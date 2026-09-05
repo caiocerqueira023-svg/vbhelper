@@ -23,3 +23,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "VBHelper"
 include(":app")
+include(":vb-nfc-reader")
+include(":vb-dim-reader")

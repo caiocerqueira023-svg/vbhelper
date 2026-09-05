@@ -68,8 +68,8 @@ protobuf {
 
 dependencies {
     implementation(libs.androidx.room.runtime)
-    implementation(libs.vb.nfc.reader)
-    implementation(libs.dim.reader)
+    implementation(project(":vb-nfc-reader"))
+    implementation(project(":vb-dim-reader"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.datastore.preferences)

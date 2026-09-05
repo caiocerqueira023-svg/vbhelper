@@ -15,8 +15,6 @@ navigationCompose = "2.9.8"
 protobufGradlePlugin = "0.10.0"
 protobufJavalite = "4.35.1"
 roomRuntime = "2.8.4"
-vbNfcReader = "0.2.0-SNAPSHOT"
-dimReader = "2.1.0"
 playServicesWearable = "20.0.1"
 kotlinxCoroutinesPlayServices = "1.11.0"
 timber = "5.0.1"
@@ -51,8 +49,6 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 material = { module = "com.google.android.material:material", version.ref = "material" }
 protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobufJavalite" }
-vb-nfc-reader = { module = "com.github.cfogrady:vb-nfc-reader", version.ref = "vbNfcReader" }
-dim-reader = { module = "com.github.cfogrady:vb-dim-reader", version.ref = "dimReader" }
 play-services-wearable = { group = "com.google.android.gms", name = "play-services-wearable", version.ref = "playServicesWearable" }
 kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutinesPlayServices" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
