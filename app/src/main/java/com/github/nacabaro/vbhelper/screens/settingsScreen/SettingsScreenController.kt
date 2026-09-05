@@ -5,4 +5,5 @@ interface SettingsScreenController {
     fun onClickImportDatabase()
     fun onClickImportApk()
     fun onClickImportCard()
+    fun onClickConfigureLlm()
 }

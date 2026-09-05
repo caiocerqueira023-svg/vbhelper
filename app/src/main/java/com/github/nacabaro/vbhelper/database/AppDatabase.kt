@@ -7,6 +7,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.github.nacabaro.vbhelper.daos.AdventureDao
 import com.github.nacabaro.vbhelper.daos.CardAdventureDao
 import com.github.nacabaro.vbhelper.daos.CharacterDao
+import com.github.nacabaro.vbhelper.daos.ChatDao
 import com.github.nacabaro.vbhelper.daos.DexDao
 import com.github.nacabaro.vbhelper.daos.CardDao
 import com.github.nacabaro.vbhelper.daos.CardFusionsDao
@@ -29,6 +30,7 @@ import com.github.nacabaro.vbhelper.domain.card.PossibleTransformations
 import com.github.nacabaro.vbhelper.domain.characters.Sprite
 import com.github.nacabaro.vbhelper.domain.characters.Adventure
 import com.github.nacabaro.vbhelper.domain.characters.Dex
+import com.github.nacabaro.vbhelper.domain.chat.ChatMessageEntity
 import com.github.nacabaro.vbhelper.domain.device_data.BECharacterData
 import com.github.nacabaro.vbhelper.domain.device_data.SpecialMissions
 import com.github.nacabaro.vbhelper.domain.device_data.TransformationHistory
@@ -40,7 +42,7 @@ import com.github.nacabaro.vbhelper.domain.device_data.CharacterTransferPolicy
 import com.github.nacabaro.vbhelper.domain.items.Items
 
 @Database(
-    version = 3,
+    version = 4,
     exportSchema = false,
     entities = [
         Card::class,
@@ -62,7 +64,8 @@ import com.github.nacabaro.vbhelper.domain.items.Items
         PossibleTransformations::class,
         ValidatedCardEntity::class,
         VitalWearCharacterSettings::class,
-        CharacterTransferPolicy::class
+        CharacterTransferPolicy::class,
+        ChatMessageEntity::class
     ]
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -80,6 +83,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun validatedCardDao(): ValidatedCardDao
     abstract fun vitalWearSettingsDao(): VitalWearSettingsDao
     abstract fun characterTransferPolicyDao(): CharacterTransferPolicyDao
+    abstract fun chatDao(): ChatDao
 
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -105,6 +109,24 @@ abstract class AppDatabase : RoomDatabase() {
                 try {
                     db.execSQL("ALTER TABLE `Card` ADD COLUMN `isBEm` INTEGER NOT NULL DEFAULT 0")
                 } catch (e: Exception) {}
+            }
+        }
+
+        val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `ChatMessageEntity` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `characterId` INTEGER NOT NULL,
+                        `role` TEXT NOT NULL,
+                        `content` TEXT NOT NULL,
+                        `timestamp` INTEGER NOT NULL,
+                        FOREIGN KEY(`characterId`) REFERENCES `UserCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_ChatMessageEntity_characterId` ON `ChatMessageEntity` (`characterId`)")
             }
         }
     }

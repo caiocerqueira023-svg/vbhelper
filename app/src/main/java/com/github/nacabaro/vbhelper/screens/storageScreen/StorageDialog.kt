@@ -44,7 +44,8 @@ fun StorageDialog(
     onClickDelete: () -> Unit,
     onSendToBracelet: () -> Unit,
     onClickSetActive: () -> Unit,
-    onClickSendToAdventure: (time: Long) -> Unit
+    onClickSendToAdventure: (time: Long) -> Unit,
+    onClickChat: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val application = LocalContext.current.applicationContext as VBHelper
@@ -114,28 +115,35 @@ fun StorageDialog(
                         )
                     }
                 }
-                            Row(
-                                horizontalArrangement = Arrangement.Center,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                            ) {
-                                Button(
-                                    onClick = onSendToBracelet,
-                                    modifier = Modifier
-                                        .weight(1f)
-                                ) {
-                                    Text(text = stringResource(R.string.storage_send_to_watch))
-                                }
-                                Spacer(
-                                    modifier = Modifier
-                                        .padding(4.dp)
-                                )
-                                Button(
-                                    onClick = onClickSetActive,
-                                ) {
-                                    Text(text = stringResource(R.string.storage_set_active))
-                                }
-                            }
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    Button(
+                        onClick = onSendToBracelet,
+                        modifier = Modifier
+                            .weight(1f)
+                    ) {
+                        Text(text = stringResource(R.string.storage_send_to_watch))
+                    }
+                    Spacer(
+                        modifier = Modifier
+                            .padding(4.dp)
+                    )
+                    Button(
+                        onClick = onClickSetActive,
+                    ) {
+                        Text(text = stringResource(R.string.storage_set_active))
+                    }
+                }
+                Button(
+                    onClick = onClickChat,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    Text(text = stringResource(R.string.storage_chat_with_digimon))
+                }
                 Button(
                     onClick = {
                         onSendToAdventureClicked = true

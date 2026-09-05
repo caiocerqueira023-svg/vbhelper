@@ -8,6 +8,7 @@ import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.di.AppContainer
 import com.github.nacabaro.vbhelper.source.CurrencyRepository
 import com.github.nacabaro.vbhelper.source.DataStoreSecretsRepository
+import com.github.nacabaro.vbhelper.source.LlmSettingsRepository
 import com.github.nacabaro.vbhelper.companion.validation.ValidatedCardManager
 import com.github.nacabaro.vbhelper.companion.logs.CompanionLogService
 import com.github.nacabaro.vbhelper.source.SecretsSerializer
@@ -15,6 +16,8 @@ import com.github.nacabaro.vbhelper.source.proto.Secrets
 
 private const val SECRETS_DATA_STORE_NAME = "secrets.pb"
 private const val USER_PREFERENCES_NAME = "user_preferences"
+private const val LLM_SETTINGS_STORE_NAME = "llm_settings"
+
 val Context.secretsStore: DataStore<Secrets> by dataStore(
     fileName = SECRETS_DATA_STORE_NAME,
     serializer = SecretsSerializer
@@ -22,6 +25,10 @@ val Context.secretsStore: DataStore<Secrets> by dataStore(
 
 val Context.currencyStore: DataStore<Preferences> by preferencesDataStore(
     name = USER_PREFERENCES_NAME
+)
+
+val Context.llmSettingsStore: DataStore<Preferences> by preferencesDataStore(
+    name = LLM_SETTINGS_STORE_NAME
 )
 
 class DefaultAppContainer(private val context: Context) : AppContainer {
@@ -32,7 +39,11 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
             klass = AppDatabase::class.java,
             "internalDb"
         )
-            .addMigrations(AppDatabase.MIGRATION_1_2)
+            .addMigrations(AppDatabase.MIGRATION_1_2, AppDatabase.MIGRATION_3_4)
+            // Escolha mais segura: se não houver caminho de migração explícito
+            // (ex.: usuário vindo de uma versão sem migration mapeada), o Room
+            // recria o banco em vez de travar o app com uma exceção de migração.
+            .fallbackToDestructiveMigration()
             .createFromAsset("items.db")
             .build()
     }
@@ -46,5 +57,6 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
     }
 
     override val companionLogService = CompanionLogService()
-}
 
+    override val llmSettingsRepository = LlmSettingsRepository(context.llmSettingsStore)
+}

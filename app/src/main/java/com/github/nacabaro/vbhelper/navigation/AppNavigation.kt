@@ -20,6 +20,8 @@ import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.screens.BattlesScreen
 import com.github.nacabaro.vbhelper.screens.cardScreen.CardsScreen
 import com.github.nacabaro.vbhelper.screens.cardScreen.CardViewScreen
+import com.github.nacabaro.vbhelper.screens.chatScreen.ChatScreen
+import com.github.nacabaro.vbhelper.screens.chatScreen.ChatScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.homeScreens.HomeScreen
 import com.github.nacabaro.vbhelper.screens.itemsScreen.ItemsScreen
 import com.github.nacabaro.vbhelper.screens.scanScreen.ScanScreen
@@ -48,7 +50,8 @@ data class AppNavigationHandlers(
     val storageScreenController: StorageScreenControllerImpl,
     val homeScreenController: HomeScreenControllerImpl,
     val spriteViewerController: SpriteViewerControllerImpl,
-    val cardScreenController: CardScreenControllerImpl
+    val cardScreenController: CardScreenControllerImpl,
+    val chatScreenController: ChatScreenControllerImpl
 )
 
 @Composable
@@ -180,6 +183,16 @@ fun AppNavigation(
                         cardId = cardId.toLong(),
                         cardScreenController = applicationNavigationHandlers
                             .cardScreenController
+                    )
+                }
+            }
+            composable(NavigationItems.Chat.route) {
+                val characterId = it.arguments?.getString("characterId")?.toLongOrNull()
+                if (characterId != null) {
+                    ChatScreen(
+                        navController = navController,
+                        chatScreenController = applicationNavigationHandlers.chatScreenController,
+                        characterId = characterId
                     )
                 }
             }

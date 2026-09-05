@@ -12,10 +12,14 @@ import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.screens.settingsScreen.controllers.CardImportController
 import com.github.nacabaro.vbhelper.screens.settingsScreen.controllers.DatabaseManagementController
 import com.github.nacabaro.vbhelper.source.ApkSecretsImporter
+import com.github.nacabaro.vbhelper.source.LlmSettingsRepository
 import com.github.nacabaro.vbhelper.source.SecretsImporter
 import com.github.nacabaro.vbhelper.source.SecretsRepository
 import com.github.nacabaro.vbhelper.source.proto.Secrets
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 
 
 class SettingsScreenControllerImpl(
@@ -34,19 +38,26 @@ class SettingsScreenControllerImpl(
         application = application
     )
 
+    val llmSettingsRepository: LlmSettingsRepository = application.container.llmSettingsRepository
+    val currentLlmApiKey: Flow<String?> = llmSettingsRepository.apiKey
+    val currentLlmModel: Flow<String> = llmSettingsRepository.model
+
+    private val _showLlmDialog = MutableStateFlow(false)
+    val showLlmDialog: StateFlow<Boolean> = _showLlmDialog
+
     init {
         filePickerLauncher = context.registerForActivityResult(
             ActivityResultContracts.CreateDocument("application/octet-stream")
         ) { uri ->
-                if (uri != null) {
-                    databaseManagementController.exportDatabase(uri)
-                } else {
-                    context.runOnUiThread {
-                        Toast.makeText(context, "No destination selected", Toast.LENGTH_SHORT)
-                            .show()
-                    }
+            if (uri != null) {
+                databaseManagementController.exportDatabase(uri)
+            } else {
+                context.runOnUiThread {
+                    Toast.makeText(context, "No destination selected", Toast.LENGTH_SHORT)
+                        .show()
                 }
             }
+        }
 
         filePickerOpenerLauncher = context.registerForActivityResult(
             ActivityResultContracts.OpenDocument()
@@ -99,6 +110,26 @@ class SettingsScreenControllerImpl(
 
     override fun onClickImportCard() {
         filePickerCard.launch(arrayOf("*/*"))
+    }
+
+    override fun onClickConfigureLlm() {
+        _showLlmDialog.value = true
+    }
+
+    fun dismissLlmDialog() {
+        _showLlmDialog.value = false
+    }
+
+    fun saveLlmSettings(apiKey: String, model: String) {
+        context.lifecycleScope.launch(Dispatchers.IO) {
+            llmSettingsRepository.setApiKey(apiKey.trim())
+            llmSettingsRepository.setModel(model.trim().ifBlank { "openrouter/auto" })
+
+            context.runOnUiThread {
+                Toast.makeText(context, "Configurações de chat salvas!", Toast.LENGTH_SHORT).show()
+                dismissLlmDialog()
+            }
+        }
     }
 
     private fun importCard(uri: Uri) {

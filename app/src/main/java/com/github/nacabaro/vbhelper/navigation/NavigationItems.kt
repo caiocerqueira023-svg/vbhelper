@@ -98,4 +98,10 @@ sealed class NavigationItems(
         R.drawable.baseline_data_24,
         R.string.nav_credits
     )
+
+    object Chat : NavigationItems(
+        "Chat/{characterId}",
+        R.drawable.baseline_mood_24,
+        R.string.nav_chat
+    )
 }

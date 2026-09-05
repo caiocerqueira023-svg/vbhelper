@@ -14,6 +14,7 @@ import com.github.cfogrady.vitalwear.protos.Character
 import com.github.nacabaro.vbhelper.navigation.AppNavigation
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.navigation.AppNavigationHandlers
+import com.github.nacabaro.vbhelper.screens.chatScreen.ChatScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.homeScreens.HomeScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.itemsScreen.ItemsScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.scanScreen.ScanScreenControllerImpl
@@ -59,6 +60,7 @@ class MainActivity : ComponentActivity() {
         val homeScreenController = HomeScreenControllerImpl(this)
         val spriteViewerController = SpriteViewerControllerImpl(this)
         val cardScreenController = CardScreenControllerImpl(this)
+        val chatScreenController = ChatScreenControllerImpl(this)
 
         super.onCreate(savedInstanceState)
 
@@ -77,6 +79,7 @@ class MainActivity : ComponentActivity() {
                     storageScreenController = storageScreenController,
                     spriteViewerController = spriteViewerController,
                     cardScreenController = cardScreenController,
+                    chatScreenController = chatScreenController,
                     initialRoute = initialRoute
                 )
             }
@@ -106,7 +109,6 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         initialRoute = getInitialRouteFromIntent(intent)
-        // Optionally, you may want to trigger navigation here if needed
         handleImportIntent(intent)
     }
 
@@ -177,6 +179,7 @@ class MainActivity : ComponentActivity() {
         homeScreenController: HomeScreenControllerImpl,
         spriteViewerController: SpriteViewerControllerImpl,
         cardScreenController: CardScreenControllerImpl,
+        chatScreenController: ChatScreenControllerImpl,
         initialRoute: String? = null
     ) {
         AppNavigation(
@@ -188,7 +191,8 @@ class MainActivity : ComponentActivity() {
                 storageScreenController,
                 homeScreenController,
                 spriteViewerController,
-                cardScreenController
+                cardScreenController,
+                chatScreenController
             ),
             initialRoute = initialRoute
         )

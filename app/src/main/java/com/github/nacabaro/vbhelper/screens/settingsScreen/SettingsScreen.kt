@@ -14,6 +14,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -23,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
+import com.github.nacabaro.vbhelper.screens.settingsScreen.dialogs.LlmSettingsDialog
 import com.github.nacabaro.vbhelper.R
 
 
@@ -32,6 +35,10 @@ fun SettingsScreen(
     settingsScreenController: SettingsScreenControllerImpl,
 ) {
     val context = LocalContext.current
+
+    val showLlmDialog by settingsScreenController.showLlmDialog.collectAsState()
+    val currentApiKey by settingsScreenController.currentLlmApiKey.collectAsState(initial = null)
+    val currentModel by settingsScreenController.currentLlmModel.collectAsState(initial = "openrouter/auto")
 
     Scaffold(
         topBar = {
@@ -67,6 +74,14 @@ fun SettingsScreen(
                 settingsScreenController.onClickImportCard()
             }
 
+            SettingsSection(title = stringResource(R.string.settings_section_llm_chat))
+            SettingsEntry(
+                title = stringResource(R.string.settings_configure_llm_title),
+                description = stringResource(R.string.settings_configure_llm_desc)
+            ) {
+                settingsScreenController.onClickConfigureLlm()
+            }
+
             SettingsSection(title = stringResource(R.string.settings_section_about))
             SettingsEntry(
                 title = stringResource(R.string.settings_credits_title),
@@ -99,6 +114,17 @@ fun SettingsScreen(
                 settingsScreenController.onClickImportDatabase()
             }
         }
+    }
+
+    if (showLlmDialog) {
+        LlmSettingsDialog(
+            currentApiKey = currentApiKey,
+            currentModel = currentModel,
+            onDismiss = { settingsScreenController.dismissLlmDialog() },
+            onSave = { apiKey, model ->
+                settingsScreenController.saveLlmSettings(apiKey, model)
+            }
+        )
     }
 }
 
