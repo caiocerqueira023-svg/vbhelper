@@ -1,13 +1,16 @@
-<string name="nav_chat">Chat</string>
-<string name="settings_section_llm_chat">Digimon chat (AI)</string>
-<string name="settings_configure_llm_title">Configure chat API key</string>
-<string name="settings_configure_llm_desc">
-Set your OpenRouter API key and model to chat with your Digimon
-</string>
-<string name="storage_chat_with_digimon">Chat with your Digimon</string>
+
 
 <resources>
     <string name="app_name">VBHelper</string>
+
+    <string name="nav_chat">Chat</string>
+    <string name="settings_section_llm_chat">Digimon chat (AI)</string>
+    <string name="settings_configure_llm_title">Configure chat API key</string>
+    <string name="settings_configure_llm_desc">
+        Set your OpenRouter API key and model to chat with your Digimon
+    </string>
+    <string name="storage_chat_with_digimon">Chat with your Digimon</string>
+
     <string name="beta_warning_message_main">
         This application is currently in alpha and it is not complete. Do not use it to store important characters for you, as any future updates might delete all your characters. Sorry for the inconvenience!
     </string>
