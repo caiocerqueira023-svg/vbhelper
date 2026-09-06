@@ -4,6 +4,8 @@ import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.domain.device_data.BECharacterData
 import com.github.nacabaro.vbhelper.domain.device_data.SpecialMissions
 import com.github.nacabaro.vbhelper.domain.device_data.VBCharacterData
+import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityGenerator
+import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.dtos.ItemDtos
 import kotlinx.coroutines.flow.Flow
@@ -37,6 +39,26 @@ class StorageRepository (
 
     suspend fun getItem(id: Long): ItemDtos.ItemsWithQuantities {
         return db.itemDao().getItem(id)
+    }
+
+    suspend fun getOrCreatePersonality(characterId: Long): DigimonPersonalityTraits {
+        val character = db.userCharacterDao().getCharacter(characterId)
+        db.digimonIndividualDao().getPersonality(character.individualId)?.let { return it }
+
+        val characterInfo = db.userCharacterDao().getCharacterInfo(characterId)
+        val generated = DigimonPersonalityGenerator.generate(
+            individualId = character.individualId,
+            attribute = characterInfo.attribute,
+            stage = characterInfo.stage
+        )
+        db.digimonIndividualDao().insertPersonality(generated)
+        return db.digimonIndividualDao().getPersonality(character.individualId) ?: generated
+    }
+
+    suspend fun ensureAllPersonalities() {
+        for (characterId in db.userCharacterDao().getAllCharacterIds()) {
+            getOrCreatePersonality(characterId)
+        }
     }
 
     fun getActiveCharacter(): Flow<CharacterDtos.CharacterWithSprites?> {

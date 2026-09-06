@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -36,6 +37,8 @@ import com.github.nacabaro.vbhelper.source.StorageRepository
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 
 @Composable
@@ -45,8 +48,14 @@ fun StorageScreen(
     adventureScreenController: AdventureScreenControllerImpl
 ) {
     val application = LocalContext.current.applicationContext as VBHelper
-    val storageRepository = StorageRepository(application.container.db)
+    val storageRepository = remember { StorageRepository(application.container.db) }
     val characterList by storageRepository.getAllCharacters().collectAsState(initial = emptyList())
+
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            storageRepository.ensureAllPersonalities()
+        }
+    }
 
     var selectedCharacter by remember { mutableStateOf<Long?>(null) }
 

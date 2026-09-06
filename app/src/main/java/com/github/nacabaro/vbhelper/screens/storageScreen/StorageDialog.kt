@@ -84,10 +84,7 @@ fun StorageDialog(
                 .getCardByCharacterIdSync(loadedCharacter.id)?.name.orEmpty()
             val loadedSpeciesProfile = speciesRepository
                 .getProfileForCharacter(loadedCharacter.charId)
-            val individualId = application.container.db.userCharacterDao()
-                .getCharacter(characterId).individualId
-            val loadedPersonality = application.container.db.digimonIndividualDao()
-                .getPersonality(individualId)
+            val loadedPersonality = storageRepository.getOrCreatePersonality(characterId)
             LoadedStorageCharacter(
                 character = loadedCharacter,
                 cardName = loadedCardName,
@@ -126,13 +123,9 @@ fun StorageDialog(
                 modifier = Modifier
                     .padding(16.dp)
             ) {
-                if (character.value != null &&
-                    characterSprite.value != null &&
-                    characterName.value != null
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
+                if (character.value != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (characterSprite.value != null && characterName.value != null) {
                         val bitmap = remember (characterSprite.value!!) { characterSprite.value!!.getBitmap() }
                         val imageBitmap = remember(bitmap) { bitmap.asImageBitmap() }
                         val density: Float = LocalContext.current.resources.displayMetrics.density
@@ -154,6 +147,7 @@ fun StorageDialog(
                             modifier = Modifier
                                 .size(nameDpSize)
                         )
+                        }
                         IconButton(onClick = { showInfoEditor = true }) {
                             Icon(
                                 imageVector = Icons.Default.Settings,

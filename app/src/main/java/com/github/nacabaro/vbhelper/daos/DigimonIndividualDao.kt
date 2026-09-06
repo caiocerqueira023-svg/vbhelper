@@ -22,7 +22,10 @@ interface DigimonIndividualDao {
     fun getPersonalitySync(individualId: String): DigimonPersonalityTraits?
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun insertPersonality(personality: DigimonPersonalityTraits)
+    suspend fun insertPersonality(personality: DigimonPersonalityTraits)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insertPersonalitySync(personality: DigimonPersonalityTraits)
 
     @Query(
         """

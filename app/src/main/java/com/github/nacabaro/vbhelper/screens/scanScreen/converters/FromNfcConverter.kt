@@ -172,7 +172,7 @@ class FromNfcConverter (
                 DigimonIndividual(individualId = individualId, createdAt = System.currentTimeMillis())
             )
             if (database.digimonIndividualDao().getPersonalitySync(individualId) == null) {
-                database.digimonIndividualDao().insertPersonality(
+                database.digimonIndividualDao().insertPersonalitySync(
                     DigimonPersonalityGenerator.generate(
                         individualId = individualId,
                         attribute = attribute,
