@@ -40,6 +40,7 @@ import com.github.nacabaro.vbhelper.utils.getBitmap
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
 
 
 @Composable
@@ -63,6 +64,7 @@ fun StorageDialog(
     var cardName by remember { mutableStateOf("") }
     var showInfoEditor by remember { mutableStateOf(false) }
     var speciesProfile by remember { mutableStateOf<com.github.nacabaro.vbhelper.domain.species.SpeciesProfile?>(null) }
+    var personality by remember { mutableStateOf<DigimonPersonalityTraits?>(null) }
     val speciesRepository = SpeciesRepository(application.container.db, application.container.speciesSettingsRepository)
 
     LaunchedEffect(storageRepository) {
@@ -72,6 +74,10 @@ fun StorageDialog(
             cardName = application.container.db.cardDao()
                 .getCardByCharacterIdSync(character.value!!.id)?.name.orEmpty()
             speciesProfile = speciesRepository.getProfileForCharacter(character.value!!.charId)
+            val individualId = application.container.db.userCharacterDao()
+                .getCharacter(characterId).individualId
+            personality = application.container.db.digimonIndividualDao()
+                .getPersonality(individualId)
             characterSprite.value = BitmapData(
                 bitmap = character.value!!.spriteIdle,
                 width = character.value!!.spriteWidth,
@@ -205,6 +211,7 @@ fun StorageDialog(
             cardName = cardName,
             nickname = nickname,
             profile = speciesProfile,
+            personality = personality,
             onDismiss = { showInfoEditor = false },
             onSave = { result ->
                 coroutineScope.launch {

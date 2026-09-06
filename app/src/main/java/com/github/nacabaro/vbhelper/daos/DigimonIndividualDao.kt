@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.github.nacabaro.vbhelper.domain.device_data.DigimonIndividual
+import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
 
 @Dao
 interface DigimonIndividualDao {
@@ -13,6 +14,12 @@ interface DigimonIndividualDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM DigimonIndividual WHERE individualId = :individualId)")
     fun exists(individualId: String): Boolean
+
+    @Query("SELECT * FROM DigimonPersonalityTraits WHERE individualId = :individualId")
+    fun getPersonality(individualId: String): DigimonPersonalityTraits?
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun insertPersonality(personality: DigimonPersonalityTraits)
 
     @Query(
         """

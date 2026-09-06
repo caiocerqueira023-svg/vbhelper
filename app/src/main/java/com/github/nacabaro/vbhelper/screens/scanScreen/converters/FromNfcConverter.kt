@@ -14,6 +14,7 @@ import com.github.nacabaro.vbhelper.domain.device_data.VBCharacterData
 import com.github.nacabaro.vbhelper.domain.device_data.VitalsHistory
 import com.github.nacabaro.vbhelper.utils.DeviceType
 import com.github.nacabaro.vbhelper.domain.identity.IndividualIdentity
+import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityGenerator
 import java.util.GregorianCalendar
 
 class FromNfcConverter (
@@ -91,7 +92,11 @@ class FromNfcConverter (
 
         updateCardProgress(nfcCharacter, cardData)
 
-        val individualId = resolveIndividualId(nfcCharacter)
+        val individualId = resolveIndividualId(
+            nfcCharacter = nfcCharacter,
+            stage = cardCharData.stage,
+            attribute = cardCharData.attribute
+        )
         val characterData = UserCharacter(
             individualId = individualId,
             charId = cardCharData.id,
@@ -149,13 +154,28 @@ class FromNfcConverter (
     }
 
     /** Reuse only IDs that were previously created by this app and still exist locally. */
-    private fun resolveIndividualId(nfcCharacter: NfcCharacter): String {
+    private fun resolveIndividualId(
+        nfcCharacter: NfcCharacter,
+        stage: Int,
+        attribute: NfcCharacter.Attribute
+    ): String {
         val fromWatch = IndividualIdentity.decode(nfcCharacter.appReserved1)
         val individualId = fromWatch?.takeIf { database.digimonIndividualDao().exists(it) }
             ?: IndividualIdentity.generate()
-        database.digimonIndividualDao().insert(
-            DigimonIndividual(individualId = individualId, createdAt = System.currentTimeMillis())
-        )
+        database.runInTransaction {
+            database.digimonIndividualDao().insert(
+                DigimonIndividual(individualId = individualId, createdAt = System.currentTimeMillis())
+            )
+            if (database.digimonIndividualDao().getPersonality(individualId) == null) {
+                database.digimonIndividualDao().insertPersonality(
+                    DigimonPersonalityGenerator.generate(
+                        individualId = individualId,
+                        attribute = attribute,
+                        stage = stage
+                    )
+                )
+            }
+        }
         return individualId
     }
     

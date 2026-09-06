@@ -43,11 +43,12 @@ import com.github.nacabaro.vbhelper.domain.device_data.VitalsHistory
 import com.github.nacabaro.vbhelper.domain.device_data.VitalWearCharacterSettings
 import com.github.nacabaro.vbhelper.domain.device_data.CharacterTransferPolicy
 import com.github.nacabaro.vbhelper.domain.device_data.DigimonIndividual
+import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
 import com.github.nacabaro.vbhelper.domain.items.Items
 import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
 
 @Database(
-    version = 7,
+    version = 8,
     exportSchema = false,
     entities = [
         Card::class,
@@ -72,10 +73,11 @@ import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
         VitalWearCharacterSettings::class,
         CharacterTransferPolicy::class,
         ChatMessageEntity::class,
-        SpeciesProfile::class
+        SpeciesProfile::class,
+        DigimonPersonalityTraits::class
     ]
 )
-@TypeConverters(SpeciesProfileConverters::class)
+@TypeConverters(SpeciesProfileConverters::class, PersonalityConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun cardDao(): CardDao
     abstract fun cardProgressDao(): CardProgressDao
@@ -204,6 +206,28 @@ abstract class AppDatabase : RoomDatabase() {
         val MIGRATION_6_7 = object : Migration(6, 7) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE `DigimonIndividual` ADD COLUMN `nickname` TEXT")
+            }
+        }
+
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `DigimonPersonalityTraits` (
+                        `individualId` TEXT NOT NULL,
+                        `temperament` TEXT NOT NULL,
+                        `socialStyle` TEXT NOT NULL,
+                        `speechQuirk` TEXT NOT NULL,
+                        `generatedAt` INTEGER NOT NULL,
+                        PRIMARY KEY(`individualId`),
+                        FOREIGN KEY(`individualId`) REFERENCES `DigimonIndividual`(`individualId`)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_DigimonPersonalityTraits_individualId` ON `DigimonPersonalityTraits` (`individualId`)"
+                )
             }
         }
     }

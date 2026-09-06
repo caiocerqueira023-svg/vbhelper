@@ -39,12 +39,12 @@ fun PromptTemplateDialog(
             Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
                 Text("Prompt do Digimon", style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "Este texto define a personalidade enviada ao OpenRouter. Os dados de gameplay do relógio são anexados separadamente e não podem ser alterados aqui.",
+                    "Este texto orienta o jeito de falar enviado ao OpenRouter. Os dados do relógio são anexados separadamente e não podem ser alterados aqui.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline
                 )
                 Text(
-                    "{species_name}, {matched_name}, {species_profile}, {species_profile_block}, {species_level}, {species_type}, {special_moves}",
+                    "{species_name}, {matched_name}, {species_profile}, {species_profile_block}, {species_level}, {species_type}, {special_moves}, {temperament}, {social_style}, {speech_quirk}, {personality_block}",
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )

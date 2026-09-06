@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
+import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
+import com.github.nacabaro.vbhelper.domain.personality.toDisplayName
 
 data class DigimonInfoEditResult(
     val nickname: String?,
@@ -40,6 +42,7 @@ fun DigimonInfoEditDialog(
     cardName: String,
     nickname: String?,
     profile: SpeciesProfile?,
+    personality: DigimonPersonalityTraits?,
     onDismiss: () -> Unit,
     onSave: (DigimonInfoEditResult) -> Unit
 ) {
@@ -114,6 +117,13 @@ fun DigimonInfoEditDialog(
                     label = { Text("Golpes especiais, separados por vírgula") },
                     modifier = Modifier.fillMaxWidth()
                 )
+                if (personality != null) {
+                    Spacer(Modifier.height(12.dp))
+                    Text("Personalidade deste indivíduo", style = MaterialTheme.typography.titleSmall)
+                    Text("Temperamento: ${personality.temperament.toDisplayName()}")
+                    Text("Estilo social: ${personality.socialStyle.toDisplayName()}")
+                    Text("Maneirismo de fala: ${personality.speechQuirk.toDisplayName()}")
+                }
                 Row(
                     Modifier.fillMaxWidth().padding(top = 8.dp),
                     horizontalArrangement = Arrangement.End

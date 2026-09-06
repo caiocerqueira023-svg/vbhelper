@@ -32,13 +32,15 @@ class ChatRepository(
         val character = database.userCharacterDao().getCharacterWithSprites(characterId)
         val userCharacter = database.userCharacterDao().getCharacter(characterId)
         val individualId = userCharacter.individualId
+        val personality = database.digimonIndividualDao().getPersonality(individualId)
         val card = database.cardDao().getCardByCharacterIdSync(characterId)
         val speciesProfile = database.speciesProfileDao().getByCardCharacterId(userCharacter.charId)
         val systemPrompt = DigimonPersonaBuilder.buildSystemPrompt(
             character,
             card?.name ?: "desconhecido",
             speciesProfile,
-            promptTemplate
+            promptTemplate,
+            personality
         )
 
         // salva a mensagem do usuário antes de chamar a API

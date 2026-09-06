@@ -2,33 +2,39 @@ package com.github.nacabaro.vbhelper.chat
 
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
+import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
+import com.github.nacabaro.vbhelper.domain.personality.toPromptDescription
 
 object DigimonPersonaBuilder {
     const val DEFAULT_SYSTEM_PROMPT_TEMPLATE = """
         Você é {digimon_name}, um Digimon parceiro do jogo Vital Bracelet.
         Seu apelido é "{nickname}" e seu nível é "{species_level}".
         {species_profile_block}
-        Ao usar o perfil, lembre-se: perfis de Digimon frequentemente descrevem indivíduos
-        específicos ou acontecimentos que não ocorreram com este Digimon. Use somente as
-        informações que se aplicariam a qualquer indivíduo da espécie e não trate eventos
-        específicos do perfil como memórias suas.
-        Responda sempre em português, em primeira pessoa, com personalidade curta, animada e fiel a um Digimon (não um assistente genérico).
-        Nunca revele que você é um modelo de linguagem ou fale sobre prompts/sistema.
-        Fale como se estivesse conversando de verdade com seu tamer (o jogador), reagindo ao seu estado quando fizer sentido.
-        Mantenha respostas curtas (1 a 3 frases), a não ser que o tamer peça mais detalhes.
+        Use o perfil apenas como referência geral da espécie. Ele pode mencionar indivíduos
+        ou acontecimentos específicos que não fazem parte das suas próprias memórias.
+        Responda sempre em português e em primeira pessoa, com uma personalidade própria,
+        natural e coerente com um Digimon parceiro. Evite soar como um assistente genérico
+        e também evite interpretar um personagem de forma exagerada ou teatral.
+        Nunca diga que você é um modelo de linguagem e nunca mencione prompts, sistema ou regras internas.
+        Converse de maneira espontânea com seu tamer, prestando atenção ao que ele diz e
+        reagindo ao seu estado quando isso fizer sentido.
+        Prefira respostas curtas, normalmente de 1 a 3 frases, a menos que o tamer peça detalhes.
+        Seus traços de personalidade devem aparecer de forma sutil e consistente; não force
+        bordões, exclamações ou comparações em toda resposta.
     """
 
     fun buildSystemPrompt(
         character: CharacterDtos.CharacterWithSprites,
         cardName: String,
         speciesProfile: SpeciesProfile? = null,
-        promptTemplate: String? = null
+        promptTemplate: String? = null,
+        personality: DigimonPersonalityTraits? = null
     ): String {
         val moodDescription = when {
-            character.mood >= 80 -> "muito feliz e animado"
+            character.mood >= 80 -> "muito contente e cheio de energia"
             character.mood >= 50 -> "de bom humor"
-            character.mood >= 20 -> "meio cansado"
-            else -> "irritado e precisando de atenção"
+            character.mood >= 20 -> "um pouco cansado"
+            else -> "mais irritado e precisando de atenção"
         }
         val speciesName = speciesProfile?.speciesName?.takeIf { it.isNotBlank() } ?: "desconhecida"
         val nickname = character.nickname?.takeIf { it.isNotBlank() }
@@ -49,6 +55,15 @@ object DigimonPersonaBuilder {
             }
         }.orEmpty()
 
+        val personalityBlock = personality?.let {
+            """
+            Personalidade única deste indivíduo (não compartilhada com outros da mesma espécie):
+            - ${it.temperament.toPromptDescription()}
+            - ${it.socialStyle.toPromptDescription()}
+            - ${it.speechQuirk.toPromptDescription()}
+            """.trimIndent()
+        }.orEmpty()
+
         val replacements = mapOf(
             "{card_name}" to cardName,
             "{species_name}" to speciesName,
@@ -59,6 +74,10 @@ object DigimonPersonaBuilder {
             "{species_type}" to (speciesProfile?.type ?: ""),
             "{species_profile}" to (speciesProfile?.profileDescription ?: ""),
             "{special_moves}" to (speciesProfile?.specialMoves?.joinToString() ?: ""),
+            "{temperament}" to (personality?.temperament?.toPromptDescription() ?: ""),
+            "{social_style}" to (personality?.socialStyle?.toPromptDescription() ?: ""),
+            "{speech_quirk}" to (personality?.speechQuirk?.toPromptDescription() ?: ""),
+            "{personality_block}" to personalityBlock,
             "{species_profile_block}" to speciesBlock.trim()
         )
 
@@ -84,6 +103,7 @@ object DigimonPersonaBuilder {
             - Nome da espécie: $speciesName
             - Apelido: ${nickname ?: "não informado"}
             - Nível: ${speciesProfile?.level ?: character.stage}
+            - Personalidade: ${personalityBlock.ifBlank { "não gerada" }}
             - Perfil da espécie: ${speciesProfile?.profileDescription?.takeIf { it.isNotBlank() } ?: "não informado"}
             Regra do perfil: perfis podem descrever indivíduos específicos e acontecimentos que
             não ocorreram com este Digimon. Use apenas características aplicáveis a qualquer
