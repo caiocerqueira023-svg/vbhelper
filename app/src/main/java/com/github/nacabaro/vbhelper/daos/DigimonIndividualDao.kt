@@ -16,7 +16,10 @@ interface DigimonIndividualDao {
     fun exists(individualId: String): Boolean
 
     @Query("SELECT * FROM DigimonPersonalityTraits WHERE individualId = :individualId")
-    fun getPersonality(individualId: String): DigimonPersonalityTraits?
+    suspend fun getPersonality(individualId: String): DigimonPersonalityTraits?
+
+    @Query("SELECT * FROM DigimonPersonalityTraits WHERE individualId = :individualId")
+    fun getPersonalitySync(individualId: String): DigimonPersonalityTraits?
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertPersonality(personality: DigimonPersonalityTraits)

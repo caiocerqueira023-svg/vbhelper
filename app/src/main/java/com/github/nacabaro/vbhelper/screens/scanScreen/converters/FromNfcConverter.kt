@@ -160,13 +160,18 @@ class FromNfcConverter (
         attribute: NfcCharacter.Attribute
     ): String {
         val fromWatch = IndividualIdentity.decode(nfcCharacter.appReserved1)
-        val individualId = fromWatch?.takeIf { database.digimonIndividualDao().exists(it) }
+        // Some devices carry the previous appReserved1 into a newly created Digimon.
+        // A fresh character must not inherit that individual's nickname or personality.
+        val isFreshCharacter = nfcCharacter.ageInDays.toInt() <= 1 &&
+            nfcCharacter.transformationHistory.all { it.toCharIndex.toInt() == 255 }
+        val individualId = fromWatch
+            ?.takeIf { !isFreshCharacter && database.digimonIndividualDao().exists(it) }
             ?: IndividualIdentity.generate()
         database.runInTransaction {
             database.digimonIndividualDao().insert(
                 DigimonIndividual(individualId = individualId, createdAt = System.currentTimeMillis())
             )
-            if (database.digimonIndividualDao().getPersonality(individualId) == null) {
+            if (database.digimonIndividualDao().getPersonalitySync(individualId) == null) {
                 database.digimonIndividualDao().insertPersonality(
                     DigimonPersonalityGenerator.generate(
                         individualId = individualId,
