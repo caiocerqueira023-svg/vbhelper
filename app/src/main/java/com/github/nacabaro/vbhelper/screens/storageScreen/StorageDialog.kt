@@ -12,7 +12,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,6 +34,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.source.StorageRepository
+import com.github.nacabaro.vbhelper.species.SpeciesRepository
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.getBitmap
 import kotlinx.coroutines.launch
@@ -56,11 +60,18 @@ fun StorageDialog(
     val characterName = remember { mutableStateOf<BitmapData?>(null) }
     var onSendToAdventureClicked by remember { mutableStateOf(false) }
     var nickname by remember { mutableStateOf("") }
+    var cardName by remember { mutableStateOf("") }
+    var showInfoEditor by remember { mutableStateOf(false) }
+    var speciesProfile by remember { mutableStateOf<com.github.nacabaro.vbhelper.domain.species.SpeciesProfile?>(null) }
+    val speciesRepository = SpeciesRepository(application.container.db, application.container.speciesSettingsRepository)
 
     LaunchedEffect(storageRepository) {
         coroutineScope.launch {
             character.value = storageRepository.getSingleCharacter(characterId)
             nickname = character.value!!.nickname.orEmpty()
+            cardName = application.container.db.cardDao()
+                .getCardByCharacterIdSync(character.value!!.id)?.name.orEmpty()
+            speciesProfile = speciesRepository.getProfileForCharacter(character.value!!.charId)
             characterSprite.value = BitmapData(
                 bitmap = character.value!!.spriteIdle,
                 width = character.value!!.spriteWidth,
@@ -116,27 +127,13 @@ fun StorageDialog(
                             modifier = Modifier
                                 .size(nameDpSize)
                         )
-                    }
-                }
-                OutlinedTextField(
-                    value = nickname,
-                    onValueChange = { nickname = it },
-                    label = { Text("Nickname") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Button(
-                    onClick = {
-                        coroutineScope.launch {
-                            storageRepository.updateNickname(
-                                characterId,
-                                nickname.trim().takeIf { it.isNotEmpty() }
+                        IconButton(onClick = { showInfoEditor = true }) {
+                            Icon(
+                                imageVector = Icons.Default.Settings,
+                                contentDescription = "Editar informações do Digimon"
                             )
                         }
-                    },
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text("Save nickname")
+                    }
                 }
                 Row(
                     horizontalArrangement = Arrangement.Center,
@@ -200,6 +197,31 @@ fun StorageDialog(
                 onClickSendToAdventure(time)
             },
             onDismissRequest = { onSendToAdventureClicked = false }
+        )
+    }
+
+    if (showInfoEditor && character.value != null) {
+        DigimonInfoEditDialog(
+            cardName = cardName,
+            nickname = nickname,
+            profile = speciesProfile,
+            onDismiss = { showInfoEditor = false },
+            onSave = { result ->
+                coroutineScope.launch {
+                    storageRepository.updateNickname(characterId, result.nickname)
+                    speciesRepository.saveManualProfile(
+                        cardCharacterId = character.value!!.charId,
+                        name = result.speciesName,
+                        level = result.level,
+                        type = result.type,
+                        profile = result.profile,
+                        specialMoves = result.specialMoves
+                    )
+                    nickname = result.nickname.orEmpty()
+                    speciesProfile = speciesRepository.getProfileForCharacter(character.value!!.charId)
+                    showInfoEditor = false
+                }
+            }
         )
     }
 }

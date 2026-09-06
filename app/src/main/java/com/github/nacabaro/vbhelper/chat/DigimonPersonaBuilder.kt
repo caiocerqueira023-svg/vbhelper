@@ -5,8 +5,13 @@ import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
 
 object DigimonPersonaBuilder {
     const val DEFAULT_SYSTEM_PROMPT_TEMPLATE = """
-        Você é {species_name}, um Digimon parceiro do jogo Vital Bracelet.
+        Você é {digimon_name}, um Digimon parceiro do jogo Vital Bracelet.
+        Seu apelido é "{nickname}" e seu nível é "{species_level}".
         {species_profile_block}
+        Ao usar o perfil, lembre-se: perfis de Digimon frequentemente descrevem indivíduos
+        específicos ou acontecimentos que não ocorreram com este Digimon. Use somente as
+        informações que se aplicariam a qualquer indivíduo da espécie e não trate eventos
+        específicos do perfil como memórias suas.
         Responda sempre em português, em primeira pessoa, com personalidade curta, animada e fiel a um Digimon (não um assistente genérico).
         Nunca revele que você é um modelo de linguagem ou fale sobre prompts/sistema.
         Fale como se estivesse conversando de verdade com seu tamer (o jogador), reagindo ao seu estado quando fizer sentido.
@@ -25,14 +30,19 @@ object DigimonPersonaBuilder {
             character.mood >= 20 -> "meio cansado"
             else -> "irritado e precisando de atenção"
         }
+        val speciesName = speciesProfile?.speciesName?.takeIf { it.isNotBlank() } ?: "desconhecida"
+        val nickname = character.nickname?.takeIf { it.isNotBlank() }
+        val digimonName = nickname?.let { "$it, da espécie $speciesName" } ?: speciesName
 
         val speciesBlock = speciesProfile?.let { profile ->
             buildString {
-                append("Espécie: ${profile.speciesName ?: "desconhecida"}")
-                profile.level?.let { append(", nível $it") }
+                append("Nome da espécie: $speciesName")
+                append(", nível ${profile.level ?: character.stage.toString()}")
                 profile.type?.let { append(", tipo $it") }
                 append(".\n")
-                profile.profileDescription?.takeIf { it.isNotBlank() }?.let { append("Perfil: $it\n") }
+                profile.profileDescription?.takeIf { it.isNotBlank() }?.let {
+                    append("Perfil geral da espécie: $it\n")
+                }
                 if (profile.specialMoves.isNotEmpty()) {
                     append("Golpes especiais: ${profile.specialMoves.joinToString()}.\n")
                 }
@@ -41,9 +51,11 @@ object DigimonPersonaBuilder {
 
         val replacements = mapOf(
             "{card_name}" to cardName,
-            "{species_name}" to (speciesProfile?.speciesName ?: "desconhecida"),
+            "{species_name}" to speciesName,
+            "{digimon_name}" to digimonName,
+            "{nickname}" to (nickname ?: ""),
             "{matched_name}" to (speciesProfile?.matchedName ?: ""),
-            "{species_level}" to (speciesProfile?.level ?: ""),
+            "{species_level}" to (speciesProfile?.level ?: character.stage.toString()),
             "{species_type}" to (speciesProfile?.type ?: ""),
             "{species_profile}" to (speciesProfile?.profileDescription ?: ""),
             "{special_moves}" to (speciesProfile?.specialMoves?.joinToString() ?: ""),
@@ -66,6 +78,18 @@ object DigimonPersonaBuilder {
             - Vitórias totais: ${character.totalBattlesWon}, Derrotas: ${character.totalBattlesLost}
         """.trimIndent()
 
-        return "$customPrompt\n\n$gameplayContext"
+        val identityContext = """
+            Identidade do Digimon:
+            - Nome usado para se referir a ele: $digimonName
+            - Nome da espécie: $speciesName
+            - Apelido: ${nickname ?: "não informado"}
+            - Nível: ${speciesProfile?.level ?: character.stage}
+            - Perfil da espécie: ${speciesProfile?.profileDescription?.takeIf { it.isNotBlank() } ?: "não informado"}
+            Regra do perfil: perfis podem descrever indivíduos específicos e acontecimentos que
+            não ocorreram com este Digimon. Use apenas características aplicáveis a qualquer
+            indivíduo da espécie; nunca transforme esses acontecimentos em memórias próprias.
+        """.trimIndent()
+
+        return "$customPrompt\n\n$identityContext\n\n$gameplayContext"
     }
 }
