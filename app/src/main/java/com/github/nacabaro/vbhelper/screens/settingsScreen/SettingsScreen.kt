@@ -8,11 +8,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -39,6 +41,7 @@ fun SettingsScreen(
     val showLlmDialog by settingsScreenController.showLlmDialog.collectAsState()
     val currentApiKey by settingsScreenController.currentLlmApiKey.collectAsState(initial = null)
     val currentModel by settingsScreenController.currentLlmModel.collectAsState(initial = "openrouter/auto")
+    val promptOriginAtImport by settingsScreenController.promptOriginAtImportTime.collectAsState(initial = false)
 
     Scaffold(
         topBar = {
@@ -80,6 +83,25 @@ fun SettingsScreen(
                 description = stringResource(R.string.settings_configure_llm_desc)
             ) {
                 settingsScreenController.onClickConfigureLlm()
+            }
+
+            SettingsSection(title = "Espécies")
+            Row(
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(16.dp)
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Perguntar origem do card no import")
+                    Text(
+                        "Se desligado, a origem pode ser definida na lista de cards.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
+                Switch(
+                    checked = promptOriginAtImport,
+                    onCheckedChange = settingsScreenController::setPromptOriginAtImportTime
+                )
             }
 
             SettingsSection(title = stringResource(R.string.settings_section_about))

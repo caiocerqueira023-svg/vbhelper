@@ -9,8 +9,12 @@ import kotlinx.coroutines.flow.Flow
 interface SpecialMissionDao {
     @Query("""
         UPDATE SpecialMissions SET 
+            goal = 0,
+            progress = 0,
             missionType = "NONE",
-            status = "UNAVAILABLE"
+            status = "UNAVAILABLE",
+            timeElapsedInMinutes = 0,
+            timeLimitInMinutes = 0
         WHERE id = :id
     """)
     suspend fun clearSpecialMission(id: Long)

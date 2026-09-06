@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.github.nacabaro.vbhelper.domain.card.Card
+import com.github.nacabaro.vbhelper.domain.card.OfficialStatus
 import com.github.nacabaro.vbhelper.dtos.CardDtos
 import kotlinx.coroutines.flow.Flow
 
@@ -50,6 +51,9 @@ interface CardDao {
 
     @Query("UPDATE Card SET name = :newName WHERE id = :id")
     suspend fun renameCard(id: Int, newName: String)
+
+    @Query("UPDATE Card SET officialStatus = :status WHERE id = :id")
+    suspend fun updateOfficialStatus(id: Long, status: OfficialStatus)
 
     @Query("DELETE FROM Card WHERE id = :id")
     suspend fun deleteCard(id: Long)

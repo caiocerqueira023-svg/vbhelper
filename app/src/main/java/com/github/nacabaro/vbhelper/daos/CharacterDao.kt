@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CharacterDao {
+    @Query("SELECT * FROM CardCharacter WHERE cardId = :cardId")
+    suspend fun getCharactersForCard(cardId: Long): List<CardCharacter>
+
     @Insert
     suspend fun insertCharacter(vararg characterData: CardCharacter)
 

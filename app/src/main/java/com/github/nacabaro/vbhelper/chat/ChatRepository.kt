@@ -25,8 +25,14 @@ class ChatRepository(
         val model = llmSettingsRepository.model.first()
 
         val character = database.userCharacterDao().getCharacterWithSprites(characterId)
+        val userCharacter = database.userCharacterDao().getCharacter(characterId)
         val card = database.cardDao().getCardByCharacterIdSync(characterId)
-        val systemPrompt = DigimonPersonaBuilder.buildSystemPrompt(character, card?.name ?: "desconhecido")
+        val speciesProfile = database.speciesProfileDao().getByCardCharacterId(userCharacter.charId)
+        val systemPrompt = DigimonPersonaBuilder.buildSystemPrompt(
+            character,
+            card?.name ?: "desconhecido",
+            speciesProfile
+        )
 
         // salva a mensagem do usuário antes de chamar a API
         chatDao.insertMessage(

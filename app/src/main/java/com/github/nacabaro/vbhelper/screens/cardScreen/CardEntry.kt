@@ -9,11 +9,13 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -26,6 +28,7 @@ import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.getBitmap
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.domain.card.OfficialStatus
 
 
 @Composable
@@ -34,10 +37,12 @@ fun CardEntry(
     logo: BitmapData,
     obtainedCharacters: Int,
     totalCharacters: Int,
+    officialStatus: OfficialStatus,
     onClick: () -> Unit,
     displayModify: Boolean,
     onClickModify: () -> Unit,
     onClickDelete: () -> Unit,
+    onClickSetOrigin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val bitmap = remember (logo.bitmap) { logo.getBitmap() }
@@ -77,6 +82,14 @@ fun CardEntry(
                     text = name,
                     modifier = Modifier
                 )
+                if (officialStatus == OfficialStatus.UNKNOWN) {
+                    TextButton(onClick = onClickSetOrigin) {
+                        Text(
+                            text = stringResource(R.string.card_entry_set_origin),
+                            fontSize = MaterialTheme.typography.labelSmall.fontSize
+                        )
+                    }
+                }
                 Text(
                     text = stringResource(
                         R.string.card_entry_characters_obtained,
@@ -93,6 +106,12 @@ fun CardEntry(
                     modifier = Modifier,
                     horizontalArrangement = Arrangement.End,
                 ) {
+                    IconButton(onClick = onClickSetOrigin) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = stringResource(R.string.card_entry_set_origin)
+                        )
+                    }
                     IconButton(
                         onClick = onClickModify
                     ) {

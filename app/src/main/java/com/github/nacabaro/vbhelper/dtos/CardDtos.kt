@@ -1,5 +1,7 @@
 package com.github.nacabaro.vbhelper.dtos
 
+import com.github.nacabaro.vbhelper.domain.card.OfficialStatus
+
 object CardDtos {
     data class CardProgress (
         val cardId: Long,
@@ -7,6 +9,7 @@ object CardDtos {
         val cardLogo: ByteArray,
         val logoWidth: Int,
         val logoHeight: Int,
+        val officialStatus: OfficialStatus,
         val totalCharacters: Int,
         val obtainedCharacters: Int,
     ) {
@@ -21,6 +24,7 @@ object CardDtos {
             if (!cardLogo.contentEquals(other.cardLogo)) return false
             if (logoWidth != other.logoWidth) return false
             if (logoHeight != other.logoHeight) return false
+            if (officialStatus != other.officialStatus) return false
             if (totalCharacters != other.totalCharacters) return false
             if (obtainedCharacters != other.obtainedCharacters) return false
 
@@ -33,6 +37,7 @@ object CardDtos {
             result = 31 * result + cardLogo.contentHashCode()
             result = 31 * result + logoWidth
             result = 31 * result + logoHeight
+            result = 31 * result + officialStatus.hashCode()
             result = 31 * result + totalCharacters
             result = 31 * result + obtainedCharacters
             return result

@@ -13,7 +13,8 @@ data class Card(
     val logoHeight: Int,
     val name: String,
     val stageCount: Int,
-    val isBEm: Boolean
+    val isBEm: Boolean,
+    val officialStatus: OfficialStatus = OfficialStatus.UNKNOWN
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -29,6 +30,7 @@ data class Card(
         if (name != other.name) return false
         if (stageCount != other.stageCount) return false
         if (isBEm != other.isBEm) return false
+        if (officialStatus != other.officialStatus) return false
 
         return true
     }
@@ -42,6 +44,7 @@ data class Card(
         result = 31 * result + name.hashCode()
         result = 31 * result + stageCount
         result = 31 * result + isBEm.hashCode()
+        result = 31 * result + officialStatus.hashCode()
         return result
     }
 }

@@ -2,6 +2,7 @@ package com.github.nacabaro.vbhelper.database
 
 import androidx.room.Database
 import androidx.room.RoomDatabase
+import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.github.nacabaro.vbhelper.daos.AdventureDao
@@ -14,6 +15,7 @@ import com.github.nacabaro.vbhelper.daos.CardFusionsDao
 import com.github.nacabaro.vbhelper.daos.CardProgressDao
 import com.github.nacabaro.vbhelper.daos.ItemDao
 import com.github.nacabaro.vbhelper.daos.SpecialMissionDao
+import com.github.nacabaro.vbhelper.daos.SpeciesProfileDao
 import com.github.nacabaro.vbhelper.daos.SpriteDao
 import com.github.nacabaro.vbhelper.daos.UserCharacterDao
 import com.github.nacabaro.vbhelper.daos.VitalWearSettingsDao
@@ -40,9 +42,10 @@ import com.github.nacabaro.vbhelper.domain.device_data.VitalsHistory
 import com.github.nacabaro.vbhelper.domain.device_data.VitalWearCharacterSettings
 import com.github.nacabaro.vbhelper.domain.device_data.CharacterTransferPolicy
 import com.github.nacabaro.vbhelper.domain.items.Items
+import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
 
 @Database(
-    version = 4,
+    version = 5,
     exportSchema = false,
     entities = [
         Card::class,
@@ -65,9 +68,11 @@ import com.github.nacabaro.vbhelper.domain.items.Items
         ValidatedCardEntity::class,
         VitalWearCharacterSettings::class,
         CharacterTransferPolicy::class,
-        ChatMessageEntity::class
+        ChatMessageEntity::class,
+        SpeciesProfile::class
     ]
 )
+@TypeConverters(SpeciesProfileConverters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun cardDao(): CardDao
     abstract fun cardProgressDao(): CardProgressDao
@@ -84,6 +89,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun vitalWearSettingsDao(): VitalWearSettingsDao
     abstract fun characterTransferPolicyDao(): CharacterTransferPolicyDao
     abstract fun chatDao(): ChatDao
+    abstract fun speciesProfileDao(): SpeciesProfileDao
 
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -127,6 +133,29 @@ abstract class AppDatabase : RoomDatabase() {
                     """.trimIndent()
                 )
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_ChatMessageEntity_characterId` ON `ChatMessageEntity` (`characterId`)")
+            }
+        }
+
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `Card` ADD COLUMN `officialStatus` TEXT NOT NULL DEFAULT 'UNKNOWN'")
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `SpeciesProfile` (
+                        `cardCharacterId` INTEGER NOT NULL,
+                        `speciesName` TEXT,
+                        `matchedName` TEXT,
+                        `level` TEXT,
+                        `type` TEXT,
+                        `profileDescription` TEXT,
+                        `specialMoves` TEXT NOT NULL,
+                        `source` TEXT NOT NULL,
+                        PRIMARY KEY(`cardCharacterId`),
+                        FOREIGN KEY(`cardCharacterId`) REFERENCES `CardCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_SpeciesProfile_cardCharacterId` ON `SpeciesProfile` (`cardCharacterId`)")
             }
         }
     }

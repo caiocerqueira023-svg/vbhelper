@@ -1,6 +1,7 @@
 package com.github.nacabaro.vbhelper.screens.cardScreen
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -26,6 +27,8 @@ import com.github.nacabaro.vbhelper.screens.cardScreen.dialogs.CardRenameDialog
 import com.github.nacabaro.vbhelper.source.DexRepository
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.domain.card.OfficialStatus
+import com.github.nacabaro.vbhelper.screens.cardScreen.dialogs.CardOriginDialog
 
 @Composable
 fun CardsScreen(
@@ -33,12 +36,14 @@ fun CardsScreen(
     cardScreenController: CardScreenControllerImpl
 ) {
     val application = LocalContext.current.applicationContext as VBHelper
+    val context = LocalContext.current
     val dexRepository = DexRepository(application.container.db)
     val cardList by dexRepository.getAllDims().collectAsState(emptyList())
 
     val selectedCard = remember { mutableStateOf<CardDtos.CardProgress?>(null) }
     var clickedDelete by remember { mutableStateOf(false) }
     var clickedRename by remember { mutableStateOf(false) }
+    var originDialogCard by remember { mutableStateOf<CardDtos.CardProgress?>(null) }
 
     var modifyCards by remember { mutableStateOf(false) }
 
@@ -74,6 +79,7 @@ fun CardsScreen(
                     },
                     obtainedCharacters = it.obtainedCharacters,
                     totalCharacters = it.totalCharacters,
+                    officialStatus = it.officialStatus,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp),
@@ -85,6 +91,9 @@ fun CardsScreen(
                     onClickDelete = {
                         selectedCard.value = it
                         clickedDelete = true
+                    },
+                    onClickSetOrigin = {
+                        originDialogCard = it
                     }
                 )
             }
@@ -130,6 +139,28 @@ fun CardsScreen(
                             selectedCard.value = null
                         }
                     )
+            }
+        )
+    }
+
+    originDialogCard?.let { card ->
+        CardOriginDialog(
+            cardName = card.cardName,
+            onDismiss = { originDialogCard = null },
+            onSelect = { status ->
+                cardScreenController.setCardOfficialStatus(card.cardId, status) { matchedCount ->
+                    originDialogCard = null
+                    val message = when (status) {
+                        OfficialStatus.OFFICIAL -> if (matchedCount > 0) {
+                            "$matchedCount espécies reconhecidas automaticamente!"
+                        } else {
+                            "Nenhuma espécie foi reconhecida no banco oficial."
+                        }
+                        OfficialStatus.CUSTOM -> "Card marcado como custom."
+                        OfficialStatus.UNKNOWN -> ""
+                    }
+                    if (message.isNotEmpty()) Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                }
             }
         )
     }

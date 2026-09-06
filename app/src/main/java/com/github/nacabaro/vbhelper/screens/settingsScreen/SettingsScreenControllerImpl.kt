@@ -13,6 +13,7 @@ import com.github.nacabaro.vbhelper.screens.settingsScreen.controllers.CardImpor
 import com.github.nacabaro.vbhelper.screens.settingsScreen.controllers.DatabaseManagementController
 import com.github.nacabaro.vbhelper.source.ApkSecretsImporter
 import com.github.nacabaro.vbhelper.source.LlmSettingsRepository
+import com.github.nacabaro.vbhelper.source.SpeciesSettingsRepository
 import com.github.nacabaro.vbhelper.source.SecretsImporter
 import com.github.nacabaro.vbhelper.source.SecretsRepository
 import com.github.nacabaro.vbhelper.source.proto.Secrets
@@ -41,6 +42,8 @@ class SettingsScreenControllerImpl(
     val llmSettingsRepository: LlmSettingsRepository = application.container.llmSettingsRepository
     val currentLlmApiKey: Flow<String?> = llmSettingsRepository.apiKey
     val currentLlmModel: Flow<String> = llmSettingsRepository.model
+    private val speciesSettingsRepository: SpeciesSettingsRepository = application.container.speciesSettingsRepository
+    val promptOriginAtImportTime: Flow<Boolean> = speciesSettingsRepository.promptOriginAtImportTime
 
     private val _showLlmDialog = MutableStateFlow(false)
     val showLlmDialog: StateFlow<Boolean> = _showLlmDialog
@@ -129,6 +132,12 @@ class SettingsScreenControllerImpl(
                 Toast.makeText(context, "Configurações de chat salvas!", Toast.LENGTH_SHORT).show()
                 dismissLlmDialog()
             }
+        }
+    }
+
+    fun setPromptOriginAtImportTime(value: Boolean) {
+        context.lifecycleScope.launch(Dispatchers.IO) {
+            speciesSettingsRepository.setPromptOriginAtImportTime(value)
         }
     }
 

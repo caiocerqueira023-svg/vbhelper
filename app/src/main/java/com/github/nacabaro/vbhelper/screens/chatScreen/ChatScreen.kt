@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.screens.chatScreen.dialogs.SpeciesManualEditDialog
 
 @Composable
 fun ChatScreen(
@@ -18,6 +19,48 @@ fun ChatScreen(
     chatScreenController: ChatScreenController,
     characterId: Long
 ) {
+    var speciesContext by remember { mutableStateOf<SpeciesContext?>(null) }
+    var showManualDialog by remember { mutableStateOf(false) }
+    var speciesGateResolved by remember { mutableStateOf(false) }
+
+    LaunchedEffect(characterId) {
+        chatScreenController.getSpeciesContext(characterId) { context ->
+            speciesContext = context
+            if (context.existingProfile == null) showManualDialog = true else speciesGateResolved = true
+        }
+    }
+
+    if (showManualDialog) {
+        speciesContext?.let { context ->
+            SpeciesManualEditDialog(
+                cardName = context.cardName,
+                onDismiss = { navController.popBackStack() },
+                onSkip = {
+                    showManualDialog = false
+                    speciesGateResolved = true
+                },
+                onSave = { result ->
+                    chatScreenController.saveManualSpeciesProfile(
+                        context.cardCharacterId, result.name, result.level, result.type,
+                        result.profile, result.specialMoves
+                    ) {
+                        showManualDialog = false
+                        speciesGateResolved = true
+                    }
+                }
+            )
+        }
+    }
+
+    if (!speciesGateResolved) {
+        Scaffold(topBar = { TopBanner(text = "Conversar", onBackClick = { navController.popBackStack() }) }) { padding ->
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
+        }
+        return
+    }
+
     val messages by chatScreenController.getHistory(characterId).collectAsState(emptyList())
     var input by remember { mutableStateOf("") }
     var sending by remember { mutableStateOf(false) }

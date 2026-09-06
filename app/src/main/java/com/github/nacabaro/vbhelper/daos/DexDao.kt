@@ -51,6 +51,7 @@ interface DexDao {
             c.logo as cardLogo,
             c.logoWidth as logoWidth,
             c.logoHeight as logoHeight, 
+            c.officialStatus as officialStatus,
             (SELECT COUNT(*) FROM CardCharacter cc WHERE cc.cardId = c.id) AS totalCharacters,
             (SELECT COUNT(*) FROM Dex d JOIN CardCharacter cc ON d.id = cc.id WHERE cc.cardId = c.id AND d.discoveredOn IS NOT NULL) AS obtainedCharacters
         FROM Card c

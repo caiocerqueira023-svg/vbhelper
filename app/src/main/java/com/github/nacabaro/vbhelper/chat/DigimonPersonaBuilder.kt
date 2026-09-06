@@ -1,11 +1,13 @@
 package com.github.nacabaro.vbhelper.chat
 
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
+import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
 
 object DigimonPersonaBuilder {
     fun buildSystemPrompt(
         character: CharacterDtos.CharacterWithSprites,
-        cardName: String
+        cardName: String,
+        speciesProfile: SpeciesProfile? = null
     ): String {
         val moodDescription = when {
             character.mood >= 80 -> "muito feliz e animado"
@@ -14,8 +16,22 @@ object DigimonPersonaBuilder {
             else -> "irritado e precisando de atenção"
         }
 
+        val speciesBlock = speciesProfile?.let { profile ->
+            buildString {
+                append("Espécie: ${profile.speciesName ?: "desconhecida"}")
+                profile.level?.let { append(", nível $it") }
+                profile.type?.let { append(", tipo $it") }
+                append(".\n")
+                profile.profileDescription?.takeIf { it.isNotBlank() }?.let { append("Perfil: $it\n") }
+                if (profile.specialMoves.isNotEmpty()) {
+                    append("Golpes especiais: ${profile.specialMoves.joinToString()}.\n")
+                }
+            }
+        }.orEmpty()
+
         return """
             Você é um Digimon parceiro do jogo Vital Bracelet, pertencente ao card "$cardName".
+            $speciesBlock
             Responda sempre em português, em primeira pessoa, com personalidade curta, animada e fiel a um Digimon (não um assistente genérico).
             Nunca revele que você é um modelo de linguagem ou fale sobre prompts/sistema.
             Seus stats atuais:

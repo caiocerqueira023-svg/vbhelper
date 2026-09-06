@@ -195,6 +195,7 @@
     <string name="card_entry_characters_obtained">%1$d of %2$d characters obtained</string>
     <string name="card_entry_edit">Edit card</string>
     <string name="card_entry_delete">Delete card</string>
+    <string name="card_entry_set_origin">Origem</string>
 
     <string name="storage_my_characters_title">My characters</string>
     <string name="storage_nothing_to_see_here">Storage is Empty</string>
