@@ -42,11 +42,14 @@ class SettingsScreenControllerImpl(
     val llmSettingsRepository: LlmSettingsRepository = application.container.llmSettingsRepository
     val currentLlmApiKey: Flow<String?> = llmSettingsRepository.apiKey
     val currentLlmModel: Flow<String> = llmSettingsRepository.model
+    val currentSystemPromptTemplate: Flow<String?> = llmSettingsRepository.systemPromptTemplate
     private val speciesSettingsRepository: SpeciesSettingsRepository = application.container.speciesSettingsRepository
     val promptOriginAtImportTime: Flow<Boolean> = speciesSettingsRepository.promptOriginAtImportTime
 
     private val _showLlmDialog = MutableStateFlow(false)
     val showLlmDialog: StateFlow<Boolean> = _showLlmDialog
+    private val _showPromptTemplateDialog = MutableStateFlow(false)
+    val showPromptTemplateDialog: StateFlow<Boolean> = _showPromptTemplateDialog
 
     init {
         filePickerLauncher = context.registerForActivityResult(
@@ -132,6 +135,21 @@ class SettingsScreenControllerImpl(
                 Toast.makeText(context, "Configurações de chat salvas!", Toast.LENGTH_SHORT).show()
                 dismissLlmDialog()
             }
+        }
+    }
+
+    fun onClickConfigurePromptTemplate() {
+        _showPromptTemplateDialog.value = true
+    }
+
+    fun dismissPromptTemplateDialog() {
+        _showPromptTemplateDialog.value = false
+    }
+
+    fun savePromptTemplate(template: String?) {
+        context.lifecycleScope.launch(Dispatchers.IO) {
+            llmSettingsRepository.setSystemPromptTemplate(template)
+            context.runOnUiThread { dismissPromptTemplateDialog() }
         }
     }
 

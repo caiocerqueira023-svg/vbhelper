@@ -72,9 +72,8 @@ fun SpeciesManualEditDialog(
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = profile,
-                    onValueChange = { if (it.length <= 280) profile = it },
-                    label = { Text("Perfil curto (opcional)") },
-                    supportingText = { Text("${profile.length}/280") },
+                    onValueChange = { profile = it },
+                    label = { Text("Perfil (opcional)") },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End) {

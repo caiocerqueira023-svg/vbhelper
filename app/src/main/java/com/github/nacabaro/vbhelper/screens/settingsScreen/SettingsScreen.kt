@@ -28,6 +28,7 @@ import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
 import com.github.nacabaro.vbhelper.screens.settingsScreen.dialogs.LlmSettingsDialog
+import com.github.nacabaro.vbhelper.screens.settingsScreen.dialogs.PromptTemplateDialog
 import com.github.nacabaro.vbhelper.R
 
 
@@ -41,6 +42,8 @@ fun SettingsScreen(
     val showLlmDialog by settingsScreenController.showLlmDialog.collectAsState()
     val currentApiKey by settingsScreenController.currentLlmApiKey.collectAsState(initial = null)
     val currentModel by settingsScreenController.currentLlmModel.collectAsState(initial = "openrouter/auto")
+    val currentSystemPromptTemplate by settingsScreenController.currentSystemPromptTemplate.collectAsState(initial = null)
+    val showPromptTemplateDialog by settingsScreenController.showPromptTemplateDialog.collectAsState()
     val promptOriginAtImport by settingsScreenController.promptOriginAtImportTime.collectAsState(initial = false)
 
     Scaffold(
@@ -83,6 +86,12 @@ fun SettingsScreen(
                 description = stringResource(R.string.settings_configure_llm_desc)
             ) {
                 settingsScreenController.onClickConfigureLlm()
+            }
+            SettingsEntry(
+                title = "Personalidade e prompt do Digimon",
+                description = "Edite as instruções enviadas ao OpenRouter e use dados da espécie e dos status atuais."
+            ) {
+                settingsScreenController.onClickConfigurePromptTemplate()
             }
 
             SettingsSection(title = "Espécies")
@@ -146,6 +155,14 @@ fun SettingsScreen(
             onSave = { apiKey, model ->
                 settingsScreenController.saveLlmSettings(apiKey, model)
             }
+        )
+    }
+
+    if (showPromptTemplateDialog) {
+        PromptTemplateDialog(
+            currentTemplate = currentSystemPromptTemplate,
+            onDismiss = { settingsScreenController.dismissPromptTemplateDialog() },
+            onSave = settingsScreenController::savePromptTemplate
         )
     }
 }
