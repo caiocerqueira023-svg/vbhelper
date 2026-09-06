@@ -11,7 +11,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -22,11 +21,9 @@ import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.domain.items.ItemType
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
-import com.github.nacabaro.vbhelper.dtos.ItemDtos
 import com.github.nacabaro.vbhelper.source.StorageRepository
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import com.github.nacabaro.vbhelper.R
 
 @Composable
@@ -35,33 +32,20 @@ fun ChooseCharacterScreen(
     itemsScreenController: ItemsScreenControllerImpl,
     itemId: Long
 ) {
-    val coroutineScope = rememberCoroutineScope()
     val application = LocalContext.current.applicationContext as VBHelper
-    val storageRepository = StorageRepository(application.container.db, )
+    val storageRepository = remember { StorageRepository(application.container.db) }
     val characterList = remember {
         mutableStateOf<List<CharacterDtos.CharacterWithSprites>>(emptyList())
     }
 
     var selectedCharacter by remember { mutableStateOf<Long?>(null) }
-    var selectedItem by remember { mutableStateOf<ItemDtos.ItemsWithQuantities?>(null) }
 
-    LaunchedEffect(storageRepository) {
-        coroutineScope.launch {
-            selectedItem = storageRepository.getItem(itemId)
-            when (selectedItem?.itemType) {
-                ItemType.BEITEM -> {
-                    characterList.value = storageRepository.getBECharacters()
-                }
-                ItemType.VBITEM -> {
-                    characterList.value = storageRepository.getVBCharacters()
-                }
-                ItemType.SPECIALMISSION-> {
-                    characterList.value = storageRepository.getVBCharacters()
-                }
-                else -> {
-                    characterList.value = storageRepository.getAllCharacters().first()
-                }
-            }
+    LaunchedEffect(itemId) {
+        val item = storageRepository.getItem(itemId)
+        characterList.value = when (item.itemType) {
+            ItemType.BEITEM -> storageRepository.getBECharacters()
+            ItemType.VBITEM, ItemType.SPECIALMISSION -> storageRepository.getVBCharacters()
+            else -> storageRepository.getAllCharacters().first()
         }
     }
 

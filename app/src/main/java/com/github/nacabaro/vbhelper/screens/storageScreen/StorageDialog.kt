@@ -38,10 +38,18 @@ import com.github.nacabaro.vbhelper.species.SpeciesRepository
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.getBitmap
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
 
+private data class LoadedStorageCharacter(
+    val character: CharacterDtos.CharacterWithSprites,
+    val cardName: String,
+    val speciesProfile: com.github.nacabaro.vbhelper.domain.species.SpeciesProfile?,
+    val personality: DigimonPersonalityTraits?
+)
 
 @Composable
 fun StorageDialog(
@@ -55,7 +63,7 @@ fun StorageDialog(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val application = LocalContext.current.applicationContext as VBHelper
-    val storageRepository = StorageRepository(application.container.db)
+    val storageRepository = remember { StorageRepository(application.container.db) }
     val character = remember { mutableStateOf<CharacterDtos.CharacterWithSprites?>(null) }
     val characterSprite = remember { mutableStateOf<BitmapData?>(null) }
     val characterName = remember { mutableStateOf<BitmapData?>(null) }
@@ -65,30 +73,43 @@ fun StorageDialog(
     var showInfoEditor by remember { mutableStateOf(false) }
     var speciesProfile by remember { mutableStateOf<com.github.nacabaro.vbhelper.domain.species.SpeciesProfile?>(null) }
     var personality by remember { mutableStateOf<DigimonPersonalityTraits?>(null) }
-    val speciesRepository = SpeciesRepository(application.container.db, application.container.speciesSettingsRepository)
+    val speciesRepository = remember {
+        SpeciesRepository(application.container.db, application.container.speciesSettingsRepository)
+    }
 
-    LaunchedEffect(storageRepository) {
-        coroutineScope.launch {
-            character.value = storageRepository.getSingleCharacter(characterId)
-            nickname = character.value!!.nickname.orEmpty()
-            cardName = application.container.db.cardDao()
-                .getCardByCharacterIdSync(character.value!!.id)?.name.orEmpty()
-            speciesProfile = speciesRepository.getProfileForCharacter(character.value!!.charId)
+    LaunchedEffect(characterId) {
+        val loaded = withContext(Dispatchers.IO) {
+            val loadedCharacter = storageRepository.getSingleCharacter(characterId)
+            val loadedCardName = application.container.db.cardDao()
+                .getCardByCharacterIdSync(loadedCharacter.id)?.name.orEmpty()
+            val loadedSpeciesProfile = speciesRepository
+                .getProfileForCharacter(loadedCharacter.charId)
             val individualId = application.container.db.userCharacterDao()
                 .getCharacter(characterId).individualId
-            personality = application.container.db.digimonIndividualDao()
+            val loadedPersonality = application.container.db.digimonIndividualDao()
                 .getPersonality(individualId)
-            characterSprite.value = BitmapData(
-                bitmap = character.value!!.spriteIdle,
-                width = character.value!!.spriteWidth,
-                height = character.value!!.spriteHeight
-            )
-            characterName.value = BitmapData(
-                bitmap = character.value!!.nameSprite,
-                width = character.value!!.nameSpriteWidth,
-                height = character.value!!.nameSpriteHeight
+            LoadedStorageCharacter(
+                character = loadedCharacter,
+                cardName = loadedCardName,
+                speciesProfile = loadedSpeciesProfile,
+                personality = loadedPersonality
             )
         }
+        character.value = loaded.character
+        nickname = loaded.character.nickname.orEmpty()
+        cardName = loaded.cardName
+        speciesProfile = loaded.speciesProfile
+        personality = loaded.personality
+        characterSprite.value = BitmapData(
+            bitmap = loaded.character.spriteIdle,
+            width = loaded.character.spriteWidth,
+            height = loaded.character.spriteHeight
+        )
+        characterName.value = BitmapData(
+            bitmap = loaded.character.nameSprite,
+            width = loaded.character.nameSpriteWidth,
+            height = loaded.character.nameSpriteHeight
+        )
     }
 
     Dialog(
