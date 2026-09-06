@@ -11,12 +11,12 @@ interface ChatDao {
     @Insert
     suspend fun insertMessage(message: ChatMessageEntity): Long
 
-    @Query("SELECT * FROM ChatMessageEntity WHERE characterId = :characterId ORDER BY id ASC")
-    fun getMessages(characterId: Long): Flow<List<ChatMessageEntity>>
+    @Query("SELECT * FROM ChatMessageEntity WHERE individualId = :individualId ORDER BY id ASC")
+    fun getMessages(individualId: String): Flow<List<ChatMessageEntity>>
 
-    @Query("SELECT * FROM ChatMessageEntity WHERE characterId = :characterId ORDER BY id ASC")
-    suspend fun getMessagesSync(characterId: Long): List<ChatMessageEntity>
+    @Query("SELECT * FROM ChatMessageEntity WHERE individualId = :individualId ORDER BY id ASC")
+    suspend fun getMessagesSync(individualId: String): List<ChatMessageEntity>
 
-    @Query("DELETE FROM ChatMessageEntity WHERE characterId = :characterId")
-    suspend fun clearHistory(characterId: Long)
+    @Query("DELETE FROM ChatMessageEntity WHERE individualId = :individualId")
+    suspend fun clearHistory(individualId: String)
 }

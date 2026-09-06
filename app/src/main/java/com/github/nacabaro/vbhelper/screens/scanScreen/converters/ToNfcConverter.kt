@@ -12,6 +12,7 @@ import com.github.cfogrady.vbnfc.vb.VBNfcCharacter
 import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.domain.device_data.UserCharacter
+import com.github.nacabaro.vbhelper.domain.identity.IndividualIdentity
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.utils.DeviceType
 import kotlinx.coroutines.flow.first
@@ -81,7 +82,7 @@ class ToNfcConverter(
             heartRateCurrent = userCharacter.heartRateCurrent.toUByte(),
             transformationHistory = paddedTransformationArray,
             vitalHistory = generateVitalsHistoryArray(characterId),
-            appReserved1 = ByteArray(12) {0},
+            appReserved1 = IndividualIdentity.encode(userCharacter.individualId),
             appReserved2 = generateUShortAppReserved(userCharacter),
             generation = vbData.generation.toUShort(),
             totalTrophies = vbData.totalTrophies.toUShort(),
@@ -207,7 +208,7 @@ class ToNfcConverter(
             heartRateCurrent = userCharacter.heartRateCurrent.toUByte(),
             transformationHistory = paddedTransformationArray,
             vitalHistory = generateVitalsHistoryArray(characterId),
-            appReserved1 = ByteArray(12) {0},
+            appReserved1 = IndividualIdentity.encode(userCharacter.individualId),
             appReserved2 = Array(3) {0u},
             trainingHp = beData.trainingHp.toUShort(),
             trainingAp = beData.trainingAp.toUShort(),

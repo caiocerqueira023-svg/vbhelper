@@ -10,6 +10,7 @@ import com.github.nacabaro.vbhelper.daos.CardAdventureDao
 import com.github.nacabaro.vbhelper.daos.CharacterDao
 import com.github.nacabaro.vbhelper.daos.ChatDao
 import com.github.nacabaro.vbhelper.daos.DexDao
+import com.github.nacabaro.vbhelper.daos.DigimonIndividualDao
 import com.github.nacabaro.vbhelper.daos.CardDao
 import com.github.nacabaro.vbhelper.daos.CardFusionsDao
 import com.github.nacabaro.vbhelper.daos.CardProgressDao
@@ -41,11 +42,12 @@ import com.github.nacabaro.vbhelper.domain.device_data.VBCharacterData
 import com.github.nacabaro.vbhelper.domain.device_data.VitalsHistory
 import com.github.nacabaro.vbhelper.domain.device_data.VitalWearCharacterSettings
 import com.github.nacabaro.vbhelper.domain.device_data.CharacterTransferPolicy
+import com.github.nacabaro.vbhelper.domain.device_data.DigimonIndividual
 import com.github.nacabaro.vbhelper.domain.items.Items
 import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
 
 @Database(
-    version = 5,
+    version = 6,
     exportSchema = false,
     entities = [
         Card::class,
@@ -55,6 +57,7 @@ import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
         CardFusions::class,
         Sprite::class,
         UserCharacter::class,
+        DigimonIndividual::class,
         BECharacterData::class,
         VBCharacterData::class,
         SpecialMissions::class,
@@ -78,6 +81,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun cardProgressDao(): CardProgressDao
     abstract fun characterDao(): CharacterDao
     abstract fun userCharacterDao(): UserCharacterDao
+    abstract fun digimonIndividualDao(): DigimonIndividualDao
     abstract fun dexDao(): DexDao
     abstract fun itemDao(): ItemDao
     abstract fun adventureDao(): AdventureDao
@@ -156,6 +160,44 @@ abstract class AppDatabase : RoomDatabase() {
                     """.trimIndent()
                 )
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_SpeciesProfile_cardCharacterId` ON `SpeciesProfile` (`cardCharacterId`)")
+            }
+        }
+
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `DigimonIndividual` (`individualId` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`individualId`))"
+                )
+                db.execSQL("ALTER TABLE `UserCharacter` ADD COLUMN `individualId` TEXT NOT NULL DEFAULT ''")
+                db.execSQL(
+                    "UPDATE `UserCharacter` SET `individualId` = lower(hex(randomblob(11))) WHERE `individualId` = ''"
+                )
+                db.execSQL(
+                    "INSERT OR IGNORE INTO `DigimonIndividual` (`individualId`, `createdAt`) SELECT `individualId`, 0 FROM `UserCharacter`"
+                )
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `ChatMessageEntity_new` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `individualId` TEXT NOT NULL,
+                        `role` TEXT NOT NULL,
+                        `content` TEXT NOT NULL,
+                        `timestamp` INTEGER NOT NULL,
+                        FOREIGN KEY(`individualId`) REFERENCES `DigimonIndividual`(`individualId`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT INTO `ChatMessageEntity_new` (`id`, `individualId`, `role`, `content`, `timestamp`)
+                    SELECT cm.`id`, uc.`individualId`, cm.`role`, cm.`content`, cm.`timestamp`
+                    FROM `ChatMessageEntity` cm
+                    JOIN `UserCharacter` uc ON uc.`id` = cm.`characterId`
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE `ChatMessageEntity`")
+                db.execSQL("ALTER TABLE `ChatMessageEntity_new` RENAME TO `ChatMessageEntity`")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_ChatMessageEntity_individualId` ON `ChatMessageEntity` (`individualId`)")
             }
         }
     }

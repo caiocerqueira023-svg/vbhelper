@@ -7,6 +7,7 @@ import androidx.room.PrimaryKey
 import com.github.cfogrady.vbnfc.data.NfcCharacter
 import com.github.nacabaro.vbhelper.utils.DeviceType
 import com.github.nacabaro.vbhelper.domain.card.CardCharacter
+import com.github.nacabaro.vbhelper.domain.identity.IndividualIdentity
 
 @Entity(
     foreignKeys = [
@@ -24,6 +25,8 @@ import com.github.nacabaro.vbhelper.domain.card.CardCharacter
  */
 data class UserCharacter (
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    /** Persistent ID written to the watch's appReserved1 field. */
+    val individualId: String = IndividualIdentity.generate(),
     var charId: Long,
     var ageInDays: Int,
     var mood: Int,

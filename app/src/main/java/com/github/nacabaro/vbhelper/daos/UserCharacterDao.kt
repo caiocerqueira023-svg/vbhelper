@@ -127,6 +127,9 @@ interface UserCharacterDao {
     @Query("SELECT * FROM UserCharacter WHERE id = :id")
     suspend fun getCharacter(id: Long): UserCharacter
 
+    @Query("SELECT individualId FROM UserCharacter WHERE id = :id")
+    fun getIndividualId(id: Long): Flow<String>
+
     @Query("SELECT * FROM BECharacterData WHERE id = :id")
     fun getBeData(id: Long): Flow<BECharacterData>
 

@@ -7,11 +7,13 @@ import com.github.cfogrady.vbnfc.vb.VBNfcCharacter
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.domain.card.Card
 import com.github.nacabaro.vbhelper.domain.device_data.BECharacterData
+import com.github.nacabaro.vbhelper.domain.device_data.DigimonIndividual
 import com.github.nacabaro.vbhelper.domain.device_data.SpecialMissions
 import com.github.nacabaro.vbhelper.domain.device_data.UserCharacter
 import com.github.nacabaro.vbhelper.domain.device_data.VBCharacterData
 import com.github.nacabaro.vbhelper.domain.device_data.VitalsHistory
 import com.github.nacabaro.vbhelper.utils.DeviceType
+import com.github.nacabaro.vbhelper.domain.identity.IndividualIdentity
 import java.util.GregorianCalendar
 
 class FromNfcConverter (
@@ -89,7 +91,9 @@ class FromNfcConverter (
 
         updateCardProgress(nfcCharacter, cardData)
 
+        val individualId = resolveIndividualId(nfcCharacter)
         val characterData = UserCharacter(
+            individualId = individualId,
             charId = cardCharData.id,
             ageInDays = nfcCharacter.ageInDays.toInt(),
             mood = nfcCharacter.mood.toInt(),
@@ -142,6 +146,17 @@ class FromNfcConverter (
         )
 
         return "Done reading character!"
+    }
+
+    /** Reuse only IDs that were previously created by this app and still exist locally. */
+    private fun resolveIndividualId(nfcCharacter: NfcCharacter): String {
+        val fromWatch = IndividualIdentity.decode(nfcCharacter.appReserved1)
+        val individualId = fromWatch?.takeIf { database.digimonIndividualDao().exists(it) }
+            ?: IndividualIdentity.generate()
+        database.digimonIndividualDao().insert(
+            DigimonIndividual(individualId = individualId, createdAt = System.currentTimeMillis())
+        )
+        return individualId
     }
     
 
