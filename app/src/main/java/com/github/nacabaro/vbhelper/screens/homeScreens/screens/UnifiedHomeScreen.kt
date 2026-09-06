@@ -24,6 +24,7 @@ import com.github.nacabaro.vbhelper.components.CharacterEntry
 import com.github.nacabaro.vbhelper.components.ItemDisplay
 import com.github.nacabaro.vbhelper.components.SpecialMissionsEntry
 import com.github.nacabaro.vbhelper.components.TransformationHistoryCard
+import com.github.nacabaro.vbhelper.components.NicknameDisplay
 import com.github.nacabaro.vbhelper.domain.device_data.SpecialMissions
 import com.github.nacabaro.vbhelper.domain.device_data.UnifiedCharacter
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
@@ -41,6 +42,7 @@ fun UnifiedHomeScreen(
     unifiedChar: UnifiedCharacter,
     specialMissions: List<SpecialMissions>,
     transformationHistory: List<CharacterDtos.TransformationHistory>,
+    nickname: String?,
     contentPadding: PaddingValues,
     homeScreenController: HomeScreenControllerImpl,
     onClickCollect: (ItemDtos.PurchasedItem?, Int?) -> Unit
@@ -170,6 +172,7 @@ fun UnifiedHomeScreen(
                 modifier = Modifier.weight(1f).padding(8.dp)
             )
         }
+        NicknameDisplay(nickname)
 
         // CONTEXTUAL BOTTOM SLOT
         if (unifiedChar.isVB()) {

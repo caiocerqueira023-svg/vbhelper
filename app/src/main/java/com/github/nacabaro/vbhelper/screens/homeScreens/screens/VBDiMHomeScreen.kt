@@ -22,6 +22,7 @@ import com.github.nacabaro.vbhelper.components.CharacterEntry
 import com.github.nacabaro.vbhelper.components.ItemDisplay
 import com.github.nacabaro.vbhelper.components.SpecialMissionsEntry
 import com.github.nacabaro.vbhelper.components.TransformationHistoryCard
+import com.github.nacabaro.vbhelper.components.NicknameDisplay
 import com.github.nacabaro.vbhelper.domain.device_data.SpecialMissions
 import com.github.nacabaro.vbhelper.domain.device_data.VBCharacterData
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
@@ -41,6 +42,7 @@ fun VBDiMHomeScreen(
     specialMissions: List<SpecialMissions>,
     homeScreenController: HomeScreenControllerImpl,
     transformationHistory: List<CharacterDtos.TransformationHistory>,
+    nickname: String?,
     contentPadding: PaddingValues,
     onClickCollect: (ItemDtos.PurchasedItem?, Int?) -> Unit
 ) {
@@ -93,7 +95,8 @@ fun VBDiMHomeScreen(
                 )
             }
         }
-        Row(
+        NicknameDisplay(nickname)
+        Row (
             modifier = Modifier
                 .fillMaxWidth()
         ) {

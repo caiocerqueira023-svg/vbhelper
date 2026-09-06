@@ -47,7 +47,7 @@ import com.github.nacabaro.vbhelper.domain.items.Items
 import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
 
 @Database(
-    version = 6,
+    version = 7,
     exportSchema = false,
     entities = [
         Card::class,
@@ -198,6 +198,12 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("DROP TABLE `ChatMessageEntity`")
                 db.execSQL("ALTER TABLE `ChatMessageEntity_new` RENAME TO `ChatMessageEntity`")
                 db.execSQL("CREATE INDEX IF NOT EXISTS `index_ChatMessageEntity_individualId` ON `ChatMessageEntity` (`individualId`)")
+            }
+        }
+
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `DigimonIndividual` ADD COLUMN `nickname` TEXT")
             }
         }
     }

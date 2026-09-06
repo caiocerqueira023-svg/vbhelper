@@ -10,5 +10,6 @@ import androidx.room.PrimaryKey
 @Entity
 data class DigimonIndividual(
     @PrimaryKey val individualId: String,
-    val createdAt: Long
+    val createdAt: Long,
+    val nickname: String? = null
 )

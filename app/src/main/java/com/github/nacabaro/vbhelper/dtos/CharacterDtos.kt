@@ -31,6 +31,7 @@ object CharacterDtos {
         val nameSpriteWidth: Int,
         val nameSpriteHeight: Int,
         val isBemCard: Boolean,
+        val nickname: String?,
         val isInAdventure: Boolean,
         val active: Boolean
     ) {
@@ -65,6 +66,7 @@ object CharacterDtos {
             if (nameSpriteWidth != other.nameSpriteWidth) return false
             if (nameSpriteHeight != other.nameSpriteHeight) return false
             if (isBemCard != other.isBemCard) return false
+            if (nickname != other.nickname) return false
             if (isInAdventure != other.isInAdventure) return false
             if (active != other.active) return false
 
@@ -97,6 +99,7 @@ object CharacterDtos {
             result = 31 * result + nameSpriteWidth
             result = 31 * result + nameSpriteHeight
             result = 31 * result + isBemCard.hashCode()
+            result = 31 * result + (nickname?.hashCode() ?: 0)
             result = 31 * result + isInAdventure.hashCode()
             result = 31 * result + active.hashCode()
             return result

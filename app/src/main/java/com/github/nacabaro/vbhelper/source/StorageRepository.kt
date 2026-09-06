@@ -43,6 +43,10 @@ class StorageRepository (
         return db.userCharacterDao().getActiveCharacter()
     }
 
+    suspend fun updateNickname(characterId: Long, nickname: String?) {
+        db.digimonIndividualDao().updateNicknameForCharacter(characterId, nickname)
+    }
+
     fun deleteCharacter(id: Long) {
         return db.userCharacterDao().deleteCharacterById(id)
     }

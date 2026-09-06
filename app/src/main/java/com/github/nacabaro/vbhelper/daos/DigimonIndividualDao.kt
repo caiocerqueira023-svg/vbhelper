@@ -13,4 +13,15 @@ interface DigimonIndividualDao {
 
     @Query("SELECT EXISTS(SELECT 1 FROM DigimonIndividual WHERE individualId = :individualId)")
     fun exists(individualId: String): Boolean
+
+    @Query(
+        """
+        UPDATE DigimonIndividual
+        SET nickname = :nickname
+        WHERE individualId = (
+            SELECT individualId FROM UserCharacter WHERE id = :characterId
+        )
+        """
+    )
+    suspend fun updateNicknameForCharacter(characterId: Long, nickname: String?)
 }

@@ -15,6 +15,7 @@ import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.CharacterEntry
 import com.github.nacabaro.vbhelper.components.ItemDisplay
 import com.github.nacabaro.vbhelper.components.TransformationHistoryCard
+import com.github.nacabaro.vbhelper.components.NicknameDisplay
 import com.github.nacabaro.vbhelper.screens.itemsScreen.getIconResource
 import com.github.nacabaro.vbhelper.domain.device_data.BECharacterData
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
@@ -28,6 +29,7 @@ fun BEBEmHomeScreen(
     beData: BECharacterData,
     cardIcon: BitmapData,
     transformationHistory: List<CharacterDtos.TransformationHistory>,
+    nickname: String?,
     contentPadding: PaddingValues
 ) {
     Column(
@@ -77,6 +79,7 @@ fun BEBEmHomeScreen(
                 )
             }
         }
+        NicknameDisplay(nickname)
         Row (
             modifier = Modifier
                 .fillMaxWidth()

@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,10 +55,12 @@ fun StorageDialog(
     val characterSprite = remember { mutableStateOf<BitmapData?>(null) }
     val characterName = remember { mutableStateOf<BitmapData?>(null) }
     var onSendToAdventureClicked by remember { mutableStateOf(false) }
+    var nickname by remember { mutableStateOf("") }
 
     LaunchedEffect(storageRepository) {
         coroutineScope.launch {
             character.value = storageRepository.getSingleCharacter(characterId)
+            nickname = character.value!!.nickname.orEmpty()
             characterSprite.value = BitmapData(
                 bitmap = character.value!!.spriteIdle,
                 width = character.value!!.spriteWidth,
@@ -114,6 +117,26 @@ fun StorageDialog(
                                 .size(nameDpSize)
                         )
                     }
+                }
+                OutlinedTextField(
+                    value = nickname,
+                    onValueChange = { nickname = it },
+                    label = { Text("Nickname") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            storageRepository.updateNickname(
+                                characterId,
+                                nickname.trim().takeIf { it.isNotEmpty() }
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Save nickname")
                 }
                 Row(
                     horizontalArrangement = Arrangement.Center,

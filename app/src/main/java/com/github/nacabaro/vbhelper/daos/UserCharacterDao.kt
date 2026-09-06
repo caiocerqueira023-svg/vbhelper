@@ -87,6 +87,7 @@ interface UserCharacterDao {
             c.nameWidth as nameSpriteWidth,
             c.nameHeight as nameSpriteHeight,
             d.isBEm as isBemCard,
+            di.nickname AS nickname,
             a.characterId = uc.id as isInAdventure,
             uc.isActive as active
         FROM UserCharacter uc
@@ -94,6 +95,7 @@ interface UserCharacterDao {
         JOIN Card d ON  d.id = c.cardId
         JOIN Sprite s ON s.id = c.spriteId
         LEFT JOIN Adventure a ON a.characterId = uc.id
+        LEFT JOIN DigimonIndividual di ON di.individualId = uc.individualId
         """
     )
     fun getAllCharacters(): Flow<List<CharacterDtos.CharacterWithSprites>>
@@ -112,6 +114,7 @@ interface UserCharacterDao {
             c.nameWidth as nameSpriteWidth,
             c.nameHeight as nameSpriteHeight,
             d.isBEm as isBemCard,
+            di.nickname AS nickname,
             a.characterId = uc.id as isInAdventure,
             uc.isActive as active
         FROM UserCharacter uc
@@ -119,6 +122,7 @@ interface UserCharacterDao {
         JOIN Card d ON c.cardId = d.id
         JOIN Sprite s ON s.id = c.spriteId
         LEFT JOIN Adventure a ON a.characterId = uc.id
+        LEFT JOIN DigimonIndividual di ON di.individualId = uc.individualId
         WHERE uc.id = :id
     """
     )
@@ -156,6 +160,7 @@ interface UserCharacterDao {
             c.nameWidth as nameSpriteWidth,
             c.nameHeight as nameSpriteHeight,
             d.isBEm as isBemCard,
+            di.nickname AS nickname,
             a.characterId as isInAdventure,
             uc.isActive as active
         FROM UserCharacter uc
@@ -163,6 +168,7 @@ interface UserCharacterDao {
         JOIN Card d ON c.cardId = d.id
         JOIN Sprite s ON s.id = c.spriteId
         LEFT JOIN Adventure a ON a.characterId = uc.id
+        LEFT JOIN DigimonIndividual di ON di.individualId = uc.individualId
         WHERE uc.isActive = 1
         LIMIT 1
     """
@@ -221,6 +227,7 @@ interface UserCharacterDao {
             c.nameWidth as nameSpriteWidth,
             c.nameHeight as nameSpriteHeight,
             d.isBEm as isBemCard,
+            di.nickname AS nickname,
             a.characterId = uc.id as isInAdventure,
             uc.isActive as active
         FROM UserCharacter uc
@@ -228,6 +235,7 @@ interface UserCharacterDao {
         JOIN Card d ON  d.id = c.cardId
         JOIN Sprite s ON s.id = c.spriteId
         LEFT JOIN Adventure a ON a.characterId = uc.id
+        LEFT JOIN DigimonIndividual di ON di.individualId = uc.individualId
         WHERE uc.characterType = "BEDevice"
         """
     )
@@ -247,6 +255,7 @@ interface UserCharacterDao {
             c.nameWidth as nameSpriteWidth,
             c.nameHeight as nameSpriteHeight,
             d.isBEm as isBemCard,
+            di.nickname AS nickname,
             a.characterId = uc.id as isInAdventure,
             uc.isActive as active
         FROM UserCharacter uc
@@ -254,6 +263,7 @@ interface UserCharacterDao {
         JOIN Card d ON  d.id = c.cardId
         JOIN Sprite s ON s.id = c.spriteId
         LEFT JOIN Adventure a ON a.characterId = uc.id
+        LEFT JOIN DigimonIndividual di ON di.individualId = uc.individualId
         WHERE uc.characterType = "VBDevice"
         """
     )

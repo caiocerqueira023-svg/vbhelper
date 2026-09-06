@@ -151,6 +151,7 @@ fun HomeScreen(
                         activeMon = activeMon!!,
                         beData = beData!!,
                         transformationHistory = transformationHistory,
+                        nickname = activeMon!!.nickname,
                         contentPadding = PaddingValues(0.dp),
                         cardIcon = cardIcon
                     )
@@ -159,6 +160,7 @@ fun HomeScreen(
                         activeMon = activeMon!!,
                         beData = beData!!,
                         transformationHistory = transformationHistory,
+                        nickname = activeMon!!.nickname,
                         contentPadding = PaddingValues(0.dp),
                         cardIcon = cardIcon
                     )
@@ -167,6 +169,7 @@ fun HomeScreen(
                         activeMon = activeMon!!,
                         vbData = vbData!!,
                         transformationHistory = transformationHistory,
+                        nickname = activeMon!!.nickname,
                         contentPadding = PaddingValues(0.dp),
                         specialMissions = vbSpecialMissions,
                         homeScreenController = homeScreenController,
