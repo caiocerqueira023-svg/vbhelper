@@ -48,11 +48,12 @@ object DigimonPersonaBuilder {
         val resolvedTamerName = tamerName.trim().ifBlank { "seu Tamer" }
         val nickname = character.nickname?.takeIf { it.isNotBlank() }
         val digimonName = nickname?.let { "$it, da espécie $speciesName" } ?: speciesName
+        val stageName = stageName(character.stage)
 
         val speciesBlock = speciesProfile?.let { profile ->
             buildString {
                 append("Nome da espécie: $speciesName")
-                append(", nível ${profile.level ?: character.stage.toString()}")
+                append(", estágio atual: $stageName")
                 profile.type?.let { append(", tipo $it") }
                 append(".\n")
                 profile.profileDescription?.takeIf { it.isNotBlank() }?.let {
@@ -79,7 +80,7 @@ object DigimonPersonaBuilder {
             "{digimon_name}" to digimonName,
             "{nickname}" to (nickname ?: ""),
             "{matched_name}" to (speciesProfile?.matchedName ?: ""),
-            "{species_level}" to (speciesProfile?.level ?: character.stage.toString()),
+            "{species_level}" to stageName,
             "{species_type}" to (speciesProfile?.type ?: ""),
             "{species_profile}" to (speciesProfile?.profileDescription ?: ""),
             "{special_moves}" to (speciesProfile?.specialMoves?.joinToString() ?: ""),
@@ -100,7 +101,7 @@ object DigimonPersonaBuilder {
         val gameplayContext = """
             Contexto atual do relógio (não é configurável pelo usuário):
             - Card: $cardName
-            - Estágio: ${character.stage}
+            - Estágio atual: $stageName (código interno ${character.stage})
             - Vitais: ${character.vitalPoints}
             - Troféus: ${character.trophies}
             - Humor: ${character.mood} ($moodDescription)
@@ -112,7 +113,7 @@ object DigimonPersonaBuilder {
             - Nome usado para se referir a ele: $digimonName
             - Nome da espécie: $speciesName
             - Apelido: ${nickname ?: "não informado"}
-            - Nível: ${speciesProfile?.level ?: character.stage}
+            - Estágio: $stageName
             - Personalidade: ${personalityBlock.ifBlank { "não gerada" }}
             - Perfil da espécie: ${speciesProfile?.profileDescription?.takeIf { it.isNotBlank() } ?: "não informado"}
             Identidade do Tamer:
@@ -123,5 +124,15 @@ object DigimonPersonaBuilder {
         """.trimIndent()
 
         return "$customPrompt\n\n$identityContext\n\n$gameplayContext"
+    }
+
+    private fun stageName(stage: Int): String = when (stage) {
+        1 -> "Baby I"
+        2 -> "Baby II"
+        3 -> "Child (Rookie)"
+        4 -> "Adult (Champion)"
+        5 -> "Perfect (Ultimate)"
+        6 -> "Ultimate (Mega)"
+        else -> "estágio desconhecido ($stage)"
     }
 }
