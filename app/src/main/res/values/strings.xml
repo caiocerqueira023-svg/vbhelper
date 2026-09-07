@@ -190,6 +190,13 @@
     <string name="dex_chara_adventure_level">AdvLvl %1$d</string>
     <string name="dex_chara_fusions_button">Fusions</string>
     <string name="dex_chara_close_button">Close</string>
+    <string name="dex_species_title">Species information</string>
+    <string name="dex_species_name">Species: %1$s</string>
+    <string name="dex_species_level">Level: %1$s</string>
+    <string name="dex_species_type">Type: %1$s</string>
+    <string name="dex_species_attribute">Attribute: %1$s</string>
+    <string name="dex_species_profile">Profile: %1$s</string>
+    <string name="dex_species_special_moves">Special moves: %1$s</string>
 
     <string name="card_adventure_missions_title">Adventure missions</string>
 

@@ -50,6 +50,9 @@ fun DexCharaDetailsDialog(
     val dexRepository = DexRepository(database)
 
     var showFusions by remember { mutableStateOf(false) }
+    val speciesProfile by database.speciesProfileDao()
+        .getByCardCharacterIdFlow(currentChara.id)
+        .collectAsState(initial = null)
 
     val currentCharaPossibleTransformations by dexRepository
         .getCharacterPossibleTransformations(currentChara.id)
@@ -171,6 +174,47 @@ fun DexCharaDetailsDialog(
                             Text(stringResource(R.string.dex_chara_stage_attribute_unknown))
                             Text(stringResource(R.string.dex_chara_stats_unknown))
                         }
+                    }
+                }
+                if (!obscure && speciesProfile != null) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Column {
+                        Text(
+                            text = stringResource(R.string.dex_species_title),
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                        speciesProfile?.speciesName
+                            ?.takeIf { it.isNotBlank() }
+                            ?.let {
+                                Text(stringResource(R.string.dex_species_name, it))
+                            }
+                        speciesProfile?.level
+                            ?.takeIf { it.isNotBlank() }
+                            ?.let {
+                                Text(stringResource(R.string.dex_species_level, it))
+                            }
+                        speciesProfile?.type
+                            ?.takeIf { it.isNotBlank() }
+                            ?.let {
+                                Text(stringResource(R.string.dex_species_type, it))
+                            }
+                        Text(
+                            stringResource(
+                                R.string.dex_species_attribute,
+                                currentChara.attribute.toString()
+                            )
+                        )
+                        speciesProfile?.profileDescription
+                            ?.takeIf { it.isNotBlank() }
+                            ?.let {
+                                Text(stringResource(R.string.dex_species_profile, it))
+                            }
+                        speciesProfile?.specialMoves
+                            ?.takeIf { it.isNotEmpty() }
+                            ?.joinToString()
+                            ?.let {
+                                Text(stringResource(R.string.dex_species_special_moves, it))
+                            }
                     }
                 }
                 Spacer(modifier = Modifier.padding(16.dp))

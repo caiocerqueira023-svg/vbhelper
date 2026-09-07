@@ -7,6 +7,7 @@ import com.github.nacabaro.vbhelper.source.SpeciesSettingsRepository
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
+import java.util.Locale
 
 class SpeciesRepository(
     private val database: AppDatabase,
@@ -83,20 +84,37 @@ class SpeciesRepository(
         specialMoves: List<String>
     ) {
         val existing = getProfileForCharacter(cardCharacterId)
+        val matched = runCatching {
+            fetchDatabase()
+                ?.species
+                ?.values
+                ?.asSequence()
+                ?.flatMap { it.values.asSequence() }
+                ?.firstOrNull { entry ->
+                    normalizeSpeciesName(entry.name) == normalizeSpeciesName(name)
+                }
+        }.onFailure {
+            Timber.w(it, "Failed to find manual species profile for name=$name")
+        }.getOrNull()
+
         database.speciesProfileDao().upsert(
             SpeciesProfile(
                 cardCharacterId = cardCharacterId,
                 speciesName = name,
-                // Preserve this audit field if an official profile is manually refined.
-                matchedName = existing?.matchedName,
-                level = level,
-                type = type,
-                profileDescription = profile,
-                specialMoves = specialMoves,
+                matchedName = matched?.name,
+                level = level ?: matched?.level,
+                type = type ?: matched?.type,
+                profileDescription = profile ?: matched?.profile,
+                specialMoves = specialMoves.ifEmpty {
+                    matched?.specialMoves ?: existing?.specialMoves ?: emptyList()
+                },
                 source = SpeciesSource.MANUAL
             )
         )
     }
+
+    private fun normalizeSpeciesName(name: String): String =
+        name.trim().lowercase(Locale.ROOT)
 
     private suspend fun fetchDatabase(): SpeciesDatabaseDto? = try {
         val remoteUrl = "$SPECIES_DB_URL?cacheBust=${System.currentTimeMillis()}"
