@@ -50,6 +50,11 @@ fun BEBEmHomeScreen(
                     height = activeMon.spriteHeight
                 ),
                 multiplier = 8,
+                idleFrame2 = BitmapData(
+                    bitmap = activeMon.spriteIdle2,
+                    width = activeMon.spriteWidth,
+                    height = activeMon.spriteHeight
+                ),
                 shape = androidx.compose.material.MaterialTheme.shapes.small,
                 cardIcon = cardIcon,
                 modifier = Modifier

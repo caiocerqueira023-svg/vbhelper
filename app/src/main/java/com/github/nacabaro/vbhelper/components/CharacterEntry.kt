@@ -19,7 +19,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
@@ -28,6 +32,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.getBitmap
 import androidx.compose.ui.graphics.Shape
@@ -49,14 +54,32 @@ fun CharacterEntry(
     disabled: Boolean = false,
     shape: Shape = MaterialTheme.shapes.medium,
     multiplier: Int = 4,
+    idleFrame2: BitmapData? = null,
     speechBubbleText: String? = null,
     cardColors: CardColors = CardDefaults.cardColors(
         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
     ),
     onClick: () -> Unit = {  }
 ) {
-    val bitmap = remember (icon.bitmap) {
-        if(obscure) icon.getObscuredBitmap() else icon.getBitmap()
+    var animationFrame by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(icon.bitmap.contentHashCode(), idleFrame2?.bitmap?.contentHashCode()) {
+        animationFrame = 0
+        if (idleFrame2 != null) {
+            while (true) {
+                delay(750L)
+                animationFrame = 1 - animationFrame
+            }
+        }
+    }
+
+    val displayedFrame = if (animationFrame == 1 && idleFrame2 != null) {
+        idleFrame2
+    } else {
+        icon
+    }
+    val bitmap = remember(displayedFrame.bitmap, obscure) {
+        if (obscure) displayedFrame.getObscuredBitmap() else displayedFrame.getBitmap()
     }
     val iconSizeMultiplier = 3
     val imageBitmap = remember(bitmap) { bitmap.asImageBitmap() }

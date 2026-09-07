@@ -64,6 +64,11 @@ fun UnifiedHomeScreen(
                 ),
                 cardIcon = cardIcon,
                 multiplier = 8,
+                idleFrame2 = BitmapData(
+                    bitmap = activeMon.spriteIdle2,
+                    width = activeMon.spriteWidth,
+                    height = activeMon.spriteHeight
+                ),
                 shape = androidx.compose.material.MaterialTheme.shapes.small,
                 modifier = Modifier.weight(1f).aspectRatio(1f)
             )
