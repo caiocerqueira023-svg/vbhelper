@@ -27,7 +27,15 @@ class SpeciesRepository(
         var matchedCount = 0
 
         database.characterDao().getCharactersForCard(cardId).forEach { character ->
-            val matched = speciesForCard[character.charaIndex.toString()] ?: return@forEach
+            val matched = sequenceOf(
+                character.charaIndex,
+                character.charaIndex + 1,
+                character.charaIndex - 1
+            )
+                .filter { it >= 0 }
+                .mapNotNull { speciesForCard[it.toString()] }
+                .firstOrNull()
+                ?: return@forEach
             val current = database.speciesProfileDao().getByCardCharacterId(character.id)
             database.speciesProfileDao().upsert(
                 SpeciesProfile(
