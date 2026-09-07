@@ -33,6 +33,13 @@ class AdventureScreenControllerImpl(
             database
                 .adventureDao()
                 .insertNewAdventure(characterId, timeInMinutes, finishesAdventureAt)
+
+            runCatching {
+                application.container.chatRepository.triggerReaction(
+                    characterId,
+                    "Você está partindo para uma aventura real de $timeInMinutes minutos agora."
+                )
+            }.onFailure { /* A aventura não deve falhar por indisponibilidade do LLM. */ }
         }
     }
 
@@ -48,6 +55,14 @@ class AdventureScreenControllerImpl(
             val generatedCurrency = generateRandomCurrency()
 
             val generatedItem = generateItem(characterId)
+
+            runCatching {
+                application.container.chatRepository.triggerReaction(
+                    characterId,
+                    "Você voltou de uma aventura real e trouxe ${generatedItem.itemName} " +
+                        "e $generatedCurrency créditos. Conte essa descoberta ao seu tamer."
+                )
+            }.onFailure { /* A recompensa continua válida mesmo sem resposta do LLM. */ }
 
             onResult(generatedItem, generatedCurrency)
         }

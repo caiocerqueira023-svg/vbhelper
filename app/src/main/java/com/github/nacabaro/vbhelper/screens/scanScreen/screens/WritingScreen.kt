@@ -129,6 +129,8 @@ fun WritingScreen(
     LaunchedEffect(isDoneSendingCard, isDoneWritingCharacter) {
         withContext(Dispatchers.IO) {
             if (isDoneSendingCard && isDoneWritingCharacter) {
+                application.container.reactionRepository
+                    .snapshotBeforeSendingToWatch(characterId)
                 storageRepository
                     .deleteCharacter(characterId)
                 completedWriting = true

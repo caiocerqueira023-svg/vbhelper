@@ -21,6 +21,22 @@ interface DigimonIndividualDao {
     @Query("SELECT * FROM DigimonPersonalityTraits WHERE individualId = :individualId")
     fun getPersonalitySync(individualId: String): DigimonPersonalityTraits?
 
+    @Query("SELECT * FROM DigimonIndividual WHERE individualId = :individualId")
+    suspend fun getIndividual(individualId: String): DigimonIndividual?
+
+    @Query("UPDATE DigimonIndividual SET lastDiaryEntryAt = :timestamp WHERE individualId = :individualId")
+    suspend fun updateLastDiaryEntry(individualId: String, timestamp: Long)
+
+    @Query(
+        """
+        UPDATE DigimonIndividual
+        SET lastCelebratedWinsMilestone = :winsMilestone,
+            lastCelebratedTrophyMilestone = :trophyMilestone
+        WHERE individualId = :individualId
+        """
+    )
+    suspend fun updateMilestones(individualId: String, winsMilestone: Int, trophyMilestone: Int)
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertPersonality(personality: DigimonPersonalityTraits)
 

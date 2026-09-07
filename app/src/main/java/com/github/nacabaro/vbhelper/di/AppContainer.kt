@@ -7,6 +7,9 @@ import com.github.nacabaro.vbhelper.source.LlmSettingsRepository
 import com.github.nacabaro.vbhelper.source.SpeciesSettingsRepository
 import com.github.nacabaro.vbhelper.companion.validation.ValidatedCardManager
 import com.github.nacabaro.vbhelper.companion.logs.CompanionLogService
+import com.github.nacabaro.vbhelper.chat.ChatRepository
+import com.github.nacabaro.vbhelper.chat.DigimonDiaryService
+import com.github.nacabaro.vbhelper.chat.ReactionRepository
 
 interface AppContainer {
     val db: AppDatabase
@@ -16,4 +19,7 @@ interface AppContainer {
     val companionLogService: CompanionLogService
     val llmSettingsRepository: LlmSettingsRepository
     val speciesSettingsRepository: SpeciesSettingsRepository
+    val chatRepository: ChatRepository
+    val reactionRepository: ReactionRepository
+    val diaryService: DigimonDiaryService
 }

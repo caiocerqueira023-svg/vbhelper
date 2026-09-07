@@ -31,7 +31,9 @@ fun BEDiMHomeScreen(
     beData: BECharacterData,
     transformationHistory: List<CharacterDtos.TransformationHistory>,
     nickname: String?,
-    contentPadding: PaddingValues
+    contentPadding: PaddingValues,
+    speechBubbleText: String? = null,
+    onClickCharacter: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -53,7 +55,9 @@ fun BEDiMHomeScreen(
                 shape = androidx.compose.material.MaterialTheme.shapes.small,
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f)
+                    .aspectRatio(1f),
+                speechBubbleText = speechBubbleText,
+                onClick = onClickCharacter
             )
             Column(
                 modifier = Modifier

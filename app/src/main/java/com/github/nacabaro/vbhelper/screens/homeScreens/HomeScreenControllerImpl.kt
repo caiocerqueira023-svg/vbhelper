@@ -7,6 +7,7 @@ import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.dtos.ItemDtos
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
 import java.time.Instant
 import kotlin.math.roundToInt
 import kotlin.random.Random
@@ -79,6 +80,12 @@ class HomeScreenControllerImpl(
             } else {
                 onCleared(null, null)
             }
+        }
+    }
+
+    override fun checkDailyDiary(characterId: Long) {
+        componentActivity.lifecycleScope.launch(Dispatchers.IO) {
+            application.container.diaryService.checkAndGenerateEntry(characterId)
         }
     }
 }

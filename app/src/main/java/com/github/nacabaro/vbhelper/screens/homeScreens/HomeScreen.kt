@@ -46,7 +46,10 @@ import android.widget.Toast
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import kotlinx.coroutines.flow.flowOf
 import kotlin.collections.emptyList
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Composable
 fun HomeScreen(
     navController: NavController,
@@ -59,6 +62,19 @@ fun HomeScreen(
     val activeMon by storageRepository
         .getActiveCharacter()
         .collectAsState(initial = null)
+
+    val latestReaction by (
+        activeMon?.let { character ->
+            application.container.db.userCharacterDao().getIndividualId(character.id)
+                .flatMapLatest { individualId ->
+                    application.container.chatRepository.getLatestAssistantMessage(individualId)
+                }
+        } ?: flowOf(null)
+    ).collectAsState(initial = null)
+
+    LaunchedEffect(activeMon?.id) {
+        activeMon?.let { homeScreenController.checkDailyDiary(it.id) }
+    }
 
     val cardIconData by (
         activeMon
@@ -153,7 +169,13 @@ fun HomeScreen(
                         transformationHistory = transformationHistory,
                         nickname = activeMon!!.nickname,
                         contentPadding = PaddingValues(0.dp),
-                        cardIcon = cardIcon
+                        cardIcon = cardIcon,
+                        speechBubbleText = latestReaction?.content,
+                        onClickCharacter = {
+                            navController.navigate(
+                                NavigationItems.Chat.route.replace("{characterId}", activeMon!!.id.toString())
+                            )
+                        }
                     )
                 } else if (!activeMon!!.isBemCard && activeMon!!.characterType == DeviceType.BEDevice && beData != null) {
                     BEDiMHomeScreen(
@@ -162,7 +184,13 @@ fun HomeScreen(
                         transformationHistory = transformationHistory,
                         nickname = activeMon!!.nickname,
                         contentPadding = PaddingValues(0.dp),
-                        cardIcon = cardIcon
+                        cardIcon = cardIcon,
+                        speechBubbleText = latestReaction?.content,
+                        onClickCharacter = {
+                            navController.navigate(
+                                NavigationItems.Chat.route.replace("{characterId}", activeMon!!.id.toString())
+                            )
+                        }
                     )
                 } else if (vbData != null) {
                     VBDiMHomeScreen(
@@ -177,7 +205,13 @@ fun HomeScreen(
                             collectedItem = item
                             collectedCurrency = currency
                         },
-                        cardIcon = cardIcon
+                        cardIcon = cardIcon,
+                        speechBubbleText = latestReaction?.content,
+                        onClickCharacter = {
+                            navController.navigate(
+                                NavigationItems.Chat.route.replace("{characterId}", activeMon!!.id.toString())
+                            )
+                        }
                     )
                 }
 

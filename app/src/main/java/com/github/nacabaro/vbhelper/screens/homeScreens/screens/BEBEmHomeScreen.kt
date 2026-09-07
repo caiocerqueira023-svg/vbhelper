@@ -30,7 +30,9 @@ fun BEBEmHomeScreen(
     cardIcon: BitmapData,
     transformationHistory: List<CharacterDtos.TransformationHistory>,
     nickname: String?,
-    contentPadding: PaddingValues
+    contentPadding: PaddingValues,
+    speechBubbleText: String? = null,
+    onClickCharacter: () -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -52,7 +54,9 @@ fun BEBEmHomeScreen(
                 cardIcon = cardIcon,
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f)
+                    .aspectRatio(1f),
+                speechBubbleText = speechBubbleText,
+                onClick = onClickCharacter
             )
             Column (
                 modifier = Modifier

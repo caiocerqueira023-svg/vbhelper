@@ -17,6 +17,9 @@ interface ChatDao {
     @Query("SELECT * FROM ChatMessageEntity WHERE individualId = :individualId ORDER BY id ASC")
     suspend fun getMessagesSync(individualId: String): List<ChatMessageEntity>
 
+    @Query("SELECT * FROM ChatMessageEntity WHERE individualId = :individualId AND role = 'assistant' ORDER BY id DESC LIMIT 1")
+    fun getLatestAssistantMessage(individualId: String): Flow<ChatMessageEntity?>
+
     @Query("DELETE FROM ChatMessageEntity WHERE individualId = :individualId")
     suspend fun clearHistory(individualId: String)
 }

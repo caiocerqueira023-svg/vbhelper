@@ -16,6 +16,7 @@ import com.github.nacabaro.vbhelper.utils.DeviceType
 import com.github.nacabaro.vbhelper.domain.identity.IndividualIdentity
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityGenerator
 import java.util.GregorianCalendar
+import kotlinx.coroutines.launch
 
 class FromNfcConverter (
     componentActivity: ComponentActivity
@@ -149,6 +150,10 @@ class FromNfcConverter (
             characterId = characterId,
             nfcCharacter = nfcCharacter
         )
+
+        application.applicationScope.launch {
+            application.container.reactionRepository.evaluateAndReact(characterId)
+        }
 
         return "Done reading character!"
     }

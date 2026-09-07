@@ -11,5 +11,8 @@ import androidx.room.PrimaryKey
 data class DigimonIndividual(
     @PrimaryKey val individualId: String,
     val createdAt: Long,
-    val nickname: String? = null
+    val nickname: String? = null,
+    val lastDiaryEntryAt: Long? = null,
+    val lastCelebratedWinsMilestone: Int = 0,
+    val lastCelebratedTrophyMilestone: Int = 0
 )

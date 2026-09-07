@@ -44,7 +44,9 @@ fun VBDiMHomeScreen(
     transformationHistory: List<CharacterDtos.TransformationHistory>,
     nickname: String?,
     contentPadding: PaddingValues,
-    onClickCollect: (ItemDtos.PurchasedItem?, Int?) -> Unit
+    onClickCollect: (ItemDtos.PurchasedItem?, Int?) -> Unit,
+    speechBubbleText: String? = null,
+    onClickCharacter: () -> Unit = {}
 ) {
     var selectedSpecialMissionId by remember { mutableStateOf<Long>(-1) }
 
@@ -68,7 +70,9 @@ fun VBDiMHomeScreen(
                 shape = androidx.compose.material.MaterialTheme.shapes.small,
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f)
+                    .aspectRatio(1f),
+                speechBubbleText = speechBubbleText,
+                onClick = onClickCharacter
             )
             Column(
                 modifier = Modifier

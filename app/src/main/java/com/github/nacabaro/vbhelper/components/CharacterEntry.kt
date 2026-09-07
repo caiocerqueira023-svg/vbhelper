@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -48,6 +49,7 @@ fun CharacterEntry(
     disabled: Boolean = false,
     shape: Shape = MaterialTheme.shapes.medium,
     multiplier: Int = 4,
+    speechBubbleText: String? = null,
     cardColors: CardColors = CardDefaults.cardColors(
         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
     ),
@@ -78,6 +80,23 @@ fun CharacterEntry(
                 .fillMaxSize()
                 .padding(4.dp)
         ) {
+            if (!speechBubbleText.isNullOrBlank()) {
+                Card(
+                    shape = MaterialTheme.shapes.small,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(4.dp)
+                        .clickable(onClick = onClick)
+                ) {
+                    Text(
+                        text = speechBubbleText.take(40) + if (speechBubbleText.length > 40) "…" else "",
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 2
+                    )
+                }
+            }
             Image(
                 bitmap = imageBitmap,
                 contentDescription = "Icon",
@@ -89,6 +108,7 @@ fun CharacterEntry(
                 modifier = Modifier
                     .size(dpSize)
                     .align(Alignment.BottomCenter)
+                    .clickable(enabled = !disabled, onClick = onClick)
             )
 
             if (cardIcon != null) {

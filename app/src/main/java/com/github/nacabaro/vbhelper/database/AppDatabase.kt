@@ -11,6 +11,7 @@ import com.github.nacabaro.vbhelper.daos.CharacterDao
 import com.github.nacabaro.vbhelper.daos.ChatDao
 import com.github.nacabaro.vbhelper.daos.DexDao
 import com.github.nacabaro.vbhelper.daos.DigimonIndividualDao
+import com.github.nacabaro.vbhelper.daos.DigimonStateSnapshotDao
 import com.github.nacabaro.vbhelper.daos.CardDao
 import com.github.nacabaro.vbhelper.daos.CardFusionsDao
 import com.github.nacabaro.vbhelper.daos.CardProgressDao
@@ -43,12 +44,13 @@ import com.github.nacabaro.vbhelper.domain.device_data.VitalsHistory
 import com.github.nacabaro.vbhelper.domain.device_data.VitalWearCharacterSettings
 import com.github.nacabaro.vbhelper.domain.device_data.CharacterTransferPolicy
 import com.github.nacabaro.vbhelper.domain.device_data.DigimonIndividual
+import com.github.nacabaro.vbhelper.domain.reactions.DigimonStateSnapshot
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
 import com.github.nacabaro.vbhelper.domain.items.Items
 import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
 
 @Database(
-    version = 8,
+    version = 9,
     exportSchema = false,
     entities = [
         Card::class,
@@ -74,7 +76,8 @@ import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
         CharacterTransferPolicy::class,
         ChatMessageEntity::class,
         SpeciesProfile::class,
-        DigimonPersonalityTraits::class
+        DigimonPersonalityTraits::class,
+        DigimonStateSnapshot::class
     ]
 )
 @TypeConverters(SpeciesProfileConverters::class, PersonalityConverters::class)
@@ -96,6 +99,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun characterTransferPolicyDao(): CharacterTransferPolicyDao
     abstract fun chatDao(): ChatDao
     abstract fun speciesProfileDao(): SpeciesProfileDao
+    abstract fun digimonStateSnapshotDao(): DigimonStateSnapshotDao
 
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -228,6 +232,33 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL(
                     "CREATE UNIQUE INDEX IF NOT EXISTS `index_DigimonPersonalityTraits_individualId` ON `DigimonPersonalityTraits` (`individualId`)"
                 )
+            }
+        }
+
+        val MIGRATION_8_9 = object : Migration(8, 9) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `DigimonStateSnapshot` (
+                        `individualId` TEXT NOT NULL,
+                        `stage` INTEGER NOT NULL,
+                        `mood` INTEGER NOT NULL,
+                        `vitalPoints` INTEGER NOT NULL,
+                        `trophies` INTEGER NOT NULL,
+                        `totalBattlesWon` INTEGER NOT NULL,
+                        `totalBattlesLost` INTEGER NOT NULL,
+                        `injuryStatus` TEXT NOT NULL,
+                        `specialMissionsJson` TEXT NOT NULL,
+                        `capturedAt` INTEGER NOT NULL,
+                        PRIMARY KEY(`individualId`),
+                        FOREIGN KEY(`individualId`) REFERENCES `DigimonIndividual`(`individualId`)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL("ALTER TABLE `DigimonIndividual` ADD COLUMN `lastDiaryEntryAt` INTEGER")
+                db.execSQL("ALTER TABLE `DigimonIndividual` ADD COLUMN `lastCelebratedWinsMilestone` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE `DigimonIndividual` ADD COLUMN `lastCelebratedTrophyMilestone` INTEGER NOT NULL DEFAULT 0")
             }
         }
     }

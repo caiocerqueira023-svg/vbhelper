@@ -1,4 +1,3 @@
-// app/src/main/java/com/github/nacabaro/vbhelper/chat/ChatRepository.kt
 package com.github.nacabaro.vbhelper.chat
 
 import com.github.nacabaro.vbhelper.daos.ChatDao
@@ -23,27 +22,11 @@ class ChatRepository(
         database.userCharacterDao().getIndividualId(characterId)
             .flatMapLatest(chatDao::getMessages)
 
+    fun getLatestAssistantMessage(individualId: String): Flow<ChatMessageEntity?> =
+        chatDao.getLatestAssistantMessage(individualId)
+
     suspend fun sendMessage(characterId: Long, userText: String): String {
-        val apiKey = llmSettingsRepository.apiKey.first()
-            ?: throw MissingApiKeyException()
-        val model = llmSettingsRepository.model.first()
-        val promptTemplate = llmSettingsRepository.systemPromptTemplate.first()
-
-        val character = database.userCharacterDao().getCharacterWithSprites(characterId)
-        val userCharacter = database.userCharacterDao().getCharacter(characterId)
-        val individualId = userCharacter.individualId
-        val personality = database.digimonIndividualDao().getPersonality(individualId)
-        val card = database.cardDao().getCardByCharacterIdSync(characterId)
-        val speciesProfile = database.speciesProfileDao().getByCardCharacterId(userCharacter.charId)
-        val systemPrompt = DigimonPersonaBuilder.buildSystemPrompt(
-            character,
-            card?.name ?: "desconhecido",
-            speciesProfile,
-            promptTemplate,
-            personality
-        )
-
-        // salva a mensagem do usuário antes de chamar a API
+        val (systemPrompt, individualId) = buildSystemPromptAndIndividualId(characterId)
         chatDao.insertMessage(
             ChatMessageEntity(
                 individualId = individualId,
@@ -52,19 +35,7 @@ class ChatRepository(
                 timestamp = System.currentTimeMillis()
             )
         )
-
-        val history = chatDao.getMessagesSync(individualId).takeLast(20) // limite de contexto
-        val messages = mutableListOf(ChatMessageDto(role = "system", content = systemPrompt))
-        messages += history.map { ChatMessageDto(role = it.role, content = it.content) }
-
-        val response = openRouterService.getChatCompletion(
-            authorization = "Bearer $apiKey",
-            request = ChatCompletionRequest(model = model, messages = messages)
-        )
-
-        val reply = response.choices.firstOrNull()?.message?.content?.trim()
-            ?: "..."
-
+        val reply = requestCompletion(systemPrompt, individualId, null)
         chatDao.insertMessage(
             ChatMessageEntity(
                 individualId = individualId,
@@ -73,12 +44,65 @@ class ChatRepository(
                 timestamp = System.currentTimeMillis()
             )
         )
+        return reply
+    }
 
+    suspend fun triggerReaction(characterId: Long, eventDescription: String): String {
+        val (systemPrompt, individualId) = buildSystemPromptAndIndividualId(characterId)
+        val instruction = """
+            [Evento real do relógio] $eventDescription
+
+            Reaja em voz alta, como se estivesse comentando sozinho com seu tamer, em 1 ou 2 frases curtas.
+            Não invente eventos nem transforme os dados em uma conversa do usuário.
+        """.trimIndent()
+        val reply = requestCompletion(systemPrompt, individualId, instruction)
+        chatDao.insertMessage(
+            ChatMessageEntity(
+                individualId = individualId,
+                role = "assistant",
+                content = reply,
+                timestamp = System.currentTimeMillis()
+            )
+        )
         return reply
     }
 
     suspend fun clearHistory(characterId: Long) {
         val individualId = database.userCharacterDao().getCharacter(characterId).individualId
         chatDao.clearHistory(individualId)
+    }
+
+    private suspend fun buildSystemPromptAndIndividualId(characterId: Long): Pair<String, String> {
+        val character = database.userCharacterDao().getCharacterWithSprites(characterId)
+        val userCharacter = database.userCharacterDao().getCharacter(characterId)
+        val personality = database.digimonIndividualDao().getPersonality(userCharacter.individualId)
+        val card = database.cardDao().getCardByCharacterIdSync(characterId)
+        val speciesProfile = database.speciesProfileDao().getByCardCharacterId(userCharacter.charId)
+        val promptTemplate = llmSettingsRepository.systemPromptTemplate.first()
+        return DigimonPersonaBuilder.buildSystemPrompt(
+            character,
+            card?.name ?: "desconhecido",
+            speciesProfile,
+            promptTemplate,
+            personality
+        ) to userCharacter.individualId
+    }
+
+    private suspend fun requestCompletion(
+        systemPrompt: String,
+        individualId: String,
+        extraUserTurn: String?
+    ): String {
+        val apiKey = llmSettingsRepository.apiKey.first() ?: throw MissingApiKeyException()
+        val model = llmSettingsRepository.model.first()
+        val messages = mutableListOf(ChatMessageDto("system", systemPrompt))
+        messages += chatDao.getMessagesSync(individualId).takeLast(20)
+            .map { ChatMessageDto(it.role, it.content) }
+        extraUserTurn?.let { messages += ChatMessageDto("user", it) }
+        val response = openRouterService.getChatCompletion(
+            authorization = "Bearer $apiKey",
+            request = ChatCompletionRequest(model = model, messages = messages)
+        )
+        return response.choices.firstOrNull()?.message?.content?.trim() ?: "..."
     }
 }
