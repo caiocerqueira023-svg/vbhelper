@@ -52,8 +52,10 @@ class ChatRepository(
         val instruction = """
             [Evento real do relógio] $eventDescription
 
-            Reaja em voz alta, como se estivesse comentando sozinho com seu tamer, em 1 ou 2 frases curtas.
-            Não invente eventos nem transforme os dados em uma conversa do usuário.
+            Reaja diretamente ao seu Tamer, priorizando uma fala natural do Digimon em 1 ou 2
+            frases curtas. Use no máximo uma breve ação entre asteriscos se ela ajudar a expressar
+            a reação. Não escreva falas, pensamentos ou ações do Tamer, não invente eventos e
+            termine de modo que o Tamer possa responder.
         """.trimIndent()
         val reply = requestCompletion(systemPrompt, individualId, instruction)
         chatDao.insertMessage(
@@ -79,12 +81,14 @@ class ChatRepository(
         val card = database.cardDao().getCardByCharacterIdSync(characterId)
         val speciesProfile = database.speciesProfileDao().getByCardCharacterId(userCharacter.charId)
         val promptTemplate = llmSettingsRepository.systemPromptTemplate.first()
+        val tamerName = llmSettingsRepository.tamerName.first()
         return DigimonPersonaBuilder.buildSystemPrompt(
             character,
             card?.name ?: "desconhecido",
             speciesProfile,
             promptTemplate,
-            personality
+            personality,
+            tamerName
         ) to userCharacter.individualId
     }
 

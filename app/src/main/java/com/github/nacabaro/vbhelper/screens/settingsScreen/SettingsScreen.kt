@@ -18,6 +18,9 @@ import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -30,6 +33,7 @@ import com.github.nacabaro.vbhelper.navigation.NavigationItems
 import com.github.nacabaro.vbhelper.screens.settingsScreen.dialogs.LlmSettingsDialog
 import com.github.nacabaro.vbhelper.screens.settingsScreen.dialogs.PromptTemplateDialog
 import com.github.nacabaro.vbhelper.R
+import androidx.compose.material3.OutlinedTextField
 
 
 @Composable
@@ -43,6 +47,7 @@ fun SettingsScreen(
     val currentApiKey by settingsScreenController.currentLlmApiKey.collectAsState(initial = null)
     val currentModel by settingsScreenController.currentLlmModel.collectAsState(initial = "openrouter/auto")
     val currentSystemPromptTemplate by settingsScreenController.currentSystemPromptTemplate.collectAsState(initial = null)
+    val currentTamerName by settingsScreenController.currentTamerName.collectAsState(initial = "")
     val showPromptTemplateDialog by settingsScreenController.showPromptTemplateDialog.collectAsState()
     val promptOriginAtImport by settingsScreenController.promptOriginAtImportTime.collectAsState(initial = false)
 
@@ -81,6 +86,21 @@ fun SettingsScreen(
             }
 
             SettingsSection(title = stringResource(R.string.settings_section_llm_chat))
+            var tamerName by remember(currentTamerName) { mutableStateOf(currentTamerName) }
+            OutlinedTextField(
+                value = tamerName,
+                onValueChange = { tamerName = it },
+                label = { Text("Nome do Tamer") },
+                supportingText = { Text("Esse nome será usado pelos Digimon durante as conversas.") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
+            )
+            SettingsEntry(
+                title = "Salvar nome do Tamer",
+                description = "Nome atual: ${currentTamerName.ifBlank { "não definido" }}"
+            ) {
+                settingsScreenController.saveTamerName(tamerName)
+            }
             SettingsEntry(
                 title = stringResource(R.string.settings_configure_llm_title),
                 description = stringResource(R.string.settings_configure_llm_desc)

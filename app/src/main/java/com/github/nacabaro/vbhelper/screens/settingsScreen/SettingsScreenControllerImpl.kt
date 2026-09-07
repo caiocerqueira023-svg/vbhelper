@@ -43,6 +43,7 @@ class SettingsScreenControllerImpl(
     val currentLlmApiKey: Flow<String?> = llmSettingsRepository.apiKey
     val currentLlmModel: Flow<String> = llmSettingsRepository.model
     val currentSystemPromptTemplate: Flow<String?> = llmSettingsRepository.systemPromptTemplate
+    val currentTamerName: Flow<String> = llmSettingsRepository.tamerName
     private val speciesSettingsRepository: SpeciesSettingsRepository = application.container.speciesSettingsRepository
     val promptOriginAtImportTime: Flow<Boolean> = speciesSettingsRepository.promptOriginAtImportTime
 
@@ -150,6 +151,15 @@ class SettingsScreenControllerImpl(
         context.lifecycleScope.launch(Dispatchers.IO) {
             llmSettingsRepository.setSystemPromptTemplate(template)
             context.runOnUiThread { dismissPromptTemplateDialog() }
+        }
+    }
+
+    fun saveTamerName(name: String) {
+        context.lifecycleScope.launch(Dispatchers.IO) {
+            llmSettingsRepository.setTamerName(name)
+            context.runOnUiThread {
+                Toast.makeText(context, "Nome do Tamer salvo!", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
