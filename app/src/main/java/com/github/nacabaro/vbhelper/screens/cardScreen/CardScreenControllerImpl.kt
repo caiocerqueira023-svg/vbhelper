@@ -72,4 +72,15 @@ class CardScreenControllerImpl(
         }
     }
 
+    override fun retrySpeciesMatch(cardId: Long, onComplete: (Int, String?) -> Unit) {
+        componentActivity.lifecycleScope.launch(Dispatchers.IO) {
+            val result = runCatching {
+                speciesRepository.matchOfficialSpeciesForCard(cardId)
+            }
+            withContext(Dispatchers.Main) {
+                onComplete(result.getOrDefault(0), result.exceptionOrNull()?.message)
+            }
+        }
+    }
+
 }

@@ -94,6 +94,18 @@ fun CardsScreen(
                     },
                     onClickSetOrigin = {
                         originDialogCard = it
+                    },
+                    onClickRetrySpeciesMatch = {
+                        cardScreenController.retrySpeciesMatch(it.cardId) { matchedCount, errorMessage ->
+                            val message = errorMessage?.let { error ->
+                                "Falha ao atualizar espécies: $error"
+                            } ?: if (matchedCount > 0) {
+                                "$matchedCount espécies reconhecidas!"
+                            } else {
+                                "Nenhuma espécie foi reconhecida."
+                            }
+                            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+                        }
                     }
                 )
             }
@@ -165,4 +177,3 @@ fun CardsScreen(
         )
     }
 }
-

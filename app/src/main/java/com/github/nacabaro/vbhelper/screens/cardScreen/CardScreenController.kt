@@ -12,4 +12,5 @@ interface CardScreenController {
     fun getCardProgress(cardId: Long): Flow<Int>
     fun getFusionsForCharacters(characterId: Long): Flow<List<CharacterDtos.FusionsWithSpritesAndObtained>>
     fun setCardOfficialStatus(cardId: Long, status: OfficialStatus, onComplete: (Int) -> Unit)
+    fun retrySpeciesMatch(cardId: Long, onComplete: (Int, String?) -> Unit)
 }
