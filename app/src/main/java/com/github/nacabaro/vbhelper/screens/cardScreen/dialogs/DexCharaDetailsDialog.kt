@@ -4,11 +4,14 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
@@ -100,10 +103,12 @@ fun DexCharaDetailsDialog(
         Card (
             modifier = Modifier
                 .fillMaxWidth()
+                .fillMaxHeight(0.9f)
         ) {
             Column (
                 modifier = Modifier
                     .padding(16.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
                 Row (
                     verticalAlignment = Alignment.CenterVertically,
