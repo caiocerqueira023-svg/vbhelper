@@ -23,17 +23,25 @@ class SpeciesRepository(
     suspend fun matchOfficialSpeciesForCard(cardId: Long): Int {
         val card = database.cardDao().getCardById(cardId) ?: return 0
         val databaseSpecies = fetchDatabase() ?: return 0
-        val speciesForCard = databaseSpecies.species[card.cardId.toString()] ?: return 0
+        val cardKeys = numericKeys(card.cardId)
+        val speciesForCard = cardKeys
+            .asSequence()
+            .mapNotNull { databaseSpecies.species[it] }
+            .firstOrNull()
+        if (speciesForCard == null) {
+            Timber.w(
+                "No species database entry for card databaseId=${card.id}, dimId=${card.cardId}, " +
+                    "triedKeys=$cardKeys, availableKeys=${databaseSpecies.species.keys}"
+            )
+            return 0
+        }
         var matchedCount = 0
 
         database.characterDao().getCharactersForCard(cardId).forEach { character ->
-            val matched = sequenceOf(
-                character.charaIndex,
-                character.charaIndex + 1,
-                character.charaIndex - 1
-            )
-                .filter { it >= 0 }
-                .mapNotNull { speciesForCard[it.toString()] }
+            val characterKeys = numericKeys(character.charaIndex)
+            val matched = characterKeys
+                .asSequence()
+                .mapNotNull { speciesForCard[it] }
                 .firstOrNull()
                 ?: return@forEach
             val current = database.speciesProfileDao().getByCardCharacterId(character.id)
@@ -52,6 +60,15 @@ class SpeciesRepository(
             matchedCount++
         }
         return matchedCount
+    }
+
+    private fun numericKeys(value: Int): List<String> {
+        val decimalVariants = listOf(value, value + 1, value - 1)
+            .filter { it >= 0 }
+        return (decimalVariants.map { it.toString() } +
+            decimalVariants.map { it.toString(16) } +
+            decimalVariants.map { "0x${it.toString(16)}" })
+            .distinct()
     }
 
     suspend fun getProfileForCharacter(cardCharacterId: Long): SpeciesProfile? =
