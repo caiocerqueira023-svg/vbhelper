@@ -45,7 +45,8 @@ fun UnifiedHomeScreen(
     nickname: String?,
     contentPadding: PaddingValues,
     homeScreenController: HomeScreenControllerImpl,
-    onClickCollect: (ItemDtos.PurchasedItem?, Int?) -> Unit
+    onClickCollect: (ItemDtos.PurchasedItem?, Int?) -> Unit,
+    onClickTransformation: (CharacterDtos.TransformationHistory) -> Unit = {}
 ) {
     var selectedSpecialMissionId by remember { mutableStateOf<Long>(-1) }
 
@@ -174,7 +175,8 @@ fun UnifiedHomeScreen(
         Row(modifier = Modifier.fillMaxWidth()) {
             TransformationHistoryCard(
                 transformationHistory = transformationHistory,
-                modifier = Modifier.weight(1f).padding(8.dp)
+                modifier = Modifier.weight(1f).padding(8.dp),
+                onClickTransformation = onClickTransformation
             )
         }
         NicknameDisplay(nickname)

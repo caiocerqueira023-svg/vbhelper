@@ -5,6 +5,7 @@ import androidx.lifecycle.lifecycleScope
 import com.github.cfogrady.vbnfc.vb.SpecialMission
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.dtos.ItemDtos
+import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
@@ -87,5 +88,43 @@ class HomeScreenControllerImpl(
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
             application.container.diaryService.checkAndGenerateEntry(characterId)
         }
+    }
+
+    override fun degenerate(
+        characterId: Long,
+        transformation: CharacterDtos.TransformationHistory,
+        onResult: (Result<Unit>) -> Unit
+    ) {
+        componentActivity.lifecycleScope.launch(Dispatchers.IO) {
+            val result = runCatching {
+                val character = database.userCharacterDao().getCharacter(characterId)
+                check(character.charId != transformation.stageId) {
+                    "O Digimon já está nesse estágio."
+                }
+
+                val currentCurrency = application.container.currencyRepository.currencyValue.first()
+                check(currentCurrency >= DEGENERATION_COST) {
+                    "Bits insuficientes. São necessários $DEGENERATION_COST bits."
+                }
+
+                database.userCharacterDao().degenerateCharacter(
+                    characterId = characterId,
+                    stageId = transformation.stageId
+                )
+                database.userCharacterDao().deleteTransformationsAfter(
+                    characterId = characterId,
+                    transformationDate = transformation.transformationDate,
+                    historyId = transformation.id
+                )
+                application.container.currencyRepository.setCurrencyValue(
+                    currentCurrency - DEGENERATION_COST
+                )
+            }
+            componentActivity.runOnUiThread { onResult(result) }
+        }
+    }
+
+    private companion object {
+        const val DEGENERATION_COST = 5000
     }
 }

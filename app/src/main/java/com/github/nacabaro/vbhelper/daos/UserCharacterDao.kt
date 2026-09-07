@@ -43,7 +43,8 @@ interface UserCharacterDao {
     @Query(
         """
         SELECT 
-            c.id AS id,
+            t.id AS id,
+            t.stageId AS stageId,
             s.spriteIdle1 AS spriteIdle,
             s.width AS spriteWidth,
             s.height AS spriteHeight,
@@ -53,6 +54,7 @@ interface UserCharacterDao {
         JOIN CardCharacter c ON c.id = t.stageId
         JOIN Sprite s ON s.id = c.spriteId
         WHERE monId = :monId
+        ORDER BY t.transformationDate ASC, t.id ASC
     """
     )
     fun getTransformationHistory(monId: Long): Flow<List<CharacterDtos.TransformationHistory>>
@@ -186,6 +188,23 @@ interface UserCharacterDao {
 
     @Query("UPDATE UserCharacter SET isActive = 1 WHERE id = :id")
     fun setActiveCharacter(id: Long)
+
+    @Query("UPDATE UserCharacter SET charId = :stageId, vitalPoints = 0 WHERE id = :characterId")
+    fun degenerateCharacter(characterId: Long, stageId: Long)
+
+    @Query(
+        """
+        DELETE FROM TransformationHistory
+        WHERE monId = :characterId
+          AND (transformationDate > :transformationDate
+            OR (transformationDate = :transformationDate AND id > :historyId))
+        """
+    )
+    fun deleteTransformationsAfter(
+        characterId: Long,
+        transformationDate: Long,
+        historyId: Long
+    )
 
     @Query(
         """

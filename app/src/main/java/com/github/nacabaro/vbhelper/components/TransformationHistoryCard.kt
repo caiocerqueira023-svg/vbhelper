@@ -1,6 +1,7 @@
 package com.github.nacabaro.vbhelper.components
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,7 +26,8 @@ import com.github.nacabaro.vbhelper.utils.getBitmap
 @Composable
 fun TransformationHistoryCard(
     transformationHistory: List<CharacterDtos.TransformationHistory>,
-    modifier: Modifier= Modifier
+    modifier: Modifier = Modifier,
+    onClickTransformation: (CharacterDtos.TransformationHistory) -> Unit = {}
 ) {
     Card (
         shape = androidx.compose.material.MaterialTheme.shapes.small,
@@ -36,7 +38,7 @@ fun TransformationHistoryCard(
                 .padding(8.dp)
         ) {
             items(transformationHistory) { transformation ->
-                TransformationHistoryItem(transformation)
+                TransformationHistoryItem(transformation, onClickTransformation)
             }
         }
     }
@@ -44,7 +46,8 @@ fun TransformationHistoryCard(
 
 @Composable
 fun TransformationHistoryItem(
-    transformation: CharacterDtos.TransformationHistory
+    transformation: CharacterDtos.TransformationHistory,
+    onClick: (CharacterDtos.TransformationHistory) -> Unit
 ) {
     val bitmapData = BitmapData(
         bitmap = transformation.spriteIdle,
@@ -62,6 +65,7 @@ fun TransformationHistoryItem(
             .aspectRatio(1f)
             .fillMaxWidth()
             .size((64*3/density).dp)
+            .clickable { onClick(transformation) }
     ) {
         Image(
             bitmap = imageBitmap,

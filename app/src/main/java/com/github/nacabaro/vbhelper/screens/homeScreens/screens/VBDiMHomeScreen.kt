@@ -46,7 +46,8 @@ fun VBDiMHomeScreen(
     contentPadding: PaddingValues,
     onClickCollect: (ItemDtos.PurchasedItem?, Int?) -> Unit,
     speechBubbleText: String? = null,
-    onClickCharacter: () -> Unit = {}
+    onClickCharacter: () -> Unit = {},
+    onClickTransformation: (CharacterDtos.TransformationHistory) -> Unit = {}
 ) {
     var selectedSpecialMissionId by remember { mutableStateOf<Long>(-1) }
 
@@ -180,7 +181,8 @@ fun VBDiMHomeScreen(
                 transformationHistory = transformationHistory,
                 modifier = Modifier
                     .weight(1f)
-                    .padding(8.dp)
+                    .padding(8.dp),
+                onClickTransformation = onClickTransformation
             )
         }
         Row (

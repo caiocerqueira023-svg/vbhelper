@@ -40,10 +40,12 @@ import com.github.nacabaro.vbhelper.screens.itemsScreen.ObtainedItemDialog
 import com.github.nacabaro.vbhelper.source.StorageRepository
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.dtos.CardDtos
+import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.source.CardRepository
 import com.github.nacabaro.vbhelper.source.VitalWearCharacterExporter
 import android.widget.Toast
 import com.github.nacabaro.vbhelper.utils.BitmapData
+import com.github.nacabaro.vbhelper.screens.homeScreens.dialogs.DegenerateDialog
 import kotlinx.coroutines.flow.flowOf
 import kotlin.collections.emptyList
 import kotlinx.coroutines.flow.flatMapLatest
@@ -122,6 +124,9 @@ fun HomeScreen(
     var adventureMissionsFinished by rememberSaveable { mutableStateOf(false) }
     var collectedItem by remember { mutableStateOf<ItemDtos.PurchasedItem?>(null) }
     var collectedCurrency by remember { mutableStateOf<Int?>(null) }
+    var selectedTransformation by remember {
+        mutableStateOf<CharacterDtos.TransformationHistory?>(null)
+    }
 
     LaunchedEffect(true) {
         homeScreenController
@@ -174,6 +179,11 @@ fun HomeScreen(
                             navController.navigate(
                                 NavigationItems.Chat.route.replace("{characterId}", activeMon!!.id.toString())
                             )
+                        },
+                        onClickTransformation = {
+                            if (it.stageId != activeMon!!.charId) {
+                                selectedTransformation = it
+                            }
                         }
                     )
                 } else if (!activeMon!!.isBemCard && activeMon!!.characterType == DeviceType.BEDevice && beData != null) {
@@ -189,6 +199,11 @@ fun HomeScreen(
                             navController.navigate(
                                 NavigationItems.Chat.route.replace("{characterId}", activeMon!!.id.toString())
                             )
+                        },
+                        onClickTransformation = {
+                            if (it.stageId != activeMon!!.charId) {
+                                selectedTransformation = it
+                            }
                         }
                     )
                 } else if (vbData != null) {
@@ -210,6 +225,11 @@ fun HomeScreen(
                             navController.navigate(
                                 NavigationItems.Chat.route.replace("{characterId}", activeMon!!.id.toString())
                             )
+                        },
+                        onClickTransformation = {
+                            if (it.stageId != activeMon!!.charId) {
+                                selectedTransformation = it
+                            }
                         }
                     )
                 }
@@ -276,6 +296,30 @@ fun HomeScreen(
                 }
             }
         }
+    }
+
+    val transformation = selectedTransformation
+    val currentCharacter = activeMon
+    if (transformation != null && currentCharacter != null) {
+        DegenerateDialog(
+            targetStage = transformation.monIndex,
+            onDismiss = { selectedTransformation = null },
+            onConfirm = {
+                homeScreenController.degenerate(
+                    characterId = currentCharacter.id,
+                    transformation = transformation
+                ) { result ->
+                    selectedTransformation = null
+                    result.onFailure {
+                        Toast.makeText(
+                            application,
+                            it.message ?: "Não foi possível regredir o Digimon.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                }
+            }
+        )
     }
 
 }

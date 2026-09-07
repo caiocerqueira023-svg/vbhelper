@@ -33,7 +33,8 @@ fun BEDiMHomeScreen(
     nickname: String?,
     contentPadding: PaddingValues,
     speechBubbleText: String? = null,
-    onClickCharacter: () -> Unit = {}
+    onClickCharacter: () -> Unit = {},
+    onClickTransformation: (CharacterDtos.TransformationHistory) -> Unit = {}
 ) {
     Column(
         modifier = Modifier
@@ -207,7 +208,8 @@ fun BEDiMHomeScreen(
                 transformationHistory = transformationHistory,
                 modifier = Modifier
                     .weight(1f)
-                    .padding(8.dp)
+                    .padding(8.dp),
+                onClickTransformation = onClickTransformation
             )
         }
     }

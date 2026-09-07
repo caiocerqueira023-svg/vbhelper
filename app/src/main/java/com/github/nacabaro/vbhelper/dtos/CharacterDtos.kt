@@ -116,6 +116,7 @@ object CharacterDtos {
 
     data class TransformationHistory(
         val id: Long,
+        val stageId: Long,
         val spriteIdle: ByteArray,
         val spriteWidth: Int,
         val spriteHeight: Int,
