@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import timber.log.Timber
 
 class ItemsScreenControllerImpl (
     private val context: ComponentActivity,
@@ -50,6 +51,8 @@ class ItemsScreenControllerImpl (
             withContext(Dispatchers.IO) {
                 val item = getItem(itemId)
                 val characterData = database.userCharacterDao().getCharacter(characterId)
+                val chatRepository = (context.applicationContext as VBHelper)
+                    .container.chatRepository
                 var beCharacterData: BECharacterData? = null
                 var vbCharacterData: VBCharacterData? = null
 
@@ -129,6 +132,16 @@ class ItemsScreenControllerImpl (
                 }
 
                 consumeItem(item.id)
+
+                runCatching {
+                    chatRepository.triggerReaction(
+                        characterId,
+                        "Seu Tamer acabou de usar o item \"${item.name}\" em você. " +
+                            "Reaja diretamente ao efeito de receber esse item."
+                    )
+                }.onFailure {
+                    Timber.e(it, "Falha ao gerar reação ao uso do item")
+                }
 
                 context.runOnUiThread {
                     onCompletion()

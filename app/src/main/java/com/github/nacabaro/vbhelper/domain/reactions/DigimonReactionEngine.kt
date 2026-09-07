@@ -7,6 +7,7 @@ import com.google.gson.reflect.TypeToken
 
 enum class ReactionType {
     EVOLUTION,
+    DEGENERATION,
     BATTLE_WIN,
     BATTLE_LOSS,
     INJURY_GAINED,
@@ -41,10 +42,17 @@ object DigimonReactionEngine {
         val events = mutableListOf<ReactionEvent>()
 
         if (currentStage != previous.stage) {
-            events += ReactionEvent(
-                ReactionType.EVOLUTION,
-                "Seu estágio mudou de ${previous.stage} para $currentStage depois de um período real no relógio. Reflita sobre essa evolução em uma ou duas frases."
-            )
+            if (currentStage < previous.stage) {
+                events += ReactionEvent(
+                    ReactionType.DEGENERATION,
+                    "Seu estágio regrediu de ${previous.stage} para $currentStage porque seu Tamer escolheu fazer você degenerar. Reaja de forma realista à regressão, ao custo de 5.000 bits e ao fato de seus vitais terem sido zerados."
+                )
+            } else {
+                events += ReactionEvent(
+                    ReactionType.EVOLUTION,
+                    "Seu estágio mudou de ${previous.stage} para $currentStage depois de um período real no relógio. Reflita sobre essa evolução em uma ou duas frases."
+                )
+            }
         }
 
         val wins = current.totalBattlesWon - previous.totalBattlesWon

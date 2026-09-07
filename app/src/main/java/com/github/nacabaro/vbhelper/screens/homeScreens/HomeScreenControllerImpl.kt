@@ -107,6 +107,8 @@ class HomeScreenControllerImpl(
                     "Bits insuficientes. São necessários $DEGENERATION_COST bits."
                 }
 
+                application.container.reactionRepository
+                    .snapshotBeforeSendingToWatch(characterId)
                 database.userCharacterDao().degenerateCharacter(
                     characterId = characterId,
                     stageId = transformation.stageId
@@ -119,6 +121,7 @@ class HomeScreenControllerImpl(
                 application.container.currencyRepository.setCurrencyValue(
                     currentCurrency - DEGENERATION_COST
                 )
+                application.container.reactionRepository.evaluateAndReact(characterId)
             }
             componentActivity.runOnUiThread { onResult(result) }
         }
