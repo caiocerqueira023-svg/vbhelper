@@ -39,7 +39,7 @@ class SpeciesRepository(
         var matchedCount = 0
 
         database.characterDao().getCharactersForCard(cardId).forEach { character ->
-            val characterKeys = numericKeys(character.charaIndex)
+            val characterKeys = numericKeys(character.charaIndex, preferNext = true)
             val matched = characterKeys
                 .asSequence()
                 .mapNotNull { speciesForCard[it] }
@@ -63,8 +63,12 @@ class SpeciesRepository(
         return matchedCount
     }
 
-    private fun numericKeys(value: Int): List<String> {
-        val decimalVariants = listOf(value, value + 1, value - 1)
+    private fun numericKeys(value: Int, preferNext: Boolean = false): List<String> {
+        val decimalVariants = if (preferNext) {
+            listOf(value + 1, value, value - 1)
+        } else {
+            listOf(value, value + 1, value - 1)
+        }.distinct()
             .filter { it >= 0 }
         return (decimalVariants.map { it.toString() } +
             decimalVariants.map { it.toString(16) } +
