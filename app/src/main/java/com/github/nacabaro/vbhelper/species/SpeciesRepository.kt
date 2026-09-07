@@ -99,8 +99,10 @@ class SpeciesRepository(
     }
 
     private suspend fun fetchDatabase(): SpeciesDatabaseDto? = try {
-        service.getSpeciesDatabase(SPECIES_DB_URL).also { remote ->
-            settingsRepository.cacheDatabase(gson.toJson(remote), remote.version)
+        val remoteUrl = "$SPECIES_DB_URL?cacheBust=${System.currentTimeMillis()}"
+        val remote = parseDatabase(service.getSpeciesDatabase(remoteUrl).string())
+        remote.also {
+            settingsRepository.cacheDatabase(gson.toJson(it), it.version)
         }
     } catch (exception: Exception) {
         Timber.w(exception, "Failed to fetch species database; using cached copy")
@@ -109,8 +111,22 @@ class SpeciesRepository(
 
     private suspend fun cachedDatabase(): SpeciesDatabaseDto? {
         val json = settingsRepository.cachedDatabaseJson.first() ?: return null
-        return runCatching { gson.fromJson(json, SpeciesDatabaseDto::class.java) }
+        return runCatching { parseDatabase(json) }
             .onFailure { Timber.w(it, "Failed to parse cached species database") }
             .getOrNull()
+    }
+
+    private fun parseDatabase(rawJson: String): SpeciesDatabaseDto {
+        val normalizedJson = rawJson
+            .removePrefix("\uFEFF")
+            .trimStart()
+            .let { content ->
+                if (content.startsWith("name=species.json")) {
+                    content.substringAfter('\n').trimStart()
+                } else {
+                    content
+                }
+            }
+        return gson.fromJson(normalizedJson, SpeciesDatabaseDto::class.java)
     }
 }
