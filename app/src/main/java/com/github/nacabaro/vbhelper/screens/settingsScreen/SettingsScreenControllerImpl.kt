@@ -185,6 +185,7 @@ class SettingsScreenControllerImpl(
                 LocaleListCompat.forLanguageTags(languageTag)
             }
         )
+        context.recreate()
     }
 
     private fun importCard(uri: Uri) {
