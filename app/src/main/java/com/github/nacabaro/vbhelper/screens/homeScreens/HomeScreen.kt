@@ -120,7 +120,6 @@ fun HomeScreen(
     ).collectAsState(initial = null)
 
     var adventureMissionsFinished by rememberSaveable { mutableStateOf(false) }
-    var betaWarning by rememberSaveable { mutableStateOf(true) }
     var collectedItem by remember { mutableStateOf<ItemDtos.PurchasedItem?>(null) }
     var collectedCurrency by remember { mutableStateOf<Int?>(null) }
 
@@ -279,9 +278,4 @@ fun HomeScreen(
         }
     }
 
-    if (betaWarning) {
-        BetaWarning {
-            betaWarning = false
-        }
-    }
 }
