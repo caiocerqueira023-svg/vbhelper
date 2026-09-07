@@ -2,6 +2,7 @@ package com.github.nacabaro.vbhelper.domain.reactions
 
 import com.github.cfogrady.vbnfc.data.NfcCharacter
 import com.github.nacabaro.vbhelper.domain.device_data.UserCharacter
+import com.github.nacabaro.vbhelper.chat.PromptLocalization
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 
@@ -45,12 +46,16 @@ object DigimonReactionEngine {
             if (currentStage < previous.stage) {
                 events += ReactionEvent(
                     ReactionType.DEGENERATION,
-                    "Seu estágio regrediu de ${previous.stage} para $currentStage porque seu Tamer escolheu fazer você degenerar. Reaja de forma realista à regressão, ao custo de 5.000 bits e ao fato de seus vitais terem sido zerados."
+                    PromptLocalization.degenerationEvent(
+                        PromptLocalization.currentLanguageTag(),
+                        previous.stage,
+                        currentStage
+                    )
                 )
             } else {
                 events += ReactionEvent(
                     ReactionType.EVOLUTION,
-                    "Seu estágio mudou de ${previous.stage} para $currentStage depois de um período real no relógio. Reflita sobre essa evolução em uma ou duas frases."
+                    PromptLocalization.evolutionEvent(PromptLocalization.currentLanguageTag(), previous.stage, currentStage)
                 )
             }
         }
@@ -59,7 +64,7 @@ object DigimonReactionEngine {
         if (wins > 0) {
             events += ReactionEvent(
                 ReactionType.BATTLE_WIN,
-                "O relógio registrou $wins vitória(s) em batalha física desde o último scan. Comente essa conquista com seu tamer."
+                PromptLocalization.battleEvent(PromptLocalization.currentLanguageTag(), wins, true)
             )
         }
 
@@ -67,7 +72,7 @@ object DigimonReactionEngine {
         if (losses > 0) {
             events += ReactionEvent(
                 ReactionType.BATTLE_LOSS,
-                "O relógio registrou $losses derrota(s) em batalha física desde o último scan. Comente como se sente e diga que vai continuar treinando."
+                PromptLocalization.battleEvent(PromptLocalization.currentLanguageTag(), losses, false)
             )
         }
 
@@ -76,12 +81,12 @@ object DigimonReactionEngine {
         if (!wasInjured && isInjured) {
             events += ReactionEvent(
                 ReactionType.INJURY_GAINED,
-                "O scan real mostrou que você se machucou em uma batalha física. Reaja com preocupação e peça cuidado ao seu tamer."
+                PromptLocalization.injuryEvent(PromptLocalization.currentLanguageTag(), false)
             )
         } else if (wasInjured && !isInjured) {
             events += ReactionEvent(
                 ReactionType.INJURY_HEALED,
-                "O scan real mostrou que sua lesão foi curada. Agradeça ao seu tamer por cuidar de você."
+                PromptLocalization.injuryEvent(PromptLocalization.currentLanguageTag(), true)
             )
         }
 
@@ -89,7 +94,7 @@ object DigimonReactionEngine {
         winMilestones.lastOrNull { it <= current.totalBattlesWon && it > lastCelebratedWinsMilestone }?.let {
             events += ReactionEvent(
                 ReactionType.MILESTONE_WINS,
-                "Você cruzou o marco de $it vitórias físicas totais no relógio. Celebre com seu tamer."
+                PromptLocalization.milestoneEvent(PromptLocalization.currentLanguageTag(), it, false)
             )
             newWinsMilestone = it
         }
@@ -98,7 +103,7 @@ object DigimonReactionEngine {
         trophyMilestones.lastOrNull { it <= current.trophies && it > lastCelebratedTrophyMilestone }?.let {
             events += ReactionEvent(
                 ReactionType.MILESTONE_TROPHIES,
-                "Você cruzou o marco de $it troféus no relógio. Comemore esse progresso."
+                PromptLocalization.milestoneEvent(PromptLocalization.currentLanguageTag(), it, true)
             )
             newTrophyMilestone = it
         }
@@ -114,7 +119,13 @@ object DigimonReactionEngine {
                 val remaining = (mission.goal - mission.progress).coerceAtLeast(0)
                 events += ReactionEvent(
                     ReactionType.MISSION_PROGRESS,
-                    "A missão ${mission.missionType} avançou no relógio para ${mission.progress} de ${mission.goal}. ${if (remaining > 0) "Faltam $remaining." else "Ela foi concluída!"}"
+                    PromptLocalization.missionEvent(
+                        PromptLocalization.currentLanguageTag(),
+                        mission.missionType.toString(),
+                        mission.progress,
+                        mission.goal,
+                        remaining
+                    )
                 )
             }
         }

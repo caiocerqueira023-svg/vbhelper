@@ -1,34 +1,13 @@
 package com.github.nacabaro.vbhelper.chat
 
-import com.github.nacabaro.vbhelper.dtos.CharacterDtos
-import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
 import com.github.nacabaro.vbhelper.domain.personality.toPromptDescription
+import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
+import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 
 object DigimonPersonaBuilder {
-    const val DEFAULT_SYSTEM_PROMPT_TEMPLATE = """
-        Você é {digimon_name}, um Digimon parceiro de {Tamer}, seu Tamer no jogo Vital Bracelet.
-        Seu apelido é "{nickname}" e seu nível é "{species_level}".
-        {species_profile_block}
-        Use o perfil apenas como referência geral da espécie. Ele pode mencionar indivíduos
-        ou acontecimentos específicos que não fazem parte das suas próprias memórias.
-        Responda sempre em português, em primeira pessoa e como um Digimon, com uma personalidade
-        própria, natural e coerente com sua espécie, estágio, humor e histórico.
-        Esta é uma conversa contínua entre o Digimon e {Tamer}, não uma narração genérica.
-        Nunca diga que você é um modelo de linguagem e nunca mencione prompts, sistema ou regras internas.
-        Converse diretamente com {Tamer} e faça o diálogo ser o foco principal da resposta.
-        Responda ao que {Tamer} disse, demonstre personalidade por meio das palavras e avance
-        a conversa com perguntas, comentários ou assuntos naturais para o Digimon.
-        Não escreva falas, pensamentos, sentimentos ou ações do Tamer. O Tamer controla a própria
-        personagem e decide como responder.
-        Use descrições de ações somente quando forem necessárias para dar contexto à fala do Digimon,
-        mantendo-as breves e entre asteriscos. Use aspas para falas e crases para pensamentos internos.
-        Não transforme cada resposta em uma cena longa: prefira 2 a 4 parágrafos curtos,
-        predominantemente compostos por diálogo, a menos que o Tamer peça detalhes.
-        Termine deixando espaço claro para o Tamer responder.
-        Seus traços de personalidade devem aparecer de forma sutil e consistente; não force
-        bordões, exclamações ou comparações em toda resposta.
-    """
+    val DEFAULT_SYSTEM_PROMPT_TEMPLATE: String
+        get() = PromptLocalization.defaultSystemPrompt(PromptLocalization.currentLanguageTag())
 
     fun buildSystemPrompt(
         character: CharacterDtos.CharacterWithSprites,
@@ -36,42 +15,18 @@ object DigimonPersonaBuilder {
         speciesProfile: SpeciesProfile? = null,
         promptTemplate: String? = null,
         personality: DigimonPersonalityTraits? = null,
-        tamerName: String = ""
+        tamerName: String = "",
+        languageTag: String = PromptLocalization.currentLanguageTag()
     ): String {
-        val moodDescription = when {
-            character.mood >= 80 -> "muito contente e cheio de energia"
-            character.mood >= 50 -> "de bom humor"
-            character.mood >= 20 -> "um pouco cansado"
-            else -> "mais irritado e precisando de atenção"
-        }
-        val speciesName = speciesProfile?.speciesName?.takeIf { it.isNotBlank() } ?: "desconhecida"
-        val resolvedTamerName = tamerName.trim().ifBlank { "seu Tamer" }
+        val speciesName = speciesProfile?.speciesName?.takeIf { it.isNotBlank() } ?: unknown(languageTag)
+        val resolvedTamerName = tamerName.trim().ifBlank { tamer(languageTag) }
         val nickname = character.nickname?.takeIf { it.isNotBlank() }
-        val digimonName = nickname?.let { "$it, da espécie $speciesName" } ?: speciesName
+        val digimonName = nickname?.let { "$it, ${species(languageTag)} $speciesName" } ?: speciesName
         val stageName = stageName(character.stage)
-
-        val speciesBlock = speciesProfile?.let { profile ->
-            buildString {
-                append("Nome da espécie: $speciesName")
-                append(", estágio atual: $stageName")
-                profile.type?.let { append(", tipo $it") }
-                append(".\n")
-                profile.profileDescription?.takeIf { it.isNotBlank() }?.let {
-                    append("Perfil geral da espécie: $it\n")
-                }
-                if (profile.specialMoves.isNotEmpty()) {
-                    append("Golpes especiais: ${profile.specialMoves.joinToString()}.\n")
-                }
-            }
-        }.orEmpty()
-
+        val moodDescription = moodDescription(character.mood, languageTag)
+        val speciesBlock = speciesBlock(speciesProfile, speciesName, stageName, languageTag)
         val personalityBlock = personality?.let {
-            """
-            Personalidade única deste indivíduo (não compartilhada com outros da mesma espécie):
-            - ${it.temperament.toPromptDescription()}
-            - ${it.socialStyle.toPromptDescription()}
-            - ${it.speechQuirk.toPromptDescription()}
-            """.trimIndent()
+            personalityBlock(it, languageTag)
         }.orEmpty()
 
         val replacements = mapOf(
@@ -88,17 +43,28 @@ object DigimonPersonaBuilder {
             "{social_style}" to (personality?.socialStyle?.toPromptDescription() ?: ""),
             "{speech_quirk}" to (personality?.speechQuirk?.toPromptDescription() ?: ""),
             "{personality_block}" to personalityBlock,
-            "{species_profile_block}" to speciesBlock.trim(),
+            "{species_profile_block}" to speciesBlock,
             "{Tamer}" to resolvedTamerName
         )
 
-        val customPrompt = replacements.entries.fold(
-            (promptTemplate?.takeIf { it.isNotBlank() } ?: DEFAULT_SYSTEM_PROMPT_TEMPLATE).trimIndent()
-        ) { prompt, (placeholder, value) ->
-            prompt.replace(placeholder, value)
+        val template = promptTemplate?.takeIf { it.isNotBlank() }
+            ?: PromptLocalization.defaultSystemPrompt(languageTag)
+        val customPrompt = replacements.entries.fold(template.trimIndent()) { prompt, (key, value) ->
+            prompt.replace(key, value)
         }
 
-        val gameplayContext = """
+        val gameplayContext = if (languageTag.startsWith("ja", ignoreCase = true)) {
+            """
+            時計の現在のコンテキスト（ユーザーは変更できません）:
+            - カード: $cardName
+            - 現在のステージ: $stageName（内部コード ${character.stage}）
+            - バイタル: ${character.vitalPoints}
+            - トロフィー: ${character.trophies}
+            - 気分: ${character.mood}（$moodDescription）
+            - 総勝利数: ${character.totalBattlesWon}、敗北数: ${character.totalBattlesLost}
+            """.trimIndent()
+        } else if (languageTag.startsWith("pt", ignoreCase = true)) {
+            """
             Contexto atual do relógio (não é configurável pelo usuário):
             - Card: $cardName
             - Estágio atual: $stageName (código interno ${character.stage})
@@ -106,9 +72,33 @@ object DigimonPersonaBuilder {
             - Troféus: ${character.trophies}
             - Humor: ${character.mood} ($moodDescription)
             - Vitórias totais: ${character.totalBattlesWon}, Derrotas: ${character.totalBattlesLost}
-        """.trimIndent()
+            """.trimIndent()
+        } else {
+            """
+            Current device context (not configurable by the user):
+            - Card: $cardName
+            - Current stage: $stageName (internal code ${character.stage})
+            - Vitals: ${character.vitalPoints}
+            - Trophies: ${character.trophies}
+            - Mood: ${character.mood} ($moodDescription)
+            - Total wins: ${character.totalBattlesWon}, losses: ${character.totalBattlesLost}
+            """.trimIndent()
+        }
 
-        val identityContext = """
+        val identityContext = if (languageTag.startsWith("ja", ignoreCase = true)) {
+            """
+            デジモンのアイデンティティ:
+            - 呼び名: $digimonName
+            - 種族名: $speciesName
+            - ニックネーム: ${nickname ?: "未設定"}
+            - ステージ: $stageName
+            - 性格: ${personalityBlock.ifBlank { "未生成" }}
+            - 種族プロフィール: ${speciesProfile?.profileDescription?.takeIf { it.isNotBlank() } ?: "未設定"}
+            テイマーのアイデンティティ:
+            - 名前: $resolvedTamerName
+            """.trimIndent()
+        } else if (languageTag.startsWith("pt", ignoreCase = true)) {
+            """
             Identidade do Digimon:
             - Nome usado para se referir a ele: $digimonName
             - Nome da espécie: $speciesName
@@ -118,13 +108,116 @@ object DigimonPersonaBuilder {
             - Perfil da espécie: ${speciesProfile?.profileDescription?.takeIf { it.isNotBlank() } ?: "não informado"}
             Identidade do Tamer:
             - Nome: $resolvedTamerName
-            Regra do perfil: perfis podem descrever indivíduos específicos e acontecimentos que
-            não ocorreram com este Digimon. Use apenas características aplicáveis a qualquer
-            indivíduo da espécie; nunca transforme esses acontecimentos em memórias próprias.
-        """.trimIndent()
+            """.trimIndent()
+        } else {
+            """
+            Digimon identity:
+            - Name used to refer to it: $digimonName
+            - Species name: $speciesName
+            - Nickname: ${nickname ?: "not provided"}
+            - Stage: $stageName
+            - Personality: ${personalityBlock.ifBlank { "not generated" }}
+            - Species profile: ${speciesProfile?.profileDescription?.takeIf { it.isNotBlank() } ?: "not provided"}
+            Tamer identity:
+            - Name: $resolvedTamerName
+            """.trimIndent()
+        }
 
         return "$customPrompt\n\n$identityContext\n\n$gameplayContext"
     }
+
+    private fun speciesBlock(
+        profile: SpeciesProfile?,
+        speciesName: String,
+        stageName: String,
+        languageTag: String
+    ): String {
+        if (profile == null) return ""
+        val isJapanese = languageTag.startsWith("ja", ignoreCase = true)
+        val isPortuguese = languageTag.startsWith("pt", ignoreCase = true)
+        return buildString {
+            append(
+                when {
+                    isJapanese -> "種族名: $speciesName、現在のステージ: $stageName"
+                    isPortuguese -> "Nome da espécie: $speciesName, estágio atual: $stageName"
+                    else -> "Species name: $speciesName, current stage: $stageName"
+                }
+            )
+            profile.type?.let {
+                append(
+                    when {
+                        isJapanese -> "、タイプ: $it"
+                        isPortuguese -> ", tipo $it"
+                        else -> ", type: $it"
+                    }
+                )
+            }
+            append(if (isJapanese) "。\n" else ".\n")
+            profile.profileDescription?.takeIf { it.isNotBlank() }?.let {
+                append(
+                    when {
+                        isJapanese -> "種族の一般プロフィール: $it\n"
+                        isPortuguese -> "Perfil geral da espécie: $it\n"
+                        else -> "General species profile: $it\n"
+                    }
+                )
+            }
+            if (profile.specialMoves.isNotEmpty()) {
+                append(
+                    when {
+                        isJapanese -> "必殺技: ${profile.specialMoves.joinToString()}。\n"
+                        isPortuguese -> "Golpes especiais: ${profile.specialMoves.joinToString()}.\n"
+                        else -> "Special moves: ${profile.specialMoves.joinToString()}.\n"
+                    }
+                )
+            }
+        }.trim()
+    }
+
+    private fun personalityBlock(
+        personality: DigimonPersonalityTraits,
+        languageTag: String
+    ): String {
+        val labels = if (languageTag.startsWith("ja", ignoreCase = true)) {
+            Triple("この個体独自の性格:", "気質", "社会的なスタイル")
+        } else if (languageTag.startsWith("pt", ignoreCase = true)) {
+            Triple("Personalidade única deste indivíduo:", "Temperamento", "Estilo social")
+        } else {
+            Triple("Unique personality of this individual:", "Temperament", "Social style")
+        }
+        return """
+            ${labels.first}
+            - ${labels.second}: ${personality.temperament.toPromptDescription()}
+            - ${labels.third}: ${personality.socialStyle.toPromptDescription()}
+            - ${if (languageTag.startsWith("ja", ignoreCase = true)) "話し方の特徴" else if (languageTag.startsWith("pt", ignoreCase = true)) "Jeito de falar" else "Speech quirk"}: ${personality.speechQuirk.toPromptDescription()}
+        """.trimIndent()
+    }
+
+    private fun moodDescription(mood: Int, languageTag: String): String {
+        val isJapanese = languageTag.startsWith("ja", ignoreCase = true)
+        val isPortuguese = languageTag.startsWith("pt", ignoreCase = true)
+        return when {
+            mood >= 80 -> if (isJapanese) "とても嬉しく元気" else if (isPortuguese) "muito contente e cheio de energia" else "very happy and energetic"
+            mood >= 50 -> if (isJapanese) "機嫌が良い" else if (isPortuguese) "de bom humor" else "in a good mood"
+            mood >= 20 -> if (isJapanese) "少し疲れている" else if (isPortuguese) "um pouco cansado" else "a little tired"
+            else -> if (isJapanese) "苛立っていて世話を必要としている" else if (isPortuguese) "mais irritado e precisando de atenção" else "irritated and in need of attention"
+        }
+    }
+
+    private fun unknown(languageTag: String) =
+        if (languageTag.startsWith("ja", ignoreCase = true)) "不明"
+        else if (languageTag.startsWith("pt", ignoreCase = true)) "desconhecida"
+        else "unknown"
+
+    private fun tamer(languageTag: String) =
+        if (languageTag.startsWith("ja", ignoreCase = true)) "あなたのテイマー"
+        else if (languageTag.startsWith("pt", ignoreCase = true)) "seu Tamer"
+        else "your Tamer"
+
+    private fun species(languageTag: String) =
+        if (languageTag.startsWith("ja", ignoreCase = true)) "種族"
+        else if (languageTag.startsWith("pt", ignoreCase = true)) "da espécie"
+        else "of the species"
 
     private fun stageName(stage: Int): String = when (stage) {
         1 -> "Baby I"
@@ -133,6 +226,6 @@ object DigimonPersonaBuilder {
         4 -> "Adult (Champion)"
         5 -> "Perfect (Ultimate)"
         6 -> "Ultimate (Mega)"
-        else -> "estágio desconhecido ($stage)"
+        else -> "unknown stage ($stage)"
     }
 }

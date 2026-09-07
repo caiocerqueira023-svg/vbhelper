@@ -49,14 +49,10 @@ class ChatRepository(
 
     suspend fun triggerReaction(characterId: Long, eventDescription: String): String {
         val (systemPrompt, individualId) = buildSystemPromptAndIndividualId(characterId)
-        val instruction = """
-            [Evento real do relógio] $eventDescription
-
-            Reaja diretamente ao seu Tamer, priorizando uma fala natural do Digimon em 1 ou 2
-            frases curtas. Use no máximo uma breve ação entre asteriscos se ela ajudar a expressar
-            a reação. Não escreva falas, pensamentos ou ações do Tamer, não invente eventos e
-            termine de modo que o Tamer possa responder.
-        """.trimIndent()
+        val instruction = PromptLocalization.reactionInstruction(
+            PromptLocalization.currentLanguageTag(),
+            eventDescription
+        )
         val reply = requestCompletion(systemPrompt, individualId, instruction)
         chatDao.insertMessage(
             ChatMessageEntity(
@@ -82,13 +78,15 @@ class ChatRepository(
         val speciesProfile = database.speciesProfileDao().getByCardCharacterId(userCharacter.charId)
         val promptTemplate = llmSettingsRepository.systemPromptTemplate.first()
         val tamerName = llmSettingsRepository.tamerName.first()
+        val languageTag = PromptLocalization.currentLanguageTag()
         return DigimonPersonaBuilder.buildSystemPrompt(
             character,
             card?.name ?: "desconhecido",
             speciesProfile,
             promptTemplate,
             personality,
-            tamerName
+            tamerName,
+            languageTag
         ) to userCharacter.individualId
     }
 

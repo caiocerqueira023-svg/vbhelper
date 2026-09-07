@@ -9,6 +9,7 @@ import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.domain.device_data.BECharacterData
 import com.github.nacabaro.vbhelper.domain.device_data.VBCharacterData
 import com.github.nacabaro.vbhelper.dtos.ItemDtos
+import com.github.nacabaro.vbhelper.chat.PromptLocalization
 import com.github.nacabaro.vbhelper.utils.DeviceType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -136,8 +137,10 @@ class ItemsScreenControllerImpl (
                 runCatching {
                     chatRepository.triggerReaction(
                         characterId,
-                        "Seu Tamer acabou de usar o item \"${item.name}\" em você. " +
-                            "Reaja diretamente ao efeito de receber esse item."
+                        PromptLocalization.itemEvent(
+                            PromptLocalization.currentLanguageTag(),
+                            item.name
+                        )
                     )
                 }.onFailure {
                     Timber.e(it, "Falha ao gerar reação ao uso do item")

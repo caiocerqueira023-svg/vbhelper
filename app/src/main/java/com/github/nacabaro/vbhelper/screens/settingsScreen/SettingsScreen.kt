@@ -32,6 +32,7 @@ import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
 import com.github.nacabaro.vbhelper.screens.settingsScreen.dialogs.LlmSettingsDialog
 import com.github.nacabaro.vbhelper.screens.settingsScreen.dialogs.PromptTemplateDialog
+import com.github.nacabaro.vbhelper.screens.settingsScreen.dialogs.LanguageDialog
 import com.github.nacabaro.vbhelper.R
 import androidx.compose.material3.OutlinedTextField
 
@@ -50,6 +51,8 @@ fun SettingsScreen(
     val currentTamerName by settingsScreenController.currentTamerName.collectAsState(initial = "")
     val showPromptTemplateDialog by settingsScreenController.showPromptTemplateDialog.collectAsState()
     val promptOriginAtImport by settingsScreenController.promptOriginAtImportTime.collectAsState(initial = false)
+    val currentLanguage by settingsScreenController.currentLanguage.collectAsState()
+    var showLanguageDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -86,6 +89,17 @@ fun SettingsScreen(
             }
 
             SettingsSection(title = stringResource(R.string.settings_section_llm_chat))
+            SettingsEntry(
+                title = "Idioma",
+                description = when (currentLanguage) {
+                    "en" -> "English"
+                    "pt-BR" -> "Português (Brasil)"
+                    "ja" -> "日本語"
+                    else -> "Idioma do sistema"
+                }
+            ) {
+                showLanguageDialog = true
+            }
             var tamerName by remember(currentTamerName) { mutableStateOf(currentTamerName) }
             OutlinedTextField(
                 value = tamerName,
@@ -183,6 +197,17 @@ fun SettingsScreen(
             currentTemplate = currentSystemPromptTemplate,
             onDismiss = { settingsScreenController.dismissPromptTemplateDialog() },
             onSave = settingsScreenController::savePromptTemplate
+        )
+    }
+
+    if (showLanguageDialog) {
+        LanguageDialog(
+            selectedLanguage = currentLanguage,
+            onLanguageSelected = {
+                settingsScreenController.setLanguage(it)
+                showLanguageDialog = false
+            },
+            onDismiss = { showLanguageDialog = false }
         )
     }
 }

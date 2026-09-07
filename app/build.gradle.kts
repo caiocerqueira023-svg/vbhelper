@@ -71,6 +71,7 @@ dependencies {
     implementation(project(":vb-nfc-reader"))
     implementation(project(":vb-dim-reader"))
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.appcompat)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.navigation.compose)

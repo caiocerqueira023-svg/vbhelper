@@ -33,10 +33,13 @@ class DigimonDiaryService(
                 .count { it.transformationDate > lastEntry }
             chatRepository.triggerReaction(
                 characterId,
-                "Escreva um diário curto de 1 ou 2 frases sobre os últimos dias. " +
-                    "Fatos reais: foram registrados cerca de $vitals vitais, " +
-                    "$transformations evolução(ões), ${character.totalBattlesWon} vitórias " +
-                    "e ${character.totalBattlesLost} derrotas."
+                PromptLocalization.diaryPrompt(
+                    PromptLocalization.currentLanguageTag(),
+                    vitals,
+                    transformations,
+                    character.totalBattlesWon,
+                    character.totalBattlesLost
+                )
             )
             database.digimonIndividualDao().updateLastDiaryEntry(character.individualId, now)
         }.onFailure { Timber.e(it, "Falha ao gerar diário do Digimon") }

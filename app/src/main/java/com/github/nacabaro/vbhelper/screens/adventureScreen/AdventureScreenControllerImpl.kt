@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.dtos.ItemDtos
+import com.github.nacabaro.vbhelper.chat.PromptLocalization
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -37,7 +38,10 @@ class AdventureScreenControllerImpl(
             runCatching {
                 application.container.chatRepository.triggerReaction(
                     characterId,
-                    "Você está partindo para uma aventura real de $timeInMinutes minutos agora."
+                    PromptLocalization.adventureStarted(
+                        PromptLocalization.currentLanguageTag(),
+                        timeInMinutes
+                    )
                 )
             }.onFailure { /* A aventura não deve falhar por indisponibilidade do LLM. */ }
         }
@@ -59,8 +63,11 @@ class AdventureScreenControllerImpl(
             runCatching {
                 application.container.chatRepository.triggerReaction(
                     characterId,
-                    "Você voltou de uma aventura real e trouxe ${generatedItem.itemName} " +
-                        "e $generatedCurrency créditos. Conte essa descoberta ao seu tamer."
+                    PromptLocalization.adventureReturned(
+                        PromptLocalization.currentLanguageTag(),
+                        generatedItem.itemName,
+                        generatedCurrency
+                    )
                 )
             }.onFailure { /* A recompensa continua válida mesmo sem resposta do LLM. */ }
 

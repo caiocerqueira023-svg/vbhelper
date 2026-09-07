@@ -21,6 +21,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 
 
 class SettingsScreenControllerImpl(
@@ -51,6 +54,10 @@ class SettingsScreenControllerImpl(
     val showLlmDialog: StateFlow<Boolean> = _showLlmDialog
     private val _showPromptTemplateDialog = MutableStateFlow(false)
     val showPromptTemplateDialog: StateFlow<Boolean> = _showPromptTemplateDialog
+    private val _currentLanguage = MutableStateFlow(
+        AppCompatDelegate.getApplicationLocales().toLanguageTags().ifBlank { "system" }
+    )
+    val currentLanguage: StateFlow<String> = _currentLanguage.asStateFlow()
 
     init {
         filePickerLauncher = context.registerForActivityResult(
@@ -167,6 +174,17 @@ class SettingsScreenControllerImpl(
         context.lifecycleScope.launch(Dispatchers.IO) {
             speciesSettingsRepository.setPromptOriginAtImportTime(value)
         }
+    }
+
+    fun setLanguage(languageTag: String) {
+        _currentLanguage.value = languageTag
+        AppCompatDelegate.setApplicationLocales(
+            if (languageTag == "system") {
+                LocaleListCompat.getEmptyLocaleList()
+            } else {
+                LocaleListCompat.forLanguageTags(languageTag)
+            }
+        )
     }
 
     private fun importCard(uri: Uri) {
