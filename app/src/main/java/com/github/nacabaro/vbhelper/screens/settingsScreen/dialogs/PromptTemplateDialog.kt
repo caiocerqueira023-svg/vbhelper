@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.github.nacabaro.vbhelper.chat.DigimonPersonaBuilder
+import androidx.compose.ui.res.stringResource
+import com.github.nacabaro.vbhelper.R
 
 @Composable
 fun PromptTemplateDialog(
@@ -37,7 +39,7 @@ fun PromptTemplateDialog(
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(dismissOnClickOutside = false)) {
         Card {
             Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
-                Text("Prompt do Digimon", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.ui_digimon_prompt), style = MaterialTheme.typography.titleMedium)
                 Text(
                     "Este texto orienta o jeito de falar enviado ao OpenRouter. Os dados do relógio são anexados separadamente e não podem ser alterados aqui.",
                     style = MaterialTheme.typography.bodySmall,
@@ -51,16 +53,16 @@ fun PromptTemplateDialog(
                 OutlinedTextField(
                     value = template,
                     onValueChange = { template = it },
-                    label = { Text("Prompt de sistema") },
+                    label = { Text(stringResource(R.string.ui_system_prompt)) },
                     minLines = 10,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = { template = DigimonPersonaBuilder.DEFAULT_SYSTEM_PROMPT_TEMPLATE.trimIndent() }) {
-                        Text("Restaurar padrão")
+                        Text(stringResource(R.string.ui_restore_default))
                     }
-                    TextButton(onClick = onDismiss) { Text("Cancelar") }
-                    Button(onClick = { onSave(template.trim().ifBlank { null }) }) { Text("Salvar") }
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.ui_cancel)) }
+                    Button(onClick = { onSave(template.trim().ifBlank { null }) }) { Text(stringResource(R.string.ui_save)) }
                 }
             }
         }

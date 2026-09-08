@@ -376,7 +376,7 @@ class CompanionImportCardActivity : ComponentActivity() {
             importPercent.value = 0
             withContext(Dispatchers.Main) {
                 val reason = failedNodes.firstOrNull() ?: "No watch accepted the transfer"
-                Toast.makeText(this@CompanionImportCardActivity, "Card transfer failed: $reason", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@CompanionImportCardActivity, getString(R.string.ui_card_transfer_failed, reason), Toast.LENGTH_LONG).show()
             }
             return false
         }
@@ -397,4 +397,3 @@ class CompanionImportCardActivity : ComponentActivity() {
         return true
     }
 }
-

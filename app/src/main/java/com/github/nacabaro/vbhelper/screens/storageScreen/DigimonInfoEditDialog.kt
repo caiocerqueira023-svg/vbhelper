@@ -24,6 +24,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.res.stringResource
+import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
 import com.github.nacabaro.vbhelper.domain.personality.toDisplayName
@@ -65,7 +67,7 @@ fun DigimonInfoEditDialog(
                     .padding(16.dp)
                     .verticalScroll(rememberScrollState())
             ) {
-                Text("Informações do Digimon", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.ui_digimon_info), style = MaterialTheme.typography.titleMedium)
                 Text(
                     "Card \"$cardName\". O apelido pertence ao indivíduo; os demais campos pertencem à espécie.",
                     style = MaterialTheme.typography.bodySmall,
@@ -75,7 +77,7 @@ fun DigimonInfoEditDialog(
                 OutlinedTextField(
                     value = editedNickname,
                     onValueChange = { editedNickname = it },
-                    label = { Text("Apelido") },
+                    label = { Text(stringResource(R.string.ui_nickname)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -83,7 +85,7 @@ fun DigimonInfoEditDialog(
                 OutlinedTextField(
                     value = speciesName,
                     onValueChange = { speciesName = it },
-                    label = { Text("Nome da espécie *") },
+                    label = { Text(stringResource(R.string.ui_species_name_required)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -91,7 +93,7 @@ fun DigimonInfoEditDialog(
                 OutlinedTextField(
                     value = level,
                     onValueChange = { level = it },
-                    label = { Text("Nível") },
+                    label = { Text(stringResource(R.string.ui_level)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -99,7 +101,7 @@ fun DigimonInfoEditDialog(
                 OutlinedTextField(
                     value = type,
                     onValueChange = { type = it },
-                    label = { Text("Tipo") },
+                    label = { Text(stringResource(R.string.ui_type)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -107,28 +109,28 @@ fun DigimonInfoEditDialog(
                 OutlinedTextField(
                     value = description,
                     onValueChange = { description = it },
-                    label = { Text("Perfil") },
+                    label = { Text(stringResource(R.string.ui_profile)) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = specialMoves,
                     onValueChange = { specialMoves = it },
-                    label = { Text("Golpes especiais, separados por vírgula") },
+                    label = { Text(stringResource(R.string.ui_special_moves)) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 if (personality != null) {
                     Spacer(Modifier.height(12.dp))
-                    Text("Personalidade deste indivíduo", style = MaterialTheme.typography.titleSmall)
-                    Text("Temperamento: ${personality.temperament.toDisplayName()}")
-                    Text("Estilo social: ${personality.socialStyle.toDisplayName()}")
-                    Text("Maneirismo de fala: ${personality.speechQuirk.toDisplayName()}")
+                    Text(stringResource(R.string.ui_individual_personality), style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(R.string.ui_temperament, personality.temperament.toDisplayName()))
+                    Text(stringResource(R.string.ui_social_style, personality.socialStyle.toDisplayName()))
+                    Text(stringResource(R.string.ui_speech_quirk, personality.speechQuirk.toDisplayName()))
                 }
                 Row(
                     Modifier.fillMaxWidth().padding(top = 8.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(onClick = onDismiss) { Text("Cancelar") }
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.ui_cancel)) }
                     Button(
                         enabled = speciesName.isNotBlank(),
                         onClick = {
@@ -146,7 +148,7 @@ fun DigimonInfoEditDialog(
                             )
                         }
                     ) {
-                        Text("Salvar")
+                        Text(stringResource(R.string.ui_save))
                     }
                 }
             }

@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -48,7 +49,7 @@ fun TopBanner(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.baseline_settings_24),
-                    contentDescription = "Settings"
+                    contentDescription = stringResource(R.string.ui_settings)
                 )
             }
         } else if (onAdventureClick != null) {
@@ -59,7 +60,7 @@ fun TopBanner(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.baseline_fort_24),
-                    contentDescription = "Adventure"
+                    contentDescription = stringResource(R.string.ui_adventure)
                 )
             }
         } else if (onModifyClick != null) {
@@ -70,7 +71,7 @@ fun TopBanner(
              ) {
                  Icon(
                      painter = painterResource(R.drawable.baseline_edit_24),
-                     contentDescription = "Adventure"
+                     contentDescription = stringResource(R.string.ui_adventure)
                  )
              }
          }
@@ -83,7 +84,7 @@ fun TopBanner(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.baseline_nfc_24),
-                    contentDescription = "Scan"
+                    contentDescription = stringResource(R.string.ui_scan)
                 )
             }
         } else if (onBackClick != null) {
@@ -94,7 +95,7 @@ fun TopBanner(
             ) {
                 Icon(
                     painter = painterResource(R.drawable.baseline_arrow_back_24),
-                    contentDescription = "Settings"
+                    contentDescription = stringResource(R.string.ui_back_icon)
                 )
             }
         }

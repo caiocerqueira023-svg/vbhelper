@@ -259,9 +259,8 @@ fun TransferCompleteScreen(
                 onClick = onClickOk,
                 modifier = Modifier.padding(top = 32.dp, bottom = 16.dp)
             ) {
-                Text("OK")
+                Text(stringResource(R.string.ui_ok))
             }
         }
     }
 }
-

@@ -12,6 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.github.nacabaro.vbhelper.R
 
 private data class LanguageOption(
     val tag: String,
@@ -33,7 +35,7 @@ fun LanguageDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Idioma do aplicativo") },
+        title = { Text(stringResource(R.string.ui_language)) },
         text = {
             Column {
                 languages.forEach { language ->
@@ -54,7 +56,7 @@ fun LanguageDialog(
         },
         confirmButton = {
             TextButton(onClick = onDismiss) {
-                Text("Fechar")
+                Text(stringResource(R.string.ui_close_dialog))
             }
         }
     )

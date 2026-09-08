@@ -90,7 +90,7 @@ fun SettingsScreen(
 
             SettingsSection(title = stringResource(R.string.settings_section_llm_chat))
             SettingsEntry(
-                title = "Idioma",
+                title = stringResource(R.string.ui_language),
                 description = when (currentLanguage) {
                     "en" -> "English"
                     "pt-BR" -> "Português (Brasil)"
@@ -104,13 +104,13 @@ fun SettingsScreen(
             OutlinedTextField(
                 value = tamerName,
                 onValueChange = { tamerName = it },
-                label = { Text("Nome do Tamer") },
-                supportingText = { Text("Esse nome será usado pelos Digimon durante as conversas.") },
+                label = { Text(stringResource(R.string.ui_tamer_name)) },
+                supportingText = { Text(stringResource(R.string.ui_tamer_name_help)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
             )
             SettingsEntry(
-                title = "Salvar nome do Tamer",
+                title = stringResource(R.string.ui_save_tamer_name),
                 description = "Nome atual: ${currentTamerName.ifBlank { "não definido" }}"
             ) {
                 settingsScreenController.saveTamerName(tamerName)
@@ -134,7 +134,7 @@ fun SettingsScreen(
                 modifier = Modifier.fillMaxWidth().padding(16.dp)
             ) {
                 Column(Modifier.weight(1f)) {
-                    Text("Perguntar origem do card no import")
+                    Text(stringResource(R.string.ui_ask_card_origin))
                     Text(
                         "Se desligado, a origem pode ser definida na lista de cards.",
                         fontSize = 12.sp,

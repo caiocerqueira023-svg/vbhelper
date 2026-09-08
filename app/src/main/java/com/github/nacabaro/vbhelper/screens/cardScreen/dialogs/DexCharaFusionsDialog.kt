@@ -23,6 +23,8 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.github.nacabaro.vbhelper.R
 import androidx.compose.ui.window.Dialog
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.getImageBitmap
@@ -173,7 +175,7 @@ fun DexCharaFusionsDialog(
                                         .padding(16.dp)
                                 )
                                 Column {
-                                    Text("Combine with ${it.fusionAttribute}")
+                                    Text(stringResource(R.string.ui_combine_with, it.fusionAttribute))
                                 }
                             }
                         }
@@ -183,7 +185,7 @@ fun DexCharaFusionsDialog(
                 Button(
                     onClick = onClickDismiss
                 ) {
-                    Text("Close")
+                    Text(stringResource(R.string.ui_close))
                 }
             }
         }

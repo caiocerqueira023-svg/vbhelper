@@ -13,6 +13,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import com.github.nacabaro.vbhelper.battle.BattleAuthContainer
+import com.github.nacabaro.vbhelper.R
 
 class RetrofitHelper {
     
@@ -94,11 +95,11 @@ class RetrofitHelper {
             }
             429 -> {
                 println("RetrofitHelper: Rate limit exceeded (429)")
-                Toast.makeText(context, "Too many requests. Please wait a moment.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.ui_too_many_requests), Toast.LENGTH_SHORT).show()
             }
             else -> {
                 println("RetrofitHelper: API error (${response.code()}): $errorMessage")
-                Toast.makeText(context, "Request failed: ${response.code()}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.ui_request_failed, response.code()), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -129,7 +130,7 @@ class RetrofitHelper {
             val retrofit = createAuthenticatedRetrofit(context)
             if (retrofit == null) {
                 println("RetrofitHelper: Cannot create authenticated Retrofit - no token available")
-                Toast.makeText(context, "Authentication required. Please log in.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.ui_auth_required), Toast.LENGTH_SHORT).show()
                 return
             }
 
@@ -148,7 +149,7 @@ class RetrofitHelper {
                 override fun onFailure(call: Call<OpponentsDataModel>, t: Throwable) {
                     println("RetrofitHelper: API call failed: ${t.message}")
                     t.printStackTrace()
-                    Toast.makeText(context, "Request Fail", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.ui_request_fail), Toast.LENGTH_SHORT).show()
                 }
 
                 override fun onResponse(call: Call<OpponentsDataModel>, response: Response<OpponentsDataModel>) {
@@ -169,7 +170,7 @@ class RetrofitHelper {
         } catch (e: Exception) {
             println("RetrofitHelper: Exception in getOpponents: ${e.message}")
             e.printStackTrace()
-            Toast.makeText(context, "Request failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.ui_request_failed, e.message), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -195,7 +196,7 @@ class RetrofitHelper {
 
             override fun onFailure(call: Call<CombatDataModel>, t: Throwable) {
                 // This method is called when the API request fails.
-                Toast.makeText(context, "Request Fail", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.ui_request_fail), Toast.LENGTH_SHORT).show()
             }
 
             override fun onResponse(call: Call<CombatDataModel>, response: Response<CombatDataModel>) {
@@ -235,7 +236,7 @@ class RetrofitHelper {
 
             override fun onFailure(call: Call<BattleDataModel>, t: Throwable) {
                 // This method is called when the API request fails.
-                Toast.makeText(context, "Request Fail", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.ui_request_fail), Toast.LENGTH_SHORT).show()
             }
 
             override fun onResponse(call: Call<BattleDataModel>, response: Response<BattleDataModel>) {
@@ -266,7 +267,7 @@ class RetrofitHelper {
             val retrofit = createAuthenticatedRetrofit(context)
             if (retrofit == null) {
                 println("RetrofitHelper: Cannot create authenticated Retrofit - no token available")
-                Toast.makeText(context, "Authentication required. Please log in.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.ui_auth_required), Toast.LENGTH_SHORT).show()
                 return
             }
 
@@ -286,7 +287,7 @@ class RetrofitHelper {
                     // This method is called when the API request fails.
                     println("RetrofitHelper: PVP API call failed: ${t.message}")
                     t.printStackTrace()
-                    Toast.makeText(context, "Request Fail", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.ui_request_fail), Toast.LENGTH_SHORT).show()
                 }
 
                 override fun onResponse(call: Call<PVPDataModel>, response: Response<PVPDataModel>) {
@@ -311,7 +312,7 @@ class RetrofitHelper {
         } catch (e: Exception) {
             println("RetrofitHelper: Exception in getPVPWinner: ${e.message}")
             e.printStackTrace()
-            Toast.makeText(context, "Request failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.ui_request_failed, e.message), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -320,7 +321,7 @@ class RetrofitHelper {
         
         if (token.isEmpty()) {
             println("RetrofitHelper: ERROR - Token is empty!")
-            Toast.makeText(context, "Authentication failed: Token is empty", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.ui_auth_token_empty), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -348,7 +349,7 @@ class RetrofitHelper {
                 override fun onFailure(call: Call<AuthenticateResponse>, t: Throwable) {
                     println("RetrofitHelper: Validate API call failed: ${t.message}")
                     t.printStackTrace()
-                    Toast.makeText(context, "Authentication failed: ${t.message}", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.ui_auth_failed, t.message), Toast.LENGTH_SHORT).show()
                 }
 
                 override fun onResponse(call: Call<AuthenticateResponse>, response: Response<AuthenticateResponse>) {
@@ -359,19 +360,19 @@ class RetrofitHelper {
                             callback(authResponse)
                         } else {
                             println("RetrofitHelper: Validation failed: Invalid response body")
-                            Toast.makeText(context, "Authentication failed: Invalid response", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, context.getString(R.string.ui_auth_invalid_response), Toast.LENGTH_SHORT).show()
                         }
                     } else {
                         val errorBody = response.errorBody()?.string()
                         println("RetrofitHelper: Validate response not successful - Code: ${response.code()}, Error: $errorBody")
-                        Toast.makeText(context, "Authentication failed: ${response.code()}", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.ui_auth_failed, response.code()), Toast.LENGTH_SHORT).show()
                     }
                 }
             })
         } catch (e: Exception) {
             println("RetrofitHelper: Exception in validate: ${e.message}")
             e.printStackTrace()
-            Toast.makeText(context, "Authentication failed: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, context.getString(R.string.ui_auth_failed, e.message), Toast.LENGTH_SHORT).show()
         }
     }
 }

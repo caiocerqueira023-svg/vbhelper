@@ -23,6 +23,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.res.stringResource
+import com.github.nacabaro.vbhelper.R
 import androidx.compose.ui.window.DialogProperties
 
 @Composable
@@ -57,7 +59,7 @@ fun LlmSettingsDialog(
                 Spacer2()
 
                 Text(
-                    text = "Crie uma chave gratuita em openrouter.ai/keys e cole abaixo.",
+                    text = stringResource(R.string.ui_api_key_help),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline
                 )
@@ -67,7 +69,7 @@ fun LlmSettingsDialog(
                 OutlinedTextField(
                     value = apiKey,
                     onValueChange = { apiKey = it },
-                    label = { Text("API key") },
+                    label = { Text(stringResource(R.string.ui_api_key)) },
                     singleLine = true,
                     visualTransformation = if (showKey) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
@@ -75,7 +77,7 @@ fun LlmSettingsDialog(
                 )
 
                 TextButton(onClick = { showKey = !showKey }) {
-                    Text(if (showKey) "Ocultar chave" else "Mostrar chave")
+                    Text(stringResource(if (showKey) R.string.ui_hide_key else R.string.ui_show_key))
                 }
 
                 Spacer2()
@@ -83,9 +85,9 @@ fun LlmSettingsDialog(
                 OutlinedTextField(
                     value = model,
                     onValueChange = { model = it },
-                    label = { Text("Modelo") },
+                    label = { Text(stringResource(R.string.ui_model)) },
                     singleLine = true,
-                    placeholder = { Text("ex: meta-llama/llama-3.1-8b-instruct:free") },
+                    placeholder = { Text(stringResource(R.string.ui_model_example)) },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -97,14 +99,14 @@ fun LlmSettingsDialog(
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) {
-                        Text("Cancelar")
+                        Text(stringResource(R.string.ui_cancel))
                     }
                     Button(
                         enabled = apiKey.isNotBlank(),
                         onClick = { onSave(apiKey, model) },
                         modifier = Modifier.padding(start = 8.dp)
                     ) {
-                        Text("Salvar")
+                        Text(stringResource(R.string.ui_save))
                     }
                 }
             }

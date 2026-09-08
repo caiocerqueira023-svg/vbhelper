@@ -23,6 +23,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.res.stringResource
+import com.github.nacabaro.vbhelper.R
 import androidx.compose.ui.window.DialogProperties
 
 data class SpeciesManualEditResult(
@@ -54,7 +56,7 @@ fun SpeciesManualEditDialog(
             Column(
                 Modifier.padding(16.dp).verticalScroll(rememberScrollState())
             ) {
-                Text("Como se chama essa espécie?", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.ui_species_question), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(4.dp))
                 Text(
                     "Card \"$cardName\". Apenas o nome é obrigatório.",
@@ -62,23 +64,23 @@ fun SpeciesManualEditDialog(
                     color = MaterialTheme.colorScheme.outline
                 )
                 Spacer(Modifier.height(12.dp))
-                OutlinedTextField(name, { name = it }, label = { Text("Nome da espécie *") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.ui_species_name_required)) }, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(level, { level = it }, label = { Text("Nível (opcional)") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(level, { level = it }, label = { Text(stringResource(R.string.ui_optional_level)) }, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(type, { type = it }, label = { Text("Tipo (opcional)") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(type, { type = it }, label = { Text(stringResource(R.string.ui_optional_type)) }, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(specialMoves, { specialMoves = it }, label = { Text("Golpes especiais, separados por vírgula") }, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(specialMoves, { specialMoves = it }, label = { Text(stringResource(R.string.ui_special_moves)) }, modifier = Modifier.fillMaxWidth())
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = profile,
                     onValueChange = { profile = it },
-                    label = { Text("Perfil (opcional)") },
+                    label = {                     Text(stringResource(R.string.ui_optional_profile)) },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = onSkip) { Text("Pular") }
-                    TextButton(onClick = onDismiss) { Text("Cancelar") }
+                    TextButton(onClick = onSkip) { Text(stringResource(R.string.ui_skip)) }
+                    TextButton(onClick = onDismiss) { Text(stringResource(R.string.ui_cancel)) }
                     Button(
                         enabled = name.isNotBlank(),
                         onClick = {
@@ -92,7 +94,7 @@ fun SpeciesManualEditDialog(
                                 )
                             )
                         }
-                    ) { Text("Salvar") }
+                    ) { Text(stringResource(R.string.ui_save)) }
                 }
             }
         }

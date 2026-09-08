@@ -10,6 +10,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.compose.ui.res.stringResource
+import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.screens.chatScreen.dialogs.SpeciesManualEditDialog
 
@@ -134,7 +136,7 @@ fun ChatScreen(
                     value = input,
                     onValueChange = { input = it },
                     modifier = Modifier.weight(1f),
-                    placeholder = { Text("Fale com seu Digimon...") },
+                    placeholder = { Text(stringResource(R.string.ui_chat_placeholder)) },
                     enabled = !sending
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -151,7 +153,7 @@ fun ChatScreen(
                         }
                     }
                 ) {
-                    Text("Enviar")
+                    Text(stringResource(R.string.ui_send))
                 }
             }
         }

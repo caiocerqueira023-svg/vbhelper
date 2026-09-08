@@ -32,6 +32,8 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.res.stringResource
+import com.github.nacabaro.vbhelper.R
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.platform.LocalContext
@@ -1161,7 +1163,7 @@ fun MiddleBattleView(
                  ),
                  shape = RoundedCornerShape(8.dp)
              ) {
-                 Text("Attack", color = Color.White, fontSize = 12.sp)
+                 Text(stringResource(R.string.ui_attack), color = Color.White, fontSize = 12.sp)
              }
         }
     }
@@ -1790,7 +1792,7 @@ fun BattlesScreen() {
                             isCheckingAuth = false
                             userId = extractedUserId
                             println("BATTLESCREEN: Authentication successful, userId: $extractedUserId")
-                            android.widget.Toast.makeText(context, "Authentication successful!", android.widget.Toast.LENGTH_SHORT).show()
+                            android.widget.Toast.makeText(context, context.getString(R.string.ui_auth_success), android.widget.Toast.LENGTH_SHORT).show()
                         }
                     } else {
                         println("BATTLESCREEN: Authentication failed: ${response.message}")
@@ -1825,7 +1827,7 @@ fun BattlesScreen() {
                         }
                         // Show toast on main thread
                         kotlinx.coroutines.CoroutineScope(Dispatchers.Main).launch {
-                            android.widget.Toast.makeText(context, "Authentication failed: ${response.message}", android.widget.Toast.LENGTH_SHORT).show()
+                            android.widget.Toast.makeText(context, context.getString(R.string.ui_auth_failed, response.message), android.widget.Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
@@ -2171,7 +2173,7 @@ fun BattlesScreen() {
                 Button(
             onClick = { currentView = "main" }
         ) {
-            Text("Back")
+            Text(stringResource(R.string.ui_back))
         }
     }
 
@@ -2232,16 +2234,16 @@ fun BattlesScreen() {
                         ) {
                             // Show active character info
                             activeUserCharacter?.let { character ->
-                                Text("Active character:")
-                                Text("Stage: ${character.stage}")
+                                Text(stringResource(R.string.ui_active_character))
+                                Text(stringResource(R.string.ui_stage, character.stage))
                                 activeCardId?.let { cardId ->
-                                    Text("Character ID: $cardId", fontSize = 14.sp, color = Color.Blue, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.ui_character_id, cardId), fontSize = 14.sp, color = Color.Blue, fontWeight = FontWeight.Bold)
                                 }
                                 
                                 Spacer(modifier = Modifier.height(16.dp))
                                 
                                 if (canBattle) {
-                                    Text("Available Opponents:", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                                    Text(stringResource(R.string.ui_available_opponents), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                                     //Text("Debug: opponentsList.size = ${opponentsList.size}", fontSize = 12.sp, color = Color.Gray)
                                     Spacer(modifier = Modifier.height(8.dp))
                                     
@@ -2325,24 +2327,24 @@ fun BattlesScreen() {
                                                     },
                                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Text("Battle ${opponent.displayName?.takeIf { it.isNotBlank() } ?: opponent.name}")
+                                    Text(stringResource(R.string.ui_battle_opponent, opponent.displayName?.takeIf { it.isNotBlank() } ?: opponent.name))
                                 }
                             }
                                         }
                                     } else {
-                                        Text("No opponents available for your stage", 
+                                        Text(stringResource(R.string.ui_no_opponents), 
                                              fontSize = 16.sp, 
                                              color = Color(0xFFFFA500), // Orange color
                                              textAlign = TextAlign.Center)
                                     }
                                 } else {
-                                    Text("Your character must be at least Stage 2 to battle",
+                                    Text(stringResource(R.string.ui_stage_requirement),
                                          fontSize = 16.sp, 
                                          color = Color.Red,
                                          textAlign = TextAlign.Center)
                                 }
                             } ?: run {
-                                Text("No active character found in database", fontSize = 16.sp, color = Color.Red)
+                                Text(stringResource(R.string.ui_no_active_character), fontSize = 16.sp, color = Color.Red)
                             }
                         }
                     }
@@ -2571,7 +2573,7 @@ fun BattlesScreen() {
                             modifier = Modifier.align(Alignment.TopCenter),
                             colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
                         ) {
-                            Text("Exit", color = Color.White)
+                            Text(stringResource(R.string.ui_exit), color = Color.White)
                         }
                     }
                 }
@@ -2760,17 +2762,17 @@ fun ResumeMatchDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text("Ongoing Match Found", fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.ui_ongoing_match), fontWeight = FontWeight.Bold)
         },
         text = {
             Column {
-                Text("You have an ongoing match:")
+                Text(stringResource(R.string.ui_ongoing_match_description))
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Round: ${matchState.currentRound + 1}", fontWeight = FontWeight.Bold)
-                Text("Your HP: ${matchState.playerHP}")
-                Text("Opponent HP: ${matchState.opponentHP}")
+                Text(stringResource(R.string.ui_round, matchState.currentRound + 1), fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_your_hp, matchState.playerHP))
+                Text(stringResource(R.string.ui_opponent_hp, matchState.opponentHP))
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("What would you like to do?")
+                Text(stringResource(R.string.ui_what_to_do))
             }
         },
         confirmButton = {
@@ -2778,7 +2780,7 @@ fun ResumeMatchDialog(
                 onClick = onResume,
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Green)
             ) {
-                Text("Resume Match")
+                Text(stringResource(R.string.ui_resume_match))
             }
         },
         dismissButton = {
@@ -2786,7 +2788,7 @@ fun ResumeMatchDialog(
                 onClick = onQuit,
                 colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
             ) {
-                Text("Quit & Start New")
+                Text(stringResource(R.string.ui_quit_new_match))
             }
         }
     )

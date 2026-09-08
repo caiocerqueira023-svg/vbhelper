@@ -130,11 +130,14 @@ class CompanionFirmwareImportActivity : ComponentActivity() {
                 Timber.e(e, "Failed to send firmware to watch")
                 transferStatus.value = "Transfer failed: ${e.message ?: "unknown"}"
                 withContext(Dispatchers.Main) {
-                    Toast.makeText(this@CompanionFirmwareImportActivity, "Firmware transfer failed: ${e.message ?: "unknown error"}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this@CompanionFirmwareImportActivity,
+                        getString(R.string.ui_firmware_transfer_failed, e.message ?: getString(R.string.ui_unknown_error)),
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
                 importState.value = FirmwareImportState.PickFirmware
             }
         }
     }
 }
-
