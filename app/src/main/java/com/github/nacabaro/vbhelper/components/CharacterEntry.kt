@@ -56,6 +56,7 @@ fun CharacterEntry(
     multiplier: Int = 4,
     idleFrame2: BitmapData? = null,
     speechBubbleText: String? = null,
+    statusText: String? = null,
     cardColors: CardColors = CardDefaults.cardColors(
         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
     ),
@@ -103,6 +104,24 @@ fun CharacterEntry(
                 .fillMaxSize()
                 .padding(4.dp)
         ) {
+            if (!statusText.isNullOrBlank()) {
+                Card(
+                    shape = MaterialTheme.shapes.small,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    ),
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .padding(4.dp)
+                ) {
+                    Text(
+                        text = statusText,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 2
+                    )
+                }
+            }
             if (!speechBubbleText.isNullOrBlank()) {
                 Card(
                     shape = MaterialTheme.shapes.small,

@@ -98,6 +98,8 @@
     <string name="card_view_discovered_characters">解放済みキャラクター</string>
     <string name="dex_chara_icon_description">キャラクターアイコン</string>
     <string name="dex_chara_name_icon_description">名前</string>
+    <string name="dex_status_never_obtained">アプリ未登場</string>
+    <string name="dex_status_previously_obtained">以前アプリに存在</string>
     <string name="credits_section_reverse_engineering">プログラム解析</string>
     <string name="credits_section_app_development">アプリケーション開発</string>
     <string name="credits_cyanic_description">ファームウェアの解析を行い、開発をサポートしてくれました。</string>

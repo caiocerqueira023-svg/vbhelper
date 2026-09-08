@@ -207,6 +207,8 @@
 
     <string name="dex_chara_icon_description">Character icon</string>
     <string name="dex_chara_name_icon_description">Character name</string>
+    <string name="dex_status_never_obtained">Never in app</string>
+    <string name="dex_status_previously_obtained">Previously in app</string>
     <string name="dex_chara_stats">HP: %1$d, BP: %2$d, AP: %3$d</string>
     <string name="dex_chara_stage_attribute">Stg: %1$s, Atr: %2$s</string>
     <string name="dex_chara_unknown_name">\?\?\?\?\?\?\?\?\?\?\?\?\?\?\?\?</string>

@@ -65,7 +65,13 @@ fun CardViewScreen(
                     onClick = {
                         selectedCharacter.value = character
                     },
-                    obscure = character.discoveredOn == null,
+                    statusText = when {
+                        character.discoveredOn == null ->
+                            stringResource(R.string.dex_status_never_obtained)
+                        !character.isCurrentlyAvailable ->
+                            stringResource(R.string.dex_status_previously_obtained)
+                        else -> null
+                    },
                     icon = BitmapData(
                         bitmap = character.spriteIdle,
                         width = character.spriteWidth,
@@ -78,7 +84,7 @@ fun CardViewScreen(
         if (selectedCharacter.value != null) {
             DexCharaDetailsDialog(
                 currentChara = selectedCharacter.value!!,
-                obscure = selectedCharacter.value!!.discoveredOn == null,
+                obscure = false,
                 onClickClose = {
                     selectedCharacter.value = null
                 }

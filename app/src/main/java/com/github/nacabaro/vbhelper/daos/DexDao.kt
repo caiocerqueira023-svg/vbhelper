@@ -34,7 +34,10 @@ interface DexDao {
             c.baseBp as baseBp,
             c.baseAp as baseAp,
             c.stage as stage,
-            c.attribute as attribute
+            c.attribute as attribute,
+            EXISTS(
+                SELECT 1 FROM UserCharacter uc WHERE uc.charId = c.id
+            ) AS isCurrentlyAvailable
         FROM CardCharacter c
         JOIN Sprite s ON c.spriteId = s.id
         LEFT JOIN dex d ON c.id = d.id

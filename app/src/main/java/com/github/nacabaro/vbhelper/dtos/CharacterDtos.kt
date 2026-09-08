@@ -171,6 +171,7 @@ object CharacterDtos {
         val baseAp: Int,
         val stage: Int,
         val attribute: NfcCharacter.Attribute,
+        val isCurrentlyAvailable: Boolean,
     ) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -191,6 +192,7 @@ object CharacterDtos {
             if (baseAp != other.baseAp) return false
             if (stage != other.stage) return false
             if (attribute != other.attribute) return false
+            if (isCurrentlyAvailable != other.isCurrentlyAvailable) return false
 
             return true
         }
@@ -209,6 +211,7 @@ object CharacterDtos {
             result = 31 * result + baseAp
             result = 31 * result + stage
             result = 31 * result + attribute.hashCode()
+            result = 31 * result + isCurrentlyAvailable.hashCode()
             return result
         }
     }

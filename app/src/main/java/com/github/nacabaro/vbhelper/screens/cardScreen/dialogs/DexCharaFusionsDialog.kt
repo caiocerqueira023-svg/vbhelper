@@ -133,7 +133,7 @@ fun DexCharaFusionsDialog(
                         val selectedCharaImageBitmap = selectedCharaBitmap.getImageBitmap(
                             context = LocalContext.current,
                             multiplier = 4,
-                            obscure = it.discoveredOn == null
+                            obscure = false
                         )
 
                         Card (
@@ -163,10 +163,7 @@ fun DexCharaFusionsDialog(
                                         modifier = Modifier
                                             .size(selectedCharaImageBitmap.dpWidth)
                                             .padding(8.dp),
-                                        colorFilter = when (it.discoveredOn == null) {
-                                            true -> ColorFilter.tint(color = MaterialTheme.colorScheme.secondary)
-                                            false -> null
-                                        },
+                                        colorFilter = null,
                                         filterQuality = FilterQuality.None
                                     )
                                 }

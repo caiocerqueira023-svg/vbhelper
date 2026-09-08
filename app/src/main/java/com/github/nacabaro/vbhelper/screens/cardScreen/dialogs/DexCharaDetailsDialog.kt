@@ -210,6 +210,17 @@ fun DexCharaDetailsDialog(
                         }
                     }
                 }
+                if (!currentChara.isCurrentlyAvailable) {
+                    Text(
+                        text = if (currentChara.discoveredOn == null) {
+                            stringResource(R.string.dex_status_never_obtained)
+                        } else {
+                            stringResource(R.string.dex_status_previously_obtained)
+                        },
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.outline
+                    )
+                }
                 if (!obscure) {
                     Spacer(modifier = Modifier.height(12.dp))
                     Column {
@@ -275,7 +286,7 @@ fun DexCharaDetailsDialog(
                         val selectedCharaImageBitmap = selectedCharaBitmap.getImageBitmap(
                             context = LocalContext.current,
                             multiplier = 4,
-                            obscure = it.discoveredOn == null
+                            obscure = false
                         )
 
                         Card (
@@ -305,10 +316,7 @@ fun DexCharaDetailsDialog(
                                         modifier = Modifier
                                             .size(selectedCharaImageBitmap.dpWidth)
                                             .padding(8.dp),
-                                        colorFilter = when (it.discoveredOn == null) {
-                                            true -> ColorFilter.tint(color = MaterialTheme.colorScheme.secondary)
-                                            false -> null
-                                        },
+                                        colorFilter = null,
                                         filterQuality = FilterQuality.None
                                     )
                                 }
@@ -336,25 +344,6 @@ fun DexCharaDetailsDialog(
                                 }
                             }
 
-                            if (showSpeciesPicker) {
-                                SpeciesPickerDialog(
-                                    speciesNames = allSpeciesNames,
-                                    onDismiss = { showSpeciesPicker = false },
-                                    onSpeciesSelected = { selectedName ->
-                                        showSpeciesPicker = false
-                                        coroutineScope.launch(Dispatchers.IO) {
-                                            speciesRepository.saveManualProfile(
-                                                cardCharacterId = currentChara.id,
-                                                name = selectedName,
-                                                level = null,
-                                                type = null,
-                                                profile = null,
-                                                specialMoves = emptyList()
-                                            )
-                                        }
-                                    }
-                                )
-                            }
                         }
                     }
                 }
@@ -393,6 +382,26 @@ fun DexCharaDetailsDialog(
                 showFusions = false
             },
             obscure = obscure
+        )
+    }
+
+    if (showSpeciesPicker) {
+        SpeciesPickerDialog(
+            speciesNames = allSpeciesNames,
+            onDismiss = { showSpeciesPicker = false },
+            onSpeciesSelected = { selectedName ->
+                showSpeciesPicker = false
+                coroutineScope.launch(Dispatchers.IO) {
+                    speciesRepository.saveManualProfile(
+                        cardCharacterId = currentChara.id,
+                        name = selectedName,
+                        level = null,
+                        type = null,
+                        profile = null,
+                        specialMoves = emptyList()
+                    )
+                }
+            }
         )
     }
 }
