@@ -243,6 +243,7 @@
     <string name="storage_set_active">Set active</string>
     <string name="storage_send_on_adventure">Send on adventure</string>
     <string name="storage_delete_character">Delete character</string>
+    <string name="storage_delete_character_confirmation">Are you sure you want to delete this Digimon? This action cannot be undone.</string>
     <string name="storage_close">Close</string>
 
     <string name="home_vbdim_vitals">Vitals</string>
@@ -311,6 +312,10 @@
     <string name="ui_social_style">Social style: %1$s</string>
     <string name="ui_speech_quirk">Speech quirk: %1$s</string>
     <string name="ui_cancel">Cancel</string>
+    <string name="ui_delete">Delete</string>
+    <string name="ui_choose_species_from_dim">Choose species from this DIM Dex</string>
+    <string name="ui_delete_messages_title">Delete messages?</string>
+    <string name="ui_delete_messages_confirmation">The selected message and all messages sent after it will be deleted. Do you want to continue?</string>
     <string name="ui_save">Save</string>
     <string name="ui_species_question">What is this species called?</string>
     <string name="ui_optional_level">Level (optional)</string>

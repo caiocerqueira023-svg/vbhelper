@@ -68,6 +68,7 @@ fun ChatScreen(
     var input by remember { mutableStateOf("") }
     var sending by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var messagePendingDeletion by remember { mutableStateOf<Long?>(null) }
     val listState = rememberLazyListState()
 
     LaunchedEffect(messages.size) {
@@ -106,7 +107,7 @@ fun ChatScreen(
                             modifier = Modifier.combinedClickable(
                                 onClick = {},
                                 onLongClick = {
-                                    chatScreenController.deleteFromMessage(characterId, message.id)
+                                    messagePendingDeletion = message.id
                                 }
                             ),
                             colors = CardDefaults.cardColors(
@@ -121,6 +122,29 @@ fun ChatScreen(
                                 modifier = Modifier.padding(12.dp)
                             )
                         }
+                    }
+
+                    messagePendingDeletion?.let { messageId ->
+                        AlertDialog(
+                            onDismissRequest = { messagePendingDeletion = null },
+                            title = { Text(stringResource(R.string.ui_delete_messages_title)) },
+                            text = { Text(stringResource(R.string.ui_delete_messages_confirmation)) },
+                            dismissButton = {
+                                TextButton(onClick = { messagePendingDeletion = null }) {
+                                    Text(stringResource(R.string.ui_cancel))
+                                }
+                            },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        chatScreenController.deleteFromMessage(characterId, messageId)
+                                        messagePendingDeletion = null
+                                    }
+                                ) {
+                                    Text(stringResource(R.string.ui_delete))
+                                }
+                            }
+                        )
                     }
                 }
             }

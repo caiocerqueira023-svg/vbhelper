@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -48,7 +49,8 @@ private data class LoadedStorageCharacter(
     val character: CharacterDtos.CharacterWithSprites,
     val cardName: String,
     val speciesProfile: com.github.nacabaro.vbhelper.domain.species.SpeciesProfile?,
-    val personality: DigimonPersonalityTraits?
+    val personality: DigimonPersonalityTraits?,
+    val speciesDexNames: List<String>
 )
 
 @Composable
@@ -73,6 +75,8 @@ fun StorageDialog(
     var showInfoEditor by remember { mutableStateOf(false) }
     var speciesProfile by remember { mutableStateOf<com.github.nacabaro.vbhelper.domain.species.SpeciesProfile?>(null) }
     var personality by remember { mutableStateOf<DigimonPersonalityTraits?>(null) }
+    var speciesDexNames by remember { mutableStateOf<List<String>>(emptyList()) }
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
     val speciesRepository = remember {
         SpeciesRepository(application.container.db, application.container.speciesSettingsRepository)
     }
@@ -84,12 +88,18 @@ fun StorageDialog(
                 .getCardByCharacterIdSync(loadedCharacter.id)?.name.orEmpty()
             val loadedSpeciesProfile = speciesRepository
                 .getProfileForCharacter(loadedCharacter.charId)
+            val loadedCard = application.container.db.cardDao()
+                .getCardByCharacterIdSync(loadedCharacter.id)
+            val loadedSpeciesDexNames = loadedCard?.let {
+                speciesRepository.getSpeciesNamesForCard(it.id)
+            }.orEmpty()
             val loadedPersonality = storageRepository.getOrCreatePersonality(characterId)
             LoadedStorageCharacter(
                 character = loadedCharacter,
                 cardName = loadedCardName,
                 speciesProfile = loadedSpeciesProfile,
-                personality = loadedPersonality
+                personality = loadedPersonality,
+                speciesDexNames = loadedSpeciesDexNames
             )
         }
         character.value = loaded.character
@@ -97,6 +107,7 @@ fun StorageDialog(
         cardName = loaded.cardName
         speciesProfile = loaded.speciesProfile
         personality = loaded.personality
+        speciesDexNames = loaded.speciesDexNames
         characterSprite.value = BitmapData(
             bitmap = loaded.character.spriteIdle,
             width = loaded.character.spriteWidth,
@@ -197,7 +208,7 @@ fun StorageDialog(
                 Button(
                     modifier = Modifier
                         .fillMaxWidth(),
-                    onClick = onClickDelete
+                    onClick = { showDeleteConfirmation = true }
                 ) {
                     Text(text = stringResource(R.string.storage_delete_character))
                 }
@@ -227,6 +238,7 @@ fun StorageDialog(
             nickname = nickname,
             profile = speciesProfile,
             personality = personality,
+            speciesDexNames = speciesDexNames,
             onDismiss = { showInfoEditor = false },
             onSave = { result ->
                 coroutineScope.launch {
@@ -242,6 +254,31 @@ fun StorageDialog(
                     nickname = result.nickname.orEmpty()
                     speciesProfile = speciesRepository.getProfileForCharacter(character.value!!.charId)
                     showInfoEditor = false
+                }
+            }
+        )
+    }
+
+    if (showDeleteConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirmation = false },
+            title = { Text(stringResource(R.string.storage_delete_character)) },
+            text = { Text(stringResource(R.string.storage_delete_character_confirmation)) },
+            dismissButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = { showDeleteConfirmation = false }
+                ) {
+                    Text(stringResource(R.string.ui_cancel))
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDeleteConfirmation = false
+                        onClickDelete()
+                    }
+                ) {
+                    Text(stringResource(R.string.ui_delete))
                 }
             }
         )
