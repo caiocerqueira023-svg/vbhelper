@@ -35,6 +35,7 @@ class SettingsScreenControllerImpl(
     private val filePickerCard: ActivityResultLauncher<Array<String>>
     private val secretsImporter: SecretsImporter = ApkSecretsImporter()
     private val application = context.applicationContext as VBHelper
+    private val languagePreferences = context.getSharedPreferences("app_preferences", 0)
     private val secretsRepository: SecretsRepository = application.container.dataStoreSecretsRepository
     private val database: AppDatabase = application.container.db
     private val databaseManagementController = DatabaseManagementController(
@@ -55,7 +56,8 @@ class SettingsScreenControllerImpl(
     private val _showPromptTemplateDialog = MutableStateFlow(false)
     val showPromptTemplateDialog: StateFlow<Boolean> = _showPromptTemplateDialog
     private val _currentLanguage = MutableStateFlow(
-        AppCompatDelegate.getApplicationLocales().toLanguageTags().ifBlank { "system" }
+        languagePreferences.getString("language_tag", null)
+            ?: AppCompatDelegate.getApplicationLocales().toLanguageTags().ifBlank { "system" }
     )
     val currentLanguage: StateFlow<String> = _currentLanguage.asStateFlow()
 
@@ -177,6 +179,9 @@ class SettingsScreenControllerImpl(
     }
 
     fun setLanguage(languageTag: String) {
+        languagePreferences.edit()
+            .putString("language_tag", languageTag)
+            .commit()
         _currentLanguage.value = languageTag
         AppCompatDelegate.setApplicationLocales(
             if (languageTag == "system") {
