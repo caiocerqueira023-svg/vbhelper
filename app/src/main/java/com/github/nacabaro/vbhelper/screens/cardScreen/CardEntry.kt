@@ -101,11 +101,13 @@ fun CardEntry(
                     fontSize = MaterialTheme.typography.labelSmall.fontSize,
                     modifier = Modifier
                 )
-                TextButton(onClick = onClickRetrySpeciesMatch) {
-                    Text(
-                        text = stringResource(R.string.card_entry_retry_species_match),
-                        fontSize = MaterialTheme.typography.labelSmall.fontSize
-                    )
+                if (officialStatus != OfficialStatus.CUSTOM) {
+                    TextButton(onClick = onClickRetrySpeciesMatch) {
+                        Text(
+                            text = stringResource(R.string.card_entry_retry_species_match),
+                            fontSize = MaterialTheme.typography.labelSmall.fontSize
+                        )
+                    }
                 }
             }
             if (displayModify) {

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -102,6 +103,12 @@ fun ChatScreen(
                         horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
                     ) {
                         Card(
+                            modifier = Modifier.combinedClickable(
+                                onClick = {},
+                                onLongClick = {
+                                    chatScreenController.deleteFromMessage(characterId, message.id)
+                                }
+                            ),
                             colors = CardDefaults.cardColors(
                                 containerColor = if (isUser)
                                     MaterialTheme.colorScheme.primary

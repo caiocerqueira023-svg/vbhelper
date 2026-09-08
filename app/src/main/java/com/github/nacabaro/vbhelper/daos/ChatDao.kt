@@ -22,4 +22,7 @@ interface ChatDao {
 
     @Query("DELETE FROM ChatMessageEntity WHERE individualId = :individualId")
     suspend fun clearHistory(individualId: String)
+
+    @Query("DELETE FROM ChatMessageEntity WHERE individualId = :individualId AND id >= :messageId")
+    suspend fun deleteFromMessage(individualId: String, messageId: Long)
 }

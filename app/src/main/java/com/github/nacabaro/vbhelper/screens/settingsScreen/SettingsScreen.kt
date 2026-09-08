@@ -126,7 +126,7 @@ fun SettingsScreen(
             }
             SettingsEntry(
                 title = stringResource(R.string.ui_personality_prompt),
-                description = "Edite as instruções enviadas ao OpenRouter e use dados da espécie e dos status atuais."
+                description = stringResource(R.string.ui_edit_prompt_description)
             ) {
                 settingsScreenController.onClickConfigurePromptTemplate()
             }
@@ -139,7 +139,7 @@ fun SettingsScreen(
                 Column(Modifier.weight(1f)) {
                     Text(stringResource(R.string.ui_ask_card_origin))
                     Text(
-                        "Se desligado, a origem pode ser definida na lista de cards.",
+                        stringResource(R.string.ui_card_origin_toggle_description),
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.outline
                     )

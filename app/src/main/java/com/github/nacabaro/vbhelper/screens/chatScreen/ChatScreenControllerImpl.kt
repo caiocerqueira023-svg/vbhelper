@@ -31,6 +31,13 @@ class ChatScreenControllerImpl(
         }
     }
 
+    override fun deleteFromMessage(characterId: Long, messageId: Long) {
+        componentActivity.lifecycleScope.launch(Dispatchers.IO) {
+            val individualId = database.userCharacterDao().getCharacter(characterId).individualId
+            database.chatDao().deleteFromMessage(individualId, messageId)
+        }
+    }
+
     override fun getSpeciesContext(characterId: Long, onResult: (SpeciesContext) -> Unit) {
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
             val userCharacter = database.userCharacterDao().getCharacter(characterId)

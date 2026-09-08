@@ -221,6 +221,9 @@
     <string name="ui_settings_llm_title">チャットAPIキーを設定</string>
     <string name="ui_settings_llm_description">OpenRouterのAPIキーとモデルを設定してデジモンと会話します</string>
     <string name="ui_retry_species">種族照合を再試行</string>
+    <string name="ui_edit_prompt_description">種族データと現在のステータスを使い、OpenRouterに送る指示を編集します。</string>
+    <string name="ui_card_origin_toggle_description">オフにすると、カード一覧から出所を設定できます。</string>
+    <string name="ui_custom_card_species_match_unavailable">カスタムカードでは種族照合を利用できません。</string>
     <string name="card_entry_retry_species_match">種族照合を再試行</string>
     <string name="personality_calm">穏やか</string>
     <string name="personality_energetic">元気</string>

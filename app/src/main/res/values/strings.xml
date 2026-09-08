@@ -20,6 +20,9 @@
     <string name="ui_settings_llm_title">Configure chat API key</string>
     <string name="ui_settings_llm_description">Set your OpenRouter API key and model to chat with your Digimon</string>
     <string name="ui_retry_species">Retry species matching</string>
+    <string name="ui_edit_prompt_description">Edit the instructions sent to OpenRouter using species data and current status values.</string>
+    <string name="ui_card_origin_toggle_description">If disabled, the origin can be set from the card list.</string>
+    <string name="ui_custom_card_species_match_unavailable">Species matching is unavailable for custom cards.</string>
     <string name="personality_calm">Calm</string>
     <string name="personality_energetic">Energetic</string>
     <string name="personality_temperamental">Temperamental</string>
