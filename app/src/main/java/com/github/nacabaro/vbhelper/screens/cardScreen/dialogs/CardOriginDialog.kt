@@ -14,6 +14,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.res.stringResource
+import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.domain.card.OfficialStatus
 
 @Composable
@@ -21,7 +23,7 @@ fun CardOriginDialog(cardName: String, onDismiss: () -> Unit, onSelect: (Officia
     Dialog(onDismissRequest = onDismiss) {
         Card {
             Column(Modifier.padding(16.dp)) {
-                Text("\"$cardName\" é um card oficial?", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.ui_official_card, cardName), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
                 Text(
                     "Cards oficiais têm espécies reconhecidas automaticamente. " +
@@ -31,13 +33,13 @@ fun CardOriginDialog(cardName: String, onDismiss: () -> Unit, onSelect: (Officia
                 )
                 Spacer(Modifier.height(16.dp))
                 Button(onClick = { onSelect(OfficialStatus.OFFICIAL) }, Modifier.fillMaxWidth()) {
-                    Text("É oficial")
+                    Text(stringResource(R.string.ui_official))
                 }
                 Spacer(Modifier.height(8.dp))
                 Button(onClick = { onSelect(OfficialStatus.CUSTOM) }, Modifier.fillMaxWidth()) {
-                    Text("É custom")
+                    Text(stringResource(R.string.ui_custom))
                 }
-                TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text("Cancelar") }
+                TextButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ui_cancel)) }
             }
         }
     }

@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import com.github.nacabaro.vbhelper.di.VBHelper
+import com.github.nacabaro.vbhelper.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
@@ -36,14 +37,14 @@ class DatabaseManagementController(
                 } ?: throw IllegalArgumentException("Unable to open destination Uri for writing")
 
                 componentActivity.runOnUiThread {
-                    Toast.makeText(componentActivity, "Database exported successfully!", Toast.LENGTH_SHORT).show()
-                    Toast.makeText(componentActivity, "Closing application to avoid changes.", Toast.LENGTH_LONG).show()
+                    Toast.makeText(componentActivity, componentActivity.getString(R.string.ui_database_exported), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(componentActivity, componentActivity.getString(R.string.ui_closing_application), Toast.LENGTH_LONG).show()
                     componentActivity.finishAffinity()
                 }
             } catch (e: Exception) {
                 Log.e("ScanScreenController", "Error exporting database $e")
                 componentActivity.runOnUiThread {
-                    Toast.makeText(componentActivity, "Error exporting database: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(componentActivity, componentActivity.getString(R.string.ui_database_export_error, e.message), Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -54,7 +55,7 @@ class DatabaseManagementController(
             try {
                 if (!getFileNameFromUri(sourceUri)!!.endsWith(".vbhelper")) {
                     componentActivity.runOnUiThread {
-                        Toast.makeText(componentActivity, "Invalid file format", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(componentActivity, componentActivity.getString(R.string.ui_invalid_file), Toast.LENGTH_SHORT).show()
                     }
                     return@launch
                 }
@@ -79,14 +80,14 @@ class DatabaseManagementController(
                 } ?: throw IllegalArgumentException("Unable to open source Uri for reading")
 
                 componentActivity.runOnUiThread {
-                    Toast.makeText(componentActivity, "Database imported successfully!", Toast.LENGTH_SHORT).show()
-                    Toast.makeText(componentActivity, "Reopen the app to finish import process!", Toast.LENGTH_LONG).show()
+                    Toast.makeText(componentActivity, componentActivity.getString(R.string.ui_database_imported), Toast.LENGTH_SHORT).show()
+                    Toast.makeText(componentActivity, componentActivity.getString(R.string.ui_reopen_app), Toast.LENGTH_LONG).show()
                     componentActivity.finishAffinity()
                 }
             } catch (e: Exception) {
                 Log.e("ScanScreenController", "Error importing database $e")
                 componentActivity.runOnUiThread {
-                    Toast.makeText(componentActivity, "Error importing database: ${e.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(componentActivity, componentActivity.getString(R.string.ui_database_import_error, e.message), Toast.LENGTH_LONG).show()
                 }
             }
         }

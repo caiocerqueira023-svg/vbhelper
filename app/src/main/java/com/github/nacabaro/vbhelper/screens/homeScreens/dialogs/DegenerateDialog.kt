@@ -4,6 +4,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.github.nacabaro.vbhelper.R
 
 @Composable
 fun DegenerateDialog(
@@ -13,21 +15,20 @@ fun DegenerateDialog(
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Regredir Digimon") },
+        title = { Text(stringResource(R.string.ui_degenerate)) },
         text = {
             Text(
-                "Regredir para o estágio $targetStage custa 5.000 bits. " +
-                    "Os vitais do Digimon serão zerados."
+                stringResource(R.string.ui_degenerate_description, targetStage)
             )
         },
         confirmButton = {
             TextButton(onClick = onConfirm) {
-                Text("Regredir")
+                Text(stringResource(R.string.ui_degenerate))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancelar")
+                Text(stringResource(R.string.ui_cancel))
             }
         }
     )

@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import com.github.nacabaro.vbhelper.R
 
 
 class SettingsScreenControllerImpl(
@@ -69,7 +70,7 @@ class SettingsScreenControllerImpl(
                 databaseManagementController.exportDatabase(uri)
             } else {
                 context.runOnUiThread {
-                    Toast.makeText(context, "No destination selected", Toast.LENGTH_SHORT)
+                    Toast.makeText(context, context.getString(R.string.ui_no_destination), Toast.LENGTH_SHORT)
                         .show()
                 }
             }
@@ -82,7 +83,7 @@ class SettingsScreenControllerImpl(
                 databaseManagementController.importDatabase(uri)
             } else {
                 context.runOnUiThread {
-                    Toast.makeText(context, "No source selected", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.ui_no_source), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -94,7 +95,7 @@ class SettingsScreenControllerImpl(
                 importApk(uri)
             } else {
                 context.runOnUiThread {
-                    Toast.makeText(context, "APK import cancelled", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.ui_apk_cancelled), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -106,7 +107,7 @@ class SettingsScreenControllerImpl(
                 importCard(uri)
             } else {
                 context.runOnUiThread {
-                    Toast.makeText(context, "Card import cancelled", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, context.getString(R.string.ui_card_cancelled), Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -142,7 +143,7 @@ class SettingsScreenControllerImpl(
             llmSettingsRepository.setModel(model.trim().ifBlank { "openrouter/auto" })
 
             context.runOnUiThread {
-                Toast.makeText(context, "Configurações de chat salvas!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.ui_chat_saved), Toast.LENGTH_SHORT).show()
                 dismissLlmDialog()
             }
         }
@@ -167,7 +168,7 @@ class SettingsScreenControllerImpl(
         context.lifecycleScope.launch(Dispatchers.IO) {
             llmSettingsRepository.setTamerName(name)
             context.runOnUiThread {
-                Toast.makeText(context, "Nome do Tamer salvo!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.ui_tamer_saved), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -205,7 +206,7 @@ class SettingsScreenControllerImpl(
 
             inputStream?.close()
             context.runOnUiThread {
-                Toast.makeText(context, "Import successful!", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.ui_import_success), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -217,7 +218,7 @@ class SettingsScreenControllerImpl(
                     context.runOnUiThread {
                         Toast.makeText(
                             context,
-                            "Selected file is empty!",
+                            context.getString(R.string.ui_empty_file),
                             Toast.LENGTH_SHORT
                         ).show()
                     }
@@ -228,7 +229,7 @@ class SettingsScreenControllerImpl(
                     secrets = secretsImporter.importSecrets(it)
                 } catch (e: Exception) {
                     context.runOnUiThread {
-                        Toast.makeText(context, "Secrets import failed. Please only select the official app APK.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.ui_secrets_import_failed), Toast.LENGTH_SHORT).show()
                     }
                     return@launch
                 }
@@ -236,7 +237,7 @@ class SettingsScreenControllerImpl(
                     secretsRepository.updateSecrets(secrets)
                 }.invokeOnCompletion {
                     context.runOnUiThread {
-                        Toast.makeText(context, "Secrets successfully imported. Connections with devices are now possible.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.ui_secrets_imported), Toast.LENGTH_SHORT).show()
                     }
                 }
             }
