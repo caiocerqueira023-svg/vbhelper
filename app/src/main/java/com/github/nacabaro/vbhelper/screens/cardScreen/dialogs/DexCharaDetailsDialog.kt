@@ -15,9 +15,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -25,7 +29,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,8 +46,10 @@ import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.SpeciesPickerDialog
 import com.github.nacabaro.vbhelper.species.SpeciesRepository
+import com.github.nacabaro.vbhelper.domain.card.OfficialStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun DexCharaDetailsDialog(
@@ -66,12 +71,17 @@ fun DexCharaDetailsDialog(
     var showFusions by remember { mutableStateOf(false) }
     var showSpeciesPicker by remember { mutableStateOf(false) }
     var allSpeciesNames by remember { mutableStateOf<List<String>>(emptyList()) }
+    var isCustomCard by remember { mutableStateOf(false) }
     val speciesProfile by database.speciesProfileDao()
         .getByCardCharacterIdFlow(currentChara.id)
         .collectAsState(initial = null)
 
     LaunchedEffect(Unit) {
-        allSpeciesNames = kotlinx.coroutines.withContext(Dispatchers.IO) {
+        isCustomCard = withContext(Dispatchers.IO) {
+            database.cardDao().getCardByCardCharacterId(currentChara.id)?.officialStatus ==
+                OfficialStatus.CUSTOM
+        }
+        allSpeciesNames = withContext(Dispatchers.IO) {
             speciesRepository.getAllSpeciesNames()
         }
     }
@@ -239,11 +249,18 @@ fun DexCharaDetailsDialog(
                             ?.let {
                                 Text(stringResource(R.string.dex_species_special_moves, it))
                             }
-                        Button(
-                            onClick = { showSpeciesPicker = true },
-                            enabled = allSpeciesNames.isNotEmpty()
-                        ) {
-                            Text(stringResource(R.string.ui_choose_species_from_dim))
+                        if (isCustomCard) {
+                            IconButton(
+                                onClick = { showSpeciesPicker = true },
+                                enabled = allSpeciesNames.isNotEmpty()
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Settings,
+                                    contentDescription = stringResource(
+                                        R.string.ui_choose_species_from_dim
+                                    )
+                                )
+                            }
                         }
                     }
                 }

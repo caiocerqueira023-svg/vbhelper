@@ -49,6 +49,17 @@ interface CardDao {
     )
     fun getCardByCharacterIdSync(id: Long): Card?
 
+    @Query(
+        """
+        SELECT ca.*
+        FROM Card ca
+        JOIN CardCharacter ch ON ca.id = ch.cardId
+        WHERE ch.id = :cardCharacterId
+        LIMIT 1
+        """
+    )
+    suspend fun getCardByCardCharacterId(cardCharacterId: Long): Card?
+
     @Query("UPDATE Card SET name = :newName WHERE id = :id")
     suspend fun renameCard(id: Int, newName: String)
 
