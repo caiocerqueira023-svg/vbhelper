@@ -10,6 +10,31 @@
         Set your OpenRouter API key and model to chat with your Digimon
     </string>
     <string name="storage_chat_with_digimon">Chat with your Digimon</string>
+    <string name="ui_current_name">Current name: %1$s</string>
+    <string name="ui_not_defined">not set</string>
+    <string name="ui_personality_prompt">Digimon personality and prompt</string>
+    <string name="ui_species_section">Species</string>
+    <string name="ui_card_fields_note">Card &quot;%1$s&quot;. The nickname belongs to the individual; the other fields belong to the species.</string>
+    <string name="ui_prompt_description">This text controls the speaking style sent to OpenRouter. Device data is attached separately and cannot be changed here.</string>
+    <string name="ui_temperamental">Temperamental</string>
+    <string name="ui_settings_llm_title">Configure chat API key</string>
+    <string name="ui_settings_llm_description">Set your OpenRouter API key and model to chat with your Digimon</string>
+    <string name="ui_retry_species">Retry species matching</string>
+    <string name="personality_calm">Calm</string>
+    <string name="personality_energetic">Energetic</string>
+    <string name="personality_temperamental">Temperamental</string>
+    <string name="personality_dreamy">Dreamy</string>
+    <string name="personality_anxious">Anxious</string>
+    <string name="personality_loyal_warm">Loyal and warm</string>
+    <string name="personality_playful_sarcastic">Playful and sarcastic</string>
+    <string name="personality_formal_polite">Formal and polite</string>
+    <string name="personality_tough_rustic">Tough and rustic</string>
+    <string name="personality_curious_talkative">Curious and talkative</string>
+    <string name="personality_short_direct">Short and direct speech</string>
+    <string name="personality_exclamations">Uses sound effects and exclamations</string>
+    <string name="personality_philosophical">Speaks like a sage</string>
+    <string name="personality_catchphrase">Repeats a characteristic catchphrase</string>
+    <string name="personality_battle_comparisons">Compares Digimon and battles</string>
 
     <string name="beta_warning_message_main">
         This application is currently in alpha and it is not complete. Do not use it to store important characters for you, as any future updates might delete all your characters. Sorry for the inconvenience!

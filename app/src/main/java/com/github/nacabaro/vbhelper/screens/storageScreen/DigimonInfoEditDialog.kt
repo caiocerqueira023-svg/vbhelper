@@ -28,7 +28,9 @@ import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
-import com.github.nacabaro.vbhelper.domain.personality.toDisplayName
+import com.github.nacabaro.vbhelper.domain.personality.Temperament
+import com.github.nacabaro.vbhelper.domain.personality.SocialStyle
+import com.github.nacabaro.vbhelper.domain.personality.SpeechQuirk
 
 data class DigimonInfoEditResult(
     val nickname: String?,
@@ -57,6 +59,30 @@ fun DigimonInfoEditDialog(
         mutableStateOf(profile?.specialMoves?.joinToString(", ").orEmpty())
     }
 
+    fun Temperament.resourceId(): Int = when (this) {
+        Temperament.CALM -> R.string.personality_calm
+        Temperament.ENERGETIC -> R.string.personality_energetic
+        Temperament.TEMPERAMENTAL -> R.string.personality_temperamental
+        Temperament.DREAMY -> R.string.personality_dreamy
+        Temperament.ANXIOUS -> R.string.personality_anxious
+    }
+
+    fun SocialStyle.resourceId(): Int = when (this) {
+        SocialStyle.LOYAL_WARM -> R.string.personality_loyal_warm
+        SocialStyle.PLAYFUL_SARCASTIC -> R.string.personality_playful_sarcastic
+        SocialStyle.FORMAL_POLITE -> R.string.personality_formal_polite
+        SocialStyle.TOUGH_RUSTIC -> R.string.personality_tough_rustic
+        SocialStyle.CURIOUS_TALKATIVE -> R.string.personality_curious_talkative
+    }
+
+    fun SpeechQuirk.resourceId(): Int = when (this) {
+        SpeechQuirk.SHORT_DIRECT -> R.string.personality_short_direct
+        SpeechQuirk.EXCLAMATIONS -> R.string.personality_exclamations
+        SpeechQuirk.PHILOSOPHICAL -> R.string.personality_philosophical
+        SpeechQuirk.CATCHPHRASE -> R.string.personality_catchphrase
+        SpeechQuirk.BATTLE_COMPARISONS -> R.string.personality_battle_comparisons
+    }
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(dismissOnClickOutside = false)
@@ -69,7 +95,7 @@ fun DigimonInfoEditDialog(
             ) {
                 Text(stringResource(R.string.ui_digimon_info), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "Card \"$cardName\". O apelido pertence ao indivíduo; os demais campos pertencem à espécie.",
+                    stringResource(R.string.ui_card_fields_note, cardName),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline
                 )
@@ -122,10 +148,11 @@ fun DigimonInfoEditDialog(
                 if (personality != null) {
                     Spacer(Modifier.height(12.dp))
                     Text(stringResource(R.string.ui_individual_personality), style = MaterialTheme.typography.titleSmall)
-                    Text(stringResource(R.string.ui_temperament, personality.temperament.toDisplayName()))
-                    Text(stringResource(R.string.ui_social_style, personality.socialStyle.toDisplayName()))
-                    Text(stringResource(R.string.ui_speech_quirk, personality.speechQuirk.toDisplayName()))
+                    Text(stringResource(R.string.ui_temperament, stringResource(personality.temperament.resourceId())))
+                    Text(stringResource(R.string.ui_social_style, stringResource(personality.socialStyle.resourceId())))
+                    Text(stringResource(R.string.ui_speech_quirk, stringResource(personality.speechQuirk.resourceId())))
                 }
+
                 Row(
                     Modifier.fillMaxWidth().padding(top = 8.dp),
                     horizontalArrangement = Arrangement.End
@@ -147,6 +174,7 @@ fun DigimonInfoEditDialog(
                                 )
                             )
                         }
+
                     ) {
                         Text(stringResource(R.string.ui_save))
                     }

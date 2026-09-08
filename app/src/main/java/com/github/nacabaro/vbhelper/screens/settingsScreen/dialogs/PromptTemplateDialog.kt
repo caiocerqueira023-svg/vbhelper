@@ -41,7 +41,7 @@ fun PromptTemplateDialog(
             Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
                 Text(stringResource(R.string.ui_digimon_prompt), style = MaterialTheme.typography.titleMedium)
                 Text(
-                    "Este texto orienta o jeito de falar enviado ao OpenRouter. Os dados do relógio são anexados separadamente e não podem ser alterados aqui.",
+                    stringResource(R.string.ui_prompt_description),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline
                 )

@@ -111,7 +111,10 @@ fun SettingsScreen(
             )
             SettingsEntry(
                 title = stringResource(R.string.ui_save_tamer_name),
-                description = "Nome atual: ${currentTamerName.ifBlank { "não definido" }}"
+                description = stringResource(
+                    R.string.ui_current_name,
+                    currentTamerName.ifBlank { stringResource(R.string.ui_not_defined) }
+                )
             ) {
                 settingsScreenController.saveTamerName(tamerName)
             }
@@ -122,13 +125,13 @@ fun SettingsScreen(
                 settingsScreenController.onClickConfigureLlm()
             }
             SettingsEntry(
-                title = "Personalidade e prompt do Digimon",
+                title = stringResource(R.string.ui_personality_prompt),
                 description = "Edite as instruções enviadas ao OpenRouter e use dados da espécie e dos status atuais."
             ) {
                 settingsScreenController.onClickConfigurePromptTemplate()
             }
 
-            SettingsSection(title = "Espécies")
+            SettingsSection(title = stringResource(R.string.ui_species_section))
             Row(
                 verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth().padding(16.dp)
