@@ -242,7 +242,8 @@
     <string name="ui_speech_quirk">Maneirismo de fala: %1$s</string>
     <string name="ui_cancel">Cancelar</string>
     <string name="ui_delete">Excluir</string>
-    <string name="ui_choose_species_from_dim">Escolher espécie pela Dex deste DIM</string>
+    <string name="ui_choose_species_from_dim">Escolher espécie pelo banco de Digimon</string>
+    <string name="ui_search_species">Pesquisar espécie</string>
     <string name="ui_delete_messages_title">Excluir mensagens?</string>
     <string name="ui_delete_messages_confirmation">A mensagem selecionada e todas as mensagens enviadas depois dela serão excluídas. Deseja continuar?</string>
     <string name="ui_save">Salvar</string>

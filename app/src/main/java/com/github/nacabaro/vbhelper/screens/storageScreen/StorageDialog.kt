@@ -49,8 +49,7 @@ private data class LoadedStorageCharacter(
     val character: CharacterDtos.CharacterWithSprites,
     val cardName: String,
     val speciesProfile: com.github.nacabaro.vbhelper.domain.species.SpeciesProfile?,
-    val personality: DigimonPersonalityTraits?,
-    val speciesDexNames: List<String>
+    val personality: DigimonPersonalityTraits?
 )
 
 @Composable
@@ -75,7 +74,6 @@ fun StorageDialog(
     var showInfoEditor by remember { mutableStateOf(false) }
     var speciesProfile by remember { mutableStateOf<com.github.nacabaro.vbhelper.domain.species.SpeciesProfile?>(null) }
     var personality by remember { mutableStateOf<DigimonPersonalityTraits?>(null) }
-    var speciesDexNames by remember { mutableStateOf<List<String>>(emptyList()) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     val speciesRepository = remember {
         SpeciesRepository(application.container.db, application.container.speciesSettingsRepository)
@@ -88,18 +86,12 @@ fun StorageDialog(
                 .getCardByCharacterIdSync(loadedCharacter.id)?.name.orEmpty()
             val loadedSpeciesProfile = speciesRepository
                 .getProfileForCharacter(loadedCharacter.charId)
-            val loadedCard = application.container.db.cardDao()
-                .getCardByCharacterIdSync(loadedCharacter.id)
-            val loadedSpeciesDexNames = loadedCard?.let {
-                speciesRepository.getSpeciesNamesForCard(it.id)
-            }.orEmpty()
             val loadedPersonality = storageRepository.getOrCreatePersonality(characterId)
             LoadedStorageCharacter(
                 character = loadedCharacter,
                 cardName = loadedCardName,
                 speciesProfile = loadedSpeciesProfile,
-                personality = loadedPersonality,
-                speciesDexNames = loadedSpeciesDexNames
+                personality = loadedPersonality
             )
         }
         character.value = loaded.character
@@ -107,7 +99,6 @@ fun StorageDialog(
         cardName = loaded.cardName
         speciesProfile = loaded.speciesProfile
         personality = loaded.personality
-        speciesDexNames = loaded.speciesDexNames
         characterSprite.value = BitmapData(
             bitmap = loaded.character.spriteIdle,
             width = loaded.character.spriteWidth,
@@ -238,7 +229,6 @@ fun StorageDialog(
             nickname = nickname,
             profile = speciesProfile,
             personality = personality,
-            speciesDexNames = speciesDexNames,
             onDismiss = { showInfoEditor = false },
             onSave = { result ->
                 coroutineScope.launch {

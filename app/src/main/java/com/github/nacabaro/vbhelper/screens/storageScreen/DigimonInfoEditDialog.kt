@@ -15,7 +15,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -48,7 +47,6 @@ fun DigimonInfoEditDialog(
     nickname: String?,
     profile: SpeciesProfile?,
     personality: DigimonPersonalityTraits?,
-    speciesDexNames: List<String> = emptyList(),
     onDismiss: () -> Unit,
     onSave: (DigimonInfoEditResult) -> Unit
 ) {
@@ -60,7 +58,6 @@ fun DigimonInfoEditDialog(
     var specialMoves by remember {
         mutableStateOf(profile?.specialMoves?.joinToString(", ").orEmpty())
     }
-    var showSpeciesPicker by remember { mutableStateOf(false) }
 
     fun Temperament.resourceId(): Int = when (this) {
         Temperament.CALM -> R.string.personality_calm
@@ -118,14 +115,6 @@ fun DigimonInfoEditDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                if (speciesDexNames.isNotEmpty()) {
-                    TextButton(
-                        onClick = { showSpeciesPicker = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(stringResource(R.string.ui_choose_species_from_dim))
-                    }
-                }
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = level,
@@ -189,33 +178,6 @@ fun DigimonInfoEditDialog(
                     ) {
                         Text(stringResource(R.string.ui_save))
                     }
-                }
-
-                if (showSpeciesPicker) {
-                    AlertDialog(
-                        onDismissRequest = { showSpeciesPicker = false },
-                        title = { Text(stringResource(R.string.ui_choose_species_from_dim)) },
-                        text = {
-                            Column(Modifier.verticalScroll(rememberScrollState())) {
-                                speciesDexNames.forEach { name ->
-                                    TextButton(
-                                        onClick = {
-                                            speciesName = name
-                                            showSpeciesPicker = false
-                                        },
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text(name)
-                                    }
-                                }
-                            }
-                        },
-                        confirmButton = {
-                            TextButton(onClick = { showSpeciesPicker = false }) {
-                                Text(stringResource(R.string.ui_cancel))
-                            }
-                        }
-                    )
                 }
             }
         }

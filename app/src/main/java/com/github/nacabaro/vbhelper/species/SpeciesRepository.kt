@@ -79,24 +79,18 @@ class SpeciesRepository(
     suspend fun getProfileForCharacter(cardCharacterId: Long): SpeciesProfile? =
         database.speciesProfileDao().getByCardCharacterId(cardCharacterId)
 
-    suspend fun getSpeciesNamesForCard(cardId: Long): List<String> {
-        val card = database.cardDao().getCardById(cardId) ?: return emptyList()
-        val databaseSpecies = fetchDatabase() ?: return emptyList()
-        val speciesForCard = numericKeys(card.cardId)
-            .asSequence()
-            .mapNotNull { databaseSpecies.species[it] }
-            .firstOrNull()
-            ?: return emptyList()
-
-        return database.characterDao().getCharactersForCard(cardId)
-            .mapNotNull { character ->
-                numericKeys(character.charaIndex, preferNext = true)
-                    .asSequence()
-                    .mapNotNull { speciesForCard[it]?.name }
-                    .firstOrNull()
-            }
-            .distinct()
-    }
+    suspend fun getAllSpeciesNames(): List<String> =
+        fetchDatabase()
+            ?.species
+            ?.values
+            ?.asSequence()
+            ?.flatMap { it.values.asSequence() }
+            ?.map { it.name }
+            ?.filter { it.isNotBlank() }
+            ?.distinct()
+            ?.sorted()
+            ?.toList()
+            ?: emptyList()
 
     suspend fun saveManualProfile(
         cardCharacterId: Long,

@@ -191,7 +191,8 @@
     <string name="ui_speech_quirk">話し方の特徴: %1$s</string>
     <string name="ui_cancel">キャンセル</string>
     <string name="ui_delete">削除</string>
-    <string name="ui_choose_species_from_dim">このDIMの図鑑から種族を選択</string>
+    <string name="ui_choose_species_from_dim">デジモンデータベースから種族を選択</string>
+    <string name="ui_search_species">種族を検索</string>
     <string name="ui_delete_messages_title">メッセージを削除しますか？</string>
     <string name="ui_delete_messages_confirmation">選択したメッセージと、それ以降に送信されたすべてのメッセージが削除されます。続行しますか？</string>
     <string name="ui_save">保存</string>
