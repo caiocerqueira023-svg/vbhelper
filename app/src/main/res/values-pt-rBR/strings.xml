@@ -249,6 +249,17 @@
     <string name="ui_delete_messages_title">Excluir mensagens?</string>
     <string name="ui_delete_messages_confirmation">A mensagem selecionada e todas as mensagens enviadas depois dela serão excluídas. Deseja continuar?</string>
     <string name="ui_save">Salvar</string>
+    <string name="ui_add">Adicionar</string>
+    <string name="ui_edit">Editar</string>
+    <string name="ui_lorebook_title">Lorebook</string>
+    <string name="ui_lorebook_description">Adicione conceitos do mundo e conhecimentos personalizados para seu Digimon usar quando termos relevantes aparecerem no chat.</string>
+    <string name="ui_lorebook_empty">Nenhuma entrada customizada no lorebook.</string>
+    <string name="lorebook_new_entry">Nova entrada de lorebook</string>
+    <string name="lorebook_edit_entry">Editar entrada de lorebook</string>
+    <string name="lorebook_title">Título</string>
+    <string name="lorebook_keys">Palavras-chave (separadas por vírgula)</string>
+    <string name="lorebook_content">Contexto fornecido ao Digimon</string>
+    <string name="lorebook_priority">Prioridade (maior = mais relevante)</string>
     <string name="ui_species_question">Como se chama essa espécie?</string>
     <string name="ui_optional_level">Nível (opcional)</string>
     <string name="ui_optional_type">Tipo (opcional)</string>

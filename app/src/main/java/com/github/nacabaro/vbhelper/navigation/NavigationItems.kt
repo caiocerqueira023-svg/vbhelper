@@ -51,6 +51,12 @@ sealed class NavigationItems(
         R.string.nav_settings
     )
 
+    object Lorebook : NavigationItems(
+        "Lorebook",
+        R.drawable.baseline_menu_book_24,
+        R.string.ui_lorebook_title
+    )
+
     object Viewer : NavigationItems(
         "Viewer",
         R.drawable.baseline_image_24,

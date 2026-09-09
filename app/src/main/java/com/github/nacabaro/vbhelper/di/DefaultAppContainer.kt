@@ -17,6 +17,8 @@ import com.github.nacabaro.vbhelper.source.proto.Secrets
 import com.github.nacabaro.vbhelper.chat.ChatRepository
 import com.github.nacabaro.vbhelper.chat.DigimonDiaryService
 import com.github.nacabaro.vbhelper.chat.ReactionRepository
+import com.github.nacabaro.vbhelper.chat.lorebook.LorebookRepository
+import com.github.nacabaro.vbhelper.species.SpeciesRepository
 
 private const val SECRETS_DATA_STORE_NAME = "secrets.pb"
 private const val USER_PREFERENCES_NAME = "user_preferences"
@@ -55,7 +57,8 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
                 AppDatabase.MIGRATION_5_6,
                 AppDatabase.MIGRATION_6_7,
                 AppDatabase.MIGRATION_7_8,
-                AppDatabase.MIGRATION_8_9
+                AppDatabase.MIGRATION_8_9,
+                AppDatabase.MIGRATION_9_10
             )
             // Escolha mais segura: se não houver caminho de migração explícito
             // (ex.: usuário vindo de uma versão sem migration mapeada), o Room
@@ -79,7 +82,16 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
 
     override val speciesSettingsRepository = SpeciesSettingsRepository(context.speciesSettingsStore)
 
-    override val chatRepository by lazy { ChatRepository(db, llmSettingsRepository) }
+    override val lorebookRepository by lazy {
+        LorebookRepository(
+            lorebookEntryDao = db.lorebookEntryDao(),
+            speciesRepository = SpeciesRepository(db, speciesSettingsRepository)
+        )
+    }
+
+    override val chatRepository by lazy {
+        ChatRepository(db, llmSettingsRepository, lorebookRepository)
+    }
     override val reactionRepository by lazy { ReactionRepository(db, chatRepository) }
     override val diaryService by lazy { DigimonDiaryService(db, chatRepository) }
 }

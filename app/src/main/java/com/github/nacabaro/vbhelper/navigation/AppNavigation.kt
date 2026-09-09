@@ -41,6 +41,8 @@ import com.github.nacabaro.vbhelper.screens.settingsScreen.CreditsScreen
 import com.github.nacabaro.vbhelper.screens.spriteViewer.SpriteViewerControllerImpl
 import com.github.nacabaro.vbhelper.screens.storageScreen.StorageScreenControllerImpl
 import com.github.nacabaro.vbhelper.source.StorageRepository
+import com.github.nacabaro.vbhelper.screens.lorebookScreen.LorebookScreen
+import com.github.nacabaro.vbhelper.screens.lorebookScreen.LorebookScreenControllerImpl
 
 data class AppNavigationHandlers(
     val settingsScreenController: SettingsScreenControllerImpl,
@@ -51,7 +53,8 @@ data class AppNavigationHandlers(
     val homeScreenController: HomeScreenControllerImpl,
     val spriteViewerController: SpriteViewerControllerImpl,
     val cardScreenController: CardScreenControllerImpl,
-    val chatScreenController: ChatScreenControllerImpl
+    val chatScreenController: ChatScreenControllerImpl,
+    val lorebookScreenController: LorebookScreenControllerImpl
 )
 
 @Composable
@@ -130,6 +133,12 @@ fun AppNavigation(
                 SettingsScreen(
                     navController = navController,
                     settingsScreenController = applicationNavigationHandlers.settingsScreenController
+                )
+            }
+            composable(NavigationItems.Lorebook.route) {
+                LorebookScreen(
+                    navController = navController,
+                    controller = applicationNavigationHandlers.lorebookScreenController
                 )
             }
             composable(NavigationItems.Viewer.route) {

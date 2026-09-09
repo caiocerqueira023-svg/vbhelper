@@ -23,6 +23,7 @@ import com.github.nacabaro.vbhelper.screens.adventureScreen.AdventureScreenContr
 import com.github.nacabaro.vbhelper.screens.cardScreen.CardScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.spriteViewer.SpriteViewerControllerImpl
 import com.github.nacabaro.vbhelper.screens.storageScreen.StorageScreenControllerImpl
+import com.github.nacabaro.vbhelper.screens.lorebookScreen.LorebookScreenControllerImpl
 import com.github.nacabaro.vbhelper.source.VitalWearCharacterImporter
 import com.github.nacabaro.vbhelper.ui.theme.VBHelperTheme
 import kotlinx.coroutines.Dispatchers
@@ -61,6 +62,7 @@ class MainActivity : AppCompatActivity() {
         val spriteViewerController = SpriteViewerControllerImpl(this)
         val cardScreenController = CardScreenControllerImpl(this)
         val chatScreenController = ChatScreenControllerImpl(this)
+        val lorebookScreenController = LorebookScreenControllerImpl(this)
 
         super.onCreate(savedInstanceState)
 
@@ -80,6 +82,7 @@ class MainActivity : AppCompatActivity() {
                     spriteViewerController = spriteViewerController,
                     cardScreenController = cardScreenController,
                     chatScreenController = chatScreenController,
+                    lorebookScreenController = lorebookScreenController,
                     initialRoute = initialRoute
                 )
             }
@@ -180,6 +183,7 @@ class MainActivity : AppCompatActivity() {
         spriteViewerController: SpriteViewerControllerImpl,
         cardScreenController: CardScreenControllerImpl,
         chatScreenController: ChatScreenControllerImpl,
+        lorebookScreenController: LorebookScreenControllerImpl,
         initialRoute: String? = null
     ) {
         AppNavigation(
@@ -192,7 +196,8 @@ class MainActivity : AppCompatActivity() {
                 homeScreenController,
                 spriteViewerController,
                 cardScreenController,
-                chatScreenController
+                chatScreenController,
+                lorebookScreenController
             ),
             initialRoute = initialRoute
         )

@@ -1,6 +1,7 @@
 package com.github.nacabaro.vbhelper.chat
 
 import com.github.nacabaro.vbhelper.daos.ChatDao
+import com.github.nacabaro.vbhelper.chat.lorebook.LorebookRepository
 import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.domain.chat.ChatMessageEntity
 import com.github.nacabaro.vbhelper.source.LlmSettingsRepository
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.first
 class ChatRepository(
     private val database: AppDatabase,
     private val llmSettingsRepository: LlmSettingsRepository,
+    private val lorebookRepository: LorebookRepository,
     private val chatDao: ChatDao = database.chatDao(),
     private val openRouterService: OpenRouterService = OpenRouterClient.create()
 ) {
@@ -26,7 +28,8 @@ class ChatRepository(
         chatDao.getLatestAssistantMessage(individualId)
 
     suspend fun sendMessage(characterId: Long, userText: String): String {
-        val (systemPrompt, individualId) = buildSystemPromptAndIndividualId(characterId)
+        val (systemPrompt, individualId, speciesName) = buildSystemPromptAndIndividualId(characterId)
+        val enrichedSystemPrompt = withLorebookContext(systemPrompt, userText, speciesName)
         chatDao.insertMessage(
             ChatMessageEntity(
                 individualId = individualId,
@@ -35,7 +38,7 @@ class ChatRepository(
                 timestamp = System.currentTimeMillis()
             )
         )
-        val reply = requestCompletion(systemPrompt, individualId, null)
+        val reply = requestCompletion(enrichedSystemPrompt, individualId, null)
         chatDao.insertMessage(
             ChatMessageEntity(
                 individualId = individualId,
@@ -48,12 +51,13 @@ class ChatRepository(
     }
 
     suspend fun triggerReaction(characterId: Long, eventDescription: String): String {
-        val (systemPrompt, individualId) = buildSystemPromptAndIndividualId(characterId)
+        val (systemPrompt, individualId, speciesName) = buildSystemPromptAndIndividualId(characterId)
+        val enrichedSystemPrompt = withLorebookContext(systemPrompt, eventDescription, speciesName)
         val instruction = PromptLocalization.reactionInstruction(
             PromptLocalization.currentLanguageTag(),
             eventDescription
         )
-        val reply = requestCompletion(systemPrompt, individualId, instruction)
+        val reply = requestCompletion(enrichedSystemPrompt, individualId, instruction)
         chatDao.insertMessage(
             ChatMessageEntity(
                 individualId = individualId,
@@ -70,7 +74,13 @@ class ChatRepository(
         chatDao.clearHistory(individualId)
     }
 
-    private suspend fun buildSystemPromptAndIndividualId(characterId: Long): Pair<String, String> {
+    private data class PromptContext(
+        val systemPrompt: String,
+        val individualId: String,
+        val speciesName: String?
+    )
+
+    private suspend fun buildSystemPromptAndIndividualId(characterId: Long): PromptContext {
         val character = database.userCharacterDao().getCharacterWithSprites(characterId)
         val userCharacter = database.userCharacterDao().getCharacter(characterId)
         val personality = database.digimonIndividualDao().getPersonality(userCharacter.individualId)
@@ -79,7 +89,7 @@ class ChatRepository(
         val promptTemplate = llmSettingsRepository.systemPromptTemplate.first()
         val tamerName = llmSettingsRepository.tamerName.first()
         val languageTag = PromptLocalization.currentLanguageTag()
-        return DigimonPersonaBuilder.buildSystemPrompt(
+        val prompt = DigimonPersonaBuilder.buildSystemPrompt(
             character,
             card?.name ?: "desconhecido",
             speciesProfile,
@@ -87,7 +97,26 @@ class ChatRepository(
             personality,
             tamerName,
             languageTag
-        ) to userCharacter.individualId
+        )
+        return PromptContext(prompt, userCharacter.individualId, speciesProfile?.speciesName)
+    }
+
+    private suspend fun withLorebookContext(
+        systemPrompt: String,
+        scanText: String,
+        currentSpeciesName: String?
+    ): String {
+        val languageTag = PromptLocalization.currentLanguageTag()
+        val matches = runCatching {
+            lorebookRepository.scanForMatches(
+                scanText = scanText,
+                languageTag = languageTag,
+                excludeSpeciesName = currentSpeciesName
+            )
+        }.getOrDefault(emptyList())
+        val block = lorebookRepository.formatContextBlock(matches, languageTag)
+            ?: return systemPrompt
+        return "$systemPrompt\n\n$block"
     }
 
     private suspend fun requestCompletion(

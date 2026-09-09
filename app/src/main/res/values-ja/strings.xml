@@ -198,6 +198,17 @@
     <string name="ui_delete_messages_title">メッセージを削除しますか？</string>
     <string name="ui_delete_messages_confirmation">選択したメッセージと、それ以降に送信されたすべてのメッセージが削除されます。続行しますか？</string>
     <string name="ui_save">保存</string>
+    <string name="ui_add">追加</string>
+    <string name="ui_edit">編集</string>
+    <string name="ui_lorebook_title">ロアブック</string>
+    <string name="ui_lorebook_description">チャットで関連する言葉が出たときに使える世界観やカスタム知識を追加します。</string>
+    <string name="ui_lorebook_empty">カスタムのロアブック項目はまだありません。</string>
+    <string name="lorebook_new_entry">新しいロアブック項目</string>
+    <string name="lorebook_edit_entry">ロアブック項目を編集</string>
+    <string name="lorebook_title">タイトル</string>
+    <string name="lorebook_keys">トリガーキーワード（カンマ区切り）</string>
+    <string name="lorebook_content">デジモンに与えるコンテキスト</string>
+    <string name="lorebook_priority">優先度（高いほど関連性が高い）</string>
     <string name="ui_species_question">この種族の名前は何ですか？</string>
     <string name="ui_optional_level">レベル（任意）</string>
     <string name="ui_optional_type">タイプ（任意）</string>

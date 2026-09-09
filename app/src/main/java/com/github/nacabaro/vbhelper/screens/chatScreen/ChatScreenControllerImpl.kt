@@ -16,7 +16,8 @@ class ChatScreenControllerImpl(
     private val application = componentActivity.applicationContext as VBHelper
     private val chatRepository = ChatRepository(
         database = application.container.db,
-        llmSettingsRepository = application.container.llmSettingsRepository
+        llmSettingsRepository = application.container.llmSettingsRepository,
+        lorebookRepository = application.container.lorebookRepository
     )
     private val database = application.container.db
     private val speciesRepository = SpeciesRepository(database, application.container.speciesSettingsRepository)

@@ -22,6 +22,7 @@ import com.github.nacabaro.vbhelper.daos.SpriteDao
 import com.github.nacabaro.vbhelper.daos.UserCharacterDao
 import com.github.nacabaro.vbhelper.daos.VitalWearSettingsDao
 import com.github.nacabaro.vbhelper.daos.CharacterTransferPolicyDao
+import com.github.nacabaro.vbhelper.daos.LorebookEntryDao
 import com.github.nacabaro.vbhelper.companion.validation.ValidatedCardDao
 import com.github.nacabaro.vbhelper.companion.validation.ValidatedCardEntity
 import com.github.nacabaro.vbhelper.domain.card.Background
@@ -48,9 +49,10 @@ import com.github.nacabaro.vbhelper.domain.reactions.DigimonStateSnapshot
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
 import com.github.nacabaro.vbhelper.domain.items.Items
 import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
+import com.github.nacabaro.vbhelper.domain.lorebook.LorebookEntry
 
 @Database(
-    version = 9,
+    version = 10,
     exportSchema = false,
     entities = [
         Card::class,
@@ -77,7 +79,8 @@ import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
         ChatMessageEntity::class,
         SpeciesProfile::class,
         DigimonPersonalityTraits::class,
-        DigimonStateSnapshot::class
+        DigimonStateSnapshot::class,
+        LorebookEntry::class
     ]
 )
 @TypeConverters(SpeciesProfileConverters::class, PersonalityConverters::class)
@@ -100,6 +103,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun chatDao(): ChatDao
     abstract fun speciesProfileDao(): SpeciesProfileDao
     abstract fun digimonStateSnapshotDao(): DigimonStateSnapshotDao
+    abstract fun lorebookEntryDao(): LorebookEntryDao
 
     companion object {
         val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -259,6 +263,25 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE `DigimonIndividual` ADD COLUMN `lastDiaryEntryAt` INTEGER")
                 db.execSQL("ALTER TABLE `DigimonIndividual` ADD COLUMN `lastCelebratedWinsMilestone` INTEGER NOT NULL DEFAULT 0")
                 db.execSQL("ALTER TABLE `DigimonIndividual` ADD COLUMN `lastCelebratedTrophyMilestone` INTEGER NOT NULL DEFAULT 0")
+            }
+        }
+
+        val MIGRATION_9_10 = object : Migration(9, 10) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `LorebookEntry` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `title` TEXT NOT NULL,
+                        `triggerKeys` TEXT NOT NULL,
+                        `content` TEXT NOT NULL,
+                        `enabled` INTEGER NOT NULL,
+                        `caseSensitive` INTEGER NOT NULL,
+                        `priority` INTEGER NOT NULL,
+                        `source` TEXT NOT NULL
+                    )
+                    """.trimIndent()
+                )
             }
         }
     }

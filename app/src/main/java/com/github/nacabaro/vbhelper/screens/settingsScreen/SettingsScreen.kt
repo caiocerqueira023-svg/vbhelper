@@ -130,6 +130,12 @@ fun SettingsScreen(
             ) {
                 settingsScreenController.onClickConfigurePromptTemplate()
             }
+            SettingsEntry(
+                title = stringResource(R.string.ui_lorebook_title),
+                description = stringResource(R.string.ui_lorebook_description)
+            ) {
+                navController.navigate(NavigationItems.Lorebook.route)
+            }
 
             SettingsSection(title = stringResource(R.string.ui_species_section))
             Row(

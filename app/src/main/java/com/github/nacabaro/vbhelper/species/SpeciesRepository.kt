@@ -92,6 +92,17 @@ class SpeciesRepository(
             ?.toList()
             ?: emptyList()
 
+    suspend fun getAllSpeciesEntries(): List<SpeciesEntryDto> =
+        fetchDatabase()
+            ?.species
+            ?.values
+            ?.asSequence()
+            ?.flatMap { it.values.asSequence() }
+            ?.filter { it.name.isNotBlank() }
+            ?.distinctBy { it.name.lowercase(Locale.ROOT) }
+            ?.toList()
+            ?: emptyList()
+
     suspend fun saveManualProfile(
         cardCharacterId: Long,
         name: String,
