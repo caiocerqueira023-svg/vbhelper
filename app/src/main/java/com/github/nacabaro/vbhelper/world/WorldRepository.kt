@@ -47,4 +47,6 @@ class WorldRepository(private val db: AppDatabase) {
     }
 
     suspend fun markInteracted(id: Long) = spawnDao.markInteracted(id)
+
+    suspend fun getSpawn(spawnId: Long): WorldDtos.SpawnWithDetails? = spawnDao.getSpawnById(spawnId)
 }

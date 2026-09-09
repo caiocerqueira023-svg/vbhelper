@@ -111,4 +111,10 @@ sealed class NavigationItems(
         R.drawable.baseline_mood_24,
         R.string.nav_chat
     )
+
+    object WorldChat : NavigationItems(
+        "WorldChat/{spawnId}",
+        R.drawable.baseline_mood_24,
+        R.string.nav_chat
+    )
 }

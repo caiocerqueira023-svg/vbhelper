@@ -24,6 +24,7 @@ import com.github.nacabaro.vbhelper.screens.cardScreen.CardScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.spriteViewer.SpriteViewerControllerImpl
 import com.github.nacabaro.vbhelper.screens.storageScreen.StorageScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.lorebookScreen.LorebookScreenControllerImpl
+import com.github.nacabaro.vbhelper.screens.worldScreen.WorldChatScreenControllerImpl
 import com.github.nacabaro.vbhelper.source.VitalWearCharacterImporter
 import com.github.nacabaro.vbhelper.ui.theme.VBHelperTheme
 import kotlinx.coroutines.Dispatchers
@@ -63,6 +64,7 @@ class MainActivity : AppCompatActivity() {
         val cardScreenController = CardScreenControllerImpl(this)
         val chatScreenController = ChatScreenControllerImpl(this)
         val lorebookScreenController = LorebookScreenControllerImpl(this)
+        val worldChatScreenController = WorldChatScreenControllerImpl(this)
 
         super.onCreate(savedInstanceState)
 
@@ -83,6 +85,7 @@ class MainActivity : AppCompatActivity() {
                     cardScreenController = cardScreenController,
                     chatScreenController = chatScreenController,
                     lorebookScreenController = lorebookScreenController,
+                    worldChatScreenController = worldChatScreenController,
                     initialRoute = initialRoute
                 )
             }
@@ -184,6 +187,7 @@ class MainActivity : AppCompatActivity() {
         cardScreenController: CardScreenControllerImpl,
         chatScreenController: ChatScreenControllerImpl,
         lorebookScreenController: LorebookScreenControllerImpl,
+        worldChatScreenController: WorldChatScreenControllerImpl,
         initialRoute: String? = null
     ) {
         AppNavigation(
@@ -197,7 +201,8 @@ class MainActivity : AppCompatActivity() {
                 spriteViewerController,
                 cardScreenController,
                 chatScreenController,
-                lorebookScreenController
+                lorebookScreenController,
+                worldChatScreenController
             ),
             initialRoute = initialRoute
         )

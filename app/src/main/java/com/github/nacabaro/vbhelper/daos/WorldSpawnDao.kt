@@ -53,4 +53,31 @@ interface WorldSpawnDao {
         """
     )
     fun getActiveSpawnsWithDetails(now: Long): Flow<List<WorldDtos.SpawnWithDetails>>
+
+    @Query(
+        """
+        SELECT
+            ws.id AS id,
+            ws.cardCharacterId AS cardCharacterId,
+            ws.individualId AS individualId,
+            ws.latitude AS latitude,
+            ws.longitude AS longitude,
+            ws.spawnedAt AS spawnedAt,
+            ws.expiresAt AS expiresAt,
+            ws.interacted AS interacted,
+            cc.charaIndex AS charaIndex,
+            cc.cardId AS cardId,
+            s.spriteIdle1 AS spriteIdle,
+            s.spriteIdle2 AS spriteIdle2,
+            s.width AS spriteWidth,
+            s.height AS spriteHeight,
+            sp.speciesName AS speciesName
+        FROM WorldSpawn ws
+        JOIN CardCharacter cc ON cc.id = ws.cardCharacterId
+        JOIN Sprite s ON s.id = cc.spriteId
+        LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = cc.id
+        WHERE ws.id = :spawnId
+        """
+    )
+    suspend fun getSpawnById(spawnId: Long): WorldDtos.SpawnWithDetails?
 }

@@ -421,4 +421,42 @@ object CharacterDtos {
             return result
         }
     }
+
+    data class WildCharacterInfo(
+        val stage: Int,
+        val attribute: NfcCharacter.Attribute,
+        val spriteIdle: ByteArray,
+        val spriteIdle2: ByteArray,
+        val spriteWidth: Int,
+        val spriteHeight: Int,
+        val cardName: String
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as WildCharacterInfo
+
+            if (stage != other.stage) return false
+            if (attribute != other.attribute) return false
+            if (!spriteIdle.contentEquals(other.spriteIdle)) return false
+            if (!spriteIdle2.contentEquals(other.spriteIdle2)) return false
+            if (spriteWidth != other.spriteWidth) return false
+            if (spriteHeight != other.spriteHeight) return false
+            if (cardName != other.cardName) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = stage
+            result = 31 * result + attribute.hashCode()
+            result = 31 * result + spriteIdle.contentHashCode()
+            result = 31 * result + spriteIdle2.contentHashCode()
+            result = 31 * result + spriteWidth
+            result = 31 * result + spriteHeight
+            result = 31 * result + cardName.hashCode()
+            return result
+        }
+    }
 }

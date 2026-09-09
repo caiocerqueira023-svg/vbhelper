@@ -1,10 +1,13 @@
 package com.github.nacabaro.vbhelper.chat
 
+import com.github.cfogrady.vbnfc.data.NfcCharacter
 import com.github.nacabaro.vbhelper.daos.ChatDao
 import com.github.nacabaro.vbhelper.chat.lorebook.LorebookRepository
 import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.domain.chat.ChatMessageEntity
+import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.source.LlmSettingsRepository
+import com.github.nacabaro.vbhelper.utils.DeviceType
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
@@ -23,6 +26,44 @@ class ChatRepository(
     fun getHistory(characterId: Long): Flow<List<ChatMessageEntity>> =
         database.userCharacterDao().getIndividualId(characterId)
             .flatMapLatest(chatDao::getMessages)
+
+    fun getHistoryForIndividual(individualId: String): Flow<List<ChatMessageEntity>> =
+        chatDao.getMessages(individualId)
+
+    /**
+     * Sends a message to a wild Digimon found on the World map that is not in storage.
+     * Uses species data (CardCharacter) and the personality generated for this individualId at spawn.
+     */
+    suspend fun sendMessageForWildEncounter(
+        individualId: String,
+        cardCharacterId: Long,
+        userText: String
+    ): String {
+        val (systemPrompt, speciesName) = buildWildSystemPrompt(cardCharacterId, individualId)
+        val enrichedSystemPrompt = withLorebookContext(systemPrompt, userText, speciesName)
+        chatDao.insertMessage(
+            ChatMessageEntity(
+                individualId = individualId,
+                role = "user",
+                content = userText,
+                timestamp = System.currentTimeMillis()
+            )
+        )
+        val reply = requestCompletion(enrichedSystemPrompt, individualId, null)
+        chatDao.insertMessage(
+            ChatMessageEntity(
+                individualId = individualId,
+                role = "assistant",
+                content = reply,
+                timestamp = System.currentTimeMillis()
+            )
+        )
+        return reply
+    }
+
+    suspend fun deleteFromMessageForIndividual(individualId: String, messageId: Long) {
+        chatDao.deleteFromMessage(individualId, messageId)
+    }
 
     fun getLatestAssistantMessage(individualId: String): Flow<ChatMessageEntity?> =
         chatDao.getLatestAssistantMessage(individualId)
@@ -99,6 +140,61 @@ class ChatRepository(
             languageTag
         )
         return PromptContext(prompt, userCharacter.individualId, speciesProfile?.speciesName)
+    }
+
+    private suspend fun buildWildSystemPrompt(
+        cardCharacterId: Long,
+        individualId: String
+    ): Pair<String, String?> {
+        val info = database.characterDao().getWildCharacterInfo(cardCharacterId)
+            ?: error("Dados da espécie não encontrados para este Digimon.")
+        val personality = database.digimonIndividualDao().getPersonality(individualId)
+        val speciesProfile = database.speciesProfileDao().getByCardCharacterId(cardCharacterId)
+        val promptTemplate = llmSettingsRepository.systemPromptTemplate.first()
+        val tamerName = llmSettingsRepository.tamerName.first()
+        val languageTag = PromptLocalization.currentLanguageTag()
+
+        val fakeCharacter = CharacterDtos.CharacterWithSprites(
+            id = 0,
+            charId = cardCharacterId,
+            stage = info.stage,
+            attribute = info.attribute,
+            ageInDays = 0,
+            mood = 50,
+            vitalPoints = 0,
+            transformationCountdown = 0,
+            injuryStatus = NfcCharacter.InjuryStatus.None,
+            trophies = 0,
+            currentPhaseBattlesWon = 0,
+            currentPhaseBattlesLost = 0,
+            totalBattlesWon = 0,
+            totalBattlesLost = 0,
+            activityLevel = 0,
+            heartRateCurrent = 0,
+            characterType = DeviceType.VBDevice,
+            spriteIdle = info.spriteIdle,
+            spriteIdle2 = info.spriteIdle2,
+            spriteWidth = info.spriteWidth,
+            spriteHeight = info.spriteHeight,
+            nameSprite = ByteArray(0),
+            nameSpriteWidth = 0,
+            nameSpriteHeight = 0,
+            isBemCard = false,
+            nickname = null,
+            isInAdventure = false,
+            active = false
+        )
+
+        val prompt = DigimonPersonaBuilder.buildSystemPrompt(
+            fakeCharacter,
+            info.cardName,
+            speciesProfile,
+            promptTemplate,
+            personality,
+            tamerName,
+            languageTag
+        )
+        return prompt to speciesProfile?.speciesName
     }
 
     private suspend fun withLorebookContext(

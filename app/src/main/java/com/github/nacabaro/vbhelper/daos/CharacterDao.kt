@@ -19,6 +19,25 @@ interface CharacterDao {
     @Query("SELECT * FROM CardCharacter WHERE id = :id")
     suspend fun getById(id: Long): CardCharacter?
 
+    @Query(
+        """
+        SELECT
+            cc.stage as stage,
+            cc.attribute as attribute,
+            s.spriteIdle1 as spriteIdle,
+            s.spriteIdle2 as spriteIdle2,
+            s.width as spriteWidth,
+            s.height as spriteHeight,
+            c.name as cardName
+        FROM CardCharacter cc
+        JOIN Sprite s ON s.id = cc.spriteId
+        JOIN Card c ON c.id = cc.cardId
+        WHERE cc.id = :cardCharacterId
+        LIMIT 1
+        """
+    )
+    suspend fun getWildCharacterInfo(cardCharacterId: Long): CharacterDtos.WildCharacterInfo?
+
     @Insert
     suspend fun insertCharacter(vararg characterData: CardCharacter)
 

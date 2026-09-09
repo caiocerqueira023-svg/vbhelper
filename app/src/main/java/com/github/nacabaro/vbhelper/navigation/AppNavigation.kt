@@ -3,14 +3,19 @@ package com.github.nacabaro.vbhelper.navigation
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
@@ -44,6 +49,9 @@ import com.github.nacabaro.vbhelper.source.StorageRepository
 import com.github.nacabaro.vbhelper.screens.lorebookScreen.LorebookScreen
 import com.github.nacabaro.vbhelper.screens.lorebookScreen.LorebookScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.worldScreen.WorldScreen
+import com.github.nacabaro.vbhelper.screens.worldScreen.WorldChatScreen
+import com.github.nacabaro.vbhelper.screens.worldScreen.WorldChatScreenControllerImpl
+import com.github.nacabaro.vbhelper.dtos.WorldDtos
 
 data class AppNavigationHandlers(
     val settingsScreenController: SettingsScreenControllerImpl,
@@ -55,7 +63,8 @@ data class AppNavigationHandlers(
     val spriteViewerController: SpriteViewerControllerImpl,
     val cardScreenController: CardScreenControllerImpl,
     val chatScreenController: ChatScreenControllerImpl,
-    val lorebookScreenController: LorebookScreenControllerImpl
+    val lorebookScreenController: LorebookScreenControllerImpl,
+    val worldChatScreenController: WorldChatScreenControllerImpl
 )
 
 @Composable
@@ -96,7 +105,7 @@ fun AppNavigation(
                     homeScreenController = applicationNavigationHandlers.homeScreenController
                 )
             }
-            composable(NavigationItems.World.route) { WorldScreen() }
+            composable(NavigationItems.World.route) { WorldScreen(navController = navController) }
             composable(NavigationItems.Storage.route) {
                 StorageScreen(
                     navController = navController,
@@ -205,6 +214,35 @@ fun AppNavigation(
                         chatScreenController = applicationNavigationHandlers.chatScreenController,
                         characterId = characterId
                     )
+                }
+            }
+            composable(NavigationItems.WorldChat.route) {
+                val spawnId = it.arguments?.getString("spawnId")?.toLongOrNull()
+                if (spawnId != null) {
+                    val context = LocalContext.current.applicationContext as VBHelper
+                    var spawnDetails by remember { mutableStateOf<WorldDtos.SpawnWithDetails?>(null) }
+                    LaunchedEffect(spawnId) {
+                        spawnDetails = context.container.worldRepository.getSpawn(spawnId)
+                    }
+                    val details = spawnDetails
+                    if (details != null) {
+                        WorldChatScreen(
+                            navController = navController,
+                            controller = applicationNavigationHandlers.worldChatScreenController,
+                            individualId = details.individualId,
+                            cardCharacterId = details.cardCharacterId,
+                            speciesName = details.speciesName ?: ""
+                        )
+                    } else {
+                        Scaffold { padding ->
+                            Box(
+                                Modifier.padding(padding).fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
+                        }
+                    }
                 }
             }
         }
