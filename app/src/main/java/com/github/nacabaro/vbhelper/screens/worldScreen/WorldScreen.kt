@@ -2,7 +2,6 @@ package com.github.nacabaro.vbhelper.screens.worldScreen
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
@@ -22,12 +21,12 @@ import com.github.nacabaro.vbhelper.di.VBHelper
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import com.google.android.gms.tasks.CancellationTokenSource
+import com.github.nacabaro.vbhelper.utils.BitmapData
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlin.math.cos
-import kotlin.math.sin
 import kotlin.math.sqrt
 
 @Composable
@@ -49,16 +48,17 @@ fun WorldScreen() {
     val animatedSpawnImages = remember(spawns, idleFrame) {
         spawns.mapNotNull { spawn ->
             runCatching {
-                val bitmap = Bitmap.createBitmap(
-                    spawn.spriteWidth.coerceAtLeast(1),
-                    spawn.spriteHeight.coerceAtLeast(1),
-                    Bitmap.Config.ARGB_8888
-                )
                 val frame = if (idleFrame == 0) spawn.spriteIdle else spawn.spriteIdle2
-                bitmap.copyPixelsFromBuffer(java.nio.ByteBuffer.wrap(frame))
-                spawn to bitmap.asImageBitmap()
+                spawn to BitmapData(
+                    bitmap = frame,
+                    width = spawn.spriteWidth.coerceAtLeast(1),
+                    height = spawn.spriteHeight.coerceAtLeast(1)
+                ).getBitmap().asImageBitmap()
             }.getOrNull()
         }
+    }
+    val animatedSpawnIds = remember(animatedSpawnImages) {
+        animatedSpawnImages.map { it.first.id }.toSet()
     }
     fun loadLocation() {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) !=
@@ -67,14 +67,11 @@ fun WorldScreen() {
             status = "Location permission is required."
             return
         }
-        LocationServices.getFusedLocationProviderClient(context).getCurrentLocation(
-            Priority.PRIORITY_BALANCED_POWER_ACCURACY,
-            CancellationTokenSource().token
-        )
-            .addOnSuccessListener { currentLocation ->
+        val client = LocationServices.getFusedLocationProviderClient(context)
+        fun applyLocation(currentLocation: android.location.Location?) {
                 if (currentLocation == null) {
-                    status = "Waiting for a location fix."
-                    return@addOnSuccessListener
+                    status = "Waiting for a location fix. Move outdoors or enable device location."
+                    return
                 }
                 location = currentLocation.latitude to currentLocation.longitude
                 scope.launch {
@@ -91,10 +88,20 @@ fun WorldScreen() {
                         status = "Could not load nearby Digimon."
                     }
                 }
+        }
+        client.lastLocation.addOnSuccessListener { cachedLocation ->
+            if (cachedLocation != null) {
+                applyLocation(cachedLocation)
+            } else {
+                client.getCurrentLocation(
+                    Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+                    CancellationTokenSource().token
+                ).addOnSuccessListener(::applyLocation)
+                    .addOnFailureListener { status = "Could not read device location." }
             }
-            .addOnFailureListener {
-                status = "Could not read device location."
-            }
+        }.addOnFailureListener {
+            status = "Could not read device location."
+        }
     }
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -118,10 +125,19 @@ fun WorldScreen() {
             val center = Offset(size.width / 2, size.height / 2)
             val radius = size.minDimension / 2.2f
             drawCircle(Color(0xFF102A43), radius)
+            drawCircle(Color(0xFF173B5E), radius * .75f)
+            drawCircle(Color(0xFF1D4D73), radius * .5f)
             drawCircle(Color(0xFF4FC3F7), radius, style = Stroke(3f))
             drawCircle(Color.White, 8f, center)
             drawCircle(Color.White.copy(alpha = .35f), radius * .5f, center, style = Stroke(2f))
             drawCircle(Color.White.copy(alpha = .18f), radius * .75f, center, style = Stroke(1f))
+            for (i in -2..2) {
+                val offset = i * radius * .25f
+                drawLine(Color.White.copy(alpha = .12f), Offset(center.x + offset, center.y - radius),
+                    Offset(center.x + offset, center.y + radius), 1f)
+                drawLine(Color.White.copy(alpha = .12f), Offset(center.x - radius, center.y + offset),
+                    Offset(center.x + radius, center.y + offset), 1f)
+            }
             location?.let { (playerLat, playerLon) ->
                 spawns.forEach { spawn ->
                     val northMeters = (spawn.latitude - playerLat) * 111_320.0
@@ -135,12 +151,14 @@ fun WorldScreen() {
                         center.x + (eastMeters * factor * scale).toFloat(),
                         center.y - (northMeters * factor * scale).toFloat()
                     )
-                    drawCircle(
-                        if (distance <= 40.0) Color(0xFF69F0AE) else Color(0xFFFFC107),
-                        12f,
-                        point
-                    )
-                    drawCircle(Color.White, 12f, point, style = Stroke(2f))
+                    if (spawn.id !in animatedSpawnIds) {
+                        drawCircle(
+                            if (distance <= 40.0) Color(0xFF69F0AE) else Color(0xFFFFC107),
+                            12f,
+                            point
+                        )
+                        drawCircle(Color.White, 12f, point, style = Stroke(2f))
+                    }
                 }
             }
             animatedSpawnImages.forEach { (spawn, image) ->
@@ -165,7 +183,7 @@ fun WorldScreen() {
             }
         }
         Text("${spawns.size} nearby Digimon", style = MaterialTheme.typography.titleMedium)
-        Text("Green: interaction range (40 m) • Yellow: detected")
+        Text("Green: interaction range (40 m) • Radar range: ${(500 / zoom).toInt()} m")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = { zoom = (zoom / 1.5f).coerceAtLeast(.5f) }) { Text("-") }
             Text("Zoom ${(zoom * 100).toInt()}%", modifier = Modifier.padding(top = 12.dp))
