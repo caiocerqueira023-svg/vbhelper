@@ -1,7 +1,13 @@
 package com.github.nacabaro.vbhelper.screens.worldScreen
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
+import android.hardware.Sensor
+import android.hardware.SensorEvent
+import android.hardware.SensorEventListener
+import android.hardware.SensorManager
+import android.location.Location
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -10,6 +16,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -23,12 +30,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -41,11 +51,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
@@ -58,24 +70,31 @@ import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.getBitmap
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
-import com.google.android.gms.tasks.CancellationTokenSource
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.math.sin
+import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 /** Radius, in meters, within which the player can tap a Digimon to chat. */
 private const val INTERACTION_RANGE_METERS = 40.0
+private const val GRID_SIZE_METERS = 60.0
 
 @Composable
 fun WorldScreen(navController: NavController) {
     val context = LocalContext.current
     val app = context.applicationContext as VBHelper
-    var location by remember { mutableStateOf<Pair<Double, Double>?>(null) }
+    var location by remember { mutableStateOf<Location?>(null) }
+    var origin by remember { mutableStateOf<Location?>(null) }
+    var heading by remember { mutableFloatStateOf(0f) }
     var status by remember {
         mutableStateOf("Permita o acesso à localização para descobrir Digimon próximos.")
     }
@@ -87,7 +106,7 @@ fun WorldScreen(navController: NavController) {
 
     LaunchedEffect(Unit) {
         while (true) {
-            delay(700L)
+            kotlinx.coroutines.delay(700L)
             idleFrame = 1 - idleFrame
         }
     }
@@ -105,85 +124,166 @@ fun WorldScreen(navController: NavController) {
         }
     }
 
-    fun loadLocation() {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) !=
-            PackageManager.PERMISSION_GRANTED
-        ) {
-            status = "É necessária permissão de localização."
-            return
-        }
-        val client = LocationServices.getFusedLocationProviderClient(context)
-        fun applyLocation(currentLocation: android.location.Location?) {
-            if (currentLocation == null) {
-                status = "Aguardando sinal de localização. Saia para uma área aberta."
-                return
-            }
-            location = currentLocation.latitude to currentLocation.longitude
-            scope.launch {
-                runCatching {
-                    withContext(Dispatchers.IO) {
-                        app.container.worldRepository.ensureSpawns(
-                            currentLocation.latitude,
-                            currentLocation.longitude
-                        )
-                    }
-                }.onSuccess {
-                    status = "Radar ativo"
-                }.onFailure {
-                    status = "Não foi possível carregar Digimon próximos."
-                }
-            }
-        }
-        client.lastLocation.addOnSuccessListener { cachedLocation ->
-            if (cachedLocation != null) {
-                applyLocation(cachedLocation)
-            } else {
-                client.getCurrentLocation(
-                    Priority.PRIORITY_BALANCED_POWER_ACCURACY,
-                    CancellationTokenSource().token
-                ).addOnSuccessListener(::applyLocation)
-                    .addOnFailureListener { status = "Não foi possível ler a localização." }
-            }
-        }.addOnFailureListener {
-            status = "Não foi possível ler a localização."
-        }
+    var hasLocationPermission by remember {
+        mutableStateOf(
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        )
     }
 
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { granted ->
-        if (granted.values.any { it }) loadLocation()
-        else status = "É necessária permissão de localização."
-    }
+        hasLocationPermission = granted.values.any { it } ||
+            ContextCompat.checkSelfPermission(
+                context,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
 
-    LaunchedEffect(Unit) {
-        val permission = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
-        if (permission != PackageManager.PERMISSION_GRANTED) {
-            launcher.launch(
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
-            )
+        if (hasLocationPermission) {
+            status = "Localização ativa."
         } else {
-            loadLocation()
+            status = "É necessária permissão de localização."
         }
     }
 
     LaunchedEffect(Unit) {
-        while (true) {
-            delay(15_000L)
-            loadLocation()
+        if (!hasLocationPermission) {
+            launcher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
+
+    // Mantém uma assinatura contínua do GPS em vez de consultar apenas a localização em cache.
+    DisposableEffect(hasLocationPermission) {
+        if (!hasLocationPermission) {
+            onDispose { }
+        } else {
+            val client = LocationServices.getFusedLocationProviderClient(context)
+            var lastSpawnRefresh: Location? = null
+
+            val callback = object : LocationCallback() {
+                override fun onLocationResult(result: LocationResult) {
+                    result.lastLocation?.let { newLocation ->
+                        if (origin == null) {
+                            origin = Location(newLocation).apply {
+                                latitude = newLocation.latitude
+                                longitude = newLocation.longitude
+                            }
+                        }
+
+                        location = newLocation
+                        status = "Radar ativo"
+
+                        val shouldRefreshSpawns = lastSpawnRefresh == null ||
+                            lastSpawnRefresh!!.distanceTo(newLocation) >= 100f
+
+                        if (shouldRefreshSpawns) {
+                            lastSpawnRefresh = Location(newLocation)
+                            scope.launch {
+                                runCatching {
+                                    withContext(Dispatchers.IO) {
+                                        app.container.worldRepository.ensureSpawns(
+                                            newLocation.latitude,
+                                            newLocation.longitude
+                                        )
+                                    }
+                                }.onFailure {
+                                    status = "Não foi possível carregar Digimon próximos."
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            val request = LocationRequest.Builder(
+                Priority.PRIORITY_HIGH_ACCURACY,
+                2_000L
+            )
+                .setMinUpdateIntervalMillis(1_000L)
+                .setMinUpdateDistanceMeters(2f)
+                .setWaitForAccurateLocation(false)
+                .build()
+
+            client.lastLocation.addOnSuccessListener { cached ->
+                cached?.let { cachedLocation ->
+                    if (origin == null) {
+                        origin = Location(cachedLocation).apply {
+                            latitude = cachedLocation.latitude
+                            longitude = cachedLocation.longitude
+                        }
+                    }
+                    location = cachedLocation
+                }
+            }
+
+            client.requestLocationUpdates(request, callback, context.mainLooper)
+                .addOnFailureListener {
+                    status = "Não foi possível iniciar o rastreamento da localização."
+                }
+
+            onDispose {
+                client.removeLocationUpdates(callback)
+            }
+        }
+    }
+
+    // TYPE_ROTATION_VECTOR combina o giroscópio com os demais sensores de orientação
+    // para obter um azimute estável em relação ao norte magnético.
+    DisposableEffect(Unit) {
+        val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        val rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
+        val rotationMatrix = FloatArray(9)
+        val orientation = FloatArray(3)
+
+        val listener = object : SensorEventListener {
+            override fun onSensorChanged(event: SensorEvent) {
+                SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
+                SensorManager.getOrientation(rotationMatrix, orientation)
+                val degrees = Math.toDegrees(orientation[0].toDouble()).toFloat()
+                heading = (degrees + 360f) % 360f
+            }
+
+            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
+        }
+
+        if (rotationSensor != null) {
+            sensorManager.registerListener(
+                listener,
+                rotationSensor,
+                SensorManager.SENSOR_DELAY_GAME
+            )
+        }
+
+        onDispose {
+            sensorManager.unregisterListener(listener)
         }
     }
 
     Scaffold(
-        topBar = { TopBanner(text = stringResource(R.string.nav_world)) }
+        topBar = {
+            TopBanner(text = "${stringResource(R.string.nav_world)} • ${cardinalDirection(heading)}")
+        }
     ) { contentPadding ->
         Column(
             Modifier
                 .padding(contentPadding)
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
             Text(status, style = MaterialTheme.typography.bodyMedium)
+            Text(
+                "Direção: ${cardinalDirection(heading)} (${heading.roundToInt()}°)",
+                style = MaterialTheme.typography.bodySmall
+            )
             Spacer(Modifier.height(8.dp))
 
             BoxWithConstraints(
@@ -192,6 +292,11 @@ fun WorldScreen(navController: NavController) {
                     .aspectRatio(1f)
                     .clip(MaterialTheme.shapes.medium)
                     .background(Color(0xFFDCE8D5))
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, _, gestureZoom, _ ->
+                            zoom = (zoom * gestureZoom).coerceIn(0.5f, 4f)
+                        }
+                    }
             ) {
                 val density = LocalDensity.current
                 val boxWidthPx = with(density) { maxWidth.toPx() }
@@ -200,32 +305,131 @@ fun WorldScreen(navController: NavController) {
                 val scale = (boxWidthPx / 2f) / visibleRadiusMeters.toFloat()
                 val interactionRadiusPx = (INTERACTION_RANGE_METERS * scale).toFloat()
 
+                // O jogador permanece sempre no centro da tela. O mundo é que se desloca
+                // em sentido contrário ao movimento do jogador.
+                val playerOffset = center
+                val playerDisplacement = origin?.let { originLocation ->
+                    location?.let { currentLocation ->
+                        val northMeters = (currentLocation.latitude - originLocation.latitude) * 111_320.0
+                        val eastMeters = (currentLocation.longitude - originLocation.longitude) *
+                            111_320.0 * cos(Math.toRadians(originLocation.latitude))
+                        Offset(
+                            (eastMeters * scale).toFloat(),
+                            (-northMeters * scale).toFloat()
+                        )
+                    }
+                } ?: Offset.Zero
+
                 Canvas(modifier = Modifier.fillMaxSize()) {
-                    val gridSpacingPx = (60f * zoom).coerceAtLeast(20f)
-                    var x = center.x % gridSpacingPx
-                    while (x < size.width) {
-                        drawLine(Color(0xFFB9CDAF), Offset(x, 0f), Offset(x, size.height), strokeWidth = 2f)
-                        x += gridSpacingPx
+                    // A grade representa o mundo, se desloca com o jogador e gira com a bússola.
+                    withTransform({
+                        rotate(degrees = -heading, pivot = center)
+                    }) {
+                        val gridSpacingPx = (GRID_SIZE_METERS * scale).toFloat().coerceAtLeast(20f)
+                        val originX = center.x - playerDisplacement.x
+                        val originY = center.y - playerDisplacement.y
+
+                        var x = originX % gridSpacingPx
+                        if (x < 0) x += gridSpacingPx
+                        while (x < size.width) {
+                            drawLine(
+                                Color(0xFFB9CDAF),
+                                Offset(x, 0f),
+                                Offset(x, size.height),
+                                strokeWidth = 2f
+                            )
+                            x += gridSpacingPx
+                        }
+
+                        var y = originY % gridSpacingPx
+                        if (y < 0) y += gridSpacingPx
+                        while (y < size.height) {
+                            drawLine(
+                                Color(0xFFB9CDAF),
+                                Offset(0f, y),
+                                Offset(size.width, y),
+                                strokeWidth = 2f
+                            )
+                            y += gridSpacingPx
+                        }
                     }
-                    var y = center.y % gridSpacingPx
-                    while (y < size.height) {
-                        drawLine(Color(0xFFB9CDAF), Offset(0f, y), Offset(size.width, y), strokeWidth = 2f)
-                        y += gridSpacingPx
-                    }
+
                     drawCircle(
                         color = Color(0x552196F3),
                         radius = interactionRadiusPx,
-                        center = center,
+                        center = playerOffset,
                         style = Stroke(width = 3f)
+                    )
+
+                    // Rosa dos ventos: os quatro pontos cardeais giram ao redor do jogador.
+                    // Quando o aparelho aponta para uma direção, o marcador correspondente
+                    // fica no topo do mapa, como em uma bússola.
+                    val compassRadius = size.minDimension / 2f - 28.dp.toPx()
+                    val arrowLength = 18.dp.toPx()
+                    val arrowHalfWidth = 8.dp.toPx()
+                    val cardinals = listOf(
+                        0f to Color(0xFFD32F2F),   // Norte
+                        90f to Color(0xFF455A64), // Leste
+                        180f to Color(0xFF455A64),// Sul
+                        270f to Color(0xFF455A64) // Oeste
+                    )
+
+                    cardinals.forEach { (cardinalAzimuth, arrowColor) ->
+                        val screenAngleDeg = cardinalAzimuth - heading - 90f
+                        val screenAngle = screenAngleDeg * (PI / 180.0)
+                        val direction = Offset(
+                            cos(screenAngle).toFloat(),
+                            sin(screenAngle).toFloat()
+                        )
+                        val tangent = Offset(-direction.y, direction.x)
+                        val tip = center + direction * compassRadius
+                        val baseCenter = tip - direction * arrowLength
+                        val arrowPath = Path().apply {
+                            moveTo(tip.x, tip.y)
+                            lineTo(
+                                baseCenter.x + tangent.x * arrowHalfWidth,
+                                baseCenter.y + tangent.y * arrowHalfWidth
+                            )
+                            lineTo(
+                                baseCenter.x - tangent.x * arrowHalfWidth,
+                                baseCenter.y - tangent.y * arrowHalfWidth
+                            )
+                            close()
+                        }
+                        drawPath(arrowPath, arrowColor)
+                    }
+                }
+
+                // Letras cardeais acompanham as setas e giram pela borda do mapa.
+                listOf(
+                    0f to "N",
+                    90f to "L",
+                    180f to "S",
+                    270f to "O"
+                ).forEach { (cardinalAzimuth, label) ->
+                    val compassRadiusPx = boxWidthPx / 2f - with(density) { 48.dp.toPx() }
+                    val angleRadians = (cardinalAzimuth - heading - 90f) * (PI / 180.0)
+                    val labelX = center.x + cos(angleRadians).toFloat() * compassRadiusPx
+                    val labelY = center.y + sin(angleRadians).toFloat() * compassRadiusPx
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelLarge,
+                        modifier = Modifier.offset {
+                            IntOffset(
+                                (labelX - 8.dp.toPx()).toInt(),
+                                (labelY - 10.dp.toPx()).toInt()
+                            )
+                        }
                     )
                 }
 
+                // O marcador azul permanece centralizado; a grade e os objetos do mundo se movem ao redor dele.
                 Box(
                     modifier = Modifier
                         .offset {
                             IntOffset(
-                                (center.x - 14.dp.toPx()).toInt(),
-                                (center.y - 14.dp.toPx()).toInt()
+                                (playerOffset.x - 14.dp.toPx()).toInt(),
+                                (playerOffset.y - 14.dp.toPx()).toInt()
                             )
                         }
                         .size(28.dp)
@@ -234,17 +438,25 @@ fun WorldScreen(navController: NavController) {
                         .border(2.dp, Color.White, CircleShape)
                 )
 
-                location?.let { (playerLat, playerLon) ->
+                // A posição dos Digimon usa a mesma origem fixa do jogador.
+                origin?.let { originLocation ->
                     spawnBitmaps.forEach { (spawn, image) ->
-                        val northMeters = (spawn.latitude - playerLat) * 111_320.0
-                        val eastMeters = (spawn.longitude - playerLon) *
-                            111_320.0 * cos(Math.toRadians(playerLat))
-                        val distance = sqrt(northMeters * northMeters + eastMeters * eastMeters)
+                        val northMeters = (spawn.latitude - originLocation.latitude) * 111_320.0
+                        val eastMeters = (spawn.longitude - originLocation.longitude) *
+                            111_320.0 * cos(Math.toRadians(originLocation.latitude))
+                        val distanceFromCenter = sqrt(northMeters * northMeters + eastMeters * eastMeters)
 
-                        if (distance <= visibleRadiusMeters) {
-                            val px = center.x + (eastMeters * scale).toFloat()
-                            val py = center.y - (northMeters * scale).toFloat()
-                            val withinRange = distance <= INTERACTION_RANGE_METERS
+                        if (distanceFromCenter <= visibleRadiusMeters * 1.25) {
+                            val px = center.x + (eastMeters * scale).toFloat() - playerDisplacement.x
+                            val py = center.y - (northMeters * scale).toFloat() - playerDisplacement.y
+                            val playerLocation = location
+                            val distanceToPlayer = if (playerLocation != null) {
+                                val northToPlayer = (spawn.latitude - playerLocation.latitude) * 111_320.0
+                                val eastToPlayer = (spawn.longitude - playerLocation.longitude) *
+                                    111_320.0 * cos(Math.toRadians(playerLocation.latitude))
+                                sqrt(northToPlayer * northToPlayer + eastToPlayer * eastToPlayer)
+                            } else Double.MAX_VALUE
+                            val withinRange = distanceToPlayer <= INTERACTION_RANGE_METERS
                             val markerSizeDp = 40.dp
 
                             Image(
@@ -282,6 +494,9 @@ fun WorldScreen(navController: NavController) {
             Spacer(Modifier.height(8.dp))
             Text("${spawns.size} Digimon próximos", style = MaterialTheme.typography.titleMedium)
             Text("Toque em um Digimon dentro do círculo azul para conversar.")
+            Text("Cada quadrado da grade representa aproximadamente 60 m.")
+            Text("Use dois dedos em movimento de pinça sobre o mapa para controlar o zoom.")
+            Text("As setas N, L, S e O giram ao redor do jogador como uma bússola.")
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -292,7 +507,7 @@ fun WorldScreen(navController: NavController) {
                 Button(onClick = { zoom = (zoom * 1.5f).coerceAtMost(4f) }) { Text("+") }
             }
 
-            if (location == null) {
+            if (!hasLocationPermission || location == null) {
                 Button(
                     onClick = {
                         launcher.launch(
@@ -313,5 +528,19 @@ fun WorldScreen(navController: NavController) {
             Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
             toastMessage = null
         }
+    }
+}
+
+private fun cardinalDirection(degrees: Float): String {
+    val normalized = (degrees + 360f) % 360f
+    return when {
+        normalized >= 337.5f || normalized < 22.5f -> "N"
+        normalized < 67.5f -> "NE"
+        normalized < 112.5f -> "L"
+        normalized < 157.5f -> "SE"
+        normalized < 202.5f -> "S"
+        normalized < 247.5f -> "SO"
+        normalized < 292.5f -> "O"
+        else -> "NO"
     }
 }
