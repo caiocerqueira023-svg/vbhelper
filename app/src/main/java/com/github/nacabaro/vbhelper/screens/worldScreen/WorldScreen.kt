@@ -249,7 +249,14 @@ fun WorldScreen(navController: NavController) {
                 SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
                 SensorManager.getOrientation(rotationMatrix, orientation)
                 val degrees = Math.toDegrees(orientation[0].toDouble()).toFloat()
-                heading = (degrees + 360f) % 360f
+                val targetHeading = (degrees + 360f) % 360f
+
+                // Suaviza a rotação usando o menor caminho entre os ângulos.
+                var delta = targetHeading - heading
+                if (delta > 180f) delta -= 360f
+                if (delta < -180f) delta += 360f
+
+                heading = (heading + delta * 0.12f + 360f) % 360f
             }
 
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
