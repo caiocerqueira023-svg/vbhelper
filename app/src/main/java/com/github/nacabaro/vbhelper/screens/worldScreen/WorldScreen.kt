@@ -17,6 +17,8 @@ import androidx.core.content.ContextCompat
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @Composable
 fun WorldScreen() {
@@ -24,24 +26,52 @@ fun WorldScreen() {
     val app = context.applicationContext as VBHelper
     var location by remember { mutableStateOf<Pair<Double, Double>?>(null) }
     var status by remember { mutableStateOf("Allow location access to discover nearby Digimon.") }
+    val scope = rememberCoroutineScope()
+    fun loadLocation() {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) !=
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            status = "Location permission is required."
+            return
+        }
+        LocationServices.getFusedLocationProviderClient(context).lastLocation
+            .addOnSuccessListener { currentLocation ->
+                if (currentLocation == null) {
+                    status = "Waiting for a location fix."
+                    return@addOnSuccessListener
+                }
+                location = currentLocation.latitude to currentLocation.longitude
+                scope.launch {
+                    runCatching {
+                        withContext(Dispatchers.IO) {
+                            app.container.worldRepository.ensureSpawns(
+                                currentLocation.latitude,
+                                currentLocation.longitude
+                            )
+                        }
+                    }.onSuccess {
+                        status = "Radar active"
+                    }.onFailure {
+                        status = "Could not load nearby Digimon."
+                    }
+                }
+            }
+            .addOnFailureListener {
+                status = "Could not read device location."
+            }
+    }
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { granted ->
-        if (granted.values.any { it }) status = "Radar active" else status = "Location permission is required."
+        if (granted.values.any { it }) loadLocation()
+        else status = "Location permission is required."
     }
-    val scope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
-        val permission = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+        val permission = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION)
         if (permission != PackageManager.PERMISSION_GRANTED) {
             launcher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
         } else {
-            LocationServices.getFusedLocationProviderClient(context).lastLocation.addOnSuccessListener {
-                if (it != null) {
-                    location = it.latitude to it.longitude
-                    scope.launch { app.container.worldRepository.ensureSpawns(it.latitude, it.longitude) }
-                    status = "Radar active"
-                }
-            }
+            loadLocation()
         }
     }
     Column(Modifier.fillMaxSize().padding(16.dp)) {
