@@ -40,6 +40,7 @@ interface WorldSpawnDao {
             cc.charaIndex AS charaIndex,
             cc.cardId AS cardId,
             s.spriteIdle1 AS spriteIdle,
+            s.spriteIdle2 AS spriteIdle2,
             s.width AS spriteWidth,
             s.height AS spriteHeight,
             sp.speciesName AS speciesName

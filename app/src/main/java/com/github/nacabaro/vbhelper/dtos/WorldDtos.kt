@@ -13,6 +13,7 @@ object WorldDtos {
         val charaIndex: Int,
         val cardId: Long,
         val spriteIdle: ByteArray,
+        val spriteIdle2: ByteArray,
         val spriteWidth: Int,
         val spriteHeight: Int,
         val speciesName: String?
@@ -22,13 +23,15 @@ object WorldDtos {
             if (other !is SpawnWithDetails) return false
             return id == other.id &&
                 individualId == other.individualId &&
-                spriteIdle.contentEquals(other.spriteIdle)
+                spriteIdle.contentEquals(other.spriteIdle) &&
+                spriteIdle2.contentEquals(other.spriteIdle2)
         }
 
         override fun hashCode(): Int {
             var result = id.hashCode()
             result = 31 * result + individualId.hashCode()
             result = 31 * result + spriteIdle.contentHashCode()
+            result = 31 * result + spriteIdle2.contentHashCode()
             return result
         }
     }

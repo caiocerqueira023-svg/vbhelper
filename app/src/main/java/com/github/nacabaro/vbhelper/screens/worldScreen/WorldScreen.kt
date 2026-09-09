@@ -2,6 +2,7 @@ package com.github.nacabaro.vbhelper.screens.worldScreen
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
@@ -10,15 +11,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.Priority
+import com.google.android.gms.tasks.CancellationTokenSource
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlin.math.cos
 import kotlin.math.sin
@@ -32,6 +38,28 @@ fun WorldScreen() {
     var status by remember { mutableStateOf("Allow location access to discover nearby Digimon.") }
     val spawns by app.container.worldRepository.observeSpawns().collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
+    var zoom by remember { mutableFloatStateOf(1f) }
+    var idleFrame by remember { mutableIntStateOf(0) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(700L)
+            idleFrame = 1 - idleFrame
+        }
+    }
+    val animatedSpawnImages = remember(spawns, idleFrame) {
+        spawns.mapNotNull { spawn ->
+            runCatching {
+                val bitmap = Bitmap.createBitmap(
+                    spawn.spriteWidth.coerceAtLeast(1),
+                    spawn.spriteHeight.coerceAtLeast(1),
+                    Bitmap.Config.ARGB_8888
+                )
+                val frame = if (idleFrame == 0) spawn.spriteIdle else spawn.spriteIdle2
+                bitmap.copyPixelsFromBuffer(java.nio.ByteBuffer.wrap(frame))
+                spawn to bitmap.asImageBitmap()
+            }.getOrNull()
+        }
+    }
     fun loadLocation() {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) !=
             PackageManager.PERMISSION_GRANTED
@@ -39,7 +67,10 @@ fun WorldScreen() {
             status = "Location permission is required."
             return
         }
-        LocationServices.getFusedLocationProviderClient(context).lastLocation
+        LocationServices.getFusedLocationProviderClient(context).getCurrentLocation(
+            Priority.PRIORITY_BALANCED_POWER_ACCURACY,
+            CancellationTokenSource().token
+        )
             .addOnSuccessListener { currentLocation ->
                 if (currentLocation == null) {
                     status = "Waiting for a location fix."
@@ -96,7 +127,7 @@ fun WorldScreen() {
                     val northMeters = (spawn.latitude - playerLat) * 111_320.0
                     val eastMeters = (spawn.longitude - playerLon) *
                         111_320.0 * cos(Math.toRadians(playerLat))
-                    val scale = radius / 500.0f
+                    val scale = radius / (500.0f / zoom)
                     val distance = sqrt(northMeters * northMeters + eastMeters * eastMeters)
                     val displayedDistance = distance.coerceAtMost(500.0)
                     val factor = if (distance == 0.0) 0.0 else displayedDistance / distance
@@ -112,9 +143,34 @@ fun WorldScreen() {
                     drawCircle(Color.White, 12f, point, style = Stroke(2f))
                 }
             }
+            animatedSpawnImages.forEach { (spawn, image) ->
+                location?.let { (playerLat, playerLon) ->
+                    val northMeters = (spawn.latitude - playerLat) * 111_320.0
+                    val eastMeters = (spawn.longitude - playerLon) *
+                        111_320.0 * cos(Math.toRadians(playerLat))
+                    val distance = sqrt(northMeters * northMeters + eastMeters * eastMeters)
+                    val visibleRadius = 500.0 / zoom
+                    if (distance <= visibleRadius) {
+                        val point = Offset(
+                            center.x + (eastMeters * radius / visibleRadius).toFloat(),
+                            center.y - (northMeters * radius / visibleRadius).toFloat()
+                        )
+                        drawImage(
+                            image,
+                            dstOffset = IntOffset((point.x - 24f).toInt(), (point.y - 24f).toInt()),
+                            dstSize = androidx.compose.ui.unit.IntSize(48, 48)
+                        )
+                    }
+                }
+            }
         }
         Text("${spawns.size} nearby Digimon", style = MaterialTheme.typography.titleMedium)
         Text("Green: interaction range (40 m) • Yellow: detected")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(onClick = { zoom = (zoom / 1.5f).coerceAtLeast(.5f) }) { Text("-") }
+            Text("Zoom ${(zoom * 100).toInt()}%", modifier = Modifier.padding(top = 12.dp))
+            Button(onClick = { zoom = (zoom * 1.5f).coerceAtMost(4f) }) { Text("+") }
+        }
         if (location == null) {
             Button(onClick = {
                 launcher.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
