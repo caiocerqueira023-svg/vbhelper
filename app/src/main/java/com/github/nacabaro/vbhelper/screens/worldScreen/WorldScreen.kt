@@ -37,6 +37,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -95,7 +97,20 @@ fun WorldScreen(navController: NavController) {
     val app = context.applicationContext as VBHelper
     var location by remember { mutableStateOf<Location?>(null) }
     var origin by remember { mutableStateOf<Location?>(null) }
-    var heading by remember { mutableFloatStateOf(0f) }
+    var rawHeading by remember { mutableFloatStateOf(0f) }
+    val headingAnimation = remember { Animatable(0f) }
+
+    // Suaviza a bússola usando sempre o menor caminho angular.
+    LaunchedEffect(rawHeading) {
+        val current = headingAnimation.value
+        val delta = ((rawHeading - current + 540f) % 360f) - 180f
+        headingAnimation.animateTo(
+            current + delta,
+            animationSpec = tween(durationMillis = 180)
+        )
+    }
+
+    val heading = ((headingAnimation.value % 360f) + 360f) % 360f
     var status by remember {
         mutableStateOf("Permita o acesso à localização para descobrir Digimon próximos.")
     }
@@ -249,14 +264,7 @@ fun WorldScreen(navController: NavController) {
                 SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
                 SensorManager.getOrientation(rotationMatrix, orientation)
                 val degrees = Math.toDegrees(orientation[0].toDouble()).toFloat()
-                val targetHeading = (degrees + 360f) % 360f
-
-                // Suaviza a rotação usando o menor caminho entre os ângulos.
-                var delta = targetHeading - heading
-                if (delta > 180f) delta -= 360f
-                if (delta < -180f) delta += 360f
-
-                heading = (heading + delta * 0.12f + 360f) % 360f
+                rawHeading = (degrees + 360f) % 360f
             }
 
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
@@ -337,13 +345,20 @@ fun WorldScreen(navController: NavController) {
                         val originX = center.x - playerDisplacement.x
                         val originY = center.y - playerDisplacement.y
 
+                        // Desenha a grade em uma área maior que a tela para que a rotação
+                        // nunca revele as bordas vazias do Canvas.
+                        val diagonal = sqrt(
+                            size.width * size.width +
+                                size.height * size.height
+                        )
+
                         var x = originX % gridSpacingPx
                         if (x < 0) x += gridSpacingPx
-                        while (x < size.width) {
+                        while (x < size.width + diagonal) {
                             drawLine(
                                 Color(0xFFB9CDAF),
-                                Offset(x, 0f),
-                                Offset(x, size.height),
+                                Offset(x, -diagonal),
+                                Offset(x, size.height + diagonal),
                                 strokeWidth = 2f
                             )
                             x += gridSpacingPx
@@ -351,11 +366,11 @@ fun WorldScreen(navController: NavController) {
 
                         var y = originY % gridSpacingPx
                         if (y < 0) y += gridSpacingPx
-                        while (y < size.height) {
+                        while (y < size.height + diagonal) {
                             drawLine(
                                 Color(0xFFB9CDAF),
-                                Offset(0f, y),
-                                Offset(size.width, y),
+                                Offset(-diagonal, y),
+                                Offset(size.width + diagonal, y),
                                 strokeWidth = 2f
                             )
                             y += gridSpacingPx
@@ -455,8 +470,19 @@ fun WorldScreen(navController: NavController) {
                         val distanceFromCenter = sqrt(northMeters * northMeters + eastMeters * eastMeters)
 
                         if (distanceFromCenter <= visibleRadiusMeters * 1.25) {
-                            val px = center.x + (eastMeters * scale).toFloat() - playerDisplacement.x
-                            val py = center.y - (northMeters * scale).toFloat() - playerDisplacement.y
+                            // Posição geográfica do Digimon em relação ao jogador.
+                            // O mesmo vetor é rotacionado junto com a grade.
+                            val worldX = (eastMeters * scale).toFloat() - playerDisplacement.x
+                            val worldY = (-northMeters * scale).toFloat() - playerDisplacement.y
+                            val angle = Math.toRadians((-heading).toDouble())
+                            val cosAngle = cos(angle).toFloat()
+                            val sinAngle = sin(angle).toFloat()
+
+                            val rotatedX = worldX * cosAngle - worldY * sinAngle
+                            val rotatedY = worldX * sinAngle + worldY * cosAngle
+
+                            val px = center.x + rotatedX
+                            val py = center.y + rotatedY
                             val playerLocation = location
                             val distanceToPlayer = if (playerLocation != null) {
                                 val northToPlayer = (spawn.latitude - playerLocation.latitude) * 111_320.0
