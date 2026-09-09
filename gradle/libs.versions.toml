@@ -18,6 +18,8 @@ protobufJavalite = "4.35.1"
 roomRuntime = "2.8.4"
 playServicesWearable = "20.0.1"
 kotlinxCoroutinesPlayServices = "1.11.0"
+workManager = "2.10.0"
+playServicesLocation = "21.3.0"
 timber = "5.0.1"
 tinylog = "2.7.0"
 retrofit = "3.0.0"
@@ -53,6 +55,8 @@ material = { module = "com.google.android.material:material", version.ref = "mat
 protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobufJavalite" }
 play-services-wearable = { group = "com.google.android.gms", name = "play-services-wearable", version.ref = "playServicesWearable" }
 kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutinesPlayServices" }
+androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workManager" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
 tinylog-api = { module = "org.tinylog:tinylog-api", version.ref = "tinylog" }
 tinylog-impl = { module = "org.tinylog:tinylog-impl", version.ref = "tinylog" }

@@ -58,6 +58,7 @@
     <string name="nav_scan">Scan</string>
     <string name="nav_battle">Battle</string>
     <string name="nav_home">Home</string>
+    <string name="nav_world">World</string>
     <string name="nav_dex">Dex</string>
     <string name="nav_card_adventure">Card adventure</string>
     <string name="nav_storage">Storage</string>

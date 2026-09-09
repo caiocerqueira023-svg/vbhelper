@@ -89,6 +89,8 @@ dependencies {
     implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.play.services.wearable)
     implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.play.services.location)
     implementation(libs.timber)
     implementation(libs.tinylog.api)
     implementation(libs.tinylog.impl)

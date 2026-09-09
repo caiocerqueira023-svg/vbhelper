@@ -9,6 +9,7 @@ import com.github.nacabaro.vbhelper.companion.logs.CompanionLogService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import com.github.nacabaro.vbhelper.world.WorldAfkScheduler
 
 class VBHelper : Application() {
     lateinit var container: DefaultAppContainer
@@ -34,5 +35,6 @@ class VBHelper : Application() {
             )
         }
         container = DefaultAppContainer(applicationContext)
+        WorldAfkScheduler.schedule(applicationContext)
     }
 }

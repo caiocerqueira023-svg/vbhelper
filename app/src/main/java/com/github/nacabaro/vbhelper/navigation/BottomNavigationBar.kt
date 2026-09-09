@@ -18,6 +18,7 @@ fun BottomNavigationBar(navController: NavController) {
         NavigationItems.Home,
         NavigationItems.Dex,
         NavigationItems.Storage,
+        NavigationItems.World,
     )
 
     NavigationBar {

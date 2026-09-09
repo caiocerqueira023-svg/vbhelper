@@ -43,6 +43,7 @@ import com.github.nacabaro.vbhelper.screens.storageScreen.StorageScreenControlle
 import com.github.nacabaro.vbhelper.source.StorageRepository
 import com.github.nacabaro.vbhelper.screens.lorebookScreen.LorebookScreen
 import com.github.nacabaro.vbhelper.screens.lorebookScreen.LorebookScreenControllerImpl
+import com.github.nacabaro.vbhelper.screens.worldScreen.WorldScreen
 
 data class AppNavigationHandlers(
     val settingsScreenController: SettingsScreenControllerImpl,
@@ -95,6 +96,7 @@ fun AppNavigation(
                     homeScreenController = applicationNavigationHandlers.homeScreenController
                 )
             }
+            composable(NavigationItems.World.route) { WorldScreen() }
             composable(NavigationItems.Storage.route) {
                 StorageScreen(
                     navController = navController,

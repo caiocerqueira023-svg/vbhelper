@@ -23,6 +23,7 @@ import com.github.nacabaro.vbhelper.daos.UserCharacterDao
 import com.github.nacabaro.vbhelper.daos.VitalWearSettingsDao
 import com.github.nacabaro.vbhelper.daos.CharacterTransferPolicyDao
 import com.github.nacabaro.vbhelper.daos.LorebookEntryDao
+import com.github.nacabaro.vbhelper.daos.WorldSpawnDao
 import com.github.nacabaro.vbhelper.companion.validation.ValidatedCardDao
 import com.github.nacabaro.vbhelper.companion.validation.ValidatedCardEntity
 import com.github.nacabaro.vbhelper.domain.card.Background
@@ -50,9 +51,10 @@ import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
 import com.github.nacabaro.vbhelper.domain.items.Items
 import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
 import com.github.nacabaro.vbhelper.domain.lorebook.LorebookEntry
+import com.github.nacabaro.vbhelper.domain.world.WorldSpawn
 
 @Database(
-    version = 10,
+    version = 11,
     exportSchema = false,
     entities = [
         Card::class,
@@ -80,7 +82,8 @@ import com.github.nacabaro.vbhelper.domain.lorebook.LorebookEntry
         SpeciesProfile::class,
         DigimonPersonalityTraits::class,
         DigimonStateSnapshot::class,
-        LorebookEntry::class
+        LorebookEntry::class,
+        WorldSpawn::class
     ]
 )
 @TypeConverters(SpeciesProfileConverters::class, PersonalityConverters::class)
@@ -104,8 +107,29 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun speciesProfileDao(): SpeciesProfileDao
     abstract fun digimonStateSnapshotDao(): DigimonStateSnapshotDao
     abstract fun lorebookEntryDao(): LorebookEntryDao
+    abstract fun worldSpawnDao(): WorldSpawnDao
 
     companion object {
+        val MIGRATION_10_11 = object : Migration(10, 11) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `WorldSpawn` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `cardCharacterId` INTEGER NOT NULL,
+                        `individualId` TEXT NOT NULL,
+                        `latitude` REAL NOT NULL,
+                        `longitude` REAL NOT NULL,
+                        `spawnedAt` INTEGER NOT NULL,
+                        `expiresAt` INTEGER NOT NULL,
+                        `interacted` INTEGER NOT NULL,
+                        FOREIGN KEY(`cardCharacterId`) REFERENCES `CardCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`individualId`) REFERENCES `DigimonIndividual`(`individualId`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_WorldSpawn_cardCharacterId` ON `WorldSpawn` (`cardCharacterId`)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_WorldSpawn_individualId` ON `WorldSpawn` (`individualId`)")
+            }
+        }
         val MIGRATION_1_2 = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 // Create new tables

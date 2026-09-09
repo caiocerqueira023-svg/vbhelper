@@ -13,6 +13,12 @@ interface CharacterDao {
     @Query("SELECT * FROM CardCharacter WHERE cardId = :cardId")
     suspend fun getCharactersForCard(cardId: Long): List<CardCharacter>
 
+    @Query("SELECT * FROM CardCharacter ORDER BY RANDOM() LIMIT 1")
+    suspend fun getRandomCharacter(): CardCharacter?
+
+    @Query("SELECT * FROM CardCharacter WHERE id = :id")
+    suspend fun getById(id: Long): CardCharacter?
+
     @Insert
     suspend fun insertCharacter(vararg characterData: CardCharacter)
 
