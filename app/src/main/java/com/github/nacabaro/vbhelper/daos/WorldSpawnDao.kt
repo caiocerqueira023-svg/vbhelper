@@ -51,5 +51,5 @@ interface WorldSpawnDao {
         ORDER BY ws.spawnedAt DESC
         """
     )
-    fun getActiveSpawnsWithDetails(now: Long): Flow<WorldDtos.SpawnWithDetails>
+    fun getActiveSpawnsWithDetails(now: Long): Flow<List<WorldDtos.SpawnWithDetails>>
 }

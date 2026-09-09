@@ -15,7 +15,7 @@ import kotlin.random.Random
 class WorldRepository(private val db: AppDatabase) {
     private val spawnDao: WorldSpawnDao = db.worldSpawnDao()
 
-    fun observeSpawns(): Flow<WorldDtos.SpawnWithDetails> =
+    fun observeSpawns(): Flow<List<WorldDtos.SpawnWithDetails>> =
         spawnDao.getActiveSpawnsWithDetails(System.currentTimeMillis())
 
     suspend fun ensureSpawns(latitude: Double, longitude: Double) {
