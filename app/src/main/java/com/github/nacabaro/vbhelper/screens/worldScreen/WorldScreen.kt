@@ -62,6 +62,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.R
