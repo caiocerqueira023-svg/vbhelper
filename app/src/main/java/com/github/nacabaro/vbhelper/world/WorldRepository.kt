@@ -5,6 +5,8 @@ import com.github.nacabaro.vbhelper.daos.WorldSpawnDao
 import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.domain.device_data.DigimonIndividual
 import com.github.nacabaro.vbhelper.domain.device_data.UserCharacter
+import com.github.nacabaro.vbhelper.domain.device_data.SpecialMissions
+import com.github.cfogrady.vbnfc.vb.SpecialMission
 import com.github.nacabaro.vbhelper.domain.device_data.VBCharacterData
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityGenerator
 import com.github.nacabaro.vbhelper.domain.world.RecruitmentState
@@ -149,21 +151,47 @@ class WorldRepository(private val db: AppDatabase) {
             characterType = DeviceType.VBDevice,
             isActive = false
         )
-        val characterId = db.userCharacterDao().insertCharacterData(userCharacter)
-        db.userCharacterDao().insertVBCharacterData(
-            VBCharacterData(id = characterId, generation = 0, totalTrophies = 0)
-        )
-        // Seed the transformation history with the current stage so the HomeScreen
-        // (which checks transformationHistory.isNotEmpty()) can render the Digimon.
-        db.userCharacterDao().insertTransformation(
-            characterId,
-            cardCharacter.charaIndex,
-            cardCharacter.cardId,
-            System.currentTimeMillis()
-        )
-        db.dexDao().insertCharacter(cardCharacter.charaIndex, cardCharacter.cardId, System.currentTimeMillis())
-        spawnDao.deleteById(spawnId)
-        characterId
+        val now = System.currentTimeMillis()
+
+        // Character creation is one logical operation. In particular, HomeScreen and
+        // watch export both depend on the auxiliary VB rows being present.
+        db.runInTransaction {
+            val characterId = db.userCharacterDao().insertCharacterData(userCharacter)
+
+            db.userCharacterDao().insertVBCharacterData(
+                VBCharacterData(id = characterId, generation = 0, totalTrophies = 0)
+            )
+
+            // Use the CardCharacter primary key directly. The previous implementation
+            // looked it up again by (charaIndex, cardId), which could leave a character
+            // without TransformationHistory after a partial failure.
+            db.userCharacterDao().insertTransformationForStage(
+                monId = characterId,
+                stageId = cardCharacter.id,
+                transformationDate = now
+            )
+
+            // NFC-created VB characters always have four mission slots. World recruits
+            // must have the same complete data shape so they can be exported later.
+            val missions = (0 until 4).map { slot ->
+                SpecialMissions(
+                    characterId = characterId,
+                    goal = 0,
+                    watchId = ((characterId * 4 + slot) % 65535L).toInt().coerceAtLeast(1),
+                    progress = 0,
+                    status = SpecialMission.Status.UNAVAILABLE,
+                    timeElapsedInMinutes = 0,
+                    timeLimitInMinutes = 0,
+                    missionType = SpecialMission.Type.NONE
+                )
+            }
+            db.userCharacterDao().insertSpecialMissions(*missions.toTypedArray())
+
+            db.dexDao().insertCharacter(cardCharacter.charaIndex, cardCharacter.cardId, now)
+            spawnDao.deleteById(spawnId)
+
+            characterId
+        }
     }
 
     private fun pickWeightedStage(random: Random = Random.Default): Int {

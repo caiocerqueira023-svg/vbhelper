@@ -37,6 +37,23 @@ interface UserCharacterDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertTransformationHistory(vararg transformationHistory: TransformationHistory)
 
+    /**
+     * Inserts the current stage using the CardCharacter primary key we already have.
+     * This avoids the old charaIndex + cardId lookup, which could silently fail to
+     * create a history row for world-recruited characters.
+     */
+    @Query(
+        """
+        INSERT INTO TransformationHistory(monId, stageId, transformationDate)
+        VALUES (:monId, :stageId, :transformationDate)
+        """
+    )
+    fun insertTransformationForStage(
+        monId: Long,
+        stageId: Long,
+        transformationDate: Long
+    )
+
     @Upsert
     fun insertSpecialMissions(vararg specialMissions: SpecialMissions)
 

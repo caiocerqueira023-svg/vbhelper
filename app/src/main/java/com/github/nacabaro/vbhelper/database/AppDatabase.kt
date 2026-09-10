@@ -54,7 +54,7 @@ import com.github.nacabaro.vbhelper.domain.lorebook.LorebookEntry
 import com.github.nacabaro.vbhelper.domain.world.WorldSpawn
 
 @Database(
-    version = 12,
+    version = 13,
     exportSchema = false,
     entities = [
         Card::class,
@@ -116,6 +116,59 @@ abstract class AppDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE `WorldSpawn` ADD COLUMN `recruitmentState` TEXT NOT NULL DEFAULT 'WILD'")
             }
         }
+
+        /**
+         * Repairs characters created by World recruitment before the auxiliary-row
+         * creation was made atomic. Such characters can have UserCharacter/VBCharacterData
+         * but no TransformationHistory and/or no SpecialMissions rows.
+         */
+        val MIGRATION_12_13 = object : Migration(12, 13) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    INSERT INTO TransformationHistory(monId, stageId, transformationDate)
+                    SELECT uc.id, uc.charId, CAST(strftime('%s', 'now') AS INTEGER) * 1000
+                    FROM UserCharacter uc
+                    LEFT JOIN TransformationHistory th ON th.monId = uc.id
+                    WHERE th.id IS NULL
+                    """.trimIndent()
+                )
+
+                db.execSQL(
+                    """
+                    INSERT INTO SpecialMissions(
+                        characterId, goal, watchId, progress, status,
+                        timeElapsedInMinutes, timeLimitInMinutes, missionType
+                    )
+                    SELECT
+                        uc.id,
+                        0,
+                        ((uc.id * 4 + slots.slot) % 65535) + 1,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0
+                    FROM UserCharacter uc
+                    JOIN (
+                        SELECT 0 AS slot
+                        UNION ALL SELECT 1
+                        UNION ALL SELECT 2
+                        UNION ALL SELECT 3
+                    ) slots
+                    WHERE uc.characterType = 'VBDevice'
+                      AND slots.slot < (
+                          4 - (
+                              SELECT COUNT(*)
+                              FROM SpecialMissions sm
+                              WHERE sm.characterId = uc.id
+                          )
+                      )
+                    """.trimIndent()
+                )
+            }
+        }
+
 
         val MIGRATION_10_11 = object : Migration(10, 11) {
             override fun migrate(db: SupportSQLiteDatabase) {
