@@ -153,6 +153,14 @@ class WorldRepository(private val db: AppDatabase) {
         db.userCharacterDao().insertVBCharacterData(
             VBCharacterData(id = characterId, generation = 0, totalTrophies = 0)
         )
+        // Seed the transformation history with the current stage so the HomeScreen
+        // (which checks transformationHistory.isNotEmpty()) can render the Digimon.
+        db.userCharacterDao().insertTransformation(
+            characterId,
+            cardCharacter.charaIndex,
+            cardCharacter.cardId,
+            System.currentTimeMillis()
+        )
         db.dexDao().insertCharacter(cardCharacter.charaIndex, cardCharacter.cardId, System.currentTimeMillis())
         spawnDao.deleteById(spawnId)
         characterId
