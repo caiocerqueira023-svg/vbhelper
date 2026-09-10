@@ -35,5 +35,8 @@ data class WorldSpawn(
     val longitude: Double,
     val spawnedAt: Long,
     val expiresAt: Long,
-    val interacted: Boolean = false
+    val interacted: Boolean = false,
+    /** 0-100. Começa em 50. Mais volátil para baixo do que para cima. */
+    val mood: Int = 50,
+    val recruitmentState: RecruitmentState = RecruitmentState.WILD
 )

@@ -34,14 +34,20 @@ class ChatRepository(
     /**
      * Sends a message to a wild Digimon found on the World map that is not in storage.
      * Uses species data (CardCharacter) and the personality generated for this individualId at spawn.
+     * Returns the reply along with the mood delta requested by the LLM via the hidden [[MOOD:+N/-N]] marker.
      */
+    data class WildChatResult(val reply: String, val moodDelta: Int?)
+
     suspend fun sendMessageForWildEncounter(
         individualId: String,
         cardCharacterId: Long,
         userText: String
-    ): String {
+    ): WildChatResult {
         val (systemPrompt, speciesName) = buildWildSystemPrompt(cardCharacterId, individualId)
-        val enrichedSystemPrompt = withLorebookContext(systemPrompt, userText, speciesName)
+        val languageTag = PromptLocalization.currentLanguageTag()
+        val enrichedSystemPrompt = withLorebookContext(systemPrompt, userText, speciesName) +
+            "\n\n" + PromptLocalization.moodDirectiveInstruction(languageTag)
+
         chatDao.insertMessage(
             ChatMessageEntity(
                 individualId = individualId,
@@ -50,16 +56,42 @@ class ChatRepository(
                 timestamp = System.currentTimeMillis()
             )
         )
-        val reply = requestCompletion(enrichedSystemPrompt, individualId, null)
+        val rawReply = requestCompletion(enrichedSystemPrompt, individualId, null)
+        val (cleanReply, moodDelta) = MoodDirectiveParser.extract(rawReply)
         chatDao.insertMessage(
             ChatMessageEntity(
                 individualId = individualId,
                 role = "assistant",
-                content = reply,
+                content = cleanReply,
                 timestamp = System.currentTimeMillis()
             )
         )
-        return reply
+        return WildChatResult(cleanReply, moodDelta)
+    }
+
+    /**
+     * Generates an event message (alliance, farewell, recruitment confirmed) for a
+     * wild Digimon, using the provided instruction directly (without the generic
+     * reactionInstruction wrapper, since these instructions are already complete).
+     */
+    suspend fun triggerReactionForWildEncounter(
+        individualId: String,
+        cardCharacterId: Long,
+        instruction: String
+    ): String {
+        val (systemPrompt, speciesName) = buildWildSystemPrompt(cardCharacterId, individualId)
+        val enrichedSystemPrompt = withLorebookContext(systemPrompt, instruction, speciesName)
+        val rawReply = requestCompletion(enrichedSystemPrompt, individualId, instruction)
+        val (cleanReply, _) = MoodDirectiveParser.extract(rawReply)
+        chatDao.insertMessage(
+            ChatMessageEntity(
+                individualId = individualId,
+                role = "assistant",
+                content = cleanReply,
+                timestamp = System.currentTimeMillis()
+            )
+        )
+        return cleanReply
     }
 
     suspend fun deleteFromMessageForIndividual(individualId: String, messageId: Long) {

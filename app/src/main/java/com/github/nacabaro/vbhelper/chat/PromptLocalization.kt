@@ -161,6 +161,64 @@ object PromptLocalization {
         else if (languageTag.startsWith("ja", ignoreCase = true)) "時計で起きた実際のイベント"
         else "Real event from the device"
 
+    /** Instrução enviada ao LLM quando o mood do Digimon selvagem chega a 100. */
+    fun wildMoodMaxedInstruction(languageTag: String, requirementsMet: Boolean): String {
+        val base = if (languageTag.startsWith("pt", ignoreCase = true)) {
+            "Sua confiança em {Tamer} chegou ao máximo. Você decidiu, por conta própria, se aliar a ele(a) " +
+                "como parceiro(a) e passar a viver com ele(a). Explique com suas próprias palavras, refletindo " +
+                "sua personalidade, por que decidiu se aliar."
+        } else if (languageTag.startsWith("ja", ignoreCase = true)) {
+            "{Tamer}への信頼が最大になりました。あなたは自分の意思で、{Tamer}のパートナーとして仲間になり、" +
+                "一緒に暮らすことを決めました。あなたの性格を反映しながら、なぜそう決めたのかを自分の言葉で説明してください。"
+        } else {
+            "Your trust in {Tamer} has reached its peak. You have decided, on your own, to join them as a " +
+                "partner and start living with them. Explain in your own words, reflecting your personality, " +
+                "why you decided to join them."
+        }
+        if (requirementsMet) return base
+        return base + if (languageTag.startsWith("pt", ignoreCase = true)) {
+            " Porém, deixe claro que só pode realmente se juntar a ele(a) se ele(a) tiver o que é necessário " +
+                "para isso, sem especificar o que é; apenas dê a entender que algo ainda falta."
+        } else if (languageTag.startsWith("ja", ignoreCase = true)) {
+            " ただし、本当に仲間になれるのは{Tamer}が必要なものを持っている場合に限られることをはっきり伝えてください。" +
+                "具体的に何かは言わず、何かが足りないとだけ匂わせてください。"
+        } else {
+            " However, make it clear that you can only truly join them if they have what is needed for that, " +
+                "without specifying what it is; just imply that something is still missing."
+        }
+    }
+
+    /** Instrução enviada ao LLM quando o mood do Digimon selvagem chega a 0. */
+    fun wildMoodZeroInstruction(languageTag: String): String {
+        return if (languageTag.startsWith("pt", ignoreCase = true)) {
+            "Sua confiança em {Tamer} chegou a zero. Você decidiu ir embora e desaparecer dessa realidade " +
+                "sobreposta, não querendo mais interagir com ele(a). Explique com suas próprias palavras, " +
+                "refletindo sua personalidade, por que está indo embora, como uma despedida final."
+        } else if (languageTag.startsWith("ja", ignoreCase = true)) {
+            "{Tamer}への信頼がゼロになりました。あなたはもう関わりたくないと感じ、この重なり合う現実から去り、" +
+                "姿を消すことを決めました。あなたの性格を反映しながら、最後の別れとして、なぜ去るのかを自分の言葉で説明してください。"
+        } else {
+            "Your trust in {Tamer} has reached zero. You have decided to leave and vanish from this " +
+                "overlapping reality, no longer wanting to interact with them. Explain in your own words, " +
+                "reflecting your personality, why you are leaving, as a final farewell."
+        }
+    }
+
+    /** Instrução enviada ao LLM quando o Tamer finalmente cumpre os requisitos e recruta o pendente. */
+    fun wildRecruitConfirmedInstruction(languageTag: String): String {
+        return if (languageTag.startsWith("pt", ignoreCase = true)) {
+            "{Tamer} finalmente conseguiu o que era necessário. Agora você pode realmente se aliar a ele(a) " +
+                "como parceiro(a). Reaja com alegria e alívio, à sua maneira, celebrando que agora podem ficar " +
+                "juntos de verdade."
+        } else if (languageTag.startsWith("ja", ignoreCase = true)) {
+            "{Tamer}はついに必要なものを手に入れました。これで本当にパートナーとして仲間になれます。" +
+                "喜びと安心を込めて、自分らしく、本当に一緒にいられることを祝ってください。"
+        } else {
+            "{Tamer} has finally obtained what was needed. Now you can truly join them as a partner. React " +
+                "with joy and relief, in your own way, celebrating that you can really be together now."
+        }
+    }
+
     private val portugueseSystemPrompt = """
         Você é {digimon_name}, um Digimon parceiro de {Tamer}, seu Tamer no jogo Vital Bracelet.
         Seu apelido é "{nickname}" e seu estágio é "{species_level}".

@@ -1,13 +1,19 @@
 package com.github.nacabaro.vbhelper.world
 
+import com.github.cfogrady.vbnfc.data.NfcCharacter
 import com.github.nacabaro.vbhelper.daos.WorldSpawnDao
 import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.domain.device_data.DigimonIndividual
+import com.github.nacabaro.vbhelper.domain.device_data.UserCharacter
+import com.github.nacabaro.vbhelper.domain.device_data.VBCharacterData
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityGenerator
+import com.github.nacabaro.vbhelper.domain.world.RecruitmentState
 import com.github.nacabaro.vbhelper.domain.world.WorldSpawn
 import com.github.nacabaro.vbhelper.dtos.WorldDtos
 import com.github.nacabaro.vbhelper.domain.identity.IndividualIdentity
+import com.github.nacabaro.vbhelper.utils.DeviceType
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -17,16 +23,11 @@ class WorldRepository(private val db: AppDatabase) {
     private val spawnDao: WorldSpawnDao = db.worldSpawnDao()
 
     companion object {
-        /** Raio, em metros, dentro do qual contamos os spawns como "próximos ao jogador". */
         private const val NEARBY_RADIUS_METERS = 350.0
-        /** Quantos Digimon devem existir dentro do raio próximo ao jogador. */
         private const val TARGET_NEARBY_COUNT = 8
-        /** Limite de novos spawns por chamada, para não gerar tudo de uma vez. */
         private const val MAX_SPAWN_PER_CALL = 3
-        /** Teto global de spawns ativos no banco, independente de distância. */
         private const val GLOBAL_ACTIVE_CAP = 60
 
-        /** Probabilidade de spawn por estágio (0=Baby I ... 5=Ultimate). Soma = 100%. */
         private val STAGE_WEIGHTS = listOf(
             0 to 0.15, // Baby I
             1 to 0.15, // Baby II
@@ -35,10 +36,19 @@ class WorldRepository(private val db: AppDatabase) {
             4 to 0.05, // Perfect
             5 to 0.01  // Ultimate
         )
+
+        /** Placeholder: recrutamento exige o Digimon ativo com 5000+ vitais. */
+        const val RECRUIT_VITALS_REQUIREMENT = 5000
     }
 
     fun observeSpawns(): Flow<List<WorldDtos.SpawnWithDetails>> =
         spawnDao.getActiveSpawnsWithDetails(System.currentTimeMillis())
+
+    fun observePendingRecruits(): Flow<List<WorldDtos.SpawnWithDetails>> =
+        spawnDao.getPendingRecruitsWithDetails()
+
+    fun observeMood(individualId: String): Flow<Int?> =
+        spawnDao.observeMoodByIndividualId(individualId)
 
     suspend fun ensureSpawns(latitude: Double, longitude: Double) {
         val now = System.currentTimeMillis()
@@ -48,7 +58,8 @@ class WorldRepository(private val db: AppDatabase) {
 
         val activeSpawns = spawnDao.getActiveSpawnsSync(now)
         val nearbyCount = activeSpawns.count {
-            distanceMeters(latitude, longitude, it.latitude, it.longitude) <= NEARBY_RADIUS_METERS
+            it.recruitmentState == RecruitmentState.WILD &&
+                distanceMeters(latitude, longitude, it.latitude, it.longitude) <= NEARBY_RADIUS_METERS
         }
         val toSpawn = (TARGET_NEARBY_COUNT - nearbyCount).coerceIn(0, MAX_SPAWN_PER_CALL)
         if (toSpawn <= 0) return
@@ -77,10 +88,83 @@ class WorldRepository(private val db: AppDatabase) {
                     latitude = latitude + latOffset,
                     longitude = longitude + lonOffset,
                     spawnedAt = now,
-                    expiresAt = now + 30 * 60 * 1000
+                    expiresAt = now + 30 * 60 * 1000,
+                    mood = 50,
+                    recruitmentState = RecruitmentState.WILD
                 )
             )
         }
+    }
+
+    suspend fun getSpawnEntityByIndividualId(individualId: String): WorldSpawn? =
+        spawnDao.getByIndividualId(individualId)
+
+    /**
+     * Aplica o delta de mood emitido pelo LLM, mas com peso assimétrico:
+     * cai mais rápido do que sobe (mais fácil desagradar do que agradar).
+     */
+    suspend fun applyWildMoodDelta(individualId: String, rawDelta: Int): Int? {
+        val spawn = spawnDao.getByIndividualId(individualId) ?: return null
+        val scaledDelta = scaleWildMoodDelta(rawDelta)
+        val newMood = (spawn.mood + scaledDelta).coerceIn(0, 100)
+        spawnDao.updateMood(individualId, newMood)
+        return newMood
+    }
+
+    private fun scaleWildMoodDelta(rawDelta: Int): Int {
+        if (rawDelta == 0) return 0
+        return if (rawDelta > 0) {
+            (rawDelta * 0.8).toInt().coerceAtLeast(1)
+        } else {
+            (rawDelta * 1.3).toInt().coerceAtMost(-1)
+        }
+    }
+
+    suspend fun meetsRecruitmentRequirements(): Boolean {
+        val active = db.userCharacterDao().getActiveCharacter().first() ?: return false
+        return active.vitalPoints >= RECRUIT_VITALS_REQUIREMENT
+    }
+
+    suspend fun markPendingRecruitment(spawnId: Long) {
+        // expiresAt bem no futuro para não ser limpo pela rotina de expiração.
+        spawnDao.updateRecruitmentState(spawnId, RecruitmentState.PENDING_RECRUITMENT.name, Long.MAX_VALUE)
+    }
+
+    suspend fun removeSpawn(spawnId: Long) {
+        spawnDao.deleteById(spawnId)
+    }
+
+    /** Converte o spawn selvagem em um UserCharacter real, no Storage. */
+    suspend fun recruitSpawn(spawnId: Long): Result<Long> = runCatching {
+        check(meetsRecruitmentRequirements()) { "Requirements not met" }
+        val details = spawnDao.getSpawnById(spawnId) ?: error("Spawn not found")
+        val cardCharacter = db.characterDao().getById(details.cardCharacterId) ?: error("Species not found")
+
+        val userCharacter = UserCharacter(
+            individualId = details.individualId,
+            charId = details.cardCharacterId,
+            ageInDays = 0,
+            mood = 80,
+            vitalPoints = 0,
+            transformationCountdown = 0,
+            injuryStatus = NfcCharacter.InjuryStatus.None,
+            trophies = 0,
+            currentPhaseBattlesWon = 0,
+            currentPhaseBattlesLost = 0,
+            totalBattlesWon = 0,
+            totalBattlesLost = 0,
+            activityLevel = 0,
+            heartRateCurrent = 0,
+            characterType = DeviceType.VBDevice,
+            isActive = false
+        )
+        val characterId = db.userCharacterDao().insertCharacterData(userCharacter)
+        db.userCharacterDao().insertVBCharacterData(
+            VBCharacterData(id = characterId, generation = 0, totalTrophies = 0)
+        )
+        db.dexDao().insertCharacter(cardCharacter.charaIndex, cardCharacter.cardId, System.currentTimeMillis())
+        spawnDao.deleteById(spawnId)
+        characterId
     }
 
     private fun pickWeightedStage(random: Random = Random.Default): Int {

@@ -54,7 +54,7 @@ import com.github.nacabaro.vbhelper.domain.lorebook.LorebookEntry
 import com.github.nacabaro.vbhelper.domain.world.WorldSpawn
 
 @Database(
-    version = 11,
+    version = 12,
     exportSchema = false,
     entities = [
         Card::class,
@@ -110,6 +110,13 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun worldSpawnDao(): WorldSpawnDao
 
     companion object {
+        val MIGRATION_11_12 = object : Migration(11, 12) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `WorldSpawn` ADD COLUMN `mood` INTEGER NOT NULL DEFAULT 50")
+                db.execSQL("ALTER TABLE `WorldSpawn` ADD COLUMN `recruitmentState` TEXT NOT NULL DEFAULT 'WILD'")
+            }
+        }
+
         val MIGRATION_10_11 = object : Migration(10, 11) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("""

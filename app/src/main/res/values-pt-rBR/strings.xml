@@ -384,6 +384,20 @@
     <string name="ui_world_enable_location">Ativar localização</string>
     <string name="ui_world_too_far">Chegue mais perto para interagir com este Digimon.</string>
     <string name="ui_world_wild_digimon">Digimon selvagem</string>
+    <string name="ui_world_mood_label">Confiança: %1$d/100</string>
+    <string name="ui_world_recruits_button">Recrutas pendentes</string>
+    <string name="ui_world_recruits_title">Recrutas pendentes</string>
+    <string name="ui_world_recruits_empty">Nenhum Digimon está esperando para ser recrutado.</string>
+    <string name="ui_world_recruit_requirement_vitals">Requisito: Digimon ativo com pelo menos %1$d vitais.</string>
+    <string name="ui_world_recruit_requirements_met">Requisito cumprido! Você já pode recrutar este Digimon.</string>
+    <string name="ui_world_recruit_requirements_not_met">Requisito ainda não cumprido.</string>
+    <string name="ui_world_recruit_button">Recrutar</string>
+    <string name="ui_world_recruited_title">Novo parceiro!</string>
+    <string name="ui_world_pending_title">Quase lá!</string>
+    <string name="ui_world_vanished_title">Despedida</string>
+    <string name="ui_world_recruited_toast">Digimon recrutado! Confira seu Armazenamento.</string>
+    <string name="ui_world_pending_toast">Este Digimon agora está esperando em Recrutas pendentes.</string>
+    <string name="ui_world_vanished_toast">O Digimon selvagem desapareceu.</string>
 
     <string-array name="world_cardinal_directions_8">
         <item>N</item><item>NE</item><item>L</item><item>SE</item>

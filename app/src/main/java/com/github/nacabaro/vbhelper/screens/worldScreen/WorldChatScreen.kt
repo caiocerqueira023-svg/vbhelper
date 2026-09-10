@@ -1,5 +1,6 @@
 package com.github.nacabaro.vbhelper.screens.worldScreen
 
+import android.widget.Toast
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,6 +17,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -30,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -44,11 +47,14 @@ fun WorldChatScreen(
     cardCharacterId: Long,
     speciesName: String
 ) {
+    val context = LocalContext.current
     val messages by controller.getHistory(individualId).collectAsState(emptyList())
+    val mood by controller.observeMood(individualId).collectAsState(initial = null)
     var input by remember { mutableStateOf("") }
     var sending by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var messagePendingDeletion by remember { mutableStateOf<Long?>(null) }
+    var eventDialog by remember { mutableStateOf<WildChatEvent?>(null) }
     val listState = rememberLazyListState()
 
     LaunchedEffect(messages.size) {
@@ -68,6 +74,19 @@ fun WorldChatScreen(
                 .padding(contentPadding)
                 .fillMaxSize()
         ) {
+            mood?.let { moodValue ->
+                Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)) {
+                    Text(
+                        text = stringResource(R.string.ui_world_mood_label, moodValue),
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                    LinearProgressIndicator(
+                        progress = { moodValue / 100f },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
             LazyColumn(
                 state = listState,
                 modifier = Modifier
@@ -158,6 +177,9 @@ fun WorldChatScreen(
                         error = null
                         controller.sendMessage(individualId, cardCharacterId, text) { result ->
                             sending = false
+                            result.onSuccess { event ->
+                                if (event !is WildChatEvent.None) eventDialog = event
+                            }
                             result.onFailure { e -> error = e.message }
                         }
                     }
@@ -166,5 +188,45 @@ fun WorldChatScreen(
                 }
             }
         }
+    }
+
+    eventDialog?.let { event ->
+        val (title, body) = when (event) {
+            is WildChatEvent.Recruited -> stringResource(R.string.ui_world_recruited_title) to event.message
+            is WildChatEvent.Pending -> stringResource(R.string.ui_world_pending_title) to event.message
+            is WildChatEvent.Vanished -> stringResource(R.string.ui_world_vanished_title) to event.message
+            WildChatEvent.None -> return@let
+        }
+        AlertDialog(
+            onDismissRequest = {
+                eventDialog = null
+                if (event is WildChatEvent.Recruited || event is WildChatEvent.Vanished) {
+                    navController.popBackStack()
+                }
+            },
+            title = { Text(title) },
+            text = { Text(body) },
+            confirmButton = {
+                Button(onClick = {
+                    eventDialog = null
+                    when (event) {
+                        is WildChatEvent.Recruited -> {
+                            Toast.makeText(context, context.getString(R.string.ui_world_recruited_toast), Toast.LENGTH_LONG).show()
+                            navController.popBackStack()
+                        }
+                        is WildChatEvent.Vanished -> {
+                            Toast.makeText(context, context.getString(R.string.ui_world_vanished_toast), Toast.LENGTH_LONG).show()
+                            navController.popBackStack()
+                        }
+                        is WildChatEvent.Pending -> {
+                            Toast.makeText(context, context.getString(R.string.ui_world_pending_toast), Toast.LENGTH_LONG).show()
+                        }
+                        WildChatEvent.None -> Unit
+                    }
+                }) {
+                    Text(stringResource(R.string.ui_ok))
+                }
+            }
+        )
     }
 }

@@ -106,6 +106,9 @@ fun AppNavigation(
                 )
             }
             composable(NavigationItems.World.route) { WorldScreen(navController = navController) }
+            composable(NavigationItems.WorldRecruits.route) {
+                com.github.nacabaro.vbhelper.screens.worldScreen.WorldRecruitsScreen(navController = navController)
+            }
             composable(NavigationItems.Storage.route) {
                 StorageScreen(
                     navController = navController,

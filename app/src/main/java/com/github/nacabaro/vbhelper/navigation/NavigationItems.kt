@@ -117,4 +117,10 @@ sealed class NavigationItems(
         R.drawable.baseline_mood_24,
         R.string.nav_chat
     )
+
+    object WorldRecruits : NavigationItems(
+        "WorldRecruits",
+        R.drawable.baseline_catching_pokemon_24,
+        R.string.nav_world
+    )
 }

@@ -1,5 +1,7 @@
 package com.github.nacabaro.vbhelper.dtos
 
+import com.github.nacabaro.vbhelper.domain.world.RecruitmentState
+
 object WorldDtos {
     data class SpawnWithDetails(
         val id: Long,
@@ -16,13 +18,17 @@ object WorldDtos {
         val spriteIdle2: ByteArray,
         val spriteWidth: Int,
         val spriteHeight: Int,
-        val speciesName: String?
+        val speciesName: String?,
+        val mood: Int,
+        val recruitmentState: RecruitmentState
     ) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
             if (other !is SpawnWithDetails) return false
             return id == other.id &&
                 individualId == other.individualId &&
+                mood == other.mood &&
+                recruitmentState == other.recruitmentState &&
                 spriteIdle.contentEquals(other.spriteIdle) &&
                 spriteIdle2.contentEquals(other.spriteIdle2)
         }
@@ -30,6 +36,8 @@ object WorldDtos {
         override fun hashCode(): Int {
             var result = id.hashCode()
             result = 31 * result + individualId.hashCode()
+            result = 31 * result + mood
+            result = 31 * result + recruitmentState.hashCode()
             result = 31 * result + spriteIdle.contentHashCode()
             result = 31 * result + spriteIdle2.contentHashCode()
             return result

@@ -333,6 +333,20 @@
     <string name="ui_world_enable_location">位置情報を有効にする</string>
     <string name="ui_world_too_far">このデジモンと関わるにはもっと近づいてください。</string>
     <string name="ui_world_wild_digimon">野生のデジモン</string>
+    <string name="ui_world_mood_label">信頼度: %1$d/100</string>
+    <string name="ui_world_recruits_button">仲間候補一覧</string>
+    <string name="ui_world_recruits_title">仲間候補一覧</string>
+    <string name="ui_world_recruits_empty">仲間になるのを待っているデジモンはいません。</string>
+    <string name="ui_world_recruit_requirement_vitals">条件: アクティブなデジモンのバイタルが%1$d以上であること。</string>
+    <string name="ui_world_recruit_requirements_met">条件達成！このデジモンを今すぐ仲間にできます。</string>
+    <string name="ui_world_recruit_requirements_not_met">まだ条件を満たしていません。</string>
+    <string name="ui_world_recruit_button">仲間にする</string>
+    <string name="ui_world_recruited_title">新しい仲間！</string>
+    <string name="ui_world_pending_title">あと少し！</string>
+    <string name="ui_world_vanished_title">お別れ</string>
+    <string name="ui_world_recruited_toast">デジモンを仲間にしました！ストレージを確認してください。</string>
+    <string name="ui_world_pending_toast">このデジモンは仲間候補一覧で待つことになりました。</string>
+    <string name="ui_world_vanished_toast">野生のデジモンが去っていきました。</string>
 
     <string-array name="world_cardinal_directions_8">
         <item>北</item><item>北東</item><item>東</item><item>南東</item>

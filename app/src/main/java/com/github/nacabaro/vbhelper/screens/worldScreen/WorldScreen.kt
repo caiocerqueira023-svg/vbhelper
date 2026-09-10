@@ -306,6 +306,11 @@ fun WorldScreen(navController: NavController) {
             )
             Spacer(Modifier.height(8.dp))
 
+            Button(onClick = { navController.navigate(NavigationItems.WorldRecruits.route) }) {
+                Text(stringResource(R.string.ui_world_recruits_button))
+            }
+            Spacer(Modifier.height(8.dp))
+
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
