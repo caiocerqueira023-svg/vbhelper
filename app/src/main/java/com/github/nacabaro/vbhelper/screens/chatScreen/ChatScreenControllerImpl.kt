@@ -25,6 +25,9 @@ class ChatScreenControllerImpl(
     override fun getHistory(characterId: Long): Flow<List<ChatMessageEntity>> =
         chatRepository.getHistory(characterId)
 
+    override fun getMood(characterId: Long): Flow<Int> =
+        database.userCharacterDao().observeMood(characterId)
+
     override fun sendMessage(characterId: Long, text: String, onResult: (Result<String>) -> Unit) {
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
             val result = runCatching { chatRepository.sendMessage(characterId, text) }

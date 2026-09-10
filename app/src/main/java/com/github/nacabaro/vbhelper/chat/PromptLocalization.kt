@@ -135,6 +135,27 @@ object PromptLocalization {
             "The $type mission advanced on the device to $progress of $goal. ${if (remaining > 0) "$remaining remain." else "It is complete!"}"
         }
 
+    fun moodDirectiveInstruction(languageTag: String): String {
+        return if (languageTag.startsWith("pt", ignoreCase = true)) {
+            "Ao final da sua resposta, em uma linha própria, inclua uma marca oculta no formato exato " +
+                "[[MOOD:+N]] ou [[MOOD:-N]] (N entre 0 e 10) indicando o quanto seu humor melhorou (+) ou " +
+                "piorou (-) por causa desta troca de mensagens. Essa marca é um sinal interno do sistema: " +
+                "nunca a explique, nunca a mencione, e ela será removida antes do Tamer ver sua resposta. " +
+                "Sempre inclua exatamente uma marca dessas, mesmo que a variação seja pequena (ex: [[MOOD:+1]])."
+        } else if (languageTag.startsWith("ja", ignoreCase = true)) {
+            "返信の最後に、独立した行として、正確な形式 [[MOOD:+N]] または [[MOOD:-N]]（Nは0から10）で、" +
+                "このやり取りによって気分がどれだけ良くなった（+）か悪くなった（-）かを示す非表示のマークを" +
+                "付けてください。このマークはシステム内部の合図であり、説明したり言及したりせず、テイマーに" +
+                "表示される前に削除されます。変化が小さい場合でも（例：[[MOOD:+1]]）必ず1つだけ含めてください。"
+        } else {
+            "At the very end of your reply, on its own line, include a hidden marker in the exact format " +
+                "[[MOOD:+N]] or [[MOOD:-N]] (N between 0 and 10) indicating how much your mood improved (+) " +
+                "or worsened (-) because of this exchange. This marker is an internal system signal: never " +
+                "explain it, never mention it, and it will be stripped before the Tamer sees your reply. " +
+                "Always include exactly one such marker, even for small shifts (e.g. [[MOOD:+1]])."
+        }
+    }
+
     private fun eventLabel(languageTag: String): String =
         if (languageTag.startsWith("pt", ignoreCase = true)) "Evento real do relógio"
         else if (languageTag.startsWith("ja", ignoreCase = true)) "時計で起きた実際のイベント"

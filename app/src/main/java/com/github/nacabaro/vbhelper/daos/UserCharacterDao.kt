@@ -130,6 +130,9 @@ interface UserCharacterDao {
     )
     suspend fun getCharacterWithSprites(id: Long): CharacterDtos.CharacterWithSprites
 
+    @Query("SELECT mood FROM UserCharacter WHERE id = :id")
+    fun observeMood(id: Long): Flow<Int>
+
     @Query("SELECT * FROM UserCharacter WHERE id = :id")
     suspend fun getCharacter(id: Long): UserCharacter
 
@@ -191,6 +194,15 @@ interface UserCharacterDao {
 
     @Query("UPDATE UserCharacter SET charId = :stageId, vitalPoints = 0 WHERE id = :characterId")
     fun degenerateCharacter(characterId: Long, stageId: Long)
+
+    @Query(
+        """
+        UPDATE UserCharacter
+        SET mood = MAX(0, MIN(100, mood + :delta))
+        WHERE id = :characterId
+        """
+    )
+    suspend fun adjustMood(characterId: Long, delta: Int)
 
     @Query(
         """

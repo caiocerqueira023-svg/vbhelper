@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface ChatScreenController {
     fun getHistory(characterId: Long): Flow<List<ChatMessageEntity>>
+    fun getMood(characterId: Long): Flow<Int>
     fun sendMessage(characterId: Long, text: String, onResult: (Result<String>) -> Unit)
     fun deleteFromMessage(characterId: Long, messageId: Long)
     fun getSpeciesContext(characterId: Long, onResult: (SpeciesContext) -> Unit)

@@ -5,6 +5,7 @@ import com.github.nacabaro.vbhelper.daos.ChatDao
 import com.github.nacabaro.vbhelper.chat.lorebook.LorebookRepository
 import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.domain.chat.ChatMessageEntity
+import com.github.nacabaro.vbhelper.domain.mood.MoodDirectiveParser
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.source.LlmSettingsRepository
 import com.github.nacabaro.vbhelper.utils.DeviceType
@@ -70,7 +71,10 @@ class ChatRepository(
 
     suspend fun sendMessage(characterId: Long, userText: String): String {
         val (systemPrompt, individualId, speciesName) = buildSystemPromptAndIndividualId(characterId)
-        val enrichedSystemPrompt = withLorebookContext(systemPrompt, userText, speciesName)
+        val languageTag = PromptLocalization.currentLanguageTag()
+        val enrichedSystemPrompt = withLorebookContext(systemPrompt, userText, speciesName) +
+            "\n\n" + PromptLocalization.moodDirectiveInstruction(languageTag)
+
         chatDao.insertMessage(
             ChatMessageEntity(
                 individualId = individualId,
@@ -79,35 +83,46 @@ class ChatRepository(
                 timestamp = System.currentTimeMillis()
             )
         )
-        val reply = requestCompletion(enrichedSystemPrompt, individualId, null)
+
+        val rawReply = requestCompletion(enrichedSystemPrompt, individualId, null)
+        val (cleanReply, moodDelta) = MoodDirectiveParser.extract(rawReply)
+
         chatDao.insertMessage(
             ChatMessageEntity(
                 individualId = individualId,
                 role = "assistant",
-                content = reply,
+                content = cleanReply,
                 timestamp = System.currentTimeMillis()
             )
         )
-        return reply
+
+        if (moodDelta != null) {
+            runCatching { database.userCharacterDao().adjustMood(characterId, moodDelta) }
+        }
+
+        return cleanReply
     }
 
     suspend fun triggerReaction(characterId: Long, eventDescription: String): String {
         val (systemPrompt, individualId, speciesName) = buildSystemPromptAndIndividualId(characterId)
-        val enrichedSystemPrompt = withLorebookContext(systemPrompt, eventDescription, speciesName)
-        val instruction = PromptLocalization.reactionInstruction(
-            PromptLocalization.currentLanguageTag(),
-            eventDescription
-        )
-        val reply = requestCompletion(enrichedSystemPrompt, individualId, instruction)
+        val languageTag = PromptLocalization.currentLanguageTag()
+        val enrichedSystemPrompt = withLorebookContext(systemPrompt, eventDescription, speciesName) +
+            "\n\n" + PromptLocalization.moodDirectiveInstruction(languageTag)
+        val instruction = PromptLocalization.reactionInstruction(languageTag, eventDescription)
+        val rawReply = requestCompletion(enrichedSystemPrompt, individualId, instruction)
+        val (cleanReply, moodDelta) = MoodDirectiveParser.extract(rawReply)
         chatDao.insertMessage(
             ChatMessageEntity(
                 individualId = individualId,
                 role = "assistant",
-                content = reply,
+                content = cleanReply,
                 timestamp = System.currentTimeMillis()
             )
         )
-        return reply
+        if (moodDelta != null) {
+            runCatching { database.userCharacterDao().adjustMood(characterId, moodDelta) }
+        }
+        return cleanReply
     }
 
     suspend fun clearHistory(characterId: Long) {

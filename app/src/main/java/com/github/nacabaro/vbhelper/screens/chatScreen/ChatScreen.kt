@@ -65,6 +65,7 @@ fun ChatScreen(
     }
 
     val messages by chatScreenController.getHistory(characterId).collectAsState(emptyList())
+    val mood by chatScreenController.getMood(characterId).collectAsState(50)
     var input by remember { mutableStateOf("") }
     var sending by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -78,7 +79,7 @@ fun ChatScreen(
     Scaffold(
         topBar = {
             TopBanner(
-                text = "Conversar",
+                text = "Conversar • Mood $mood",
                 onBackClick = { navController.popBackStack() }
             )
         }
