@@ -88,7 +88,7 @@ import kotlin.math.sqrt
 
 /** Radius, in meters, within which the player can tap a Digimon to chat. */
 private const val INTERACTION_RANGE_METERS = 40.0
-private const val GRID_SIZE_METERS = 60.0
+private const val GRID_SIZE_METERS = 20.0
 private const val COMPASS_SMOOTHING = 0.35f // quanto maior, mais rápido (0..1)
 
 @Composable
@@ -185,7 +185,7 @@ fun WorldScreen(navController: NavController) {
                         status = context.getString(R.string.ui_world_radar_active)
 
                         val shouldRefreshSpawns = lastSpawnRefresh == null ||
-                            lastSpawnRefresh!!.distanceTo(newLocation) >= 100f
+                            lastSpawnRefresh!!.distanceTo(newLocation) >= 60f
 
                         if (shouldRefreshSpawns) {
                             lastSpawnRefresh = Location(newLocation)
@@ -311,7 +311,7 @@ fun WorldScreen(navController: NavController) {
                     .fillMaxWidth()
                     .aspectRatio(1f)
                     .clip(MaterialTheme.shapes.medium)
-                    .background(Color(0xFFDCE8D5))
+                    .background(Color.Black)
                     .pointerInput(Unit) {
                         detectTransformGestures { _, _, gestureZoom, _ ->
                             zoom = (zoom * gestureZoom).coerceIn(0.5f, 4f)
@@ -360,7 +360,7 @@ fun WorldScreen(navController: NavController) {
                         if (x < 0) x += gridSpacingPx
                         while (x < size.width + diagonal) {
                             drawLine(
-                                Color(0xFFB9CDAF),
+                                Color.White,
                                 Offset(x, -diagonal),
                                 Offset(x, size.height + diagonal),
                                 strokeWidth = 2f
@@ -372,7 +372,7 @@ fun WorldScreen(navController: NavController) {
                         if (y < 0) y += gridSpacingPx
                         while (y < size.height + diagonal) {
                             drawLine(
-                                Color(0xFFB9CDAF),
+                                Color.White,
                                 Offset(-diagonal, y),
                                 Offset(size.width + diagonal, y),
                                 strokeWidth = 2f
@@ -382,7 +382,7 @@ fun WorldScreen(navController: NavController) {
                     }
 
                     drawCircle(
-                        color = Color(0x552196F3),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
                         radius = interactionRadiusPx,
                         center = playerOffset,
                         style = Stroke(width = 3f)
@@ -395,10 +395,10 @@ fun WorldScreen(navController: NavController) {
                     val arrowLength = 18.dp.toPx()
                     val arrowHalfWidth = 8.dp.toPx()
                     val cardinals = listOf(
-                        0f to Color(0xFFD32F2F),   // Norte
-                        90f to Color(0xFF455A64), // Leste
-                        180f to Color(0xFF455A64),// Sul
-                        270f to Color(0xFF455A64) // Oeste
+                        0f to MaterialTheme.colorScheme.primary, // Norte
+                        90f to Color(0xFFB0B0B0),                // Leste
+                        180f to Color(0xFFB0B0B0),               // Sul
+                        270f to Color(0xFFB0B0B0)                // Oeste
                     )
 
                     cardinals.forEach { (cardinalAzimuth, arrowColor) ->
@@ -442,6 +442,7 @@ fun WorldScreen(navController: NavController) {
                     Text(
                         text = label,
                         style = MaterialTheme.typography.labelLarge,
+                        color = Color.White,
                         modifier = Modifier.offset {
                             IntOffset(
                                 (labelX - 8.dp.toPx()).toInt(),
@@ -462,7 +463,7 @@ fun WorldScreen(navController: NavController) {
                         }
                         .size(28.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFF2196F3))
+                        .background(MaterialTheme.colorScheme.primary)
                         .border(2.dp, Color.White, CircleShape)
                 )
 

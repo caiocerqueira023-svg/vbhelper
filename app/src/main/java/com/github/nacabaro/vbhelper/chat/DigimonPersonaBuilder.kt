@@ -224,12 +224,12 @@ object DigimonPersonaBuilder {
         else "of the species"
 
     private fun stageName(stage: Int): String = when (stage) {
-        1 -> "Baby I"
-        2 -> "Baby II"
-        3 -> "Child (Rookie)"
-        4 -> "Adult (Champion)"
-        5 -> "Perfect (Ultimate)"
-        6 -> "Ultimate (Mega)"
+        0 -> "Baby I"
+        1 -> "Baby II"
+        2 -> "Child (Rookie)"
+        3 -> "Adult (Champion)"
+        4 -> "Perfect (Ultimate)"
+        5 -> "Ultimate (Mega)"
         else -> "unknown stage ($stage)"
     }
 }

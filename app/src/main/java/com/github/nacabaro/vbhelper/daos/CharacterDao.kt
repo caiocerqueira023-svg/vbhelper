@@ -16,6 +16,9 @@ interface CharacterDao {
     @Query("SELECT * FROM CardCharacter ORDER BY RANDOM() LIMIT 1")
     suspend fun getRandomCharacter(): CardCharacter?
 
+    @Query("SELECT * FROM CardCharacter WHERE stage = :stage ORDER BY RANDOM() LIMIT 1")
+    suspend fun getRandomCharacterForStage(stage: Int): CardCharacter?
+
     @Query("SELECT * FROM CardCharacter WHERE id = :id")
     suspend fun getById(id: Long): CardCharacter?
 
