@@ -340,6 +340,8 @@ fun WorldScreen(navController: NavController) {
                     }
                 } ?: Offset.Zero
 
+                val primaryColor = MaterialTheme.colorScheme.primary
+
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     // A grade representa o mundo, se desloca com o jogador e gira com a bússola.
                     withTransform({
@@ -382,7 +384,7 @@ fun WorldScreen(navController: NavController) {
                     }
 
                     drawCircle(
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f),
+                        color = primaryColor.copy(alpha = 0.35f),
                         radius = interactionRadiusPx,
                         center = playerOffset,
                         style = Stroke(width = 3f)
@@ -395,7 +397,7 @@ fun WorldScreen(navController: NavController) {
                     val arrowLength = 18.dp.toPx()
                     val arrowHalfWidth = 8.dp.toPx()
                     val cardinals = listOf(
-                        0f to MaterialTheme.colorScheme.primary, // Norte
+                        0f to primaryColor, // Norte
                         90f to Color(0xFFB0B0B0),                // Leste
                         180f to Color(0xFFB0B0B0),               // Sul
                         270f to Color(0xFFB0B0B0)                // Oeste
