@@ -30,10 +30,10 @@ class WorldRepository(private val db: AppDatabase) {
         private val STAGE_WEIGHTS = listOf(
             0 to 0.15, // Baby I
             1 to 0.15, // Baby II
-            2 to 0.35, // Child
-            3 to 0.20, // Adult
-            4 to 0.10, // Perfect
-            5 to 0.05  // Ultimate
+            2 to 0.40, // Child
+            3 to 0.24, // Adult
+            4 to 0.05, // Perfect
+            5 to 0.01  // Ultimate
         )
     }
 

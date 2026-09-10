@@ -103,7 +103,7 @@ fun WorldScreen(navController: NavController) {
     }
     val spawns by app.container.worldRepository.observeSpawns().collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
-    var zoom by remember { mutableFloatStateOf(1f) }
+    var zoom by remember { mutableFloatStateOf(2.4f) }
     var idleFrame by remember { mutableIntStateOf(0) }
     var toastMessage by remember { mutableStateOf<String?>(null) }
 
@@ -359,10 +359,10 @@ fun WorldScreen(navController: NavController) {
                         )
 
                         var x = originX % gridSpacingPx
-                        if (x < 0) x += gridSpacingPx
+                        while (x > -diagonal) x -= gridSpacingPx
                         while (x < size.width + diagonal) {
                             drawLine(
-                                Color.White,
+                                Color(0xFF555555),
                                 Offset(x, -diagonal),
                                 Offset(x, size.height + diagonal),
                                 strokeWidth = 2f
@@ -371,10 +371,10 @@ fun WorldScreen(navController: NavController) {
                         }
 
                         var y = originY % gridSpacingPx
-                        if (y < 0) y += gridSpacingPx
+                        while (y > -diagonal) y -= gridSpacingPx
                         while (y < size.height + diagonal) {
                             drawLine(
-                                Color.White,
+                                Color(0xFF555555),
                                 Offset(-diagonal, y),
                                 Offset(size.width + diagonal, y),
                                 strokeWidth = 2f
