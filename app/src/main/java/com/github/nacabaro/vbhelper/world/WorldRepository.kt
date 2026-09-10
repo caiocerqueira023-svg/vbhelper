@@ -8,6 +8,7 @@ import com.github.nacabaro.vbhelper.domain.device_data.UserCharacter
 import com.github.nacabaro.vbhelper.domain.device_data.SpecialMissions
 import com.github.cfogrady.vbnfc.vb.SpecialMission
 import com.github.nacabaro.vbhelper.domain.device_data.VBCharacterData
+import com.github.nacabaro.vbhelper.domain.device_data.TransformationHistory
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityGenerator
 import com.github.nacabaro.vbhelper.domain.world.RecruitmentState
 import com.github.nacabaro.vbhelper.domain.world.WorldSpawn
@@ -155,8 +156,9 @@ class WorldRepository(private val db: AppDatabase) {
 
         // Character creation is one logical operation. In particular, HomeScreen and
         // watch export both depend on the auxiliary VB rows being present.
+        var characterId = 0L
         db.runInTransaction {
-            val characterId = db.userCharacterDao().insertCharacterData(userCharacter)
+            characterId = db.userCharacterDao().insertCharacterData(userCharacter)
 
             db.userCharacterDao().insertVBCharacterData(
                 VBCharacterData(id = characterId, generation = 0, totalTrophies = 0)
@@ -165,10 +167,12 @@ class WorldRepository(private val db: AppDatabase) {
             // Use the CardCharacter primary key directly. The previous implementation
             // looked it up again by (charaIndex, cardId), which could leave a character
             // without TransformationHistory after a partial failure.
-            db.userCharacterDao().insertTransformationForStage(
-                monId = characterId,
-                stageId = cardCharacter.id,
-                transformationDate = now
+            db.userCharacterDao().insertTransformationHistory(
+                TransformationHistory(
+                    monId = characterId,
+                    stageId = cardCharacter.id,
+                    transformationDate = now
+                )
             )
 
             // NFC-created VB characters always have four mission slots. World recruits
@@ -190,8 +194,9 @@ class WorldRepository(private val db: AppDatabase) {
             db.dexDao().insertCharacter(cardCharacter.charaIndex, cardCharacter.cardId, now)
             spawnDao.deleteById(spawnId)
 
-            characterId
         }
+
+        characterId
     }
 
     private fun pickWeightedStage(random: Random = Random.Default): Int {

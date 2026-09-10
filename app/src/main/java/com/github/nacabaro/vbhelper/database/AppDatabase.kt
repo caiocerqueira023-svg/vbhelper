@@ -145,10 +145,10 @@ abstract class AppDatabase : RoomDatabase() {
                         0,
                         ((uc.id * 4 + slots.slot) % 65535) + 1,
                         0,
+                        'UNAVAILABLE',
                         0,
                         0,
-                        0,
-                        0
+                        'NONE'
                     FROM UserCharacter uc
                     JOIN (
                         SELECT 0 AS slot
