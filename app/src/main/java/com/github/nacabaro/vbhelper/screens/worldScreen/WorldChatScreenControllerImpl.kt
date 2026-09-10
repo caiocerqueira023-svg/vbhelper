@@ -7,6 +7,7 @@ import com.github.nacabaro.vbhelper.chat.PromptLocalization
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.domain.chat.ChatMessageEntity
 import com.github.nacabaro.vbhelper.domain.world.RecruitmentState
+import com.github.nacabaro.vbhelper.world.WildMoodAnalyzer
 import com.github.nacabaro.vbhelper.world.WorldRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -41,7 +42,7 @@ class WorldChatScreenControllerImpl(
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
             val result = runCatching {
                 val chatResult = chatRepository.sendMessageForWildEncounter(individualId, cardCharacterId, text)
-                val delta = chatResult.moodDelta ?: return@runCatching WildChatEvent.None
+                val delta = WildMoodAnalyzer.resolveDelta(text, chatResult.reply, chatResult.moodDelta)
                 val newMood = worldRepository.applyWildMoodDelta(individualId, delta)
                     ?: return@runCatching WildChatEvent.None
                 val spawn = worldRepository.getSpawnEntityByIndividualId(individualId)

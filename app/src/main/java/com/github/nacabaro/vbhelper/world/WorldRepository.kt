@@ -105,19 +105,10 @@ class WorldRepository(private val db: AppDatabase) {
      */
     suspend fun applyWildMoodDelta(individualId: String, rawDelta: Int): Int? {
         val spawn = spawnDao.getByIndividualId(individualId) ?: return null
-        val scaledDelta = scaleWildMoodDelta(rawDelta)
+        val scaledDelta = WildMoodAnalyzer.scaleDelta(rawDelta)
         val newMood = (spawn.mood + scaledDelta).coerceIn(0, 100)
         spawnDao.updateMood(individualId, newMood)
         return newMood
-    }
-
-    private fun scaleWildMoodDelta(rawDelta: Int): Int {
-        if (rawDelta == 0) return 0
-        return if (rawDelta > 0) {
-            (rawDelta * 0.8).toInt().coerceAtLeast(1)
-        } else {
-            (rawDelta * 1.3).toInt().coerceAtMost(-1)
-        }
     }
 
     suspend fun meetsRecruitmentRequirements(): Boolean {

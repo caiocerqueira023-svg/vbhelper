@@ -137,22 +137,51 @@ object PromptLocalization {
 
     fun moodDirectiveInstruction(languageTag: String): String {
         return if (languageTag.startsWith("pt", ignoreCase = true)) {
-            "Ao final da sua resposta, em uma linha própria, inclua uma marca oculta no formato exato " +
-                "[[MOOD:+N]] ou [[MOOD:-N]] (N entre 0 e 10) indicando o quanto seu humor melhorou (+) ou " +
-                "piorou (-) por causa desta troca de mensagens. Essa marca é um sinal interno do sistema: " +
-                "nunca a explique, nunca a mencione, e ela será removida antes do Tamer ver sua resposta. " +
-                "Sempre inclua exatamente uma marca dessas, mesmo que a variação seja pequena (ex: [[MOOD:+1]])."
+            "OBRIGATÓRIO: No final da sua resposta, em uma linha própria, você DEVE incluir uma marca oculta " +
+                "no formato exato [[MOOD:+N]] ou [[MOOD:-N]] (N entre 1 e 10) indicando o quanto sua confiança " +
+                "melhorou (+) ou piorou (-) por causa desta troca de mensagens. Sua resposta será REJEITADA se " +
+                "esta marca estiver ausente. Esta marca é um sinal interno do sistema: nunca a explique, nunca " +
+                "a mencione no texto visível, e ela será removida antes do Tamer ver sua resposta. " +
+                "Sempre inclua exatamente uma marca, mesmo que a variação seja pequena.\n" +
+                "Exemplos do formato correto (coloque na última linha, sozinha):\n" +
+                "[[MOOD:+3]]\n[[MOOD:-5]]\n[[MOOD:+1]]\n[[MOOD:-8]]"
         } else if (languageTag.startsWith("ja", ignoreCase = true)) {
-            "返信の最後に、独立した行として、正確な形式 [[MOOD:+N]] または [[MOOD:-N]]（Nは0から10）で、" +
-                "このやり取りによって気分がどれだけ良くなった（+）か悪くなった（-）かを示す非表示のマークを" +
-                "付けてください。このマークはシステム内部の合図であり、説明したり言及したりせず、テイマーに" +
-                "表示される前に削除されます。変化が小さい場合でも（例：[[MOOD:+1]]）必ず1つだけ含めてください。"
+            "必須: 返信の最後に、独立した行として、正確な形式 [[MOOD:+N]] または [[MOOD:-N]]（Nは1から10）で、" +
+                "このやり取りによって信頼がどれだけ上がった（+）か下がった（-）かを示す非表示のマークを" +
+                "必ず付けてください。このマークがない場合、返信は拒否されます。このマークはシステム内部の" +
+                "合図であり、説明したり本文で言及したりせず、テイマーに表示される前に削除されます。" +
+                "変化が小さい場合でも必ず1つだけ含めてください。\n" +
+                "正しい形式の例（最後の行に単独で配置）:\n" +
+                "[[MOOD:+3]]\n[[MOOD:-5]]\n[[MOOD:+1]]\n[[MOOD:-8]]"
         } else {
-            "At the very end of your reply, on its own line, include a hidden marker in the exact format " +
-                "[[MOOD:+N]] or [[MOOD:-N]] (N between 0 and 10) indicating how much your mood improved (+) " +
-                "or worsened (-) because of this exchange. This marker is an internal system signal: never " +
-                "explain it, never mention it, and it will be stripped before the Tamer sees your reply. " +
-                "Always include exactly one such marker, even for small shifts (e.g. [[MOOD:+1]])."
+            "MANDATORY: At the very end of your reply, on its own line, you MUST include a hidden marker " +
+                "in the exact format [[MOOD:+N]] or [[MOOD:-N]] (N between 1 and 10) indicating how much " +
+                "your trust improved (+) or worsened (-) because of this exchange. Your reply WILL BE " +
+                "REJECTED if this marker is missing. This marker is an internal system signal: never " +
+                "explain it, never mention it in your visible text, and it will be stripped before the " +
+                "Tamer sees your reply. Always include exactly one marker, even for small shifts.\n" +
+            "Correct format examples (place on the last line, by itself):\n" +
+            "[[MOOD:+3]]\n[[MOOD:-5]]\n[[MOOD:+1]]\n[[MOOD:-8]]"
+        }
+    }
+
+    /**
+     * Short follow-up instruction sent when the LLM forgot to include the mood marker.
+     * The LLM sees the full conversation history and is asked to output ONLY the marker.
+     */
+    fun moodRatingFollowUpInstruction(languageTag: String): String {
+        return if (languageTag.startsWith("pt", ignoreCase = true)) {
+            "Sua resposta anterior não continha a marca obrigatória de humor. Com base na troca acima, " +
+                "responda APENAS com a marca [[MOOD:+N]] ou [[MOOD:-N]] (N entre 1 e 10) em uma única linha. " +
+                "Nenhum outro texto, nenhuma explicação."
+        } else if (languageTag.startsWith("ja", ignoreCase = true)) {
+            "前の返信に必須のムードマークが含まれていませんでした。上記のやり取りに基づいて、" +
+                "[[MOOD:+N]] または [[MOOD:-N]]（Nは1から10）のマークのみを1行で出力してください。" +
+                "他のテキストや説明は一切不要です。"
+        } else {
+            "Your previous reply was missing the mandatory mood marker. Based on the exchange above, " +
+                "output ONLY the marker [[MOOD:+N]] or [[MOOD:-N]] (N between 1 and 10) on a single line. " +
+                "No other text, no explanation."
         }
     }
 

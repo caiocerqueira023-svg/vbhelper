@@ -66,7 +66,34 @@ class ChatRepository(
                 timestamp = System.currentTimeMillis()
             )
         )
-        return WildChatResult(cleanReply, moodDelta)
+        // If the LLM omitted the mood marker, make a single lightweight follow-up
+        // call asking it to output ONLY the marker. The conversation history is
+        // already in the DB (user message + assistant reply), so the LLM has full
+        // context. This is cheap because the response is just the marker itself.
+        val resolvedDelta = if (moodDelta != null) {
+            moodDelta
+        } else {
+            requestMoodDelta(enrichedSystemPrompt, individualId, languageTag)
+        }
+        return WildChatResult(cleanReply, resolvedDelta)
+    }
+
+    /**
+     * Lightweight follow-up: asks the LLM to output ONLY the [[MOOD:+N/-N]] marker
+     * based on the conversation already stored in the DB. Returns null if the LLM
+     * still refuses to emit a valid marker (the analyzer fallback handles that case).
+     */
+    private suspend fun requestMoodDelta(
+        systemPrompt: String,
+        individualId: String,
+        languageTag: String
+    ): Int? {
+        val followUp = PromptLocalization.moodRatingFollowUpInstruction(languageTag)
+        val rawReply = runCatching {
+            requestCompletion(systemPrompt, individualId, followUp)
+        }.getOrNull() ?: return null
+        val (_, delta) = MoodDirectiveParser.extract(rawReply)
+        return delta
     }
 
     /**
