@@ -246,23 +246,26 @@ fun WorldScreen(navController: NavController) {
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
         val rotationMatrix = FloatArray(9)
-        val remappedMatrix = FloatArray(9)
-        val orientation = FloatArray(3)
 
         val listener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {
                 SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
-                // Remapeia os eixos para uso com o aparelhado em pé (retrato). Sem isso,
-                // o pitch fica próximo de ±90° e o azimute do getOrientation entra em gimbal
-                // lock, cobrindo só um arco (ex.: S/SW/W) e nunca alcançando o Norte.
-                SensorManager.remapCoordinateSystem(
-                    rotationMatrix,
-                    SensorManager.AXIS_X,
-                    SensorManager.AXIS_Z,
-                    remappedMatrix
-                )
-                SensorManager.getOrientation(remappedMatrix, orientation)
-                val degrees = ((Math.toDegrees(orientation[0].toDouble()).toFloat()) + 360f) % 360f
+                // Azimute tilt-compensado calculado diretamente da matriz de rotação,
+                // sem getOrientation nem remapCoordinateSystem (que sofrem gimbal lock
+                // quando o aparelho está em pé). Usa o eixo Y (topo do aparelho) quando
+                // o aparelho está mais deitado, e o eixo Z (tela) com offset de 180°
+                // quando está mais em pé. Ambos dão o mesmo valor no ponto de transição.
+                val horizY = rotationMatrix[1] * rotationMatrix[1] + rotationMatrix[4] * rotationMatrix[4]
+                val horizZ = rotationMatrix[2] * rotationMatrix[2] + rotationMatrix[5] * rotationMatrix[5]
+                val degrees = if (horizY >= horizZ) {
+                    ((Math.toDegrees(Math.atan2(
+                        rotationMatrix[1].toDouble(), rotationMatrix[4].toDouble()
+                    )).toFloat()) + 360f) % 360f
+                } else {
+                    ((Math.toDegrees(Math.atan2(
+                        rotationMatrix[2].toDouble(), rotationMatrix[5].toDouble()
+                    )).toFloat()) + 180f + 360f) % 360f
+                }
                 // menor caminho angular, para não "girar pelo lado errado" ao cruzar 0/360
                 val delta = ((degrees - heading + 540f) % 360f) - 180f
                 heading = (heading + delta * COMPASS_SMOOTHING + 360f) % 360f
