@@ -246,12 +246,22 @@ fun WorldScreen(navController: NavController) {
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
         val rotationMatrix = FloatArray(9)
+        val remappedMatrix = FloatArray(9)
         val orientation = FloatArray(3)
 
         val listener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {
                 SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
-                SensorManager.getOrientation(rotationMatrix, orientation)
+                // Remapeia os eixos para uso com o aparelhado em pé (retrato). Sem isso,
+                // o pitch fica próximo de ±90° e o azimute do getOrientation entra em gimbal
+                // lock, cobrindo só um arco (ex.: S/SW/W) e nunca alcançando o Norte.
+                SensorManager.remapCoordinateSystem(
+                    rotationMatrix,
+                    SensorManager.AXIS_X,
+                    SensorManager.AXIS_Z,
+                    remappedMatrix
+                )
+                SensorManager.getOrientation(remappedMatrix, orientation)
                 val degrees = ((Math.toDegrees(orientation[0].toDouble()).toFloat()) + 360f) % 360f
                 // menor caminho angular, para não "girar pelo lado errado" ao cruzar 0/360
                 val delta = ((degrees - heading + 540f) % 360f) - 180f
