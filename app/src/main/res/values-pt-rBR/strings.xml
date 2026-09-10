@@ -368,5 +368,30 @@
     <string name="ui_animated_sprite">Sprite animado %1$s</string>
     <string name="ui_battle_background">Fundo de batalha %1$d</string>
 
+    <string name="ui_world_grant_location">Permita o acesso à localização para descobrir Digimon próximos.</string>
+    <string name="ui_world_location_active">Localização ativa.</string>
+    <string name="ui_world_location_required">É necessária permissão de localização.</string>
+    <string name="ui_world_radar_active">Radar ativo</string>
+    <string name="ui_world_load_nearby_failed">Não foi possível carregar Digimon próximos.</string>
+    <string name="ui_world_tracking_failed">Não foi possível iniciar o rastreamento da localização.</string>
+    <string name="ui_world_direction">Direção: %1$s (%2$d°)</string>
+    <string name="ui_world_nearby_count">%1$d Digimon próximos</string>
+    <string name="ui_world_tap_instruction">Toque em um Digimon dentro do círculo azul para conversar.</string>
+    <string name="ui_world_grid_instruction">Cada quadrado da grade representa aproximadamente 60 m.</string>
+    <string name="ui_world_zoom_instruction">Use dois dedos em movimento de pinça sobre o mapa para controlar o zoom.</string>
+    <string name="ui_world_compass_instruction">As setas N, L, S e O giram ao redor do jogador como uma bússola.</string>
+    <string name="ui_world_zoom_label">Zoom %1$d%%</string>
+    <string name="ui_world_enable_location">Ativar localização</string>
+    <string name="ui_world_too_far">Chegue mais perto para interagir com este Digimon.</string>
+    <string name="ui_world_wild_digimon">Digimon selvagem</string>
+
+    <string-array name="world_cardinal_directions_8">
+        <item>N</item><item>NE</item><item>L</item><item>SE</item>
+        <item>S</item><item>SO</item><item>O</item><item>NO</item>
+    </string-array>
+
+    <string name="ui_wild_digimon_prompt">Prompt do Digimon selvagem</string>
+    <string name="ui_wild_digimon_prompt_desc">Edite a personalidade e o jeito de falar dos Digimon selvagens encontrados na aba Mundo</string>
+
 
 </resources>

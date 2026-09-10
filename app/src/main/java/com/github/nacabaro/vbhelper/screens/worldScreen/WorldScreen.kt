@@ -37,8 +37,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -61,6 +59,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -90,6 +89,7 @@ import kotlin.math.sqrt
 /** Radius, in meters, within which the player can tap a Digimon to chat. */
 private const val INTERACTION_RANGE_METERS = 40.0
 private const val GRID_SIZE_METERS = 60.0
+private const val COMPASS_SMOOTHING = 0.35f // quanto maior, mais rápido (0..1)
 
 @Composable
 fun WorldScreen(navController: NavController) {
@@ -97,22 +97,9 @@ fun WorldScreen(navController: NavController) {
     val app = context.applicationContext as VBHelper
     var location by remember { mutableStateOf<Location?>(null) }
     var origin by remember { mutableStateOf<Location?>(null) }
-    var rawHeading by remember { mutableFloatStateOf(0f) }
-    val headingAnimation = remember { Animatable(0f) }
-
-    // Suaviza a bússola usando sempre o menor caminho angular.
-    LaunchedEffect(rawHeading) {
-        val current = headingAnimation.value
-        val delta = ((rawHeading - current + 540f) % 360f) - 180f
-        headingAnimation.animateTo(
-            current + delta,
-            animationSpec = tween(durationMillis = 180)
-        )
-    }
-
-    val heading = ((headingAnimation.value % 360f) + 360f) % 360f
+    var heading by remember { mutableFloatStateOf(0f) }
     var status by remember {
-        mutableStateOf("Permita o acesso à localização para descobrir Digimon próximos.")
+        mutableStateOf(context.getString(R.string.ui_world_grant_location))
     }
     val spawns by app.container.worldRepository.observeSpawns().collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
@@ -159,9 +146,9 @@ fun WorldScreen(navController: NavController) {
             ) == PackageManager.PERMISSION_GRANTED
 
         if (hasLocationPermission) {
-            status = "Localização ativa."
+            status = context.getString(R.string.ui_world_location_active)
         } else {
-            status = "É necessária permissão de localização."
+            status = context.getString(R.string.ui_world_location_required)
         }
     }
 
@@ -195,7 +182,7 @@ fun WorldScreen(navController: NavController) {
                         }
 
                         location = newLocation
-                        status = "Radar ativo"
+                        status = context.getString(R.string.ui_world_radar_active)
 
                         val shouldRefreshSpawns = lastSpawnRefresh == null ||
                             lastSpawnRefresh!!.distanceTo(newLocation) >= 100f
@@ -211,7 +198,7 @@ fun WorldScreen(navController: NavController) {
                                         )
                                     }
                                 }.onFailure {
-                                    status = "Não foi possível carregar Digimon próximos."
+                                    status = context.getString(R.string.ui_world_load_nearby_failed)
                                 }
                             }
                         }
@@ -242,7 +229,7 @@ fun WorldScreen(navController: NavController) {
 
             client.requestLocationUpdates(request, callback, context.mainLooper)
                 .addOnFailureListener {
-                    status = "Não foi possível iniciar o rastreamento da localização."
+                    status = context.getString(R.string.ui_world_tracking_failed)
                 }
 
             onDispose {
@@ -252,7 +239,9 @@ fun WorldScreen(navController: NavController) {
     }
 
     // TYPE_ROTATION_VECTOR combina o giroscópio com os demais sensores de orientação
-    // para obter um azimute estável em relação ao norte magnético.
+    // para obter um azimute estável em relação ao norte magnético. O filtro passa-baixa
+    // é aplicado aqui, diretamente no listener, para a agulha responder de forma suave
+    // sem reiniciar a animação a cada leitura do sensor.
     DisposableEffect(Unit) {
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
@@ -263,8 +252,10 @@ fun WorldScreen(navController: NavController) {
             override fun onSensorChanged(event: SensorEvent) {
                 SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
                 SensorManager.getOrientation(rotationMatrix, orientation)
-                val degrees = Math.toDegrees(orientation[0].toDouble()).toFloat()
-                rawHeading = (degrees + 360f) % 360f
+                val degrees = ((Math.toDegrees(orientation[0].toDouble()).toFloat()) + 360f) % 360f
+                // menor caminho angular, para não "girar pelo lado errado" ao cruzar 0/360
+                val delta = ((degrees - heading + 540f) % 360f) - 180f
+                heading = (heading + delta * COMPASS_SMOOTHING + 360f) % 360f
             }
 
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
@@ -297,7 +288,7 @@ fun WorldScreen(navController: NavController) {
         ) {
             Text(status, style = MaterialTheme.typography.bodyMedium)
             Text(
-                "Direção: ${cardinalDirection(heading)} (${heading.roundToInt()}°)",
+                stringResource(R.string.ui_world_direction, cardinalDirection(heading), heading.roundToInt()),
                 style = MaterialTheme.typography.bodySmall
             )
             Spacer(Modifier.height(8.dp))
@@ -424,11 +415,12 @@ fun WorldScreen(navController: NavController) {
                 }
 
                 // Letras cardeais acompanham as setas e giram pela borda do mapa.
+                val cardinalNames = stringArrayResource(R.array.world_cardinal_directions_8)
                 listOf(
-                    0f to "N",
-                    90f to "L",
-                    180f to "S",
-                    270f to "O"
+                    0f to cardinalNames[0],
+                    90f to cardinalNames[2],
+                    180f to cardinalNames[4],
+                    270f to cardinalNames[6]
                 ).forEach { (cardinalAzimuth, label) ->
                     val compassRadiusPx = boxWidthPx / 2f - with(density) { 48.dp.toPx() }
                     val angleRadians = (cardinalAzimuth - heading - 90f) * (PI / 180.0)
@@ -516,7 +508,7 @@ fun WorldScreen(navController: NavController) {
                                             )
                                         } else {
                                             toastMessage =
-                                                "Chegue mais perto para interagir com este Digimon."
+                                                context.getString(R.string.ui_world_too_far)
                                         }
                                     }
                             )
@@ -526,18 +518,24 @@ fun WorldScreen(navController: NavController) {
             }
 
             Spacer(Modifier.height(8.dp))
-            Text("${spawns.size} Digimon próximos", style = MaterialTheme.typography.titleMedium)
-            Text("Toque em um Digimon dentro do círculo azul para conversar.")
-            Text("Cada quadrado da grade representa aproximadamente 60 m.")
-            Text("Use dois dedos em movimento de pinça sobre o mapa para controlar o zoom.")
-            Text("As setas N, L, S e O giram ao redor do jogador como uma bússola.")
+            Text(
+                stringResource(R.string.ui_world_nearby_count, spawns.size),
+                style = MaterialTheme.typography.titleMedium
+            )
+            Text(stringResource(R.string.ui_world_tap_instruction))
+            Text(stringResource(R.string.ui_world_grid_instruction))
+            Text(stringResource(R.string.ui_world_zoom_instruction))
+            Text(stringResource(R.string.ui_world_compass_instruction))
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(top = 8.dp)
             ) {
                 Button(onClick = { zoom = (zoom / 1.5f).coerceAtLeast(.5f) }) { Text("-") }
-                Text("Zoom ${(zoom * 100).toInt()}%", modifier = Modifier.padding(top = 12.dp))
+                Text(
+                    stringResource(R.string.ui_world_zoom_label, (zoom * 100).toInt()),
+                    modifier = Modifier.padding(top = 12.dp)
+                )
                 Button(onClick = { zoom = (zoom * 1.5f).coerceAtMost(4f) }) { Text("+") }
             }
 
@@ -552,7 +550,7 @@ fun WorldScreen(navController: NavController) {
                         )
                     },
                     modifier = Modifier.padding(top = 8.dp)
-                ) { Text("Ativar localização") }
+                ) { Text(stringResource(R.string.ui_world_enable_location)) }
             }
         }
     }
@@ -565,16 +563,10 @@ fun WorldScreen(navController: NavController) {
     }
 }
 
+@Composable
 private fun cardinalDirection(degrees: Float): String {
+    val names = stringArrayResource(R.array.world_cardinal_directions_8)
     val normalized = (degrees + 360f) % 360f
-    return when {
-        normalized >= 337.5f || normalized < 22.5f -> "N"
-        normalized < 67.5f -> "NE"
-        normalized < 112.5f -> "L"
-        normalized < 157.5f -> "SE"
-        normalized < 202.5f -> "S"
-        normalized < 247.5f -> "SO"
-        normalized < 292.5f -> "O"
-        else -> "NO"
-    }
+    val index = ((normalized + 22.5f) / 45f).toInt() % 8
+    return names[index]
 }

@@ -406,4 +406,29 @@
     <string name="ui_hit_effect">Hit effect</string>
     <string name="ui_animated_sprite">Animated sprite %1$s</string>
     <string name="ui_battle_background">Battle background %1$d</string>
+
+    <string name="ui_world_grant_location">Allow location access to discover nearby Digimon.</string>
+    <string name="ui_world_location_active">Location active.</string>
+    <string name="ui_world_location_required">Location permission is required.</string>
+    <string name="ui_world_radar_active">Radar active</string>
+    <string name="ui_world_load_nearby_failed">Couldn\'t load nearby Digimon.</string>
+    <string name="ui_world_tracking_failed">Couldn\'t start location tracking.</string>
+    <string name="ui_world_direction">Direction: %1$s (%2$d°)</string>
+    <string name="ui_world_nearby_count">%1$d nearby Digimon</string>
+    <string name="ui_world_tap_instruction">Tap a Digimon inside the blue circle to talk.</string>
+    <string name="ui_world_grid_instruction">Each grid square represents about 60 m.</string>
+    <string name="ui_world_zoom_instruction">Use a two-finger pinch on the map to zoom.</string>
+    <string name="ui_world_compass_instruction">The N, E, S and W arrows rotate around the player like a compass.</string>
+    <string name="ui_world_zoom_label">Zoom %1$d%%</string>
+    <string name="ui_world_enable_location">Enable location</string>
+    <string name="ui_world_too_far">Get closer to interact with this Digimon.</string>
+    <string name="ui_world_wild_digimon">Wild Digimon</string>
+
+    <string-array name="world_cardinal_directions_8">
+        <item>N</item><item>NE</item><item>E</item><item>SE</item>
+        <item>S</item><item>SW</item><item>W</item><item>NW</item>
+    </string-array>
+
+    <string name="ui_wild_digimon_prompt">Wild Digimon prompt</string>
+    <string name="ui_wild_digimon_prompt_desc">Edit the personality and speaking style used by wild Digimon met in the World tab</string>
 </resources>

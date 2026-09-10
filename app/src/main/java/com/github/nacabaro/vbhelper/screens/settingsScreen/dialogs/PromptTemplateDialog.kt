@@ -30,16 +30,18 @@ import com.github.nacabaro.vbhelper.R
 fun PromptTemplateDialog(
     currentTemplate: String?,
     onDismiss: () -> Unit,
-    onSave: (String?) -> Unit
+    onSave: (String?) -> Unit,
+    title: String = stringResource(R.string.ui_digimon_prompt),
+    defaultTemplate: String = DigimonPersonaBuilder.DEFAULT_SYSTEM_PROMPT_TEMPLATE.trimIndent()
 ) {
     var template by remember(currentTemplate) {
-        mutableStateOf(currentTemplate ?: DigimonPersonaBuilder.DEFAULT_SYSTEM_PROMPT_TEMPLATE.trimIndent())
+        mutableStateOf(currentTemplate ?: defaultTemplate)
     }
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(dismissOnClickOutside = false)) {
         Card {
             Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
-                Text(stringResource(R.string.ui_digimon_prompt), style = MaterialTheme.typography.titleMedium)
+                Text(title, style = MaterialTheme.typography.titleMedium)
                 Text(
                     stringResource(R.string.ui_prompt_description),
                     style = MaterialTheme.typography.bodySmall,
@@ -58,7 +60,7 @@ fun PromptTemplateDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End) {
-                    TextButton(onClick = { template = DigimonPersonaBuilder.DEFAULT_SYSTEM_PROMPT_TEMPLATE.trimIndent() }) {
+                    TextButton(onClick = { template = defaultTemplate }) {
                         Text(stringResource(R.string.ui_restore_default))
                     }
                     TextButton(onClick = onDismiss) { Text(stringResource(R.string.ui_cancel)) }

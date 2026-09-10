@@ -150,7 +150,7 @@ class ChatRepository(
             ?: error("Dados da espécie não encontrados para este Digimon.")
         val personality = database.digimonIndividualDao().getPersonality(individualId)
         val speciesProfile = database.speciesProfileDao().getByCardCharacterId(cardCharacterId)
-        val promptTemplate = llmSettingsRepository.systemPromptTemplate.first()
+        val promptTemplate = llmSettingsRepository.wildSystemPromptTemplate.first()
         val tamerName = llmSettingsRepository.tamerName.first()
         val languageTag = PromptLocalization.currentLanguageTag()
 
@@ -192,7 +192,8 @@ class ChatRepository(
             promptTemplate,
             personality,
             tamerName,
-            languageTag
+            languageTag,
+            defaultTemplate = PromptLocalization::defaultWildSystemPrompt
         )
         return prompt to speciesProfile?.speciesName
     }

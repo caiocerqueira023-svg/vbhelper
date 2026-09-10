@@ -33,6 +33,7 @@ import com.github.nacabaro.vbhelper.navigation.NavigationItems
 import com.github.nacabaro.vbhelper.screens.settingsScreen.dialogs.LlmSettingsDialog
 import com.github.nacabaro.vbhelper.screens.settingsScreen.dialogs.PromptTemplateDialog
 import com.github.nacabaro.vbhelper.screens.settingsScreen.dialogs.LanguageDialog
+import com.github.nacabaro.vbhelper.chat.DigimonPersonaBuilder
 import com.github.nacabaro.vbhelper.R
 import androidx.compose.material3.OutlinedTextField
 
@@ -48,8 +49,10 @@ fun SettingsScreen(
     val currentApiKey by settingsScreenController.currentLlmApiKey.collectAsState(initial = null)
     val currentModel by settingsScreenController.currentLlmModel.collectAsState(initial = "openrouter/auto")
     val currentSystemPromptTemplate by settingsScreenController.currentSystemPromptTemplate.collectAsState(initial = null)
+    val currentWildSystemPromptTemplate by settingsScreenController.currentWildSystemPromptTemplate.collectAsState(initial = null)
     val currentTamerName by settingsScreenController.currentTamerName.collectAsState(initial = "")
     val showPromptTemplateDialog by settingsScreenController.showPromptTemplateDialog.collectAsState()
+    val showWildPromptTemplateDialog by settingsScreenController.showWildPromptTemplateDialog.collectAsState()
     val promptOriginAtImport by settingsScreenController.promptOriginAtImportTime.collectAsState(initial = false)
     val currentLanguage by settingsScreenController.currentLanguage.collectAsState()
     var showLanguageDialog by remember { mutableStateOf(false) }
@@ -131,6 +134,12 @@ fun SettingsScreen(
                 settingsScreenController.onClickConfigurePromptTemplate()
             }
             SettingsEntry(
+                title = stringResource(R.string.ui_wild_digimon_prompt),
+                description = stringResource(R.string.ui_wild_digimon_prompt_desc)
+            ) {
+                settingsScreenController.onClickConfigureWildPromptTemplate()
+            }
+            SettingsEntry(
                 title = stringResource(R.string.ui_lorebook_title),
                 description = stringResource(R.string.ui_lorebook_description)
             ) {
@@ -206,6 +215,16 @@ fun SettingsScreen(
             currentTemplate = currentSystemPromptTemplate,
             onDismiss = { settingsScreenController.dismissPromptTemplateDialog() },
             onSave = settingsScreenController::savePromptTemplate
+        )
+    }
+
+    if (showWildPromptTemplateDialog) {
+        PromptTemplateDialog(
+            currentTemplate = currentWildSystemPromptTemplate,
+            onDismiss = { settingsScreenController.dismissWildPromptTemplateDialog() },
+            onSave = settingsScreenController::saveWildPromptTemplate,
+            title = stringResource(R.string.ui_wild_digimon_prompt),
+            defaultTemplate = DigimonPersonaBuilder.DEFAULT_WILD_SYSTEM_PROMPT_TEMPLATE.trimIndent()
         )
     }
 

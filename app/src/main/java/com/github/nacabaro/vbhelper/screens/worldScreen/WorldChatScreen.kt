@@ -58,7 +58,7 @@ fun WorldChatScreen(
     Scaffold(
         topBar = {
             TopBanner(
-                text = speciesName.ifBlank { "Digimon selvagem" },
+                text = speciesName.ifBlank { stringResource(R.string.ui_world_wild_digimon) },
                 onBackClick = { navController.popBackStack() }
             )
         }

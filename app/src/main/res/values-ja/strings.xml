@@ -316,4 +316,29 @@
     <string name="ui_hit_effect">攻撃効果</string>
     <string name="ui_animated_sprite">アニメーションスプライト %1$s</string>
     <string name="ui_battle_background">バトル背景 %1$d</string>
+
+    <string name="ui_world_grant_location">位置情報へのアクセスを許可して近くのデジモンを見つけましょう。</string>
+    <string name="ui_world_location_active">位置情報が有効です。</string>
+    <string name="ui_world_location_required">位置情報の権限が必要です。</string>
+    <string name="ui_world_radar_active">レーダー作動中</string>
+    <string name="ui_world_load_nearby_failed">近くのデジモンを読み込めませんでした。</string>
+    <string name="ui_world_tracking_failed">位置情報の追跡を開始できませんでした。</string>
+    <string name="ui_world_direction">方角: %1$s (%2$d°)</string>
+    <string name="ui_world_nearby_count">近くのデジモン %1$d体</string>
+    <string name="ui_world_tap_instruction">青い円の中のデジモンをタップして話しましょう。</string>
+    <string name="ui_world_grid_instruction">グリッドの1マスは約60mです。</string>
+    <string name="ui_world_zoom_instruction">地図上で2本指のピンチ操作でズームできます。</string>
+    <string name="ui_world_compass_instruction">N・E・S・Wの矢印はコンパスのようにプレイヤーの周りを回ります。</string>
+    <string name="ui_world_zoom_label">ズーム %1$d%%</string>
+    <string name="ui_world_enable_location">位置情報を有効にする</string>
+    <string name="ui_world_too_far">このデジモンと関わるにはもっと近づいてください。</string>
+    <string name="ui_world_wild_digimon">野生のデジモン</string>
+
+    <string-array name="world_cardinal_directions_8">
+        <item>北</item><item>北東</item><item>東</item><item>南東</item>
+        <item>南</item><item>南西</item><item>西</item><item>北西</item>
+    </string-array>
+
+    <string name="ui_wild_digimon_prompt">野生のデジモンのプロンプト</string>
+    <string name="ui_wild_digimon_prompt_desc">「ワールド」タブで出会う野生のデジモンの性格と話し方を編集します</string>
 </resources>

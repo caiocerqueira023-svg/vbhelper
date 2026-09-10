@@ -48,6 +48,7 @@ class SettingsScreenControllerImpl(
     val currentLlmApiKey: Flow<String?> = llmSettingsRepository.apiKey
     val currentLlmModel: Flow<String> = llmSettingsRepository.model
     val currentSystemPromptTemplate: Flow<String?> = llmSettingsRepository.systemPromptTemplate
+    val currentWildSystemPromptTemplate: Flow<String?> = llmSettingsRepository.wildSystemPromptTemplate
     val currentTamerName: Flow<String> = llmSettingsRepository.tamerName
     private val speciesSettingsRepository: SpeciesSettingsRepository = application.container.speciesSettingsRepository
     val promptOriginAtImportTime: Flow<Boolean> = speciesSettingsRepository.promptOriginAtImportTime
@@ -56,6 +57,8 @@ class SettingsScreenControllerImpl(
     val showLlmDialog: StateFlow<Boolean> = _showLlmDialog
     private val _showPromptTemplateDialog = MutableStateFlow(false)
     val showPromptTemplateDialog: StateFlow<Boolean> = _showPromptTemplateDialog
+    private val _showWildPromptTemplateDialog = MutableStateFlow(false)
+    val showWildPromptTemplateDialog: StateFlow<Boolean> = _showWildPromptTemplateDialog
     private val _currentLanguage = MutableStateFlow(
         languagePreferences.getString("language_tag", null)
             ?: AppCompatDelegate.getApplicationLocales().toLanguageTags().ifBlank { "system" }
@@ -161,6 +164,21 @@ class SettingsScreenControllerImpl(
         context.lifecycleScope.launch(Dispatchers.IO) {
             llmSettingsRepository.setSystemPromptTemplate(template)
             context.runOnUiThread { dismissPromptTemplateDialog() }
+        }
+    }
+
+    fun onClickConfigureWildPromptTemplate() {
+        _showWildPromptTemplateDialog.value = true
+    }
+
+    fun dismissWildPromptTemplateDialog() {
+        _showWildPromptTemplateDialog.value = false
+    }
+
+    fun saveWildPromptTemplate(template: String?) {
+        context.lifecycleScope.launch(Dispatchers.IO) {
+            llmSettingsRepository.setWildSystemPromptTemplate(template)
+            context.runOnUiThread { dismissWildPromptTemplateDialog() }
         }
     }
 

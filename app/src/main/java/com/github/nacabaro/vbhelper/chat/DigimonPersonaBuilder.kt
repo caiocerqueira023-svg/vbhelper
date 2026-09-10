@@ -9,6 +9,9 @@ object DigimonPersonaBuilder {
     val DEFAULT_SYSTEM_PROMPT_TEMPLATE: String
         get() = PromptLocalization.defaultSystemPrompt(PromptLocalization.currentLanguageTag())
 
+    val DEFAULT_WILD_SYSTEM_PROMPT_TEMPLATE: String
+        get() = PromptLocalization.defaultWildSystemPrompt(PromptLocalization.currentLanguageTag())
+
     fun buildSystemPrompt(
         character: CharacterDtos.CharacterWithSprites,
         cardName: String,
@@ -16,7 +19,8 @@ object DigimonPersonaBuilder {
         promptTemplate: String? = null,
         personality: DigimonPersonalityTraits? = null,
         tamerName: String = "",
-        languageTag: String = PromptLocalization.currentLanguageTag()
+        languageTag: String = PromptLocalization.currentLanguageTag(),
+        defaultTemplate: (String) -> String = PromptLocalization::defaultSystemPrompt
     ): String {
         val speciesName = speciesProfile?.speciesName?.takeIf { it.isNotBlank() } ?: unknown(languageTag)
         val resolvedTamerName = tamerName.trim().ifBlank { tamer(languageTag) }
@@ -48,7 +52,7 @@ object DigimonPersonaBuilder {
         )
 
         val template = promptTemplate?.takeIf { it.isNotBlank() }
-            ?: PromptLocalization.defaultSystemPrompt(languageTag)
+            ?: defaultTemplate(languageTag)
         val customPrompt = replacements.entries.fold(template.trimIndent()) { prompt, (key, value) ->
             prompt.replace(key, value)
         }
