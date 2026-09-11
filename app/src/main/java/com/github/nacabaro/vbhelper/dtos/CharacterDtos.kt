@@ -459,4 +459,37 @@ object CharacterDtos {
             return result
         }
     }
+
+    /** Minimal sprite set used by the Digimon home-screen widget. */
+    data class WidgetSprites(
+        val spriteIdle1: ByteArray,
+        val spriteIdle2: ByteArray,
+        val spriteWalk1: ByteArray,
+        val spriteWalk2: ByteArray,
+        val width: Int,
+        val height: Int
+    ) {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+            other as WidgetSprites
+            if (!spriteIdle1.contentEquals(other.spriteIdle1)) return false
+            if (!spriteIdle2.contentEquals(other.spriteIdle2)) return false
+            if (!spriteWalk1.contentEquals(other.spriteWalk1)) return false
+            if (!spriteWalk2.contentEquals(other.spriteWalk2)) return false
+            if (width != other.width) return false
+            if (height != other.height) return false
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = spriteIdle1.contentHashCode()
+            result = 31 * result + spriteIdle2.contentHashCode()
+            result = 31 * result + spriteWalk1.contentHashCode()
+            result = 31 * result + spriteWalk2.contentHashCode()
+            result = 31 * result + width
+            result = 31 * result + height
+            return result
+        }
+    }
 }

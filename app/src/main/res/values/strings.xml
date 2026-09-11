@@ -449,4 +449,7 @@
 
     <string name="ui_wild_digimon_prompt">Wild Digimon prompt</string>
     <string name="ui_wild_digimon_prompt_desc">Edit the personality and speaking style used by wild Digimon met in the World tab</string>
+
+    <string name="widget_digimon_description">Your active Digimon walking on the home screen</string>
+    <string name="widget_digimon_label">Digimon</string>
 </resources>

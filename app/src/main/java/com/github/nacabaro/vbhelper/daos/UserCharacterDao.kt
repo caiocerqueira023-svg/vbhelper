@@ -302,4 +302,25 @@ interface UserCharacterDao {
         """
     )
     suspend fun getVBDimCharacters(): List<CharacterDtos.CharacterWithSprites>
+
+    /**
+     * Sprites needed by the home-screen Digimon widget (idle + walk frames).
+     */
+    @Query(
+        """
+        SELECT
+            s.spriteIdle1 AS spriteIdle1,
+            s.spriteIdle2 AS spriteIdle2,
+            s.spriteWalk1 AS spriteWalk1,
+            s.spriteWalk2 AS spriteWalk2,
+            s.width AS width,
+            s.height AS height
+        FROM UserCharacter uc
+        JOIN CardCharacter c ON uc.charId = c.id
+        JOIN Sprite s ON s.id = c.spriteId
+        WHERE uc.isActive = 1
+        LIMIT 1
+        """
+    )
+    suspend fun getActiveCharacterWidgetSprites(): CharacterDtos.WidgetSprites?
 }

@@ -19,6 +19,8 @@ class StorageScreenControllerImpl(
             database.userCharacterDao().setActiveCharacter(characterId)
 
             componentActivity.runOnUiThread {
+                com.github.nacabaro.vbhelper.widget.DigimonWidgetProvider
+                    .notifyActiveCharacterChanged(componentActivity)
                 Toast.makeText(
                     componentActivity,
                     "Active character updated!",

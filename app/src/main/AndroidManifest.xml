@@ -72,6 +72,18 @@
                 <data android:mimeType="application/x-vitalwear-character" />
             </intent-filter>
         </activity>
+
+        <receiver
+            android:name=".widget.DigimonWidgetProvider"
+            android:exported="true"
+            android:label="@string/widget_digimon_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/digimon_widget_info" />
+        </receiver>
     </application>
 
 </manifest>
