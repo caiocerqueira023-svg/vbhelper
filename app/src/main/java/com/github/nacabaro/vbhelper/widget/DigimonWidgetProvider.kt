@@ -254,8 +254,9 @@ class DigimonWidgetProvider : AppWidgetProvider() {
                 val matrix = Matrix()
                 // Scale up for pixel art
                 matrix.postScale(SCALE.toFloat(), SCALE.toFloat())
-                if (direction < 0) {
-                    // Flip horizontally around the sprite center
+                // VB Digimon sprites face left by default; flip when moving right
+                // so the character always faces the direction of travel.
+                if (direction > 0) {
                     matrix.postScale(-1f, 1f, drawW / 2f, drawH / 2f)
                 }
                 matrix.postTranslate(posX, y)
