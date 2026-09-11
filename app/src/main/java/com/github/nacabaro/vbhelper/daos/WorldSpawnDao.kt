@@ -36,7 +36,7 @@ interface WorldSpawnDao {
     suspend fun updateRecruitmentState(id: Long, state: String, expiresAt: Long)
 
     @Query("DELETE FROM WorldSpawn WHERE id = :id")
-    suspend fun deleteById(id: Long)
+    fun deleteById(id: Long)
 
     @Query("DELETE FROM WorldSpawn WHERE expiresAt <= :now")
     suspend fun deleteExpired(now: Long)
