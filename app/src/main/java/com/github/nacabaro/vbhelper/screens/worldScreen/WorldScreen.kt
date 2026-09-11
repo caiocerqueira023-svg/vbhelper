@@ -8,6 +8,9 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 import android.location.Location
+import android.os.Build
+import android.view.Surface
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -277,6 +280,7 @@ fun WorldScreen(navController: NavController) {
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
         val rotationMatrix = FloatArray(9)
+        val displayRotationMatrix = FloatArray(9)
         // Local filter state — do not read Compose state from the sensor thread.
         var smoothedHeading = 0f
         var hasSample = false
@@ -287,15 +291,39 @@ fun WorldScreen(navController: NavController) {
                 // event.values can be 3–5 floats; getRotationMatrixFromVector accepts both.
                 SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
 
-                // Device Y in world (East, North, Up) = (R[1], R[4], R[7])
-                val yEast = rotationMatrix[1]
-                val yNorth = rotationMatrix[4]
+                // The rotation-vector axes are tied to the device's natural
+                // orientation, while the UI follows the current display rotation.
+                // Without this remap, turning the phone through 180° makes the map
+                // appear to undo its rotation as the screen coordinate system flips.
+                val displayRotation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                    context.display.rotation
+                } else {
+                    @Suppress("DEPRECATION")
+                    (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager)
+                        .defaultDisplay.rotation
+                }
+                val (axisX, axisY) = when (displayRotation) {
+                    Surface.ROTATION_90 -> SensorManager.AXIS_Y to SensorManager.AXIS_MINUS_X
+                    Surface.ROTATION_180 -> SensorManager.AXIS_MINUS_X to SensorManager.AXIS_MINUS_Y
+                    Surface.ROTATION_270 -> SensorManager.AXIS_MINUS_Y to SensorManager.AXIS_X
+                    else -> SensorManager.AXIS_X to SensorManager.AXIS_Y
+                }
+                SensorManager.remapCoordinateSystem(
+                    rotationMatrix,
+                    axisX,
+                    axisY,
+                    displayRotationMatrix
+                )
+
+                // Display Y in world (East, North, Up) = (R[1], R[4], R[7])
+                val yEast = displayRotationMatrix[1]
+                val yNorth = displayRotationMatrix[4]
                 val yHorizSquared = yEast * yEast + yNorth * yNorth
 
                 // Device Z in world = (R[2], R[5], R[8]); use -Z when upright so
                 // "forward" is the direction the back of the phone faces (away from user).
-                val zEast = -rotationMatrix[2]
-                val zNorth = -rotationMatrix[5]
+                val zEast = -displayRotationMatrix[2]
+                val zNorth = -displayRotationMatrix[5]
                 val zHorizSquared = zEast * zEast + zNorth * zNorth
 
                 // Change source only after a meaningful advantage. At least one of
