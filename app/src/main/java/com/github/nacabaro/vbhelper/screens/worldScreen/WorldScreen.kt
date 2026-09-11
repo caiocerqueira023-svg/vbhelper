@@ -238,37 +238,29 @@ fun WorldScreen(navController: NavController) {
         }
     }
 
-    // TYPE_ROTATION_VECTOR combina o giroscópio com os demais sensores de orientação
-    // para obter um azimute estável em relação ao norte magnético. O filtro passa-baixa
-    // é aplicado aqui, diretamente no listener, para a agulha responder de forma suave
-    // sem reiniciar a animação a cada leitura do sensor.
+    // TYPE_ROTATION_VECTOR combina acelerômetro + magnetômetro + giroscópio para obter
+    // um azimute estável em relação ao norte magnético. Usamos SensorManager.getOrientation()
+    // (método padrão e robusto do Android) em vez de lógica manual de eixos Y/Z, que
+    // gerava saltos e travava a bússola em N/NW/W nas transições de inclinação.
+    // O filtro passa-baixa mantém a memória fora do estado do Compose para evitar atraso.
     DisposableEffect(Unit) {
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
         val rotationMatrix = FloatArray(9)
+        val orientation = FloatArray(3)
+        // Memória do filtro local ao effect — evita ler estado Compose atrasado no listener
+        var smoothedHeading = 0f
 
         val listener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {
                 SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
-                // Azimute tilt-compensado calculado diretamente da matriz de rotação,
-                // sem getOrientation nem remapCoordinateSystem (que sofrem gimbal lock
-                // quando o aparelho está em pé). Usa o eixo Y (topo do aparelho) quando
-                // o aparelho está mais deitado, e o eixo Z (tela) com offset de 180°
-                // quando está mais em pé. Ambos dão o mesmo valor no ponto de transição.
-                val horizY = rotationMatrix[1] * rotationMatrix[1] + rotationMatrix[4] * rotationMatrix[4]
-                val horizZ = rotationMatrix[2] * rotationMatrix[2] + rotationMatrix[5] * rotationMatrix[5]
-                val degrees = if (horizY >= horizZ) {
-                    ((Math.toDegrees(Math.atan2(
-                        rotationMatrix[1].toDouble(), rotationMatrix[4].toDouble()
-                    )).toFloat()) + 360f) % 360f
-                } else {
-                    ((Math.toDegrees(Math.atan2(
-                        rotationMatrix[2].toDouble(), rotationMatrix[5].toDouble()
-                    )).toFloat()) + 180f + 360f) % 360f
-                }
+                SensorManager.getOrientation(rotationMatrix, orientation)
+                // orientation[0] = azimute em radianos (-π..π); converte para 0..360
+                val degrees = ((Math.toDegrees(orientation[0].toDouble()).toFloat()) + 360f) % 360f
                 // menor caminho angular, para não "girar pelo lado errado" ao cruzar 0/360
-                val delta = ((degrees - heading + 540f) % 360f) - 180f
-                heading = (heading + delta * COMPASS_SMOOTHING + 360f) % 360f
+                val delta = ((degrees - smoothedHeading + 540f) % 360f) - 180f
+                smoothedHeading = (smoothedHeading + delta * COMPASS_SMOOTHING + 360f) % 360f
+                heading = smoothedHeading
             }
 
             override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
