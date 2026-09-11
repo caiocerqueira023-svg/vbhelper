@@ -268,10 +268,11 @@ fun WorldScreen(navController: NavController) {
     // Azimuth is the horizontal direction the "forward" axis points:
     //  - phone flatter → device +Y (top edge)
     //  - phone more upright → device -Z (through the screen, away from the user)
-    // The two axes are *soft-blended* by their horizontal magnitude so there is no
-    // hard mode switch (which caused the compass to lock onto fixed cardinals when
-    // tilting near the old threshold). A low-pass on the shortest angular path
-    // keeps the map smooth without fighting the sensor.
+    // Pick the axis with the most reliable horizontal projection. Do not blend the
+    // axes: when the phone is tilted past its vertical position, their projections
+    // can point in opposite directions and a blend becomes a zero vector. atan2 on
+    // that vector is the source of the heading snapping back to a fixed direction.
+    // A small hysteresis keeps the choice stable near the transition.
     DisposableEffect(Unit) {
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
@@ -279,6 +280,7 @@ fun WorldScreen(navController: NavController) {
         // Local filter state — do not read Compose state from the sensor thread.
         var smoothedHeading = 0f
         var hasSample = false
+        var usesTopEdge = true
 
         val listener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {
@@ -288,20 +290,25 @@ fun WorldScreen(navController: NavController) {
                 // Device Y in world (East, North, Up) = (R[1], R[4], R[7])
                 val yEast = rotationMatrix[1]
                 val yNorth = rotationMatrix[4]
-                val yHoriz = sqrt(yEast * yEast + yNorth * yNorth)
+                val yHorizSquared = yEast * yEast + yNorth * yNorth
 
                 // Device Z in world = (R[2], R[5], R[8]); use -Z when upright so
                 // "forward" is the direction the back of the phone faces (away from user).
                 val zEast = -rotationMatrix[2]
                 val zNorth = -rotationMatrix[5]
-                val zHoriz = sqrt(zEast * zEast + zNorth * zNorth)
+                val zHorizSquared = zEast * zEast + zNorth * zNorth
 
-                // Continuous weight: 1 = fully top-of-phone, 0 = fully through-screen.
-                val denom = yHoriz + zHoriz
-                val weightY = if (denom > 1e-5f) (yHoriz / denom) else 1f
-
-                val east = yEast * weightY + zEast * (1f - weightY)
-                val north = yNorth * weightY + zNorth * (1f - weightY)
+                // Change source only after a meaningful advantage. At least one of
+                // these orthogonal device axes always has a strong horizontal
+                // projection, so the selected heading cannot collapse to zero.
+                val hysteresis = 0.08f
+                usesTopEdge = when {
+                    usesTopEdge && zHorizSquared > yHorizSquared + hysteresis -> false
+                    !usesTopEdge && yHorizSquared > zHorizSquared + hysteresis -> true
+                    else -> usesTopEdge
+                }
+                val east = if (usesTopEdge) yEast else zEast
+                val north = if (usesTopEdge) yNorth else zNorth
 
                 // atan2(east, north): 0° = magnetic north, 90° = east, CW-positive
                 // matching SensorManager.getOrientation azimuth convention.
