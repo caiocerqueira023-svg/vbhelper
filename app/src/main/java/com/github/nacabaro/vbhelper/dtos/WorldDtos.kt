@@ -20,7 +20,8 @@ object WorldDtos {
         val spriteHeight: Int,
         val speciesName: String?,
         val mood: Int,
-        val recruitmentState: RecruitmentState
+        val recruitmentState: RecruitmentState,
+        val isFollowing: Boolean = false
     ) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -29,6 +30,7 @@ object WorldDtos {
                 individualId == other.individualId &&
                 mood == other.mood &&
                 recruitmentState == other.recruitmentState &&
+                isFollowing == other.isFollowing &&
                 spriteIdle.contentEquals(other.spriteIdle) &&
                 spriteIdle2.contentEquals(other.spriteIdle2)
         }
@@ -38,6 +40,7 @@ object WorldDtos {
             result = 31 * result + individualId.hashCode()
             result = 31 * result + mood
             result = 31 * result + recruitmentState.hashCode()
+            result = 31 * result + isFollowing.hashCode()
             result = 31 * result + spriteIdle.contentHashCode()
             result = 31 * result + spriteIdle2.contentHashCode()
             return result

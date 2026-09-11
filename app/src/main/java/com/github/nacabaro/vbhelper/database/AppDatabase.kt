@@ -54,7 +54,7 @@ import com.github.nacabaro.vbhelper.domain.lorebook.LorebookEntry
 import com.github.nacabaro.vbhelper.domain.world.WorldSpawn
 
 @Database(
-    version = 13,
+    version = 14,
     exportSchema = false,
     entities = [
         Card::class,
@@ -122,6 +122,15 @@ abstract class AppDatabase : RoomDatabase() {
          * creation was made atomic. Such characters can have UserCharacter/VBCharacterData
          * but no TransformationHistory and/or no SpecialMissions rows.
          */
+
+        val MIGRATION_13_14 = object : Migration(13, 14) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE `WorldSpawn` ADD COLUMN `isFollowing` INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE `WorldSpawn` ADD COLUMN `followLastLat` REAL DEFAULT NULL")
+                db.execSQL("ALTER TABLE `WorldSpawn` ADD COLUMN `followLastLon` REAL DEFAULT NULL")
+            }
+        }
+
         val MIGRATION_12_13 = object : Migration(12, 13) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(

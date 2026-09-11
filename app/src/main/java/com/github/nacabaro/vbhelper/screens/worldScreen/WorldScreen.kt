@@ -184,6 +184,27 @@ fun WorldScreen(navController: NavController) {
                         location = newLocation
                         status = context.getString(R.string.ui_world_radar_active)
 
+                        // Keep follow system and chat start-following in sync with GPS.
+                        app.container.worldRepository.updateLastKnownLocation(
+                            newLocation.latitude,
+                            newLocation.longitude
+                        )
+                        scope.launch {
+                            val stopped = withContext(Dispatchers.IO) {
+                                app.container.worldRepository.processFollowMovement(
+                                    newLocation.latitude,
+                                    newLocation.longitude
+                                )
+                            }
+                            if (stopped.isNotEmpty()) {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.ui_world_stopped_following_toast),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+
                         val shouldRefreshSpawns = lastSpawnRefresh == null ||
                             lastSpawnRefresh!!.distanceTo(newLocation) >= 60f
 
@@ -224,6 +245,10 @@ fun WorldScreen(navController: NavController) {
                         }
                     }
                     location = cachedLocation
+                    app.container.worldRepository.updateLastKnownLocation(
+                        cachedLocation.latitude,
+                        cachedLocation.longitude
+                    )
                 }
             }
 
@@ -523,6 +548,11 @@ fun WorldScreen(navController: NavController) {
                                         )
                                     }
                                     .size(markerSizeDp)
+                                    .then(
+                                        if (spawn.isFollowing) {
+                                            Modifier.border(2.dp, Color(0xFF4FC3F7), CircleShape)
+                                        } else Modifier
+                                    )
                                     .clickable {
                                         if (withinRange) {
                                             navController.navigate(

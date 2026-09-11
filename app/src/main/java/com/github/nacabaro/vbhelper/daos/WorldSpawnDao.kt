@@ -54,6 +54,7 @@ interface WorldSpawnDao {
             ws.interacted AS interacted,
             ws.mood AS mood,
             ws.recruitmentState AS recruitmentState,
+            ws.isFollowing AS isFollowing,
             cc.charaIndex AS charaIndex,
             cc.cardId AS cardId,
             s.spriteIdle1 AS spriteIdle,
@@ -84,6 +85,7 @@ interface WorldSpawnDao {
             ws.interacted AS interacted,
             ws.mood AS mood,
             ws.recruitmentState AS recruitmentState,
+            ws.isFollowing AS isFollowing,
             cc.charaIndex AS charaIndex,
             cc.cardId AS cardId,
             s.spriteIdle1 AS spriteIdle,
@@ -114,6 +116,7 @@ interface WorldSpawnDao {
             ws.interacted AS interacted,
             ws.mood AS mood,
             ws.recruitmentState AS recruitmentState,
+            ws.isFollowing AS isFollowing,
             cc.charaIndex AS charaIndex,
             cc.cardId AS cardId,
             s.spriteIdle1 AS spriteIdle,
@@ -129,4 +132,59 @@ interface WorldSpawnDao {
         """
     )
     suspend fun getSpawnById(spawnId: Long): WorldDtos.SpawnWithDetails?
+
+    @Query(
+        """
+        SELECT * FROM WorldSpawn
+        WHERE isFollowing = 1
+          AND recruitmentState = 'WILD'
+          AND expiresAt > :now
+        """
+    )
+    suspend fun getFollowingSpawns(now: Long): List<WorldSpawn>
+
+    @Query(
+        """
+        UPDATE WorldSpawn SET
+            isFollowing = :isFollowing,
+            followLastLat = :followLastLat,
+            followLastLon = :followLastLon,
+            expiresAt = :expiresAt
+        WHERE individualId = :individualId
+        """
+    )
+    suspend fun updateFollowingState(
+        individualId: String,
+        isFollowing: Boolean,
+        followLastLat: Double?,
+        followLastLon: Double?,
+        expiresAt: Long
+    )
+
+    @Query(
+        """
+        UPDATE WorldSpawn SET
+            latitude = :latitude,
+            longitude = :longitude,
+            mood = :mood,
+            isFollowing = :isFollowing,
+            followLastLat = :followLastLat,
+            followLastLon = :followLastLon,
+            expiresAt = :expiresAt
+        WHERE id = :id
+        """
+    )
+    suspend fun updateFollowProgress(
+        id: Long,
+        latitude: Double,
+        longitude: Double,
+        mood: Int,
+        isFollowing: Boolean,
+        followLastLat: Double?,
+        followLastLon: Double?,
+        expiresAt: Long
+    )
+
+    @Query("SELECT isFollowing FROM WorldSpawn WHERE individualId = :individualId LIMIT 1")
+    fun observeIsFollowing(individualId: String): Flow<Boolean?>
 }

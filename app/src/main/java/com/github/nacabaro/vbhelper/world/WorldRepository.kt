@@ -18,12 +18,26 @@ import com.github.nacabaro.vbhelper.utils.DeviceType
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlin.math.cos
+import kotlin.math.floor
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
 
 class WorldRepository(private val db: AppDatabase) {
     private val spawnDao: WorldSpawnDao = db.worldSpawnDao()
+
+    /** Last GPS fix observed by the world screen; used when starting follow from chat. */
+    @Volatile
+    var lastKnownLatitude: Double? = null
+        private set
+    @Volatile
+    var lastKnownLongitude: Double? = null
+        private set
+
+    fun updateLastKnownLocation(latitude: Double, longitude: Double) {
+        lastKnownLatitude = latitude
+        lastKnownLongitude = longitude
+    }
 
     companion object {
         private const val NEARBY_RADIUS_METERS = 350.0
@@ -111,7 +125,140 @@ class WorldRepository(private val db: AppDatabase) {
         val scaledDelta = WildMoodAnalyzer.scaleDelta(rawDelta)
         val newMood = (spawn.mood + scaledDelta).coerceIn(0, 100)
         spawnDao.updateMood(individualId, newMood)
+        // If mood fell below the follow threshold while following, stop immediately.
+        if (spawn.isFollowing && newMood < WorldSpawn.FOLLOW_STOP_MOOD) {
+            stopFollowing(individualId)
+        }
         return newMood
+    }
+
+    /**
+     * Starts temporary following after the first chat message raised the mood.
+     * The Digimon will track the player so conversation can continue while walking.
+     * Mood decays ~[WorldSpawn.FOLLOW_MOOD_LOSS_PER_SEGMENT] points every
+     * ~[WorldSpawn.FOLLOW_SEGMENT_METERS] meters moved; following ends below
+     * [WorldSpawn.FOLLOW_STOP_MOOD].
+     */
+    suspend fun startFollowing(
+        individualId: String,
+        playerLatitude: Double,
+        playerLongitude: Double
+    ): Boolean {
+        val spawn = spawnDao.getByIndividualId(individualId) ?: return false
+        if (spawn.recruitmentState != RecruitmentState.WILD) return false
+        if (spawn.isFollowing) return true
+        if (spawn.mood < WorldSpawn.FOLLOW_STOP_MOOD) return false
+
+        val now = System.currentTimeMillis()
+        // Keep the spawn alive while following (30 more minutes from now).
+        val newExpires = maxOf(spawn.expiresAt, now + 30 * 60 * 1000L)
+        spawnDao.updateFollowingState(
+            individualId = individualId,
+            isFollowing = true,
+            followLastLat = playerLatitude,
+            followLastLon = playerLongitude,
+            expiresAt = newExpires
+        )
+        return true
+    }
+
+    suspend fun stopFollowing(individualId: String) {
+        val spawn = spawnDao.getByIndividualId(individualId) ?: return
+        if (!spawn.isFollowing) return
+        spawnDao.updateFollowingState(
+            individualId = individualId,
+            isFollowing = false,
+            followLastLat = null,
+            followLastLon = null,
+            expiresAt = spawn.expiresAt
+        )
+    }
+
+    fun observeIsFollowing(individualId: String): Flow<Boolean?> =
+        spawnDao.observeIsFollowing(individualId)
+
+    /**
+     * Called on every meaningful GPS update while the world screen is open.
+     * For each Digimon currently following the player:
+     *  - measures meters walked since the last deduction point
+     *  - deducts mood in segments of [WorldSpawn.FOLLOW_SEGMENT_METERS]
+     *  - relocates the Digimon near the player so it stays in interaction range
+     *  - stops following if mood falls below [WorldSpawn.FOLLOW_STOP_MOOD]
+     *
+     * @return list of individualIds that stopped following on this tick (for UI toasts)
+     */
+    suspend fun processFollowMovement(
+        playerLatitude: Double,
+        playerLongitude: Double
+    ): List<String> {
+        val now = System.currentTimeMillis()
+        val following = spawnDao.getFollowingSpawns(now)
+        if (following.isEmpty()) return emptyList()
+
+        val stopped = mutableListOf<String>()
+        for (spawn in following) {
+            val lastLat = spawn.followLastLat ?: playerLatitude
+            val lastLon = spawn.followLastLon ?: playerLongitude
+            val walked = distanceMeters(lastLat, lastLon, playerLatitude, playerLongitude)
+
+            // How many full 2 m segments were walked since last checkpoint
+            val segments = floor(walked / WorldSpawn.FOLLOW_SEGMENT_METERS).toInt()
+            var newMood = spawn.mood
+            var stillFollowing = true
+            var newLastLat = lastLat
+            var newLastLon = lastLon
+
+            if (segments > 0) {
+                val moodLoss = segments * WorldSpawn.FOLLOW_MOOD_LOSS_PER_SEGMENT
+                newMood = (spawn.mood - moodLoss).coerceIn(0, 100)
+                // Advance the checkpoint by the exact segments consumed so residual meters carry over.
+                val consumedMeters = segments * WorldSpawn.FOLLOW_SEGMENT_METERS
+                val fraction = (consumedMeters / walked).coerceIn(0.0, 1.0)
+                newLastLat = lastLat + (playerLatitude - lastLat) * fraction
+                newLastLon = lastLon + (playerLongitude - lastLon) * fraction
+
+                if (newMood < WorldSpawn.FOLLOW_STOP_MOOD) {
+                    stillFollowing = false
+                    stopped.add(spawn.individualId)
+                }
+            }
+
+            // Keep the Digimon near the player with a stable offset derived from its id
+            // so the radar marker does not jitter on every GPS tick.
+            val digimonLat: Double
+            val digimonLon: Double
+            if (stillFollowing) {
+                val seed = spawn.id * 31L + 17L
+                val offsetDistance = 6.0 + (seed % 5) // 6–10 m
+                val bearing = ((seed % 360) / 360.0) * Math.PI * 2
+                val latOffset = offsetDistance * cos(bearing) / 111_320.0
+                val lonOffset = offsetDistance * sin(bearing) /
+                    (111_320.0 * cos(Math.toRadians(playerLatitude)).coerceAtLeast(0.1))
+                digimonLat = playerLatitude + latOffset
+                digimonLon = playerLongitude + lonOffset
+            } else {
+                digimonLat = spawn.latitude
+                digimonLon = spawn.longitude
+            }
+
+            val newExpires = if (stillFollowing) {
+                maxOf(spawn.expiresAt, now + 30 * 60 * 1000L)
+            } else {
+                spawn.expiresAt
+            }
+
+            spawnDao.updateFollowProgress(
+                id = spawn.id,
+                latitude = digimonLat,
+                longitude = digimonLon,
+                mood = newMood,
+                isFollowing = stillFollowing,
+                followLastLat = if (stillFollowing) newLastLat else null,
+                followLastLon = if (stillFollowing) newLastLon else null,
+                expiresAt = newExpires
+            )
+        }
+        return stopped
     }
 
     suspend fun meetsRecruitmentRequirements(): Boolean {
