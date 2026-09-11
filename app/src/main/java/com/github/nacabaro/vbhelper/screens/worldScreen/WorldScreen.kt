@@ -89,7 +89,8 @@ import kotlin.math.sqrt
 /** Radius, in meters, within which the player can tap a Digimon to chat. */
 private const val INTERACTION_RANGE_METERS = 40.0
 private const val GRID_SIZE_METERS = 20.0
-private const val COMPASS_SMOOTHING = 0.35f // quanto maior, mais rápido (0..1)
+/** Low-pass factor for heading (0..1). Higher = snappier, lower = smoother. */
+private const val COMPASS_SMOOTHING = 0.28f
 
 @Composable
 fun WorldScreen(navController: NavController) {
@@ -263,40 +264,58 @@ fun WorldScreen(navController: NavController) {
         }
     }
 
-    // TYPE_ROTATION_VECTOR combina o giroscópio com os demais sensores de orientação
-    // para obter um azimute estável em relação ao norte magnético. O filtro passa-baixa
-    // é aplicado aqui, diretamente no listener, para a agulha responder de forma suave
-    // sem reiniciar a animação a cada leitura do sensor.
-    // Lógica da versão anterior: azimute tilt-compensado calculado diretamente da matriz
-    // de rotação (eixo Y quando deitado, eixo Z + 180° quando em pé), sem getOrientation
-    // (que sofre gimbal lock com o aparelho em pé).
+    // TYPE_ROTATION_VECTOR (gyro + accel + magnetometer fusion) → rotation matrix.
+    // Azimuth is the horizontal direction the "forward" axis points:
+    //  - phone flatter → device +Y (top edge)
+    //  - phone more upright → device -Z (through the screen, away from the user)
+    // The two axes are *soft-blended* by their horizontal magnitude so there is no
+    // hard mode switch (which caused the compass to lock onto fixed cardinals when
+    // tilting near the old threshold). A low-pass on the shortest angular path
+    // keeps the map smooth without fighting the sensor.
     DisposableEffect(Unit) {
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
         val rotationMatrix = FloatArray(9)
-        // Memória do filtro local ao effect — evita ler estado Compose atrasado no listener
+        // Local filter state — do not read Compose state from the sensor thread.
         var smoothedHeading = 0f
+        var hasSample = false
 
         val listener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {
+                // event.values can be 3–5 floats; getRotationMatrixFromVector accepts both.
                 SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
-                // Azimute tilt-compensado calculado diretamente da matriz de rotação.
-                // Usa o eixo Y (topo do aparelho) quando o aparelho está mais deitado,
-                // e o eixo Z (tela) com offset de 180° quando está mais em pé.
-                val horizY = rotationMatrix[1] * rotationMatrix[1] + rotationMatrix[4] * rotationMatrix[4]
-                val horizZ = rotationMatrix[2] * rotationMatrix[2] + rotationMatrix[5] * rotationMatrix[5]
-                val degrees = if (horizY >= horizZ) {
-                    ((Math.toDegrees(Math.atan2(
-                        rotationMatrix[1].toDouble(), rotationMatrix[4].toDouble()
-                    )).toFloat()) + 360f) % 360f
+
+                // Device Y in world (East, North, Up) = (R[1], R[4], R[7])
+                val yEast = rotationMatrix[1]
+                val yNorth = rotationMatrix[4]
+                val yHoriz = sqrt(yEast * yEast + yNorth * yNorth)
+
+                // Device Z in world = (R[2], R[5], R[8]); use -Z when upright so
+                // "forward" is the direction the back of the phone faces (away from user).
+                val zEast = -rotationMatrix[2]
+                val zNorth = -rotationMatrix[5]
+                val zHoriz = sqrt(zEast * zEast + zNorth * zNorth)
+
+                // Continuous weight: 1 = fully top-of-phone, 0 = fully through-screen.
+                val denom = yHoriz + zHoriz
+                val weightY = if (denom > 1e-5f) (yHoriz / denom) else 1f
+
+                val east = yEast * weightY + zEast * (1f - weightY)
+                val north = yNorth * weightY + zNorth * (1f - weightY)
+
+                // atan2(east, north): 0° = magnetic north, 90° = east, CW-positive
+                // matching SensorManager.getOrientation azimuth convention.
+                var degrees = Math.toDegrees(kotlin.math.atan2(east.toDouble(), north.toDouble())).toFloat()
+                degrees = (degrees + 360f) % 360f
+
+                if (!hasSample) {
+                    smoothedHeading = degrees
+                    hasSample = true
                 } else {
-                    ((Math.toDegrees(Math.atan2(
-                        rotationMatrix[2].toDouble(), rotationMatrix[5].toDouble()
-                    )).toFloat()) + 180f + 360f) % 360f
+                    // Shortest-path low-pass so 359° → 1° does not spin the long way.
+                    val delta = ((degrees - smoothedHeading + 540f) % 360f) - 180f
+                    smoothedHeading = (smoothedHeading + delta * COMPASS_SMOOTHING + 360f) % 360f
                 }
-                // menor caminho angular, para não "girar pelo lado errado" ao cruzar 0/360
-                val delta = ((degrees - smoothedHeading + 540f) % 360f) - 180f
-                smoothedHeading = (smoothedHeading + delta * COMPASS_SMOOTHING + 360f) % 360f
                 heading = smoothedHeading
             }
 
