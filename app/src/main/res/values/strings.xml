@@ -437,9 +437,9 @@
     <string name="ui_world_recruited_toast">Digimon recruited! Check your Storage.</string>
     <string name="ui_world_pending_toast">This Digimon is now waiting in Pending recruits.</string>
     <string name="ui_world_vanished_toast">The wild Digimon vanished.</string>
-    <string name="ui_world_following_label">Following you — trust drops while walking</string>
-    <string name="ui_world_following_title">It's following you!</string>
-    <string name="ui_world_following_toast">This Digimon is following you. Keep talking while you walk — trust falls as you move.</string>
+    <string name="ui_world_following_label">Following you - trust drops while walking</string>
+    <string name="ui_world_following_title">It\'s following you!</string>
+    <string name="ui_world_following_toast">This Digimon is following you. Keep talking while you walk - trust falls as you move.</string>
     <string name="ui_world_stopped_following_toast">A Digimon stopped following you (trust too low).</string>
 
     <string-array name="world_cardinal_directions_8">

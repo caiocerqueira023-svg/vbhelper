@@ -347,7 +347,7 @@
     <string name="ui_world_recruited_toast">デジモンを仲間にしました！ストレージを確認してください。</string>
     <string name="ui_world_pending_toast">このデジモンは仲間候補一覧で待つことになりました。</string>
     <string name="ui_world_vanished_toast">野生のデジモンが去っていきました。</string>
-    <string name="ui_world_following_label">ついてきている — 歩くと信頼が下がります</string>
+    <string name="ui_world_following_label">ついてきている - 歩くと信頼が下がります</string>
     <string name="ui_world_following_title">ついてきた！</string>
     <string name="ui_world_following_toast">このデジモンがついてきます。歩きながら会話を続けられますが、移動すると信頼が下がります。</string>
     <string name="ui_world_stopped_following_toast">デジモンがついてくるのをやめました（信頼が低すぎます）。</string>

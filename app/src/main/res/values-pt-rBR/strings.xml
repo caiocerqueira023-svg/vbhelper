@@ -398,9 +398,9 @@
     <string name="ui_world_recruited_toast">Digimon recrutado! Confira seu Armazenamento.</string>
     <string name="ui_world_pending_toast">Este Digimon agora está esperando em Recrutas pendentes.</string>
     <string name="ui_world_vanished_toast">O Digimon selvagem desapareceu.</string>
-    <string name="ui_world_following_label">Te seguindo — a confiança cai enquanto você anda</string>
+    <string name="ui_world_following_label">Te seguindo - a confiança cai enquanto você anda</string>
     <string name="ui_world_following_title">Está te seguindo!</string>
-    <string name="ui_world_following_toast">Este Digimon está te seguindo. Continue conversando enquanto anda — a confiança cai com o movimento.</string>
+    <string name="ui_world_following_toast">Este Digimon está te seguindo. Continue conversando enquanto anda - a confiança cai com o movimento.</string>
     <string name="ui_world_stopped_following_toast">Um Digimon parou de te seguir (confiança baixa demais).</string>
 
     <string-array name="world_cardinal_directions_8">
