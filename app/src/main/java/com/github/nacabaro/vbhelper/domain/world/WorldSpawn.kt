@@ -60,8 +60,8 @@ data class WorldSpawn(
         /** Mood below this value ends following. */
         const val FOLLOW_STOP_MOOD = 50
         /** Distance (meters) that triggers one mood-loss segment while following. */
-        const val FOLLOW_SEGMENT_METERS = 2.0
+        const val FOLLOW_SEGMENT_METERS = 20
         /** Mood points lost per [FOLLOW_SEGMENT_METERS] walked while following. */
-        const val FOLLOW_MOOD_LOSS_PER_SEGMENT = 3
+        const val FOLLOW_MOOD_LOSS_PER_SEGMENT = 5
     }
 }
