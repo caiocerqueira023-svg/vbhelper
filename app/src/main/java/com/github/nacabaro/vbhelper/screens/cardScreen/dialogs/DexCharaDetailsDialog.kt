@@ -27,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -50,12 +51,14 @@ import com.github.nacabaro.vbhelper.domain.card.OfficialStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
 
 @Composable
 fun DexCharaDetailsDialog(
     currentChara: CharacterDtos.CardCharaProgress,
     obscure: Boolean,
-    onClickClose: () -> Unit
+    onClickClose: () -> Unit,
+    onClickCharacter: (Long) -> Unit
 ) {
     val nameMultiplier = 3
     val charaMultiplier = 4
@@ -72,6 +75,7 @@ fun DexCharaDetailsDialog(
     var showSpeciesPicker by remember { mutableStateOf(false) }
     var allSpeciesNames by remember { mutableStateOf<List<String>>(emptyList()) }
     var isCustomCard by remember { mutableStateOf(false) }
+    var idleFrame by remember { mutableIntStateOf(0) }
     val speciesProfile by database.speciesProfileDao()
         .getByCardCharacterIdFlow(currentChara.id)
         .collectAsState(initial = null)
@@ -83,6 +87,16 @@ fun DexCharaDetailsDialog(
         }
         allSpeciesNames = withContext(Dispatchers.IO) {
             speciesRepository.getAllSpeciesNames()
+        }
+    }
+
+    LaunchedEffect(currentChara.id) {
+        val animationOffset = (currentChara.id and 0x7fff_ffffL) % 750L
+        idleFrame = if (animationOffset > 375L) 1 else 0
+        delay(animationOffset)
+        while (true) {
+            delay(750L)
+            idleFrame = 1 - idleFrame
         }
     }
 
@@ -105,7 +119,7 @@ fun DexCharaDetailsDialog(
     }
 
     val charaBitmapData = BitmapData(
-        bitmap = currentChara.spriteIdle,
+        bitmap = if (idleFrame == 1) currentChara.spriteIdle2 else currentChara.spriteIdle,
         width = currentChara.spriteWidth,
         height = currentChara.spriteHeight
     )
@@ -290,6 +304,7 @@ fun DexCharaDetailsDialog(
                         )
 
                         Card (
+                            onClick = { onClickCharacter(it.charaId) },
                             modifier = Modifier
                                 .padding(vertical = 8.dp)
                         ) {

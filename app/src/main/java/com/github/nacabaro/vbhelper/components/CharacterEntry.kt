@@ -80,6 +80,7 @@ fun CharacterEntry(
     shape: Shape = MaterialTheme.shapes.medium,
     multiplier: Int = 4,
     idleFrame2: BitmapData? = null,
+    animationKey: Any = icon.bitmap.contentHashCode(),
     speechBubbleText: String? = null,
     statusText: String? = null,
     grayscale: Boolean = false,
@@ -90,10 +91,15 @@ fun CharacterEntry(
     onClick: () -> Unit = {  }
 ) {
     var animationFrame by remember { mutableIntStateOf(0) }
+    val animationOffsetMillis = remember(animationKey) {
+        (animationKey.hashCode().toLong() and 0x7fff_ffffL) % 750L
+    }
 
-    LaunchedEffect(icon.bitmap.contentHashCode(), idleFrame2?.bitmap?.contentHashCode()) {
-        animationFrame = 0
+    LaunchedEffect(animationKey, idleFrame2?.bitmap?.contentHashCode()) {
+        // Keep a stable but unique phase for each Digimon, so a grid does not animate in lockstep.
+        animationFrame = if (animationOffsetMillis > 375L) 1 else 0
         if (idleFrame2 != null) {
+            delay(animationOffsetMillis)
             while (true) {
                 delay(750L)
                 animationFrame = 1 - animationFrame

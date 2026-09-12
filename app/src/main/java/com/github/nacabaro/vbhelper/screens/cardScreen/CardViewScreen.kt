@@ -77,6 +77,7 @@ fun CardViewScreen(
                             height = it.spriteHeight,
                         )
                     },
+                    animationKey = character.id,
                     grayscale = character.discoveredOn == null,
                 )
             }
@@ -88,6 +89,9 @@ fun CardViewScreen(
                 obscure = false,
                 onClickClose = {
                     selectedCharacter.value = null
+                },
+                onClickCharacter = { characterId ->
+                    selectedCharacter.value = characterList.firstOrNull { it.id == characterId }
                 }
             )
         }

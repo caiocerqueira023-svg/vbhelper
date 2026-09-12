@@ -97,6 +97,12 @@ fun StorageScreen(
                             width = index.spriteWidth,
                             height = index.spriteHeight
                         ),
+                        idleFrame2 = BitmapData(
+                            bitmap = index.spriteIdle2,
+                            width = index.spriteWidth,
+                            height = index.spriteHeight
+                        ),
+                        animationKey = index.id,
                         onClick = {
                             if (!index.isInAdventure) {
                                 selectedCharacter = index.id

@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -42,6 +43,7 @@ import com.github.nacabaro.vbhelper.utils.getBitmap
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.delay
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
@@ -76,6 +78,7 @@ fun StorageDialog(
     var speciesProfile by remember { mutableStateOf<com.github.nacabaro.vbhelper.domain.species.SpeciesProfile?>(null) }
     var personality by remember { mutableStateOf<DigimonPersonalityTraits?>(null) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var idleFrame by remember { mutableIntStateOf(0) }
     val speciesRepository = remember {
         SpeciesRepository(application.container.db, application.container.speciesSettingsRepository)
     }
@@ -112,6 +115,18 @@ fun StorageDialog(
         )
     }
 
+    LaunchedEffect(character.value?.id) {
+        val animationOffset = ((character.value?.id ?: 0L) and 0x7fff_ffffL) % 750L
+        idleFrame = if (animationOffset > 375L) 1 else 0
+        if (character.value != null) {
+            delay(animationOffset)
+            while (true) {
+                delay(750L)
+                idleFrame = 1 - idleFrame
+            }
+        }
+    }
+
     Dialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(
@@ -129,10 +144,19 @@ fun StorageDialog(
                 if (character.value != null) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (characterSprite.value != null && characterName.value != null) {
-                        val bitmap = remember (characterSprite.value!!) { characterSprite.value!!.getBitmap() }
+                        val displayedSprite = if (idleFrame == 1) {
+                            BitmapData(
+                                bitmap = character.value!!.spriteIdle2,
+                                width = character.value!!.spriteWidth,
+                                height = character.value!!.spriteHeight
+                            )
+                        } else {
+                            characterSprite.value!!
+                        }
+                        val bitmap = remember(displayedSprite) { displayedSprite.getBitmap() }
                         val imageBitmap = remember(bitmap) { bitmap.asImageBitmap() }
                         val density: Float = LocalContext.current.resources.displayMetrics.density
-                        val dpSize = (characterSprite.value!!.width * 4 / density).dp
+                        val dpSize = (displayedSprite.width * 4 / density).dp
                         Image(
                             bitmap = imageBitmap,
                             contentDescription = stringResource(R.string.storage_character_image_description),

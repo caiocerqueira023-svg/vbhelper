@@ -42,7 +42,7 @@ sealed class NavigationItems(
 
     object Storage : NavigationItems(
         "Storage",
-        R.drawable.baseline_catching_pokemon_24,
+        R.drawable.baseline_chest_24,
         R.string.nav_storage
     )
 
