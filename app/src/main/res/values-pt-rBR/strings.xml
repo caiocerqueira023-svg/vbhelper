@@ -388,6 +388,15 @@
     <string name="ui_world_tracking_failed">Não foi possível iniciar o rastreamento da localização.</string>
     <string name="ui_world_direction">Direção: %1$s (%2$d°)</string>
     <string name="ui_world_nearby_count">%1$d Digimon próximos</string>
+    <string name="ui_world_biome_label">BIOMA: %1$s</string>
+    <string name="ui_world_biome_urban">Urbano</string>
+    <string name="ui_world_biome_park">Parque</string>
+    <string name="ui_world_biome_water">Água</string>
+    <string name="ui_world_biome_rural">Rural</string>
+    <string name="ui_world_biome_industrial">Industrial</string>
+    <string name="ui_world_biome_entertainment">Entretenimento</string>
+    <string name="ui_world_biome_grassland">Campo</string>
+    <string name="ui_world_biome_null">Nulo</string>
     <string name="ui_world_tap_instruction">Toque em um Digimon dentro do círculo azul para conversar.</string>
     <string name="ui_world_grid_instruction">Cada quadrado da grade representa aproximadamente 60 m.</string>
     <string name="ui_world_zoom_instruction">Use dois dedos em movimento de pinça sobre o mapa para controlar o zoom.</string>
@@ -414,6 +423,10 @@
     <string name="ui_world_following_title">Está te seguindo!</string>
     <string name="ui_world_following_toast">Este Digimon está te seguindo. Continue conversando enquanto anda - a confiança cai com o movimento.</string>
     <string name="ui_world_stopped_following_toast">Um Digimon parou de te seguir (confiança baixa demais).</string>
+    <string name="ui_world_spawn_dims_title">DiMs dos spawns do Mundo</string>
+    <string name="ui_world_spawn_dims_empty">Nenhum DiM foi carregado.</string>
+    <string name="ui_world_spawn_dims_enabled">Ativado</string>
+    <string name="ui_world_spawn_dims_disabled">Desativado</string>
 
     <string-array name="world_cardinal_directions_8">
         <item>N</item><item>NE</item><item>L</item><item>SE</item>

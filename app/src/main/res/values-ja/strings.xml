@@ -337,6 +337,15 @@
     <string name="ui_world_tracking_failed">位置情報の追跡を開始できませんでした。</string>
     <string name="ui_world_direction">方角: %1$s (%2$d°)</string>
     <string name="ui_world_nearby_count">近くのデジモン %1$d体</string>
+    <string name="ui_world_biome_label">バイオーム: %1$s</string>
+    <string name="ui_world_biome_urban">都市</string>
+    <string name="ui_world_biome_park">公園</string>
+    <string name="ui_world_biome_water">水辺</string>
+    <string name="ui_world_biome_rural">農村</string>
+    <string name="ui_world_biome_industrial">工業地帯</string>
+    <string name="ui_world_biome_entertainment">娯楽施設</string>
+    <string name="ui_world_biome_grassland">草原</string>
+    <string name="ui_world_biome_null">なし</string>
     <string name="ui_world_tap_instruction">青い円の中のデジモンをタップして話しましょう。</string>
     <string name="ui_world_grid_instruction">グリッドの1マスは約60mです。</string>
     <string name="ui_world_zoom_instruction">地図上で2本指のピンチ操作でズームできます。</string>
@@ -363,6 +372,10 @@
     <string name="ui_world_following_title">ついてきた！</string>
     <string name="ui_world_following_toast">このデジモンがついてきます。歩きながら会話を続けられますが、移動すると信頼が下がります。</string>
     <string name="ui_world_stopped_following_toast">デジモンがついてくるのをやめました（信頼が低すぎます）。</string>
+    <string name="ui_world_spawn_dims_title">ワールド出現DiM</string>
+    <string name="ui_world_spawn_dims_empty">読み込まれたDiMはありません。</string>
+    <string name="ui_world_spawn_dims_enabled">有効</string>
+    <string name="ui_world_spawn_dims_disabled">無効</string>
 
     <string-array name="world_cardinal_directions_8">
         <item>北</item><item>北東</item><item>東</item><item>南東</item>

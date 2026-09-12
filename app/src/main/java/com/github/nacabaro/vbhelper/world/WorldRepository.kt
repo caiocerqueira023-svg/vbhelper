@@ -16,6 +16,8 @@ import com.github.nacabaro.vbhelper.dtos.WorldDtos
 import com.github.nacabaro.vbhelper.domain.identity.IndividualIdentity
 import com.github.nacabaro.vbhelper.utils.DeviceType
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlin.math.cos
 import kotlin.math.floor
@@ -26,6 +28,8 @@ import kotlin.random.Random
 class WorldRepository(private val db: AppDatabase) {
     private val spawnDao: WorldSpawnDao = db.worldSpawnDao()
     private val biomeDetector = OpenStreetMapBiomeDetector()
+    private val _currentBiome = MutableStateFlow(WorldBiome.NULL)
+    val currentBiome = _currentBiome.asStateFlow()
 
     /** Last GPS fix observed by the world screen; used when starting follow from chat. */
     @Volatile
@@ -66,6 +70,8 @@ class WorldRepository(private val db: AppDatabase) {
     suspend fun ensureSpawns(latitude: Double, longitude: Double) {
         val now = System.currentTimeMillis()
         spawnDao.deleteExpired(now)
+        val biome = biomeDetector.biomeAt(latitude, longitude)
+        _currentBiome.value = biome
 
         if (spawnDao.countActive(now) >= GLOBAL_ACTIVE_CAP) return
 
@@ -88,9 +94,8 @@ class WorldRepository(private val db: AppDatabase) {
             .coerceAtMost(GLOBAL_ACTIVE_CAP - activeSpawns.size)
         if (toSpawn <= 0) return
 
-        val loadedCharacters = db.characterDao().getAllCharacters()
+        val loadedCharacters = db.characterDao().getCharactersForWorldSpawns()
         if (loadedCharacters.isEmpty()) return
-        val biome = biomeDetector.biomeAt(latitude, longitude)
         val speciesNames = db.speciesProfileDao().getAll().associate { profile ->
             profile.cardCharacterId to (profile.matchedName ?: profile.speciesName)
         }

@@ -11,6 +11,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +24,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -30,10 +32,13 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -47,6 +52,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Color
@@ -61,6 +67,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
@@ -69,9 +77,11 @@ import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.dtos.WorldDtos
+import com.github.nacabaro.vbhelper.domain.card.Card
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
 import com.github.nacabaro.vbhelper.screens.cardScreen.dialogs.DexCharaDetailsDialog
 import com.github.nacabaro.vbhelper.source.DexRepository
+import com.github.nacabaro.vbhelper.world.WorldBiome
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import com.github.nacabaro.vbhelper.utils.BitmapData
@@ -87,6 +97,8 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.first
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -115,10 +127,14 @@ fun WorldScreen(navController: NavController) {
     val spawns by app.container.worldRepository.observeSpawns().collectAsState(initial = emptyList())
     val pendingRecruits by app.container.worldRepository.observePendingRecruits()
         .collectAsState(initial = emptyList())
+    val worldSpawnCards by app.container.db.cardDao().observeCardsForWorldSpawns()
+        .collectAsState(initial = emptyList())
+    val currentBiome by app.container.worldRepository.currentBiome.collectAsState()
     val scope = rememberCoroutineScope()
     var zoom by remember { mutableFloatStateOf(2.4f) }
     var idleFrame by remember { mutableIntStateOf(0) }
     var selectedSpecies by remember { mutableStateOf<CharacterDtos.CardCharaProgress?>(null) }
+    var showWorldSpawnSettings by remember { mutableStateOf(false) }
     val radarPulse = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
@@ -298,7 +314,9 @@ fun WorldScreen(navController: NavController) {
         topBar = {
             TopBanner(text = if (compass.heading != null) {
                 "${stringResource(R.string.nav_world)} • ${cardinalDirection(heading)}"
-            } else stringResource(R.string.nav_world))
+            } else stringResource(R.string.nav_world), onGearClick = {
+                showWorldSpawnSettings = true
+            })
         }
     ) { contentPadding ->
         Column(
@@ -495,6 +513,24 @@ fun WorldScreen(navController: NavController) {
                 }
 
                 // O marcador azul permanece centralizado; a grade e os objetos do mundo se movem ao redor dele.
+                androidx.compose.animation.AnimatedVisibility(
+                    visible = currentBiome != WorldBiome.NULL,
+                    enter = fadeIn(animationSpec = tween(durationMillis = 250)),
+                    exit = fadeOut(animationSpec = tween(durationMillis = 250)),
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 8.dp)
+                ) {
+                    Text(
+                        text = stringResource(
+                            R.string.ui_world_biome_label,
+                            currentBiome.displayName()
+                        ),
+                        color = Color.White,
+                        fontSize = 10.sp
+                    )
+                }
+
                 Box(
                     modifier = Modifier
                         .offset {
@@ -656,6 +692,72 @@ fun WorldScreen(navController: NavController) {
             onClickCharacter = { }
         )
     }
+
+    if (showWorldSpawnSettings) {
+        WorldSpawnDimSettingsDialog(
+            cards = worldSpawnCards,
+            onDismiss = { showWorldSpawnSettings = false },
+            onEnabledChange = { card, enabled ->
+                scope.launch(Dispatchers.IO) {
+                    app.container.db.cardDao().setWorldSpawnsEnabled(card.id, enabled)
+                }
+            }
+        )
+    }
+}
+
+@Composable
+private fun WorldSpawnDimSettingsDialog(
+    cards: List<Card>,
+    onDismiss: () -> Unit,
+    onEnabledChange: (Card, Boolean) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.ui_world_spawn_dims_title)) },
+        text = {
+            if (cards.isEmpty()) {
+                Text(stringResource(R.string.ui_world_spawn_dims_empty))
+            } else {
+                LazyColumn(modifier = Modifier.heightIn(max = 360.dp)) {
+                    items(cards, key = { it.id }) { card ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onEnabledChange(card, !card.worldSpawnsEnabled) }
+                                .padding(vertical = 8.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(card.name, style = MaterialTheme.typography.bodyLarge)
+                                Text(
+                                    text = stringResource(
+                                        if (card.worldSpawnsEnabled) {
+                                            R.string.ui_world_spawn_dims_enabled
+                                        } else {
+                                            R.string.ui_world_spawn_dims_disabled
+                                        }
+                                    ),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Switch(
+                                checked = card.worldSpawnsEnabled,
+                                onCheckedChange = { enabled -> onEnabledChange(card, enabled) }
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.ui_close))
+            }
+        }
+    )
 }
 
 @Composable
@@ -667,6 +769,20 @@ private fun cardinalDirection(degrees: Float): String {
 }
 
 private enum class PlayerMotion { IDLE, WALK, RUN }
+
+@Composable
+private fun WorldBiome.displayName(): String = stringResource(
+    when (this) {
+        WorldBiome.URBAN -> R.string.ui_world_biome_urban
+        WorldBiome.PARK -> R.string.ui_world_biome_park
+        WorldBiome.WATER -> R.string.ui_world_biome_water
+        WorldBiome.RURAL -> R.string.ui_world_biome_rural
+        WorldBiome.INDUSTRIAL -> R.string.ui_world_biome_industrial
+        WorldBiome.ENTERTAINMENT -> R.string.ui_world_biome_entertainment
+        WorldBiome.GRASSLAND -> R.string.ui_world_biome_grassland
+        WorldBiome.NULL -> R.string.ui_world_biome_null
+    }
+)
 
 private fun WorldDtos.SpawnWithDetails.frameFor(motion: PlayerMotion, frame: Int): ByteArray = when (motion) {
     PlayerMotion.IDLE -> if (frame == 0) spriteIdle else spriteIdle2

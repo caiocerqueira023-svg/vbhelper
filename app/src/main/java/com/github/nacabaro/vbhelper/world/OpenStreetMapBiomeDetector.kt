@@ -61,6 +61,23 @@ internal class OpenStreetMapBiomeDetector {
             );
             out tags;
         """.trimIndent()
+        val biome = biomeFromResponse(executeQuery(query))
+        if (biome != WorldBiome.NULL) return biome
+
+        // Residential land-use polygons are not consistently mapped in every
+        // neighbourhood, while building footprints are. Use one small,
+        // single-result fallback so homes still classify as Urban without
+        // treating unmapped countryside as urban.
+        val buildingQuery = """
+            [out:json][timeout:8];
+            way(around:$SEARCH_RADIUS_METERS,$latitude,$longitude)["building"];
+            out tags 1;
+        """.trimIndent()
+        val buildings = executeQuery(buildingQuery).optJSONArray("elements")
+        return if (buildings?.length() ?: 0 > 0) WorldBiome.URBAN else WorldBiome.NULL
+    }
+
+    private fun executeQuery(query: String): JSONObject {
         val body = "data=" + URLEncoder.encode(query, Charsets.UTF_8.name())
         val connection = (URL(OVERPASS_ENDPOINT).openConnection() as HttpURLConnection).apply {
             requestMethod = "POST"
@@ -68,14 +85,17 @@ internal class OpenStreetMapBiomeDetector {
             readTimeout = NETWORK_TIMEOUT_MILLIS
             doOutput = true
             setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-            setRequestProperty("User-Agent", "VBHelper World Biome Prototype")
+            setRequestProperty(
+                "User-Agent",
+                "VBHelper/1.0 (+https://github.com/nacabaro/vbhelper)"
+            )
         }
 
         try {
             connection.outputStream.bufferedWriter(Charsets.UTF_8).use { it.write(body) }
             check(connection.responseCode in 200..299) { "Overpass returned ${connection.responseCode}" }
             val response = connection.inputStream.bufferedReader(Charsets.UTF_8).use { it.readText() }
-            return biomeFromResponse(JSONObject(response))
+            return JSONObject(response)
         } finally {
             connection.disconnect()
         }

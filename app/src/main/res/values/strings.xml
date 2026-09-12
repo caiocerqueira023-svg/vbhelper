@@ -241,6 +241,7 @@
     <string name="storage_in_adventure_toast">This character is in an adventure</string>
 
     <string name="storage_character_image_description">Character image</string>
+    <string name="storage_edit_digimon_info">Edit Digimon information</string>
     <string name="storage_send_to_watch">Send to watch</string>
     <string name="storage_send_to_vitalwear">Send to VitalWear</string>
     <string name="storage_set_active">Set active</string>
@@ -346,6 +347,7 @@
     <string name="ui_optional_profile">Profile (optional)</string>
     <string name="ui_skip">Skip</string>
     <string name="ui_chat_placeholder">Talk to your Digimon...</string>
+    <string name="ui_chat_mood_title">Chat • Mood %1$d</string>
     <string name="ui_send">Send</string>
     <string name="ui_official_card">%1$s is an official card?</string>
     <string name="ui_official">Official</string>
@@ -427,6 +429,15 @@
     <string name="ui_world_tracking_failed">Couldn\'t start location tracking.</string>
     <string name="ui_world_direction">Direction: %1$s (%2$d°)</string>
     <string name="ui_world_nearby_count">%1$d nearby Digimon</string>
+    <string name="ui_world_biome_label">BIOME: %1$s</string>
+    <string name="ui_world_biome_urban">Urban</string>
+    <string name="ui_world_biome_park">Park</string>
+    <string name="ui_world_biome_water">Water</string>
+    <string name="ui_world_biome_rural">Rural</string>
+    <string name="ui_world_biome_industrial">Industrial</string>
+    <string name="ui_world_biome_entertainment">Entertainment</string>
+    <string name="ui_world_biome_grassland">Grassland</string>
+    <string name="ui_world_biome_null">Null</string>
     <string name="ui_world_tap_instruction">Tap a Digimon inside the blue circle to talk.</string>
     <string name="ui_world_grid_instruction">Each grid square represents about 60 m.</string>
     <string name="ui_world_zoom_instruction">Use a two-finger pinch on the map to zoom.</string>
@@ -453,6 +464,10 @@
     <string name="ui_world_following_title">It\'s following you!</string>
     <string name="ui_world_following_toast">This Digimon is following you. Keep talking while you walk - trust falls as you move.</string>
     <string name="ui_world_stopped_following_toast">A Digimon stopped following you (trust too low).</string>
+    <string name="ui_world_spawn_dims_title">World spawn DiMs</string>
+    <string name="ui_world_spawn_dims_empty">No DiMs are loaded.</string>
+    <string name="ui_world_spawn_dims_enabled">Enabled</string>
+    <string name="ui_world_spawn_dims_disabled">Disabled</string>
 
     <string-array name="world_cardinal_directions_8">
         <item>N</item><item>NE</item><item>E</item><item>SE</item>
