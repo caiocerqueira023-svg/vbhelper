@@ -16,7 +16,8 @@ class CardImportController(
     private val database: AppDatabase
 ) {
     suspend fun importCard(
-        fileReader: InputStream?
+        fileReader: InputStream?,
+        sourceFileName: String? = null,
     ) {
         val dimReader = DimReader()
         val card = dimReader.readCard(fileReader, false)
@@ -24,7 +25,7 @@ class CardImportController(
         val cardModel = Card(
             cardId = card.header.dimId,
             logo = card.spriteData.sprites[0].pixelData,
-            name = card.spriteData.text,
+            name = nameFromSourceFile(sourceFileName, card.spriteData.text),
             stageCount = card.adventureLevels.levels.size,
             logoHeight = card.spriteData.sprites[0].height,
             logoWidth = card.spriteData.sprites[0].width,
@@ -44,6 +45,16 @@ class CardImportController(
         importAdventureMissions(cardId, card)
 
         importCardFusions(cardId, card)
+    }
+
+    private fun nameFromSourceFile(sourceFileName: String?, fallbackName: String): String {
+        val fileName = sourceFileName?.trim().orEmpty()
+        if (fileName.isBlank()) return fallbackName
+
+        return fileName
+            .substringBeforeLast('.', missingDelimiterValue = fileName)
+            .trim()
+            .ifBlank { fallbackName }
     }
 
     private fun updateCardProgress(

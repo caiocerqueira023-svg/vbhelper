@@ -3,6 +3,7 @@ package com.github.nacabaro.vbhelper.screens.settingsScreen
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import android.net.Uri
+import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
@@ -231,10 +232,24 @@ class SettingsScreenControllerImpl(
         context.lifecycleScope.launch(Dispatchers.IO) {
             val contentResolver = context.contentResolver
             val inputStream = contentResolver.openInputStream(uri)
+            val sourceFileName = contentResolver.query(
+                uri,
+                arrayOf(OpenableColumns.DISPLAY_NAME),
+                null,
+                null,
+                null
+            )?.use { cursor ->
+                val displayNameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                if (displayNameIndex >= 0 && cursor.moveToFirst()) {
+                    cursor.getString(displayNameIndex)
+                } else {
+                    null
+                }
+            }
 
             inputStream.use { fileReader ->
                 val cardImportController = CardImportController(database)
-                cardImportController.importCard(fileReader)
+                cardImportController.importCard(fileReader, sourceFileName)
             }
 
             inputStream?.close()

@@ -1,7 +1,6 @@
 package com.github.nacabaro.vbhelper.screens.worldScreen
 
 import android.Manifest
-import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.location.Location
@@ -12,7 +11,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -27,6 +26,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
@@ -34,7 +34,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -61,13 +60,20 @@ import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.di.VBHelper
+import com.github.nacabaro.vbhelper.dtos.CharacterDtos
+import com.github.nacabaro.vbhelper.dtos.WorldDtos
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
+import com.github.nacabaro.vbhelper.screens.cardScreen.dialogs.DexCharaDetailsDialog
+import com.github.nacabaro.vbhelper.source.DexRepository
+import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
+import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.getBitmap
 import com.google.android.gms.location.LocationCallback
@@ -78,15 +84,20 @@ import com.google.android.gms.location.Priority
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.first
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
-import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
 /** Radius, in meters, within which the player can tap a Digimon to chat. */
 private const val INTERACTION_RANGE_METERS = 40.0
-private const val GRID_SIZE_METERS = 20.0
+private const val GRID_SIZE_METERS = 60.0
+private const val RADAR_RING_INTERVAL_METERS = 200
+private const val WALK_SPEED_METERS_PER_SECOND = 0.8f
+private const val RUN_SPEED_METERS_PER_SECOND = 2.2f
 
 @Composable
 fun WorldScreen(navController: NavController) {
@@ -102,10 +113,13 @@ fun WorldScreen(navController: NavController) {
         mutableStateOf(context.getString(R.string.ui_world_grant_location))
     }
     val spawns by app.container.worldRepository.observeSpawns().collectAsState(initial = emptyList())
+    val pendingRecruits by app.container.worldRepository.observePendingRecruits()
+        .collectAsState(initial = emptyList())
     val scope = rememberCoroutineScope()
     var zoom by remember { mutableFloatStateOf(2.4f) }
     var idleFrame by remember { mutableIntStateOf(0) }
-    var toastMessage by remember { mutableStateOf<String?>(null) }
+    var selectedSpecies by remember { mutableStateOf<CharacterDtos.CardCharaProgress?>(null) }
+    val radarPulse = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -114,10 +128,26 @@ fun WorldScreen(navController: NavController) {
         }
     }
 
-    val spawnBitmaps = remember(spawns, idleFrame) {
+    LaunchedEffect(Unit) {
+        while (true) {
+            radarPulse.snapTo(0f)
+            radarPulse.animateTo(1f, animationSpec = tween(durationMillis = 2_600))
+            kotlinx.coroutines.delay(1_400L)
+        }
+    }
+
+    val playerMotion = when {
+        (location?.speed ?: 0f) >= RUN_SPEED_METERS_PER_SECOND -> PlayerMotion.RUN
+        (location?.speed ?: 0f) >= WALK_SPEED_METERS_PER_SECOND -> PlayerMotion.WALK
+        else -> PlayerMotion.IDLE
+    }
+    val spawnBitmaps = remember(spawns, idleFrame, playerMotion) {
         spawns.mapNotNull { spawn ->
             runCatching {
-                val frame = if (idleFrame == 0) spawn.spriteIdle else spawn.spriteIdle2
+                val frame = spawn.frameFor(
+                    motion = if (spawn.isFollowing) playerMotion else PlayerMotion.IDLE,
+                    frame = idleFrame
+                )
                 spawn to BitmapData(
                     bitmap = frame,
                     width = spawn.spriteWidth.coerceAtLeast(1),
@@ -282,6 +312,7 @@ fun WorldScreen(navController: NavController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
+                    .border(2.dp, SurfaceStroke, MaterialTheme.shapes.medium)
                     .clip(MaterialTheme.shapes.medium)
                     .background(Color.Black)
                     .pointerInput(Unit) {
@@ -291,11 +322,15 @@ fun WorldScreen(navController: NavController) {
                     }
             ) {
                 val density = LocalDensity.current
+                val cardinalNames = stringArrayResource(R.array.world_cardinal_directions_8)
                 val boxWidthPx = with(density) { maxWidth.toPx() }
                 val center = Offset(boxWidthPx / 2f, boxWidthPx / 2f)
                 val visibleRadiusMeters = 500.0 / zoom
                 val scale = (boxWidthPx / 2f) / visibleRadiusMeters.toFloat()
                 val interactionRadiusPx = (INTERACTION_RANGE_METERS * scale).toFloat()
+                val distanceRingMeters = (RADAR_RING_INTERVAL_METERS..visibleRadiusMeters.toInt())
+                    .step(RADAR_RING_INTERVAL_METERS)
+                    .toList()
 
                 // O jogador permanece sempre no centro da tela. O mundo é que se desloca
                 // em sentido contrário ao movimento do jogador.
@@ -334,7 +369,7 @@ fun WorldScreen(navController: NavController) {
                         while (x > -diagonal) x -= gridSpacingPx
                         while (x < size.width + diagonal) {
                             drawLine(
-                                Color(0xFF555555),
+                                SurfaceStroke.copy(alpha = 0.72f),
                                 Offset(x, -diagonal),
                                 Offset(x, size.height + diagonal),
                                 strokeWidth = 2f
@@ -346,7 +381,7 @@ fun WorldScreen(navController: NavController) {
                         while (y > -diagonal) y -= gridSpacingPx
                         while (y < size.height + diagonal) {
                             drawLine(
-                                Color(0xFF555555),
+                                SurfaceStroke.copy(alpha = 0.72f),
                                 Offset(-diagonal, y),
                                 Offset(size.width + diagonal, y),
                                 strokeWidth = 2f
@@ -355,12 +390,31 @@ fun WorldScreen(navController: NavController) {
                         }
                     }
 
+                    distanceRingMeters.forEach { meters ->
+                        drawCircle(
+                            color = Color.White.copy(alpha = 0.18f),
+                            radius = meters * scale,
+                            center = playerOffset,
+                            style = Stroke(width = 1.5f)
+                        )
+                    }
+
+                    val pulseRadiusPx = radarPulse.value * visibleRadiusMeters.toFloat() * scale
                     drawCircle(
-                        color = primaryColor.copy(alpha = 0.35f),
-                        radius = interactionRadiusPx,
+                        color = VitalCyan.copy(alpha = 0.65f * (1f - radarPulse.value)),
+                        radius = pulseRadiusPx,
                         center = playerOffset,
-                        style = Stroke(width = 3f)
+                        style = Stroke(width = 2.5f)
                     )
+
+                    if (spawns.none { it.isFollowing }) {
+                        drawCircle(
+                            color = primaryColor.copy(alpha = 0.35f),
+                            radius = interactionRadiusPx,
+                            center = playerOffset,
+                            style = Stroke(width = 3f)
+                        )
+                    }
 
                     // Rosa dos ventos: os quatro pontos cardeais giram ao redor do jogador.
                     // Quando o aparelho aponta para uma direção, o marcador correspondente
@@ -401,8 +455,22 @@ fun WorldScreen(navController: NavController) {
                     }
                 }
 
+                distanceRingMeters.forEach { meters ->
+                    val radiusPx = meters * scale
+                    Text(
+                        text = "$meters m",
+                        color = Color.White.copy(alpha = 0.72f),
+                        fontSize = 10.sp,
+                        modifier = Modifier.offset {
+                            IntOffset(
+                                (center.x + radiusPx + 4.dp.toPx()).toInt(),
+                                (center.y - 9.dp.toPx()).toInt()
+                            )
+                        }
+                    )
+                }
+
                 // Letras cardeais acompanham as setas e giram pela borda do mapa.
-                val cardinalNames = stringArrayResource(R.array.world_cardinal_directions_8)
                 listOf(
                     0f to cardinalNames[0],
                     90f to cardinalNames[2],
@@ -488,22 +556,39 @@ fun WorldScreen(navController: NavController) {
                                     .size(markerSizeDp)
                                     .then(
                                         if (spawn.isFollowing) {
-                                            Modifier.border(2.dp, Color(0xFF4FC3F7), CircleShape)
+                                            Modifier
+                                                .clip(CircleShape)
+                                                .border(3.dp, Color(0xFF4FC3F7), CircleShape)
                                         } else Modifier
                                     )
-                                    .clickable {
-                                        if (withinRange) {
-                                            navController.navigate(
-                                                NavigationItems.WorldChat.route.replace(
-                                                    "{spawnId}",
-                                                    spawn.id.toString()
+                                    .combinedClickable(
+                                        onClick = {
+                                            if (withinRange) {
+                                                navController.navigate(
+                                                    NavigationItems.WorldChat.route.replace(
+                                                        "{spawnId}",
+                                                        spawn.id.toString()
+                                                    )
                                                 )
-                                            )
-                                        } else {
-                                            toastMessage =
-                                                context.getString(R.string.ui_world_too_far)
+                                            } else {
+                                                Toast.makeText(
+                                                    context,
+                                                    context.getString(R.string.ui_world_too_far),
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                        },
+                                        onLongClick = {
+                                            scope.launch {
+                                                selectedSpecies = withContext(Dispatchers.IO) {
+                                                    DexRepository(app.container.db)
+                                                        .getCharactersByCardId(spawn.cardId)
+                                                        .first()
+                                                        .firstOrNull { it.id == spawn.cardCharacterId }
+                                                }
+                                            }
                                         }
-                                    }
+                                    )
                             )
                         }
                     }
@@ -513,25 +598,35 @@ fun WorldScreen(navController: NavController) {
             Spacer(Modifier.height(8.dp))
             Text(
                 stringResource(R.string.ui_world_nearby_count, spawns.size),
-                style = MaterialTheme.typography.titleMedium
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .wrapContentWidth()
             )
 
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(top = 8.dp)
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 8.dp)
             ) {
                 Button(onClick = { zoom = (zoom / 1.5f).coerceAtLeast(.5f) }) { Text("-") }
                 Text(
                     stringResource(R.string.ui_world_zoom_label, (zoom * 100).toInt()),
-                    modifier = Modifier.padding(top = 12.dp)
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
                 )
                 Button(onClick = { zoom = (zoom * 1.5f).coerceAtMost(4f) }) { Text("+") }
             }
-            Button(
-                onClick = { navController.navigate(NavigationItems.WorldRecruits.route) },
-                modifier = Modifier.padding(top = 8.dp)
-            ) {
-                Text(stringResource(R.string.ui_world_recruits_button))
+            if (pendingRecruits.isNotEmpty()) {
+                Button(
+                    onClick = { navController.navigate(NavigationItems.WorldRecruits.route) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentWidth()
+                        .padding(top = 8.dp)
+                ) {
+                    Text(stringResource(R.string.ui_world_recruits_button))
+                }
             }
 
             if (!hasLocationPermission || location == null) {
@@ -544,17 +639,22 @@ fun WorldScreen(navController: NavController) {
                             )
                         )
                     },
-                    modifier = Modifier.padding(top = 8.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentWidth()
+                        .padding(top = 8.dp)
                 ) { Text(stringResource(R.string.ui_world_enable_location)) }
             }
         }
     }
 
-    toastMessage?.let { msg ->
-        LaunchedEffect(msg) {
-            Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-            toastMessage = null
-        }
+    selectedSpecies?.let { species ->
+        DexCharaDetailsDialog(
+            currentChara = species,
+            obscure = false,
+            onClickClose = { selectedSpecies = null },
+            onClickCharacter = { }
+        )
     }
 }
 
@@ -564,4 +664,12 @@ private fun cardinalDirection(degrees: Float): String {
     val normalized = (degrees + 360f) % 360f
     val index = ((normalized + 22.5f) / 45f).toInt() % 8
     return names[index]
+}
+
+private enum class PlayerMotion { IDLE, WALK, RUN }
+
+private fun WorldDtos.SpawnWithDetails.frameFor(motion: PlayerMotion, frame: Int): ByteArray = when (motion) {
+    PlayerMotion.IDLE -> if (frame == 0) spriteIdle else spriteIdle2
+    PlayerMotion.WALK -> if (frame == 0) spriteWalk else spriteWalk2
+    PlayerMotion.RUN -> if (frame == 0) spriteRun else spriteRun2
 }

@@ -62,13 +62,82 @@ class WorldSpawnSelectorTest {
         assertTrue(abs(agumonCount / 30_000.0 - 0.5) < 0.02)
     }
 
-    private fun character(id: Long, cardId: Long, stage: Int = 2, name: ByteArray) = CardCharacter(
+    @Test
+    fun `favored attribute receives thirty percent biome share while normal rolls stay uniform`() {
+        val virus = character(
+            id = 1,
+            cardId = 1,
+            name = byteArrayOf(1),
+            attribute = NfcCharacter.Attribute.Virus
+        )
+        val vaccine = character(
+            id = 2,
+            cardId = 2,
+            name = byteArrayOf(2),
+            attribute = NfcCharacter.Attribute.Vaccine
+        )
+        var virusCount = 0
+
+        repeat(50_000) {
+            if (
+                WorldSpawnSelector.selectCharacter(
+                    characters = listOf(virus, vaccine),
+                    favoredAttribute = NfcCharacter.Attribute.Virus,
+                    random = Random(it)
+                )!!.attribute == NfcCharacter.Attribute.Virus
+            ) {
+                virusCount++
+            }
+        }
+
+        // 30% of rolls choose Virus, and the remaining 70% are 50/50.
+        assertTrue(abs(virusCount / 50_000.0 - 0.65) < 0.02)
+    }
+
+    @Test
+    fun `null biome attribute keeps species selection completely neutral`() {
+        val virus = character(
+            id = 1,
+            cardId = 1,
+            name = byteArrayOf(1),
+            attribute = NfcCharacter.Attribute.Virus
+        )
+        val vaccine = character(
+            id = 2,
+            cardId = 2,
+            name = byteArrayOf(2),
+            attribute = NfcCharacter.Attribute.Vaccine
+        )
+        var virusCount = 0
+
+        repeat(40_000) {
+            if (
+                WorldSpawnSelector.selectCharacter(
+                    characters = listOf(virus, vaccine),
+                    favoredAttribute = null,
+                    random = Random(it)
+                )!!.attribute == NfcCharacter.Attribute.Virus
+            ) {
+                virusCount++
+            }
+        }
+
+        assertTrue(abs(virusCount / 40_000.0 - 0.5) < 0.02)
+    }
+
+    private fun character(
+        id: Long,
+        cardId: Long,
+        stage: Int = 2,
+        name: ByteArray,
+        attribute: NfcCharacter.Attribute = NfcCharacter.Attribute.Vaccine
+    ) = CardCharacter(
         id = id,
         cardId = cardId,
         spriteId = id,
         charaIndex = 0,
         stage = stage,
-        attribute = NfcCharacter.Attribute.Vaccine,
+        attribute = attribute,
         baseHp = 0,
         baseBp = 0,
         baseAp = 0,

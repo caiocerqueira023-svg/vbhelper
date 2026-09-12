@@ -1,5 +1,6 @@
 package com.github.nacabaro.vbhelper.world
 
+import com.github.cfogrady.vbnfc.data.NfcCharacter
 import com.github.nacabaro.vbhelper.domain.card.CardCharacter
 import java.util.Locale
 import kotlin.random.Random
@@ -9,7 +10,8 @@ import kotlin.random.Random
  *
  * 1. Select an available stage according to [STAGE_WEIGHTS].
  * 2. Select one species uniformly within that stage, then one of its imported
- *    card variants uniformly.
+ *    card variants uniformly. A biome can use 30% of these rolls to favor an
+ *    attribute, while the remaining 70% remains fully uniform.
  *
  * An official/manual species name, when available, is the canonical identity.
  * Otherwise the name sprite stored on the card is used as a deterministic
@@ -29,6 +31,7 @@ internal object WorldSpawnSelector {
     fun selectCharacter(
         characters: List<CardCharacter>,
         speciesNames: Map<Long, String?> = emptyMap(),
+        favoredAttribute: NfcCharacter.Attribute? = null,
         random: Random = Random.Default
     ): CardCharacter? {
         val speciesByStage = characters
@@ -41,8 +44,21 @@ internal object WorldSpawnSelector {
         if (availableStages.isEmpty()) return null
 
         val stage = pickWeightedStage(availableStages, random)
-        val variants = speciesByStage.getValue(stage).random(random)
-        return variants.random(random)
+        val species = speciesByStage.getValue(stage)
+        val favoredSpecies = favoredAttribute?.let { attribute ->
+            species.filter { variants -> variants.any { it.attribute == attribute } }
+        }.orEmpty()
+        val useFavoredSpecies = favoredSpecies.isNotEmpty() &&
+            random.nextDouble() < FAVORED_ATTRIBUTE_CHANCE
+        val variants = (if (useFavoredSpecies) favoredSpecies else species).random(random)
+
+        // A favored roll must actually produce the favored attribute. In the
+        // normal 70% path every imported variant remains equally likely.
+        return if (useFavoredSpecies) {
+            variants.filter { it.attribute == favoredAttribute }.random(random)
+        } else {
+            variants.random(random)
+        }
     }
 
     private fun pickWeightedStage(stages: List<Pair<Int, Double>>, random: Random): Int {
@@ -54,6 +70,8 @@ internal object WorldSpawnSelector {
         }
         return stages.last().first
     }
+
+    private const val FAVORED_ATTRIBUTE_CHANCE = 0.30
 
     private fun CardCharacter.speciesKey(speciesName: String?) = SpeciesKey(
         stage = stage,

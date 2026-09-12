@@ -34,7 +34,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
@@ -140,14 +139,7 @@ fun CharacterEntry(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .fillMaxSize()
-                .background(
-                    Brush.radialGradient(
-                        colors = listOf(
-                            SurfaceHighlightPurple,
-                            MaterialTheme.colorScheme.surfaceContainerHighest
-                        )
-                    )
-                )
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh)
         ) {
             Box(
                 modifier = Modifier

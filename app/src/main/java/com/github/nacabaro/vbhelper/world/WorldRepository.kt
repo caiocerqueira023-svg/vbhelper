@@ -25,6 +25,7 @@ import kotlin.random.Random
 
 class WorldRepository(private val db: AppDatabase) {
     private val spawnDao: WorldSpawnDao = db.worldSpawnDao()
+    private val biomeDetector = OpenStreetMapBiomeDetector()
 
     /** Last GPS fix observed by the world screen; used when starting follow from chat. */
     @Volatile
@@ -89,12 +90,17 @@ class WorldRepository(private val db: AppDatabase) {
 
         val loadedCharacters = db.characterDao().getAllCharacters()
         if (loadedCharacters.isEmpty()) return
+        val biome = biomeDetector.biomeAt(latitude, longitude)
         val speciesNames = db.speciesProfileDao().getAll().associate { profile ->
             profile.cardCharacterId to (profile.matchedName ?: profile.speciesName)
         }
 
         repeat(toSpawn) { spawnIndex ->
-            val character = WorldSpawnSelector.selectCharacter(loadedCharacters, speciesNames)
+            val character = WorldSpawnSelector.selectCharacter(
+                characters = loadedCharacters,
+                speciesNames = speciesNames,
+                favoredAttribute = biome.favoredAttribute
+            )
                 ?: return@repeat
 
             val individualId = IndividualIdentity.generate()
