@@ -179,7 +179,7 @@ fun StorageDialog(
                         IconButton(onClick = { showInfoEditor = true }) {
                             Icon(
                                 imageVector = Icons.Default.Settings,
-                                contentDescription = "Editar informações do Digimon"
+                                contentDescription = stringResource(R.string.storage_edit_digimon_info)
                             )
                         }
                     }

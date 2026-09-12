@@ -8,6 +8,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -49,6 +51,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        applyDefaultLanguageIfUnset()
+
         val application = applicationContext as VBHelper
         val scanScreenController = ScanScreenControllerImpl(
             application.container.dataStoreSecretsRepository.secretsFlow,
@@ -67,8 +72,6 @@ class MainActivity : AppCompatActivity() {
         val chatScreenController = ChatScreenControllerImpl(this)
         val lorebookScreenController = LorebookScreenControllerImpl(this)
         val worldChatScreenController = WorldChatScreenControllerImpl(this)
-
-        super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
 
@@ -176,6 +179,14 @@ class MainActivity : AppCompatActivity() {
             }
         }
         return null
+    }
+
+    private fun applyDefaultLanguageIfUnset() {
+        val preferences = getSharedPreferences("app_preferences", MODE_PRIVATE)
+        if (!preferences.contains("language_tag")) {
+            preferences.edit().putString("language_tag", "en").apply()
+            AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags("en"))
+        }
     }
 
     @Composable

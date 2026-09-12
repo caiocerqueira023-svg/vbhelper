@@ -64,7 +64,8 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
                 AppDatabase.MIGRATION_11_12,
                 AppDatabase.MIGRATION_12_13,
                 AppDatabase.MIGRATION_13_14,
-                AppDatabase.MIGRATION_14_15
+                AppDatabase.MIGRATION_14_15,
+                AppDatabase.MIGRATION_15_16
             )
             // Escolha mais segura: se não houver caminho de migração explícito
             // (ex.: usuário vindo de uma versão sem migration mapeada), o Room

@@ -17,6 +17,9 @@ interface CardDao {
     @Query("SELECT * FROM Card")
     fun getAllCards(): List<Card>
 
+    @Query("SELECT * FROM Card ORDER BY name COLLATE NOCASE")
+    fun observeCardsForWorldSpawns(): Flow<List<Card>>
+
     @Query("SELECT * FROM Card WHERE cardId = :id")
     fun getCardByCardId(id: Int): List<Card>
 
@@ -65,6 +68,9 @@ interface CardDao {
 
     @Query("UPDATE Card SET officialStatus = :status WHERE id = :id")
     suspend fun updateOfficialStatus(id: Long, status: OfficialStatus)
+
+    @Query("UPDATE Card SET worldSpawnsEnabled = :enabled WHERE id = :id")
+    suspend fun setWorldSpawnsEnabled(id: Long, enabled: Boolean)
 
     @Query("DELETE FROM Card WHERE id = :id")
     suspend fun deleteCard(id: Long)

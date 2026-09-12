@@ -427,6 +427,10 @@
     <string name="ui_world_spawn_dims_empty">Nenhum DiM foi carregado.</string>
     <string name="ui_world_spawn_dims_enabled">Ativado</string>
     <string name="ui_world_spawn_dims_disabled">Desativado</string>
+    <string name="ui_world_spawn_dims_hint">Segure um DiM para ver seus Digimon.</string>
+    <string name="ui_world_spawn_dim_species_title">Digimon de %1$s</string>
+    <string name="ui_world_spawn_dim_species_empty">Este DiM não tem Digimon.</string>
+    <string name="ui_world_spawn_dim_species_fallback">Digimon %1$d</string>
 
     <string-array name="world_cardinal_directions_8">
         <item>N</item><item>NE</item><item>L</item><item>SE</item>

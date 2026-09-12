@@ -376,6 +376,10 @@
     <string name="ui_world_spawn_dims_empty">読み込まれたDiMはありません。</string>
     <string name="ui_world_spawn_dims_enabled">有効</string>
     <string name="ui_world_spawn_dims_disabled">無効</string>
+    <string name="ui_world_spawn_dims_hint">DiMを長押しするとデジモンの一覧を表示します。</string>
+    <string name="ui_world_spawn_dim_species_title">%1$sのデジモン</string>
+    <string name="ui_world_spawn_dim_species_empty">このDiMにはデジモンがいません。</string>
+    <string name="ui_world_spawn_dim_species_fallback">デジモン %1$d</string>
 
     <string-array name="world_cardinal_directions_8">
         <item>北</item><item>北東</item><item>東</item><item>南東</item>

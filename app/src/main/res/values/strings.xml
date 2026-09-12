@@ -468,6 +468,10 @@
     <string name="ui_world_spawn_dims_empty">No DiMs are loaded.</string>
     <string name="ui_world_spawn_dims_enabled">Enabled</string>
     <string name="ui_world_spawn_dims_disabled">Disabled</string>
+    <string name="ui_world_spawn_dims_hint">Hold a DiM to view its Digimon.</string>
+    <string name="ui_world_spawn_dim_species_title">%1$s Digimon</string>
+    <string name="ui_world_spawn_dim_species_empty">This DiM has no Digimon.</string>
+    <string name="ui_world_spawn_dim_species_fallback">Digimon %1$d</string>
 
     <string-array name="world_cardinal_directions_8">
         <item>N</item><item>NE</item><item>E</item><item>SE</item>

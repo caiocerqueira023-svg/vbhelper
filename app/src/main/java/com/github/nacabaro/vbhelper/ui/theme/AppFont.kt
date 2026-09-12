@@ -6,7 +6,7 @@ import androidx.compose.ui.text.font.FontWeight
 import com.github.nacabaro.vbhelper.R
 
 enum class AppFont(val preferenceValue: String, val displayName: String) {
-    DEFAULT("default", "Padrão"),
+    DEFAULT("default", "Default"),
     MICHROMA("michroma", "Michroma"),
     OXANIUM("oxanium", "Oxanium"),
     EUROSTILE_EXTENDED("eurostile_extended", "Eurostile Extended"),
@@ -14,7 +14,7 @@ enum class AppFont(val preferenceValue: String, val displayName: String) {
 
     companion object {
         fun fromPreference(value: String?): AppFont =
-            entries.firstOrNull { it.preferenceValue == value } ?: DEFAULT
+            entries.firstOrNull { it.preferenceValue == value } ?: OXANIUM
     }
 }
 

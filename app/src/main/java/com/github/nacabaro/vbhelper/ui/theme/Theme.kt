@@ -84,7 +84,7 @@ private val VitalArenaLightColorScheme = lightColorScheme(
 @Composable
 fun VBHelperTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    appFont: AppFont = AppFont.DEFAULT,
+    appFont: AppFont = AppFont.OXANIUM,
     // Dynamic color intentionally defaults to OFF: this app has its own
     // dark-purple "Vital Arena" identity that we always want to keep,
     // regardless of the device's Material You wallpaper colors.

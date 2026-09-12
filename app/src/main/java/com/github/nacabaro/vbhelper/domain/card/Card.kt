@@ -14,7 +14,9 @@ data class Card(
     val name: String,
     val stageCount: Int,
     val isBEm: Boolean,
-    val officialStatus: OfficialStatus = OfficialStatus.UNKNOWN
+    val officialStatus: OfficialStatus = OfficialStatus.UNKNOWN,
+    /** Whether characters from this DiM can be selected for new World spawns. */
+    val worldSpawnsEnabled: Boolean = true
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -31,6 +33,7 @@ data class Card(
         if (stageCount != other.stageCount) return false
         if (isBEm != other.isBEm) return false
         if (officialStatus != other.officialStatus) return false
+        if (worldSpawnsEnabled != other.worldSpawnsEnabled) return false
 
         return true
     }
@@ -45,6 +48,7 @@ data class Card(
         result = 31 * result + stageCount
         result = 31 * result + isBEm.hashCode()
         result = 31 * result + officialStatus.hashCode()
+        result = 31 * result + worldSpawnsEnabled.hashCode()
         return result
     }
 }

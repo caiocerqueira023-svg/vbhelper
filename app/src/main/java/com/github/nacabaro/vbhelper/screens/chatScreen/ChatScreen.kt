@@ -59,7 +59,7 @@ fun ChatScreen(
     }
 
     if (!speciesGateResolved) {
-        Scaffold(topBar = { TopBanner(text = "Conversar", onBackClick = { navController.popBackStack() }) }) { padding ->
+        Scaffold(topBar = { TopBanner(text = stringResource(R.string.nav_chat), onBackClick = { navController.popBackStack() }) }) { padding ->
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
@@ -84,7 +84,7 @@ fun ChatScreen(
     Scaffold(
         topBar = {
             TopBanner(
-                text = "Conversar • Mood $mood",
+                text = stringResource(R.string.ui_chat_mood_title, mood),
                 onBackClick = { navController.popBackStack() }
             )
         }

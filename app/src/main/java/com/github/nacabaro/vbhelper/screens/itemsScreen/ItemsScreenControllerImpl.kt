@@ -51,7 +51,7 @@ class ItemsScreenControllerImpl (
         context.lifecycleScope.launch {
             val itemName = withContext(Dispatchers.IO) {
                 val item = getItem(itemId)
-                check(item.quantity > 0) { "Este item não está mais disponível." }
+                check(item.quantity > 0) { "This item is no longer available." }
                 val characterData = database.userCharacterDao().getCharacter(characterId)
                 var beCharacterData: BECharacterData? = null
                 var vbCharacterData: VBCharacterData? = null
@@ -132,7 +132,7 @@ class ItemsScreenControllerImpl (
                 }
 
                 check(consumeItem(item.id) == 1) {
-                    "Este item não está mais disponível."
+                    "This item is no longer available."
                 }
                 item.name
             }

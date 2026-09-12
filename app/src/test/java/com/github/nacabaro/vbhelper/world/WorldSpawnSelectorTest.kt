@@ -37,8 +37,8 @@ class WorldSpawnSelectorTest {
             if (WorldSpawnSelector.selectCharacter(characters, random = Random(it))!!.stage == 2) childCount++
         }
 
-        // 0.40 / (0.40 + 0.24): only stages that have loaded Digimon participate.
-        assertTrue(abs(childCount / 50_000.0 - 0.625) < 0.02)
+        // 0.40 / (0.40 + 0.30): only stages that have loaded Digimon participate.
+        assertTrue(abs(childCount / 50_000.0 - (0.40 / 0.70)) < 0.02)
     }
 
     @Test

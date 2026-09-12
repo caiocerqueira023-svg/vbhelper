@@ -64,7 +64,7 @@ class SettingsScreenControllerImpl(
     val showWildPromptTemplateDialog: StateFlow<Boolean> = _showWildPromptTemplateDialog
     private val _currentLanguage = MutableStateFlow(
         languagePreferences.getString("language_tag", null)
-            ?: AppCompatDelegate.getApplicationLocales().toLanguageTags().ifBlank { "system" }
+            ?: AppCompatDelegate.getApplicationLocales().toLanguageTags().ifBlank { "en" }
     )
     val currentLanguage: StateFlow<String> = _currentLanguage.asStateFlow()
     private val _currentFont = MutableStateFlow(

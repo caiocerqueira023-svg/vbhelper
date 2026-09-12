@@ -100,15 +100,15 @@ class HomeScreenControllerImpl(
                 val character = database.userCharacterDao().getCharacter(characterId)
                 val characterWithSprites = database.userCharacterDao().getCharacterWithSprites(characterId)
                 check(character.charId != transformation.stageId) {
-                    "O Digimon já está nesse estágio."
+                    "This Digimon is already at that stage."
                 }
                 check(transformation.stage <= characterWithSprites.stage) {
-                    "Não é possível regredir para um estágio maior que o atual."
+                    "Cannot degenerate to a stage higher than the current one."
                 }
 
                 val currentCurrency = application.container.currencyRepository.currencyValue.first()
                 check(currentCurrency >= DEGENERATION_COST) {
-                    "Bits insuficientes. São necessários $DEGENERATION_COST bits."
+                    "Not enough bits. $DEGENERATION_COST bits are required."
                 }
 
                 application.container.reactionRepository

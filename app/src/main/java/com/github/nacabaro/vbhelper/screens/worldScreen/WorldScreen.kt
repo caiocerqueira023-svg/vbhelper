@@ -11,7 +11,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Arrangement
@@ -135,6 +134,8 @@ fun WorldScreen(navController: NavController) {
     var idleFrame by remember { mutableIntStateOf(0) }
     var selectedSpecies by remember { mutableStateOf<CharacterDtos.CardCharaProgress?>(null) }
     var showWorldSpawnSettings by remember { mutableStateOf(false) }
+    var selectedWorldDim by remember { mutableStateOf<Card?>(null) }
+    var selectedWorldDimSpecies by remember { mutableStateOf(emptyList<WorldDimSpecies>()) }
     val radarPulse = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
@@ -701,16 +702,51 @@ fun WorldScreen(navController: NavController) {
                 scope.launch(Dispatchers.IO) {
                     app.container.db.cardDao().setWorldSpawnsEnabled(card.id, enabled)
                 }
+            },
+            onLongClickCard = { card ->
+                scope.launch {
+                    selectedWorldDimSpecies = withContext(Dispatchers.IO) {
+                        val profiles = app.container.db.speciesProfileDao()
+                            .getByCardId(card.id)
+                            .associateBy { it.cardCharacterId }
+                        DexRepository(app.container.db).getCharactersByCardId(card.id)
+                            .first()
+                            .mapIndexed { index, character ->
+                                WorldDimSpecies(
+                                    character = character,
+                                    name = profiles[character.id]?.matchedName
+                                        ?: profiles[character.id]?.speciesName,
+                                    fallbackNumber = index + 1
+                                )
+                            }
+                    }
+                    selectedWorldDim = card
+                }
             }
         )
     }
+
+    selectedWorldDim?.let { card ->
+        WorldDimSpeciesDialog(
+            card = card,
+            species = selectedWorldDimSpecies,
+            onDismiss = { selectedWorldDim = null }
+        )
+    }
 }
+
+private data class WorldDimSpecies(
+    val character: CharacterDtos.CardCharaProgress,
+    val name: String?,
+    val fallbackNumber: Int
+)
 
 @Composable
 private fun WorldSpawnDimSettingsDialog(
     cards: List<Card>,
     onDismiss: () -> Unit,
-    onEnabledChange: (Card, Boolean) -> Unit
+    onEnabledChange: (Card, Boolean) -> Unit,
+    onLongClickCard: (Card) -> Unit
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -719,32 +755,18 @@ private fun WorldSpawnDimSettingsDialog(
             if (cards.isEmpty()) {
                 Text(stringResource(R.string.ui_world_spawn_dims_empty))
             } else {
-                LazyColumn(modifier = Modifier.heightIn(max = 360.dp)) {
-                    items(cards, key = { it.id }) { card ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { onEnabledChange(card, !card.worldSpawnsEnabled) }
-                                .padding(vertical = 8.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(card.name, style = MaterialTheme.typography.bodyLarge)
-                                Text(
-                                    text = stringResource(
-                                        if (card.worldSpawnsEnabled) {
-                                            R.string.ui_world_spawn_dims_enabled
-                                        } else {
-                                            R.string.ui_world_spawn_dims_disabled
-                                        }
-                                    ),
-                                    style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Switch(
-                                checked = card.worldSpawnsEnabled,
+                Column {
+                    Text(
+                        stringResource(R.string.ui_world_spawn_dims_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    LazyColumn(modifier = Modifier.heightIn(max = 360.dp)) {
+                        items(cards, key = { it.id }) { card ->
+                            WorldSpawnDimRow(
+                                card = card,
+                                onClick = { onEnabledChange(card, !card.worldSpawnsEnabled) },
+                                onLongClick = { onLongClickCard(card) },
                                 onCheckedChange = { enabled -> onEnabledChange(card, enabled) }
                             )
                         }
@@ -756,6 +778,130 @@ private fun WorldSpawnDimSettingsDialog(
             TextButton(onClick = onDismiss) {
                 Text(stringResource(R.string.ui_close))
             }
+        }
+    )
+}
+
+@Composable
+private fun WorldSpawnDimRow(
+    card: Card,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    val logo = remember(card.logo) {
+        runCatching {
+            BitmapData(card.logo, card.logoWidth, card.logoHeight).getBitmap().asImageBitmap()
+        }.getOrNull()
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick)
+            .padding(vertical = 8.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        logo?.let { image ->
+            Image(
+                bitmap = image,
+                contentDescription = card.name,
+                filterQuality = FilterQuality.None,
+                modifier = Modifier
+                    .size(40.dp)
+                    .padding(end = 8.dp)
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(card.name, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = stringResource(
+                    if (card.worldSpawnsEnabled) {
+                        R.string.ui_world_spawn_dims_enabled
+                    } else {
+                        R.string.ui_world_spawn_dims_disabled
+                    }
+                ),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Switch(
+            checked = card.worldSpawnsEnabled,
+            onCheckedChange = onCheckedChange
+        )
+    }
+}
+
+@Composable
+private fun WorldDimSpeciesDialog(
+    card: Card,
+    species: List<WorldDimSpecies>,
+    onDismiss: () -> Unit
+) {
+    var idleFrame by remember { mutableIntStateOf(0) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(700L)
+            idleFrame = 1 - idleFrame
+        }
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.ui_world_spawn_dim_species_title, card.name)) },
+        text = {
+            if (species.isEmpty()) {
+                Text(stringResource(R.string.ui_world_spawn_dim_species_empty))
+            } else {
+                LazyColumn(modifier = Modifier.heightIn(max = 420.dp)) {
+                    items(species, key = { it.character.id }) { item ->
+                        val label = item.name ?: stringResource(
+                            R.string.ui_world_spawn_dim_species_fallback,
+                            item.fallbackNumber
+                        )
+                        val idleSprite = if (idleFrame == 0) {
+                            item.character.spriteIdle
+                        } else {
+                            item.character.spriteIdle2
+                        }
+                        val idleImage = remember(idleSprite) {
+                            runCatching {
+                                BitmapData(
+                                    idleSprite,
+                                    item.character.spriteWidth,
+                                    item.character.spriteHeight
+                                ).getBitmap().asImageBitmap()
+                            }.getOrNull()
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            idleImage?.let { image ->
+                                Image(
+                                    bitmap = image,
+                                    contentDescription = label,
+                                    filterQuality = FilterQuality.None,
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                )
+                            }
+                            Text(
+                                text = label,
+                                modifier = Modifier.padding(start = 8.dp),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.ui_close)) }
         }
     )
 }

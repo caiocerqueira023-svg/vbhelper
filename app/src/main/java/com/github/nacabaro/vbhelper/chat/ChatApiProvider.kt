@@ -36,7 +36,7 @@ enum class ChatApiProvider(
         baseUrl = null
     ),
     CUSTOM(
-        displayName = "Manual (compatível com OpenAI)",
+        displayName = "Manual (OpenAI-compatible)",
         baseUrl = null
     );
 

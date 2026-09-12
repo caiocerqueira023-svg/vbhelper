@@ -326,7 +326,7 @@ fun HomeScreen(
                     result.onFailure {
                         Toast.makeText(
                             application,
-                            it.message ?: "Não foi possível regredir o Digimon.",
+                            it.message ?: "Could not degenerate this Digimon.",
                             Toast.LENGTH_LONG
                         ).show()
                     }

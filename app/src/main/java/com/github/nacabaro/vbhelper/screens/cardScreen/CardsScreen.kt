@@ -98,11 +98,11 @@ fun CardsScreen(
                     onClickRetrySpeciesMatch = {
                         cardScreenController.retrySpeciesMatch(it.cardId) { matchedCount, errorMessage ->
                             val message = errorMessage?.let { error ->
-                                "Falha ao atualizar espécies: $error"
+                                "Failed to update species: $error"
                             } ?: if (matchedCount > 0) {
-                                "$matchedCount espécies reconhecidas!"
+                                "$matchedCount species recognized!"
                             } else {
-                                "Nenhuma espécie foi reconhecida."
+                                "No species were recognized."
                             }
                             Toast.makeText(context, message, Toast.LENGTH_LONG).show()
                         }
@@ -164,11 +164,11 @@ fun CardsScreen(
                     originDialogCard = null
                     val message = when (status) {
                         OfficialStatus.OFFICIAL -> if (matchedCount > 0) {
-                            "$matchedCount espécies reconhecidas automaticamente!"
+                            "$matchedCount species recognized automatically!"
                         } else {
-                            "Nenhuma espécie foi reconhecida no banco oficial."
+                            "No species were recognized in the official database."
                         }
-                        OfficialStatus.CUSTOM -> "Card marcado como custom."
+                        OfficialStatus.CUSTOM -> "Card marked as custom."
                         OfficialStatus.UNKNOWN -> ""
                     }
                     if (message.isNotEmpty()) Toast.makeText(context, message, Toast.LENGTH_LONG).show()

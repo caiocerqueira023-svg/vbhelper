@@ -59,7 +59,7 @@ fun SpeciesManualEditDialog(
                 Text(stringResource(R.string.ui_species_question), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "Card \"$cardName\". Apenas o nome é obrigatório.",
+                    "Card \"$cardName\". Only the name is required.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline
                 )

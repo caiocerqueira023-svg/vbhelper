@@ -16,6 +16,16 @@ interface CharacterDao {
     @Query("SELECT * FROM CardCharacter")
     suspend fun getAllCharacters(): List<CardCharacter>
 
+    @Query(
+        """
+        SELECT cc.*
+        FROM CardCharacter cc
+        JOIN Card c ON c.id = cc.cardId
+        WHERE c.worldSpawnsEnabled = 1
+        """
+    )
+    suspend fun getCharactersForWorldSpawns(): List<CardCharacter>
+
     @Query("SELECT * FROM CardCharacter WHERE id = :id")
     suspend fun getById(id: Long): CardCharacter?
 

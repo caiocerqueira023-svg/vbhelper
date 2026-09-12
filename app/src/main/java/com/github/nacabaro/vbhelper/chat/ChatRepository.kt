@@ -22,7 +22,7 @@ class ChatRepository(
     private val lorebookRepository: LorebookRepository,
     private val chatDao: ChatDao = database.chatDao()
 ) {
-    class MissingApiKeyException : Exception("Chave de API do chat não configurada.")
+    class MissingApiKeyException : Exception("Chat API key is not configured.")
 
     fun getHistory(characterId: Long): Flow<List<ChatMessageEntity>> =
         database.userCharacterDao().getIndividualId(characterId)
@@ -221,7 +221,7 @@ class ChatRepository(
         val languageTag = PromptLocalization.currentLanguageTag()
         val prompt = DigimonPersonaBuilder.buildSystemPrompt(
             character,
-            card?.name ?: "desconhecido",
+        card?.name ?: "unknown",
             speciesProfile,
             promptTemplate,
             personality,
@@ -236,7 +236,7 @@ class ChatRepository(
         individualId: String
     ): Pair<String, String?> {
         val info = database.characterDao().getWildCharacterInfo(cardCharacterId)
-            ?: error("Dados da espécie não encontrados para este Digimon.")
+            ?: error("Species data was not found for this Digimon.")
         val personality = database.digimonIndividualDao().getPersonality(individualId)
         val speciesProfile = database.speciesProfileDao().getByCardCharacterId(cardCharacterId)
         val promptTemplate = llmSettingsRepository.wildSystemPromptTemplate.first()

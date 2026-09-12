@@ -20,12 +20,12 @@ import kotlin.random.Random
  */
 internal object WorldSpawnSelector {
     private val STAGE_WEIGHTS = listOf(
-        0 to 0.15,
+        0 to 0.00,
         1 to 0.15,
         2 to 0.40,
-        3 to 0.24,
-        4 to 0.05,
-        5 to 0.01
+        3 to 0.30,
+        4 to 0.10,
+        5 to 0.05
     )
 
     fun selectCharacter(

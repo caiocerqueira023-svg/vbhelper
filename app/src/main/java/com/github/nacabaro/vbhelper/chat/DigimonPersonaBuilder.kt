@@ -28,10 +28,16 @@ object DigimonPersonaBuilder {
         val digimonName = nickname?.let { "$it, ${species(languageTag)} $speciesName" } ?: speciesName
         val stageName = stageName(character.stage)
         val moodDescription = moodDescription(character.mood, languageTag)
-        val speciesBlock = speciesBlock(speciesProfile, speciesName, stageName, languageTag)
         val personalityBlock = personality?.let {
             personalityBlock(it, languageTag)
         }.orEmpty()
+        val speciesBlock = speciesBlock(
+            profile = speciesProfile,
+            speciesName = speciesName,
+            stageName = stageName,
+            personalityBlock = personalityBlock,
+            languageTag = languageTag
+        )
 
         val replacements = mapOf(
             "{card_name}" to cardName,
@@ -134,9 +140,9 @@ object DigimonPersonaBuilder {
         profile: SpeciesProfile?,
         speciesName: String,
         stageName: String,
+        personalityBlock: String,
         languageTag: String
     ): String {
-        if (profile == null) return ""
         val isJapanese = languageTag.startsWith("ja", ignoreCase = true)
         val isPortuguese = languageTag.startsWith("pt", ignoreCase = true)
         return buildString {
@@ -147,7 +153,7 @@ object DigimonPersonaBuilder {
                     else -> "Species name: $speciesName, current stage: $stageName"
                 }
             )
-            profile.type?.let {
+            profile?.type?.let {
                 append(
                     when {
                         isJapanese -> "、タイプ: $it"
@@ -157,7 +163,7 @@ object DigimonPersonaBuilder {
                 )
             }
             append(if (isJapanese) "。\n" else ".\n")
-            profile.profileDescription?.takeIf { it.isNotBlank() }?.let {
+            profile?.profileDescription?.takeIf { it.isNotBlank() }?.let {
                 append(
                     when {
                         isJapanese -> "種族の一般プロフィール: $it\n"
@@ -166,7 +172,7 @@ object DigimonPersonaBuilder {
                     }
                 )
             }
-            if (profile.specialMoves.isNotEmpty()) {
+            if (profile?.specialMoves?.isNotEmpty() == true) {
                 append(
                     when {
                         isJapanese -> "必殺技: ${profile.specialMoves.joinToString()}。\n"
@@ -174,6 +180,10 @@ object DigimonPersonaBuilder {
                         else -> "Special moves: ${profile.specialMoves.joinToString()}.\n"
                     }
                 )
+            }
+            personalityBlock.takeIf { it.isNotBlank() }?.let {
+                append(it)
+                append('\n')
             }
         }.trim()
     }

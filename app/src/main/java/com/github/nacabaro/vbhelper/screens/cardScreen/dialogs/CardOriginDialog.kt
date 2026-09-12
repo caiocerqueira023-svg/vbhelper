@@ -26,8 +26,8 @@ fun CardOriginDialog(cardName: String, onDismiss: () -> Unit, onSelect: (Officia
                 Text(stringResource(R.string.ui_official_card, cardName), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "Cards oficiais têm espécies reconhecidas automaticamente. " +
-                        "Em cards custom, você informa a espécie ao abrir o chat.",
+                    "Official cards have their species recognized automatically. " +
+                        "For custom cards, you provide the species when opening chat.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline
                 )
