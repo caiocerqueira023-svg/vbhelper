@@ -48,10 +48,10 @@ private const val MAX_VITAL_POINTS = 9999
 private fun shortStageName(stage: Int): String = when (stage) {
     0 -> "Baby I"
     1 -> "Baby II"
-    2 -> "Rookie"
-    3 -> "Champion"
-    4 -> "Ultimate"
-    5 -> "Mega"
+    2 -> "Child"
+    3 -> "Adult"
+    4 -> "Perfect"
+    5 -> "Ultimate"
     else -> "Stage $stage"
 }
 
@@ -90,6 +90,7 @@ fun VBDiMHomeScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .padding(horizontal = 8.dp)
         ) {
             CharacterEntry(
                 icon = BitmapData(
@@ -181,6 +182,10 @@ fun VBDiMHomeScreen(
                     .aspectRatio(1f)
                     .padding(8.dp)
             )
+        }
+        Row(
+            modifier = Modifier.fillMaxWidth()
+        ) {
             ItemDisplay(
                 icon = R.drawable.baseline_swords_24,
                 textValue = when {
