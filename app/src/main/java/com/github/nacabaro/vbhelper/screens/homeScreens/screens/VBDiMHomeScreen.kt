@@ -84,13 +84,12 @@ fun VBDiMHomeScreen(
             label = stringResource(R.string.home_vbdim_vitals),
             current = activeMon.vitalPoints,
             max = MAX_VITAL_POINTS,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
         )
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 8.dp)
         ) {
             CharacterEntry(
                 icon = BitmapData(
@@ -107,7 +106,7 @@ fun VBDiMHomeScreen(
                 ),
                 shape = androidx.compose.material.MaterialTheme.shapes.small,
                 modifier = Modifier
-                    .weight(1f)
+                    .weight(0.9f)
                     .aspectRatio(1f),
                 speechBubbleText = speechBubbleText,
                 vitalPoints = activeMon.vitalPoints,
@@ -117,7 +116,7 @@ fun VBDiMHomeScreen(
             // portrait, matching the reference screen's stat list.
             Column(
                 modifier = Modifier
-                    .weight(0.7f)
+                    .weight(0.8f)
                     .padding(start = 4.dp, top = 8.dp)
             ) {
                 InfoStatRow(
@@ -143,7 +142,7 @@ fun VBDiMHomeScreen(
         if (vitalsHistory.isNotEmpty()) {
             WeeklyVitalsChart(
                 history = vitalsHistory,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
             )
         }
 

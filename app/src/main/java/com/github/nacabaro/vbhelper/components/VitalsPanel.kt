@@ -143,21 +143,27 @@ fun InfoStatRow(
             painter = painterResource(icon),
             contentDescription = label,
             tint = TextMutedOnDark,
-            modifier = Modifier.size(16.dp)
+            modifier = Modifier.size(14.dp)
         )
-        Column(modifier = Modifier.padding(start = 8.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(start = 6.dp)
+                .weight(1f)
+        ) {
             Text(
                 text = label.uppercase(),
                 color = TextMutedOnDark,
-                fontSize = 11.sp,
+                fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.5.sp
+                letterSpacing = 0.sp,
+                maxLines = 1
             )
             Text(
                 text = value,
                 color = valueColor,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Bold
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1
             )
         }
     }
