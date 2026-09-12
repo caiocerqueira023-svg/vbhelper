@@ -452,4 +452,9 @@
 
     <string name="widget_digimon_description">Your active Digimon walking on the home screen</string>
     <string name="widget_digimon_label">Digimon</string>
+    <string name="ui_world_compass_waiting">Waiting for compass readings. Map is north-up until north is calibrated.</string>
+    <string name="ui_world_compass_calibrate">Compass needs calibration. Move away from magnets and metal, then move the phone in a figure-eight. Map is north-up until calibration completes.</string>
+    <string name="ui_world_compass_approximate">Compass paused: north is unreliable. The last direction is held. Move away from magnets and metal and make a figure-eight to recalibrate.</string>
+    <string name="ui_world_compass_unavailable">Compass sensors unavailable. Map is north-up.</string>
+    <string name="ui_world_compass_diagnostics">Compass diagnostics</string>
 </resources>

@@ -359,4 +359,9 @@
 
     <string name="ui_wild_digimon_prompt">野生のデジモンのプロンプト</string>
     <string name="ui_wild_digimon_prompt_desc">「ワールド」タブで出会う野生のデジモンの性格と話し方を編集します</string>
+    <string name="ui_world_compass_waiting">コンパスの読み取りを待っています。校正が完了するまで地図の上が北になります。</string>
+    <string name="ui_world_compass_calibrate">コンパスの校正が必要です。磁石や金属から離れ、端末を8の字に動かしてください。校正が完了するまで地図の上が北になります。</string>
+    <string name="ui_world_compass_approximate">コンパスを一時停止しました。北の方向が不正確なため、最後の方向を保持しています。磁石や金属から離れ、端末を8の字に動かして校正してください。</string>
+    <string name="ui_world_compass_unavailable">コンパスセンサーを利用できません。地図の上が北になります。</string>
+    <string name="ui_world_compass_diagnostics">コンパス診断</string>
 </resources>

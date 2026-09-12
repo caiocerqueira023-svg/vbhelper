@@ -2,15 +2,9 @@ package com.github.nacabaro.vbhelper.screens.worldScreen
 
 import android.Manifest
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.hardware.Sensor
-import android.hardware.SensorEvent
-import android.hardware.SensorEventListener
-import android.hardware.SensorManager
 import android.location.Location
-import android.os.Build
-import android.view.Surface
-import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -40,6 +34,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -92,8 +87,6 @@ import kotlin.math.sqrt
 /** Radius, in meters, within which the player can tap a Digimon to chat. */
 private const val INTERACTION_RANGE_METERS = 40.0
 private const val GRID_SIZE_METERS = 20.0
-/** Low-pass factor for heading (0..1). Higher = snappier, lower = smoother. */
-private const val COMPASS_SMOOTHING = 0.28f
 
 @Composable
 fun WorldScreen(navController: NavController) {
@@ -101,7 +94,10 @@ fun WorldScreen(navController: NavController) {
     val app = context.applicationContext as VBHelper
     var location by remember { mutableStateOf<Location?>(null) }
     var origin by remember { mutableStateOf<Location?>(null) }
-    var heading by remember { mutableFloatStateOf(0f) }
+    val compass = rememberWorldCompass(location)
+    val heading = compass.heading ?: 0f // Uncalibrated map is explicitly north-up.
+    val compassDebug = (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    var showCompassDiagnostics by remember { mutableStateOf(false) }
     var status by remember {
         mutableStateOf(context.getString(R.string.ui_world_grant_location))
     }
@@ -267,83 +263,12 @@ fun WorldScreen(navController: NavController) {
         }
     }
 
-    // TYPE_ROTATION_VECTOR combines the available orientation sensors. The map uses
-    // Android's azimuth for the top of the current display, which is the only stable
-    // reference for a full 360° turn. Mixing the top and screen-normal axes made the
-    // selected direction ambiguous after half a turn on some devices.
-    DisposableEffect(Unit) {
-        val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-        val rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
-        val rotationMatrix = FloatArray(9)
-        val displayRotationMatrix = FloatArray(9)
-        val orientationAngles = FloatArray(3)
-        // Local filter state — do not read Compose state from the sensor thread.
-        var smoothedHeading = 0f
-        var hasSample = false
-
-        val listener = object : SensorEventListener {
-            override fun onSensorChanged(event: SensorEvent) {
-                // event.values can be 3–5 floats; getRotationMatrixFromVector accepts both.
-                SensorManager.getRotationMatrixFromVector(rotationMatrix, event.values)
-
-                // The rotation-vector axes are tied to the device's natural
-                // orientation, while the UI follows the current display rotation.
-                // Without this remap, turning the phone through 180° makes the map
-                // appear to undo its rotation as the screen coordinate system flips.
-                val displayRotation = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    context.display.rotation
-                } else {
-                    @Suppress("DEPRECATION")
-                    (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager)
-                        .defaultDisplay.rotation
-                }
-                val (axisX, axisY) = when (displayRotation) {
-                    Surface.ROTATION_90 -> SensorManager.AXIS_Y to SensorManager.AXIS_MINUS_X
-                    Surface.ROTATION_180 -> SensorManager.AXIS_MINUS_X to SensorManager.AXIS_MINUS_Y
-                    Surface.ROTATION_270 -> SensorManager.AXIS_MINUS_Y to SensorManager.AXIS_X
-                    else -> SensorManager.AXIS_X to SensorManager.AXIS_Y
-                }
-                SensorManager.remapCoordinateSystem(
-                    rotationMatrix,
-                    axisX,
-                    axisY,
-                    displayRotationMatrix
-                )
-
-                SensorManager.getOrientation(displayRotationMatrix, orientationAngles)
-                // orientationAngles[0] is azimuth in radians (-π..π).
-                val degrees = (Math.toDegrees(orientationAngles[0].toDouble()).toFloat() + 360f) % 360f
-
-                if (!hasSample) {
-                    smoothedHeading = degrees
-                    hasSample = true
-                } else {
-                    // Shortest-path low-pass so 359° → 1° does not spin the long way.
-                    val delta = ((degrees - smoothedHeading + 540f) % 360f) - 180f
-                    smoothedHeading = (smoothedHeading + delta * COMPASS_SMOOTHING + 360f) % 360f
-                }
-                heading = smoothedHeading
-            }
-
-            override fun onAccuracyChanged(sensor: Sensor?, accuracy: Int) = Unit
-        }
-
-        if (rotationSensor != null) {
-            sensorManager.registerListener(
-                listener,
-                rotationSensor,
-                SensorManager.SENSOR_DELAY_GAME
-            )
-        }
-
-        onDispose {
-            sensorManager.unregisterListener(listener)
-        }
-    }
 
     Scaffold(
         topBar = {
-            TopBanner(text = "${stringResource(R.string.nav_world)} • ${cardinalDirection(heading)}")
+            TopBanner(text = if (compass.heading != null) {
+                "${stringResource(R.string.nav_world)} • ${cardinalDirection(heading)}"
+            } else stringResource(R.string.nav_world))
         }
     ) { contentPadding ->
         Column(
@@ -354,10 +279,31 @@ fun WorldScreen(navController: NavController) {
                 .padding(16.dp)
         ) {
             Text(status, style = MaterialTheme.typography.bodyMedium)
-            Text(
-                stringResource(R.string.ui_world_direction, cardinalDirection(heading), heading.roundToInt()),
-                style = MaterialTheme.typography.bodySmall
-            )
+            if (compass.heading != null) {
+                Text(
+                    stringResource(R.string.ui_world_direction, cardinalDirection(heading), heading.roundToInt() % 360),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            val compassMessage = when (compass.status) {
+                CompassStatus.WAITING -> R.string.ui_world_compass_waiting
+                CompassStatus.CALIBRATE -> R.string.ui_world_compass_calibrate
+                CompassStatus.APPROXIMATE -> R.string.ui_world_compass_approximate
+                CompassStatus.UNAVAILABLE -> R.string.ui_world_compass_unavailable
+                CompassStatus.TRACKING -> null
+            }
+            compassMessage?.let {
+                Text(stringResource(it), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error)
+            }
+            if (compassDebug) {
+                TextButton(onClick = { showCompassDiagnostics = !showCompassDiagnostics }) {
+                    Text(stringResource(R.string.ui_world_compass_diagnostics))
+                }
+                if (showCompassDiagnostics) {
+                    Text(compass.diagnostic, style = MaterialTheme.typography.bodySmall)
+                }
+            }
             Spacer(Modifier.height(8.dp))
 
             Button(onClick = { navController.navigate(NavigationItems.WorldRecruits.route) }) {

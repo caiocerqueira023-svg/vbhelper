@@ -412,4 +412,9 @@
     <string name="ui_wild_digimon_prompt_desc">Edite a personalidade e o jeito de falar dos Digimon selvagens encontrados na aba Mundo</string>
 
 
+    <string name="ui_world_compass_waiting">Aguardando a bússola. O mapa fica com o norte no topo até a calibração.</string>
+    <string name="ui_world_compass_calibrate">A bússola precisa de calibração. Afaste-se de ímãs e metais e mova o celular desenhando um oito. O mapa fica com o norte no topo até calibrar.</string>
+    <string name="ui_world_compass_approximate">Bússola pausada: norte sem precisão. A última direção está mantida. Afaste-se de ímãs e metais e desenhe um oito com o celular para recalibrar.</string>
+    <string name="ui_world_compass_unavailable">Sensores da bússola indisponíveis. O mapa está com o norte no topo.</string>
+    <string name="ui_world_compass_diagnostics">Diagnóstico da bússola</string>
 </resources>
