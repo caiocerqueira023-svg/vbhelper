@@ -54,7 +54,7 @@ import com.github.nacabaro.vbhelper.domain.lorebook.LorebookEntry
 import com.github.nacabaro.vbhelper.domain.world.WorldSpawn
 
 @Database(
-    version = 14,
+    version = 15,
     exportSchema = false,
     entities = [
         Card::class,
@@ -110,6 +110,16 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun worldSpawnDao(): WorldSpawnDao
 
     companion object {
+        val MIGRATION_14_15 = object : Migration(14, 15) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Existing chat history was already available to the user before
+                // unread tracking existed, so it must not surface as a new bubble.
+                db.execSQL(
+                    "ALTER TABLE `ChatMessageEntity` ADD COLUMN `isRead` INTEGER NOT NULL DEFAULT 1"
+                )
+            }
+        }
+
         val MIGRATION_11_12 = object : Migration(11, 12) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE `WorldSpawn` ADD COLUMN `mood` INTEGER NOT NULL DEFAULT 50")

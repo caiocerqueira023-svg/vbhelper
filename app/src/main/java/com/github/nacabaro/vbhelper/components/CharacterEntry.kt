@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.getBitmap
@@ -263,7 +264,7 @@ fun ItemDisplay(
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .fillMaxWidth(0.62f)
+                    .fillMaxWidth(0.5f)
                     .aspectRatio(1f)
                     .clip(CircleShape)
                     .background(VitalCyan.copy(alpha = 0.16f))
@@ -288,9 +289,11 @@ fun ItemDisplay(
                 Text(
                     text = definition,
                     textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.labelSmall,
+                    fontSize = 10.sp,
+                    lineHeight = 11.sp,
                     color = TextMutedOnDark,
-                    maxLines = 1
+                    minLines = 2,
+                    maxLines = 2
                 )
             }
         }

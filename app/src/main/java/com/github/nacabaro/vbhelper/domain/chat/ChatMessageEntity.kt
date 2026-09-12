@@ -22,5 +22,6 @@ data class ChatMessageEntity(
     val individualId: String,
     val role: String, // "user" | "assistant"
     val content: String,
-    val timestamp: Long
+    val timestamp: Long,
+    val isRead: Boolean = false
 )

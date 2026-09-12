@@ -1,6 +1,7 @@
 package com.github.nacabaro.vbhelper.screens.homeScreens.screens
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -104,9 +105,9 @@ fun VBDiMHomeScreen(
                     width = activeMon.spriteWidth,
                     height = activeMon.spriteHeight
                 ),
-                shape = androidx.compose.material.MaterialTheme.shapes.small,
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                 modifier = Modifier
-                    .weight(0.9f)
+                    .weight(1f)
                     .aspectRatio(1f),
                 speechBubbleText = speechBubbleText,
                 vitalPoints = activeMon.vitalPoints,
@@ -116,24 +117,28 @@ fun VBDiMHomeScreen(
             // portrait, matching the reference screen's stat list.
             Column(
                 modifier = Modifier
-                    .weight(0.8f)
-                    .padding(start = 4.dp, top = 8.dp)
+                    .weight(1f)
+                    .aspectRatio(1f)
+                    .padding(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 InfoStatRow(
                     icon = R.drawable.baseline_trophy_24,
                     label = stringResource(R.string.home_vbdim_level),
-                    value = shortStageName(activeMon.stage)
+                    value = shortStageName(activeMon.stage),
+                    modifier = Modifier.weight(1f)
                 )
                 InfoStatRow(
                     icon = R.drawable.baseline_mood_24,
                     label = stringResource(R.string.home_vbdim_attribute),
                     value = activeMon.attribute.name,
-                    valueColor = TextPrimaryOnDark
+                    modifier = Modifier.weight(1f)
                 )
                 InfoStatRow(
                     icon = R.drawable.baseline_next_24,
                     label = stringResource(R.string.home_vbdim_days),
-                    value = activeMon.ageInDays.toString()
+                    value = activeMon.ageInDays.toString(),
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
@@ -240,7 +245,7 @@ fun VBDiMHomeScreen(
         }
         Row (
             modifier = Modifier
-                .padding(16.dp)
+                .padding(8.dp)
         ) {
             Text(
                 text = stringResource(R.string.home_vbdim_special_missions),
@@ -258,7 +263,7 @@ fun VBDiMHomeScreen(
                     specialMission = mission,
                     modifier = Modifier
                         .weight(1f)
-                        .padding(horizontal = 16.dp, vertical = 6.dp),
+                        .padding(8.dp),
                     onClickMission = { missionId ->
                         selectedSpecialMissionId = missionId
                     },

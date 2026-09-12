@@ -128,6 +128,14 @@ class ChatRepository(
     fun getLatestAssistantMessage(individualId: String): Flow<ChatMessageEntity?> =
         chatDao.getLatestAssistantMessage(individualId)
 
+    fun getLatestUnreadAssistantMessage(individualId: String): Flow<ChatMessageEntity?> =
+        chatDao.getLatestUnreadAssistantMessage(individualId)
+
+    suspend fun markAssistantMessagesRead(characterId: Long) {
+        val individualId = database.userCharacterDao().getCharacter(characterId).individualId
+        chatDao.markAssistantMessagesRead(individualId)
+    }
+
     suspend fun sendMessage(characterId: Long, userText: String): String {
         val (systemPrompt, individualId, speciesName) = buildSystemPromptAndIndividualId(characterId)
         val languageTag = PromptLocalization.currentLanguageTag()

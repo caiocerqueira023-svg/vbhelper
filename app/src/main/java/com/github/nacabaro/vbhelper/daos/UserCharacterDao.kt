@@ -49,6 +49,7 @@ interface UserCharacterDao {
             s.width AS spriteWidth,
             s.height AS spriteHeight,
             c.charaIndex AS monIndex, 
+            c.stage AS stage,
             t.transformationDate AS transformationDate
         FROM TransformationHistory t 
         JOIN CardCharacter c ON c.id = t.stageId

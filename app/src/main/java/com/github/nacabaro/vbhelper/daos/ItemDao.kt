@@ -38,10 +38,10 @@ interface ItemDao {
         """
         UPDATE Items
         SET quantity = quantity - 1
-        WHERE id = :itemId
-    """
+        WHERE id = :itemId AND quantity > 0
+        """
     )
-    suspend fun useItem(itemId: Long)
+    suspend fun useItem(itemId: Long): Int
 
     @Query(
         """

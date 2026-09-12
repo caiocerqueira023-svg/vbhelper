@@ -74,6 +74,7 @@ fun ChatScreen(
 
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1)
+        chatScreenController.markAssistantMessagesRead(characterId)
     }
 
     Scaffold(

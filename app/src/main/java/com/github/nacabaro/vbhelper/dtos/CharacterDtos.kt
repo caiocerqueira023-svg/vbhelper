@@ -121,6 +121,7 @@ object CharacterDtos {
         val spriteWidth: Int,
         val spriteHeight: Int,
         val monIndex: Int,
+        val stage: Int,
         val transformationDate: Long
     ) {
         override fun equals(other: Any?): Boolean {
@@ -134,6 +135,7 @@ object CharacterDtos {
             if (spriteWidth != other.spriteWidth) return false
             if (spriteHeight != other.spriteHeight) return false
             if (monIndex != other.monIndex) return false
+            if (stage != other.stage) return false
             if (transformationDate != other.transformationDate) return false
 
             return true
@@ -145,6 +147,7 @@ object CharacterDtos {
             result = 31 * result + spriteWidth
             result = 31 * result + spriteHeight
             result = 31 * result + monIndex
+            result = 31 * result + stage
             result = 31 * result + transformationDate.hashCode()
             return result
         }

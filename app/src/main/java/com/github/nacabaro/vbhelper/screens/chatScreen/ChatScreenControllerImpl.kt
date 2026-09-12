@@ -42,6 +42,12 @@ class ChatScreenControllerImpl(
         }
     }
 
+    override fun markAssistantMessagesRead(characterId: Long) {
+        componentActivity.lifecycleScope.launch(Dispatchers.IO) {
+            chatRepository.markAssistantMessagesRead(characterId)
+        }
+    }
+
     override fun getSpeciesContext(characterId: Long, onResult: (SpeciesContext) -> Unit) {
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
             val userCharacter = database.userCharacterDao().getCharacter(characterId)

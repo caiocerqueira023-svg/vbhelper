@@ -9,6 +9,7 @@ interface ChatScreenController {
     fun getMood(characterId: Long): Flow<Int>
     fun sendMessage(characterId: Long, text: String, onResult: (Result<String>) -> Unit)
     fun deleteFromMessage(characterId: Long, messageId: Long)
+    fun markAssistantMessagesRead(characterId: Long)
     fun getSpeciesContext(characterId: Long, onResult: (SpeciesContext) -> Unit)
     fun saveManualSpeciesProfile(
         cardCharacterId: Long,

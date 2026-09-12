@@ -98,8 +98,12 @@ class HomeScreenControllerImpl(
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
             val result = runCatching {
                 val character = database.userCharacterDao().getCharacter(characterId)
+                val characterWithSprites = database.userCharacterDao().getCharacterWithSprites(characterId)
                 check(character.charId != transformation.stageId) {
                     "O Digimon já está nesse estágio."
+                }
+                check(transformation.stage <= characterWithSprites.stage) {
+                    "Não é possível regredir para um estágio maior que o atual."
                 }
 
                 val currentCurrency = application.container.currencyRepository.currencyValue.first()

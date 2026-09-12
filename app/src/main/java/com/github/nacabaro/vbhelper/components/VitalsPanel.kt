@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -135,36 +136,48 @@ fun InfoStatRow(
     modifier: Modifier = Modifier,
     valueColor: Color = VitalCyan
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier.padding(vertical = 6.dp)
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceStroke)
     ) {
-        Icon(
-            painter = painterResource(icon),
-            contentDescription = label,
-            tint = TextMutedOnDark,
-            modifier = Modifier.size(14.dp)
-        )
-        Column(
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .padding(start = 6.dp)
-                .weight(1f)
+                .fillMaxSize()
+                .padding(horizontal = 8.dp)
         ) {
-            Text(
-                text = label.uppercase(),
-                color = TextMutedOnDark,
-                fontSize = 10.sp,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.sp,
-                maxLines = 1
+            Icon(
+                painter = painterResource(icon),
+                contentDescription = label,
+                tint = TextMutedOnDark,
+                modifier = Modifier.size(14.dp)
             )
-            Text(
-                text = value,
-                color = valueColor,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1
-            )
+            Column(
+                modifier = Modifier
+                    .padding(start = 6.dp)
+                    .weight(1f)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "$label: ",
+                        color = TextPrimaryOnDark,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
+                    )
+                    Text(
+                        text = value,
+                        color = valueColor,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1
+                    )
+                }
+            }
         }
     }
 }

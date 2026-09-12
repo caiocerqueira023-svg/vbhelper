@@ -70,7 +70,7 @@ fun UnifiedHomeScreen(
                     width = activeMon.spriteWidth,
                     height = activeMon.spriteHeight
                 ),
-                shape = androidx.compose.material.MaterialTheme.shapes.small,
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                 modifier = Modifier.weight(1f).aspectRatio(1f),
                 vitalPoints = activeMon.vitalPoints
             )

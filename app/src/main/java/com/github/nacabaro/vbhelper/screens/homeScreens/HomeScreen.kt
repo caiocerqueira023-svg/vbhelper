@@ -69,7 +69,7 @@ fun HomeScreen(
         activeMon?.let { character ->
             application.container.db.userCharacterDao().getIndividualId(character.id)
                 .flatMapLatest { individualId ->
-                    application.container.chatRepository.getLatestAssistantMessage(individualId)
+                    application.container.chatRepository.getLatestUnreadAssistantMessage(individualId)
                 }
         } ?: flowOf(null)
     ).collectAsState(initial = null)
@@ -193,7 +193,7 @@ fun HomeScreen(
                             )
                         },
                         onClickTransformation = {
-                            if (it.stageId != activeMon!!.charId) {
+                            if (it.stageId != activeMon!!.charId && it.stage <= activeMon!!.stage) {
                                 selectedTransformation = it
                             }
                         }
@@ -213,7 +213,7 @@ fun HomeScreen(
                             )
                         },
                         onClickTransformation = {
-                            if (it.stageId != activeMon!!.charId) {
+                            if (it.stageId != activeMon!!.charId && it.stage <= activeMon!!.stage) {
                                 selectedTransformation = it
                             }
                         }
@@ -239,7 +239,7 @@ fun HomeScreen(
                             )
                         },
                         onClickTransformation = {
-                            if (it.stageId != activeMon!!.charId) {
+                            if (it.stageId != activeMon!!.charId && it.stage <= activeMon!!.stage) {
                                 selectedTransformation = it
                             }
                         },
@@ -315,7 +315,7 @@ fun HomeScreen(
     val currentCharacter = activeMon
     if (transformation != null && currentCharacter != null) {
         DegenerateDialog(
-            targetStage = transformation.monIndex,
+                targetStage = transformation.stage,
             onDismiss = { selectedTransformation = null },
             onConfirm = {
                 homeScreenController.degenerate(

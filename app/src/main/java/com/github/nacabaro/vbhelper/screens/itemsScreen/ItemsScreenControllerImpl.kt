@@ -49,11 +49,10 @@ class ItemsScreenControllerImpl (
 
     override fun applyItem(itemId: Long, characterId: Long, onCompletion: () -> Unit) {
         context.lifecycleScope.launch {
-            withContext(Dispatchers.IO) {
+            val itemName = withContext(Dispatchers.IO) {
                 val item = getItem(itemId)
+                check(item.quantity > 0) { "Este item não está mais disponível." }
                 val characterData = database.userCharacterDao().getCharacter(characterId)
-                val chatRepository = (context.applicationContext as VBHelper)
-                    .container.chatRepository
                 var beCharacterData: BECharacterData? = null
                 var vbCharacterData: VBCharacterData? = null
 
@@ -132,22 +131,26 @@ class ItemsScreenControllerImpl (
                     applySpecialMission(item.itemIcon, item.itemLength, characterId)
                 }
 
-                consumeItem(item.id)
+                check(consumeItem(item.id) == 1) {
+                    "Este item não está mais disponível."
+                }
+                item.name
+            }
 
+            // The state change and inventory consumption are complete now. Do
+            // not make the user wait for the network-backed Digimon reaction.
+            onCompletion()
+            launch(Dispatchers.IO) {
                 runCatching {
-                    chatRepository.triggerReaction(
+                    (context.applicationContext as VBHelper).container.chatRepository.triggerReaction(
                         characterId,
                         PromptLocalization.itemEvent(
                             PromptLocalization.currentLanguageTag(),
-                            item.name
+                            itemName
                         )
                     )
                 }.onFailure {
                     Timber.e(it, "Falha ao gerar reação ao uso do item")
-                }
-
-                context.runOnUiThread {
-                    onCompletion()
                 }
             }
         }
@@ -220,9 +223,5 @@ class ItemsScreenControllerImpl (
             .getItem(itemId)
     }
 
-    private suspend fun consumeItem(itemId: Long) {
-        database
-            .itemDao()
-            .useItem(itemId)
-    }
+    private suspend fun consumeItem(itemId: Long): Int = database.itemDao().useItem(itemId)
 }
