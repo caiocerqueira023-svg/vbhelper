@@ -267,24 +267,19 @@ fun WorldScreen(navController: NavController) {
         }
     }
 
-    // TYPE_ROTATION_VECTOR (gyro + accel + magnetometer fusion) → rotation matrix.
-    // Azimuth is the horizontal direction the "forward" axis points:
-    //  - phone flatter → device +Y (top edge)
-    //  - phone more upright → device -Z (through the screen, away from the user)
-    // Pick the axis with the most reliable horizontal projection. Do not blend the
-    // axes: when the phone is tilted past its vertical position, their projections
-    // can point in opposite directions and a blend becomes a zero vector. atan2 on
-    // that vector is the source of the heading snapping back to a fixed direction.
-    // A small hysteresis keeps the choice stable near the transition.
+    // TYPE_ROTATION_VECTOR combines the available orientation sensors. The map uses
+    // Android's azimuth for the top of the current display, which is the only stable
+    // reference for a full 360° turn. Mixing the top and screen-normal axes made the
+    // selected direction ambiguous after half a turn on some devices.
     DisposableEffect(Unit) {
         val sensorManager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val rotationSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
         val rotationMatrix = FloatArray(9)
         val displayRotationMatrix = FloatArray(9)
+        val orientationAngles = FloatArray(3)
         // Local filter state — do not read Compose state from the sensor thread.
         var smoothedHeading = 0f
         var hasSample = false
-        var usesTopEdge = true
 
         val listener = object : SensorEventListener {
             override fun onSensorChanged(event: SensorEvent) {
@@ -315,33 +310,9 @@ fun WorldScreen(navController: NavController) {
                     displayRotationMatrix
                 )
 
-                // Display Y in world (East, North, Up) = (R[1], R[4], R[7])
-                val yEast = displayRotationMatrix[1]
-                val yNorth = displayRotationMatrix[4]
-                val yHorizSquared = yEast * yEast + yNorth * yNorth
-
-                // Device Z in world = (R[2], R[5], R[8]); use -Z when upright so
-                // "forward" is the direction the back of the phone faces (away from user).
-                val zEast = -displayRotationMatrix[2]
-                val zNorth = -displayRotationMatrix[5]
-                val zHorizSquared = zEast * zEast + zNorth * zNorth
-
-                // Change source only after a meaningful advantage. At least one of
-                // these orthogonal device axes always has a strong horizontal
-                // projection, so the selected heading cannot collapse to zero.
-                val hysteresis = 0.08f
-                usesTopEdge = when {
-                    usesTopEdge && zHorizSquared > yHorizSquared + hysteresis -> false
-                    !usesTopEdge && yHorizSquared > zHorizSquared + hysteresis -> true
-                    else -> usesTopEdge
-                }
-                val east = if (usesTopEdge) yEast else zEast
-                val north = if (usesTopEdge) yNorth else zNorth
-
-                // atan2(east, north): 0° = magnetic north, 90° = east, CW-positive
-                // matching SensorManager.getOrientation azimuth convention.
-                var degrees = Math.toDegrees(kotlin.math.atan2(east.toDouble(), north.toDouble())).toFloat()
-                degrees = (degrees + 360f) % 360f
+                SensorManager.getOrientation(displayRotationMatrix, orientationAngles)
+                // orientationAngles[0] is azimuth in radians (-π..π).
+                val degrees = (Math.toDegrees(orientationAngles[0].toDouble()).toFloat() + 360f) % 360f
 
                 if (!hasSample) {
                     smoothedHeading = degrees
