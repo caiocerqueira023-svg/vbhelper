@@ -32,7 +32,7 @@ enum class ChatApiProvider(
         suggestedModel = "minimax-m2.7"
     ),
     LITELLM(
-        displayName = "LiteLLM (seu proxy)",
+        displayName = "LiteLLM",
         baseUrl = null
     ),
     CUSTOM(
