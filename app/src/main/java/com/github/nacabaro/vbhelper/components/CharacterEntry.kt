@@ -91,17 +91,21 @@ fun CharacterEntry(
     onClick: () -> Unit = {  }
 ) {
     var animationFrame by remember { mutableIntStateOf(0) }
-    val animationOffsetMillis = remember(animationKey) {
-        (animationKey.hashCode().toLong() and 0x7fff_ffffL) % 750L
+    val animationTiming = remember(animationKey) {
+        // A mixed seed avoids consecutive database IDs producing almost identical timings.
+        val seed = (animationKey.hashCode().toLong() * 1_103_515_245L + 12_345L) and 0x7fff_ffffL
+        val intervalMillis = 550L + (seed % 301L)
+        val offsetMillis = (seed / 997L) % intervalMillis
+        offsetMillis to intervalMillis
     }
 
     LaunchedEffect(animationKey, idleFrame2?.bitmap?.contentHashCode()) {
         // Keep a stable but unique phase for each Digimon, so a grid does not animate in lockstep.
-        animationFrame = if (animationOffsetMillis > 375L) 1 else 0
+        animationFrame = if (animationTiming.first * 2L >= animationTiming.second) 1 else 0
         if (idleFrame2 != null) {
-            delay(animationOffsetMillis)
+            delay(animationTiming.first)
             while (true) {
-                delay(750L)
+                delay(animationTiming.second)
                 animationFrame = 1 - animationFrame
             }
         }

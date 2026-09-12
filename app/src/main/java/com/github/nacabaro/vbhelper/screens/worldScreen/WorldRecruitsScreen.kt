@@ -132,22 +132,29 @@ fun WorldRecruitsScreen(navController: NavController) {
                         isRecruiting = true
                         scope.launch(Dispatchers.IO) {
                             val languageTag = PromptLocalization.currentLanguageTag()
-                            val message = runCatching {
-                                val msg = chatRepository.triggerReactionForWildEncounter(
-                                    spawn.individualId,
-                                    spawn.cardCharacterId,
-                                    PromptLocalization.wildRecruitConfirmedInstruction(languageTag)
-                                )
+                            val recruitment = runCatching {
                                 worldRepository.recruitSpawn(spawn.id).getOrThrow()
-                                msg
+                            }
+                            if (recruitment.isSuccess) {
+                                // The recruit is already in Storage. Its reaction is optional and must not
+                                // hold up the action when the chat service is slow or unavailable.
+                                launch {
+                                    runCatching {
+                                        chatRepository.triggerReactionForWildEncounter(
+                                            spawn.individualId,
+                                            spawn.cardCharacterId,
+                                            PromptLocalization.wildRecruitConfirmedInstruction(languageTag)
+                                        )
+                                    }
+                                }
                             }
                             withContext(Dispatchers.Main) {
                                 isRecruiting = false
                                 selected = null
-                                message.onSuccess {
+                                recruitment.onSuccess {
                                     Toast.makeText(context, context.getString(R.string.ui_world_recruited_toast), Toast.LENGTH_LONG).show()
                                 }
-                                message.onFailure {
+                                recruitment.onFailure {
                                     Toast.makeText(context, it.message ?: context.getString(R.string.ui_unknown_error), Toast.LENGTH_LONG).show()
                                 }
                             }
