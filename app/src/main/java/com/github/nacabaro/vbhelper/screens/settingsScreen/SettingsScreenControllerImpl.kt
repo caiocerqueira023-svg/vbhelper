@@ -26,6 +26,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.chat.ChatApiProvider
+import com.github.nacabaro.vbhelper.source.LlmProviderSettings
 import com.github.nacabaro.vbhelper.ui.theme.AppFont
 
 
@@ -50,6 +52,9 @@ class SettingsScreenControllerImpl(
     val currentLlmApiKey: Flow<String?> = llmSettingsRepository.apiKey
     val currentLlmModel: Flow<String> = llmSettingsRepository.model
     val currentLlmBaseUrl: Flow<String> = llmSettingsRepository.chatCompletionsBaseUrl
+    val currentLlmProvider: Flow<ChatApiProvider> = llmSettingsRepository.activeProvider
+    val savedLlmProviderSettings: Flow<Map<ChatApiProvider, LlmProviderSettings>> =
+        llmSettingsRepository.providerSettings
     val currentSystemPromptTemplate: Flow<String?> = llmSettingsRepository.systemPromptTemplate
     val currentWildSystemPromptTemplate: Flow<String?> = llmSettingsRepository.wildSystemPromptTemplate
     val currentTamerName: Flow<String> = llmSettingsRepository.tamerName
@@ -147,11 +152,14 @@ class SettingsScreenControllerImpl(
         _showLlmDialog.value = false
     }
 
-    fun saveLlmSettings(apiKey: String, model: String, baseUrl: String) {
+    fun saveLlmSettings(
+        provider: ChatApiProvider,
+        apiKey: String,
+        model: String,
+        baseUrl: String
+    ) {
         context.lifecycleScope.launch(Dispatchers.IO) {
-            llmSettingsRepository.setApiKey(apiKey.trim())
-            llmSettingsRepository.setModel(model.trim().ifBlank { "openrouter/auto" })
-            llmSettingsRepository.setChatCompletionsBaseUrl(baseUrl)
+            llmSettingsRepository.saveProviderSettings(provider, apiKey, model, baseUrl)
 
             context.runOnUiThread {
                 Toast.makeText(context, context.getString(R.string.ui_chat_saved), Toast.LENGTH_SHORT).show()

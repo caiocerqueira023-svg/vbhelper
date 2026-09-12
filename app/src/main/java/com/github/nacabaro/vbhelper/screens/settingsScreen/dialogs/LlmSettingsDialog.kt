@@ -28,6 +28,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.chat.ChatApiProvider
+import com.github.nacabaro.vbhelper.source.LlmProviderSettings
 import androidx.compose.ui.window.DialogProperties
 
 @Composable
@@ -35,15 +36,17 @@ fun LlmSettingsDialog(
     currentApiKey: String?,
     currentModel: String,
     currentBaseUrl: String,
+    currentProvider: ChatApiProvider,
+    savedProviderSettings: Map<ChatApiProvider, LlmProviderSettings>,
     onDismiss: () -> Unit,
-    onSave: (apiKey: String, model: String, baseUrl: String) -> Unit
+    onSave: (provider: ChatApiProvider, apiKey: String, model: String, baseUrl: String) -> Unit
 ) {
     var apiKey by remember(currentApiKey) { mutableStateOf(currentApiKey.orEmpty()) }
     var model by remember(currentModel) { mutableStateOf(currentModel) }
     var baseUrl by remember(currentBaseUrl) { mutableStateOf(currentBaseUrl) }
     var showKey by remember { mutableStateOf(false) }
-    var selectedProvider by remember(currentBaseUrl) {
-        mutableStateOf(ChatApiProvider.fromBaseUrl(currentBaseUrl))
+    var selectedProvider by remember(currentProvider) {
+        mutableStateOf(currentProvider)
     }
     var showProviderPicker by remember { mutableStateOf(false) }
 
@@ -138,7 +141,7 @@ fun LlmSettingsDialog(
                     }
                     Button(
                         enabled = apiKey.isNotBlank() && baseUrl.startsWith("https://"),
-                        onClick = { onSave(apiKey, model, baseUrl) },
+                        onClick = { onSave(selectedProvider, apiKey, model, baseUrl) },
                         modifier = Modifier.padding(start = 8.dp)
                     ) {
                         Text(stringResource(R.string.ui_save))
@@ -158,9 +161,10 @@ fun LlmSettingsDialog(
                         TextButton(
                             onClick = {
                                 selectedProvider = provider
-                                provider.baseUrl?.let { baseUrl = it }
-                                if (provider == ChatApiProvider.LITELLM) baseUrl = ""
-                                provider.suggestedModel?.let { model = it }
+                                val saved = savedProviderSettings[provider]
+                                apiKey = saved?.apiKey.orEmpty()
+                                model = saved?.model ?: provider.suggestedModel ?: "openrouter/auto"
+                                baseUrl = saved?.baseUrl ?: provider.baseUrl.orEmpty()
                                 showProviderPicker = false
                             },
                             modifier = Modifier.fillMaxWidth()

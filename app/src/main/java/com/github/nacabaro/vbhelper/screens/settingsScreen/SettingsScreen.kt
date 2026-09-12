@@ -41,6 +41,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.TextButton
 import com.github.nacabaro.vbhelper.ui.theme.AppFont
 import com.github.nacabaro.vbhelper.ui.theme.appFontFamily
+import com.github.nacabaro.vbhelper.chat.ChatApiProvider
 
 
 @Composable
@@ -54,6 +55,8 @@ fun SettingsScreen(
     val currentApiKey by settingsScreenController.currentLlmApiKey.collectAsState(initial = null)
     val currentModel by settingsScreenController.currentLlmModel.collectAsState(initial = "openrouter/auto")
     val currentBaseUrl by settingsScreenController.currentLlmBaseUrl.collectAsState(initial = "https://openrouter.ai/api/v1/")
+    val currentProvider by settingsScreenController.currentLlmProvider.collectAsState(initial = ChatApiProvider.OPENROUTER)
+    val savedProviderSettings by settingsScreenController.savedLlmProviderSettings.collectAsState(initial = emptyMap())
     val currentSystemPromptTemplate by settingsScreenController.currentSystemPromptTemplate.collectAsState(initial = null)
     val currentWildSystemPromptTemplate by settingsScreenController.currentWildSystemPromptTemplate.collectAsState(initial = null)
     val currentTamerName by settingsScreenController.currentTamerName.collectAsState(initial = "")
@@ -220,9 +223,11 @@ fun SettingsScreen(
             currentApiKey = currentApiKey,
             currentModel = currentModel,
             currentBaseUrl = currentBaseUrl,
+            currentProvider = currentProvider,
+            savedProviderSettings = savedProviderSettings,
             onDismiss = { settingsScreenController.dismissLlmDialog() },
-            onSave = { apiKey, model, baseUrl ->
-                settingsScreenController.saveLlmSettings(apiKey, model, baseUrl)
+            onSave = { provider, apiKey, model, baseUrl ->
+                settingsScreenController.saveLlmSettings(provider, apiKey, model, baseUrl)
             }
         )
     }
