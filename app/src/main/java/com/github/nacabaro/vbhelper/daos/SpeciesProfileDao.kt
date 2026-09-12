@@ -17,6 +17,9 @@ interface SpeciesProfileDao {
     @Query("SELECT * FROM SpeciesProfile WHERE cardCharacterId = :cardCharacterId")
     fun getByCardCharacterIdFlow(cardCharacterId: Long): Flow<SpeciesProfile?>
 
+    @Query("SELECT * FROM SpeciesProfile")
+    suspend fun getAll(): List<SpeciesProfile>
+
     @Query("""
         SELECT sp.* FROM SpeciesProfile sp
         JOIN CardCharacter cc ON cc.id = sp.cardCharacterId

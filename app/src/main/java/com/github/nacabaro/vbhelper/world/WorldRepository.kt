@@ -42,17 +42,12 @@ class WorldRepository(private val db: AppDatabase) {
     companion object {
         private const val NEARBY_RADIUS_METERS = 350.0
         private const val TARGET_NEARBY_COUNT = 8
+        // WorldScreen shows a 1 km radius at its furthest (50%) zoom level.
+        private const val WORLD_VISIBLE_RADIUS_METERS = 1_000.0
+        private const val TARGET_OUTER_VISIBLE_COUNT = 12
         private const val MAX_SPAWN_PER_CALL = 3
+        private const val MAX_OUTER_SPAWN_PER_CALL = TARGET_OUTER_VISIBLE_COUNT
         private const val GLOBAL_ACTIVE_CAP = 60
-
-        private val STAGE_WEIGHTS = listOf(
-            0 to 0.15, // Baby I
-            1 to 0.15, // Baby II
-            2 to 0.40, // Child
-            3 to 0.24, // Adult
-            4 to 0.05, // Perfect
-            5 to 0.01  // Ultimate
-        )
 
         /** Placeholder: recrutamento exige o Digimon ativo com 5000+ vitais. */
         const val RECRUIT_VITALS_REQUIREMENT = 5000
@@ -78,13 +73,28 @@ class WorldRepository(private val db: AppDatabase) {
             it.recruitmentState == RecruitmentState.WILD &&
                 distanceMeters(latitude, longitude, it.latitude, it.longitude) <= NEARBY_RADIUS_METERS
         }
-        val toSpawn = (TARGET_NEARBY_COUNT - nearbyCount).coerceIn(0, MAX_SPAWN_PER_CALL)
+        val outerVisibleCount = activeSpawns.count {
+            it.recruitmentState == RecruitmentState.WILD &&
+                distanceMeters(latitude, longitude, it.latitude, it.longitude) > NEARBY_RADIUS_METERS &&
+                distanceMeters(latitude, longitude, it.latitude, it.longitude) <= WORLD_VISIBLE_RADIUS_METERS
+        }
+        val nearbyNeeded = (TARGET_NEARBY_COUNT - nearbyCount).coerceAtLeast(0)
+        val outerNeeded = (TARGET_OUTER_VISIBLE_COUNT - outerVisibleCount).coerceAtLeast(0)
+        val nearbyToSpawn = nearbyNeeded.coerceAtMost(MAX_SPAWN_PER_CALL)
+        // Outer spawns are additional: the existing nearby spawn rate/count is untouched.
+        val outerToSpawn = outerNeeded.coerceAtMost(MAX_OUTER_SPAWN_PER_CALL)
+        val toSpawn = (nearbyToSpawn + outerToSpawn)
+            .coerceAtMost(GLOBAL_ACTIVE_CAP - activeSpawns.size)
         if (toSpawn <= 0) return
 
-        repeat(toSpawn) {
-            val stage = pickWeightedStage()
-            val character = db.characterDao().getRandomCharacterForStage(stage)
-                ?: db.characterDao().getRandomCharacter()
+        val loadedCharacters = db.characterDao().getAllCharacters()
+        if (loadedCharacters.isEmpty()) return
+        val speciesNames = db.speciesProfileDao().getAll().associate { profile ->
+            profile.cardCharacterId to (profile.matchedName ?: profile.speciesName)
+        }
+
+        repeat(toSpawn) { spawnIndex ->
+            val character = WorldSpawnSelector.selectCharacter(loadedCharacters, speciesNames)
                 ?: return@repeat
 
             val individualId = IndividualIdentity.generate()
@@ -93,7 +103,14 @@ class WorldRepository(private val db: AppDatabase) {
                 DigimonPersonalityGenerator.generate(individualId, character.attribute, character.stage, now)
             )
 
-            val distance = Random.nextDouble(30.0, NEARBY_RADIUS_METERS)
+            // Preserve the existing eight nearby spawns. Once they are accounted for,
+            // fill the outer ring visible at 50% zoom (350 m to 1 km).
+            val isNearbySpawn = spawnIndex < nearbyToSpawn
+            val distance = if (isNearbySpawn) {
+                randomDistanceInArea(30.0, NEARBY_RADIUS_METERS)
+            } else {
+                randomDistanceInArea(NEARBY_RADIUS_METERS, WORLD_VISIBLE_RADIUS_METERS)
+            }
             val bearing = Random.nextDouble(0.0, Math.PI * 2)
             val latOffset = distance * cos(bearing) / 111_320.0
             val lonOffset = distance * sin(bearing) / (111_320.0 * cos(Math.toRadians(latitude)).coerceAtLeast(0.1))
@@ -346,21 +363,17 @@ class WorldRepository(private val db: AppDatabase) {
         characterId
     }
 
-    private fun pickWeightedStage(random: Random = Random.Default): Int {
-        val roll = random.nextDouble()
-        var cumulative = 0.0
-        for ((stage, weight) in STAGE_WEIGHTS) {
-            cumulative += weight
-            if (roll < cumulative) return stage
-        }
-        return STAGE_WEIGHTS.last().first
-    }
-
     private fun distanceMeters(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val northMeters = (lat2 - lat1) * 111_320.0
         val eastMeters = (lon2 - lon1) * 111_320.0 * cos(Math.toRadians(lat1))
         return sqrt(northMeters * northMeters + eastMeters * eastMeters)
     }
+
+    /** Uniform distribution over a circular area/ring, not merely over its radius. */
+    private fun randomDistanceInArea(minDistance: Double, maxDistance: Double): Double = sqrt(
+        minDistance * minDistance +
+            Random.nextDouble() * (maxDistance * maxDistance - minDistance * minDistance)
+    )
 
     suspend fun markInteracted(id: Long) = spawnDao.markInteracted(id)
 
