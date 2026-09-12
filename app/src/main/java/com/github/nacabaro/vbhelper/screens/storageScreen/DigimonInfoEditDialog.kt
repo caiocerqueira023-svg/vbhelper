@@ -94,11 +94,6 @@ fun DigimonInfoEditDialog(
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(stringResource(R.string.ui_digimon_info), style = MaterialTheme.typography.titleMedium)
-                Text(
-                    stringResource(R.string.ui_card_fields_note, cardName),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline
-                )
                 Spacer(Modifier.height(12.dp))
                 OutlinedTextField(
                     value = editedNickname,

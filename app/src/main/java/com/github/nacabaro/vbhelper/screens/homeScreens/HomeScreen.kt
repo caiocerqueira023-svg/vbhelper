@@ -127,6 +127,18 @@ fun HomeScreen(
     var selectedTransformation by remember {
         mutableStateOf<CharacterDtos.TransformationHistory?>(null)
     }
+    var vitalsHistory by remember {
+        mutableStateOf<List<com.github.nacabaro.vbhelper.domain.device_data.VitalsHistory>>(emptyList())
+    }
+
+    LaunchedEffect(activeMon?.id) {
+        val character = activeMon
+        vitalsHistory = if (character != null) {
+            application.container.db.userCharacterDao().getVitalsHistory(character.id)
+        } else {
+            emptyList()
+        }
+    }
 
     LaunchedEffect(true) {
         homeScreenController
@@ -230,7 +242,8 @@ fun HomeScreen(
                             if (it.stageId != activeMon!!.charId) {
                                 selectedTransformation = it
                             }
-                        }
+                        },
+                        vitalsHistory = vitalsHistory
                     )
                 }
 

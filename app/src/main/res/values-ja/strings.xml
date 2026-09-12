@@ -51,6 +51,10 @@
     <string name="card_entry_delete">削除</string>
     <string name="home_vbdim_current_phase_win">フェーズ勝率 %</string>
     <string name="home_vbdim_special_missions">スペシャルミッション</string>
+    <string name="home_vbdim_weekly_vitals">週間バイタルグラフ</string>
+    <string name="home_vbdim_level">レベル</string>
+    <string name="home_vbdim_attribute">属性</string>
+    <string name="home_vbdim_days">日数</string>
     <string name="storage_delete_character">削除</string>
     <string name="storage_delete_character_confirmation">このデジモンを削除してもよろしいですか？この操作は取り消せません。</string>
     <string name="storage_close">閉じる</string>

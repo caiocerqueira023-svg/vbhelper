@@ -71,7 +71,8 @@ fun UnifiedHomeScreen(
                     height = activeMon.spriteHeight
                 ),
                 shape = androidx.compose.material.MaterialTheme.shapes.small,
-                modifier = Modifier.weight(1f).aspectRatio(1f)
+                modifier = Modifier.weight(1f).aspectRatio(1f),
+                vitalPoints = activeMon.vitalPoints
             )
             Column(modifier = Modifier.weight(0.5f).aspectRatio(0.5f)) {
                 ItemDisplay(

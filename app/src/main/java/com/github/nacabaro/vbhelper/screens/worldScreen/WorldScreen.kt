@@ -278,39 +278,6 @@ fun WorldScreen(navController: NavController) {
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
-            Text(status, style = MaterialTheme.typography.bodyMedium)
-            if (compass.heading != null) {
-                Text(
-                    stringResource(R.string.ui_world_direction, cardinalDirection(heading), heading.roundToInt() % 360),
-                    style = MaterialTheme.typography.bodySmall
-                )
-            }
-            val compassMessage = when (compass.status) {
-                CompassStatus.WAITING -> R.string.ui_world_compass_waiting
-                CompassStatus.CALIBRATE -> R.string.ui_world_compass_calibrate
-                CompassStatus.APPROXIMATE -> R.string.ui_world_compass_approximate
-                CompassStatus.UNAVAILABLE -> R.string.ui_world_compass_unavailable
-                CompassStatus.TRACKING -> null
-            }
-            compassMessage?.let {
-                Text(stringResource(it), style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error)
-            }
-            if (compassDebug) {
-                TextButton(onClick = { showCompassDiagnostics = !showCompassDiagnostics }) {
-                    Text(stringResource(R.string.ui_world_compass_diagnostics))
-                }
-                if (showCompassDiagnostics) {
-                    Text(compass.diagnostic, style = MaterialTheme.typography.bodySmall)
-                }
-            }
-            Spacer(Modifier.height(8.dp))
-
-            Button(onClick = { navController.navigate(NavigationItems.WorldRecruits.route) }) {
-                Text(stringResource(R.string.ui_world_recruits_button))
-            }
-            Spacer(Modifier.height(8.dp))
-
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -548,10 +515,6 @@ fun WorldScreen(navController: NavController) {
                 stringResource(R.string.ui_world_nearby_count, spawns.size),
                 style = MaterialTheme.typography.titleMedium
             )
-            Text(stringResource(R.string.ui_world_tap_instruction))
-            Text(stringResource(R.string.ui_world_grid_instruction))
-            Text(stringResource(R.string.ui_world_zoom_instruction))
-            Text(stringResource(R.string.ui_world_compass_instruction))
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -563,6 +526,12 @@ fun WorldScreen(navController: NavController) {
                     modifier = Modifier.padding(top = 12.dp)
                 )
                 Button(onClick = { zoom = (zoom * 1.5f).coerceAtMost(4f) }) { Text("+") }
+            }
+            Button(
+                onClick = { navController.navigate(NavigationItems.WorldRecruits.route) },
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
+                Text(stringResource(R.string.ui_world_recruits_button))
             }
 
             if (!hasLocationPermission || location == null) {

@@ -2,6 +2,8 @@ package com.github.nacabaro.vbhelper.components
 
 import android.widget.Toast
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,11 +12,16 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,6 +33,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
@@ -41,6 +51,19 @@ import androidx.compose.ui.text.font.FontWeight
 import com.github.cfogrady.vbnfc.vb.SpecialMission
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.domain.device_data.SpecialMissions
+import com.github.nacabaro.vbhelper.ui.theme.StatusBlue
+import com.github.nacabaro.vbhelper.ui.theme.StatusBlueDim
+import com.github.nacabaro.vbhelper.ui.theme.StatusGreen
+import com.github.nacabaro.vbhelper.ui.theme.StatusGreenDim
+import com.github.nacabaro.vbhelper.ui.theme.StatusRed
+import com.github.nacabaro.vbhelper.ui.theme.StatusRedDim
+import com.github.nacabaro.vbhelper.ui.theme.StatusYellow
+import com.github.nacabaro.vbhelper.ui.theme.StatusYellowDim
+import com.github.nacabaro.vbhelper.ui.theme.SurfaceHighlightPurple
+import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
+import com.github.nacabaro.vbhelper.ui.theme.TextMutedOnDark
+import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
+import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import com.github.nacabaro.vbhelper.utils.getObscuredBitmap
 import androidx.compose.ui.res.stringResource
 
@@ -57,6 +80,7 @@ fun CharacterEntry(
     idleFrame2: BitmapData? = null,
     speechBubbleText: String? = null,
     statusText: String? = null,
+    vitalPoints: Int? = null,
     cardColors: CardColors = CardDefaults.cardColors(
         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
     ),
@@ -96,77 +120,115 @@ fun CharacterEntry(
         modifier = modifier
             .aspectRatio(1f)
             .padding(8.dp),
-        colors = cardColors
+        colors = cardColors,
+        border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceStroke)
     ) {
         Box(
-            contentAlignment = Alignment.BottomCenter,
+            contentAlignment = Alignment.Center,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(4.dp)
+                .background(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            SurfaceHighlightPurple,
+                            MaterialTheme.colorScheme.surfaceContainerHighest
+                        )
+                    )
+                )
         ) {
-            if (!statusText.isNullOrBlank()) {
-                Card(
-                    shape = MaterialTheme.shapes.small,
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surface
-                    ),
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .padding(4.dp)
-                ) {
-                    Text(
-                        text = statusText,
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        maxLines = 2
-                    )
-                }
-            }
-            if (!speechBubbleText.isNullOrBlank()) {
-                Card(
-                    shape = MaterialTheme.shapes.small,
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(4.dp)
-                        .clickable(onClick = onClick)
-                ) {
-                    Text(
-                        text = speechBubbleText.take(40) + if (speechBubbleText.length > 40) "…" else "",
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        style = MaterialTheme.typography.labelSmall,
-                        maxLines = 2
-                    )
-                }
-            }
-            Image(
-                bitmap = imageBitmap,
-                contentDescription = "Icon",
-                filterQuality = FilterQuality.None,
-                colorFilter = when (obscure) {
-                    true -> ColorFilter.tint(color = MaterialTheme.colorScheme.secondary)
-                    false -> null
-                },
+            Box(
                 modifier = Modifier
-                    .size(dpSize)
-                    .align(Alignment.BottomCenter)
-                    .clickable(enabled = !disabled, onClick = onClick)
+                    .fillMaxSize(0.86f)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surface)
+                    .align(Alignment.Center)
             )
+            vitalPoints?.let { vitals ->
+                CircularProgressIndicator(
+                    progress = { (vitals / 9_999f).coerceIn(0f, 1f) },
+                    modifier = Modifier
+                        .fillMaxSize(0.86f)
+                        .align(Alignment.Center),
+                    color = VitalCyan,
+                    trackColor = SurfaceStroke,
+                    strokeWidth = 4.dp
+                )
+            }
 
-            if (cardIcon != null) {
-                val bitmap = remember (icon.bitmap) { cardIcon.getBitmap() }
-                val iconBitmap = remember(bitmap) { bitmap.asImageBitmap() }
-                val dpSize = (icon.width * iconSizeMultiplier /density).dp
-
+            Box(
+                contentAlignment = Alignment.BottomCenter,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(4.dp)
+            ) {
+                if (!statusText.isNullOrBlank()) {
+                    Card(
+                        shape = RoundedCornerShape(10.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceStroke),
+                        modifier = Modifier
+                            .align(Alignment.TopStart)
+                            .padding(4.dp)
+                    ) {
+                        Text(
+                            text = statusText,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextPrimaryOnDark,
+                            maxLines = 2
+                        )
+                    }
+                }
+                if (!speechBubbleText.isNullOrBlank()) {
+                    Card(
+                        shape = RoundedCornerShape(10.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceStroke),
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(4.dp)
+                            .clickable(onClick = onClick)
+                    ) {
+                        Text(
+                            text = speechBubbleText.take(40) + if (speechBubbleText.length > 40) "…" else "",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextPrimaryOnDark,
+                            maxLines = 2
+                        )
+                    }
+                }
                 Image(
-                    bitmap = iconBitmap,
-                    contentDescription = "Card icon",
+                    bitmap = imageBitmap,
+                    contentDescription = "Icon",
                     filterQuality = FilterQuality.None,
+                    colorFilter = when (obscure) {
+                        true -> ColorFilter.tint(color = MaterialTheme.colorScheme.secondary)
+                        false -> null
+                    },
                     modifier = Modifier
                         .size(dpSize)
-                        .align(Alignment.BottomEnd)
-                        .padding(8.dp)
+                        .align(Alignment.BottomCenter)
+                        .clickable(enabled = !disabled, onClick = onClick)
                 )
+
+                if (cardIcon != null) {
+                    val cardBitmap = remember(icon.bitmap) { cardIcon.getBitmap() }
+                    val iconBitmap = remember(cardBitmap) { cardBitmap.asImageBitmap() }
+                    val cardIconDpSize = (icon.width * iconSizeMultiplier / density).dp
+
+                    Image(
+                        bitmap = iconBitmap,
+                        contentDescription = "Card icon",
+                        filterQuality = FilterQuality.None,
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd)
+                            .padding(8.dp)
+                            .size(cardIconDpSize)
+                    )
+                }
             }
         }
     }
@@ -182,7 +244,11 @@ fun ItemDisplay(
     val context = LocalContext.current
     Card(
         modifier = modifier,
-        shape = androidx.compose.material.MaterialTheme.shapes.small,
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceStroke),
         onClick = {
             Toast.makeText(context, definition, Toast.LENGTH_SHORT).show()
         }
@@ -192,20 +258,41 @@ fun ItemDisplay(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier
                 .fillMaxSize()
+                .padding(6.dp)
         ) {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = "Vitals",
+            Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .fillMaxSize(0.5f)
-                    .padding(8.dp)
-            )
+                    .fillMaxWidth(0.62f)
+                    .aspectRatio(1f)
+                    .clip(CircleShape)
+                    .background(VitalCyan.copy(alpha = 0.16f))
+            ) {
+                Icon(
+                    painter = painterResource(icon),
+                    contentDescription = definition,
+                    tint = VitalCyan,
+                    modifier = Modifier.fillMaxSize(0.55f)
+                )
+            }
             Text(
                 text = textValue,
                 textAlign = TextAlign.Center,
-                fontFamily = MaterialTheme.typography.titleLarge.fontFamily,
+                fontFamily = MaterialTheme.typography.titleMedium.fontFamily,
                 fontWeight = FontWeight.Bold,
+                color = TextPrimaryOnDark,
+                maxLines = 1,
+                modifier = Modifier.padding(top = 4.dp)
             )
+            if (definition.isNotBlank()) {
+                Text(
+                    text = definition,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextMutedOnDark,
+                    maxLines = 1
+                )
+            }
         }
     }
 }
@@ -271,17 +358,26 @@ fun SpecialMissionsEntry(
         SpecialMission.Type.VITALS -> R.drawable.baseline_vitals_24
     }
 
-    val color = when (specialMission.status)
-    {
-        SpecialMission.Status.IN_PROGRESS -> MaterialTheme.colorScheme.secondary
-        SpecialMission.Status.COMPLETED -> MaterialTheme.colorScheme.primary
-        SpecialMission.Status.FAILED -> MaterialTheme.colorScheme.error
-        else -> MaterialTheme.colorScheme.surfaceContainerHighest
+    // Colorful ribbon-style banner colors, echoing the mission-log cards
+    // from the reference UI (each mission type gets its own bold color).
+    val (bannerColor, bannerColorDim) = when (specialMission.missionType) {
+        SpecialMission.Type.STEPS -> StatusYellow to StatusYellowDim
+        SpecialMission.Type.BATTLES -> StatusBlue to StatusBlueDim
+        SpecialMission.Type.WINS -> StatusRed to StatusRedDim
+        SpecialMission.Type.VITALS -> StatusGreen to StatusGreenDim
+        SpecialMission.Type.NONE -> SurfaceHighlightPurple to SurfaceHighlightPurple
+    }
+
+    val (containerColor, contentColor, isVivid) = when (specialMission.status) {
+        SpecialMission.Status.IN_PROGRESS -> Triple(bannerColorDim, TextPrimaryOnDark, false)
+        SpecialMission.Status.COMPLETED -> Triple(bannerColor, Color.Black, true)
+        SpecialMission.Status.FAILED -> Triple(StatusRedDim, TextPrimaryOnDark, false)
+        else -> Triple(MaterialTheme.colorScheme.surfaceContainerHighest, TextMutedOnDark, false)
     }
 
     Card(
         modifier = modifier,
-        shape = androidx.compose.material.MaterialTheme.shapes.small,
+        shape = RoundedCornerShape(16.dp),
         onClick = if (specialMission.status == SpecialMission.Status.COMPLETED) {
             { onClickCollect(specialMission.id) }
         } else if (specialMission.status == SpecialMission.Status.UNAVAILABLE) {
@@ -290,34 +386,61 @@ fun SpecialMissionsEntry(
             { onClickMission(specialMission.id) }
         },
         colors = CardDefaults.cardColors(
-            containerColor = color
+            containerColor = containerColor
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            if (isVivid) Color.Black.copy(alpha = 0.15f) else SurfaceStroke
         )
 
     ) {
-        Row (
+        Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(horizontal = 14.dp, vertical = 12.dp)
         ) {
-            Icon(
-                painter = painterResource(icon),
-                contentDescription = stringResource(R.string.special_mission_icon_content_description),
+            Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .fillMaxHeight()
-                    .padding(16.dp)
-            )
-            Column {
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(if (isVivid) Color.Black.copy(alpha = 0.15f) else Color.White.copy(alpha = 0.08f))
+            ) {
+                Icon(
+                    painter = painterResource(icon),
+                    contentDescription = stringResource(R.string.special_mission_icon_content_description),
+                    tint = contentColor,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = textValue,
-                    fontFamily = MaterialTheme.typography.titleLarge.fontFamily,
+                    fontFamily = MaterialTheme.typography.titleMedium.fontFamily,
                     fontWeight = FontWeight.Bold,
+                    color = contentColor,
                 )
                 Text(
                     text = completion,
                     fontFamily = MaterialTheme.typography.titleSmall.fontFamily,
+                    color = contentColor.copy(alpha = 0.8f),
                 )
+            }
+            if (specialMission.status == SpecialMission.Status.COMPLETED) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color.Black.copy(alpha = 0.2f))
+                        .padding(horizontal = 10.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = "OK",
+                        fontWeight = FontWeight.ExtraBold,
+                        color = contentColor
+                    )
+                }
             }
         }
     }

@@ -256,6 +256,10 @@
     <string name="home_vbdim_total_battle_win">Total battle win %</string>
     <string name="home_vbdim_current_phase_win">Current phase win %</string>
     <string name="home_vbdim_special_missions">Special missions</string>
+    <string name="home_vbdim_weekly_vitals">Weekly Vitals</string>
+    <string name="home_vbdim_level">Level</string>
+    <string name="home_vbdim_attribute">Attribute</string>
+    <string name="home_vbdim_days">Days</string>
 
     <string name="special_mission_none">No mission selected</string>
     <string name="special_mission_steps">Walk %1$d steps</string>

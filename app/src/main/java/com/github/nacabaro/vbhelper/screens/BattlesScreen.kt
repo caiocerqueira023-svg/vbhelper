@@ -90,6 +90,18 @@ import com.github.nacabaro.vbhelper.di.VBHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.draw.clip
+import com.github.nacabaro.vbhelper.ui.theme.StatusRed
+import com.github.nacabaro.vbhelper.ui.theme.StatusRedDim
+import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
+import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
+import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
+import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 
 /*@Composable
 fun isLandscapeMode(): Boolean {
@@ -2334,7 +2346,7 @@ fun BattlesScreen() {
                                     } else {
                                         Text(stringResource(R.string.ui_no_opponents), 
                                              fontSize = 16.sp, 
-                                             color = Color(0xFFFFA500), // Orange color
+                                             color = Color.White,
                                              textAlign = TextAlign.Center)
                                     }
                                 } else {
@@ -2371,6 +2383,7 @@ fun BattlesScreen() {
                 "battle-results" -> {
                     var winnerName by remember { mutableStateOf("") }
                     var isWinnerLoaded by remember { mutableStateOf(false) }
+                    var playerWonResult by remember { mutableStateOf<Boolean?>(null) }
                     
                     LaunchedEffect(Unit) {
                         // Determine player and opponent stages
@@ -2436,6 +2449,7 @@ fun BattlesScreen() {
                             // Store winner name for display (will be updated in cleanup call if available)
                             winnerName = apiResult.winner
                             isWinnerLoaded = true
+                            playerWonResult = playerWon
                             
                             // Then send the cleanup call - this will have the actual winner name
                             RetrofitHelper().getPVPWinner(
@@ -2493,6 +2507,7 @@ fun BattlesScreen() {
                                 }
                                 
                                 println("BATTLESCREEN: Battle result (cleanup call) - winner: '${cleanupResult.winner}', playerHP: ${cleanupResult.playerHP}, opponentHP: ${cleanupResult.opponentHP}, finalPlayerWon: $finalPlayerWon")
+                                playerWonResult = finalPlayerWon
                                 
                                 // Update battle stats in database using the most reliable determination
                                 kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
@@ -2531,49 +2546,134 @@ fun BattlesScreen() {
                         }
                     }
                     
+                    val opponentDisplayName = selectedOpponent?.name ?: "???"
+                    val opponentMaxHp = selectedOpponent?.baseHp ?: 0
+                    val opponentCurrentHp = if (playerWonResult == true) 0 else (selectedOpponent?.currentHp ?: 0)
+
                     Box(
                         modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
+                        contentAlignment = Alignment.TopCenter
                     ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Text(
-                                text = "Battle Complete!",
-                                fontSize = 24.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Gray
-                            )
-                            
-                            Spacer(modifier = Modifier.height(16.dp))
-                            
-                            if (isWinnerLoaded) {
+                        // Opponent HP banner, echoing the red "boss bar" shown
+                        // at the top of the reference victory screen.
+                        Column(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(StatusRedDim)
+                                    .padding(horizontal = 16.dp, vertical = 10.dp)
+                            ) {
                                 Text(
-                                    text = "Winner: $winnerName",
-                                    fontSize = 20.sp,
-                                    color = Color.Gray
+                                    text = opponentDisplayName,
+                                    color = Color.White,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp,
+                                    modifier = Modifier.weight(1f)
                                 )
-                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .weight(2f)
+                                        .height(10.dp)
+                                        .padding(horizontal = 8.dp)
+                                        .clip(RoundedCornerShape(50))
+                                        .background(Color.Black.copy(alpha = 0.35f))
+                                ) {
+                                    val ratio = if (opponentMaxHp <= 0) 0f else
+                                        (opponentCurrentHp.toFloat() / opponentMaxHp.toFloat()).coerceIn(0f, 1f)
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxHeight()
+                                            .fillMaxWidth(ratio)
+                                            .clip(RoundedCornerShape(50))
+                                            .background(StatusRed)
+                                    )
+                                }
                                 Text(
-                                    text = "Loading results...",
-                                    fontSize = 20.sp,
-                                    color = Color.Gray
+                                    text = "$opponentCurrentHp/$opponentMaxHp",
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = " HP",
+                                    color = Color.White.copy(alpha = 0.8f),
+                                    fontSize = 11.sp
                                 )
                             }
                         }
-                        
-                        // Exit button - stop music before exiting
-                        Button(
-                            onClick = { 
-                                // Stop background music before exiting
-                                // Note: Music will also be stopped by DisposableEffect in BattleScreen
-                                currentView = "main" 
-                            },
-                            modifier = Modifier.align(Alignment.TopCenter),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+
+                        // Result card, echoing the reference "YOU WIN!" panel:
+                        // a light rounded card with a big bold title, the
+                        // winner line and a single confirm button.
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
                         ) {
-                            Text(stringResource(R.string.ui_exit), color = Color.White)
+                            Card(
+                                shape = RoundedCornerShape(24.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                                ),
+                                border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceStroke),
+                                modifier = Modifier
+                                    .padding(32.dp)
+                                    .fillMaxWidth()
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    modifier = Modifier.padding(vertical = 32.dp, horizontal = 24.dp)
+                                ) {
+                                    if (!isWinnerLoaded) {
+                                        Text(
+                                            text = "Loading results...",
+                                            fontSize = 18.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = TextSecondaryOnDark
+                                        )
+                                    } else {
+                                        val didWin = playerWonResult == true
+                                        Text(
+                                            text = if (didWin) "YOU WIN!" else "YOU LOSE...",
+                                            fontSize = 32.sp,
+                                            fontWeight = FontWeight.Black,
+                                            color = if (didWin) VitalCyan else StatusRed,
+                                            textAlign = TextAlign.Center
+                                        )
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        Text(
+                                            text = if (didWin)
+                                                "Victory against\n$opponentDisplayName!"
+                                            else
+                                                "Defeated by\n$opponentDisplayName…",
+                                            fontSize = 16.sp,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = TextPrimaryOnDark,
+                                            textAlign = TextAlign.Center
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(28.dp))
+
+                                    Button(
+                                        onClick = { currentView = "main" },
+                                        shape = RoundedCornerShape(14.dp),
+                                        colors = ButtonDefaults.buttonColors(
+                                            containerColor = VitalCyan,
+                                            contentColor = Color.Black
+                                        ),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(48.dp)
+                                    ) {
+                                        Text(
+                                            text = "OK",
+                                            fontWeight = FontWeight.ExtraBold,
+                                            fontSize = 16.sp
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }

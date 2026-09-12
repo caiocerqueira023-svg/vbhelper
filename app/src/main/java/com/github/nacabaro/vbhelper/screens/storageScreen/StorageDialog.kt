@@ -27,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -141,13 +142,14 @@ fun StorageDialog(
                         )
                         val nameBitmap = remember (characterName.value!!) { characterName.value!!.getBitmap() }
                         val nameImageBitmap = remember(nameBitmap) { nameBitmap.asImageBitmap() }
-                        val nameDpSize = (characterName.value!!.width * 4 / density).dp
                         Image(
                             bitmap = nameImageBitmap,
                             contentDescription = stringResource(R.string.storage_character_image_description),
                             filterQuality = FilterQuality.None,
+                            contentScale = ContentScale.Fit,
                             modifier = Modifier
-                                .size(nameDpSize)
+                                .weight(1f)
+                                .size(width = 160.dp, height = 64.dp)
                         )
                         }
                         IconButton(onClick = { showInfoEditor = true }) {

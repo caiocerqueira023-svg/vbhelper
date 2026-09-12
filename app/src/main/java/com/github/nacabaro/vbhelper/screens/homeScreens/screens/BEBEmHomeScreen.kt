@@ -62,6 +62,7 @@ fun BEBEmHomeScreen(
                     .weight(1f)
                     .aspectRatio(1f),
                 speechBubbleText = speechBubbleText,
+                vitalPoints = activeMon.vitalPoints,
                 onClick = onClickCharacter
             )
             Column (

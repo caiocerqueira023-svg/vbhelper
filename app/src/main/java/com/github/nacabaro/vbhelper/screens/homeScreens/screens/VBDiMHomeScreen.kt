@@ -3,8 +3,10 @@ package com.github.nacabaro.vbhelper.screens.homeScreens.screens
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -15,24 +17,43 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.CharacterEntry
+import com.github.nacabaro.vbhelper.components.InfoStatRow
 import com.github.nacabaro.vbhelper.components.ItemDisplay
 import com.github.nacabaro.vbhelper.components.SpecialMissionsEntry
 import com.github.nacabaro.vbhelper.components.TransformationHistoryCard
 import com.github.nacabaro.vbhelper.components.NicknameDisplay
+import com.github.nacabaro.vbhelper.components.VitalsHeaderStat
+import com.github.nacabaro.vbhelper.components.WeeklyVitalsChart
 import com.github.nacabaro.vbhelper.domain.device_data.SpecialMissions
 import com.github.nacabaro.vbhelper.domain.device_data.VBCharacterData
+import com.github.nacabaro.vbhelper.domain.device_data.VitalsHistory
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.dtos.ItemDtos
 import com.github.nacabaro.vbhelper.screens.homeScreens.HomeScreenControllerImpl
+import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import java.util.Locale
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.screens.homeScreens.dialogs.DeleteSpecialMissionDialog
 
+// The firmware-side vitals counter is capped at this value across the app
+// (see ItemsScreenControllerImpl), so we reuse it as the gauge's max.
+private const val MAX_VITAL_POINTS = 9999
+
+private fun shortStageName(stage: Int): String = when (stage) {
+    0 -> "Baby I"
+    1 -> "Baby II"
+    2 -> "Rookie"
+    3 -> "Champion"
+    4 -> "Ultimate"
+    5 -> "Mega"
+    else -> "Stage $stage"
+}
 
 @Composable
 fun VBDiMHomeScreen(
@@ -47,7 +68,8 @@ fun VBDiMHomeScreen(
     onClickCollect: (ItemDtos.PurchasedItem?, Int?) -> Unit,
     speechBubbleText: String? = null,
     onClickCharacter: () -> Unit = {},
-    onClickTransformation: (CharacterDtos.TransformationHistory) -> Unit = {}
+    onClickTransformation: (CharacterDtos.TransformationHistory) -> Unit = {},
+    vitalsHistory: List<VitalsHistory> = emptyList()
 ) {
     var selectedSpecialMissionId by remember { mutableStateOf<Long>(-1) }
 
@@ -56,6 +78,15 @@ fun VBDiMHomeScreen(
             .padding(top = contentPadding.calculateTopPadding())
             .verticalScroll(state = rememberScrollState())
     ) {
+        // Big "Vitals X / max" readout, echoing the top gauge of the
+        // reference home screen.
+        VitalsHeaderStat(
+            label = stringResource(R.string.home_vbdim_vitals),
+            current = activeMon.vitalPoints,
+            max = MAX_VITAL_POINTS,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -78,34 +109,43 @@ fun VBDiMHomeScreen(
                     .weight(1f)
                     .aspectRatio(1f),
                 speechBubbleText = speechBubbleText,
+                vitalPoints = activeMon.vitalPoints,
                 onClick = onClickCharacter
             )
+            // Level / Attribute / Days readout beside the character
+            // portrait, matching the reference screen's stat list.
             Column(
                 modifier = Modifier
-                    .weight(0.5f)
-                    .aspectRatio(0.5f)
+                    .weight(0.7f)
+                    .padding(start = 4.dp, top = 8.dp)
             ) {
-                ItemDisplay(
-                    icon = R.drawable.baseline_vitals_24,
-                    textValue = activeMon.vitalPoints.toString(),
-                    definition = stringResource(R.string.home_vbdim_vitals),
-                    modifier = Modifier
-                        .weight(0.5f)
-                        .aspectRatio(1f)
-                        .padding(8.dp)
-                )
-                ItemDisplay(
+                InfoStatRow(
                     icon = R.drawable.baseline_trophy_24,
-                    textValue = activeMon.trophies.toString(),
-                    definition = stringResource(R.string.home_vbdim_trophies),
-                    modifier = Modifier
-                        .weight(0.5f)
-                        .aspectRatio(1f)
-                        .padding(8.dp)
+                    label = stringResource(R.string.home_vbdim_level),
+                    value = shortStageName(activeMon.stage)
+                )
+                InfoStatRow(
+                    icon = R.drawable.baseline_mood_24,
+                    label = stringResource(R.string.home_vbdim_attribute),
+                    value = activeMon.attribute.name,
+                    valueColor = TextPrimaryOnDark
+                )
+                InfoStatRow(
+                    icon = R.drawable.baseline_next_24,
+                    label = stringResource(R.string.home_vbdim_days),
+                    value = activeMon.ageInDays.toString()
                 )
             }
         }
         NicknameDisplay(nickname)
+
+        if (vitalsHistory.isNotEmpty()) {
+            WeeklyVitalsChart(
+                history = vitalsHistory,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+        }
+
         Row (
             modifier = Modifier
                 .fillMaxWidth()
@@ -114,6 +154,15 @@ fun VBDiMHomeScreen(
                 icon = R.drawable.baseline_mood_24,
                 textValue = activeMon.mood.toString(),
                 definition = stringResource(R.string.home_vbdim_mood),
+                modifier = Modifier
+                    .weight(1f)
+                    .aspectRatio(1f)
+                    .padding(8.dp)
+            )
+            ItemDisplay(
+                icon = R.drawable.baseline_trophy_24,
+                textValue = activeMon.trophies.toString(),
+                definition = stringResource(R.string.home_vbdim_trophies),
                 modifier = Modifier
                     .weight(1f)
                     .aspectRatio(1f)
@@ -191,7 +240,9 @@ fun VBDiMHomeScreen(
         ) {
             Text(
                 text = stringResource(R.string.home_vbdim_special_missions),
-                fontSize = 24.sp
+                fontSize = 20.sp,
+                fontWeight = FontWeight.ExtraBold,
+                color = TextPrimaryOnDark
                 )
         }
         for (mission in specialMissions) {
@@ -203,7 +254,7 @@ fun VBDiMHomeScreen(
                     specialMission = mission,
                     modifier = Modifier
                         .weight(1f)
-                        .padding(8.dp),
+                        .padding(horizontal = 16.dp, vertical = 6.dp),
                     onClickMission = { missionId ->
                         selectedSpecialMissionId = missionId
                     },
@@ -214,6 +265,7 @@ fun VBDiMHomeScreen(
                 )
             }
         }
+        Spacer(modifier = Modifier.height(8.dp))
     }
 
     if (selectedSpecialMissionId.toInt() != -1) {
