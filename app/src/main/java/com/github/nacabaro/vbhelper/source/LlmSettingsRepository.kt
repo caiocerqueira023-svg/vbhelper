@@ -11,8 +11,10 @@ class LlmSettingsRepository(
     private val dataStore: DataStore<Preferences>
 ) {
     private companion object {
+        const val DEFAULT_CHAT_COMPLETIONS_BASE_URL = "https://openrouter.ai/api/v1/"
         val API_KEY = stringPreferencesKey("openrouter_api_key")
         val MODEL = stringPreferencesKey("openrouter_model")
+        val CHAT_COMPLETIONS_BASE_URL = stringPreferencesKey("chat_completions_base_url")
         val SYSTEM_PROMPT_TEMPLATE = stringPreferencesKey("openrouter_system_prompt_template")
         val WILD_SYSTEM_PROMPT_TEMPLATE = stringPreferencesKey("openrouter_wild_system_prompt_template")
         val TAMER_NAME = stringPreferencesKey("tamer_name")
@@ -20,6 +22,9 @@ class LlmSettingsRepository(
 
     val apiKey: Flow<String?> = dataStore.data.map { it[API_KEY] }
     val model: Flow<String> = dataStore.data.map { it[MODEL] ?: "openrouter/auto" }
+    val chatCompletionsBaseUrl: Flow<String> = dataStore.data.map {
+        it[CHAT_COMPLETIONS_BASE_URL] ?: DEFAULT_CHAT_COMPLETIONS_BASE_URL
+    }
     val systemPromptTemplate: Flow<String?> = dataStore.data.map { it[SYSTEM_PROMPT_TEMPLATE] }
     val wildSystemPromptTemplate: Flow<String?> = dataStore.data.map { it[WILD_SYSTEM_PROMPT_TEMPLATE] }
     val tamerName: Flow<String> = dataStore.data.map { it[TAMER_NAME] ?: "" }
@@ -30,6 +35,10 @@ class LlmSettingsRepository(
 
     suspend fun setModel(model: String) {
         dataStore.edit { it[MODEL] = model }
+    }
+
+    suspend fun setChatCompletionsBaseUrl(baseUrl: String) {
+        dataStore.edit { it[CHAT_COMPLETIONS_BASE_URL] = baseUrl.trim().ensureTrailingSlash() }
     }
 
     suspend fun setSystemPromptTemplate(template: String?) {
@@ -52,4 +61,7 @@ class LlmSettingsRepository(
             else preferences[TAMER_NAME] = name.trim()
         }
     }
+
+    private fun String.ensureTrailingSlash() = if (endsWith('/')) this else "$this/"
+
 }

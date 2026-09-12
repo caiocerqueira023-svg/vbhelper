@@ -7,7 +7,7 @@
     <string name="settings_section_llm_chat">Digimon chat (AI)</string>
     <string name="settings_configure_llm_title">Configure chat API key</string>
     <string name="settings_configure_llm_desc">
-        Set your OpenRouter API key and model to chat with your Digimon
+        Set an OpenAI-compatible API endpoint, key and model to chat with your Digimon
     </string>
     <string name="storage_chat_with_digimon">Chat with your Digimon</string>
     <string name="ui_current_name">Current name: %1$s</string>
@@ -364,7 +364,11 @@
     <string name="ui_system_prompt">System prompt</string>
     <string name="ui_restore_default">Restore default</string>
     <string name="ui_api_key">API key</string>
-    <string name="ui_api_key_help">Create a free key at openrouter.ai/keys and paste it below.</string>
+    <string name="ui_api_key_help">Use the API key issued by your selected provider.</string>
+    <string name="ui_chat_api_settings">Chat API settings</string>
+    <string name="ui_chat_api_base_url">OpenAI-compatible base URL</string>
+    <string name="ui_chat_api_base_url_help">Include the API version path, e.g. https://openrouter.ai/api/v1/</string>
+    <string name="ui_chat_api_provider">Provider</string>
     <string name="ui_hide_key">Hide key</string>
     <string name="ui_show_key">Show key</string>
     <string name="ui_model">Model</string>
@@ -460,6 +464,8 @@
 
     <string name="widget_digimon_description">Your active Digimon walking on the home screen</string>
     <string name="widget_digimon_label">Digimon</string>
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_font_title">App font</string>
     <string name="ui_world_compass_waiting">Waiting for compass readings. Map is north-up until north is calibrated.</string>
     <string name="ui_world_compass_calibrate">Compass needs calibration. Move away from magnets and metal, then move the phone in a figure-eight. Map is north-up until calibration completes.</string>
     <string name="ui_world_compass_approximate">Compass paused: north is unreliable. The last direction is held. Move away from magnets and metal and make a figure-eight to recalibrate.</string>

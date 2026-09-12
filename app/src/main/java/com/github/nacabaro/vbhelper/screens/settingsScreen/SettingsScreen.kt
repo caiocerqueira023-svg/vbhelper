@@ -36,6 +36,11 @@ import com.github.nacabaro.vbhelper.screens.settingsScreen.dialogs.LanguageDialo
 import com.github.nacabaro.vbhelper.chat.DigimonPersonaBuilder
 import com.github.nacabaro.vbhelper.R
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.TextButton
+import com.github.nacabaro.vbhelper.ui.theme.AppFont
+import com.github.nacabaro.vbhelper.ui.theme.appFontFamily
 
 
 @Composable
@@ -48,6 +53,7 @@ fun SettingsScreen(
     val showLlmDialog by settingsScreenController.showLlmDialog.collectAsState()
     val currentApiKey by settingsScreenController.currentLlmApiKey.collectAsState(initial = null)
     val currentModel by settingsScreenController.currentLlmModel.collectAsState(initial = "openrouter/auto")
+    val currentBaseUrl by settingsScreenController.currentLlmBaseUrl.collectAsState(initial = "https://openrouter.ai/api/v1/")
     val currentSystemPromptTemplate by settingsScreenController.currentSystemPromptTemplate.collectAsState(initial = null)
     val currentWildSystemPromptTemplate by settingsScreenController.currentWildSystemPromptTemplate.collectAsState(initial = null)
     val currentTamerName by settingsScreenController.currentTamerName.collectAsState(initial = "")
@@ -55,7 +61,9 @@ fun SettingsScreen(
     val showWildPromptTemplateDialog by settingsScreenController.showWildPromptTemplateDialog.collectAsState()
     val promptOriginAtImport by settingsScreenController.promptOriginAtImportTime.collectAsState(initial = false)
     val currentLanguage by settingsScreenController.currentLanguage.collectAsState()
+    val currentFont by settingsScreenController.currentFont.collectAsState()
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var showFontDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -89,6 +97,14 @@ fun SettingsScreen(
                 description = stringResource(R.string.settings_import_card_desc)
             ) {
                 settingsScreenController.onClickImportCard()
+            }
+
+            SettingsSection(title = stringResource(R.string.settings_section_appearance))
+            SettingsEntry(
+                title = stringResource(R.string.settings_font_title),
+                description = currentFont.displayName
+            ) {
+                showFontDialog = true
             }
 
             SettingsSection(title = stringResource(R.string.settings_section_llm_chat))
@@ -203,9 +219,10 @@ fun SettingsScreen(
         LlmSettingsDialog(
             currentApiKey = currentApiKey,
             currentModel = currentModel,
+            currentBaseUrl = currentBaseUrl,
             onDismiss = { settingsScreenController.dismissLlmDialog() },
-            onSave = { apiKey, model ->
-                settingsScreenController.saveLlmSettings(apiKey, model)
+            onSave = { apiKey, model, baseUrl ->
+                settingsScreenController.saveLlmSettings(apiKey, model, baseUrl)
             }
         )
     }
@@ -236,6 +253,47 @@ fun SettingsScreen(
                 showLanguageDialog = false
             },
             onDismiss = { showLanguageDialog = false }
+        )
+    }
+
+    if (showFontDialog) {
+        AlertDialog(
+            onDismissRequest = { showFontDialog = false },
+            title = { Text(stringResource(R.string.settings_font_title)) },
+            text = {
+                Column {
+                    AppFont.entries.forEach { appFont ->
+                        Row(
+                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    settingsScreenController.setAppFont(appFont)
+                                    showFontDialog = false
+                                }
+                                .padding(vertical = 6.dp)
+                        ) {
+                            RadioButton(
+                                selected = appFont == currentFont,
+                                onClick = {
+                                    settingsScreenController.setAppFont(appFont)
+                                    showFontDialog = false
+                                }
+                            )
+                            Text(
+                                text = appFont.displayName,
+                                fontFamily = appFontFamily(appFont),
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showFontDialog = false }) {
+                    Text(stringResource(R.string.ui_close))
+                }
+            }
         )
     }
 }

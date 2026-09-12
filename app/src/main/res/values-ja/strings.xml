@@ -236,7 +236,7 @@
     <string name="ui_save_tamer_name">テイマー名を保存</string>
     <string name="settings_section_llm_chat">デジモンチャット（AI）</string>
     <string name="settings_configure_llm_title">チャットAPIキーを設定</string>
-    <string name="settings_configure_llm_desc">OpenRouterのAPIキーとモデルを設定してデジモンと会話します</string>
+    <string name="settings_configure_llm_desc">OpenAI互換のエンドポイント、APIキー、モデルを設定してデジモンと会話します</string>
     <string name="storage_chat_with_digimon">デジモンと話す</string>
     <string name="ui_current_name">現在の名前: %1$s</string>
     <string name="ui_not_defined">未設定</string>
@@ -274,7 +274,11 @@
     <string name="ui_system_prompt">システムプロンプト</string>
     <string name="ui_restore_default">デフォルトに戻す</string>
     <string name="ui_api_key">APIキー</string>
-    <string name="ui_api_key_help">openrouter.ai/keysで無料キーを作成し、ここに貼り付けてください。</string>
+    <string name="ui_api_key_help">選択したプロバイダーから発行されたAPIキーを入力してください。</string>
+    <string name="ui_chat_api_settings">チャットAPI設定</string>
+    <string name="ui_chat_api_base_url">OpenAI互換ベースURL</string>
+    <string name="ui_chat_api_base_url_help">APIバージョンまで含めてください。例: https://openrouter.ai/api/v1/</string>
+    <string name="ui_chat_api_provider">プロバイダー</string>
     <string name="ui_hide_key">キーを隠す</string>
     <string name="ui_show_key">キーを表示</string>
     <string name="ui_model">モデル</string>

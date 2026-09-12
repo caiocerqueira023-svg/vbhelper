@@ -93,16 +93,17 @@ fun StorageScreen(
                 items(characterList) { index ->
                     CharacterEntry(
                         icon = BitmapData(
-                            bitmap = index.spriteIdle,
+                            bitmap = if (index.active) index.spriteRun1 else index.spriteIdle,
                             width = index.spriteWidth,
                             height = index.spriteHeight
                         ),
                         idleFrame2 = BitmapData(
-                            bitmap = index.spriteIdle2,
+                            bitmap = if (index.active) index.spriteRun2 else index.spriteIdle2,
                             width = index.spriteWidth,
                             height = index.spriteHeight
                         ),
                         animationKey = index.id,
+                        vitalPoints = index.vitalPoints,
                         onClick = {
                             if (!index.isInAdventure) {
                                 selectedCharacter = index.id

@@ -6,26 +6,26 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object OpenRouterClient {
-    private const val BASE_URL = "https://openrouter.ai/"
-
-    fun create(): OpenRouterService {
+    fun create(baseUrl: String): OpenRouterService {
+        require(baseUrl.startsWith("https://")) { "The chat endpoint must use HTTPS." }
         val logging = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BASIC
         }
-        val client = OkHttpClient.Builder()
+        val clientBuilder = OkHttpClient.Builder()
             .addInterceptor(logging)
-            .addInterceptor { chain ->
+        if (baseUrl.contains("openrouter.ai", ignoreCase = true)) {
+            clientBuilder.addInterceptor { chain ->
                 val request = chain.request().newBuilder()
                     .addHeader("HTTP-Referer", "https://github.com/nacabaro/vbhelper")
                     .addHeader("X-Title", "VBHelper")
                     .build()
                 chain.proceed(request)
             }
-            .build()
+        }
 
         return Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .client(client)
+            .baseUrl(if (baseUrl.endsWith('/')) baseUrl else "$baseUrl/")
+            .client(clientBuilder.build())
             .addConverterFactory(GsonConverterFactory.create())
             .build()
             .create(OpenRouterService::class.java)

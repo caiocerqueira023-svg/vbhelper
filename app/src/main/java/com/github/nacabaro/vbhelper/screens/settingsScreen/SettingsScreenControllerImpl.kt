@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.ui.theme.AppFont
 
 
 class SettingsScreenControllerImpl(
@@ -47,6 +48,7 @@ class SettingsScreenControllerImpl(
     val llmSettingsRepository: LlmSettingsRepository = application.container.llmSettingsRepository
     val currentLlmApiKey: Flow<String?> = llmSettingsRepository.apiKey
     val currentLlmModel: Flow<String> = llmSettingsRepository.model
+    val currentLlmBaseUrl: Flow<String> = llmSettingsRepository.chatCompletionsBaseUrl
     val currentSystemPromptTemplate: Flow<String?> = llmSettingsRepository.systemPromptTemplate
     val currentWildSystemPromptTemplate: Flow<String?> = llmSettingsRepository.wildSystemPromptTemplate
     val currentTamerName: Flow<String> = llmSettingsRepository.tamerName
@@ -64,6 +66,10 @@ class SettingsScreenControllerImpl(
             ?: AppCompatDelegate.getApplicationLocales().toLanguageTags().ifBlank { "system" }
     )
     val currentLanguage: StateFlow<String> = _currentLanguage.asStateFlow()
+    private val _currentFont = MutableStateFlow(
+        AppFont.fromPreference(languagePreferences.getString("app_font", null))
+    )
+    val currentFont: StateFlow<AppFont> = _currentFont.asStateFlow()
 
     init {
         filePickerLauncher = context.registerForActivityResult(
@@ -140,10 +146,11 @@ class SettingsScreenControllerImpl(
         _showLlmDialog.value = false
     }
 
-    fun saveLlmSettings(apiKey: String, model: String) {
+    fun saveLlmSettings(apiKey: String, model: String, baseUrl: String) {
         context.lifecycleScope.launch(Dispatchers.IO) {
             llmSettingsRepository.setApiKey(apiKey.trim())
             llmSettingsRepository.setModel(model.trim().ifBlank { "openrouter/auto" })
+            llmSettingsRepository.setChatCompletionsBaseUrl(baseUrl)
 
             context.runOnUiThread {
                 Toast.makeText(context, context.getString(R.string.ui_chat_saved), Toast.LENGTH_SHORT).show()
@@ -209,6 +216,14 @@ class SettingsScreenControllerImpl(
                 LocaleListCompat.forLanguageTags(languageTag)
             }
         )
+        context.recreate()
+    }
+
+    fun setAppFont(appFont: AppFont) {
+        languagePreferences.edit()
+            .putString("app_font", appFont.preferenceValue)
+            .apply()
+        _currentFont.value = appFont
         context.recreate()
     }
 

@@ -9,6 +9,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.lifecycleScope
 import com.github.cfogrady.vitalwear.protos.Character
 import com.github.nacabaro.vbhelper.navigation.AppNavigation
@@ -73,7 +75,8 @@ class MainActivity : AppCompatActivity() {
         initialRoute = getInitialRouteFromIntent(intent)
 
         setContent {
-            VBHelperTheme {
+            val appFont by settingsScreenController.currentFont.collectAsState()
+            VBHelperTheme(appFont = appFont) {
                 MainApplication(
                     scanScreenController = scanScreenController,
                     settingsScreenController = settingsScreenController,

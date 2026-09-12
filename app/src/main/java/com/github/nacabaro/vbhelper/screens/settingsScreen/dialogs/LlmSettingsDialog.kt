@@ -12,6 +12,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,18 +27,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.chat.ChatApiProvider
 import androidx.compose.ui.window.DialogProperties
 
 @Composable
 fun LlmSettingsDialog(
     currentApiKey: String?,
     currentModel: String,
+    currentBaseUrl: String,
     onDismiss: () -> Unit,
-    onSave: (apiKey: String, model: String) -> Unit
+    onSave: (apiKey: String, model: String, baseUrl: String) -> Unit
 ) {
     var apiKey by remember(currentApiKey) { mutableStateOf(currentApiKey.orEmpty()) }
     var model by remember(currentModel) { mutableStateOf(currentModel) }
+    var baseUrl by remember(currentBaseUrl) { mutableStateOf(currentBaseUrl) }
     var showKey by remember { mutableStateOf(false) }
+    var selectedProvider by remember(currentBaseUrl) {
+        mutableStateOf(ChatApiProvider.fromBaseUrl(currentBaseUrl))
+    }
+    var showProviderPicker by remember { mutableStateOf(false) }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -52,8 +61,34 @@ fun LlmSettingsDialog(
                 modifier = Modifier.padding(16.dp)
             ) {
                 Text(
-                    text = "Configurações de chat (OpenRouter)",
+                    text = stringResource(R.string.ui_chat_api_settings),
                     style = MaterialTheme.typography.titleMedium
+                )
+
+                Spacer2()
+
+                OutlinedButton(
+                    onClick = { showProviderPicker = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("${stringResource(R.string.ui_chat_api_provider)}: ${selectedProvider.displayName}")
+                }
+
+                Spacer2()
+
+                OutlinedTextField(
+                    value = baseUrl,
+                    onValueChange = {
+                        baseUrl = it
+                        if (selectedProvider != ChatApiProvider.LITELLM) {
+                            selectedProvider = ChatApiProvider.CUSTOM
+                        }
+                    },
+                    label = { Text(stringResource(R.string.ui_chat_api_base_url)) },
+                    supportingText = { Text(stringResource(R.string.ui_chat_api_base_url_help)) },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                    modifier = Modifier.fillMaxWidth()
                 )
 
                 Spacer2()
@@ -102,8 +137,8 @@ fun LlmSettingsDialog(
                         Text(stringResource(R.string.ui_cancel))
                     }
                     Button(
-                        enabled = apiKey.isNotBlank(),
-                        onClick = { onSave(apiKey, model) },
+                        enabled = apiKey.isNotBlank() && baseUrl.startsWith("https://"),
+                        onClick = { onSave(apiKey, model, baseUrl) },
                         modifier = Modifier.padding(start = 8.dp)
                     ) {
                         Text(stringResource(R.string.ui_save))
@@ -111,6 +146,36 @@ fun LlmSettingsDialog(
                 }
             }
         }
+    }
+
+    if (showProviderPicker) {
+        AlertDialog(
+            onDismissRequest = { showProviderPicker = false },
+            title = { Text(stringResource(R.string.ui_chat_api_provider)) },
+            text = {
+                Column {
+                    ChatApiProvider.entries.forEach { provider ->
+                        TextButton(
+                            onClick = {
+                                selectedProvider = provider
+                                provider.baseUrl?.let { baseUrl = it }
+                                if (provider == ChatApiProvider.LITELLM) baseUrl = ""
+                                provider.suggestedModel?.let { model = it }
+                                showProviderPicker = false
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(provider.displayName, modifier = Modifier.fillMaxWidth())
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showProviderPicker = false }) {
+                    Text(stringResource(R.string.ui_close))
+                }
+            }
+        )
     }
 }
 

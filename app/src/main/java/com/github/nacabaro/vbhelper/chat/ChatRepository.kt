@@ -20,10 +20,9 @@ class ChatRepository(
     private val database: AppDatabase,
     private val llmSettingsRepository: LlmSettingsRepository,
     private val lorebookRepository: LorebookRepository,
-    private val chatDao: ChatDao = database.chatDao(),
-    private val openRouterService: OpenRouterService = OpenRouterClient.create()
+    private val chatDao: ChatDao = database.chatDao()
 ) {
-    class MissingApiKeyException : Exception("Chave de API do OpenRouter não configurada.")
+    class MissingApiKeyException : Exception("Chave de API do chat não configurada.")
 
     fun getHistory(characterId: Long): Flow<List<ChatMessageEntity>> =
         database.userCharacterDao().getIndividualId(characterId)
@@ -264,6 +263,8 @@ class ChatRepository(
             characterType = DeviceType.VBDevice,
             spriteIdle = info.spriteIdle,
             spriteIdle2 = info.spriteIdle2,
+            spriteRun1 = info.spriteIdle,
+            spriteRun2 = info.spriteIdle2,
             spriteWidth = info.spriteWidth,
             spriteHeight = info.spriteHeight,
             nameSprite = ByteArray(0),
@@ -313,11 +314,12 @@ class ChatRepository(
     ): String {
         val apiKey = llmSettingsRepository.apiKey.first() ?: throw MissingApiKeyException()
         val model = llmSettingsRepository.model.first()
+        val baseUrl = llmSettingsRepository.chatCompletionsBaseUrl.first()
         val messages = mutableListOf(ChatMessageDto("system", systemPrompt))
         messages += chatDao.getMessagesSync(individualId).takeLast(20)
             .map { ChatMessageDto(it.role, it.content) }
         extraUserTurn?.let { messages += ChatMessageDto("user", it) }
-        val response = openRouterService.getChatCompletion(
+        val response = OpenRouterClient.create(baseUrl).getChatCompletion(
             authorization = "Bearer $apiKey",
             request = ChatCompletionRequest(model = model, messages = messages)
         )

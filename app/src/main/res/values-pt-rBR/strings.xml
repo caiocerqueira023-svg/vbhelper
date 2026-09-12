@@ -287,7 +287,7 @@
     <string name="ui_save_tamer_name">Salvar nome do Tamer</string>
     <string name="settings_section_llm_chat">Chat com Digimon (IA)</string>
     <string name="settings_configure_llm_title">Configurar chave da API de chat</string>
-    <string name="settings_configure_llm_desc">Defina sua chave da API e o modelo do OpenRouter para conversar com seu Digimon</string>
+    <string name="settings_configure_llm_desc">Defina um endpoint compatível com OpenAI, a chave da API e o modelo para conversar com seu Digimon</string>
     <string name="storage_chat_with_digimon">Conversar com seu Digimon</string>
     <string name="ui_current_name">Nome atual: %1$s</string>
     <string name="ui_not_defined">não definido</string>
@@ -325,7 +325,11 @@
     <string name="ui_system_prompt">Prompt de sistema</string>
     <string name="ui_restore_default">Restaurar padrão</string>
     <string name="ui_api_key">Chave da API</string>
-    <string name="ui_api_key_help">Crie uma chave gratuita em openrouter.ai/keys e cole abaixo.</string>
+    <string name="ui_api_key_help">Use a chave da API emitida pelo provedor selecionado.</string>
+    <string name="ui_chat_api_settings">Configurações da API de chat</string>
+    <string name="ui_chat_api_base_url">URL base compatível com OpenAI</string>
+    <string name="ui_chat_api_base_url_help">Inclua o caminho da versão da API, por exemplo: https://openrouter.ai/api/v1/</string>
+    <string name="ui_chat_api_provider">Provedor</string>
     <string name="ui_hide_key">Ocultar chave</string>
     <string name="ui_show_key">Mostrar chave</string>
     <string name="ui_model">Modelo</string>
