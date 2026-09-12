@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
@@ -81,6 +82,7 @@ fun CharacterEntry(
     idleFrame2: BitmapData? = null,
     speechBubbleText: String? = null,
     statusText: String? = null,
+    grayscale: Boolean = false,
     vitalPoints: Int? = null,
     cardColors: CardColors = CardDefaults.cardColors(
         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
@@ -205,9 +207,10 @@ fun CharacterEntry(
                     bitmap = imageBitmap,
                     contentDescription = "Icon",
                     filterQuality = FilterQuality.None,
-                    colorFilter = when (obscure) {
-                        true -> ColorFilter.tint(color = MaterialTheme.colorScheme.secondary)
-                        false -> null
+                    colorFilter = when {
+                        obscure -> ColorFilter.tint(color = MaterialTheme.colorScheme.secondary)
+                        grayscale -> ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
+                        else -> null
                     },
                     modifier = Modifier
                         .size(dpSize)

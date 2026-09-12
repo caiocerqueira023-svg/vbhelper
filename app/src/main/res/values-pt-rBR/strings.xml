@@ -252,6 +252,10 @@
     <string name="ui_search_species">Pesquisar espécie</string>
     <string name="ui_delete_messages_title">Excluir mensagens?</string>
     <string name="ui_delete_messages_confirmation">A mensagem selecionada e todas as mensagens enviadas depois dela serão excluídas. Deseja continuar?</string>
+    <string name="ui_message_actions">Ações da mensagem</string>
+    <string name="ui_message_actions_description">Escolha o que fazer com esta mensagem.</string>
+    <string name="ui_copy">Copiar</string>
+    <string name="ui_resend">Reenviar</string>
     <string name="ui_save">Salvar</string>
     <string name="ui_add">Adicionar</string>
     <string name="ui_edit">Editar</string>

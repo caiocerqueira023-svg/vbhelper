@@ -26,7 +26,7 @@ sealed class NavigationItems(
         R.drawable.baseline_cottage_24,
         R.string.nav_home
     )
-    object World : NavigationItems("World", R.drawable.baseline_cottage_24, R.string.nav_world)
+    object World : NavigationItems("World", R.drawable.baseline_compass_24, R.string.nav_world)
 
     object Dex : NavigationItems(
         "Dex",

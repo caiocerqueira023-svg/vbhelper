@@ -65,18 +65,19 @@ fun CardViewScreen(
                     onClick = {
                         selectedCharacter.value = character
                     },
-                    statusText = when {
-                        character.discoveredOn == null ->
-                            stringResource(R.string.dex_status_never_obtained)
-                        !character.isCurrentlyAvailable ->
-                            stringResource(R.string.dex_status_previously_obtained)
-                        else -> null
-                    },
                     icon = BitmapData(
                         bitmap = character.spriteIdle,
                         width = character.spriteWidth,
                         height = character.spriteHeight,
                     ),
+                    idleFrame2 = character.takeIf { it.isCurrentlyAvailable }?.let {
+                        BitmapData(
+                            bitmap = it.spriteIdle2,
+                            width = it.spriteWidth,
+                            height = it.spriteHeight,
+                        )
+                    },
+                    grayscale = character.discoveredOn == null,
                 )
             }
         }

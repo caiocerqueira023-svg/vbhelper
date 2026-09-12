@@ -1,7 +1,6 @@
 package com.github.nacabaro.vbhelper.world
 
 import kotlin.math.ceil
-import kotlin.math.floor
 import kotlin.random.Random
 
 /**
@@ -135,16 +134,13 @@ object WildMoodAnalyzer {
     }
 
     /**
-     * Scales a raw mood delta with asymmetric weighting:
-     * gains are dampened (×0.8, floored), losses are amplified (×1.3, ceiled).
-     * This makes it easier to lose trust than to gain it.
+     * Scales a raw mood delta so conversations have visible consequences.
+     * A two-times multiplier lets a normal exchange move mood by several
+     * points while preserving the original positive or negative direction.
      */
     fun scaleDelta(rawDelta: Int): Int {
         if (rawDelta == 0) return 0
-        return if (rawDelta > 0) {
-            floor(rawDelta * 0.8).toInt().coerceAtLeast(1)
-        } else {
-            -ceil(kotlin.math.abs(rawDelta) * 1.3).toInt().coerceAtLeast(1)
-        }
+        val magnitude = ceil(kotlin.math.abs(rawDelta) * 2f).toInt().coerceAtLeast(2)
+        return if (rawDelta > 0) magnitude else -magnitude
     }
 }

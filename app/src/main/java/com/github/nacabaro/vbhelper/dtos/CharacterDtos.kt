@@ -163,6 +163,7 @@ object CharacterDtos {
     data class CardCharaProgress(
         val id: Long,
         val spriteIdle: ByteArray,
+        val spriteIdle2: ByteArray,
         val spriteWidth: Int,
         val spriteHeight: Int,
         val nameSprite: ByteArray,
@@ -184,6 +185,7 @@ object CharacterDtos {
 
             if (id != other.id) return false
             if (!spriteIdle.contentEquals(other.spriteIdle)) return false
+            if (!spriteIdle2.contentEquals(other.spriteIdle2)) return false
             if (spriteWidth != other.spriteWidth) return false
             if (spriteHeight != other.spriteHeight) return false
             if (!nameSprite.contentEquals(other.nameSprite)) return false
@@ -203,6 +205,7 @@ object CharacterDtos {
         override fun hashCode(): Int {
             var result = id.hashCode()
             result = 31 * result + spriteIdle.contentHashCode()
+            result = 31 * result + spriteIdle2.contentHashCode()
             result = 31 * result + spriteWidth
             result = 31 * result + spriteHeight
             result = 31 * result + nameSprite.contentHashCode()

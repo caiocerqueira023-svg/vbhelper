@@ -24,6 +24,7 @@ interface DexDao {
         SELECT 
             c.id AS id,
             s.spriteIdle1 AS spriteIdle,
+            s.spriteIdle2 AS spriteIdle2,
             s.width AS spriteWidth,
             s.height AS spriteHeight,
             c.nameSprite AS nameSprite,

@@ -324,6 +324,10 @@
     <string name="ui_search_species">Search species</string>
     <string name="ui_delete_messages_title">Delete messages?</string>
     <string name="ui_delete_messages_confirmation">The selected message and all messages sent after it will be deleted. Do you want to continue?</string>
+    <string name="ui_message_actions">Message actions</string>
+    <string name="ui_message_actions_description">Choose what to do with this message.</string>
+    <string name="ui_copy">Copy</string>
+    <string name="ui_resend">Resend</string>
     <string name="ui_save">Save</string>
     <string name="ui_add">Add</string>
     <string name="ui_edit">Edit</string>

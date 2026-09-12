@@ -1,5 +1,7 @@
 package com.github.nacabaro.vbhelper.screens.chatScreen
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -9,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.compose.ui.res.stringResource
@@ -69,7 +72,8 @@ fun ChatScreen(
     var input by remember { mutableStateOf("") }
     var sending by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
-    var messagePendingDeletion by remember { mutableStateOf<Long?>(null) }
+    var selectedMessage by remember { mutableStateOf<com.github.nacabaro.vbhelper.domain.chat.ChatMessageEntity?>(null) }
+    val context = LocalContext.current
     val listState = rememberLazyListState()
 
     LaunchedEffect(messages.size) {
@@ -109,7 +113,7 @@ fun ChatScreen(
                             modifier = Modifier.combinedClickable(
                                 onClick = {},
                                 onLongClick = {
-                                    messagePendingDeletion = message.id
+                                    selectedMessage = message
                                 }
                             ),
                             colors = CardDefaults.cardColors(
@@ -126,29 +130,56 @@ fun ChatScreen(
                         }
                     }
 
-                    messagePendingDeletion?.let { messageId ->
-                        AlertDialog(
-                            onDismissRequest = { messagePendingDeletion = null },
-                            title = { Text(stringResource(R.string.ui_delete_messages_title)) },
-                            text = { Text(stringResource(R.string.ui_delete_messages_confirmation)) },
-                            dismissButton = {
-                                TextButton(onClick = { messagePendingDeletion = null }) {
-                                    Text(stringResource(R.string.ui_cancel))
-                                }
-                            },
-                            confirmButton = {
-                                Button(
-                                    onClick = {
-                                        chatScreenController.deleteFromMessage(characterId, messageId)
-                                        messagePendingDeletion = null
-                                    }
-                                ) {
-                                    Text(stringResource(R.string.ui_delete))
-                                }
-                            }
-                        )
-                    }
                 }
+            }
+
+            selectedMessage?.let { message ->
+                AlertDialog(
+                    onDismissRequest = { selectedMessage = null },
+                    title = { Text(stringResource(R.string.ui_message_actions)) },
+                    text = {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Button(
+                                onClick = {
+                                    val clipboard = context.getSystemService(ClipboardManager::class.java)
+                                    clipboard?.setPrimaryClip(ClipData.newPlainText("Digimon message", message.content))
+                                    selectedMessage = null
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text(stringResource(R.string.ui_copy)) }
+                            if (message.role == "user") {
+                                Button(
+                                    enabled = !sending,
+                                    onClick = {
+                                        sending = true
+                                        selectedMessage = null
+                                        chatScreenController.resendMessage(characterId, message.id, message.content) { result ->
+                                            sending = false
+                                            result.onFailure { error = it.message }
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) { Text(stringResource(R.string.ui_resend)) }
+                            }
+                            OutlinedButton(
+                                onClick = {
+                                    chatScreenController.deleteFromMessage(characterId, message.id)
+                                    selectedMessage = null
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text(stringResource(R.string.ui_delete)) }
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { selectedMessage = null }) {
+                            Text(stringResource(R.string.ui_cancel))
+                        }
+                    },
+                    confirmButton = {}
+                )
             }
 
             error?.let {

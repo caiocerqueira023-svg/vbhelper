@@ -114,4 +114,23 @@ class WorldChatScreenControllerImpl(
             chatRepository.deleteFromMessageForIndividual(individualId, messageId)
         }
     }
+
+    fun resendMessage(
+        individualId: String,
+        cardCharacterId: Long,
+        messageId: Long,
+        text: String,
+        onResult: (Result<WildChatEvent>) -> Unit
+    ) {
+        componentActivity.lifecycleScope.launch(Dispatchers.IO) {
+            val deletion = runCatching {
+                chatRepository.deleteFromMessageForIndividual(individualId, messageId)
+            }
+            if (deletion.isFailure) {
+                componentActivity.runOnUiThread { onResult(Result.failure(deletion.exceptionOrNull()!!)) }
+                return@launch
+            }
+            sendMessage(individualId, cardCharacterId, text, onResult)
+        }
+    }
 }

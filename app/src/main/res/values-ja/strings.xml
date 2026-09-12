@@ -201,6 +201,10 @@
     <string name="ui_search_species">種族を検索</string>
     <string name="ui_delete_messages_title">メッセージを削除しますか？</string>
     <string name="ui_delete_messages_confirmation">選択したメッセージと、それ以降に送信されたすべてのメッセージが削除されます。続行しますか？</string>
+    <string name="ui_message_actions">メッセージの操作</string>
+    <string name="ui_message_actions_description">このメッセージに対する操作を選択してください。</string>
+    <string name="ui_copy">コピー</string>
+    <string name="ui_resend">再送信</string>
     <string name="ui_save">保存</string>
     <string name="ui_add">追加</string>
     <string name="ui_edit">編集</string>

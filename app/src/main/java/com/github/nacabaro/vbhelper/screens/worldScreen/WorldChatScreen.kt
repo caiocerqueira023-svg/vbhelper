@@ -1,5 +1,7 @@
 package com.github.nacabaro.vbhelper.screens.worldScreen
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.widget.Toast
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -19,6 +21,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -54,7 +57,7 @@ fun WorldChatScreen(
     var input by remember { mutableStateOf("") }
     var sending by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
-    var messagePendingDeletion by remember { mutableStateOf<Long?>(null) }
+    var selectedMessage by remember { mutableStateOf<com.github.nacabaro.vbhelper.domain.chat.ChatMessageEntity?>(null) }
     var eventDialog by remember { mutableStateOf<WildChatEvent?>(null) }
     val listState = rememberLazyListState()
 
@@ -113,7 +116,7 @@ fun WorldChatScreen(
                         Card(
                             modifier = Modifier.combinedClickable(
                                 onClick = {},
-                                onLongClick = { messagePendingDeletion = message.id }
+                                onLongClick = { selectedMessage = message }
                             ),
                             colors = CardDefaults.cardColors(
                                 containerColor = if (isUser)
@@ -131,26 +134,60 @@ fun WorldChatScreen(
                 }
             }
 
-            messagePendingDeletion?.let { messageId ->
+            selectedMessage?.let { message ->
                 AlertDialog(
-                    onDismissRequest = { messagePendingDeletion = null },
-                    title = { Text(stringResource(R.string.ui_delete_messages_title)) },
-                    text = { Text(stringResource(R.string.ui_delete_messages_confirmation)) },
+                    onDismissRequest = { selectedMessage = null },
+                    title = { Text(stringResource(R.string.ui_message_actions)) },
+                    text = {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Button(
+                                onClick = {
+                                    val clipboard = context.getSystemService(ClipboardManager::class.java)
+                                    clipboard?.setPrimaryClip(ClipData.newPlainText("Digimon message", message.content))
+                                    selectedMessage = null
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text(stringResource(R.string.ui_copy)) }
+                            if (message.role == "user") {
+                                Button(
+                                    enabled = !sending,
+                                    onClick = {
+                                        sending = true
+                                        selectedMessage = null
+                                        controller.resendMessage(
+                                            individualId,
+                                            cardCharacterId,
+                                            message.id,
+                                            message.content
+                                        ) { result ->
+                                            sending = false
+                                            result.onSuccess { event ->
+                                                if (event !is WildChatEvent.None) eventDialog = event
+                                            }
+                                            result.onFailure { error = it.message }
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth()
+                                ) { Text(stringResource(R.string.ui_resend)) }
+                            }
+                            OutlinedButton(
+                                onClick = {
+                                    controller.deleteFromMessage(individualId, message.id)
+                                    selectedMessage = null
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) { Text(stringResource(R.string.ui_delete)) }
+                        }
+                    },
                     dismissButton = {
-                        TextButton(onClick = { messagePendingDeletion = null }) {
+                        TextButton(onClick = { selectedMessage = null }) {
                             Text(stringResource(R.string.ui_cancel))
                         }
                     },
-                    confirmButton = {
-                        Button(
-                            onClick = {
-                                controller.deleteFromMessage(individualId, messageId)
-                                messagePendingDeletion = null
-                            }
-                        ) {
-                            Text(stringResource(R.string.ui_delete))
-                        }
-                    }
+                    confirmButton = {}
                 )
             }
 

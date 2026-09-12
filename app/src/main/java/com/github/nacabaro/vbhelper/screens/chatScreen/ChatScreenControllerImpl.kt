@@ -42,6 +42,22 @@ class ChatScreenControllerImpl(
         }
     }
 
+    override fun resendMessage(
+        characterId: Long,
+        messageId: Long,
+        text: String,
+        onResult: (Result<String>) -> Unit
+    ) {
+        componentActivity.lifecycleScope.launch(Dispatchers.IO) {
+            val result = runCatching {
+                val individualId = database.userCharacterDao().getCharacter(characterId).individualId
+                database.chatDao().deleteFromMessage(individualId, messageId)
+                chatRepository.sendMessage(characterId, text)
+            }
+            componentActivity.runOnUiThread { onResult(result) }
+        }
+    }
+
     override fun markAssistantMessagesRead(characterId: Long) {
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
             chatRepository.markAssistantMessagesRead(characterId)

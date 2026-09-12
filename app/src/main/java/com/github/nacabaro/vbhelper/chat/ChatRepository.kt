@@ -6,6 +6,7 @@ import com.github.nacabaro.vbhelper.chat.lorebook.LorebookRepository
 import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.domain.chat.ChatMessageEntity
 import com.github.nacabaro.vbhelper.domain.mood.MoodDirectiveParser
+import com.github.nacabaro.vbhelper.world.WildMoodAnalyzer
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.source.LlmSettingsRepository
 import com.github.nacabaro.vbhelper.utils.DeviceType
@@ -163,8 +164,15 @@ class ChatRepository(
             )
         )
 
-        if (moodDelta != null) {
-            runCatching { database.userCharacterDao().adjustMood(characterId, moodDelta) }
+        // Models do not always return the hidden mood marker. Use the same
+        // sentiment fallback as wild encounters so every conversation has a
+        // meaningful, non-zero mood outcome.
+        val resolvedMoodDelta = WildMoodAnalyzer.resolveDelta(userText, cleanReply, moodDelta)
+        runCatching {
+            database.userCharacterDao().adjustMood(
+                characterId,
+                WildMoodAnalyzer.scaleDelta(resolvedMoodDelta)
+            )
         }
 
         return cleanReply
