@@ -1,6 +1,7 @@
 
 
 <resources>
+    <string name="scan_selected_card_rescan">DIM selected. Hold the watch near the phone again to finish receiving.</string>
     <string name="app_name">VBHelper</string>
 
     <string name="nav_chat">Chat</string>

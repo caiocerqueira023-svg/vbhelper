@@ -65,12 +65,12 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
                 AppDatabase.MIGRATION_12_13,
                 AppDatabase.MIGRATION_13_14,
                 AppDatabase.MIGRATION_14_15,
-                AppDatabase.MIGRATION_15_16
+                AppDatabase.MIGRATION_15_16,
+                AppDatabase.MIGRATION_16_17,
+                AppDatabase.MIGRATION_17_18
             )
-            // Escolha mais segura: se não houver caminho de migração explícito
-            // (ex.: usuário vindo de uma versão sem migration mapeada), o Room
-            // recria o banco em vez de travar o app com uma exceção de migração.
-            .fallbackToDestructiveMigration()
+            // Missing migrations must preserve the database, never erase individuals/chats.
+            .addCallback(com.github.nacabaro.vbhelper.database.IndividualIntegrity.callback)
             .createFromAsset("items.db")
             .build()
     }

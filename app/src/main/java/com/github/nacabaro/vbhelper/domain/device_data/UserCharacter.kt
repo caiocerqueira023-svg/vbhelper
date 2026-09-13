@@ -25,7 +25,7 @@ import com.github.nacabaro.vbhelper.domain.identity.IndividualIdentity
  */
 data class UserCharacter (
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    /** Persistent ID written to the watch's appReserved1 field. */
+    /** Permanent app identity; physical-watch transfers use a separate one-time token. */
     val individualId: String = IndividualIdentity.generate(),
     var charId: Long,
     var ageInDays: Int,

@@ -22,6 +22,11 @@ android {
     }
 
     buildTypes {
+        create("integrityCheck") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".integritycheck"
+            matchingFallbacks += "debug"
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
@@ -30,6 +35,7 @@ android {
             )
         }
     }
+    testBuildType = "integrityCheck"
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11

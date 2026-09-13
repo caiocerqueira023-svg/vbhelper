@@ -14,8 +14,20 @@ data class ChatCompletionRequest(
 
 data class ChatCompletionChoice(
     val index: Int,
-    val message: ChatMessageDto,
+    val message: ChatCompletionResponseMessage,
     val finish_reason: String?
+)
+
+/**
+ * Gateways disagree on where they expose chain-of-thought.  Keep these fields
+ * separate so only the model's final `content` is ever shown in chat.
+ */
+data class ChatCompletionResponseMessage(
+    val role: String? = null,
+    val content: String? = null,
+    val reasoning: String? = null,
+    val reasoning_content: String? = null,
+    val analysis: String? = null
 )
 
 data class ChatCompletionResponse(

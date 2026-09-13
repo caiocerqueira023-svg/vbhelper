@@ -1,4 +1,5 @@
 <resources>
+    <string name="scan_selected_card_rescan">DIM selecionado. Aproxime o relógio novamente para concluir o recebimento.</string>
     <string name="app_name">VBHelper</string>
     <string name="beta_warning_message_main">
         Este aplicativo ainda está em versão alfa e não está completo. Não o use para armazenar personagens importantes para você, pois futuras atualizações podem apagar todos os seus personagens. Desculpe pelo transtorno!

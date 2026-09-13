@@ -8,15 +8,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import com.github.cfogrady.vbnfc.data.NfcCharacter
 import com.github.nacabaro.vbhelper.ActivityLifecycleListener
-import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.screens.scanScreen.SCAN_SCREEN_ACTIVITY_LIFECYCLE_LISTENER
 import com.github.nacabaro.vbhelper.screens.scanScreen.ScanScreenController
-import com.github.nacabaro.vbhelper.source.StorageRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
 
@@ -29,9 +24,6 @@ fun WritingScreen(
     onCancel: () -> Unit,
 ) {
     val secrets by scanScreenController.secretsFlow.collectAsState(null)
-
-    val application = LocalContext.current.applicationContext as VBHelper
-    val storageRepository = StorageRepository(application.container.db)
 
     var writing by remember { mutableStateOf(false) }
     var writingScreen by remember { mutableStateOf(false) }
@@ -127,14 +119,9 @@ fun WritingScreen(
     var completedWriting by remember { mutableStateOf(false) }
 
     LaunchedEffect(isDoneSendingCard, isDoneWritingCharacter) {
-        withContext(Dispatchers.IO) {
-            if (isDoneSendingCard && isDoneWritingCharacter) {
-                application.container.reactionRepository
-                    .snapshotBeforeSendingToWatch(characterId)
-                storageRepository
-                    .deleteCharacter(characterId)
-                completedWriting = true
-            }
+        if (isDoneSendingCard && isDoneWritingCharacter) {
+            // Persistence is completed by the controller before this callback.
+            completedWriting = true
         }
     }
 

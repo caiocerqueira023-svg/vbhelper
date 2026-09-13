@@ -225,7 +225,9 @@ class VitalWearHceReaderClient(
      */
     fun sendCharacterToWatchAndConfirm(character: Character): Boolean {
         var lastError: Exception? = null
-        for (candidateChunk in chunkCandidates()) {
+        // A lost COMMIT response is ambiguous: resending automatically can clone a
+        // successfully imported character. Keep the phone copy for explicit recovery.
+        for (candidateChunk in listOf(desiredMaxChunkSize())) {
             val confirmStartMs = SystemClock.elapsedRealtime()
             val session = try {
                 sendCharacterToWatchInternal(

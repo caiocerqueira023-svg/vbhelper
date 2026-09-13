@@ -4,6 +4,7 @@ import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.util.concurrent.TimeUnit
 
 object OpenRouterClient {
     fun create(baseUrl: String): OpenRouterService {
@@ -12,6 +13,11 @@ object OpenRouterClient {
             level = HttpLoggingInterceptor.Level.BASIC
         }
         val clientBuilder = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .callTimeout(135, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
             .addInterceptor(logging)
         if (baseUrl.contains("openrouter.ai", ignoreCase = true)) {
             clientBuilder.addInterceptor { chain ->

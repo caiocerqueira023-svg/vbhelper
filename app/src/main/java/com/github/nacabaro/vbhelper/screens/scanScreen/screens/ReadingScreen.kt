@@ -106,6 +106,8 @@ fun ReadingScreen(
             onCardSelected = { card ->
                 cardSelectScreen = false
                 scanScreenController.flushCharacter(card.id)
+                isDoneReadingCharacter = false
+                readingScreen = true
             }
         )
     }

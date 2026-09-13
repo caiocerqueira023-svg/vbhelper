@@ -19,6 +19,12 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 @RewriteQueriesToDropUnusedColumns
 interface UserCharacterDao {
+    @Query("SELECT * FROM UserCharacter WHERE id = :id")
+    fun getCharacterSync(id: Long): UserCharacter?
+
+    @Query("SELECT * FROM UserCharacter WHERE individualId = :individualId")
+    fun getByIndividualIdSync(individualId: String): List<UserCharacter>
+
     @Insert
     fun insertCharacterData(characterData: UserCharacter): Long
 
@@ -55,7 +61,7 @@ interface UserCharacterDao {
         JOIN CardCharacter c ON c.id = t.stageId
         JOIN Sprite s ON s.id = c.spriteId
         WHERE monId = :monId
-        ORDER BY t.transformationDate ASC, t.id ASC
+        ORDER BY t.id ASC
     """
     )
     fun getTransformationHistory(monId: Long): Flow<List<CharacterDtos.TransformationHistory>>
@@ -71,7 +77,7 @@ interface UserCharacterDao {
         JOIN CardCharacter c ON c.id = t.stageId
         JOIN Card ca ON ca.id = c.cardId
         WHERE t.monId = :monId
-        ORDER BY t.transformationDate ASC, t.id ASC
+        ORDER BY t.id ASC
     """
     )
     suspend fun getTransformationHistoryForExport(monId: Long): List<CharacterDtos.TransformationHistoryExport>
@@ -202,6 +208,9 @@ interface UserCharacterDao {
     @Query("UPDATE UserCharacter SET charId = :stageId, vitalPoints = 0 WHERE id = :characterId")
     fun degenerateCharacter(characterId: Long, stageId: Long)
 
+    @Query("SELECT * FROM TransformationHistory WHERE monId = :characterId AND id = :historyId")
+    fun getTransformationHistoryEntry(characterId: Long, historyId: Long): TransformationHistory?
+
     @Query(
         """
         UPDATE UserCharacter
@@ -215,13 +224,11 @@ interface UserCharacterDao {
         """
         DELETE FROM TransformationHistory
         WHERE monId = :characterId
-          AND (transformationDate > :transformationDate
-            OR (transformationDate = :transformationDate AND id > :historyId))
+          AND id > :historyId
         """
     )
     fun deleteTransformationsAfter(
         characterId: Long,
-        transformationDate: Long,
         historyId: Long
     )
 

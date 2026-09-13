@@ -2,6 +2,7 @@ package com.github.nacabaro.vbhelper.di
 
 import DefaultAppContainer
 import android.app.Application
+import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.github.nacabaro.vbhelper.companion.validation.ValidatedCardManager
@@ -9,6 +10,9 @@ import com.github.nacabaro.vbhelper.companion.logs.CompanionLogService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
+import com.github.nacabaro.vbhelper.source.EvolutionHistoryRepository
 import com.github.nacabaro.vbhelper.world.WorldAfkScheduler
 
 class VBHelper : Application() {
@@ -35,6 +39,23 @@ class VBHelper : Application() {
             )
         }
         container = DefaultAppContainer(applicationContext)
+        applicationScope.launch {
+            val histories = EvolutionHistoryRepository(container.db)
+            // Initial emission repairs existing storage; later emissions also cover
+            // imports, degeneration, restored backups and edited evolution routes.
+            container.db.invalidationTracker.createFlow(
+                "UserCharacter", "TransformationHistory", "CardCharacter",
+                "PossibleTransformations", "CardFusions",
+            ).collect {
+                try {
+                    histories.repairAll()
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (failure: Exception) {
+                    Log.e("EvolutionHistory", "Could not repair stored evolution histories", failure)
+                }
+            }
+        }
         WorldAfkScheduler.schedule(applicationContext)
     }
 }

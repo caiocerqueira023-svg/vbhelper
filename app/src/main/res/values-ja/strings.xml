@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="scan_selected_card_rescan">DIMを選択しました。受信を完了するには、時計をもう一度スマートフォンに近づけてください。</string>
     <string name="app_name">VBHelper</string>
     <string name="beta_warning_button_dismiss">閉じる</string>
     <string name="nav_scan">スキャン</string>

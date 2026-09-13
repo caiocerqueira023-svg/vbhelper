@@ -7,6 +7,9 @@ import com.github.nacabaro.vbhelper.domain.device_data.BECharacterData
 import com.github.nacabaro.vbhelper.domain.device_data.UserCharacter
 import com.github.nacabaro.vbhelper.utils.DeviceType
 import kotlin.math.max
+import java.util.concurrent.Callable
+import com.github.nacabaro.vbhelper.domain.identity.TransferFingerprint
+import com.github.nacabaro.vbhelper.domain.identity.WatchImportReceipt
 
 class VitalWearCharacterImporter(
     private val database: AppDatabase
@@ -16,7 +19,16 @@ class VitalWearCharacterImporter(
         val message: String
     )
 
-    fun importCharacter(character: Character): ImportResult {
+    fun importCharacter(character: Character): ImportResult = database.runInTransaction(Callable {
+        val fingerprint = TransferFingerprint.bytes(character.toByteArray(), "VitalWear")
+        val previous = database.watchTransferDao().getImport(fingerprint)
+        if (previous != null) {
+            val saved = database.userCharacterDao().getCharacterSync(previous.characterId)
+            ImportResult(saved?.individualId == previous.individualId, "This transfer has already been imported.")
+        } else importCharacterInTransaction(character)
+    })
+
+    private fun importCharacterInTransaction(character: Character): ImportResult {
         val importedCard = resolveCard(character)
             ?: return ImportResult(
                 success = false,
@@ -112,6 +124,11 @@ class VitalWearCharacterImporter(
             )
         }
 
+        EvolutionHistoryRepository(database).repairCharacter(userCharacterId)
+        val saved = requireNotNull(database.userCharacterDao().getCharacterSync(userCharacterId))
+        database.watchTransferDao().recordImport(WatchImportReceipt(
+            TransferFingerprint.bytes(character.toByteArray(), "VitalWear"), userCharacterId, saved.individualId,
+        ))
         return ImportResult(
             success = true,
             message = "Imported ${importedCard.name} slot $slotId from VitalWear."

@@ -14,10 +14,18 @@ import kotlin.experimental.and
 import kotlin.experimental.or
 
 class TagCommunicator(
-    private val nfcData: NfcA,
+    private val nfcData: NfcTransport,
     private val checksumCalculator: ChecksumCalculator,
     private val nfcDataTranslatorFactory: NfcDataTranslatorFactory,
     ) {
+    constructor(nfcData: NfcA, checksumCalculator: ChecksumCalculator, factory: NfcDataTranslatorFactory) : this(
+        object : NfcTransport {
+            override val tagId: ByteArray get() = nfcData.tag.id
+            override fun transceive(command: ByteArray): ByteArray = nfcData.transceive(command)
+        }, checksumCalculator, factory,
+    )
+
+    private fun write(command: ByteArray) = NfcTransferSafety.requireWriteAck(nfcData.transceive(command))
 
     companion object {
         const val TAG = "VBNfcHandler"
@@ -71,26 +79,29 @@ class TagCommunicator(
 
     data class DeviceTranslatorAndHeader(val nfcHeader: NfcHeader, val translator: NfcDataTranslator<*>)
 
+    val deviceKey: String
+        get() = nfcData.tagId.joinToString("") { "%02x".format(it.toInt() and 255) }
+
     @OptIn(ExperimentalStdlibApi::class)
     fun receiveCharacter(confirmReceive: (NfcCharacter)->Boolean = {true}): NfcCharacter {
         val translatorAndHeader = fetchDeviceTranslatorAndHeader()
         val header = translatorAndHeader.nfcHeader
         val translator = translatorAndHeader.translator
         Log.i(TAG, "Writing to make ready for operation")
-        nfcData.transceive(translator.getOperationCommandBytes(header, OPERATION_READY))
+        write(translator.getOperationCommandBytes(header, OPERATION_READY))
         Log.i(TAG, "Authenticating")
 
         passwordAuth(translator.cryptographicTransformer)
         Log.i(TAG, "Reading Character")
         val encryptedCharacterData = readNfcData()
-        val decryptedCharacterData = translator.cryptographicTransformer.decryptData(encryptedCharacterData, nfcData.tag.id)
+        val decryptedCharacterData = translator.cryptographicTransformer.decryptData(encryptedCharacterData, nfcData.tagId)
         checksumCalculator.checkChecksums(decryptedCharacterData)
         Log.i(TAG, "Decrypted NFC Data Received: ${decryptedCharacterData.toHexString()}")
         val nfcCharacter = translator.parseNfcCharacter(decryptedCharacterData)
         Log.i(TAG, "Known Character Stats: $nfcCharacter")
         if(confirmReceive.invoke(nfcCharacter)) {
             Log.i(TAG, "Signaling operation complete")
-            nfcData.transceive(translator.getOperationCommandBytes(header, OPERATION_TRANSFERRED_TO_APP))
+            write(translator.getOperationCommandBytes(header, OPERATION_TRANSFERRED_TO_APP))
         }
         return nfcCharacter
     }
@@ -109,7 +120,7 @@ class TagCommunicator(
         val result = ByteArray(((LAST_DATA_PAGE +4)- START_DATA_PAGE) * 4)
         for (page in START_DATA_PAGE..LAST_DATA_PAGE step 4) {
             val pages = nfcData.transceive(byteArrayOf(NFC_READ_COMMAND, page.toByte()))
-            if (pages.size < 16) {
+            if (pages.size != 16) {
                 throw Exception("Failed to read page: $page")
             }
             System.arraycopy(pages, 0, result, (page - START_DATA_PAGE)*4, pages.size)
@@ -123,13 +134,13 @@ class TagCommunicator(
         val translator = translatorAndHeader.translator
         // set app nonce to device ensure when we send back the character that we are preparing
         // the same device we send to
-        nfcData.transceive(translator.getOperationCommandBytes(header, OPERATION_READY))
+        write(translator.getOperationCommandBytes(header, OPERATION_READY))
         // app authenticates, and reads everything, and checks the version
         // The version check is only for the BE when transfering from DIM=0 (pulsemon).
         // This was from the bug when the BE first came out.
         // Check (page 103 [0:1] != 1, 0)
         header.setDimId(dimId)
-        nfcData.transceive(translator.getOperationCommandBytes(header, OPERATION_CHECK_DIM))
+        write(translator.getOperationCommandBytes(header, OPERATION_CHECK_DIM))
     }
 
     // sendCharacter sends a character to the device using the nfcDataGenerator function. The
@@ -158,27 +169,28 @@ class TagCommunicator(
         }
 
         // update the memory data
-        nfcData.transceive(translator.getOperationCommandBytes(header, OPERATION_READY))
+        write(translator.getOperationCommandBytes(header, OPERATION_READY))
         passwordAuth(translator.cryptographicTransformer)
 
         val currentNfcData = readNfcData()
-        var newNfcData = translator.cryptographicTransformer.decryptData(currentNfcData, nfcData.tag.id)
+        var newNfcData = translator.cryptographicTransformer.decryptData(currentNfcData, nfcData.tagId)
         if(header.deviceTypeId == DeviceType.VitalBraceletBEDeviceType && ZERO_DIM_ID == character.dimId) {
             verifyMinimumFirmware(newNfcData)
         }
         translator.setCharacterInByteArray(character, newNfcData)
         translator.finalizeByteArrayFormat(newNfcData)
-        newNfcData = translator.cryptographicTransformer.encryptData(newNfcData, nfcData.tag.id)
+        newNfcData = translator.cryptographicTransformer.encryptData(newNfcData, nfcData.tagId)
 
         // write nfc data
         val pagedData = ConvertToPages(newNfcData)
         for(pageToWriteIdx in 8..<pagedData.size) {
             val pageToWrite = pagedData[pageToWriteIdx]
-            nfcData.transceive(byteArrayOf(NFC_WRITE_COMMAND, pageToWriteIdx.toByte(), pageToWrite[0], pageToWrite[1], pageToWrite[2], pageToWrite[3]))
+            write(byteArrayOf(NFC_WRITE_COMMAND, pageToWriteIdx.toByte(), pageToWrite[0], pageToWrite[1], pageToWrite[2], pageToWrite[3]))
         }
 
 
-        nfcData.transceive(translator.getOperationCommandBytes(header, OPERATION_TRANSFERED_TO_DEVICE))
+        NfcTransferSafety.requireReadBack(newNfcData, readNfcData())
+        write(translator.getOperationCommandBytes(header, OPERATION_TRANSFERED_TO_DEVICE))
 
     }
 
@@ -192,17 +204,18 @@ class TagCommunicator(
 
     @OptIn(ExperimentalStdlibApi::class)
     fun passwordAuth(cryptographicTransformer: CryptographicTransformer) {
-        val tagId = nfcData.tag.id
+        val tagId = nfcData.tagId
         Log.i(TAG, "TagId: ${tagId.toHexString()}")
         val password = cryptographicTransformer.createNfcPassword(tagId)
         try {
             val result = nfcData.transceive(byteArrayOf(NFC_PASSWORD_COMMAND, password[0], password[1], password[2], password[3]))
             Log.i(TAG, "PasswordAuth Result: ${result.toHexString()}")
-            if (result.size == 1) {
+            if (result.size != 2) {
                 throw AuthenticationException("Authentication failed. Result: ${result.toHexString()}")
             }
         } catch (e: Exception) {
             Log.e(TAG, "Exception: ${e.message}")
+            throw e
         }
     }
 

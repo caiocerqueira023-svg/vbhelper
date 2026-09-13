@@ -333,6 +333,8 @@ class WorldRepository(private val db: AppDatabase) {
         // watch export both depend on the auxiliary VB rows being present.
         var characterId = 0L
         db.runInTransaction {
+            // Atomically claim the spawn. A double tap/concurrent recruitment cannot clone it.
+            check(spawnDao.deleteById(spawnId) == 1) { "This Digimon is no longer available in World." }
             characterId = db.userCharacterDao().insertCharacterData(userCharacter)
 
             db.userCharacterDao().insertVBCharacterData(
@@ -367,7 +369,7 @@ class WorldRepository(private val db: AppDatabase) {
             db.userCharacterDao().insertSpecialMissions(*missions.toTypedArray())
 
             db.dexDao().insertCharacter(cardCharacter.charaIndex, cardCharacter.cardId, now)
-            spawnDao.deleteById(spawnId)
+            com.github.nacabaro.vbhelper.source.EvolutionHistoryRepository(db).repairCharacter(characterId)
 
         }
 

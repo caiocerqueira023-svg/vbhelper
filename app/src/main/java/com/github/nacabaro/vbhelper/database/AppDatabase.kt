@@ -1,6 +1,10 @@
 package com.github.nacabaro.vbhelper.database
 
 import androidx.room.Database
+import com.github.nacabaro.vbhelper.daos.EvolutionHistoryDao
+import com.github.nacabaro.vbhelper.daos.WatchTransferDao
+import com.github.nacabaro.vbhelper.domain.identity.WatchTransfer
+import com.github.nacabaro.vbhelper.domain.identity.WatchImportReceipt
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
@@ -54,7 +58,7 @@ import com.github.nacabaro.vbhelper.domain.lorebook.LorebookEntry
 import com.github.nacabaro.vbhelper.domain.world.WorldSpawn
 
 @Database(
-    version = 16,
+    version = 18,
     exportSchema = false,
     entities = [
         Card::class,
@@ -65,6 +69,8 @@ import com.github.nacabaro.vbhelper.domain.world.WorldSpawn
         Sprite::class,
         UserCharacter::class,
         DigimonIndividual::class,
+        WatchTransfer::class,
+        WatchImportReceipt::class,
         BECharacterData::class,
         VBCharacterData::class,
         SpecialMissions::class,
@@ -92,7 +98,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun cardProgressDao(): CardProgressDao
     abstract fun characterDao(): CharacterDao
     abstract fun userCharacterDao(): UserCharacterDao
+    abstract fun evolutionHistoryDao(): EvolutionHistoryDao
     abstract fun digimonIndividualDao(): DigimonIndividualDao
+    abstract fun watchTransferDao(): WatchTransferDao
     abstract fun dexDao(): DexDao
     abstract fun itemDao(): ItemDao
     abstract fun adventureDao(): AdventureDao
@@ -110,6 +118,42 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun worldSpawnDao(): WorldSpawnDao
 
     companion object {
+        val MIGRATION_17_18 = object : Migration(17, 18) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE WatchTransfer ADD COLUMN sourceCharacterId INTEGER")
+                db.execSQL("ALTER TABLE WatchTransfer ADD COLUMN cardId INTEGER")
+                db.execSQL("ALTER TABLE WatchTransfer ADD COLUMN sourceFingerprint TEXT")
+                db.execSQL("ALTER TABLE WatchTransfer ADD COLUMN deviceKey TEXT NOT NULL DEFAULT ''")
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS WatchImportReceipt (
+                        fingerprint TEXT NOT NULL PRIMARY KEY,
+                        characterId INTEGER NOT NULL,
+                        individualId TEXT NOT NULL
+                    )
+                """.trimIndent())
+                IndividualIntegrity.install(db)
+            }
+        }
+
+        val MIGRATION_16_17 = object : Migration(16, 17) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `WatchTransfer` (
+                        `token` TEXT NOT NULL PRIMARY KEY,
+                        `individualId` TEXT NOT NULL,
+                        `deviceType` INTEGER NOT NULL,
+                        `dimId` INTEGER NOT NULL,
+                        `generation` INTEGER,
+                        `ageInDays` INTEGER NOT NULL,
+                        `totalBattlesWon` INTEGER NOT NULL,
+                        `totalBattlesLost` INTEGER NOT NULL,
+                        `history` TEXT NOT NULL
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_WatchTransfer_individualId` ON `WatchTransfer` (`individualId`)")
+            }
+        }
+
         val MIGRATION_15_16 = object : Migration(15, 16) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(

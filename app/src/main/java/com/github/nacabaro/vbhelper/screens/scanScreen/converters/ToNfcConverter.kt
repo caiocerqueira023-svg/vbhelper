@@ -1,7 +1,5 @@
 package com.github.nacabaro.vbhelper.screens.scanScreen.converters
 
-import android.icu.util.Calendar
-import android.icu.util.TimeZone
 import android.util.Log
 import androidx.activity.ComponentActivity
 import com.github.cfogrady.vbnfc.be.BENfcCharacter
@@ -11,26 +9,25 @@ import com.github.cfogrady.vbnfc.vb.SpecialMission
 import com.github.cfogrady.vbnfc.vb.VBNfcCharacter
 import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.di.VBHelper
+import com.github.nacabaro.vbhelper.domain.device_data.NfcEvolutionHistory
 import com.github.nacabaro.vbhelper.domain.device_data.UserCharacter
-import com.github.nacabaro.vbhelper.domain.identity.IndividualIdentity
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.utils.DeviceType
 import kotlinx.coroutines.flow.first
-import java.util.Date
+import androidx.room.withTransaction
+import com.github.nacabaro.vbhelper.source.EvolutionHistoryRepository
 
 class ToNfcConverter(
-    private val componentActivity: ComponentActivity
+    private val database: AppDatabase,
 ) {
-    private val application: VBHelper = componentActivity.applicationContext as VBHelper
-    private val database: AppDatabase = application.container.db
+    constructor(componentActivity: ComponentActivity) : this((componentActivity.applicationContext as VBHelper).container.db)
 
 
 
     suspend fun characterToNfc(
         characterId: Long
-    ): NfcCharacter {
-        val app = componentActivity.applicationContext as VBHelper
-        val database = app.container.db
+    ): NfcCharacter = database.withTransaction {
+        EvolutionHistoryRepository(database).repairCharacter(characterId)
 
         val userCharacter = database
             .userCharacterDao()
@@ -40,7 +37,7 @@ class ToNfcConverter(
             .characterDao()
             .getCharacterInfo(userCharacter.charId)
 
-        return if (userCharacter.characterType == DeviceType.BEDevice)
+        if (userCharacter.characterType == DeviceType.BEDevice)
             nfcToBENfc(characterId, characterInfo, userCharacter)
         else
             nfcToVBNfc(characterId, characterInfo, userCharacter)
@@ -82,7 +79,7 @@ class ToNfcConverter(
             heartRateCurrent = userCharacter.heartRateCurrent.toUByte(),
             transformationHistory = paddedTransformationArray,
             vitalHistory = generateVitalsHistoryArray(characterId),
-            appReserved1 = IndividualIdentity.encode(userCharacter.individualId),
+            // ScanScreenController attaches a one-time transfer token before sending.
             appReserved2 = generateUShortAppReserved(userCharacter),
             generation = vbData.generation.toUShort(),
             totalTrophies = vbData.totalTrophies.toUShort(),
@@ -208,7 +205,7 @@ class ToNfcConverter(
             heartRateCurrent = userCharacter.heartRateCurrent.toUByte(),
             transformationHistory = paddedTransformationArray,
             vitalHistory = generateVitalsHistoryArray(characterId),
-            appReserved1 = IndividualIdentity.encode(userCharacter.individualId),
+            // ScanScreenController attaches a one-time transfer token before sending.
             appReserved2 = Array(3) {0u},
             trainingHp = beData.trainingHp.toUShort(),
             trainingAp = beData.trainingAp.toUShort(),
@@ -239,61 +236,8 @@ class ToNfcConverter(
         characterId: Long,
         length: Int = 8
     ): Array<NfcCharacter.Transformation> {
-        val transformationHistory = database
-            .userCharacterDao()
-            .getTransformationHistory(characterId)
-            .first()
-            .map {
-                val date = Date(it.transformationDate)
-                val calendar = android.icu.util.GregorianCalendar(TimeZone.getTimeZone("UTC"))
-                calendar.time = date
-
-                Log.d(
-                    "TransformationHistory",
-                    "Year: ${calendar.get(Calendar.YEAR)}, " +
-                            "Month: ${calendar.get(Calendar.MONTH) + 1}, " +
-                            "Day: ${calendar.get(Calendar.DAY_OF_MONTH)}"
-                )
-
-                NfcCharacter.Transformation(
-                    toCharIndex = it.monIndex.toUByte(),
-                    year = calendar
-                        .get(Calendar.YEAR)
-                        .toUShort(),
-                    month = (calendar
-                        .get(Calendar.MONTH) + 1)
-                        .toUByte(),
-                    day = calendar
-                        .get(Calendar.DAY_OF_MONTH)
-                        .toUByte()
-                )
-            }.toTypedArray()
-
-        val paddedTransformationArray = padTransformationArray(transformationHistory, length)
-
-        return paddedTransformationArray
-    }
-
-
-
-    private fun padTransformationArray(
-        transformationArray: Array<NfcCharacter.Transformation>,
-        length: Int
-    ): Array<NfcCharacter.Transformation> {
-        if (transformationArray.size >= 8) {
-            return transformationArray
-        }
-
-        val paddedArray = Array(length) {
-            NfcCharacter.Transformation(
-                toCharIndex = 255u,
-                year = 65535u,
-                month = 255u,
-                day = 255u
-            )
-        }
-
-        System.arraycopy(transformationArray, 0, paddedArray, 0, transformationArray.size)
-        return paddedArray
+        val history = database.userCharacterDao().getTransformationHistory(characterId).first()
+            .map { NfcEvolutionHistory.transformation(it.monIndex, it.transformationDate) }
+        return NfcEvolutionHistory.pad(history, length)
     }
 }

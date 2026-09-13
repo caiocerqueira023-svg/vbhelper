@@ -47,7 +47,15 @@ fun ScanScreen(
     LaunchedEffect(characterId) {
         withContext(Dispatchers.IO) {
             if (characterId != null && nfcCharacter == null) {
-                nfcCharacter = scanScreenController.characterToNfc(characterId)
+                try {
+                    nfcCharacter = scanScreenController.characterToNfc(characterId)
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    throw cancelled
+                } catch (failure: Exception) {
+                    withContext(Dispatchers.Main) {
+                        android.widget.Toast.makeText(context, failure.message ?: "Transfer preparation failed", android.widget.Toast.LENGTH_LONG).show()
+                    }
+                }
             }
         }
     }

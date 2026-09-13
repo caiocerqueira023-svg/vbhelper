@@ -14,15 +14,29 @@ import com.github.nacabaro.vbhelper.domain.device_data.VBCharacterData
 import com.github.nacabaro.vbhelper.domain.device_data.VitalsHistory
 import com.github.nacabaro.vbhelper.utils.DeviceType
 import com.github.nacabaro.vbhelper.domain.identity.IndividualIdentity
+import com.github.nacabaro.vbhelper.domain.identity.resolveReturningIndividual
+import com.github.nacabaro.vbhelper.domain.identity.TransferFingerprint
+import com.github.nacabaro.vbhelper.domain.identity.WatchImportReceipt
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityGenerator
-import java.util.GregorianCalendar
+import com.github.nacabaro.vbhelper.domain.device_data.NfcEvolutionHistory
+import com.github.nacabaro.vbhelper.source.EvolutionHistoryRepository
 import kotlinx.coroutines.launch
+import java.util.concurrent.Callable
+import com.github.nacabaro.vbhelper.database.AppDatabase
 
 class FromNfcConverter (
-    componentActivity: ComponentActivity
+    private val database: AppDatabase,
+    private val sourceDevice: String = "",
+    private val onImported: (Long) -> Unit = {},
 ) {
-    private val application = componentActivity.applicationContext as VBHelper
-    private val database = application.container.db
+    constructor(componentActivity: ComponentActivity, sourceDevice: String = "") : this(
+        (componentActivity.applicationContext as VBHelper).container.db,
+        sourceDevice,
+        { id ->
+            val app = componentActivity.applicationContext as VBHelper
+            app.applicationScope.launch { app.container.reactionRepository.evaluateAndReact(id) }
+        },
+    )
     
     
     fun addCharacterUsingCard(
@@ -36,6 +50,7 @@ class FromNfcConverter (
         if (cardData == null) {
             return "Card not found"
         }
+        check(cardData.cardId == nfcCharacter.dimId.toInt()) { "Selected card does not match the received DIM." }
 
         return insertCharacter(nfcCharacter, cardData)
     }
@@ -45,6 +60,14 @@ class FromNfcConverter (
         nfcCharacter: NfcCharacter,
         onMultipleCards: (List<Card>, NfcCharacter) -> Unit
     ): String {
+        val transfer = IndividualIdentity.decode(nfcCharacter.appReserved1)?.let(database.watchTransferDao()::get)
+        transfer?.cardId?.let { exportedCardId ->
+            val exportedCard = database.cardDao().getCardById(exportedCardId)
+            check(exportedCard != null && exportedCard.cardId == nfcCharacter.dimId.toInt()) {
+                "The original imported DIM is missing. Restore it before receiving this Digimon."
+            }
+            return insertCharacter(nfcCharacter, exportedCard)
+        }
         val appReservedCardId = nfcCharacter
             .appReserved2[0].toLong()
 
@@ -55,9 +78,7 @@ class FromNfcConverter (
                 .cardDao()
                 .getCardById(appReservedCardId)
 
-            if (fetchedCard == null) {
-                return "Card not found"
-            } else if (fetchedCard.cardId == nfcCharacter.dimId.toInt()) {
+            if (fetchedCard != null && fetchedCard.cardId == nfcCharacter.dimId.toInt()) {
                 cardData = fetchedCard
             }
         }
@@ -87,6 +108,34 @@ class FromNfcConverter (
         nfcCharacter: NfcCharacter,
         cardData: Card
     ): String {
+        val characterId = database.runInTransaction(Callable {
+            val fingerprint = TransferFingerprint.of(nfcCharacter, sourceDevice)
+            val previous = database.watchTransferDao().getImport(fingerprint)
+            if (previous != null) {
+                val saved = database.userCharacterDao().getCharacterSync(previous.characterId)
+                check(saved != null && saved.individualId == previous.individualId) {
+                    "This transfer was already received and its Digimon has since left storage."
+                }
+                previous.characterId
+            } else {
+                val insertedId = insertCharacterInTransaction(nfcCharacter, cardData)
+                val inserted = requireNotNull(database.userCharacterDao().getCharacterSync(insertedId))
+                database.watchTransferDao().recordImport(WatchImportReceipt(fingerprint, insertedId, inserted.individualId))
+                insertedId
+            }
+        })
+        onImported(characterId)
+        return "Done reading character!"
+    }
+
+    private fun insertCharacterInTransaction(
+        nfcCharacter: NfcCharacter,
+        cardData: Card
+    ): Long {
+        val transfer = IndividualIdentity.decode(nfcCharacter.appReserved1)?.let(database.watchTransferDao()::get)
+        check(transfer?.cardId == null || transfer.cardId == cardData.id) {
+            "This individual must return to its original imported DIM."
+        }
         val cardCharData = database
             .characterDao()
             .getCharacterByMonIndex(nfcCharacter.charIndex.toInt(), cardData.id)
@@ -101,7 +150,7 @@ class FromNfcConverter (
         val characterData = UserCharacter(
             individualId = individualId,
             charId = cardCharData.id,
-            ageInDays = nfcCharacter.ageInDays.toInt(),
+            ageInDays = nfcCharacter.ageInDays.toInt() and 0xFF,
             mood = nfcCharacter.mood.toInt(),
             vitalPoints = nfcCharacter.vitalPoints.toInt(),
             transformationCountdown = nfcCharacter.transformationCountdownInMinutes.toInt(),
@@ -151,27 +200,46 @@ class FromNfcConverter (
             nfcCharacter = nfcCharacter
         )
 
-        application.applicationScope.launch {
-            application.container.reactionRepository.evaluateAndReact(characterId)
-        }
-
-        return "Done reading character!"
+        EvolutionHistoryRepository(database).repairCharacter(characterId)
+        return characterId
     }
 
-    /** Reuse only IDs that were previously created by this app and still exist locally. */
+    /** Only a recorded export with matching lineage can restore an individual. */
     private fun resolveIndividualId(
         nfcCharacter: NfcCharacter,
         stage: Int,
         attribute: NfcCharacter.Attribute
     ): String {
-        val fromWatch = IndividualIdentity.decode(nfcCharacter.appReserved1)
-        // Some devices carry the previous appReserved1 into a newly created Digimon.
-        // A fresh character must not inherit that individual's nickname or personality.
-        val isFreshCharacter = nfcCharacter.ageInDays.toInt() <= 1 &&
-            nfcCharacter.transformationHistory.all { it.toCharIndex.toInt() == 255 }
-        val individualId = fromWatch
-            ?.takeIf { !isFreshCharacter && database.digimonIndividualDao().exists(it) }
-            ?: IndividualIdentity.generate()
+        val token = IndividualIdentity.decode(nfcCharacter.appReserved1)
+        val transfers = database.watchTransferDao()
+        val transfer = token?.let(transfers::get)
+        if (transfer != null) {
+            check(transfer.deviceKey.isEmpty() || transfer.deviceKey == sourceDevice) {
+                "This transfer belongs to another physical watch."
+            }
+            check(transfer.matches(nfcCharacter)) {
+                "The watch data does not match this individual's transfer. It has been preserved on the watch."
+            }
+            check(database.digimonIndividualDao().exists(transfer.individualId)) { "The permanent individual record is missing." }
+            val local = database.userCharacterDao().getByIndividualIdSync(transfer.individualId)
+            if (local.isNotEmpty()) {
+                // Recover a send that reached the watch but whose success ACK was lost.
+                check(local.size == 1 && local.single().id == transfer.sourceCharacterId &&
+                    TransferFingerprint.of(local.single()) == transfer.sourceFingerprint) {
+                    "A different local copy already owns this identity. Both copies have been preserved."
+                }
+                database.userCharacterDao().deleteCharacterById(local.single().id)
+            }
+            check(!transfers.isPresentLocally(transfer.individualId)) { "This individual is already present in World." }
+        }
+        val individualId = resolveReturningIndividual(
+            character = nfcCharacter,
+            findTransfer = transfers::get,
+            individualExists = database.digimonIndividualDao()::exists,
+            isPresentLocally = transfers::isPresentLocally,
+        ) ?: IndividualIdentity.generate()
+        // Consumed atomically with the complete import and its retry receipt.
+        if (token != null) transfers.consume(token)
         database.runInTransaction {
             database.digimonIndividualDao().insert(
                 DigimonIndividual(individualId = individualId, createdAt = System.currentTimeMillis())
@@ -318,13 +386,9 @@ class FromNfcConverter (
         val transformationHistoryWatch = nfcCharacter.transformationHistory
         transformationHistoryWatch.map { item ->
             if (item.toCharIndex.toInt() != 255) {
-                val date = GregorianCalendar(
-                    item.year.toInt(),
-                    item.month.toInt(),
-                    item.day.toInt()
-                )
-                    .time
-                    .time
+                // Calendar expects 0-based months; the watch sends 1-based months.
+                // An invalid device date must not prevent saving a received Digimon.
+                val date = NfcEvolutionHistory.dateToEpochMillis(item) ?: System.currentTimeMillis()
 
                 database
                     .userCharacterDao()

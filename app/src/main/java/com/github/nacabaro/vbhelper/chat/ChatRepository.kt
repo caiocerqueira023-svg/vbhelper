@@ -11,9 +11,12 @@ import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.source.LlmSettingsRepository
 import com.github.nacabaro.vbhelper.utils.DeviceType
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.first
+import retrofit2.HttpException
+import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ChatRepository(
@@ -319,10 +322,45 @@ class ChatRepository(
         messages += chatDao.getMessagesSync(individualId).takeLast(20)
             .map { ChatMessageDto(it.role, it.content) }
         extraUserTurn?.let { messages += ChatMessageDto("user", it) }
-        val response = OpenRouterClient.create(baseUrl).getChatCompletion(
-            authorization = "Bearer $apiKey",
-            request = ChatCompletionRequest(model = model, messages = messages)
-        )
-        return response.choices.firstOrNull()?.message?.content?.trim() ?: "..."
+        val service = OpenRouterClient.create(baseUrl)
+        repeat(2) { attempt ->
+            try {
+                val response = service.getChatCompletion(
+                    authorization = "Bearer $apiKey",
+                    request = ChatCompletionRequest(model = model, messages = messages)
+                )
+                return finalReply(response)
+            } catch (error: IOException) {
+                if (attempt == 1) throw error
+            } catch (error: HttpException) {
+                if (attempt == 1 || error.code() !in setOf(408, 429, 500, 502, 503, 504)) {
+                    throw error
+                }
+            }
+            delay(1_000)
+        }
+        error("The chat service did not return a response.")
+    }
+
+    private fun finalReply(response: ChatCompletionResponse): String {
+        val content = response.choices.firstOrNull()?.message?.content
+            ?.trim()
+            ?.removeLeakedReasoning()
+            ?.trim()
+            .orEmpty()
+        if (content.isNotBlank()) return content
+        throw IllegalStateException("The chat provider returned reasoning but no final response.")
+    }
+
+    private fun String.removeLeakedReasoning(): String {
+        var result = this
+        val tags = listOf("think", "analysis", "reasoning")
+        tags.forEach { tag ->
+            val expression = Regex("(?is)<$tag\\b[^>]*>.*?</$tag\\s*>")
+            result = result.replace(expression, "")
+            val unfinishedExpression = Regex("(?is)<$tag\\b[^>]*>.*$")
+            result = result.replace(unfinishedExpression, "")
+        }
+        return result
     }
 }

@@ -2,6 +2,7 @@ package com.github.nacabaro.vbhelper.screens.homeScreens
 
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.room.withTransaction
 import com.github.cfogrady.vbnfc.vb.SpecialMission
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.dtos.ItemDtos
@@ -102,8 +103,8 @@ class HomeScreenControllerImpl(
                 check(character.charId != transformation.stageId) {
                     "This Digimon is already at that stage."
                 }
-                check(transformation.stage <= characterWithSprites.stage) {
-                    "Cannot degenerate to a stage higher than the current one."
+                check(transformation.stage < characterWithSprites.stage) {
+                    "Degeneration requires a strictly lower stage."
                 }
 
                 val currentCurrency = application.container.currencyRepository.currencyValue.first()
@@ -113,15 +114,27 @@ class HomeScreenControllerImpl(
 
                 application.container.reactionRepository
                     .snapshotBeforeSendingToWatch(characterId)
-                database.userCharacterDao().degenerateCharacter(
-                    characterId = characterId,
-                    stageId = transformation.stageId
-                )
-                database.userCharacterDao().deleteTransformationsAfter(
-                    characterId = characterId,
-                    transformationDate = transformation.transformationDate,
-                    historyId = transformation.id
-                )
+                database.withTransaction {
+                    com.github.nacabaro.vbhelper.source.EvolutionHistoryRepository(database)
+                        .repairCharacter(characterId)
+                    val selected = database.userCharacterDao()
+                        .getTransformationHistoryEntry(characterId, transformation.id)
+                    check(selected != null && selected.stageId == transformation.stageId) {
+                        "This evolution is no longer in this Digimon's history."
+                    }
+                    database.userCharacterDao().degenerateCharacter(
+                        characterId = characterId,
+                        stageId = selected.stageId
+                    )
+                    // Watch dates can precede recruitment dates or move backwards
+                    // when its clock changes. Follow lineage order, not dates.
+                    database.userCharacterDao().deleteTransformationsAfter(
+                        characterId = characterId,
+                        historyId = selected.id
+                    )
+                    com.github.nacabaro.vbhelper.source.EvolutionHistoryRepository(database)
+                        .repairCharacter(characterId)
+                }
                 application.container.currencyRepository.setCurrencyValue(
                     currentCurrency - DEGENERATION_COST
                 )

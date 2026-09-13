@@ -9,6 +9,8 @@ import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.utils.DeviceType
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.File
 
 class VitalWearCharacterExporter(
@@ -16,6 +18,9 @@ class VitalWearCharacterExporter(
     private val database: AppDatabase
 ) {
     fun buildCharacterProto(characterId: Long): Character = runBlocking {
+        withContext(Dispatchers.IO) {
+            EvolutionHistoryRepository(database).repairCharacter(characterId)
+        }
         val characterWithSprites = database.userCharacterDao().getCharacterWithSprites(characterId)
         val userCharacter = database.userCharacterDao().getCharacter(characterId)
         val card = database.cardDao().getCardByCharacterIdSync(characterId)
