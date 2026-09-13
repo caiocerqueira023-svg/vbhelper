@@ -18,6 +18,9 @@ interface WatchTransferDao {
     @Query("SELECT * FROM WatchTransfer WHERE individualId = :individualId")
     fun getByIndividualId(individualId: String): WatchTransfer?
 
+    @Query("SELECT * FROM WatchTransfer WHERE deviceKey = :deviceKey OR deviceKey = ''")
+    fun getPendingForWatch(deviceKey: String): List<WatchTransfer>
+
     @Insert
     fun recordImport(receipt: WatchImportReceipt)
 

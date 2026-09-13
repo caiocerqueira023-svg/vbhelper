@@ -60,11 +60,14 @@ class FromNfcConverter (
         nfcCharacter: NfcCharacter,
         onMultipleCards: (List<Card>, NfcCharacter) -> Unit
     ): String {
-        val transfer = IndividualIdentity.decode(nfcCharacter.appReserved1)?.let(database.watchTransferDao()::get)
+        val transfer = checkedTransfer(nfcCharacter)
         transfer?.cardId?.let { exportedCardId ->
             val exportedCard = database.cardDao().getCardById(exportedCardId)
-            check(exportedCard != null && exportedCard.cardId == nfcCharacter.dimId.toInt()) {
+            check(exportedCard != null) {
                 "The original imported DIM is missing. Restore it before receiving this Digimon."
+            }
+            check(exportedCard.cardId == nfcCharacter.dimId.toInt()) {
+                "O identificador devolvido pelo relógio pertence a outro DIM. O Digimon foi preservado no relógio."
             }
             return insertCharacter(nfcCharacter, exportedCard)
         }
@@ -132,7 +135,7 @@ class FromNfcConverter (
         nfcCharacter: NfcCharacter,
         cardData: Card
     ): Long {
-        val transfer = IndividualIdentity.decode(nfcCharacter.appReserved1)?.let(database.watchTransferDao()::get)
+        val transfer = checkedTransfer(nfcCharacter)
         check(transfer?.cardId == null || transfer.cardId == cardData.id) {
             "This individual must return to its original imported DIM."
         }
@@ -202,6 +205,36 @@ class FromNfcConverter (
 
         EvolutionHistoryRepository(database).repairCharacter(characterId)
         return characterId
+    }
+
+    /** App-reserved bytes are not proven to survive active/backup switching independently.
+     * Never use lineage as an alternative identity, or silently create a new identity
+     * while this watch has an unresolved export. Rechecked inside the import transaction.
+     */
+    private fun checkedTransfer(character: NfcCharacter): com.github.nacabaro.vbhelper.domain.identity.WatchTransfer? {
+        val transfers = database.watchTransferDao()
+        val token = IndividualIdentity.decode(character.appReserved1)
+        val transfer = token?.let(transfers::get)
+        val pending = transfers.getPendingForWatch(sourceDevice)
+        if (transfer == null) {
+            check(pending.isEmpty()) {
+                "O relógio devolveu um identificador ausente ou desconhecido, mas há uma transferência pendente. " +
+                    "O Digimon foi preservado no relógio; nenhuma identidade nova foi criada."
+            }
+        } else {
+            check(transfer.deviceKey.isEmpty() || transfer.deviceKey == sourceDevice) {
+                "This transfer belongs to another physical watch."
+            }
+            check(transfer.matches(character)) {
+                "O identificador devolvido pelo relógio não corresponde a este Digimon. " +
+                    "Isso pode ocorrer ao alternar ativo e backup. O Digimon foi preservado no relógio."
+            }
+            check(pending.none { it.token != transfer.token && it.matches(character) }) {
+                "Há mais de uma transferência compatível com os dados deste relógio. " +
+                    "O recebimento foi interrompido para não associar o nome e a conversa de outro indivíduo."
+            }
+        }
+        return transfer
     }
 
     /** Only a recorded export with matching lineage can restore an individual. */

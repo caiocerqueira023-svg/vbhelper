@@ -10,6 +10,12 @@ class WatchTransferRepository(private val db: AppDatabase) {
         validateSource(transfer)
         val previous = db.watchTransferDao().getByIndividualId(transfer.individualId)
         check(previous == null || previous == transfer) { "An unfinished transfer already exists for this individual." }
+        check(db.watchTransferDao().getPendingForWatch(transfer.deviceKey).none {
+            it.individualId != transfer.individualId
+        }) {
+            "Já existe um Digimon enviado a este relógio que ainda não retornou. " +
+                "Receba-o no app antes de enviar outro, para preservar nome e conversa."
+        }
         db.watchTransferDao().record(transfer)
     }
 

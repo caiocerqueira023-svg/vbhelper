@@ -29,6 +29,45 @@ class WatchTransferTest {
 
     private fun receipt() = WatchTransfer.capture(token, individualId, character())
 
+    @Test fun backupPayloadWithLastSentTokenCannotResolveItsOwnPendingReceipt() {
+        val first = character()
+        val secondToken = "aabbccddeeff0011223344"
+        val secondId = "ffeeddccbbaa9988776655"
+        val second = VBNfcCharacter(dimId = 2u, charIndex = 3u,
+            appReserved1 = IndividualIdentity.encode(secondToken),
+            transformationHistory = first.transformationHistory.copyOf())
+        val firstReceipt = receipt().copy(cardId = 11, deviceKey = "watch-A")
+        val secondReceipt = WatchTransfer.capture(secondToken, secondId, second)
+            .copy(cardId = 22, deviceKey = "watch-A")
+        val pending = mutableMapOf(token to firstReceipt, secondToken to secondReceipt)
+
+        // Fault injection: active/backup switch keeps the last app block, but restores
+        // the first character's actual DIM and stats. This does not emulate firmware.
+        first.appReserved1 = second.appReserved1.copyOf()
+        val selected = pending[IndividualIdentity.decode(first.appReserved1)]!!
+        assertEquals(22L, selected.cardId)
+        assertNotEquals(first.dimId.toInt(), selected.dimId)
+        assertNull(resolveReturningIndividual(first, pending::get, { true }, { false }))
+
+        // Returning the second consumes its receipt. The first still has an outstanding
+        // receipt, but the current token-only resolver no longer finds it.
+        assertEquals(secondId, resolveReturningIndividual(second, pending::get, { true }, { false }))
+        pending.remove(secondToken)
+        assertTrue(firstReceipt.matches(first))
+        assertEquals(firstReceipt, pending[token])
+        assertNull(resolveReturningIndividual(first, pending::get, { true }, { false }))
+    }
+
+    @Test fun lineageAndStatsAreNotAUniqueIdentifierForTwoBackupOccupants() {
+        val first = receipt()
+        val second = first.copy(token = "aabbccddeeff0011223344", individualId = "ffeeddccbbaa9988776655")
+        // Two genuine individuals can have identical lineage dates, age, generation,
+        // species and counters. Matching those fields cannot establish ownership.
+        assertNotEquals(first.individualId, second.individualId)
+        assertTrue(first.matches(character()))
+        assertTrue(second.matches(character()))
+    }
+
     @Test fun returningIndividualKeepsIdentityAfterEvolutionAndTraining() {
         val incoming = character().apply {
             charIndex = 5u
