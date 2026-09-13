@@ -21,7 +21,7 @@ import com.github.nacabaro.vbhelper.domain.device_data.BECharacterData
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.screens.itemsScreen.ItemsScreenControllerImpl
 import com.github.nacabaro.vbhelper.utils.BitmapData
-import java.util.Locale
+import androidx.compose.ui.platform.LocalConfiguration
 
 @Composable
 fun BEBEmHomeScreen(
@@ -147,7 +147,7 @@ fun BEBEmHomeScreen(
                     activeMon.totalBattlesLost == 0 -> "0.00 %"
                     else -> {
                         val battleWinPercentage = activeMon.totalBattlesWon.toFloat() / (activeMon.totalBattlesWon + activeMon.totalBattlesLost).toFloat()
-                        String.format(Locale.getDefault(), "%.2f", battleWinPercentage * 100) + " %" // Specify locale
+                        String.format(LocalConfiguration.current.locales[0], "%.2f", battleWinPercentage * 100) + " %" // Specify locale
                     }
                 },
                 definition = "Total battle win %",
@@ -162,7 +162,7 @@ fun BEBEmHomeScreen(
                     activeMon.totalBattlesLost == 0 -> "0.00 %"
                     else -> {
                         val battleWinPercentage = activeMon.currentPhaseBattlesWon.toFloat() / (activeMon.currentPhaseBattlesWon + activeMon.currentPhaseBattlesLost).toFloat()
-                        String.format(Locale.getDefault(), "%.2f", battleWinPercentage * 100) + " %" // Specify locale
+                        String.format(LocalConfiguration.current.locales[0], "%.2f", battleWinPercentage * 100) + " %" // Specify locale
                     }
                 },
                 definition = "Current phase win %",

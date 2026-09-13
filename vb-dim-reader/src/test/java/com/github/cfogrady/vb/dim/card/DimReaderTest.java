@@ -15,7 +15,7 @@ public class DimReaderTest {
     @Test
     void testThatDimReaderWorks() throws IOException {
         DimReader reader = new DimReader();
-        File file = new File("original.bin");
+        File file = CardTestFixtures.dim();
         InputStream fileInputStream = new FileInputStream(file);
         reader.readDimData(fileInputStream, false);
     }
@@ -23,11 +23,11 @@ public class DimReaderTest {
     @Test
     void testThatSpriteChecksumsMatch() throws IOException {
         DimReader reader = new DimReader();
-        File file = new File("original.bin");
+        File file = CardTestFixtures.dim();
         InputStream fileInputStream = new FileInputStream(file);
         DimCard content = reader.readDimData(fileInputStream, false);
         fileInputStream.close();
-        content.getSpriteData().getSprites().set(1, loadSprite(new File("new_background.bmp")));
+        content.getSpriteData().getSprites().set(1, CardTestFixtures.changedSprite(content.getSpriteData().getSprites().get(1)));
         DimWriter writer = new DimWriter();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         writer.writeDimData(content, byteArrayOutputStream);

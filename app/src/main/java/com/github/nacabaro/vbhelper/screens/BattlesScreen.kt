@@ -36,6 +36,7 @@ import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
@@ -1549,6 +1550,7 @@ fun EnemyBattleView(
 fun BattlesScreen() {
     val TAG = "BattleScreen"
     val context = LocalContext.current
+    val resources = LocalResources.current
     val activity = context as? ComponentActivity
     
     // Permission state
@@ -1804,7 +1806,7 @@ fun BattlesScreen() {
                             isCheckingAuth = false
                             userId = extractedUserId
                             println("BATTLESCREEN: Authentication successful, userId: $extractedUserId")
-                            android.widget.Toast.makeText(context, context.getString(R.string.ui_auth_success), android.widget.Toast.LENGTH_SHORT).show()
+                            android.widget.Toast.makeText(context, resources.getString(R.string.ui_auth_success), android.widget.Toast.LENGTH_SHORT).show()
                         }
                     } else {
                         println("BATTLESCREEN: Authentication failed: ${response.message}")
@@ -1839,7 +1841,7 @@ fun BattlesScreen() {
                         }
                         // Show toast on main thread
                         kotlinx.coroutines.CoroutineScope(Dispatchers.Main).launch {
-                            android.widget.Toast.makeText(context, context.getString(R.string.ui_auth_failed, response.message), android.widget.Toast.LENGTH_SHORT).show()
+                            android.widget.Toast.makeText(context, resources.getString(R.string.ui_auth_failed, response.message), android.widget.Toast.LENGTH_SHORT).show()
                         }
                     }
                 }
@@ -2899,6 +2901,7 @@ fun AnimatedBattleBackground(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     var backgroundBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
     var xOffset by remember { mutableStateOf(0f) }
     var screenWidth by remember { mutableStateOf(0.dp) }
@@ -2997,6 +3000,7 @@ fun MultiLayerAnimatedBattleBackground(
     backgroundSetIndex: Int = 0
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     var backLayerBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
     var middleLayerBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
     var frontLayerBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }

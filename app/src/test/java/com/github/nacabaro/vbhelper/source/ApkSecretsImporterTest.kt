@@ -2,6 +2,7 @@ package com.github.nacabaro.vbhelper.source
 
 import com.github.nacabaro.vbhelper.source.proto.Secrets
 import org.junit.Assert
+import org.junit.Assume.assumeNotNull
 import org.junit.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -17,7 +18,7 @@ class ApkSecretsImporterTest {
     fun testThatRealImportSecretsPasses() {
         val apkFileSecretsImporter = ApkSecretsImporter()
         val url = getAndAssertApkFile()
-        val file = File(url.path)
+        val file = File(url.toURI())
         file.inputStream().use {
             val secrets = apkFileSecretsImporter.importSecrets(it)
             Assert.assertEquals("Cipher size isn't correct", 16, secrets.vbCipherCount)
@@ -64,13 +65,19 @@ class ApkSecretsImporterTest {
 
     private fun getAndAssertApkFile(): URL {
         val url = javaClass.getResource("com.bandai.vitalbraceletarena.apk")
-        if(url == null) {
-            Assert.assertTrue("""
-                Create `resources\com\github\nacabaro\vbhelper\source` within the src/test directory.
-                Add com.bandai.vitalbraceletarena.apk (the official apk) in the above directory. It
-                should never be checked in and should be on the .gitignore.
-            """.trimIndent(), false)
-        }
+        // Optional integration fixture: proprietary APK must not be checked into the repository.
+        assumeNotNull(url)
         return url!!
+    }
+
+    @Test fun rejectsArchiveWithoutClassesDex() {
+        val bytes = ByteArrayOutputStream()
+        ZipOutputStream(bytes).use {
+            it.putNextEntry(ZipEntry("AndroidManifest.xml"))
+            it.write(byteArrayOf(0))
+        }
+        Assert.assertThrows(IllegalArgumentException::class.java) {
+            ApkSecretsImporter().importSecrets(ByteArrayInputStream(bytes.toByteArray()))
+        }
     }
 }

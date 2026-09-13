@@ -4,35 +4,21 @@ import android.util.Log
 import com.github.cfogrady.vbnfc.CryptographicTransformer
 import com.github.cfogrady.vbnfc.TranslatorTestUtils
 import com.github.cfogrady.vbnfc.data.NfcCharacter
-import io.mockk.every
-import io.mockk.mockkClass
-import io.mockk.mockkStatic
 import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Test
 
 class BENfcDataTranslatorTest {
 
-    companion object {
-        @JvmStatic
-        @BeforeClass
-        fun mockLogging(): Unit {
-            mockkStatic(Log::class)
-            every { Log.i(any<String>(), any<String>()) } answers {
-                val tag = it.invocation.args[0] as String
-                val message = it.invocation.args[1] as String
-                println("$tag: $message")
-                1
-            }
-        }
-    }
 
     @OptIn(ExperimentalStdlibApi::class)
     @Test
     fun testNfcCharacterParsing() {
         val nfcBytes = "000000000000000000000000000000000000000000000000000000000000000010400010040010001000000000001094104000100400100010000000000010940000000000000000000500820302008c0000000000000000000500820302008c000b00030002000b000b000001010028000b00030002000b000b0000010100280464028b04b4000000000000000308b80464028b04b4000000000000000308b80474000000001500000000000000008d0002000000000000000000002401062d240105240104240103240102240101c80024010601240106042401060000008605240116ffffffffffffffff00000038ffffffffffffffff00000000000000f80005000f000a00000000046b0000008d0005000f000a00000000046b0000008d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010101010101010100000000000000210202020202020202000000000101003a000000000000000000000000000000000000000000000000000000000000000014c5400000000000000000000000001914c540000000000000000000000000190000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000".hexToByteArray()
         // println("BE Data:\n${FormatPagedBytes(nfcBytes)}")
-        val mockCryptographicTransformer = mockkClass(CryptographicTransformer::class)
+        val mockCryptographicTransformer = com.github.cfogrady.vbnfc.CryptographicTransformerTest().let {
+            CryptographicTransformer(it.testHmacKey1, it.testHmacKey2, it.testAesKey, it.testSubstitutionCipher)
+        }
         val beNfcDataTranslator = BENfcDataTranslator(mockCryptographicTransformer)
 
         val character = beNfcDataTranslator.parseNfcCharacter(nfcBytes)
@@ -159,7 +145,9 @@ class BENfcDataTranslatorTest {
             otp0 = "0101010101010101".hexToByteArray(),
             otp1 = "0202020202020202".hexToByteArray()
         )
-        val mockCryptographicTransformer = mockkClass(CryptographicTransformer::class)
+        val mockCryptographicTransformer = com.github.cfogrady.vbnfc.CryptographicTransformerTest().let {
+            CryptographicTransformer(it.testHmacKey1, it.testHmacKey2, it.testAesKey, it.testSubstitutionCipher)
+        }
         val beNfcDataTranslator = BENfcDataTranslator(mockCryptographicTransformer)
         val resultArray = ByteArray(864) {
             0

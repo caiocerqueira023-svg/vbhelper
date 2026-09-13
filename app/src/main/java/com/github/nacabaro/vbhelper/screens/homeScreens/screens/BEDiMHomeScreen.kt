@@ -10,7 +10,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import java.util.Locale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.CharacterEntry
@@ -150,7 +150,7 @@ fun BEDiMHomeScreen(
                         val battleWinPercentage =
                             activeMon.totalBattlesWon.toFloat() / (activeMon.totalBattlesWon + activeMon.totalBattlesLost).toFloat()
                         String.format(
-                            Locale.getDefault(),
+                            LocalConfiguration.current.locales[0],
                             "%.2f",
                             battleWinPercentage * 100
                         ) + " %" // Specify locale
@@ -170,7 +170,7 @@ fun BEDiMHomeScreen(
                         val battleWinPercentage =
                             activeMon.currentPhaseBattlesWon.toFloat() / (activeMon.currentPhaseBattlesWon + activeMon.currentPhaseBattlesLost).toFloat()
                         String.format(
-                            Locale.getDefault(),
+                            LocalConfiguration.current.locales[0],
                             "%.2f",
                             battleWinPercentage * 100
                         ) + " %" // Specify locale

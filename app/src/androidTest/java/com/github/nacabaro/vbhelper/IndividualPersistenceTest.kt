@@ -93,6 +93,103 @@ class IndividualPersistenceTest {
         return key
     }
 
+    // Replaces obsolete helper-only tests with the current public converters and real Room data.
+    private fun markAsBe(key: Long, minutes: Int = 37) {
+        db.openHelper.writableDatabase.execSQL("UPDATE UserCharacter SET characterType='BEDevice' WHERE id=?", arrayOf(key))
+        seed("BECharacterData", mapOf("id" to key, "remainingTrainingTimeInMinutes" to minutes,
+            "trainingHp" to 12, "trainingAp" to 34, "trainingBp" to 56,
+            "abilityRarity" to NfcCharacter.AbilityRarity.entries.first().name))
+    }
+
+    @Test fun nfcExportUsesStoredVbProfileAndPreservesSource() = runBlocking {
+        val key = store()
+        personalData()
+        val before = TransferFingerprint.of(db.userCharacterDao().getCharacterSync(key)!!)
+        val nfc = ToNfcConverter(db).characterToNfc(key)
+        assertTrue(nfc is VBNfcCharacter)
+        assertEquals(9999, nfc.vitalPoints.toInt())
+        assertEquals(30, (nfc as VBNfcCharacter).trophies.toInt())
+        assertEquals(before, TransferFingerprint.of(db.userCharacterDao().getCharacterSync(key)!!))
+    }
+
+    @Test fun nfcExportUsesStoredBeProfileEvenWithDimCard() = runBlocking {
+        val key = store()
+        markAsBe(key)
+        val before = TransferFingerprint.of(db.userCharacterDao().getCharacterSync(key)!!)
+        val nfc = ToNfcConverter(db).characterToNfc(key)
+        assertTrue(nfc is com.github.cfogrady.vbnfc.be.BENfcCharacter)
+        nfc as com.github.cfogrady.vbnfc.be.BENfcCharacter
+        assertEquals(37, nfc.remainingTrainingTimeInMinutes.toInt())
+        assertEquals(30, nfc.trophies.toInt())
+        assertEquals(56, nfc.trainingBp.toInt())
+        assertEquals(before, TransferFingerprint.of(db.userCharacterDao().getCharacterSync(key)!!))
+    }
+
+    @Test fun vitalWearExportPreservesBeTrainingAndStats() {
+        val key = store()
+        markAsBe(key)
+        val proto = com.github.nacabaro.vbhelper.source.VitalWearCharacterExporter(context, db).buildCharacterProto(key)
+        assertEquals(37L * 60, proto.characterStats.trainingTimeRemainingInSeconds)
+        assertEquals(12, proto.characterStats.trainedHp)
+        assertEquals(34, proto.characterStats.trainedAp)
+        assertEquals(56, proto.characterStats.trainedBp)
+        assertEquals(30, proto.characterStats.trainedPp)
+        assertEquals(9999, proto.characterStats.vitals)
+        assertEquals(40, proto.characterStats.totalWins)
+        assertEquals(individual, db.userCharacterDao().getCharacterSync(key)!!.individualId)
+    }
+
+    @Test fun vitalWearExportKeepsCurrentZeroTrainingForVb() {
+        val key = store()
+        val proto = com.github.nacabaro.vbhelper.source.VitalWearCharacterExporter(context, db).buildCharacterProto(key)
+        assertEquals(0L, proto.characterStats.trainingTimeRemainingInSeconds)
+        assertEquals(30, proto.characterStats.trainedPp)
+    }
+
+    @Test fun vitalWearExportRejectsMissingBeDataWithoutChangingIndividual() {
+        val key = store()
+        db.openHelper.writableDatabase.execSQL("UPDATE UserCharacter SET characterType='BEDevice' WHERE id=?", arrayOf(key))
+        val before = TransferFingerprint.of(db.userCharacterDao().getCharacterSync(key)!!)
+        assertThrows(IllegalStateException::class.java) {
+            com.github.nacabaro.vbhelper.source.VitalWearCharacterExporter(context, db).buildCharacterProto(key)
+        }
+        assertEquals(before, TransferFingerprint.of(db.userCharacterDao().getCharacterSync(key)!!))
+    }
+
+    private fun incomingVitalWear(cardName: String, cardId: Int) =
+        com.github.cfogrady.vitalwear.protos.Character.newBuilder().setCardName(cardName).setCardId(cardId)
+            .setCharacterStats(com.github.cfogrady.vitalwear.protos.Character.CharacterStats.newBuilder()
+                .setSlotId(2).setVitals(1300).setTrainedPp(10).setTotalBattles(8).setTotalWins(8)).build()
+
+    @Test fun vitalWearImportFindsRenamedCardByUniqueDimIdAndRejectsReplayDuplicates() {
+        val importer = com.github.nacabaro.vbhelper.source.VitalWearCharacterImporter(db)
+        val incoming = incomingVitalWear("Old card name", 27)
+        assertTrue(importer.importCharacter(incoming).success)
+        assertTrue(importer.importCharacter(incoming).success)
+        db.openHelper.writableDatabase.query("SELECT individualId, vitalPoints, trophies FROM UserCharacter").use {
+            assertTrue(it.moveToFirst())
+            assertTrue(it.getString(0).isNotBlank())
+            assertEquals(1300, it.getInt(1))
+            assertEquals(10, it.getInt(2))
+            assertFalse(it.moveToNext())
+        }
+    }
+
+    @Test fun vitalWearImportUsesExactNameWhenDimIdIsUnavailable() {
+        val importer = com.github.nacabaro.vbhelper.source.VitalWearCharacterImporter(db)
+        assertTrue(importer.importCharacter(incomingVitalWear("MadDragonicMetal", 999)).success)
+    }
+
+    @Test fun vitalWearImportDoesNotGuessNormalizedNameOrAmbiguousDim() {
+        val importer = com.github.nacabaro.vbhelper.source.VitalWearCharacterImporter(db)
+        assertFalse(importer.importCharacter(incomingVitalWear("mad-dragonic-metal", 999)).success)
+        seed("Card", mapOf("id" to 2, "cardId" to 27, "name" to "Other custom", "officialStatus" to "UNKNOWN"))
+        assertFalse(importer.importCharacter(incomingVitalWear("Unknown", 27)).success)
+        db.openHelper.writableDatabase.query("SELECT COUNT(*) FROM UserCharacter").use {
+            assertTrue(it.moveToFirst()); assertEquals(0, it.getInt(0))
+        }
+    }
+
     private fun personalData() {
         db.openHelper.writableDatabase.execSQL("UPDATE DigimonIndividual SET nickname='1stmaru' WHERE individualId=?", arrayOf(individual))
         seed("ChatMessageEntity", mapOf("individualId" to individual, "role" to "user", "content" to "My own conversation"))

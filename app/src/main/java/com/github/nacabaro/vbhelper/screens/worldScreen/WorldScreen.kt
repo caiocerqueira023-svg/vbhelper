@@ -58,6 +58,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -113,6 +114,7 @@ private const val RUN_SPEED_METERS_PER_SECOND = 2.2f
 @Composable
 fun WorldScreen(navController: NavController) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val app = context.applicationContext as VBHelper
     var location by remember { mutableStateOf<Location?>(null) }
     var origin by remember { mutableStateOf<Location?>(null) }
@@ -121,7 +123,7 @@ fun WorldScreen(navController: NavController) {
     val compassDebug = (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
     var showCompassDiagnostics by remember { mutableStateOf(false) }
     var status by remember {
-        mutableStateOf(context.getString(R.string.ui_world_grant_location))
+        mutableStateOf(resources.getString(R.string.ui_world_grant_location))
     }
     val spawns by app.container.worldRepository.observeSpawns().collectAsState(initial = emptyList())
     val pendingRecruits by app.container.worldRepository.observePendingRecruits()
@@ -193,9 +195,9 @@ fun WorldScreen(navController: NavController) {
             ) == PackageManager.PERMISSION_GRANTED
 
         if (hasLocationPermission) {
-            status = context.getString(R.string.ui_world_location_active)
+            status = resources.getString(R.string.ui_world_location_active)
         } else {
-            status = context.getString(R.string.ui_world_location_required)
+            status = resources.getString(R.string.ui_world_location_required)
         }
     }
 
@@ -229,7 +231,7 @@ fun WorldScreen(navController: NavController) {
                         }
 
                         location = newLocation
-                        status = context.getString(R.string.ui_world_radar_active)
+                        status = resources.getString(R.string.ui_world_radar_active)
 
                         // Keep follow system and chat start-following in sync with GPS.
                         app.container.worldRepository.updateLastKnownLocation(
@@ -246,7 +248,7 @@ fun WorldScreen(navController: NavController) {
                             if (stopped.isNotEmpty()) {
                                 Toast.makeText(
                                     context,
-                                    context.getString(R.string.ui_world_stopped_following_toast),
+                                    resources.getString(R.string.ui_world_stopped_following_toast),
                                     Toast.LENGTH_SHORT
                                 ).show()
                             }
@@ -266,7 +268,7 @@ fun WorldScreen(navController: NavController) {
                                         )
                                     }
                                 }.onFailure {
-                                    status = context.getString(R.string.ui_world_load_nearby_failed)
+                                    status = resources.getString(R.string.ui_world_load_nearby_failed)
                                 }
                             }
                         }
@@ -301,7 +303,7 @@ fun WorldScreen(navController: NavController) {
 
             client.requestLocationUpdates(request, callback, context.mainLooper)
                 .addOnFailureListener {
-                    status = context.getString(R.string.ui_world_tracking_failed)
+                    status = resources.getString(R.string.ui_world_tracking_failed)
                 }
 
             onDispose {
@@ -610,7 +612,7 @@ fun WorldScreen(navController: NavController) {
                                             } else {
                                                 Toast.makeText(
                                                     context,
-                                                    context.getString(R.string.ui_world_too_far),
+                                                    resources.getString(R.string.ui_world_too_far),
                                                     Toast.LENGTH_SHORT
                                                 ).show()
                                             }

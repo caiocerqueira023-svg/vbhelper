@@ -394,4 +394,20 @@
     <string name="ui_world_compass_approximate">コンパスを一時停止しました。北の方向が不正確なため、最後の方向を保持しています。磁石や金属から離れ、端末を8の字に動かして校正してください。</string>
     <string name="ui_world_compass_unavailable">コンパスセンサーを利用できません。地図の上が北になります。</string>
     <string name="ui_world_compass_diagnostics">コンパス診断</string>
+    <string name="nav_chat">チャット</string>
+    <string name="nav_world">ワールド</string>
+    <string name="dex_species_title">種族情報</string>
+    <string name="dex_species_name">種族：%1$s</string>
+    <string name="dex_species_level">成長段階：%1$s</string>
+    <string name="dex_species_type">型：%1$s</string>
+    <string name="dex_species_attribute">属性：%1$s</string>
+    <string name="dex_species_profile">プロフィール：%1$s</string>
+    <string name="dex_species_special_moves">必殺技：%1$s</string>
+    <string name="card_entry_set_origin">出身</string>
+    <string name="storage_edit_digimon_info">デジモンの情報を編集</string>
+    <string name="ui_chat_mood_title">チャット • 気分 %1$d</string>
+    <string name="widget_digimon_description">アクティブなデジモンがホーム画面を歩きます</string>
+    <string name="widget_digimon_label">デジモン</string>
+    <string name="settings_section_appearance">外観</string>
+    <string name="settings_font_title">アプリのフォント</string>
 </resources>

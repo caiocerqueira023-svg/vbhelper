@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -51,6 +52,7 @@ fun WorldChatScreen(
     speciesName: String
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val messages by controller.getHistory(individualId).collectAsState(emptyList())
     val mood by controller.observeMood(individualId).collectAsState(initial = null)
     val isFollowing by controller.observeIsFollowing(individualId).collectAsState(initial = false)
@@ -257,18 +259,18 @@ fun WorldChatScreen(
                     eventDialog = null
                     when (event) {
                         is WildChatEvent.Recruited -> {
-                            Toast.makeText(context, context.getString(R.string.ui_world_recruited_toast), Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, resources.getString(R.string.ui_world_recruited_toast), Toast.LENGTH_LONG).show()
                             navController.popBackStack()
                         }
                         is WildChatEvent.Vanished -> {
-                            Toast.makeText(context, context.getString(R.string.ui_world_vanished_toast), Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, resources.getString(R.string.ui_world_vanished_toast), Toast.LENGTH_LONG).show()
                             navController.popBackStack()
                         }
                         is WildChatEvent.Pending -> {
-                            Toast.makeText(context, context.getString(R.string.ui_world_pending_toast), Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, resources.getString(R.string.ui_world_pending_toast), Toast.LENGTH_LONG).show()
                         }
                         is WildChatEvent.StartedFollowing -> {
-                            Toast.makeText(context, context.getString(R.string.ui_world_following_toast), Toast.LENGTH_LONG).show()
+                            Toast.makeText(context, resources.getString(R.string.ui_world_following_toast), Toast.LENGTH_LONG).show()
                         }
                         WildChatEvent.None -> Unit
                     }

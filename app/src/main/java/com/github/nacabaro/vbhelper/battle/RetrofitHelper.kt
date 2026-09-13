@@ -99,7 +99,7 @@ class RetrofitHelper {
             }
             else -> {
                 println("RetrofitHelper: API error (${response.code()}): $errorMessage")
-                Toast.makeText(context, context.getString(R.string.ui_request_failed, response.code()), Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, context.getString(R.string.ui_request_failed, response.code().toString()), Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -365,7 +365,7 @@ class RetrofitHelper {
                     } else {
                         val errorBody = response.errorBody()?.string()
                         println("RetrofitHelper: Validate response not successful - Code: ${response.code()}, Error: $errorBody")
-                        Toast.makeText(context, context.getString(R.string.ui_auth_failed, response.code()), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, context.getString(R.string.ui_auth_failed, response.code().toString()), Toast.LENGTH_SHORT).show()
                     }
                 }
             })

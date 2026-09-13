@@ -10,11 +10,11 @@ public class BemCardReadWriteTest {
     @Test
     void testThatSpriteChecksumsMatch() throws IOException {
         BemCardReader reader = new BemCardReader();
-        File file = new File("BEM_CARD_IMAGE.bin");
+        File file = CardTestFixtures.bem();
         InputStream fileInputStream = new FileInputStream(file);
         BemCard content = reader.readBemCard(fileInputStream);
         fileInputStream.close();
-        content.getSpriteData().getSprites().set(1, DimReaderTest.loadSprite(new File("new_background.bmp")));
+        content.getSpriteData().getSprites().set(1, CardTestFixtures.changedSprite(content.getSpriteData().getSprites().get(1)));
         BemCardWriter writer = new BemCardWriter();
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         writer.writeBemCard(content, byteArrayOutputStream);

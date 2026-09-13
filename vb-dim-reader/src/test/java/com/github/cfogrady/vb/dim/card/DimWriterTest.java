@@ -9,7 +9,7 @@ public class DimWriterTest {
 
     @Test
     void testThatDimWriterWritesIdenticalForNormalDIM() throws IOException {
-        File file = new File("C:\\dev\\Digimon Hacking\\01._Agumon_Original_BE86D5FD.bin");
+        File file = CardTestFixtures.dim();
         InputStream fileInputStream = new FileInputStream(file);
         byte[] image = fileInputStream.readAllBytes();
         fileInputStream.close();

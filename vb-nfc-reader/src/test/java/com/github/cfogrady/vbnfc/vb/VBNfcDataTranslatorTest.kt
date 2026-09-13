@@ -3,9 +3,6 @@ package com.github.cfogrady.vbnfc.vb
 import com.github.cfogrady.vbnfc.CryptographicTransformer
 import com.github.cfogrady.vbnfc.TranslatorTestUtils
 import com.github.cfogrady.vbnfc.data.NfcCharacter
-import io.mockk.every
-import io.mockk.mockkClass
-import io.mockk.mockkStatic
 import org.junit.Assert
 import org.junit.Test
 
@@ -29,12 +26,6 @@ class VBNfcDataTranslatorTest {
     @OptIn(ExperimentalStdlibApi::class)
     @Test
     fun testParsing() {
-        mockkStatic(android.util.Log::class)
-        every { android.util.Log.i(any<String>(), any<String>()) } answers {
-            val message = it.invocation.args[1] as String
-            println(message)
-            1
-        }
 
         // println("Ultimate Date:\n${FormatPagedBytes(UltimateSlot13_2023_04_27)}")
 
@@ -123,7 +114,9 @@ class VBNfcDataTranslatorTest {
             totalTrophies=0u,
         )
 
-        val mockCryptographicTransformer = mockkClass(CryptographicTransformer::class)
+        val mockCryptographicTransformer = com.github.cfogrady.vbnfc.CryptographicTransformerTest().let {
+            CryptographicTransformer(it.testHmacKey1, it.testHmacKey2, it.testAesKey, it.testSubstitutionCipher)
+        }
         val translator = VBNfcDataTranslator(mockCryptographicTransformer)
         val character = translator.parseNfcCharacter(testRaw)
         Assert.assertEquals(expectedCharacter, character)
@@ -215,7 +208,9 @@ class VBNfcDataTranslatorTest {
             generation=1u,
             totalTrophies=0u,
         )
-        val mockCryptographicTransformer = mockkClass(CryptographicTransformer::class)
+        val mockCryptographicTransformer = com.github.cfogrady.vbnfc.CryptographicTransformerTest().let {
+            CryptographicTransformer(it.testHmacKey1, it.testHmacKey2, it.testAesKey, it.testSubstitutionCipher)
+        }
         val translator = VBNfcDataTranslator(mockCryptographicTransformer)
         val bytesToOverwrite = PerfectSlot7_2023_04_26.copyOf()
         translator.setCharacterInByteArray(testCharacter, bytesToOverwrite)

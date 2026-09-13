@@ -1,7 +1,5 @@
 package com.github.cfogrady.vbnfc
 
-import io.mockk.every
-import io.mockk.mockkStatic
 import org.junit.Assert
 import org.junit.Test
 
@@ -18,12 +16,6 @@ class CryptographicTransformerTest {
     @Test
     fun createPasswordCreatesExpectedPassword() {
 
-        mockkStatic(android.util.Log::class)
-        every { android.util.Log.i(any<String>(), any<String>()) } answers {
-            val message = it.invocation.args[1] as String
-            println(message)
-            1
-        }
 
         val cryptographicTransformer = CryptographicTransformer(testHmacKey1, testHmacKey2, testAesKey, testSubstitutionCipher)
 

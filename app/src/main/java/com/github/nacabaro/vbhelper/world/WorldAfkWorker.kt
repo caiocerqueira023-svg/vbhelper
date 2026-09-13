@@ -11,9 +11,13 @@ class WorldAfkWorker(context: Context, params: WorkerParameters) :
     CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val container = DefaultAppContainer(applicationContext)
-        val location = runCatching {
+        val location = try {
             LocationServices.getFusedLocationProviderClient(applicationContext).lastLocation.await()
-        }.getOrNull() ?: return Result.retry()
+        } catch (_: SecurityException) {
+            null
+        } catch (_: Throwable) {
+            null
+        } ?: return Result.retry()
         container.worldRepository.ensureSpawns(location.latitude, location.longitude)
         return Result.success()
     }
