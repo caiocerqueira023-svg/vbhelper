@@ -2613,7 +2613,7 @@ fun BattlesScreen() {
                             contentAlignment = Alignment.Center
                         ) {
                             Card(
-                                shape = RoundedCornerShape(24.dp),
+                                shape = MaterialTheme.shapes.medium,
                                 colors = CardDefaults.cardColors(
                                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                                 ),

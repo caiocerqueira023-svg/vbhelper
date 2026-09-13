@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -37,7 +37,7 @@ fun TransformationHistoryCard(
     onClickTransformation: (CharacterDtos.TransformationHistory) -> Unit = {}
 ) {
     Card (
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
@@ -77,7 +77,7 @@ fun TransformationHistoryItem(
             .fillMaxWidth()
             .size((64*3/density).dp)
             .padding(4.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .clip(CutCornerShape(8.dp))
             .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             .clickable { onClick(transformation) }
     ) {

@@ -82,7 +82,7 @@ fun WorldRecruitsScreen(navController: NavController) {
             }
         } else {
             LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
+                columns = GridCells.Adaptive(minSize = 104.dp),
                 contentPadding = contentPadding
             ) {
                 items(recruits) { spawn ->

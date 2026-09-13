@@ -28,14 +28,19 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.motionEnabled
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.ui.theme.StatusGreen
+import com.github.nacabaro.vbhelper.ui.theme.StatusRed
+import com.github.nacabaro.vbhelper.ui.theme.TextMutedOnDark
+import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
+import com.github.nacabaro.vbhelper.ui.theme.VitalPurple
 import com.github.nacabaro.vbhelper.utils.ImageBitmapData
 import kotlinx.coroutines.delay
 
@@ -48,6 +53,7 @@ fun TransferAnimationScreen(
     onClickCancel: () -> Unit,
     isTransferring: Boolean = true,
 ) {
+    val motionEnabled = motionEnabled()
     var pulseScale by remember { mutableStateOf(1f) }
     var animationProgress by remember { mutableStateOf(0) }
 
@@ -63,8 +69,8 @@ fun TransferAnimationScreen(
         label = "progress"
     )
 
-    LaunchedEffect(isTransferring) {
-        if (isTransferring) {
+    LaunchedEffect(isTransferring, motionEnabled) {
+        if (isTransferring && motionEnabled) {
             while (true) {
                 pulseScale = 1.2f
                 delay(400)
@@ -119,7 +125,7 @@ fun TransferAnimationScreen(
                     .size(120.dp)
                     .scale(scale)
                     .background(
-                        color = Color(0xFF6366F1).copy(alpha = 0.2f),
+                        color = VitalPurple.copy(alpha = 0.2f),
                         shape = CircleShape
                     ),
                 contentAlignment = Alignment.Center
@@ -128,7 +134,7 @@ fun TransferAnimationScreen(
                     modifier = Modifier
                         .size(80.dp)
                         .background(
-                            color = Color(0xFF6366F1),
+                            color = VitalPurple,
                             shape = CircleShape
                         ),
                     contentAlignment = Alignment.Center
@@ -162,7 +168,7 @@ fun TransferAnimationScreen(
                     modifier = Modifier.padding(top = 12.dp, start = 16.dp, end = 16.dp),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF6366F1)
+                    color = VitalPurple
                 )
             }
 
@@ -180,7 +186,7 @@ fun TransferAnimationScreen(
                     text = "$progress%",
                     modifier = Modifier.padding(top = 8.dp),
                     fontSize = 12.sp,
-                    color = Color.Gray
+                    color = TextMutedOnDark
                 )
             }
 
@@ -201,6 +207,7 @@ fun TransferCompleteScreen(
     onClickOk: () -> Unit,
     isSuccess: Boolean = true,
 ) {
+    val motionEnabled = motionEnabled()
     var showCheckmark by remember { mutableStateOf(false) }
 
     val scale by animateFloatAsState(
@@ -209,8 +216,8 @@ fun TransferCompleteScreen(
         label = "checkmark_scale"
     )
 
-    LaunchedEffect(Unit) {
-        delay(300)
+    LaunchedEffect(motionEnabled) {
+        if (motionEnabled) delay(300)
         showCheckmark = true
     }
 
@@ -234,7 +241,7 @@ fun TransferCompleteScreen(
                     .size(120.dp)
                     .scale(scale)
                     .background(
-                        color = if (isSuccess) Color(0xFF10B981) else Color(0xFFEF4444),
+                        color = if (isSuccess) StatusGreen else StatusRed,
                         shape = CircleShape
                     ),
                 contentAlignment = Alignment.Center
@@ -242,7 +249,7 @@ fun TransferCompleteScreen(
                 Text(
                     text = if (isSuccess) "✓" else "✕",
                     fontSize = 60.sp,
-                    color = Color.White,
+                    color = TextPrimaryOnDark,
                     fontWeight = FontWeight.Bold
                 )
             }

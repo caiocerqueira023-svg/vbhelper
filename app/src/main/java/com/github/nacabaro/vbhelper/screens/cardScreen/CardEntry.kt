@@ -29,6 +29,7 @@ import com.github.nacabaro.vbhelper.utils.getBitmap
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.domain.card.OfficialStatus
+import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 
 
 @Composable
@@ -79,10 +80,10 @@ fun CardEntry(
                     .padding(8.dp)
                     .weight(1f)
             ) {
-                Text(
-                    text = name,
-                    modifier = Modifier
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("◆", color = VitalCyan, modifier = Modifier.padding(end = 6.dp))
+                    Text(text = name)
+                }
                 if (officialStatus == OfficialStatus.UNKNOWN) {
                     TextButton(onClick = onClickSetOrigin) {
                         Text(
@@ -99,6 +100,7 @@ fun CardEntry(
                     ),
                     fontFamily = MaterialTheme.typography.labelSmall.fontFamily,
                     fontSize = MaterialTheme.typography.labelSmall.fontSize,
+                    color = VitalCyan,
                     modifier = Modifier
                 )
                 if (officialStatus != OfficialStatus.CUSTOM) {

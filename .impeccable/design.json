@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-13T00:00:00-03:00",
+  "title": "Design System: VBHelper",
+  "extensions": {
+    "colorMeta": {
+      "deep-purple-bg": { "role": "neutral", "displayName": "Espaço Profundo", "canonical": "#120F1F", "tonalRamp": ["#0A0812", "#120F1F", "#171327", "#1C1730", "#251E3D", "#2F2650", "#3C3260", "#F4F1FF"] },
+      "vital-purple": { "role": "primary", "displayName": "Pulso Violeta", "canonical": "#8B5CF6", "tonalRamp": ["#211536", "#4C3A82", "#6650A4", "#8B5CF6", "#A78BFA", "#D0BCFF", "#E7DEFF", "#F7F2FF"] },
+      "vital-cyan": { "role": "secondary", "displayName": "Ciano Vital", "canonical": "#2DE1FC", "tonalRamp": ["#062C33", "#0E5967", "#1A8FA6", "#20B8D2", "#2DE1FC", "#81EBFF", "#B5F5FF", "#E6FCFF"] },
+      "vital-yellow": { "role": "tertiary", "displayName": "Amarelo de Sinal", "canonical": "#FFD447", "tonalRamp": ["#3E3200", "#7A631B", "#B89327", "#FFD447", "#FFE27D", "#FFEEAD", "#FFF5CD", "#FFFBEA"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Leitura de Status", "purpose": "Números e métricas de maior impacto." },
+      "headline": { "displayName": "Contexto", "purpose": "Identificação de áreas principais." },
+      "body": { "displayName": "Orientação", "purpose": "Texto explicativo e instruções." },
+      "label": { "displayName": "Metadado", "purpose": "Rótulos, navegação e informação auxiliar." }
+    },
+    "shadows": [
+      { "name": "tonal-elevation", "value": "surface tonal layering; no heavy drop shadow", "purpose": "Separar informação mantendo a aparência de dispositivo digital." }
+    ],
+    "motion": [
+      { "name": "route-fade", "value": "200ms fade", "purpose": "Mudança breve de destino." },
+      { "name": "vital-pulse", "value": "1000ms ease-in-out alternate", "purpose": "Sinalizar vitalidade sem competir com o conteúdo." },
+      { "name": "background-rings", "value": "24000ms linear loop", "purpose": "Adicionar vida discreta ao fundo tecnológico." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ação principal com presença energética e alvo confortável para toque.",
+      "html": "<button class=\"ds-btn-primary\">CONFIRMAR</button>",
+      "css": ".ds-btn-primary { min-height: 48px; padding: 0 16px; border: 0; clip-path: polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px); background:#A78BFA; color:#0A0812; font:700 14px Oxanium,sans-serif; letter-spacing:.02em; transition:filter .2s,transform .2s; } .ds-btn-primary:hover { filter:brightness(1.1); transform:translateY(-1px); } .ds-btn-primary:focus-visible { outline:2px solid #2DE1FC; outline-offset:3px; } .ds-btn-primary:active { transform:translateY(0); }"
+    },
+    {
+      "name": "Cyber Frame",
+      "kind": "custom",
+      "refersTo": "cyber-frame",
+      "description": "Painel quadrado de status com moldura tecnológica e cantos reforçados.",
+      "html": "<section class=\"ds-cyber-frame\"><strong>VITAIS</strong><span>9.999</span></section>",
+      "css": ".ds-cyber-frame { position:relative; display:flex; justify-content:space-between; padding:16px; background:#251E3D; border:1px solid #2DE1FC; color:#F4F1FF; font:700 14px Oxanium,sans-serif; box-shadow:inset 0 0 22px rgba(45,225,252,.12); } .ds-cyber-frame:before,.ds-cyber-frame:after { content:''; position:absolute; width:13px; height:13px; border-color:#2DE1FC; } .ds-cyber-frame:before { left:-1px; top:-1px; border-left:3px solid; border-top:3px solid; } .ds-cyber-frame:after { right:-1px; bottom:-1px; border-right:3px solid; border-bottom:3px solid; } .ds-cyber-frame span { color:#2DE1FC; }"
+    },
+    {
+      "name": "Top Banner",
+      "kind": "nav",
+      "description": "Contexto de tela com título central e ação de ícone lateral.",
+      "html": "<header class=\"ds-top-banner\"><button aria-label=\"Voltar\">←</button><strong>ARMAZENAMENTO</strong></header>",
+      "css": ".ds-top-banner { display:flex; align-items:center; justify-content:space-between; padding:14px 12px; color:#F4F1FF; background:linear-gradient(#1C1730,#120F1F); font:800 20px Oxanium,sans-serif; letter-spacing:1px; } .ds-top-banner button { width:40px; height:40px; border:0; clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px); background:#2F2650; color:#F4F1FF; font-size:22px; } .ds-top-banner button:focus-visible { outline:2px solid #2DE1FC; outline-offset:2px; }"
+    },
+    {
+      "name": "Active Navigation Item",
+      "kind": "nav",
+      "refersTo": "navigation-active",
+      "description": "Destino selecionado na navegação inferior.",
+      "html": "<button class=\"ds-nav-active\"><span>◇</span><small>CASA</small></button>",
+      "css": ".ds-nav-active { display:grid; gap:4px; place-items:center; min-width:48px; min-height:48px; padding:8px; border:0; clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px); background:rgba(139,92,246,.22); color:#2DE1FC; font:700 10px Oxanium,sans-serif; transition:background .2s,color .2s; } .ds-nav-active:hover { background:rgba(139,92,246,.34); } .ds-nav-active:focus-visible { outline:2px solid #2DE1FC; outline-offset:2px; }"
+    },
+    {
+      "name": "Empty State",
+      "kind": "custom",
+      "description": "Estado vazio calmo e orientador para coleções ainda sem conteúdo.",
+      "html": "<section class=\"ds-empty\"><strong>NO DATA</strong><p>Nenhum Digimon encontrado.</p></section>",
+      "css": ".ds-empty { display:grid; place-content:center; min-height:180px; padding:32px; text-align:center; background:#120F1F; color:#8A82AC; font:500 14px Oxanium,sans-serif; } .ds-empty strong { color:#2DE1FC; font-size:16px; } .ds-empty p { margin:8px 0 0; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Companheiro Digital",
+    "overview": "VBHelper é um companheiro de bolso técnico e acolhedor para o ecossistema Digimon. A base escura cria um espaço calmo para sprites e dados, enquanto roxo constrói atmosfera e ciano sinaliza energia, atividade e informação importante.",
+    "keyCharacteristics": ["Técnica, porém acolhedora.", "Densa em informação sem parecer um dashboard corporativo.", "Geométrica, legível e própria para toque em Android.", "Animada com intenção: estado e vitalidade, nunca ruído."],
+    "rules": [
+      { "name": "Vital Signal Rule", "body": "Ciano representa informação viva ou selecionada; não o use como decoração espalhada pela tela.", "section": "colors" },
+      { "name": "Dark Habitat Rule", "body": "Fundos permanecem profundos e silenciosos para que sprites, dados e alertas tenham prioridade visual.", "section": "colors" },
+      { "name": "Quiet Elevation Rule", "body": "Elevação separa grupos de informação, nunca compete com o sprite, o número principal ou a ação selecionada.", "section": "elevation" }
+    ],
+    "dos": ["Do use ciano para valores ativos, progresso e seleção.", "Do mantenha ações tocáveis com pelo menos 48dp.", "Do preserve o fundo técnico em baixa opacidade, atrás do conteúdo.", "Do use a moldura técnica apenas em painéis que precisam comunicar estado ou importância."],
+    "donts": ["Don't preencher a tela com brilho, ciano ou animações simultâneas.", "Don't arredondar painéis que já possuem os quatro cantos reforçados da moldura técnica.", "Don't depender somente de cor para comunicar erro, progresso ou seleção.", "Don't substituir padrões de navegação e interação nativos do Android por controles de aparência iOS."]
+  }
+}

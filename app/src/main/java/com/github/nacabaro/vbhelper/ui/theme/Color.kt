@@ -28,6 +28,10 @@ val VitalPurpleDim = Color(0xFF4C3A82)
 val VitalCyan = Color(0xFF2DE1FC)
 val VitalCyanDim = Color(0xFF1A8FA6)
 
+// World radar and map overlays
+val RadarCompass = Color(0xFFB0B0B0)
+val RadarFollower = Color(0xFF4FC3F7)
+
 // Warm accent used for the sun / attribute icon highlight
 val VitalOrange = Color.White
 val VitalYellow = Color(0xFFFFD447)

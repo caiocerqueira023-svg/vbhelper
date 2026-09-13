@@ -74,7 +74,7 @@ fun ItemsStore(
             }
 
             LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
+                columns = GridCells.Adaptive(minSize = 104.dp),
                 modifier = Modifier
             ) {
                 items(myItems) { index ->

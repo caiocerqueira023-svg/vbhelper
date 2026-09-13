@@ -1,14 +1,15 @@
 package com.github.nacabaro.vbhelper.ui.theme
 
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.Shapes
 import androidx.compose.ui.unit.dp
 
-// Rounder, "game console UI" corner radii used across the Vital Arena theme.
+// Deliberately clipped corners make Material controls feel like parts of a
+// device interface instead of floating rounded cards.
 val VitalArenaShapes = Shapes(
-    extraSmall = RoundedCornerShape(8.dp),
-    small = RoundedCornerShape(14.dp),
-    medium = RoundedCornerShape(18.dp),
-    large = RoundedCornerShape(24.dp),
-    extraLarge = RoundedCornerShape(32.dp)
+    extraSmall = CutCornerShape(4.dp),
+    small = CutCornerShape(7.dp),
+    medium = CutCornerShape(10.dp),
+    large = CutCornerShape(14.dp),
+    extraLarge = CutCornerShape(18.dp)
 )

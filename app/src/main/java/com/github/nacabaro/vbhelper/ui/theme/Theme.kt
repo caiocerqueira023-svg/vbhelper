@@ -3,6 +3,9 @@ package com.github.nacabaro.vbhelper.ui.theme
 import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
@@ -28,7 +31,9 @@ private val VitalArenaDarkColorScheme = darkColorScheme(
     tertiaryContainer = SurfaceHighlightPurple,
     onTertiaryContainer = VitalOrange,
 
-    background = DeepPurpleBg,
+    // Screens use background as their Scaffold container. Keeping it transparent
+    // lets the app-level device pattern remain visible behind every destination.
+    background = androidx.compose.ui.graphics.Color.Transparent,
     onBackground = TextPrimaryOnDark,
 
     surface = SurfaceDeepPurple,
@@ -66,7 +71,7 @@ private val VitalArenaLightColorScheme = lightColorScheme(
     tertiary = VitalOrange,
     onTertiary = SpaceBlack,
 
-    background = DeepPurpleBg,
+    background = androidx.compose.ui.graphics.Color.Transparent,
     onBackground = TextPrimaryOnDark,
 
     surface = SurfaceDeepPurple,
@@ -82,6 +87,7 @@ private val VitalArenaLightColorScheme = lightColorScheme(
 )
 
 @Composable
+@Suppress("DEPRECATION")
 fun VBHelperTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     appFont: AppFont = AppFont.OXANIUM,
@@ -101,18 +107,20 @@ fun VBHelperTheme(
         SideEffect {
             val window = (view.context as? Activity)?.window
             if (window != null) {
-                window.statusBarColor = colorScheme.background.toArgb()
-                window.navigationBarColor = colorScheme.background.toArgb()
+                window.statusBarColor = DeepPurpleBg.toArgb()
+                window.navigationBarColor = DeepPurpleBg.toArgb()
                 WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
                 WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = false
             }
         }
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = appTypography(appFontFamily(appFont)),
-        shapes = VitalArenaShapes,
-        content = content
-    )
+    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 48.dp) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            typography = appTypography(appFontFamily(appFont)),
+            shapes = VitalArenaShapes,
+            content = content
+        )
+    }
 }

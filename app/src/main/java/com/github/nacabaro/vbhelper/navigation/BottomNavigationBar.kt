@@ -2,22 +2,31 @@ package com.github.nacabaro.vbhelper.navigation
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,77 +38,118 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import com.github.nacabaro.vbhelper.ui.theme.VitalPurple
 
-/**
- * Bottom navigation styled after the Vital Bracelet / Pendulum companion
- * apps: a dark rounded dock with a soft pill highlight behind the
- * currently-selected destination instead of stock Material tabs.
- */
-@Composable
-fun BottomNavigationBar(navController: NavController) {
-    val items = listOf(
-        NavigationItems.Items,
-        NavigationItems.Battles,
-        NavigationItems.Home,
-        NavigationItems.Dex,
-        NavigationItems.Storage,
-        NavigationItems.World,
-    )
+private val compactDestinations = listOf(
+    NavigationItems.Storage,
+    NavigationItems.Dex,
+    NavigationItems.Home,
+    NavigationItems.World,
+)
 
-    val currentBackStackEntry = navController.currentBackStackEntryAsState()
-    val currentRoute = currentBackStackEntry.value?.destination?.route
+private val overflowDestinations = listOf(
+    NavigationItems.Items,
+    NavigationItems.Battles,
+    NavigationItems.Settings,
+)
+
+/** Compact phones keep four daily destinations visible; secondary tools live in More. */
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+fun BottomNavigationBar(navController: NavController) {
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    var showMore by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.background,
-                        MaterialTheme.colorScheme.surface
-                    )
-                )
-            )
+            .background(Brush.verticalGradient(listOf(MaterialTheme.colorScheme.background, MaterialTheme.colorScheme.surface)))
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(SurfaceStroke.copy(alpha = 0.6f))
-        )
+        Box(Modifier.fillMaxWidth().height(1.dp).background(SurfaceStroke.copy(alpha = 0.6f)))
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 6.dp, vertical = 8.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp),
             horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
         ) {
-            items.forEach { item ->
-                val selected = currentRoute == item.route
+            compactDestinations.forEach { item ->
                 VitalNavItem(
                     icon = item.icon,
                     label = stringResource(item.label),
-                    selected = selected,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    if (item == NavigationItems.Home) {
-                        navController.navigate(NavigationItems.Home.route) {
-                            popUpTo(0) { inclusive = false }
-                            launchSingleTop = true
-                        }
-                    } else {
-                        navController.navigate(item.route) {
-                            popUpTo(navController.graph.startDestinationId) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
+                    selected = currentRoute == item.route,
+                    modifier = Modifier.weight(1f),
+                    onClick = { navController.navigatePrimary(item) }
+                )
+            }
+            VitalNavItem(
+                icon = R.drawable.baseline_settings_24,
+                label = stringResource(R.string.nav_more),
+                selected = overflowDestinations.any { currentRoute == it.route },
+                modifier = Modifier.weight(1f),
+                onClick = { showMore = true }
+            )
+        }
+    }
+
+    if (showMore) {
+        ModalBottomSheet(onDismissRequest = { showMore = false }) {
+            Column(Modifier.padding(start = 20.dp, end = 20.dp, bottom = 28.dp)) {
+                Text(
+                    text = stringResource(R.string.nav_more).uppercase(),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = VitalCyan,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                overflowDestinations.forEach { item ->
+                    OverflowDestination(item = item) {
+                        showMore = false
+                        navController.navigatePrimary(item)
                     }
                 }
             }
         }
+    }
+}
+
+/** Expanded screens use a rail rather than stretching a phone navigation bar. */
+@Composable
+fun VitalNavigationRail(navController: NavController) {
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    NavigationRail(
+        modifier = Modifier.statusBarsPadding().navigationBarsPadding(),
+        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+    ) {
+        (compactDestinations + overflowDestinations).forEach { item ->
+            val selected = currentRoute == item.route
+            NavigationRailItem(
+                selected = selected,
+                onClick = { navController.navigatePrimary(item) },
+                icon = { Icon(painterResource(item.icon), stringResource(item.label)) },
+                label = { Text(stringResource(item.label), maxLines = 1) },
+                colors = NavigationRailItemDefaults.colors(
+                    selectedIconColor = VitalCyan,
+                    selectedTextColor = VitalCyan,
+                    indicatorColor = VitalPurple.copy(alpha = 0.25f)
+                )
+            )
+        }
+    }
+}
+
+@Composable
+private fun OverflowDestination(item: NavigationItems, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.small)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(painterResource(item.icon), null, tint = VitalCyan, modifier = Modifier.size(24.dp))
+        Text(stringResource(item.label), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(start = 16.dp))
     }
 }
 
@@ -108,7 +158,7 @@ private fun RowScope.VitalNavItem(
     icon: Int,
     label: String,
     selected: Boolean,
-    modifier: Modifier = Modifier,
+    modifier: Modifier,
     onClick: () -> Unit
 ) {
     val backgroundColor by animateColorAsState(
@@ -119,29 +169,31 @@ private fun RowScope.VitalNavItem(
         targetValue = if (selected) VitalCyan else MaterialTheme.colorScheme.onSurfaceVariant,
         label = "navItemTint"
     )
-
     Column(
         modifier = modifier
             .padding(horizontal = 2.dp)
-            .clip(RoundedCornerShape(16.dp))
+            .clip(MaterialTheme.shapes.small)
             .background(backgroundColor)
             .selectable(selected = selected, onClick = onClick)
             .padding(vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(
-            painter = painterResource(icon),
-            contentDescription = label,
-            tint = iconTint,
-            modifier = Modifier.size(24.dp)
-        )
-        Text(
-            text = label,
-            color = iconTint,
-            fontSize = 10.sp,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-            maxLines = 1,
-            modifier = Modifier.padding(top = 4.dp)
-        )
+        Icon(painterResource(icon), label, tint = iconTint, modifier = Modifier.size(24.dp))
+        Text(label, color = iconTint, fontSize = 10.sp, fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium, maxLines = 1, modifier = Modifier.padding(top = 4.dp))
+    }
+}
+
+private fun NavController.navigatePrimary(item: NavigationItems) {
+    if (item == NavigationItems.Home) {
+        navigate(item.route) {
+            popUpTo(0) { inclusive = false }
+            launchSingleTop = true
+        }
+    } else {
+        navigate(item.route) {
+            popUpTo(graph.startDestinationId) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
     }
 }

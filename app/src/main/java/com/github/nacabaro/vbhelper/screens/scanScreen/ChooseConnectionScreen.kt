@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,11 +19,17 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.components.cyberFrame
+import com.github.nacabaro.vbhelper.ui.theme.StatusRed
+import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 
 @Composable
 fun ChooseConnectOption(
     onClickRead: (() -> Unit)? = null,
     onClickWrite: (() -> Unit)? = null,
+    feedbackMessage: String? = null,
+    onFeedbackAction: (() -> Unit)? = null,
+    onDismissFeedback: (() -> Unit)? = null,
     navController: NavController
 ) {
     Scaffold(
@@ -42,6 +49,26 @@ fun ChooseConnectOption(
                 .fillMaxSize()
                 .padding(contentPadding)
         ) {
+            feedbackMessage?.let { message ->
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 24.dp, vertical = 16.dp)
+                        .cyberFrame(active = true)
+                        .padding(16.dp)
+                ) {
+                    Text(message, color = TextPrimaryOnDark)
+                    if (onFeedbackAction != null) {
+                        TextButton(onClick = onFeedbackAction) {
+                            Text(stringResource(R.string.ui_settings), color = StatusRed)
+                        }
+                    }
+                    if (onDismissFeedback != null) {
+                        TextButton(onClick = onDismissFeedback) {
+                            Text(stringResource(R.string.ui_ok), color = TextPrimaryOnDark)
+                        }
+                    }
+                }
+            }
             Text(
                 text = "VB, VH, VBBE",
                 fontSize = 14.sp,

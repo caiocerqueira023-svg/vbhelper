@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.rememberScrollState
@@ -42,6 +43,7 @@ import androidx.compose.material3.TextButton
 import com.github.nacabaro.vbhelper.ui.theme.AppFont
 import com.github.nacabaro.vbhelper.ui.theme.appFontFamily
 import com.github.nacabaro.vbhelper.chat.ChatApiProvider
+import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 
 
 @Composable
@@ -84,6 +86,7 @@ fun SettingsScreen(
             modifier = Modifier
                 .padding(top = contentPadding.calculateTopPadding())
                 .fillMaxSize()
+                .imePadding()
                 .verticalScroll(rememberScrollState())
         ) {
             SettingsSection(title = stringResource(R.string.settings_section_nfc))
@@ -313,13 +316,17 @@ fun SettingsEntry(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 14.dp)
     ) {
-        Text(text = title)
+        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Text("◆", color = VitalCyan, fontSize = 12.sp)
+            Text(text = title, modifier = Modifier.padding(start = 8.dp))
+        }
         Text(
             text = description,
             fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.outline
+            color = VitalCyan,
+            modifier = Modifier.padding(start = 20.dp)
         )
     }
 }

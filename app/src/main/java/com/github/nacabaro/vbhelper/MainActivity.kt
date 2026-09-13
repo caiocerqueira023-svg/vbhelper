@@ -31,6 +31,7 @@ import com.github.nacabaro.vbhelper.screens.lorebookScreen.LorebookScreenControl
 import com.github.nacabaro.vbhelper.screens.worldScreen.WorldChatScreenControllerImpl
 import com.github.nacabaro.vbhelper.source.VitalWearCharacterImporter
 import com.github.nacabaro.vbhelper.ui.theme.VBHelperTheme
+import com.github.nacabaro.vbhelper.components.TechBackground
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -80,20 +81,22 @@ class MainActivity : AppCompatActivity() {
         setContent {
             val appFont by settingsScreenController.currentFont.collectAsState()
             VBHelperTheme(appFont = appFont) {
-                MainApplication(
-                    scanScreenController = scanScreenController,
-                    settingsScreenController = settingsScreenController,
-                    itemsScreenController = itemsScreenController,
-                    adventureScreenController = adventureScreenController,
-                    homeScreenController = homeScreenController,
-                    storageScreenController = storageScreenController,
-                    spriteViewerController = spriteViewerController,
-                    cardScreenController = cardScreenController,
-                    chatScreenController = chatScreenController,
-                    lorebookScreenController = lorebookScreenController,
-                    worldChatScreenController = worldChatScreenController,
-                    initialRoute = initialRoute
-                )
+                TechBackground {
+                    MainApplication(
+                        scanScreenController = scanScreenController,
+                        settingsScreenController = settingsScreenController,
+                        itemsScreenController = itemsScreenController,
+                        adventureScreenController = adventureScreenController,
+                        homeScreenController = homeScreenController,
+                        storageScreenController = storageScreenController,
+                        spriteViewerController = spriteViewerController,
+                        cardScreenController = cardScreenController,
+                        chatScreenController = chatScreenController,
+                        lorebookScreenController = lorebookScreenController,
+                        worldChatScreenController = worldChatScreenController,
+                        initialRoute = initialRoute
+                    )
+                }
             }
         }
 

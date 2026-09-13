@@ -4,6 +4,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
@@ -18,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -74,12 +77,20 @@ fun AppNavigation(
 ) {
     val navController = rememberNavController()
 
-    Scaffold(
-        bottomBar = {
-            BottomNavigationBar(navController = navController)
-        }
-    ) { contentPadding ->
-        NavHost(
+    BoxWithConstraints {
+        val expandedNavigation = maxWidth >= 840.dp
+        Scaffold(
+            bottomBar = {
+                if (!expandedNavigation) BottomNavigationBar(navController = navController)
+            }
+        ) { contentPadding ->
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(contentPadding)
+            ) {
+                if (expandedNavigation) VitalNavigationRail(navController = navController)
+                NavHost(
             navController = navController,
             startDestination = initialRoute ?: NavigationItems.Home.route,
             enterTransition = {
@@ -92,8 +103,7 @@ fun AppNavigation(
                     animationSpec = tween(200)
                 )
             },
-            modifier = Modifier
-                .padding(contentPadding)
+            modifier = Modifier.weight(1f)
 
         ) {
             composable(NavigationItems.Battles.route) {
@@ -246,6 +256,8 @@ fun AppNavigation(
                             }
                         }
                     }
+                }
+            }
                 }
             }
         }

@@ -24,6 +24,7 @@ import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
 import com.github.nacabaro.vbhelper.source.ItemsRepository
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.components.CyberEmptyState
 
 
 @Composable
@@ -37,16 +38,10 @@ fun MyItems(
     var selectedElementIndex by remember { mutableStateOf<Int?>(null) }
 
     if (myItems.isEmpty()) {
-        Column(
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Text(stringResource(R.string.items_no_items))
-        }
+        CyberEmptyState(stringResource(R.string.items_no_items))
     } else {
         LazyVerticalGrid(
-            columns = GridCells.Fixed(3),
+            columns = GridCells.Adaptive(minSize = 104.dp),
             modifier = Modifier
         ) {
             items(myItems) { index ->

@@ -1,6 +1,5 @@
 package com.github.nacabaro.vbhelper.screens.scanScreen
 
-import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -41,6 +40,8 @@ fun ScanScreen(
     val application = LocalContext.current.applicationContext as VBHelper
     val storageRepository = StorageRepository(application.container.db)
     var nfcCharacter by remember { mutableStateOf<NfcCharacter?>(null) }
+    var feedbackMessage by remember { mutableStateOf<String?>(null) }
+    var feedbackRequiresSettings by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
 
@@ -53,7 +54,8 @@ fun ScanScreen(
                     throw cancelled
                 } catch (failure: Exception) {
                     withContext(Dispatchers.Main) {
-                        android.widget.Toast.makeText(context, failure.message ?: "Transfer preparation failed", android.widget.Toast.LENGTH_LONG).show()
+                        feedbackMessage = failure.message ?: "Transfer preparation failed"
+                        feedbackRequiresSettings = false
                     }
                 }
             }
@@ -96,10 +98,14 @@ fun ScanScreen(
                 else -> {
                     {
                         if(secrets == null) {
-                            Toast.makeText(context, context.getString(R.string.scan_secrets_not_initialized), Toast.LENGTH_SHORT).show()
+                            feedbackMessage = context.getString(R.string.scan_secrets_not_initialized)
+                            feedbackRequiresSettings = true
                         } else if(secrets?.isMissingSecrets() == true) {
-                            Toast.makeText(context, context.getString(R.string.scan_secrets_not_imported), Toast.LENGTH_SHORT).show()
+                            feedbackMessage = context.getString(R.string.scan_secrets_not_imported)
+                            feedbackRequiresSettings = true
                         } else {
+                            feedbackMessage = null
+                            feedbackRequiresSettings = false
                             readingScreen = true // kicks off nfc adapter in DisposableEffect
                         }
                     }
@@ -110,16 +116,25 @@ fun ScanScreen(
                 else -> {
                     {
                         if(secrets == null) {
-                            Toast.makeText(context,   context.getString(R.string.scan_secrets_not_initialized), Toast.LENGTH_SHORT).show()
+                            feedbackMessage = context.getString(R.string.scan_secrets_not_initialized)
+                            feedbackRequiresSettings = true
                         } else if(secrets?.isMissingSecrets() == true) {
-                            Toast.makeText(context, context.getString(R.string.scan_secrets_not_imported), Toast.LENGTH_SHORT).show()
+                            feedbackMessage = context.getString(R.string.scan_secrets_not_imported)
+                            feedbackRequiresSettings = true
                         } else {
+                            feedbackMessage = null
+                            feedbackRequiresSettings = false
                             writingScreen = true // kicks off nfc adapter in DisposableEffect
                         }
                     }
                 }
             },
-            navController = navController
+            navController = navController,
+            feedbackMessage = feedbackMessage,
+            onFeedbackAction = feedbackMessage?.takeIf { feedbackRequiresSettings }?.let {
+                { navController.navigate(NavigationItems.Settings.route) }
+            },
+            onDismissFeedback = { feedbackMessage = null }
         )
     }
 }

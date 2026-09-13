@@ -3,9 +3,10 @@ package com.github.nacabaro.vbhelper.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.nacabaro.vbhelper.R
@@ -56,6 +58,8 @@ fun TopBanner(
         Text(
             text = text.uppercase(),
             textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
             fontSize = 20.sp,
             fontWeight = FontWeight.ExtraBold,
             color = MaterialTheme.colorScheme.onBackground,
@@ -117,14 +121,13 @@ private fun TopBannerIconChip(
 ) {
     Box(
         modifier = modifier
-            .padding(4.dp)
-            .size(40.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .size(48.dp)
+            .clip(CutCornerShape(8.dp))
             .background(if (accent) VitalCyan.copy(alpha = 0.18f) else SurfaceHighlightPurple)
             .padding(1.dp),
         contentAlignment = Alignment.Center
     ) {
-        IconButton(onClick = onClick, modifier = Modifier.size(40.dp)) {
+        IconButton(onClick = onClick, modifier = Modifier.fillMaxSize()) {
             Icon(
                 painter = painterResource(icon),
                 contentDescription = contentDescription,

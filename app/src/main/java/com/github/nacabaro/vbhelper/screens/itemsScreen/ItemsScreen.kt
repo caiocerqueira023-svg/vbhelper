@@ -14,11 +14,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 
 
 @Composable
@@ -42,7 +46,17 @@ fun ItemsScreen(
                         Tab(
                             text = { Text(text = stringResource(item.label)) },
                             selected = selectedTabItem == index,
-                            onClick = { selectedTabItem = index }
+                            onClick = { selectedTabItem = index },
+                            modifier = Modifier.drawBehind {
+                                if (selectedTabItem == index) {
+                                    drawLine(
+                                        color = VitalCyan,
+                                        start = Offset(12.dp.toPx(), size.height - 2.dp.toPx()),
+                                        end = Offset(size.width - 12.dp.toPx(), size.height - 2.dp.toPx()),
+                                        strokeWidth = 3.dp.toPx()
+                                    )
+                                }
+                            }
                         )
                     }
                 }

@@ -54,7 +54,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -83,6 +82,10 @@ import com.github.nacabaro.vbhelper.screens.cardScreen.dialogs.DexCharaDetailsDi
 import com.github.nacabaro.vbhelper.source.DexRepository
 import com.github.nacabaro.vbhelper.world.WorldBiome
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
+import com.github.nacabaro.vbhelper.ui.theme.SpaceBlack
+import com.github.nacabaro.vbhelper.ui.theme.RadarCompass
+import com.github.nacabaro.vbhelper.ui.theme.RadarFollower
+import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.getBitmap
@@ -335,7 +338,7 @@ fun WorldScreen(navController: NavController) {
                     .aspectRatio(1f)
                     .border(2.dp, SurfaceStroke, MaterialTheme.shapes.medium)
                     .clip(MaterialTheme.shapes.medium)
-                    .background(Color.Black)
+                    .background(SpaceBlack)
                     .pointerInput(Unit) {
                         detectTransformGestures { _, _, gestureZoom, _ ->
                             zoom = (zoom * gestureZoom).coerceIn(0.5f, 4f)
@@ -413,7 +416,7 @@ fun WorldScreen(navController: NavController) {
 
                     distanceRingMeters.forEach { meters ->
                         drawCircle(
-                            color = Color.White.copy(alpha = 0.18f),
+                            color = TextPrimaryOnDark.copy(alpha = 0.18f),
                             radius = meters * scale,
                             center = playerOffset,
                             style = Stroke(width = 1.5f)
@@ -445,9 +448,9 @@ fun WorldScreen(navController: NavController) {
                     val arrowHalfWidth = 8.dp.toPx()
                     val cardinals = listOf(
                         0f to primaryColor, // Norte
-                        90f to Color(0xFFB0B0B0),                // Leste
-                        180f to Color(0xFFB0B0B0),               // Sul
-                        270f to Color(0xFFB0B0B0)                // Oeste
+                        90f to RadarCompass,                // Leste
+                        180f to RadarCompass,               // Sul
+                        270f to RadarCompass                // Oeste
                     )
 
                     cardinals.forEach { (cardinalAzimuth, arrowColor) ->
@@ -480,7 +483,7 @@ fun WorldScreen(navController: NavController) {
                     val radiusPx = meters * scale
                     Text(
                         text = "$meters m",
-                        color = Color.White.copy(alpha = 0.72f),
+                        color = TextPrimaryOnDark.copy(alpha = 0.72f),
                         fontSize = 10.sp,
                         modifier = Modifier.offset {
                             IntOffset(
@@ -505,7 +508,7 @@ fun WorldScreen(navController: NavController) {
                     Text(
                         text = label,
                         style = MaterialTheme.typography.labelLarge,
-                        color = Color.White,
+                        color = TextPrimaryOnDark,
                         modifier = Modifier.offset {
                             IntOffset(
                                 (labelX - 8.dp.toPx()).toInt(),
@@ -529,7 +532,7 @@ fun WorldScreen(navController: NavController) {
                             R.string.ui_world_biome_label,
                             currentBiome.displayName()
                         ),
-                        color = Color.White,
+                        color = TextPrimaryOnDark,
                         fontSize = 10.sp
                     )
                 }
@@ -545,7 +548,7 @@ fun WorldScreen(navController: NavController) {
                         .size(28.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary)
-                        .border(2.dp, Color.White, CircleShape)
+                        .border(2.dp, TextPrimaryOnDark, CircleShape)
                 )
 
                 // A posição dos Digimon usa a mesma origem fixa do jogador.
@@ -578,7 +581,7 @@ fun WorldScreen(navController: NavController) {
                                 sqrt(northToPlayer * northToPlayer + eastToPlayer * eastToPlayer)
                             } else Double.MAX_VALUE
                             val withinRange = distanceToPlayer <= INTERACTION_RANGE_METERS
-                            val markerSizeDp = 40.dp
+                            val markerSizeDp = 48.dp
 
                             Image(
                                 bitmap = image,
@@ -597,7 +600,7 @@ fun WorldScreen(navController: NavController) {
                                         if (spawn.isFollowing) {
                                             Modifier
                                                 .clip(CircleShape)
-                                                .border(3.dp, Color(0xFF4FC3F7), CircleShape)
+                                                .border(3.dp, RadarFollower, CircleShape)
                                         } else Modifier
                                     )
                                     .combinedClickable(

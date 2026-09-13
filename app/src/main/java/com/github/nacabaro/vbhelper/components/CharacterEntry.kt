@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
@@ -29,12 +30,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.FilterQuality
@@ -60,6 +65,7 @@ import com.github.nacabaro.vbhelper.ui.theme.StatusRed
 import com.github.nacabaro.vbhelper.ui.theme.StatusRedDim
 import com.github.nacabaro.vbhelper.ui.theme.StatusYellow
 import com.github.nacabaro.vbhelper.ui.theme.StatusYellowDim
+import com.github.nacabaro.vbhelper.ui.theme.SpaceBlack
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceHighlightPurple
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
 import com.github.nacabaro.vbhelper.ui.theme.TextMutedOnDark
@@ -76,7 +82,7 @@ fun CharacterEntry(
     cardIcon: BitmapData? = null,
     obscure: Boolean = false,
     disabled: Boolean = false,
-    shape: Shape = MaterialTheme.shapes.medium,
+    shape: Shape = RectangleShape,
     multiplier: Int = 4,
     idleFrame2: BitmapData? = null,
     animationKey: Any = icon.bitmap.contentHashCode(),
@@ -89,6 +95,10 @@ fun CharacterEntry(
     ),
     onClick: () -> Unit = {  }
 ) {
+    val motionEnabled = motionEnabled()
+    var hasEntered by remember(animationKey) { mutableStateOf(false) }
+    LaunchedEffect(animationKey, motionEnabled) { hasEntered = true }
+    val entranceAlpha by animateFloatAsState(if (hasEntered) 1f else 0f, tween(260), label = "characterEntryIn")
     var animationFrame by remember { mutableIntStateOf(0) }
     val animationTiming = remember(animationKey) {
         // A mixed seed avoids consecutive database IDs producing almost identical timings.
@@ -98,10 +108,10 @@ fun CharacterEntry(
         offsetMillis to intervalMillis
     }
 
-    LaunchedEffect(animationKey, idleFrame2?.bitmap?.contentHashCode()) {
+    LaunchedEffect(animationKey, idleFrame2?.bitmap?.contentHashCode(), motionEnabled) {
         // Keep a stable but unique phase for each Digimon, so a grid does not animate in lockstep.
         animationFrame = if (animationTiming.first * 2L >= animationTiming.second) 1 else 0
-        if (idleFrame2 != null) {
+        if (idleFrame2 != null && motionEnabled) {
             delay(animationTiming.first)
             while (true) {
                 delay(animationTiming.second)
@@ -131,7 +141,9 @@ fun CharacterEntry(
         },
         modifier = modifier
             .aspectRatio(1f)
-            .padding(8.dp),
+            .padding(8.dp)
+            .cyberFrame(active = vitalPoints != null)
+            .graphicsLayer(alpha = entranceAlpha, scaleX = 0.96f + entranceAlpha * 0.04f, scaleY = 0.96f + entranceAlpha * 0.04f),
         colors = cardColors,
         border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceStroke)
     ) {
@@ -168,7 +180,7 @@ fun CharacterEntry(
             ) {
                 if (!statusText.isNullOrBlank()) {
                     Card(
-                        shape = RoundedCornerShape(10.dp),
+                        shape = MaterialTheme.shapes.small,
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surface
                         ),
@@ -188,7 +200,7 @@ fun CharacterEntry(
                 }
                 if (!speechBubbleText.isNullOrBlank()) {
                     Card(
-                        shape = RoundedCornerShape(10.dp),
+                        shape = MaterialTheme.shapes.small,
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceStroke),
                         modifier = Modifier
@@ -250,7 +262,7 @@ fun ItemDisplay(
     val context = LocalContext.current
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
@@ -378,14 +390,14 @@ fun SpecialMissionsEntry(
 
     val (containerColor, contentColor, isVivid) = when (specialMission.status) {
         SpecialMission.Status.IN_PROGRESS -> Triple(bannerColorDim, TextPrimaryOnDark, false)
-        SpecialMission.Status.COMPLETED -> Triple(bannerColor, Color.Black, true)
+        SpecialMission.Status.COMPLETED -> Triple(bannerColor, SpaceBlack, true)
         SpecialMission.Status.FAILED -> Triple(StatusRedDim, TextPrimaryOnDark, false)
         else -> Triple(MaterialTheme.colorScheme.surfaceContainerHighest, TextMutedOnDark, false)
     }
 
     Card(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.medium,
         onClick = if (specialMission.status == SpecialMission.Status.COMPLETED) {
             { onClickCollect(specialMission.id) }
         } else if (specialMission.status == SpecialMission.Status.UNAVAILABLE) {
@@ -398,7 +410,7 @@ fun SpecialMissionsEntry(
         ),
         border = androidx.compose.foundation.BorderStroke(
             1.dp,
-            if (isVivid) Color.Black.copy(alpha = 0.15f) else SurfaceStroke
+            if (isVivid) SpaceBlack.copy(alpha = 0.15f) else SurfaceStroke
         )
 
     ) {
@@ -414,7 +426,7 @@ fun SpecialMissionsEntry(
                 modifier = Modifier
                     .size(44.dp)
                     .clip(CircleShape)
-                    .background(if (isVivid) Color.Black.copy(alpha = 0.15f) else Color.White.copy(alpha = 0.08f))
+                    .background(if (isVivid) SpaceBlack.copy(alpha = 0.15f) else TextPrimaryOnDark.copy(alpha = 0.08f))
             ) {
                 Icon(
                     painter = painterResource(icon),
@@ -440,7 +452,7 @@ fun SpecialMissionsEntry(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color.Black.copy(alpha = 0.2f))
+                        .background(SpaceBlack.copy(alpha = 0.2f))
                         .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
                     Text(

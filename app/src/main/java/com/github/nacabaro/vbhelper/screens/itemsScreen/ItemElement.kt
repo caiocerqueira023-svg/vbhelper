@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -15,6 +16,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.github.nacabaro.vbhelper.dtos.ItemDtos
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.components.cyberFrame
+import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 
 @Composable
 fun ItemElement(
@@ -24,8 +27,10 @@ fun ItemElement(
 ) {
     Card (
         onClick = onClick,
+        shape = RectangleShape,
         modifier = modifier
             .aspectRatio(1f)
+            .cyberFrame()
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             Icon(
@@ -34,7 +39,8 @@ fun ItemElement(
                 modifier = Modifier
                     .size(96.dp)
                     .align(Alignment.Center)
-                    .padding(16.dp)
+                    .padding(16.dp),
+                tint = VitalCyan
             )
             Icon(
                 painter = painterResource(id = getLengthResource(item.itemLength)),

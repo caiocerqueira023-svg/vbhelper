@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -21,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -51,9 +53,10 @@ fun VitalsHeaderStat(
     modifier: Modifier = Modifier,
     icon: Int = R.drawable.baseline_vitals_24
 ) {
+    val pulseAlpha = cyberPulseAlpha()
     Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        modifier = modifier.fillMaxWidth().cyberFrame(active = true),
+        shape = RectangleShape,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
         border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceStroke)
     ) {
@@ -112,6 +115,7 @@ fun VitalsHeaderStat(
                             .fillMaxWidth(ratio)
                             .height(8.dp)
                             .clip(RoundedCornerShape(50))
+                            .graphicsLayer(alpha = pulseAlpha)
                             .background(
                                 Brush.horizontalGradient(listOf(VitalCyanDim, VitalCyan))
                             )
@@ -137,8 +141,8 @@ fun InfoStatRow(
     valueColor: Color = VitalCyan
 ) {
     Card(
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
+        modifier = modifier.cyberFrame(),
+        shape = RectangleShape,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
@@ -198,8 +202,8 @@ fun WeeklyVitalsChart(
     val maxValue = max(1, recent.maxOf { it.vitalPoints })
 
     Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(18.dp),
+        modifier = modifier.fillMaxWidth().cyberFrame(),
+        shape = RectangleShape,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
         border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceStroke)
     ) {
