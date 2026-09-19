@@ -5,6 +5,7 @@ import androidx.room.Query
 import com.github.nacabaro.vbhelper.domain.device_data.EvolutionHistoryRepair.Entry
 import com.github.nacabaro.vbhelper.domain.device_data.EvolutionHistoryRepair.Route
 import com.github.nacabaro.vbhelper.domain.device_data.EvolutionHistoryRepair.Species
+import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 
 @Dao
 interface EvolutionHistoryDao {
@@ -32,6 +33,19 @@ interface EvolutionHistoryDao {
 
     @Query("SELECT stageId AS speciesId, transformationDate AS date FROM TransformationHistory WHERE monId = :characterId ORDER BY id ASC")
     fun getHistory(characterId: Long): List<Entry>
+
+    @Query("""
+        SELECT
+            c.stage AS stage,
+            sp.speciesName AS speciesName,
+            sp.matchedName AS matchedName
+        FROM TransformationHistory h
+        JOIN CardCharacter c ON c.id = h.stageId
+        LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = c.id
+        WHERE h.monId = :characterId
+        ORDER BY h.id ASC
+    """)
+    fun getPromptHistory(characterId: Long): List<CharacterDtos.EvolutionHistoryPromptEntry>
 
     @Query("DELETE FROM TransformationHistory WHERE monId = :characterId")
     fun deleteHistory(characterId: Long)

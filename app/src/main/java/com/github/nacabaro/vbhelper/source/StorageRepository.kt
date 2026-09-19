@@ -43,7 +43,9 @@ class StorageRepository (
 
     suspend fun getOrCreatePersonality(characterId: Long): DigimonPersonalityTraits {
         val character = db.userCharacterDao().getCharacter(characterId)
-        db.digimonIndividualDao().getPersonality(character.individualId)?.let { return it }
+        db.digimonIndividualDao().getPersonality(character.individualId)
+            ?.takeIf { it.isCurrentSystem }
+            ?.let { return it }
 
         val characterInfo = db.userCharacterDao().getCharacterInfo(characterId)
         val generated = DigimonPersonalityGenerator.generate(
@@ -51,8 +53,25 @@ class StorageRepository (
             attribute = characterInfo.attribute,
             stage = characterInfo.stage
         )
-        db.digimonIndividualDao().insertPersonality(generated)
+        db.digimonIndividualDao().upsertPersonality(generated)
         return db.digimonIndividualDao().getPersonality(character.individualId) ?: generated
+    }
+
+    suspend fun getOrCreatePersonalityForIndividual(
+        individualId: String,
+        attribute: com.github.cfogrady.vbnfc.data.NfcCharacter.Attribute?,
+        stage: Int
+    ): DigimonPersonalityTraits {
+        db.digimonIndividualDao().getPersonality(individualId)
+            ?.takeIf { it.isCurrentSystem }
+            ?.let { return it }
+        val generated = DigimonPersonalityGenerator.generate(
+            individualId = individualId,
+            attribute = attribute,
+            stage = stage
+        )
+        db.digimonIndividualDao().upsertPersonality(generated)
+        return db.digimonIndividualDao().getPersonality(individualId) ?: generated
     }
 
     suspend fun ensureAllPersonalities() {

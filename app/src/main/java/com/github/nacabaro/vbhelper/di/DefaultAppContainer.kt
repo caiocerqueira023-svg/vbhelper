@@ -68,7 +68,8 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
                 AppDatabase.MIGRATION_15_16,
                 AppDatabase.MIGRATION_16_17,
                 AppDatabase.MIGRATION_17_18,
-                AppDatabase.MIGRATION_18_19
+                AppDatabase.MIGRATION_18_19,
+                AppDatabase.MIGRATION_19_20
             )
             // Missing migrations must preserve the database, never erase individuals/chats.
             .addCallback(com.github.nacabaro.vbhelper.database.IndividualIntegrity.callback)
@@ -98,6 +99,11 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
                 runCatching {
                     context.assets.open("species.json").bufferedReader().use { it.readText() }
                 }.getOrNull()
+            },
+            conversationExamplesLoader = {
+                runCatching {
+                    context.assets.open("species_chat_examples.json").bufferedReader().use { it.readText() }
+                }.getOrNull()
             }
         )
     }
@@ -110,7 +116,7 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
     }
 
     override val chatRepository by lazy {
-        ChatRepository(db, llmSettingsRepository, lorebookRepository)
+        ChatRepository(db, llmSettingsRepository, lorebookRepository, speciesRepository)
     }
     override val worldRepository by lazy { WorldRepository(db) }
     override val reactionRepository by lazy { ReactionRepository(db, chatRepository) }

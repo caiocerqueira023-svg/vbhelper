@@ -14,7 +14,8 @@ class SpeciesRepository(
     private val database: AppDatabase? = null,
     private val settingsRepository: SpeciesSettingsRepository,
     private val service: SpeciesDatabaseService = SpeciesDatabaseClient.create(),
-    private val assetLoader: (() -> String?)? = null
+    private val assetLoader: (() -> String?)? = null,
+    private val conversationExamplesLoader: (() -> String?)? = null
 ) {
     companion object {
         const val SPECIES_DB_URL =
@@ -22,6 +23,7 @@ class SpeciesRepository(
     }
 
     private val gson = Gson()
+    private var conversationExamplesCache: List<SpeciesConversationEntry>? = null
 
     suspend fun matchOfficialSpeciesForCard(cardId: Long): Int {
         val db = database ?: return 0
@@ -175,6 +177,21 @@ class SpeciesRepository(
             ?.toList()
             ?: emptyList()
 
+    /**
+     * Returns the source dialogue sets for a species. These are references for
+     * interaction rhythm and characterization, never mandatory lines to copy.
+     */
+    fun getConversationExamples(speciesName: String?): List<SpeciesConversationEntry> {
+        val requestedName = speciesName?.takeIf { it.isNotBlank() } ?: return emptyList()
+        val entries = conversationExamplesCache ?: loadConversationExamples().also {
+            conversationExamplesCache = it
+        }
+        val normalizedRequestedName = canonicalConversationName(requestedName)
+        return entries.filter {
+            canonicalConversationName(it.speciesName) == normalizedRequestedName
+        }
+    }
+
     suspend fun saveManualProfile(
         cardCharacterId: Long,
         name: String,
@@ -215,6 +232,48 @@ class SpeciesRepository(
 
     private fun normalizeSpeciesName(name: String): String =
         name.trim().lowercase(Locale.ROOT)
+
+    private fun normalizeConversationName(name: String): String =
+        name.lowercase(Locale.ROOT).replace(Regex("[^a-z0-9]"), "")
+
+    /** Handles official-name spelling and form abbreviations used by the source sheet. */
+    private fun canonicalConversationName(name: String): String = when (normalizeConversationName(name)) {
+        "aegiochusmonholly" -> "aegiochusmonholy"
+        "chronomondestroy" -> "chronomondestroymode"
+        "lillymon" -> "lilimon"
+        "herculeskabuterimon" -> "heraklekabuterimon"
+        "lotosmon" -> "lotusmon"
+        "rosemonbm" -> "rosemonburstmode"
+        "ultimatebrakimon" -> "ultimatebrachimon"
+        "ancientwisetmon" -> "ancientwisemon"
+        "kerpymonbad" -> "cherubimonvice"
+        "grapleomon" -> "grappuleomon"
+        "craniamon" -> "craniummon"
+        "aeroveedramon" -> "aerovdramon"
+        "lucemonfm" -> "lucemonfalldownmode"
+        "imperialdramonfm" -> "imperialdramonfightermode"
+        "miragegaogamonbm" -> "miragegaogamonburstmode"
+        "magnagarurumonseparation" -> "magnagarurumon"
+        "dukemoncm" -> "dukemoncrimsonmode"
+        "duftmonlm" -> "duftmonleopardmode"
+        "beelzemonbm" -> "beelzebumonblastmode"
+        "belphemonrm" -> "belphemonragemode"
+        "belphemonsm" -> "belphemonsleepmode"
+        "lucemonsm" -> "lucemonsatanmode"
+        else -> normalizeConversationName(name)
+    }
+
+    private fun loadConversationExamples(): List<SpeciesConversationEntry> {
+        val json = conversationExamplesLoader?.invoke() ?: return emptyList()
+        return runCatching {
+            gson.fromJson(json, SpeciesConversationDatabase::class.java)
+                ?.entries
+                .orEmpty()
+                .filter { it.speciesName.isNotBlank() && it.exchanges.isNotEmpty() }
+        }.onFailure {
+            Timber.w(it, "Failed to parse bundled Digimon conversation examples")
+        }.getOrDefault(emptyList())
+    }
 
     internal suspend fun fetchDatabase(): SpeciesDatabaseDto? = try {
         val remoteUrl = "$SPECIES_DB_URL?cacheBust=${System.currentTimeMillis()}"

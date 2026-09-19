@@ -58,7 +58,7 @@ import com.github.nacabaro.vbhelper.domain.lorebook.LorebookEntry
 import com.github.nacabaro.vbhelper.domain.world.WorldSpawn
 
 @Database(
-    version = 19,
+    version = 20,
     exportSchema = false,
     entities = [
         Card::class,
@@ -118,6 +118,39 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun worldSpawnDao(): WorldSpawnDao
 
     companion object {
+        /** Replaces the old temperament/social-style/speech-quirk record. */
+        val MIGRATION_19_20 = object : Migration(19, 20) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `DigimonPersonalityTraits_new` (
+                        `individualId` TEXT NOT NULL,
+                        `personalityType` TEXT NOT NULL,
+                        `generatedAt` INTEGER NOT NULL,
+                        `systemVersion` INTEGER NOT NULL,
+                        PRIMARY KEY(`individualId`),
+                        FOREIGN KEY(`individualId`) REFERENCES `DigimonIndividual`(`individualId`)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT OR IGNORE INTO `DigimonPersonalityTraits_new`
+                        (`individualId`, `personalityType`, `generatedAt`, `systemVersion`)
+                    SELECT `individualId`, 'FRIENDLY', `generatedAt`, 1
+                    FROM `DigimonPersonalityTraits`
+                    """.trimIndent()
+                )
+                db.execSQL("DROP TABLE `DigimonPersonalityTraits`")
+                db.execSQL("ALTER TABLE `DigimonPersonalityTraits_new` RENAME TO `DigimonPersonalityTraits`")
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS `index_DigimonPersonalityTraits_individualId` " +
+                        "ON `DigimonPersonalityTraits` (`individualId`)"
+                )
+            }
+        }
+
         val MIGRATION_18_19 = object : Migration(18, 19) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("ALTER TABLE `UserCharacter` ADD COLUMN `isFavorite` INTEGER NOT NULL DEFAULT 0")

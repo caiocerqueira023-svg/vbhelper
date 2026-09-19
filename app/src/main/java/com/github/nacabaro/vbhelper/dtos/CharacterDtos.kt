@@ -172,6 +172,12 @@ object CharacterDtos {
         val transformationDate: Long
     )
 
+    data class EvolutionHistoryPromptEntry(
+        val stage: Int,
+        val speciesName: String?,
+        val matchedName: String?
+    )
+
     data class CardCharaProgress(
         val id: Long,
         val spriteIdle: ByteArray,

@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.CancellationException
 import com.github.nacabaro.vbhelper.source.EvolutionHistoryRepository
 import com.github.nacabaro.vbhelper.world.WorldAfkScheduler
+import com.github.nacabaro.vbhelper.source.StorageRepository
 
 class VBHelper : Application() {
     lateinit var container: DefaultAppContainer
@@ -40,6 +41,13 @@ class VBHelper : Application() {
         }
         container = DefaultAppContainer(applicationContext)
         applicationScope.launch {
+            try {
+                // Reassign legacy or missing personality rows before any chat
+                // screen can build a prompt from the old system.
+                StorageRepository(container.db).ensureAllPersonalities()
+            } catch (failure: Exception) {
+                Log.e("DigimonPersonality", "Could not migrate stored personalities", failure)
+            }
             val histories = EvolutionHistoryRepository(container.db)
             // Initial emission repairs existing storage; later emissions also cover
             // imports, degeneration, restored backups and edited evolution routes.

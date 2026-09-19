@@ -137,7 +137,7 @@ class WorldRepository(private val db: AppDatabase) {
 
             val individualId = IndividualIdentity.generate()
             db.digimonIndividualDao().insert(DigimonIndividual(individualId, now))
-            db.digimonIndividualDao().insertPersonality(
+            db.digimonIndividualDao().upsertPersonality(
                 DigimonPersonalityGenerator.generate(individualId, character.attribute, character.stage, now)
             )
 

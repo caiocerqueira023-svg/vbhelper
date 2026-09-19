@@ -17,7 +17,8 @@ class ChatScreenControllerImpl(
     private val chatRepository = ChatRepository(
         database = application.container.db,
         llmSettingsRepository = application.container.llmSettingsRepository,
-        lorebookRepository = application.container.lorebookRepository
+        lorebookRepository = application.container.lorebookRepository,
+        speciesRepository = application.container.speciesRepository
     )
     private val database = application.container.db
     private val speciesRepository = SpeciesRepository(database, application.container.speciesSettingsRepository)

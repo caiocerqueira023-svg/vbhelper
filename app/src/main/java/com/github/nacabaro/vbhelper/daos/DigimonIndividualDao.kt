@@ -37,11 +37,11 @@ interface DigimonIndividualDao {
     )
     suspend fun updateMilestones(individualId: String, winsMilestone: Int, trophyMilestone: Int)
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertPersonality(personality: DigimonPersonalityTraits)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsertPersonality(personality: DigimonPersonalityTraits)
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    fun insertPersonalitySync(personality: DigimonPersonalityTraits)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun upsertPersonalitySync(personality: DigimonPersonalityTraits)
 
     @Query(
         """

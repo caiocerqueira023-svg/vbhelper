@@ -193,8 +193,12 @@ class IndividualPersistenceTest {
     private fun personalData() {
         db.openHelper.writableDatabase.execSQL("UPDATE DigimonIndividual SET nickname='1stmaru' WHERE individualId=?", arrayOf(individual))
         seed("ChatMessageEntity", mapOf("individualId" to individual, "role" to "user", "content" to "My own conversation"))
-        seed("DigimonPersonalityTraits", mapOf("individualId" to individual, "temperament" to "CALM",
-            "socialStyle" to "LOYAL_WARM", "speechQuirk" to "SHORT_DIRECT"))
+        seed("DigimonPersonalityTraits", mapOf(
+            "individualId" to individual,
+            "personalityType" to "FRIENDLY",
+            "generatedAt" to 0L,
+            "systemVersion" to com.github.nacabaro.vbhelper.domain.personality.CURRENT_PERSONALITY_SYSTEM_VERSION
+        ))
     }
 
     private fun prepare(key: Long, watch: String = "watch-A"): Pair<VBNfcCharacter, WatchTransfer> = runBlocking {

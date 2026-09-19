@@ -9,6 +9,8 @@ import com.github.nacabaro.vbhelper.domain.mood.MoodDirectiveParser
 import com.github.nacabaro.vbhelper.world.WildMoodAnalyzer
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.source.LlmSettingsRepository
+import com.github.nacabaro.vbhelper.source.StorageRepository
+import com.github.nacabaro.vbhelper.species.SpeciesRepository
 import com.github.nacabaro.vbhelper.utils.DeviceType
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
@@ -23,9 +25,12 @@ class ChatRepository(
     private val database: AppDatabase,
     private val llmSettingsRepository: LlmSettingsRepository,
     private val lorebookRepository: LorebookRepository,
+    private val speciesRepository: SpeciesRepository,
     private val chatDao: ChatDao = database.chatDao()
 ) {
     class MissingApiKeyException : Exception("Chat API key is not configured.")
+
+    private val storageRepository = StorageRepository(database)
 
     fun getHistory(characterId: Long): Flow<List<ChatMessageEntity>> =
         database.userCharacterDao().getIndividualId(characterId)
@@ -216,20 +221,26 @@ class ChatRepository(
     private suspend fun buildSystemPromptAndIndividualId(characterId: Long): PromptContext {
         val character = database.userCharacterDao().getCharacterWithSprites(characterId)
         val userCharacter = database.userCharacterDao().getCharacter(characterId)
-        val personality = database.digimonIndividualDao().getPersonality(userCharacter.individualId)
+        val personality = storageRepository.getOrCreatePersonality(characterId)
         val card = database.cardDao().getCardByCharacterIdSync(characterId)
         val speciesProfile = database.speciesProfileDao().getByCardCharacterId(userCharacter.charId)
+        val conversationExamples = speciesRepository.getConversationExamples(
+            speciesProfile?.matchedName ?: speciesProfile?.speciesName ?: character.speciesName
+        )
+        val evolutionHistory = database.evolutionHistoryDao().getPromptHistory(characterId)
         val promptTemplate = llmSettingsRepository.systemPromptTemplate.first()
         val tamerName = llmSettingsRepository.tamerName.first()
         val languageTag = PromptLocalization.currentLanguageTag()
         val prompt = DigimonPersonaBuilder.buildSystemPrompt(
-            character,
-        card?.name ?: "unknown",
-            speciesProfile,
-            promptTemplate,
-            personality,
-            tamerName,
-            languageTag
+            character = character,
+            cardName = card?.name ?: "unknown",
+            speciesProfile = speciesProfile,
+            promptTemplate = promptTemplate,
+            personality = personality,
+            tamerName = tamerName,
+            languageTag = languageTag,
+            conversationExamples = conversationExamples,
+            evolutionHistory = evolutionHistory
         )
         return PromptContext(prompt, userCharacter.individualId, speciesProfile?.speciesName)
     }
@@ -240,8 +251,15 @@ class ChatRepository(
     ): Pair<String, String?> {
         val info = database.characterDao().getWildCharacterInfo(cardCharacterId)
             ?: error("Species data was not found for this Digimon.")
-        val personality = database.digimonIndividualDao().getPersonality(individualId)
+        val personality = storageRepository.getOrCreatePersonalityForIndividual(
+            individualId = individualId,
+            attribute = info.attribute,
+            stage = info.stage
+        )
         val speciesProfile = database.speciesProfileDao().getByCardCharacterId(cardCharacterId)
+        val conversationExamples = speciesRepository.getConversationExamples(
+            speciesProfile?.matchedName ?: speciesProfile?.speciesName
+        )
         val promptTemplate = llmSettingsRepository.wildSystemPromptTemplate.first()
         val tamerName = llmSettingsRepository.tamerName.first()
         val languageTag = PromptLocalization.currentLanguageTag()
@@ -282,14 +300,15 @@ class ChatRepository(
         )
 
         val prompt = DigimonPersonaBuilder.buildSystemPrompt(
-            fakeCharacter,
-            info.cardName,
-            speciesProfile,
-            promptTemplate,
-            personality,
-            tamerName,
-            languageTag,
-            defaultTemplate = PromptLocalization::defaultWildSystemPrompt
+            character = fakeCharacter,
+            cardName = info.cardName,
+            speciesProfile = speciesProfile,
+            promptTemplate = promptTemplate,
+            personality = personality,
+            tamerName = tamerName,
+            languageTag = languageTag,
+            defaultTemplate = PromptLocalization::defaultWildSystemPrompt,
+            conversationExamples = conversationExamples
         )
         return prompt to speciesProfile?.speciesName
     }
