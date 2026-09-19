@@ -29,9 +29,16 @@ internal class OpenStreetMapBiomeDetector {
         )
         cache[cell]?.takeIf { it.expiresAt > now }?.let { return it.biome }
 
-        val biome = runCatching { queryBiome(latitude, longitude) }
-            .getOrDefault(WorldBiome.NULL)
-        cache[cell] = CachedBiome(biome, now + CACHE_DURATION_MILLIS)
+        val query = runCatching { queryBiome(latitude, longitude) }
+        val biome = query.getOrDefault(WorldBiome.NULL)
+        // A transient network failure should not make this location stay Null for
+        // the full successful-query cache window.
+        val cacheDuration = if (query.isSuccess) {
+            CACHE_DURATION_MILLIS
+        } else {
+            FAILURE_CACHE_DURATION_MILLIS
+        }
+        cache[cell] = CachedBiome(biome, now + cacheDuration)
         return biome
     }
 
@@ -169,7 +176,10 @@ internal class OpenStreetMapBiomeDetector {
         const val SEARCH_RADIUS_METERS = 250
         const val CELL_SCALE = 500.0
         const val CACHE_DURATION_MILLIS = 15 * 60 * 1000L
-        const val NETWORK_TIMEOUT_MILLIS = 8_000
+        const val FAILURE_CACHE_DURATION_MILLIS = 30 * 1000L
+        // Biome data is enrichment, not a prerequisite for showing the World map.
+        // Keep the first GPS refresh responsive when Overpass is slow or unavailable.
+        const val NETWORK_TIMEOUT_MILLIS = 1_500
         val GRASSLAND_LAND_USES = setOf("meadow", "grass")
         val RURAL_LAND_USES = setOf("farmland", "orchard", "vineyard", "farmyard")
         val URBAN_LAND_USES = setOf("residential", "commercial", "retail")
