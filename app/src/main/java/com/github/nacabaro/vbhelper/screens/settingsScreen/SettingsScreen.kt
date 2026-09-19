@@ -319,14 +319,13 @@ fun SettingsEntry(
             .padding(horizontal = 16.dp, vertical = 14.dp)
     ) {
         Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-            Text("◆", color = VitalCyan, fontSize = 12.sp)
-            Text(text = title, modifier = Modifier.padding(start = 8.dp))
+            Text(text = title)
         }
         Text(
             text = description,
             fontSize = 12.sp,
             color = VitalCyan,
-            modifier = Modifier.padding(start = 20.dp)
+            modifier = Modifier.padding(top = 2.dp)
         )
     }
 }

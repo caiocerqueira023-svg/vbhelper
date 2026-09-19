@@ -81,7 +81,6 @@ fun CardEntry(
                     .weight(1f)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("◆", color = VitalCyan, modifier = Modifier.padding(end = 6.dp))
                     Text(text = name)
                 }
                 if (officialStatus == OfficialStatus.UNKNOWN) {

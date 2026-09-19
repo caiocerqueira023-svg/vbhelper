@@ -95,6 +95,7 @@ fun CharacterEntry(
     ),
     onClick: () -> Unit = {  }
 ) {
+    val effectiveShape = if (vitalPoints != null) RectangleShape else shape
     val motionEnabled = motionEnabled()
     var hasEntered by remember(animationKey) { mutableStateOf(false) }
     LaunchedEffect(animationKey, motionEnabled) { hasEntered = true }
@@ -134,7 +135,7 @@ fun CharacterEntry(
     val dpSize = (icon.width * multiplier / density).dp
 
     Card(
-        shape = shape,
+        shape = effectiveShape,
         onClick = when (disabled) {
             true -> { {} }
             false -> onClick

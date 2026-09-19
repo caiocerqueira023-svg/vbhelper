@@ -27,7 +27,6 @@ import com.github.nacabaro.vbhelper.components.InfoStatRow
 import com.github.nacabaro.vbhelper.components.ItemDisplay
 import com.github.nacabaro.vbhelper.components.SpecialMissionsEntry
 import com.github.nacabaro.vbhelper.components.TransformationHistoryCard
-import com.github.nacabaro.vbhelper.components.NicknameDisplay
 import com.github.nacabaro.vbhelper.components.VitalsHeaderStat
 import com.github.nacabaro.vbhelper.components.WeeklyVitalsChart
 import com.github.nacabaro.vbhelper.domain.device_data.SpecialMissions
@@ -65,6 +64,7 @@ fun VBDiMHomeScreen(
     homeScreenController: HomeScreenControllerImpl,
     transformationHistory: List<CharacterDtos.TransformationHistory>,
     nickname: String?,
+    speciesName: String?,
     contentPadding: PaddingValues,
     onClickCollect: (ItemDtos.PurchasedItem?, Int?) -> Unit,
     speechBubbleText: String? = null,
@@ -82,7 +82,9 @@ fun VBDiMHomeScreen(
         // Big "Vitals X / max" readout, echoing the top gauge of the
         // reference home screen.
         VitalsHeaderStat(
-            label = stringResource(R.string.home_vbdim_vitals),
+            label = nickname?.takeIf { it.isNotBlank() }
+                ?: speciesName?.takeIf { it.isNotBlank() }
+                ?: stringResource(R.string.widget_digimon_label),
             current = activeMon.vitalPoints,
             max = MAX_VITAL_POINTS,
             modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp)
@@ -105,7 +107,6 @@ fun VBDiMHomeScreen(
                     width = activeMon.spriteWidth,
                     height = activeMon.spriteHeight
                 ),
-                shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp),
                 modifier = Modifier
                     .weight(1f)
                     .aspectRatio(1f),
@@ -142,8 +143,6 @@ fun VBDiMHomeScreen(
                 )
             }
         }
-        NicknameDisplay(nickname)
-
         if (vitalsHistory.isNotEmpty()) {
             WeeklyVitalsChart(
                 history = vitalsHistory,

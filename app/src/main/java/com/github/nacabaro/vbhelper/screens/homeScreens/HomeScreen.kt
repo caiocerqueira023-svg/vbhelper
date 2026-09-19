@@ -86,6 +86,15 @@ fun HomeScreen(
             ?: flowOf<CardDtos.CardIcon?>(null)
     ).collectAsState(initial = null)
 
+    val speciesProfile by (
+        activeMon
+            ?.let { character ->
+                application.container.db.speciesProfileDao()
+                    .getByCardCharacterIdFlow(character.charId)
+            }
+            ?: flowOf<com.github.nacabaro.vbhelper.domain.species.SpeciesProfile?>(null)
+    ).collectAsState(initial = null)
+
     val transformationHistory by (
         activeMon
             ?.let { chara ->
@@ -224,6 +233,9 @@ fun HomeScreen(
                         vbData = vbData!!,
                         transformationHistory = transformationHistory,
                         nickname = activeMon!!.nickname,
+                        speciesName = speciesProfile?.speciesName
+                            ?.takeIf { it.isNotBlank() }
+                            ?: speciesProfile?.matchedName?.takeIf { it.isNotBlank() },
                         contentPadding = PaddingValues(0.dp),
                         specialMissions = vbSpecialMissions,
                         homeScreenController = homeScreenController,

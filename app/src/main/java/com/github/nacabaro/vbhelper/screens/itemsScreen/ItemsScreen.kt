@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -40,7 +41,10 @@ fun ItemsScreen(
                 TopBanner(text = stringResource(R.string.items_title))
                 PrimaryTabRow(
                     selectedTabIndex = selectedTabItem,
-                    modifier = Modifier
+                    modifier = Modifier,
+                    containerColor = MaterialTheme.colorScheme.background,
+                    indicator = {},
+                    divider = {}
                 ) {
                     items.forEachIndexed { index, item ->
                         Tab(
