@@ -326,7 +326,11 @@ fun StorageScreen(
                         state = gridState,
                         modifier = Modifier.weight(1f)
                     ) {
-                        items(visibleCharacters, key = { it.id }) { character ->
+                        items(
+                            items = visibleCharacters,
+                            key = { it.id },
+                            contentType = { "storage-character" }
+                        ) { character ->
                             val openCharacter = {
                                 if (!character.isInAdventure) {
                                     selectedCharacter = character.id

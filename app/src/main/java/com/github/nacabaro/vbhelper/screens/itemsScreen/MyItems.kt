@@ -32,7 +32,7 @@ fun MyItems(
     navController: NavController,
 ) {
     val application = LocalContext.current.applicationContext as VBHelper
-    val itemsRepository = ItemsRepository(application.container.db)
+    val itemsRepository = remember { ItemsRepository(application.container.db) }
     val myItems by itemsRepository.getUserItems().collectAsState(emptyList())
 
     var selectedElementIndex by remember { mutableStateOf<Int?>(null) }
@@ -44,7 +44,11 @@ fun MyItems(
             columns = GridCells.Adaptive(minSize = 104.dp),
             modifier = Modifier
         ) {
-            items(myItems) { index ->
+            items(
+                items = myItems,
+                key = { it.id },
+                contentType = { "item-entry" }
+            ) { index ->
                 ItemElement(
                     item = index,
                     modifier = Modifier

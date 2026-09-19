@@ -35,7 +35,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.Alignment
@@ -90,7 +89,9 @@ fun CharacterEntry(
     shape: Shape = RectangleShape,
     multiplier: Int = 4,
     idleFrame2: BitmapData? = null,
-    animationKey: Any = icon.bitmap.contentHashCode(),
+    // Byte-array identity is a stable, cheap fallback. Computing a full
+    // sprite content hash during every recomposition is costly in long grids.
+    animationKey: Any = icon.bitmap,
     speechBubbleText: String? = null,
     statusText: String? = null,
     grayscale: Boolean = false,
@@ -121,7 +122,7 @@ fun CharacterEntry(
         offsetMillis to intervalMillis
     }
 
-    LaunchedEffect(animationKey, idleFrame2?.bitmap?.contentHashCode(), motionEnabled) {
+    LaunchedEffect(animationKey, idleFrame2?.bitmap, motionEnabled) {
         // Keep a stable but unique phase for each Digimon, so a grid does not animate in lockstep.
         animationFrame = if (animationTiming.first * 2L >= animationTiming.second) 1 else 0
         if (idleFrame2 != null && motionEnabled) {
@@ -276,7 +277,7 @@ fun CharacterEntry(
                 )
 
                 if (cardIcon != null) {
-                    val cardBitmap = remember(icon.bitmap) { cardIcon.getBitmap() }
+                    val cardBitmap = remember(cardIcon.bitmap) { cardIcon.getBitmap() }
                     val iconBitmap = remember(cardBitmap) { cardBitmap.asImageBitmap() }
                     val cardIconDpSize = (icon.width * iconSizeMultiplier / density).dp
 

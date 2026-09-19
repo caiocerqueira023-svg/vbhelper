@@ -20,6 +20,7 @@ import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
@@ -44,7 +45,7 @@ fun WriteCharacterScreen(
 ) {
     val application = LocalContext.current.applicationContext as VBHelper
     val database = application.container.db
-    val scanRepository = ScanRepository(database)
+    val scanRepository = remember { ScanRepository(database) }
     val cardDetails by scanRepository.getCardDetails(characterId).collectAsState(Card(
         id = 0,
         cardId = 0,

@@ -106,7 +106,11 @@ fun ChatScreen(
                     .fillMaxWidth()
                     .padding(8.dp)
             ) {
-                items(messages) { message ->
+                items(
+                    items = messages,
+                    key = { it.id },
+                    contentType = { "chat-message" }
+                ) { message ->
                     val isUser = message.role == "user"
                     Row(
                         modifier = Modifier

@@ -1,8 +1,11 @@
 package com.github.nacabaro.vbhelper.navigation
 
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
@@ -29,6 +32,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.github.nacabaro.vbhelper.di.VBHelper
+import com.github.nacabaro.vbhelper.components.motionEnabled
 import com.github.nacabaro.vbhelper.screens.BattlesScreen
 import com.github.nacabaro.vbhelper.screens.cardScreen.CardsScreen
 import com.github.nacabaro.vbhelper.screens.cardScreen.CardViewScreen
@@ -82,6 +86,7 @@ fun AppNavigation(
     val navController = rememberNavController()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     val tabSwipeThresholdPx = with(LocalDensity.current) { 96.dp.toPx() }
+    val allowMotion = motionEnabled()
 
     BoxWithConstraints {
         val expandedNavigation = maxWidth >= 840.dp
@@ -111,14 +116,32 @@ fun AppNavigation(
             navController = navController,
             startDestination = initialRoute ?: NavigationItems.Home.route,
             enterTransition = {
-                fadeIn(
-                    animationSpec = tween(200)
+                val direction = primaryTabTransitionDirection(
+                    initialState.destination.route,
+                    targetState.destination.route
                 )
+                if (!allowMotion || direction == 0) {
+                    fadeIn(animationSpec = tween(if (allowMotion) 160 else 80))
+                } else {
+                    slideInHorizontally(
+                        animationSpec = tween(280, easing = FastOutSlowInEasing),
+                        initialOffsetX = { width -> if (direction > 0) width else -width }
+                    ) + fadeIn(tween(170))
+                }
             },
             exitTransition = {
-                fadeOut(
-                    animationSpec = tween(200)
+                val direction = primaryTabTransitionDirection(
+                    initialState.destination.route,
+                    targetState.destination.route
                 )
+                if (!allowMotion || direction == 0) {
+                    fadeOut(animationSpec = tween(if (allowMotion) 120 else 60))
+                } else {
+                    slideOutHorizontally(
+                        animationSpec = tween(220, easing = FastOutSlowInEasing),
+                        targetOffsetX = { width -> if (direction > 0) -width else width }
+                    ) + fadeOut(tween(130))
+                }
             },
             modifier = Modifier.fillMaxSize()
 
@@ -151,7 +174,7 @@ fun AppNavigation(
 
                 if (characterId == null) {
                     val context = LocalContext.current.applicationContext as VBHelper
-                    val storageRepository = StorageRepository(context.container.db)
+                    val storageRepository = remember { StorageRepository(context.container.db) }
                     val characterData by storageRepository.getActiveCharacter().collectAsState(null)
                     if (characterData != null) {
                         characterId = characterData!!.id
@@ -312,4 +335,14 @@ private fun Modifier.tabSwipeNavigation(
         },
         onDragCancel = { dragDistance = 0f }
     )
+}
+
+private fun primaryTabTransitionDirection(initialRoute: String?, targetRoute: String?): Int {
+    val initialIndex = primaryDestinations.indexOfFirst { it.route == initialRoute }
+    val targetIndex = primaryDestinations.indexOfFirst { it.route == targetRoute }
+    return if (initialIndex >= 0 && targetIndex >= 0) {
+        (targetIndex - initialIndex).coerceIn(-1, 1)
+    } else {
+        0
+    }
 }

@@ -78,7 +78,11 @@ fun ChooseCharacterScreen(
             modifier = Modifier
                 .padding(top = contentPadding.calculateTopPadding())
         ) {
-            items(characterList.value) {
+            items(
+                items = characterList.value,
+                key = { it.id },
+                contentType = { "item-character" }
+            ) {
                 CharacterEntry(
                     icon = BitmapData(
                         bitmap = it.spriteIdle,

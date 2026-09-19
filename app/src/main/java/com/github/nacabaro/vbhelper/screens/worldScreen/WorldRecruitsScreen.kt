@@ -85,7 +85,11 @@ fun WorldRecruitsScreen(navController: NavController) {
                 columns = GridCells.Adaptive(minSize = 104.dp),
                 contentPadding = contentPadding
             ) {
-                items(recruits) { spawn ->
+                items(
+                    items = recruits,
+                    key = { it.id },
+                    contentType = { "world-recruit" }
+                ) { spawn ->
                     CharacterEntry(
                         icon = BitmapData(
                             bitmap = spawn.spriteIdle,

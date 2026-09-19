@@ -39,7 +39,7 @@ fun AdventureScreen(
 ) {
     val application = LocalContext.current.applicationContext as VBHelper
     val database = application.container.db
-    val storageRepository = StorageRepository(database)
+    val storageRepository = remember { StorageRepository(database) }
     val characterList by storageRepository.getAdventureCharacters().collectAsState(emptyList())
 
     var obtainedItem by remember {
@@ -49,7 +49,11 @@ fun AdventureScreen(
         mutableStateOf(0)
     }
 
-    val currentTime by produceState(initialValue = Instant.now().epochSecond) {
+    val currentTime by produceState(
+        initialValue = Instant.now().epochSecond,
+        key1 = characterList.isNotEmpty()
+    ) {
+        if (characterList.isEmpty()) return@produceState
         while (true) {
             value = Instant.now().epochSecond
             delay(1000)
@@ -85,7 +89,11 @@ fun AdventureScreen(
                 modifier = Modifier
                     .padding(top = contentPadding.calculateTopPadding())
             ) {
-                items(characterList) {
+                items(
+                    items = characterList,
+                    key = { it.id },
+                    contentType = { "adventure-character" }
+                ) {
                     AdventureEntry(
                         icon = BitmapData(
                             bitmap = it.spriteIdle,

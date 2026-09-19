@@ -30,7 +30,7 @@ fun CardViewScreen(
     cardId: Long
 ) {
     val application = LocalContext.current.applicationContext as VBHelper
-    val dexRepository = DexRepository(application.container.db)
+    val dexRepository = remember { DexRepository(application.container.db) }
 
     val characterList by dexRepository.getCharactersByCardId(cardId).collectAsState(emptyList())
 
@@ -61,7 +61,11 @@ fun CardViewScreen(
             columns = GridCells.Adaptive(minSize = 104.dp),
             contentPadding = contentPadding
         ) {
-            items(characterList) { character ->
+            items(
+                items = characterList,
+                key = { it.id },
+                contentType = { "dex-character" }
+            ) { character ->
                 CharacterEntry(
                     onClick = {
                         selectedCharacter.value = character

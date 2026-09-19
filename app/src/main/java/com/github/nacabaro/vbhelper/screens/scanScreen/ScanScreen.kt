@@ -38,7 +38,7 @@ fun ScanScreen(
     val secrets by scanScreenController.secretsFlow.collectAsState(null)
 
     val application = LocalContext.current.applicationContext as VBHelper
-    val storageRepository = StorageRepository(application.container.db)
+    val storageRepository = remember { StorageRepository(application.container.db) }
     var nfcCharacter by remember { mutableStateOf<NfcCharacter?>(null) }
     var feedbackMessage by remember { mutableStateOf<String?>(null) }
     var feedbackRequiresSettings by remember { mutableStateOf(false) }

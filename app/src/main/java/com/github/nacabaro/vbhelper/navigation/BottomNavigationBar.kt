@@ -1,6 +1,8 @@
 package com.github.nacabaro.vbhelper.navigation
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -39,6 +41,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.components.motionEnabled
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import com.github.nacabaro.vbhelper.ui.theme.VitalPurple
@@ -161,12 +164,15 @@ private fun RowScope.VitalNavItem(
     modifier: Modifier,
     onClick: () -> Unit
 ) {
+    val allowMotion = motionEnabled()
     val backgroundColor by animateColorAsState(
         targetValue = if (selected) VitalPurple.copy(alpha = 0.22f) else androidx.compose.ui.graphics.Color.Transparent,
+        animationSpec = if (allowMotion) tween(180) else snap(),
         label = "navItemBackground"
     )
     val iconTint by animateColorAsState(
         targetValue = if (selected) VitalCyan else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = if (allowMotion) tween(180) else snap(),
         label = "navItemTint"
     )
     Column(

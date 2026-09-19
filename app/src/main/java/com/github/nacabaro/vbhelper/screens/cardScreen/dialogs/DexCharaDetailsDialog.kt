@@ -66,7 +66,7 @@ fun DexCharaDetailsDialog(
 
     val application = LocalContext.current.applicationContext as VBHelper
     val database = application.container.db
-    val dexRepository = DexRepository(database)
+    val dexRepository = remember { DexRepository(database) }
     val speciesRepository = remember {
         SpeciesRepository(database, application.container.speciesSettingsRepository)
     }

@@ -37,7 +37,7 @@ fun CardsScreen(
 ) {
     val application = LocalContext.current.applicationContext as VBHelper
     val context = LocalContext.current
-    val dexRepository = DexRepository(application.container.db)
+    val dexRepository = remember { DexRepository(application.container.db) }
     val cardList by dexRepository.getAllDims().collectAsState(emptyList())
 
     val selectedCard = remember { mutableStateOf<CardDtos.CardProgress?>(null) }
@@ -61,7 +61,11 @@ fun CardsScreen(
             modifier = Modifier
                 .padding(top = contentPadding.calculateTopPadding())
         ) {
-            items(cardList) {
+            items(
+                items = cardList,
+                key = { it.cardId },
+                contentType = { "card-progress" }
+            ) {
                 CardEntry(
                     name = it.cardName,
                     logo = BitmapData(
