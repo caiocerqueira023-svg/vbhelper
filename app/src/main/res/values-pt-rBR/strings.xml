@@ -204,6 +204,7 @@
     <string name="storage_clear_filters">Limpar pesquisa e filtros</string>
     <string name="storage_pin_character">Adicionar aos favoritos</string>
     <string name="storage_unpin_character">Remover dos favoritos</string>
+    <string name="storage_favorite_indicator">Digimon favorito</string>
     <string name="home_open_dex_details">Exibir detalhes do Digimon</string>
     <string name="home_next_favorite">Próximo favorito</string>
     <string name="home_previous_favorite">Favorito anterior</string>

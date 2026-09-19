@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.R
 
 @Composable
@@ -36,7 +36,7 @@ fun ActionScreen(
                 .fillMaxSize()
         ) {
             Text(stringResource(R.string.action_place_near_reader))
-            Button(
+            VitalButton(
                 onClick = onClickCancel,
                 modifier = Modifier.padding(16.dp)
             ) {

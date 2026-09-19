@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.material3.Icon
@@ -38,6 +37,7 @@ import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.source.DexRepository
@@ -371,7 +371,7 @@ fun DexCharaDetailsDialog(
 
                 Row {
                     if (currentCharaPossibleFusions.isNotEmpty()) {
-                        Button(
+                        VitalButton(
                             onClick = {
                                 showFusions = true
                             }
@@ -385,7 +385,7 @@ fun DexCharaDetailsDialog(
                             .padding(4.dp)
                     )
 
-                    Button(
+                    VitalButton(
                         onClick = onClickClose
                     ) {
                         Text(stringResource(R.string.dex_chara_close_button))

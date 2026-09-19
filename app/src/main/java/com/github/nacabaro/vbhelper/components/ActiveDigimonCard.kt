@@ -10,19 +10,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CutCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,11 +19,8 @@ import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.unit.dp
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
-import com.github.nacabaro.vbhelper.ui.theme.SurfaceHighlightPurple
-import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import com.github.nacabaro.vbhelper.utils.BitmapData
 
 @Composable
@@ -106,60 +91,27 @@ fun ActiveDigimonCard(
         label = "favoriteDigimonTransition",
         modifier = modifier.then(accessibilityModifier)
     ) { character ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            CharacterEntry(
-                icon = BitmapData(
-                    bitmap = character.spriteIdle,
-                    width = character.spriteWidth,
-                    height = character.spriteHeight
-                ),
-                cardIcon = cardIcon,
-                multiplier = multiplier,
-                idleFrame2 = BitmapData(
-                    bitmap = character.spriteIdle2,
-                    width = character.spriteWidth,
-                    height = character.spriteHeight
-                ),
-                animationKey = character.id,
-                speechBubbleText = speechBubbleText,
-                vitalPoints = character.vitalPoints,
-                onClick = onClick,
-                onLongClick = onLongClick,
-                longClickLabel = detailsLabel,
-                onVerticalSwipe = if (canCycleFavorites) onFavoriteSwipe else null,
-                modifier = Modifier.fillMaxSize()
-            )
-
-            if (canCycleFavorites) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(0.dp),
-                    modifier = Modifier
-                        .align(Alignment.CenterStart)
-                        .padding(start = 12.dp)
-                        .background(
-                            color = SurfaceHighlightPurple.copy(alpha = 0.9f),
-                            shape = CutCornerShape(6.dp)
-                        )
-                        .padding(horizontal = 4.dp, vertical = 2.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowUp,
-                        contentDescription = null,
-                        tint = VitalCyan
-                    )
-                    Text(
-                        text = "${favoriteIndex + 1}/$favoriteCount",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = VitalCyan
-                    )
-                    Icon(
-                        imageVector = Icons.Default.KeyboardArrowDown,
-                        contentDescription = null,
-                        tint = VitalCyan
-                    )
-                }
-            }
-        }
+        CharacterEntry(
+            icon = BitmapData(
+                bitmap = character.spriteIdle,
+                width = character.spriteWidth,
+                height = character.spriteHeight
+            ),
+            cardIcon = cardIcon,
+            multiplier = multiplier,
+            idleFrame2 = BitmapData(
+                bitmap = character.spriteIdle2,
+                width = character.spriteWidth,
+                height = character.spriteHeight
+            ),
+            animationKey = character.id,
+            speechBubbleText = speechBubbleText,
+            vitalPoints = character.vitalPoints,
+            onClick = onClick,
+            onLongClick = onLongClick,
+            longClickLabel = detailsLabel,
+            onVerticalSwipe = if (canCycleFavorites) onFavoriteSwipe else null,
+            modifier = Modifier.fillMaxSize()
+        )
     }
 }

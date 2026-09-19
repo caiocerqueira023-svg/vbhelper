@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -23,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.github.nacabaro.vbhelper.components.VitalButton
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
 import androidx.compose.ui.window.DialogProperties
@@ -81,7 +81,7 @@ fun SpeciesManualEditDialog(
                 Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onSkip) { Text(stringResource(R.string.ui_skip)) }
                     TextButton(onClick = onDismiss) { Text(stringResource(R.string.ui_cancel)) }
-                    Button(
+                    VitalButton(
                         enabled = name.isNotBlank(),
                         onClick = {
                             onSave(

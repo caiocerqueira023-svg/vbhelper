@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -25,6 +24,7 @@ import androidx.compose.ui.window.DialogProperties
 import com.github.nacabaro.vbhelper.chat.DigimonPersonaBuilder
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.components.VitalButton
 
 @Composable
 fun PromptTemplateDialog(
@@ -64,7 +64,7 @@ fun PromptTemplateDialog(
                         Text(stringResource(R.string.ui_restore_default))
                     }
                     TextButton(onClick = onDismiss) { Text(stringResource(R.string.ui_cancel)) }
-                    Button(onClick = { onSave(template.trim().ifBlank { null }) }) { Text(stringResource(R.string.ui_save)) }
+                    VitalButton(onClick = { onSave(template.trim().ifBlank { null }) }) { Text(stringResource(R.string.ui_save)) }
                 }
             }
         }

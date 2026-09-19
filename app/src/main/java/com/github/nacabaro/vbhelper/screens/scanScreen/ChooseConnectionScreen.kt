@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -20,6 +19,7 @@ import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.cyberFrame
+import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.ui.theme.StatusRed
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 
@@ -97,7 +97,7 @@ fun ScanButton(
     modifier: Modifier = Modifier,
     disabled: Boolean = false,
 ) {
-    Button(
+    VitalButton(
         onClick = onClick,
         modifier = modifier,
         enabled = !disabled,

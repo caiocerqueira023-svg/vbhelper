@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -27,6 +26,7 @@ import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.domain.items.ItemType
 import com.github.nacabaro.vbhelper.dtos.ItemDtos
 import com.github.nacabaro.vbhelper.ui.theme.VBHelperTheme
+import com.github.nacabaro.vbhelper.components.VitalButton
 
 
 
@@ -124,7 +124,7 @@ fun ItemDialog(
                         .fillMaxWidth()
                 ) {
                     if (onClickUse != null) {
-                        Button(
+                        VitalButton(
                             onClick = onClickUse
                         ) {
                             Text(stringResource(R.string.item_dialog_use))
@@ -132,7 +132,7 @@ fun ItemDialog(
                     }
 
                     if (onClickPurchase != null) {
-                        Button(
+                        VitalButton(
                             onClick = onClickPurchase
                         ) {
                             Text(stringResource(R.string.item_dialog_purchase))
@@ -140,7 +140,7 @@ fun ItemDialog(
                     }
 
                     Spacer(modifier = Modifier.size(8.dp))
-                    Button(
+                    VitalButton(
                         onClick = onClickCancel
                     ) {
                         Text(stringResource(R.string.item_dialog_cancel))

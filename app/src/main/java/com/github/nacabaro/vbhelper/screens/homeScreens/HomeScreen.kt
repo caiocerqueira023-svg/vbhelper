@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -27,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.utils.DeviceType
 import com.github.nacabaro.vbhelper.domain.device_data.BECharacterData
@@ -310,7 +310,7 @@ fun HomeScreen(
                     )
                 }
 
-                Button(
+                VitalButton(
                     onClick = {
                         try {
                             val intent = VitalWearCharacterExporter(application, application.container.db)
@@ -368,7 +368,7 @@ fun HomeScreen(
                         text = stringResource(R.string.home_adventure_mission_finished),
                         textAlign = TextAlign.Center
                     )
-                    Button(
+                    VitalButton(
                         onClick = {
                             adventureMissionsFinished = false
                         },

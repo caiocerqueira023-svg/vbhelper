@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,6 +12,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.R
 
 @Composable
@@ -34,7 +34,7 @@ fun DeleteSpecialMissionDialog(
                 )
                 Spacer(modifier = Modifier.padding(8.dp))
                 Row {
-                    Button(
+                    VitalButton(
                         onClick = onClickDismiss,
                         modifier = Modifier
                             .padding(8.dp)
@@ -42,7 +42,7 @@ fun DeleteSpecialMissionDialog(
                         Text(text = stringResource(R.string.home_special_mission_delete_dismiss))
                     }
 
-                    Button(
+                    VitalButton(
                         onClick = onClickDelete,
                         modifier = Modifier
                             .padding(8.dp)

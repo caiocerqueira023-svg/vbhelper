@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.AlertDialog
@@ -17,6 +16,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -47,6 +48,8 @@ import kotlinx.coroutines.delay
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
+import com.github.nacabaro.vbhelper.components.motionEnabled
+import com.github.nacabaro.vbhelper.components.VitalButton
 
 private data class LoadedStorageCharacter(
     val character: CharacterDtos.CharacterWithSprites,
@@ -63,6 +66,7 @@ fun StorageDialog(
     onSendToBracelet: () -> Unit,
     onClickSetActive: () -> Unit,
     onClickSendToAdventure: (time: Long) -> Unit,
+    onToggleFavorite: (Boolean) -> Unit,
     onClickChat: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -79,6 +83,8 @@ fun StorageDialog(
     var personality by remember { mutableStateOf<DigimonPersonalityTraits?>(null) }
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var idleFrame by remember { mutableIntStateOf(0) }
+    var isFavorite by remember { mutableStateOf(false) }
+    val motionEnabled = motionEnabled()
     val speciesRepository = remember {
         SpeciesRepository(application.container.db, application.container.speciesSettingsRepository)
     }
@@ -103,6 +109,7 @@ fun StorageDialog(
         cardName = loaded.cardName
         speciesProfile = loaded.speciesProfile
         personality = loaded.personality
+        isFavorite = loaded.character.isFavorite
         characterSprite.value = BitmapData(
             bitmap = loaded.character.spriteIdle,
             width = loaded.character.spriteWidth,
@@ -115,7 +122,11 @@ fun StorageDialog(
         )
     }
 
-    LaunchedEffect(character.value?.id) {
+    LaunchedEffect(character.value?.id, motionEnabled) {
+        if (!motionEnabled) {
+            idleFrame = 0
+            return@LaunchedEffect
+        }
         val animationOffset = ((character.value?.id ?: 0L) and 0x7fff_ffffL) % 750L
         idleFrame = if (animationOffset > 375L) 1 else 0
         if (character.value != null) {
@@ -189,7 +200,7 @@ fun StorageDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
-                    Button(
+                    VitalButton(
                         onClick = onSendToBracelet,
                         modifier = Modifier
                             .weight(1f)
@@ -200,20 +211,41 @@ fun StorageDialog(
                         modifier = Modifier
                             .padding(4.dp)
                     )
-                    Button(
+                    VitalButton(
                         onClick = onClickSetActive,
                     ) {
                         Text(text = stringResource(R.string.storage_set_active))
                     }
                 }
-                Button(
+                VitalButton(
                     onClick = onClickChat,
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
                     Text(text = stringResource(R.string.storage_chat_with_digimon))
                 }
-                Button(
+                VitalButton(
+                    onClick = {
+                        isFavorite = !isFavorite
+                        onToggleFavorite(isFavorite)
+                    },
+                    enabled = character.value != null,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(
+                        imageVector = if (isFavorite) Icons.Filled.Star else Icons.Outlined.StarOutline,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.size(8.dp))
+                    Text(
+                        text = stringResource(
+                            if (isFavorite) R.string.storage_unpin_character
+                            else R.string.storage_pin_character
+                        )
+                    )
+                }
+                VitalButton(
                     onClick = {
                         onSendToAdventureClicked = true
                     },
@@ -222,14 +254,14 @@ fun StorageDialog(
                 ) {
                     Text(text = stringResource(R.string.storage_send_on_adventure))
                 }
-                Button(
+                VitalButton(
                     modifier = Modifier
                         .fillMaxWidth(),
                     onClick = { showDeleteConfirmation = true }
                 ) {
                     Text(text = stringResource(R.string.storage_delete_character))
                 }
-                Button(
+                VitalButton(
                     modifier = Modifier
                         .fillMaxWidth(),
                     onClick = onDismissRequest
@@ -288,7 +320,7 @@ fun StorageDialog(
                 }
             },
             confirmButton = {
-                Button(
+                VitalButton(
                     onClick = {
                         showDeleteConfirmation = false
                         onClickDelete()

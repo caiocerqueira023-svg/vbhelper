@@ -11,7 +11,6 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -36,6 +35,7 @@ import com.github.nacabaro.vbhelper.chat.ChatRepository
 import com.github.nacabaro.vbhelper.chat.PromptLocalization
 import com.github.nacabaro.vbhelper.components.CharacterEntry
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.dtos.WorldDtos
 import com.github.nacabaro.vbhelper.utils.BitmapData
@@ -128,7 +128,7 @@ fun WorldRecruitsScreen(navController: NavController) {
                 }
             },
             confirmButton = {
-                Button(
+                VitalButton(
                     enabled = requirementsMet && !isRecruiting,
                     onClick = {
                         isRecruiting = true

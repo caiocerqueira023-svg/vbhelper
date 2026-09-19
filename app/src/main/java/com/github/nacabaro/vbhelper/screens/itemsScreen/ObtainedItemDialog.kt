@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -21,6 +20,7 @@ import androidx.compose.ui.window.Dialog
 import com.github.nacabaro.vbhelper.dtos.ItemDtos
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.components.VitalButton
 
 @Composable
 fun ObtainedItemDialog(
@@ -104,7 +104,7 @@ fun ObtainedItemDialog(
                             .fillMaxWidth()
                             .padding(bottom = 4.dp)
                     )
-                    Button(
+                    VitalButton(
                         onClick = onClickDismiss,
                         modifier = Modifier
                             .fillMaxWidth()

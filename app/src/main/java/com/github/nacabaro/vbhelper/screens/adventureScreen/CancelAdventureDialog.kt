@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,6 +16,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.getBitmap
 
@@ -55,13 +55,13 @@ fun CancelAdventureDialog(
                     modifier = Modifier
                         .padding(8.dp)
                 ) {
-                    Button(
+                    VitalButton(
                         onClick = onClickConfirm
                     ) {
                         Text(text = "Confirm")
                     }
                     Spacer(modifier = Modifier.padding(4.dp))
-                    Button(
+                    VitalButton(
                         onClick = onDismissRequest
                     ) {
                         Text(text = "Dismiss")

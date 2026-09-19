@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
@@ -20,9 +21,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.screens.BattlesScreen
@@ -76,6 +80,8 @@ fun AppNavigation(
     initialRoute: String? = null
 ) {
     val navController = rememberNavController()
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    val tabSwipeThresholdPx = with(LocalDensity.current) { 96.dp.toPx() }
 
     BoxWithConstraints {
         val expandedNavigation = maxWidth >= 840.dp
@@ -90,6 +96,17 @@ fun AppNavigation(
                     .padding(contentPadding)
             ) {
                 if (expandedNavigation) VitalNavigationRail(navController = navController)
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .tabSwipeNavigation(
+                            currentRoute = currentRoute,
+                            thresholdPx = tabSwipeThresholdPx,
+                            onNavigate = { destination ->
+                                navController.navigatePrimary(destination)
+                            }
+                        )
+                ) {
                 NavHost(
             navController = navController,
             startDestination = initialRoute ?: NavigationItems.Home.route,
@@ -103,7 +120,7 @@ fun AppNavigation(
                     animationSpec = tween(200)
                 )
             },
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.fillMaxSize()
 
         ) {
             composable(NavigationItems.Battles.route) {
@@ -260,7 +277,39 @@ fun AppNavigation(
                 }
             }
                 }
+                }
             }
         }
     }
+}
+
+/**
+ * Keeps the primary tabs reachable with a deliberate horizontal swipe while
+ * leaving secondary destinations (dialogs, chat, settings, etc.) untouched.
+ */
+private fun Modifier.tabSwipeNavigation(
+    currentRoute: String?,
+    thresholdPx: Float,
+    onNavigate: (NavigationItems) -> Unit
+): Modifier = pointerInput(currentRoute, thresholdPx) {
+    val currentIndex = primaryDestinations.indexOfFirst { it.route == currentRoute }
+    if (currentIndex < 0) return@pointerInput
+
+    var dragDistance = 0f
+    detectHorizontalDragGestures(
+        onDragStart = { dragDistance = 0f },
+        onHorizontalDrag = { _, dragAmount ->
+            dragDistance += dragAmount
+        },
+        onDragEnd = {
+            val targetIndex = when {
+                dragDistance <= -thresholdPx -> currentIndex + 1
+                dragDistance >= thresholdPx -> currentIndex - 1
+                else -> -1
+            }
+            primaryDestinations.getOrNull(targetIndex)?.let(onNavigate)
+            dragDistance = 0f
+        },
+        onDragCancel = { dragDistance = 0f }
+    )
 }

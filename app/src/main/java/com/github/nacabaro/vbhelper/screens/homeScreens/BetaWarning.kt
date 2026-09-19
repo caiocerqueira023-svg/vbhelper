@@ -3,7 +3,6 @@ package com.github.nacabaro.vbhelper.screens.homeScreens
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -11,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.R
 
 @Composable
@@ -37,7 +37,7 @@ fun BetaWarning(
                     text = stringResource(R.string.beta_warning_message_thanks)
                 )
                 Spacer(modifier = Modifier.padding(8.dp))
-                Button(
+                VitalButton(
                     onClick = onDismissRequest
                 ) {
                     Text(text = stringResource(R.string.beta_warning_button_dismiss))

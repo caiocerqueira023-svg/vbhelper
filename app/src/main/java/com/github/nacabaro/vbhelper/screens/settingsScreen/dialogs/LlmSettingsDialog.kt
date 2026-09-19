@@ -6,13 +6,11 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.AlertDialog
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -28,6 +26,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.chat.ChatApiProvider
+import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.source.LlmProviderSettings
 import androidx.compose.ui.window.DialogProperties
 
@@ -70,7 +69,7 @@ fun LlmSettingsDialog(
 
                 Spacer2()
 
-                OutlinedButton(
+                VitalButton(
                     onClick = { showProviderPicker = true },
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -139,7 +138,7 @@ fun LlmSettingsDialog(
                     TextButton(onClick = onDismiss) {
                         Text(stringResource(R.string.ui_cancel))
                     }
-                    Button(
+                    VitalButton(
                         enabled = apiKey.isNotBlank() && baseUrl.startsWith("https://"),
                         onClick = { onSave(selectedProvider, apiKey, model, baseUrl) },
                         modifier = Modifier.padding(start = 8.dp)

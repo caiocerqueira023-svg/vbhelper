@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Card
 import androidx.compose.material3.Scaffold
@@ -34,6 +33,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.components.motionEnabled
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.ui.theme.StatusGreen
@@ -190,7 +190,7 @@ fun TransferAnimationScreen(
                 )
             }
 
-            Button(
+            VitalButton(
                 onClick = onClickCancel,
                 modifier = Modifier.padding(top = 32.dp, bottom = 16.dp)
             ) {
@@ -262,7 +262,7 @@ fun TransferCompleteScreen(
                 textAlign = TextAlign.Center
             )
 
-            Button(
+            VitalButton(
                 onClick = onClickOk,
                 modifier = Modifier.padding(top = 32.dp, bottom = 16.dp)
             ) {

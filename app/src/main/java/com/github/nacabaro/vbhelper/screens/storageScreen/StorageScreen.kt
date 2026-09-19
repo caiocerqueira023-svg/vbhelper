@@ -3,10 +3,8 @@ package com.github.nacabaro.vbhelper.screens.storageScreen
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.StringRes
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,15 +16,20 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Sort
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Sort
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -34,7 +37,6 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -44,8 +46,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +57,8 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.R
@@ -60,18 +66,19 @@ import com.github.nacabaro.vbhelper.components.CharacterEntry
 import com.github.nacabaro.vbhelper.components.CyberEmptyState
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.components.motionEnabled
+import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
 import com.github.nacabaro.vbhelper.screens.adventureScreen.AdventureScreenControllerImpl
 import com.github.nacabaro.vbhelper.source.StorageRepository
-import com.github.nacabaro.vbhelper.ui.theme.SurfaceHighlightPurple
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.DeviceType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlin.math.abs
 
 private enum class StorageFilter(@StringRes val label: Int) {
     ALL(R.string.storage_filter_all),
@@ -103,7 +110,6 @@ fun StorageScreen(
     val storageRepository = remember { StorageRepository(application.container.db) }
     val characterList by storageRepository.getAllCharacters().collectAsState(initial = emptyList())
     val fallbackName = stringResource(R.string.widget_digimon_label)
-    val motionEnabled = motionEnabled()
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
@@ -116,6 +122,42 @@ fun StorageScreen(
     var filter by rememberSaveable { mutableStateOf(StorageFilter.ALL) }
     var sort by rememberSaveable { mutableStateOf(StorageSort.RECENT) }
     var sortMenuExpanded by remember { mutableStateOf(false) }
+    val gridState = rememberLazyGridState()
+    val allowMotion = motionEnabled()
+    var toolbarVisible by rememberSaveable { mutableStateOf(true) }
+    var lastScrollPosition by remember { mutableIntStateOf(0) }
+    var downwardScrollDistance by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(gridState) {
+        snapshotFlow {
+            gridState.firstVisibleItemIndex * 10_000 + gridState.firstVisibleItemScrollOffset
+        }.collect { position ->
+            val delta = position - lastScrollPosition
+            if (delta > 0) {
+                downwardScrollDistance += delta
+                if (downwardScrollDistance >= 96) {
+                    toolbarVisible = false
+                }
+            } else if (delta < 0) {
+                downwardScrollDistance = 0
+                if (abs(delta) >= 12) {
+                    toolbarVisible = true
+                }
+            }
+            if (position == 0) {
+                toolbarVisible = true
+                downwardScrollDistance = 0
+            }
+            lastScrollPosition = position
+        }
+    }
+
+    LaunchedEffect(query, filter, sort) {
+        gridState.scrollToItem(0)
+        toolbarVisible = true
+        downwardScrollDistance = 0
+        lastScrollPosition = 0
+    }
 
     val visibleCharacters = remember(characterList, query, filter, sort, fallbackName) {
         val normalizedQuery = query.trim().lowercase()
@@ -162,84 +204,93 @@ fun StorageScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(contentPadding)
+                .padding(top = contentPadding.calculateTopPadding())
         ) {
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                singleLine = true,
-                label = { Text(stringResource(R.string.storage_search_label)) },
-                placeholder = { Text(stringResource(R.string.storage_search_hint)) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                trailingIcon = if (query.isNotEmpty()) {
-                    {
-                        IconButton(onClick = { query = "" }) {
-                            Icon(
-                                Icons.Default.Clear,
-                                contentDescription = stringResource(R.string.storage_clear_search)
+            AnimatedVisibility(
+                visible = toolbarVisible,
+                enter = if (allowMotion) expandVertically() + fadeIn() else expandVertically(),
+                exit = if (allowMotion) shrinkVertically() + fadeOut() else shrinkVertically(),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column {
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        singleLine = true,
+                        label = { Text(stringResource(R.string.storage_search_label)) },
+                        placeholder = { Text(stringResource(R.string.storage_search_hint)) },
+                        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                        trailingIcon = if (query.isNotEmpty()) {
+                            {
+                                IconButton(onClick = { query = "" }) {
+                                    Icon(
+                                        Icons.Default.Clear,
+                                        contentDescription = stringResource(R.string.storage_clear_search)
+                                    )
+                                }
+                            }
+                        } else null,
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                        shape = CutCornerShape(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp)
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState())
+                            .padding(horizontal = 12.dp)
+                    ) {
+                        StorageFilter.entries.forEach { option ->
+                            FilterChip(
+                                selected = filter == option,
+                                onClick = { filter = option },
+                                label = { Text(stringResource(option.label)) },
+                                shape = CutCornerShape(6.dp)
                             )
                         }
                     }
-                } else null,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                shape = CutCornerShape(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 8.dp)
-            )
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 12.dp)
-            ) {
-                StorageFilter.entries.forEach { option ->
-                    FilterChip(
-                        selected = filter == option,
-                        onClick = { filter = option },
-                        label = { Text(stringResource(option.label)) },
-                        shape = CutCornerShape(6.dp)
-                    )
-                }
-            }
-
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 12.dp, vertical = 6.dp)
-            ) {
-                Text(
-                    text = stringResource(R.string.storage_result_count, visibleCharacters.size),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = VitalCyan
-                )
-                Box {
-                    OutlinedButton(
-                        onClick = { sortMenuExpanded = true },
-                        shape = CutCornerShape(6.dp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
-                        Icon(Icons.Default.Sort, contentDescription = null)
                         Text(
-                            text = stringResource(sort.label),
-                            modifier = Modifier.padding(start = 8.dp)
+                            text = stringResource(R.string.storage_result_count, visibleCharacters.size),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = VitalCyan
                         )
-                    }
-                    DropdownMenu(
-                        expanded = sortMenuExpanded,
-                        onDismissRequest = { sortMenuExpanded = false }
-                    ) {
-                        StorageSort.entries.forEach { option ->
-                            DropdownMenuItem(
-                                text = { Text(stringResource(option.label)) },
-                                onClick = {
-                                    sort = option
-                                    sortMenuExpanded = false
+                        Box {
+                            VitalButton(
+                                onClick = { sortMenuExpanded = true },
+                                shape = CutCornerShape(6.dp)
+                            ) {
+                                Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = null)
+                                Text(
+                                    text = stringResource(sort.label),
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = sortMenuExpanded,
+                                onDismissRequest = { sortMenuExpanded = false }
+                            ) {
+                                StorageSort.entries.forEach { option ->
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(option.label)) },
+                                        onClick = {
+                                            sort = option
+                                            sortMenuExpanded = false
+                                        }
+                                    )
                                 }
-                            )
+                            }
                         }
                     }
                 }
@@ -272,84 +323,77 @@ fun StorageScreen(
                 else -> {
                     LazyVerticalGrid(
                         columns = GridCells.Adaptive(minSize = 112.dp),
+                        state = gridState,
                         modifier = Modifier.weight(1f)
                     ) {
                         items(visibleCharacters, key = { it.id }) { character ->
-                            Box {
-                                CharacterEntry(
-                                    icon = BitmapData(
-                                        bitmap = if (character.active) character.spriteRun1 else character.spriteIdle,
-                                        width = character.spriteWidth,
-                                        height = character.spriteHeight
-                                    ),
-                                    idleFrame2 = BitmapData(
-                                        bitmap = if (character.active) character.spriteRun2 else character.spriteIdle2,
-                                        width = character.spriteWidth,
-                                        height = character.spriteHeight
-                                    ),
-                                    animationKey = character.id,
-                                    vitalPoints = character.vitalPoints,
-                                    statusText = character.displayName(fallbackName),
-                                    shape = RectangleShape,
-                                    onClick = {
-                                        if (!character.isInAdventure) {
-                                            selectedCharacter = character.id
+                            val openCharacter = {
+                                if (!character.isInAdventure) {
+                                    selectedCharacter = character.id
+                                } else {
+                                    Toast.makeText(
+                                        application,
+                                        application.getString(R.string.storage_in_adventure_toast),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                    navController.navigate(NavigationItems.Adventure.route)
+                                }
+                            }
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 4.dp, vertical = 4.dp)
+                            ) {
+                                Box(modifier = Modifier.fillMaxWidth()) {
+                                    CharacterEntry(
+                                        icon = BitmapData(
+                                            bitmap = if (character.active) character.spriteRun1 else character.spriteIdle,
+                                            width = character.spriteWidth,
+                                            height = character.spriteHeight
+                                        ),
+                                        idleFrame2 = BitmapData(
+                                            bitmap = if (character.active) character.spriteRun2 else character.spriteIdle2,
+                                            width = character.spriteWidth,
+                                            height = character.spriteHeight
+                                        ),
+                                        animationKey = character.id,
+                                        vitalPoints = character.vitalPoints,
+                                        shape = RectangleShape,
+                                        onClick = openCharacter,
+                                        cardColors = if (character.active) {
+                                            CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
                                         } else {
-                                            Toast.makeText(
-                                                application,
-                                                application.getString(R.string.storage_in_adventure_toast),
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                            navController.navigate(NavigationItems.Adventure.route)
+                                            CardDefaults.cardColors(
+                                                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                                            )
                                         }
-                                    },
-                                    cardColors = if (character.active) {
-                                        CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
-                                    } else {
-                                        CardDefaults.cardColors(
-                                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                                    )
+
+                                    if (character.isFavorite) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Star,
+                                            contentDescription = stringResource(R.string.storage_favorite_indicator),
+                                            tint = VitalCyan.copy(alpha = 0.58f),
+                                            modifier = Modifier
+                                                .align(Alignment.TopEnd)
+                                                .padding(14.dp)
+                                                .size(18.dp)
                                         )
                                     }
-                                )
-
-                                val pinBackground by animateColorAsState(
-                                    targetValue = if (character.isFavorite) {
-                                        VitalCyan.copy(alpha = 0.22f)
-                                    } else {
-                                        SurfaceHighlightPurple.copy(alpha = 0.88f)
-                                    },
-                                    animationSpec = tween(if (motionEnabled) 160 else 0),
-                                    label = "favoritePin"
-                                )
-                                IconButton(
-                                    onClick = {
-                                        storageScreenController.setFavorite(
-                                            characterId = character.id,
-                                            isFavorite = !character.isFavorite
-                                        )
-                                    },
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .padding(12.dp)
-                                        .size(48.dp)
-                                        .background(pinBackground, CutCornerShape(8.dp))
-                                ) {
-                                    Icon(
-                                        imageVector = if (character.isFavorite) {
-                                            Icons.Filled.Star
-                                        } else {
-                                            Icons.Outlined.StarOutline
-                                        },
-                                        contentDescription = stringResource(
-                                            if (character.isFavorite) {
-                                                R.string.storage_unpin_character
-                                            } else {
-                                                R.string.storage_pin_character
-                                            }
-                                        ),
-                                        tint = if (character.isFavorite) VitalCyan else TextPrimaryOnDark
-                                    )
                                 }
+                                Text(
+                                    text = character.displayName(fallbackName),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = TextPrimaryOnDark,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable(onClick = openCharacter)
+                                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                                )
                             }
                         }
                     }
@@ -361,6 +405,12 @@ fun StorageScreen(
             StorageDialog(
                 characterId = characterId,
                 onDismissRequest = { selectedCharacter = null },
+                onToggleFavorite = { isFavorite ->
+                    storageScreenController.setFavorite(
+                        characterId = characterId,
+                        isFavorite = isFavorite
+                    )
+                },
                 onClickSetActive = {
                     storageScreenController.setActive(
                         characterId = characterId,

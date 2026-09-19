@@ -9,9 +9,15 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -20,9 +26,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
+import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.TextMutedOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 
@@ -59,6 +67,45 @@ fun CyberEmptyState(message: String, modifier: Modifier = Modifier) {
     ) {
         Text(message, style = MaterialTheme.typography.bodyMedium, color = TextMutedOnDark)
     }
+}
+
+/**
+ * Standard action control for the Vital Arena UI.
+ *
+ * Actions share the same quiet, angular outline as the favorite control so
+ * dialogs and secondary screens do not fall back to rounded Material fills.
+ * The default content color is deliberately white for readable contrast;
+ * callers can still opt into a status color for a genuinely semantic action.
+ */
+@Composable
+fun VitalButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    shape: Shape = CutCornerShape(8.dp),
+    borderColor: Color = SurfaceStroke,
+    contentColor: Color = TextPrimaryOnDark,
+    disabledContentColor: Color = TextMutedOnDark,
+    containerColor: Color = Color.Transparent,
+    disabledContainerColor: Color = Color.Transparent,
+    contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
+    content: @Composable RowScope.() -> Unit
+) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        shape = shape,
+        border = BorderStroke(1.dp, borderColor),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = containerColor,
+            contentColor = contentColor,
+            disabledContainerColor = disabledContainerColor,
+            disabledContentColor = disabledContentColor
+        ),
+        contentPadding = contentPadding,
+        content = content
+    )
 }
 
 @Composable

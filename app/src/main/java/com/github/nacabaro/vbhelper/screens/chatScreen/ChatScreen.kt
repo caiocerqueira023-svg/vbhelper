@@ -17,6 +17,7 @@ import androidx.navigation.NavController
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.screens.chatScreen.dialogs.SpeciesManualEditDialog
 
 @Composable
@@ -146,7 +147,7 @@ fun ChatScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Button(
+                            VitalButton(
                                 onClick = {
                                     val clipboard = context.getSystemService(ClipboardManager::class.java)
                                     clipboard?.setPrimaryClip(ClipData.newPlainText("Digimon message", message.content))
@@ -155,7 +156,7 @@ fun ChatScreen(
                                 modifier = Modifier.fillMaxWidth()
                             ) { Text(stringResource(R.string.ui_copy)) }
                             if (message.role == "user") {
-                                Button(
+                                VitalButton(
                                     enabled = !sending,
                                     onClick = {
                                         sending = true
@@ -168,7 +169,7 @@ fun ChatScreen(
                                     modifier = Modifier.fillMaxWidth()
                                 ) { Text(stringResource(R.string.ui_resend)) }
                             }
-                            OutlinedButton(
+                            VitalButton(
                                 onClick = {
                                     chatScreenController.deleteFromMessage(characterId, message.id)
                                     selectedMessage = null
@@ -208,7 +209,7 @@ fun ChatScreen(
                     enabled = !sending
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Button(
+                VitalButton(
                     enabled = input.isNotBlank() && !sending,
                     onClick = {
                         val text = input

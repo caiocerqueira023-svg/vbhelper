@@ -43,10 +43,10 @@ import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import com.github.nacabaro.vbhelper.ui.theme.VitalPurple
 
-private val compactDestinations = listOf(
+internal val primaryDestinations = listOf(
+    NavigationItems.Home,
     NavigationItems.Storage,
     NavigationItems.Dex,
-    NavigationItems.Home,
     NavigationItems.World,
 )
 
@@ -74,7 +74,7 @@ fun BottomNavigationBar(navController: NavController) {
             modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp, vertical = 8.dp),
             horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween
         ) {
-            compactDestinations.forEach { item ->
+            primaryDestinations.forEach { item ->
                 VitalNavItem(
                     icon = item.icon,
                     label = stringResource(item.label),
@@ -121,7 +121,7 @@ fun VitalNavigationRail(navController: NavController) {
         modifier = Modifier.statusBarsPadding().navigationBarsPadding(),
         containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
     ) {
-        (compactDestinations + overflowDestinations).forEach { item ->
+        (primaryDestinations + overflowDestinations).forEach { item ->
             val selected = currentRoute == item.route
             NavigationRailItem(
                 selected = selected,
@@ -183,7 +183,7 @@ private fun RowScope.VitalNavItem(
     }
 }
 
-private fun NavController.navigatePrimary(item: NavigationItems) {
+internal fun NavController.navigatePrimary(item: NavigationItems) {
     if (item == NavigationItems.Home) {
         navigate(item.route) {
             popUpTo(0) { inclusive = false }

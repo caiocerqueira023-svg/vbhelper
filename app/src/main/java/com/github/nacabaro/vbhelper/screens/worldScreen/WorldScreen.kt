@@ -32,7 +32,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -51,6 +50,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.zIndex
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
@@ -73,6 +73,7 @@ import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.dtos.WorldDtos
@@ -440,43 +441,6 @@ fun WorldScreen(navController: NavController) {
                         )
                     }
 
-                    // Rosa dos ventos: os quatro pontos cardeais giram ao redor do jogador.
-                    // Quando o aparelho aponta para uma direção, o marcador correspondente
-                    // fica no topo do mapa, como em uma bússola.
-                    val compassRadius = size.minDimension / 2f - 28.dp.toPx()
-                    val arrowLength = 18.dp.toPx()
-                    val arrowHalfWidth = 8.dp.toPx()
-                    val cardinals = listOf(
-                        0f to primaryColor, // Norte
-                        90f to RadarCompass,                // Leste
-                        180f to RadarCompass,               // Sul
-                        270f to RadarCompass                // Oeste
-                    )
-
-                    cardinals.forEach { (cardinalAzimuth, arrowColor) ->
-                        val screenAngleDeg = cardinalAzimuth - heading - 90f
-                        val screenAngle = screenAngleDeg * (PI / 180.0)
-                        val direction = Offset(
-                            cos(screenAngle).toFloat(),
-                            sin(screenAngle).toFloat()
-                        )
-                        val tangent = Offset(-direction.y, direction.x)
-                        val tip = center + direction * compassRadius
-                        val baseCenter = tip - direction * arrowLength
-                        val arrowPath = Path().apply {
-                            moveTo(tip.x, tip.y)
-                            lineTo(
-                                baseCenter.x + tangent.x * arrowHalfWidth,
-                                baseCenter.y + tangent.y * arrowHalfWidth
-                            )
-                            lineTo(
-                                baseCenter.x - tangent.x * arrowHalfWidth,
-                                baseCenter.y - tangent.y * arrowHalfWidth
-                            )
-                            close()
-                        }
-                        drawPath(arrowPath, arrowColor)
-                    }
                 }
 
                 distanceRingMeters.forEach { meters ->
@@ -514,7 +478,7 @@ fun WorldScreen(navController: NavController) {
                                 (labelX - 8.dp.toPx()).toInt(),
                                 (labelY - 10.dp.toPx()).toInt()
                             )
-                        }
+                        }.zIndex(3f)
                     )
                 }
 
@@ -526,6 +490,7 @@ fun WorldScreen(navController: NavController) {
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .padding(top = 8.dp)
+                        .zIndex(4f)
                 ) {
                     Text(
                         text = stringResource(
@@ -635,6 +600,45 @@ fun WorldScreen(navController: NavController) {
                         }
                     }
                 }
+
+                // Compass pointers are an information layer, so they stay legible above sprites.
+                Canvas(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .zIndex(3f)
+                ) {
+                    val compassRadius = size.minDimension / 2f - 28.dp.toPx()
+                    val arrowLength = 18.dp.toPx()
+                    val arrowHalfWidth = 8.dp.toPx()
+                    listOf(
+                        0f to primaryColor,
+                        90f to RadarCompass,
+                        180f to RadarCompass,
+                        270f to RadarCompass
+                    ).forEach { (cardinalAzimuth, arrowColor) ->
+                        val screenAngle = (cardinalAzimuth - heading - 90f) * (PI / 180.0)
+                        val direction = Offset(
+                            cos(screenAngle).toFloat(),
+                            sin(screenAngle).toFloat()
+                        )
+                        val tangent = Offset(-direction.y, direction.x)
+                        val tip = center + direction * compassRadius
+                        val baseCenter = tip - direction * arrowLength
+                        val arrowPath = Path().apply {
+                            moveTo(tip.x, tip.y)
+                            lineTo(
+                                baseCenter.x + tangent.x * arrowHalfWidth,
+                                baseCenter.y + tangent.y * arrowHalfWidth
+                            )
+                            lineTo(
+                                baseCenter.x - tangent.x * arrowHalfWidth,
+                                baseCenter.y - tangent.y * arrowHalfWidth
+                            )
+                            close()
+                        }
+                        drawPath(arrowPath, arrowColor)
+                    }
+                }
             }
 
             Spacer(Modifier.height(8.dp))
@@ -652,15 +656,15 @@ fun WorldScreen(navController: NavController) {
                     .fillMaxWidth()
                     .padding(top = 8.dp)
             ) {
-                Button(onClick = { zoom = (zoom / 1.5f).coerceAtLeast(.5f) }) { Text("-") }
+                VitalButton(onClick = { zoom = (zoom / 1.5f).coerceAtLeast(.5f) }) { Text("-") }
                 Text(
                     stringResource(R.string.ui_world_zoom_label, (zoom * 100).toInt()),
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
                 )
-                Button(onClick = { zoom = (zoom * 1.5f).coerceAtMost(4f) }) { Text("+") }
+                VitalButton(onClick = { zoom = (zoom * 1.5f).coerceAtMost(4f) }) { Text("+") }
             }
             if (pendingRecruits.isNotEmpty()) {
-                Button(
+                VitalButton(
                     onClick = { navController.navigate(NavigationItems.WorldRecruits.route) },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -672,7 +676,7 @@ fun WorldScreen(navController: NavController) {
             }
 
             if (!hasLocationPermission || location == null) {
-                Button(
+                VitalButton(
                     onClick = {
                         launcher.launch(
                             arrayOf(

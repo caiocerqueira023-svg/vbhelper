@@ -16,12 +16,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -42,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.VitalButton
 
 @Composable
 fun WorldChatScreen(
@@ -145,7 +144,7 @@ fun WorldChatScreen(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Button(
+                            VitalButton(
                                 onClick = {
                                     val clipboard = context.getSystemService(ClipboardManager::class.java)
                                     clipboard?.setPrimaryClip(ClipData.newPlainText("Digimon message", message.content))
@@ -154,7 +153,7 @@ fun WorldChatScreen(
                                 modifier = Modifier.fillMaxWidth()
                             ) { Text(stringResource(R.string.ui_copy)) }
                             if (message.role == "user") {
-                                Button(
+                                VitalButton(
                                     enabled = !sending,
                                     onClick = {
                                         sending = true
@@ -175,7 +174,7 @@ fun WorldChatScreen(
                                     modifier = Modifier.fillMaxWidth()
                                 ) { Text(stringResource(R.string.ui_resend)) }
                             }
-                            OutlinedButton(
+                            VitalButton(
                                 onClick = {
                                     controller.deleteFromMessage(individualId, message.id)
                                     selectedMessage = null
@@ -215,7 +214,7 @@ fun WorldChatScreen(
                     enabled = !sending
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Button(
+                VitalButton(
                     enabled = input.isNotBlank() && !sending,
                     onClick = {
                         val text = input
@@ -255,7 +254,7 @@ fun WorldChatScreen(
             title = { Text(title) },
             text = { Text(body) },
             confirmButton = {
-                Button(onClick = {
+                VitalButton(onClick = {
                     eventDialog = null
                     when (event) {
                         is WildChatEvent.Recruited -> {

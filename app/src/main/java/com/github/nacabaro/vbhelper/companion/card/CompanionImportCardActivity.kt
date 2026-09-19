@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -47,6 +46,7 @@ import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.companion.card.CompanionValidateCardActivity
 import com.github.nacabaro.vbhelper.companion.common.ChannelTypes
 import com.github.nacabaro.vbhelper.companion.ui.CompanionLoading
+import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.companion.validation.ValidatedCardManager
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.google.android.gms.wearable.Wearable
@@ -181,7 +181,7 @@ class CompanionImportCardActivity : ComponentActivity() {
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Button(modifier = Modifier.padding(end = 10.dp), onClick = { importState.value = ImportState.PickFile }) {
+                VitalButton(modifier = Modifier.padding(end = 10.dp), onClick = { importState.value = ImportState.PickFile }) {
                     Text(text = "File")
                 }
                 Text(text = filePath)
@@ -216,7 +216,7 @@ class CompanionImportCardActivity : ComponentActivity() {
                 Text(text = "Convert to BeM:")
                 Checkbox(checked = convert, onCheckedChange = { convertToBem.value = it })
             }
-            Button(
+            VitalButton(
                 modifier = Modifier.padding(top = 16.dp),
                 enabled = selectedUri != null,
                 onClick = { importState.value = ImportState.LoadFile },
