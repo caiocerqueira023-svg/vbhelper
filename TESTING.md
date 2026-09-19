@@ -31,6 +31,20 @@ NFC protocol tests use an in-memory transport with the production encryption,
 checksums and packet handling. They do not replace validation with a physical
 Digivice V. The JVM Android logger shim is confined to test source sets.
 
+Physical-watch identity protection allows only one outstanding exported individual
+per watch UID. A second send is rejected before character data is written. Returning
+the first individual releases that restriction; retrying the same transfer remains
+allowed. Separate watches can have independent outstanding transfers.
+
+Unknown/erased return tokens with an outstanding export, contradictory tokens and
+ambiguous legacy backup occupants are rejected before import acknowledgement.
+Neither choosing a DIM manually nor matching species/stats bypasses this check.
+An exact already-committed receive can be retried without duplicating or resetting
+the saved individual. Historical unresolved transfers are preserved for deliberate
+recovery, not automatically reassigned to a similar-looking individual. This is a
+conservative software safeguard, not a claim that backup-slot firmware behavior
+has been verified or corrected.
+
 ## Optional private fixtures
 
 Three official-APK integration tests are reported as skipped when these private

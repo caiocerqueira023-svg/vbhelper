@@ -3,6 +3,7 @@ package com.github.nacabaro.vbhelper.source
 import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.domain.identity.TransferFingerprint
 import com.github.nacabaro.vbhelper.domain.identity.WatchTransfer
+import com.github.nacabaro.vbhelper.domain.identity.WatchTransferSafety
 
 class WatchTransferRepository(private val db: AppDatabase) {
     /** Durable before any NFC write. A failed/uncertain send keeps both source and receipt. */
@@ -10,12 +11,7 @@ class WatchTransferRepository(private val db: AppDatabase) {
         validateSource(transfer)
         val previous = db.watchTransferDao().getByIndividualId(transfer.individualId)
         check(previous == null || previous == transfer) { "An unfinished transfer already exists for this individual." }
-        check(db.watchTransferDao().getPendingForWatch(transfer.deviceKey).none {
-            it.individualId != transfer.individualId
-        }) {
-            "Já existe um Digimon enviado a este relógio que ainda não retornou. " +
-                "Receba-o no app antes de enviar outro, para preservar nome e conversa."
-        }
+        WatchTransferSafety.requireSingleExport(transfer, db.watchTransferDao().getPendingForWatch(transfer.deviceKey))
         db.watchTransferDao().record(transfer)
     }
 

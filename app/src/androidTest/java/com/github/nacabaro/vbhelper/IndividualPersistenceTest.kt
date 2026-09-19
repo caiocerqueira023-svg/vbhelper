@@ -197,13 +197,13 @@ class IndividualPersistenceTest {
             "socialStyle" to "LOYAL_WARM", "speechQuirk" to "SHORT_DIRECT"))
     }
 
-    private fun prepare(key: Long): Pair<VBNfcCharacter, WatchTransfer> = runBlocking {
+    private fun prepare(key: Long, watch: String = "watch-A"): Pair<VBNfcCharacter, WatchTransfer> = runBlocking {
         val character = ToNfcConverter(db).characterToNfc(key) as VBNfcCharacter
         val token = IndividualIdentity.generate()
         character.appReserved1 = IndividualIdentity.encode(token)
         val source = requireNotNull(db.userCharacterDao().getCharacterSync(key))
         val receipt = WatchTransfer.capture(token, source.individualId, character).copy(
-            sourceCharacterId = key, cardId = 1, sourceFingerprint = TransferFingerprint.of(source), deviceKey = "watch-A",
+            sourceCharacterId = key, cardId = 1, sourceFingerprint = TransferFingerprint.of(source), deviceKey = watch,
         )
         WatchTransferRepository(db).prepare(receipt)
         character to receipt
@@ -219,6 +219,88 @@ class IndividualPersistenceTest {
     private fun fails(action: () -> Unit) {
         try { action() } catch (_: Exception) { return }
         fail("Expected failure preserving the source")
+    }
+
+    @Test fun secondSendToSameWatchIsBlockedBeforeDeletingEitherIdentity() = runBlocking {
+        val first = store(); personalData()
+        val second = store(IndividualIdentity.generate())
+        val (_, receipt) = prepare(first)
+        WatchTransferRepository(db).complete(receipt)
+        fails { prepare(second) }
+        assertNotNull(db.userCharacterDao().getCharacterSync(second))
+        assertEquals(receipt, db.watchTransferDao().get(receipt.token))
+        assertEquals(1, count("WatchTransfer"))
+        assertEquals(1, db.chatDao().getMessagesSync(individual).size)
+    }
+
+    @Test fun differentWatchesCanHaveIndependentPendingTransfers() {
+        val (wireA, receiptA) = prepare(store())
+        val other = IndividualIdentity.generate()
+        val (wireB, receiptB) = prepare(store(other), "watch-B")
+        WatchTransferRepository(db).complete(receiptA)
+        WatchTransferRepository(db).complete(receiptB)
+        receive(wireB, "watch-B"); receive(wireA)
+        assertEquals(2, count("UserCharacter"))
+        assertEquals(0, count("WatchTransfer"))
+    }
+
+    @Test fun missingTokenCannotCreateNewIdentityEvenWithManuallySelectedDim() = runBlocking {
+        val (wire, receipt) = prepare(store()); personalData()
+        WatchTransferRepository(db).complete(receipt)
+        wire.appReserved1 = ByteArray(12)
+        fails { receive(wire) }
+        fails { FromNfcConverter(db, "watch-A").addCharacterUsingCard(wire, 1) }
+        assertEquals(0, count("UserCharacter"))
+        assertEquals(1, count("DigimonIndividual"))
+        assertEquals(0, count("WatchImportReceipt"))
+        assertEquals(1, db.chatDao().getMessagesSync(individual).size)
+        assertEquals(receipt, db.watchTransferDao().get(receipt.token))
+    }
+
+    @Test fun legacyTwoSlotReturnCannotLoseFirstIdentityAfterSecondReceiptIsConsumed() = runBlocking {
+        val first = store(); personalData()
+        val (wireA, receiptA) = prepare(first)
+        WatchTransferRepository(db).complete(receiptA)
+        val secondId = IndividualIdentity.generate()
+        val second = store(secondId)
+        val wireB = ToNfcConverter(db).characterToNfc(second) as VBNfcCharacter
+        wireB.transformationHistory = wireB.transformationHistory.map {
+            if (it.toCharIndex == UByte.MAX_VALUE) it else it.copy(day = 22u)
+        }.toTypedArray()
+        val tokenB = IndividualIdentity.generate()
+        wireB.appReserved1 = IndividualIdentity.encode(tokenB)
+        val receiptB = WatchTransfer.capture(tokenB, secondId, wireB).copy(sourceCharacterId = second,
+            cardId = 1, sourceFingerprint = TransferFingerprint.of(db.userCharacterDao().getCharacterSync(second)!!), deviceKey = "watch-A")
+        // Legacy database from before the one-outstanding-export restriction.
+        db.watchTransferDao().record(receiptB)
+        WatchTransferRepository(db).complete(receiptB)
+        wireA.appReserved1 = wireB.appReserved1.copyOf()
+        fails { receive(wireA) }
+        receive(wireB)
+        db.close(); db = open()
+        fails { receive(wireA) }
+        assertEquals(2, count("DigimonIndividual"))
+        assertEquals(1, count("UserCharacter"))
+        assertEquals("1stmaru", db.digimonIndividualDao().getIndividual(individual)?.nickname)
+        assertEquals(1, db.chatDao().getMessagesSync(individual).size)
+        assertEquals(receiptA, db.watchTransferDao().get(receiptA.token))
+        // With its original token, the genuine first return still succeeds.
+        wireA.appReserved1 = IndividualIdentity.encode(receiptA.token)
+        receive(wireA)
+        assertEquals(2, count("UserCharacter"))
+        assertEquals(0, count("WatchTransfer"))
+    }
+
+    @Test fun exactReceiveRetryStillWorksWhileAnotherIndividualIsAway() {
+        val (firstWire, firstReceipt) = prepare(store())
+        WatchTransferRepository(db).complete(firstReceipt)
+        receive(firstWire)
+        val (_, secondReceipt) = prepare(store(IndividualIdentity.generate()))
+        WatchTransferRepository(db).complete(secondReceipt)
+        receive(firstWire)
+        assertEquals(1, count("UserCharacter"))
+        assertEquals(2, count("DigimonIndividual"))
+        assertEquals(secondReceipt, db.watchTransferDao().get(secondReceipt.token))
     }
 
     @Test fun fullRoundTripsPreserveIdentityStatsChatsAndPersonalityAcrossRestarts() = runBlocking {

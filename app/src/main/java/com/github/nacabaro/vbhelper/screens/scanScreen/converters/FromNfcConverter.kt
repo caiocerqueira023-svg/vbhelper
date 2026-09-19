@@ -17,6 +17,7 @@ import com.github.nacabaro.vbhelper.domain.identity.IndividualIdentity
 import com.github.nacabaro.vbhelper.domain.identity.resolveReturningIndividual
 import com.github.nacabaro.vbhelper.domain.identity.TransferFingerprint
 import com.github.nacabaro.vbhelper.domain.identity.WatchImportReceipt
+import com.github.nacabaro.vbhelper.domain.identity.WatchTransferSafety
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityGenerator
 import com.github.nacabaro.vbhelper.domain.device_data.NfcEvolutionHistory
 import com.github.nacabaro.vbhelper.source.EvolutionHistoryRepository
@@ -60,6 +61,16 @@ class FromNfcConverter (
         nfcCharacter: NfcCharacter,
         onMultipleCards: (List<Card>, NfcCharacter) -> Unit
     ): String {
+        // A lost receive ACK may be retried after another export starts. Resolve the
+        // exact committed import first; insertCharacter rechecks it transactionally.
+        database.watchTransferDao().getImport(TransferFingerprint.of(nfcCharacter, sourceDevice))?.let { previous ->
+            val saved = database.userCharacterDao().getCharacterSync(previous.characterId)
+            check(saved != null && saved.individualId == previous.individualId) {
+                "This transfer was already received and its Digimon has since left storage."
+            }
+            val card = requireNotNull(database.cardDao().getCardByCharacterIdSync(saved.id))
+            return insertCharacter(nfcCharacter, card)
+        }
         val transfer = checkedTransfer(nfcCharacter)
         transfer?.cardId?.let { exportedCardId ->
             val exportedCard = database.cardDao().getCardById(exportedCardId)
@@ -216,25 +227,7 @@ class FromNfcConverter (
         val token = IndividualIdentity.decode(character.appReserved1)
         val transfer = token?.let(transfers::get)
         val pending = transfers.getPendingForWatch(sourceDevice)
-        if (transfer == null) {
-            check(pending.isEmpty()) {
-                "O relógio devolveu um identificador ausente ou desconhecido, mas há uma transferência pendente. " +
-                    "O Digimon foi preservado no relógio; nenhuma identidade nova foi criada."
-            }
-        } else {
-            check(transfer.deviceKey.isEmpty() || transfer.deviceKey == sourceDevice) {
-                "This transfer belongs to another physical watch."
-            }
-            check(transfer.matches(character)) {
-                "O identificador devolvido pelo relógio não corresponde a este Digimon. " +
-                    "Isso pode ocorrer ao alternar ativo e backup. O Digimon foi preservado no relógio."
-            }
-            check(pending.none { it.token != transfer.token && it.matches(character) }) {
-                "Há mais de uma transferência compatível com os dados deste relógio. " +
-                    "O recebimento foi interrompido para não associar o nome e a conversa de outro indivíduo."
-            }
-        }
-        return transfer
+        return WatchTransferSafety.checkReturn(character, sourceDevice, transfer, pending)
     }
 
     /** Only a recorded export with matching lineage can restore an individual. */

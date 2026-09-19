@@ -29,6 +29,44 @@ class WatchTransferTest {
 
     private fun receipt() = WatchTransfer.capture(token, individualId, character())
 
+    @Test fun pendingReturnWithLostOrConsumedTokenIsNeverANewIndividual() {
+        for (bytes in listOf(ByteArray(12), IndividualIdentity.encode("aabbccddeeff0011223344"))) {
+            val wire = character().apply { appReserved1 = bytes }
+            assertThrows(IllegalStateException::class.java) {
+                WatchTransferSafety.checkReturn(wire, "watch-A", null, listOf(receipt()))
+            }
+        }
+    }
+
+    @Test fun matchingForeignBackupTokenCannotClaimIdenticalIndividuals() {
+        val first = receipt()
+        val second = first.copy(token = "aabbccddeeff0011223344", individualId = "ffeeddccbbaa9988776655")
+        val wire = character().apply { appReserved1 = IndividualIdentity.encode(second.token) }
+        assertThrows(IllegalStateException::class.java) {
+            WatchTransferSafety.checkReturn(wire, "watch-A", second, listOf(first, second))
+        }
+    }
+
+    @Test fun foreignBackupDimIsAnIdentityErrorBeforeCardSelection() {
+        assertThrows(IllegalStateException::class.java) {
+            WatchTransferSafety.checkReturn(character(), "watch-A", receipt().copy(dimId = 34), listOf(receipt()))
+        }
+    }
+
+    @Test fun secondIndividualCannotBeSentWhileFirstIsOutstanding() {
+        val first = receipt()
+        assertThrows(IllegalStateException::class.java) {
+            WatchTransferSafety.requireSingleExport(first.copy(individualId = "other"), listOf(first))
+        }
+        WatchTransferSafety.requireSingleExport(first, listOf(first)) // same transfer retry
+        WatchTransferSafety.requireSingleExport(first, emptyList()) // a different, empty watch
+    }
+
+    @Test fun unambiguousKnownReturnAndUnrelatedNewImportRemainSupported() {
+        assertEquals(receipt(), WatchTransferSafety.checkReturn(character(), "watch-A", receipt(), listOf(receipt())))
+        assertNull(WatchTransferSafety.checkReturn(character(), "watch-A", null, emptyList()))
+    }
+
     @Test fun backupPayloadWithLastSentTokenCannotResolveItsOwnPendingReceipt() {
         val first = character()
         val secondToken = "aabbccddeeff0011223344"

@@ -236,7 +236,7 @@ class ScanScreenControllerImpl(
                     componentActivity.getString(R.string.scan_sent_character_success)
                 } catch (e: Throwable) {
                     Log.e("TAG", e.stackTraceToString())
-                    componentActivity.getString(R.string.scan_error_generic)
+                    e.message ?: componentActivity.getString(R.string.scan_error_generic)
                 }
             },
             hceHandler = { isoDep ->
