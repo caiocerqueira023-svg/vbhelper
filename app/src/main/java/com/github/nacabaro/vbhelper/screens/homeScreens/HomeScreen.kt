@@ -61,7 +61,9 @@ fun HomeScreen(
     homeScreenController: HomeScreenControllerImpl,
     storageScreenController: StorageScreenControllerImpl
 ) {
-    val application = LocalContext.current.applicationContext as VBHelper
+    val context = LocalContext.current
+    val application = context.applicationContext as VBHelper
+
     val storageRepository = remember { StorageRepository(application.container.db) }
     val cardRepository = remember { CardRepository(application.container.db) }
     val dexRepository = remember { DexRepository(application.container.db) }

@@ -3,17 +3,9 @@ package com.github.nacabaro.vbhelper.battle
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.os.Environment
-import java.io.File
 
 class IndividualSpriteManager(private val context: Context) {
     private val spriteCache = mutableMapOf<String, Bitmap>()
-    
-    // Get the external storage directory for sprite files
-    private fun getSpriteBaseDir(): File {
-        val externalDir = android.os.Environment.getExternalStorageDirectory()
-        return File(externalDir, "VBHelper/battle_sprites/extracted_assets/sprites")
-    }
     
     /**
      * Load a specific sprite frame for a character
@@ -29,27 +21,13 @@ class IndividualSpriteManager(private val context: Context) {
             return spriteCache[cacheKey]
         }
         
-        // Debug: Check if base directory exists
-        val spriteBaseDir = getSpriteBaseDir()
-        if (!spriteBaseDir.exists()) {
-            println("Sprite base directory does not exist: ${spriteBaseDir.absolutePath}")
-            return null
-        }
-        
         try {
-            // Construct the sprite file path
-            val spriteFileName = "${characterId}_${String.format("%02d", frameNumber)}.png"
-            val spriteFile = File(spriteBaseDir, "$characterId/$spriteFileName")
-            
-            if (!spriteFile.exists()) {
-                println("Sprite file not found: ${spriteFile.absolutePath}")
-                return null
+            val assetPath = BattleAssetPaths.characterFrame(characterId, frameNumber)
+            val bitmap = context.assets.open(assetPath).use { input ->
+                BitmapFactory.decodeStream(input)
             }
-            
-            // Load the PNG file directly
-            val bitmap = BitmapFactory.decodeFile(spriteFile.absolutePath)
             if (bitmap == null) {
-                println("Failed to decode sprite file: ${spriteFile.absolutePath}")
+                println("Failed to decode sprite asset: $assetPath")
                 return null
             }
             
@@ -71,21 +49,14 @@ class IndividualSpriteManager(private val context: Context) {
      * @return List of frame numbers (1-12) that exist for this character
      */
     fun getAvailableFrames(characterId: String): List<Int> {
-        val spriteBaseDir = getSpriteBaseDir()
-        val characterDir = File(spriteBaseDir, characterId)
-        
-        if (!characterDir.exists()) {
-            return emptyList()
-        }
-        
-        val spriteFiles = characterDir.listFiles { file ->
-            file.name.startsWith("${characterId}_") && file.name.endsWith(".png")
-        } ?: emptyArray()
-        
-        return spriteFiles.mapNotNull { file ->
-            val fileName = file.name
-            val frameMatch = Regex("${characterId}_(\\d{2})\\.png").find(fileName)
-            frameMatch?.groupValues?.get(1)?.toIntOrNull()
+        val files = context.assets.list("${BattleAssetPaths.CHARACTER_SPRITES}/$characterId")
+            ?: return emptyList()
+        return files.mapNotNull { fileName ->
+            Regex("${Regex.escape(characterId)}_(\\d{2})\\.png")
+                .matchEntire(fileName)
+                ?.groupValues
+                ?.get(1)
+                ?.toIntOrNull()
         }.sorted()
     }
     
@@ -94,15 +65,13 @@ class IndividualSpriteManager(private val context: Context) {
      * @return List of character IDs that have sprite directories
      */
     fun getAvailableCharacters(): List<String> {
-        val spriteBaseDir = getSpriteBaseDir()
-        
-        if (!spriteBaseDir.exists()) {
-            return emptyList()
-        }
-        
-        return spriteBaseDir.listFiles { file ->
-            file.isDirectory && file.listFiles()?.any { it.name.endsWith(".png") } == true
-        }?.map { it.name }?.sorted() ?: emptyList()
+        return context.assets.list(BattleAssetPaths.CHARACTER_SPRITES)
+            ?.filter { characterId ->
+                context.assets.list("${BattleAssetPaths.CHARACTER_SPRITES}/$characterId")
+                    ?.any { it.endsWith(".png") } == true
+            }
+            ?.sorted()
+            ?: emptyList()
     }
     
     /**
@@ -118,15 +87,6 @@ class IndividualSpriteManager(private val context: Context) {
      * @return true if the character has sprite files, false otherwise
      */
     fun hasCharacterSprites(characterId: String): Boolean {
-        val characterDir = File(getSpriteBaseDir(), characterId)
-        if (!characterDir.exists()) {
-            return false
-        }
-        
-        val spriteFiles = characterDir.listFiles { file ->
-            file.name.startsWith("${characterId}_") && file.name.endsWith(".png")
-        } ?: emptyArray()
-        
-        return spriteFiles.isNotEmpty()
+        return getAvailableFrames(characterId).isNotEmpty()
     }
-} 
+}

@@ -3,18 +3,9 @@ package com.github.nacabaro.vbhelper.battle
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Rect
-import android.os.Environment
-import java.io.File
 
 class HitEffectSpriteManager(private val context: Context) {
     private val spriteCache = mutableMapOf<String, Bitmap>()
-    
-    // Get the external storage directory for hit effect sprites
-    private fun getHitSpritesDir(): File {
-        val externalDir = android.os.Environment.getExternalStorageDirectory()
-        return File(externalDir, "VBHelper/battle_sprites/extracted_hit_sprites")
-    }
     
     /**
      * Load a hit sprite (hit_01.png, hit_02.png, hit_02_white.png)
@@ -30,17 +21,12 @@ class HitEffectSpriteManager(private val context: Context) {
         }
         
         try {
-            val hitSpritesDir = getHitSpritesDir()
-            val spriteFile = File(hitSpritesDir, "$spriteName.png")
-            
-            if (!spriteFile.exists()) {
-                println("Hit sprite file not found: ${spriteFile.absolutePath}")
-                return null
+            val assetPath = BattleAssetPaths.hit(spriteName)
+            val bitmap = context.assets.open(assetPath).use { input ->
+                BitmapFactory.decodeStream(input)
             }
-            
-            val bitmap = BitmapFactory.decodeFile(spriteFile.absolutePath)
             if (bitmap == null) {
-                println("Failed to decode hit sprite file: ${spriteFile.absolutePath}")
+                println("Failed to decode hit sprite asset: $assetPath")
                 return null
             }
             
@@ -71,16 +57,12 @@ class HitEffectSpriteManager(private val context: Context) {
         }
         
         try {
-            val spritesheetFile = File(getHitSpritesDir(), "$spritesheetName.png")
-            
-            if (!spritesheetFile.exists()) {
-                println("Damage effect spritesheet not found: ${spritesheetFile.absolutePath}")
-                return null
+            val assetPath = BattleAssetPaths.hit(spritesheetName)
+            val spritesheet = context.assets.open(assetPath).use { input ->
+                BitmapFactory.decodeStream(input)
             }
-            
-            val spritesheet = BitmapFactory.decodeFile(spritesheetFile.absolutePath)
             if (spritesheet == null) {
-                println("Failed to decode damage effect spritesheet: ${spritesheetFile.absolutePath}")
+                println("Failed to decode damage effect spritesheet: $assetPath")
                 return null
             }
             
@@ -125,17 +107,11 @@ class HitEffectSpriteManager(private val context: Context) {
      * @return List of hit sprite names (without .png extension)
      */
     fun getAvailableHitSprites(): List<String> {
-        val hitSpritesDir = getHitSpritesDir()
-        
-        if (!hitSpritesDir.exists()) {
-            return emptyList()
-        }
-        
-        return hitSpritesDir.listFiles { file ->
-            file.name.startsWith("hit_") && file.name.endsWith(".png")
-        }?.map { file ->
-            file.name.substringBefore(".png")
-        }?.sorted() ?: emptyList()
+        return context.assets.list(BattleAssetPaths.HIT_SPRITES)
+            ?.filter { it.startsWith("hit_") && it.endsWith(".png") }
+            ?.map { it.removeSuffix(".png") }
+            ?.sorted()
+            ?: emptyList()
     }
     
     /**
@@ -144,17 +120,11 @@ class HitEffectSpriteManager(private val context: Context) {
      */
     fun getAvailableDamageEffectSpritesheets(): List<String> {
         try {
-            if (!getHitSpritesDir().exists()) {
-                return emptyList()
-            }
-            
-            val dmgFiles = getHitSpritesDir().listFiles { file ->
-                file.name.startsWith("dmg_ef") && file.name.endsWith(".png")
-            } ?: emptyArray()
-            
-            return dmgFiles.map { file ->
-                file.name.substringBefore(".png")
-            }.sorted()
+            return context.assets.list(BattleAssetPaths.HIT_SPRITES)
+                ?.filter { it.startsWith("dmg_ef") && it.endsWith(".png") }
+                ?.map { it.removeSuffix(".png") }
+                ?.sorted()
+                ?: emptyList()
             
         } catch (e: Exception) {
             println("Error getting available damage effect spritesheets: ${e.message}")

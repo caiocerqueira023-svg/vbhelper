@@ -3,9 +3,7 @@ package com.github.nacabaro.vbhelper.battle
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.os.Environment
 import com.google.gson.Gson
-import java.io.File
 
 data class CharacterData(
     val name: String,
@@ -15,13 +13,8 @@ data class CharacterData(
 )
 
 data class CharacterDataResponse(
-    val name: String,
-    val type: String,
-    val source_file: String,
-    val collection: String,
-    val unity_collection_id: String,
-    val relative_path: String,
-    val all_attributes: CharacterDataAttributes
+    val DataList: List<String>? = null,
+    val all_attributes: CharacterDataAttributes? = null
 )
 
 data class CharacterDataAttributes(
@@ -32,17 +25,16 @@ class AttackSpriteManager(private val context: Context) {
     private val gson = Gson()
     private val characterDataCache = mutableMapOf<String, CharacterData>()
     
-    // Get the external storage directory for attack sprites
-    private fun getAttackTexturesBaseDir(): File {
-        val externalDir = android.os.Environment.getExternalStorageDirectory()
-        return File(externalDir, "VBHelper/battle_sprites/extracted_atksprites")
-    }
-    
     fun getAttackSprite(characterId: String, isLarge: Boolean = false): Bitmap? {
         println("AttackSpriteManager: Getting attack sprite for characterId=$characterId, isLarge=$isLarge")
         try {
             // Get character data
-            val characterData = getCharacterData(characterId) ?: return null
+            val characterData = getCharacterData(characterId) ?: CharacterData(
+                name = characterId,
+                charaId = characterId,
+                smalefilename = "atk_s_02",
+                laugeFileName = "atk_l_04"
+            )
             // Determine which attack file to use
             val attackFileName = if (isLarge) {
                 characterData.laugeFileName
@@ -56,22 +48,20 @@ class AttackSpriteManager(private val context: Context) {
                 return null
             }
             
-            // Load the attack sprite from external storage
-            val attackFile = File(getAttackTexturesBaseDir(), "$attackFileName.png")
-            
-            return if (attackFile.exists()) {
-                val bitmap = BitmapFactory.decodeFile(attackFile.absolutePath)
-                bitmap
-            } else {
-                println("AttackSpriteManager: Attack file does not exist")
-                null
-            }
+            return loadAttackAsset(attackFileName)
+                ?: loadAttackAsset(if (isLarge) "atk_l_04" else "atk_s_02")
         } catch (e: Exception) {
             println("AttackSpriteManager: Exception occurred: ${e.message}")
             e.printStackTrace()
             return null
         }
     }
+
+    private fun loadAttackAsset(fileName: String): Bitmap? = runCatching {
+        context.assets.open(BattleAssetPaths.attack(fileName)).use { input ->
+            BitmapFactory.decodeStream(input)
+        }
+    }.getOrNull()
     
     private fun getCharacterData(characterId: String): CharacterData? {
         // Check cache first
@@ -80,11 +70,13 @@ class AttackSpriteManager(private val context: Context) {
         }
         
         try {
-            // Load character data from JSON file in external storage
-            val externalDir = android.os.Environment.getExternalStorageDirectory()
-            val characterDataFile = File(externalDir, "VBHelper/battle_sprites/extracted_digimon_stats/character_data/CharacterData.json")
-            
-            if (!characterDataFile.exists()) {
+            val jsonContent = runCatching {
+                context.assets.open(BattleAssetPaths.CHARACTER_DATA).use { input ->
+                    input.bufferedReader().readText()
+                }
+            }.getOrNull()
+
+            if (jsonContent == null) {
                 println("AttackSpriteManager: Character data file does not exist, using default data")
                 // For now, return a default character data
                 val characterData = CharacterData(
@@ -98,13 +90,17 @@ class AttackSpriteManager(private val context: Context) {
                 return characterData
             }
             
-            val jsonContent = characterDataFile.readText()
-            
             // Parse the JSON response
             val response = gson.fromJson(jsonContent, CharacterDataResponse::class.java)
             
+            // The current extractor writes DataList at the root. Older extractor
+            // output wrapped it in all_attributes, so accept both layouts.
+            val characterRecords = response.DataList
+                ?: response.all_attributes?.DataList
+                ?: emptyList()
+
             // Search through the DataList for the matching characterId
-            for (characterString in response.all_attributes.DataList) {
+            for (characterString in characterRecords) {
                 // Extract charaId from the string format: "<UnknownObject<Character> id=0, charaId='dim000_mon03', ...>"
                 val charaIdMatch = Regex("charaId='([^']+)'").find(characterString)
                 if (charaIdMatch != null) {
@@ -148,4 +144,4 @@ class AttackSpriteManager(private val context: Context) {
             return null
         }
     }
-} 
+}

@@ -15,6 +15,7 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -27,11 +28,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.github.nacabaro.vbhelper.di.VBHelper
+import com.github.nacabaro.vbhelper.audio.AppMusicController
+import com.github.nacabaro.vbhelper.battle.BattleAssetPaths
 import com.github.nacabaro.vbhelper.components.motionEnabled
 import com.github.nacabaro.vbhelper.screens.BattlesScreen
 import com.github.nacabaro.vbhelper.screens.cardScreen.CardsScreen
@@ -57,6 +61,8 @@ import com.github.nacabaro.vbhelper.screens.settingsScreen.CreditsScreen
 import com.github.nacabaro.vbhelper.screens.spriteViewer.SpriteViewerControllerImpl
 import com.github.nacabaro.vbhelper.screens.storageScreen.StorageScreenControllerImpl
 import com.github.nacabaro.vbhelper.source.StorageRepository
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.github.nacabaro.vbhelper.screens.lorebookScreen.LorebookScreen
 import com.github.nacabaro.vbhelper.screens.lorebookScreen.LorebookScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.worldScreen.WorldScreen
@@ -87,6 +93,33 @@ fun AppNavigation(
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
     val tabSwipeThresholdPx = with(LocalDensity.current) { 96.dp.toPx() }
     val allowMotion = motionEnabled()
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val musicController = remember { AppMusicController(context) }
+
+    LaunchedEffect(currentRoute) {
+        if (currentRoute != NavigationItems.Battles.route) {
+            musicController.play(BattleAssetPaths.HOME_MUSIC)
+        }
+    }
+
+    DisposableEffect(lifecycleOwner, musicController) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_START -> musicController.setAppInForeground(true)
+                Lifecycle.Event.ON_STOP -> musicController.setAppInForeground(false)
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        musicController.setAppInForeground(
+            lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
+        )
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            musicController.release()
+        }
+    }
 
     BoxWithConstraints {
         val expandedNavigation = maxWidth >= 840.dp
@@ -147,7 +180,7 @@ fun AppNavigation(
 
         ) {
             composable(NavigationItems.Battles.route) {
-                BattlesScreen()
+                BattlesScreen(musicController = musicController)
             }
             composable(NavigationItems.Home.route) {
                 HomeScreen(
@@ -197,7 +230,8 @@ fun AppNavigation(
             composable(NavigationItems.Settings.route) {
                 SettingsScreen(
                     navController = navController,
-                    settingsScreenController = applicationNavigationHandlers.settingsScreenController
+                    settingsScreenController = applicationNavigationHandlers.settingsScreenController,
+                    musicController = musicController
                 )
             }
             composable(NavigationItems.Lorebook.route) {

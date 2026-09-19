@@ -43,18 +43,9 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
-import android.Manifest
-import android.content.pm.PackageManager
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.core.content.ContextCompat
 import androidx.activity.ComponentActivity
-import android.os.Build
-import android.provider.Settings
 import android.content.Intent
 import android.net.Uri
-import android.media.MediaPlayer
-import android.os.Environment
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
@@ -63,27 +54,30 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import com.github.nacabaro.vbhelper.battle.APIBattleCharacter
+import com.github.nacabaro.vbhelper.battle.AssetAudioPlayer
+import com.github.nacabaro.vbhelper.battle.BattleAssetPaths
+import com.github.nacabaro.vbhelper.battle.BattleCharacterImage
+import com.github.nacabaro.vbhelper.battle.decodeBattleAsset
 import android.util.Log
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.battle.RetrofitHelper
 import com.github.nacabaro.vbhelper.battle.AttackSpriteImage
-import com.github.nacabaro.vbhelper.battle.SpriteFileManager
 import com.github.nacabaro.vbhelper.battle.ArenaBattleSystem
 import com.github.nacabaro.vbhelper.battle.DigimonAnimationType
 import com.github.nacabaro.vbhelper.battle.AnimatedSpriteImage
 import com.github.nacabaro.vbhelper.battle.HitEffectOverlay
 import com.github.nacabaro.vbhelper.battle.BattleAuthContainer
+import com.github.nacabaro.vbhelper.dtos.CharacterDtos
+import com.github.nacabaro.vbhelper.audio.AppMusicController
 import kotlinx.coroutines.flow.first
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.foundation.Image
 import androidx.compose.ui.graphics.asImageBitmap
-import android.graphics.BitmapFactory
-import java.io.File
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.foundation.layout.width
@@ -234,7 +228,8 @@ fun BattleScreen(
     opponentCharacter: APIBattleCharacter?,
     onAttackClick: () -> Unit,
     context: android.content.Context? = null,
-    selectedBackgroundSet: Int = 0
+    selectedBackgroundSet: Int = 0,
+    playerSprites: CharacterDtos.CharacterWithSprites? = null
 ) {
     // Capture userId parameter for use in lambdas - use remember to ensure it's accessible in all scopes
     val currentUserId = remember { userId }
@@ -242,8 +237,9 @@ fun BattleScreen(
     val battleSystem = remember { ArenaBattleSystem() }
     val coroutineScope = rememberCoroutineScope()
     
-    // Background music MediaPlayer
-    var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
+    // Battle music and effects are packaged assets; no external extraction is required.
+    val audioContext = context ?: LocalContext.current
+    val audioPlayer = remember(audioContext) { AssetAudioPlayer(audioContext) }
     
     // Initialize HP when battle starts
     // Use currentHp if available (for resumed matches), otherwise use baseHp (for new matches)
@@ -253,58 +249,17 @@ fun BattleScreen(
         battleSystem.initializeHP(playerHP, opponentHP)
     }
     
-    // Start background music when battle starts
-    LaunchedEffect(Unit) {
-        context?.let { ctx ->
-            try {
-                // Get external storage directory
-                val externalDir = Environment.getExternalStorageDirectory()
-                val musicDir = File(externalDir, "VBHelper/extracted_audio/background_music")
-                
-                // Pick a random BGM file (bgm_001.wav to bgm_004.wav)
-                val bgmNumber = kotlin.random.Random.nextInt(1, 5) // 1 to 4
-                val bgmFileName = String.format("bgm_%03d.wav", bgmNumber)
-                val bgmFile = File(musicDir, bgmFileName)
-                
-                if (bgmFile.exists()) {
-                    println("BATTLESCREEN: Starting background music: $bgmFileName")
-                    val player = MediaPlayer().apply {
-                        setDataSource(bgmFile.absolutePath)
-                        prepare()
-                        setOnCompletionListener {
-                            // Stop after one playthrough
-                            println("BATTLESCREEN: Background music completed, stopping")
-                            it.release()
-                            mediaPlayer = null
-                        }
-                        start()
-                    }
-                    mediaPlayer = player
-                } else {
-                    println("BATTLESCREEN: Background music file not found: ${bgmFile.absolutePath}")
-                }
-            } catch (e: Exception) {
-                println("BATTLESCREEN: Error starting background music: ${e.message}")
-                e.printStackTrace()
-            }
+    // Give the attack phases a small amount of audio feedback without changing
+    // the online battle protocol or its timing.
+    LaunchedEffect(battleSystem.attackPhase) {
+        if (battleSystem.attackPhase == 1) {
+            audioPlayer.playOneShot(BattleAssetPaths.ATTACK_SOUND)
         }
     }
-    
-    // Clean up MediaPlayer when battle ends or composable is disposed
-    DisposableEffect(Unit) {
-        onDispose {
-            mediaPlayer?.let { player ->
-                try {
-                    if (player.isPlaying) {
-                        player.stop()
-                    }
-                    player.release()
-                    println("BATTLESCREEN: Background music stopped and released")
-                } catch (e: Exception) {
-                    println("BATTLESCREEN: Error stopping background music: ${e.message}")
-                }
-            }
-            mediaPlayer = null
+
+    LaunchedEffect(battleSystem.isOpponentHit, battleSystem.isPlayerHit) {
+        if (battleSystem.isOpponentHit || battleSystem.isPlayerHit) {
+            audioPlayer.playOneShot(BattleAssetPaths.DAMAGE_SOUND)
         }
     }
     
@@ -661,6 +616,7 @@ fun BattleScreen(
                     },
                     activeCharacter = activeCharacter,
                     opponentCharacter = opponentCharacter,
+                    playerSprites = playerSprites,
                     context = context,
                     onSetPendingDamage = { playerDamage, opponentDamage ->
                         pendingPlayerDamage = playerDamage
@@ -683,6 +639,7 @@ fun BattleScreen(
                         battleSystem.startPlayerAttack()
                     },
                     activeCharacter = activeCharacter,
+                    playerSprites = playerSprites,
                     context = context,
                     opponent = opponentCharacter,
                     onSetPendingDamage = { playerDamage, opponentDamage ->
@@ -777,6 +734,7 @@ fun MiddleBattleView(
     onAttackClick: () -> Unit,
     activeCharacter: APIBattleCharacter?,
     opponentCharacter: APIBattleCharacter?,
+    playerSprites: CharacterDtos.CharacterWithSprites? = null,
     context: android.content.Context?,
     onSetPendingDamage: (Float, Float) -> Unit,
     coroutineScope: kotlinx.coroutines.CoroutineScope,
@@ -980,8 +938,9 @@ fun MiddleBattleView(
                         0.dp
                     }
                     
-                    AnimatedSpriteImage(
+                    BattleCharacterImage(
                         characterId = activeCharacter?.charaId ?: "dim011_mon01",
+                        databaseCharacter = playerSprites,
                         animationType = playerAnimationType,
                         modifier = Modifier
                             .size(80.dp)
@@ -1190,6 +1149,7 @@ fun PlayerBattleView(
     attackAnimationProgress: Float,
     onAttackClick: () -> Unit,
     activeCharacter: APIBattleCharacter?,
+    playerSprites: CharacterDtos.CharacterWithSprites? = null,
     context: android.content.Context?,
     opponent: APIBattleCharacter?,
     onSetPendingDamage: (Float, Float) -> Unit,
@@ -1303,8 +1263,9 @@ fun PlayerBattleView(
                     0.dp
             }
             
-            AnimatedSpriteImage(
+            BattleCharacterImage(
                 characterId = activeCharacter?.charaId ?: "dim011_mon01",
+                databaseCharacter = playerSprites,
                 animationType = animationType,
                     modifier = Modifier
                         .size(80.dp)
@@ -1547,95 +1508,20 @@ fun EnemyBattleView(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BattlesScreen() {
+fun BattlesScreen(musicController: AppMusicController) {
     val TAG = "BattleScreen"
     val context = LocalContext.current
     val resources = LocalResources.current
-    val activity = context as? ComponentActivity
-    
-    // Permission state
-    var hasStoragePermission by remember { mutableStateOf(false) }
-    
-    // Check if permission is already granted
-    // For Android 11+ (API 30+), check MANAGE_EXTERNAL_STORAGE
-    // For Android 10 and below, check READ_EXTERNAL_STORAGE
-    val permissionCheck = remember {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // Android 11+ - check for MANAGE_EXTERNAL_STORAGE
-            android.os.Environment.isExternalStorageManager()
-        } else {
-            // Android 10 and below - check for READ_EXTERNAL_STORAGE
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED
-        }
-    }
-    
-    // Permission launcher for READ_EXTERNAL_STORAGE (Android 10 and below)
-    val readStoragePermissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        hasStoragePermission = isGranted
-        if (isGranted) {
-        } else {
-            println("BATTLESCREEN: READ_EXTERNAL_STORAGE permission denied")
-        }
-    }
-    
-    // Launcher for opening settings to grant MANAGE_EXTERNAL_STORAGE (Android 11+)
-    val manageStorageSettingsLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult()
-    ) {
-        // Re-check permission after returning from settings
-        val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            android.os.Environment.isExternalStorageManager()
-        } else {
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.READ_EXTERNAL_STORAGE
-            ) == PackageManager.PERMISSION_GRANTED
-        }
-        hasStoragePermission = hasPermission
-        if (hasPermission) {
-        } else {
-            println("BATTLESCREEN: MANAGE_EXTERNAL_STORAGE permission not granted")
-        }
-    }
-    
-    // Initialize permission state
-    LaunchedEffect(Unit) {
-        hasStoragePermission = permissionCheck
-        if (!permissionCheck && activity != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                // Android 11+ - need to request MANAGE_EXTERNAL_STORAGE
-                // This requires user to go to settings
-                println("BATTLESCREEN: Android 11+ detected - opening settings for MANAGE_EXTERNAL_STORAGE")
-                try {
-                    val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-                    intent.data = Uri.parse("package:${context.packageName}")
-                    manageStorageSettingsLauncher.launch(intent)
-                } catch (e: Exception) {
-                    println("BATTLESCREEN: Error opening settings: ${e.message}")
-                    // Fallback: try the general manage external storage settings
-                    try {
-                        val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
-                        manageStorageSettingsLauncher.launch(intent)
-                    } catch (e2: Exception) {
-                        println("BATTLESCREEN: Error opening fallback settings: ${e2.message}")
-                    }
-                }
-            } else {
-                // Android 10 and below - request READ_EXTERNAL_STORAGE
-                println("BATTLESCREEN: Requesting READ_EXTERNAL_STORAGE permission...")
-                readStoragePermissionLauncher.launch(Manifest.permission.READ_EXTERNAL_STORAGE)
-            }
-        } else if (permissionCheck) {
-            //println("BATTLESCREEN: Storage permission already granted")
-        }
-    }
-
     var currentView by remember { mutableStateOf("main") }
+
+    LaunchedEffect(currentView) {
+        val track = if (currentView == "battle-main" || currentView == "offline-battle") {
+            BattleAssetPaths.BATTLE_MUSIC
+        } else {
+            BattleAssetPaths.HOME_MUSIC
+        }
+        musicController.play(track)
+    }
     
     // Create BattleAuthContainer
     val battleAuthContainer = remember { BattleAuthContainer(context) }
@@ -1652,8 +1538,12 @@ fun BattlesScreen() {
 
     var activeCharacter by remember { mutableStateOf<APIBattleCharacter?>(null) }
     var selectedOpponent by remember { mutableStateOf<APIBattleCharacter?>(null) }
-    var activeUserCharacter by remember { mutableStateOf<com.github.nacabaro.vbhelper.dtos.CharacterDtos.CharacterWithSprites?>(null) }
+    var activeUserCharacter by remember { mutableStateOf<CharacterDtos.CharacterWithSprites?>(null) }
     var activeCardId by remember { mutableStateOf<String?>(null) }
+
+    var offlinePlayer by remember { mutableStateOf<OfflineBattleParticipant?>(null) }
+    var offlineOpponents by remember { mutableStateOf<List<OfflineBattleParticipant>>(emptyList()) }
+    var selectedOfflineOpponent by remember { mutableStateOf<OfflineBattleParticipant?>(null) }
 
     var expanded by remember { mutableStateOf(false) }
     var selectedStage by remember { mutableStateOf("") }
@@ -2086,20 +1976,6 @@ fun BattlesScreen() {
         }
     }
     
-    // Initialize sprite files on first load - check that they exist in external storage
-    // Only check if permission is granted
-    LaunchedEffect(hasStoragePermission) {
-        if (hasStoragePermission) {
-            val spriteFileManager = SpriteFileManager(context)
-            if (spriteFileManager.checkSpriteFilesExist()) {
-            } else {
-                println("BATTLESCREEN: Sprite files not found in external storage")
-            }
-        } else {
-            println("BATTLESCREEN: Cannot check sprite files - storage permission not granted")
-        }
-    }
-    
     // Load active character from database
     LaunchedEffect(Unit) {
         try {
@@ -2109,7 +1985,7 @@ fun BattlesScreen() {
             // Move database operations to background thread
             kotlinx.coroutines.withContext(Dispatchers.IO) {
                 // First, let's check all characters to see what's in the database
-                val allCharacters = database.userCharacterDao().getAllCharacters()
+                val allCharacters = database.userCharacterDao().getAllCharacters().first()
                 /*
                 println("BATTLESCREEN: Found ${allCharacters.size} total characters in database")
                 allCharacters.forEach { char ->
@@ -2137,6 +2013,35 @@ fun BattlesScreen() {
                     
                     // Format as "dim" + cardId + "_mon" + (charaIndex + 1)
                     val formattedCardId = String.format("dim%03d_mon%02d", cardId, charaIndex + 1)
+
+                    val cardsById = database.characterDao().getAllCharacters().associateBy { it.id }
+                    val offlineParticipants = allCharacters.map { storedCharacter ->
+                        val storedCard = cardsById[storedCharacter.charId]
+                        val defaultHp = when {
+                            storedCharacter.stage <= 1 -> 1800
+                            storedCharacter.stage == 2 -> 2600
+                            storedCharacter.stage == 3 -> 3600
+                            else -> 4400
+                        }
+                        val defaultAttack = when {
+                            storedCharacter.stage <= 1 -> 700
+                            storedCharacter.stage == 2 -> 1050
+                            storedCharacter.stage == 3 -> 1450
+                            else -> 1850
+                        }
+                        offlineBattleParticipant(
+                            character = storedCharacter,
+                            maxHp = storedCard?.baseHp?.takeIf { it > 0 } ?: defaultHp,
+                            attackPower = storedCard?.baseAp?.takeIf { it > 0 } ?: defaultAttack
+                        )
+                    }
+                    val packagedOfflineOpponents = listOf(
+                        assetOfflineBattleParticipant("dim000_mon03", "Pulsemon", 1800, 700),
+                        assetOfflineBattleParticipant("dim012_mon03", "Agumon", 2200, 820),
+                        assetOfflineBattleParticipant("dim014_mon05", "Arena challenger", 3000, 1100),
+                        assetOfflineBattleParticipant("dim137_mon03", "Dorumon", 3600, 1350)
+                    )
+                    val activeOfflineParticipant = offlineParticipants.firstOrNull { it.character?.id == activeChar.id }
                     
                     // Create APIBattleCharacter from database character
                     val playerCharacter = APIBattleCharacter(
@@ -2156,6 +2061,11 @@ fun BattlesScreen() {
                         activeUserCharacter = activeChar
                         activeCardId = formattedCardId
                         activeCharacter = playerCharacter // Set the active character for battle
+                        offlinePlayer = activeOfflineParticipant
+                        offlineOpponents = (
+                            offlineParticipants.filter { it.character?.id != activeChar.id } +
+                                packagedOfflineOpponents.filter { it.assetCharacterId != formattedCardId }
+                            ).distinctBy { it.stableId }
                     }
 
                     /*
@@ -2174,6 +2084,8 @@ fun BattlesScreen() {
                     println("BATTLESCREEN: No active character found in database")
                     withContext(Dispatchers.Main) {
                         activeCardId = null
+                        offlinePlayer = null
+                        offlineOpponents = emptyList()
                     }
                 }
             }
@@ -2194,9 +2106,9 @@ fun BattlesScreen() {
     Scaffold (
         topBar = {
             // Only show TopBanner when not in battle mode
-            if (currentView != "battle-main" && currentView != "battle-results") {
+            if (currentView != "battle-main" && currentView != "battle-results" && currentView != "offline-battle") {
             TopBanner(
-                text = "Online Battles"
+                text = "Battles"
             )
             }
         }
@@ -2210,13 +2122,36 @@ fun BattlesScreen() {
         ) {
             when (currentView) {
                 "main" -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
+                            .padding(bottom = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                    offlinePlayer?.let { player ->
+                        OfflineBattleEntryPanel(
+                            player = player,
+                            opponents = offlineOpponents,
+                            onStartBattle = { opponent ->
+                                selectedOfflineOpponent = opponent
+                                selectedBackgroundSet = kotlin.random.Random.nextInt(3)
+                                currentView = "offline-battle"
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                        )
+                    }
+
                     // Show loading/authentication message if not authenticated
                     if (isCheckingAuth || !isAuthenticated) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center,
                             modifier = Modifier
-                                .fillMaxSize()
+                                .fillMaxWidth()
                                 .padding(32.dp)
                         ) {
                             if (isCheckingAuth) {
@@ -2244,7 +2179,10 @@ fun BattlesScreen() {
                     }
                     else {
                         Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp)
                         ) {
                             // Show active character info
                             activeUserCharacter?.let { character ->
@@ -2262,15 +2200,14 @@ fun BattlesScreen() {
                                     Spacer(modifier = Modifier.height(8.dp))
                                     
                                     if (opponentsList.isNotEmpty()) {
-                                        // Show scrollable list of opponents
-                                        LazyColumn(
+                                        // This list is part of the screen's single scroll surface.
+                                        Column(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .weight(1f)
                                                 .padding(horizontal = 16.dp),
                                             verticalArrangement = Arrangement.spacedBy(4.dp)
                                         ) {
-                                            items(opponentsList) { opponent ->
+                                            opponentsList.forEach { opponent ->
                                 Button(
                                     onClick = {
                                                         activeCardId?.let { cardId ->
@@ -2365,6 +2302,26 @@ fun BattlesScreen() {
                 }
 
 
+                }
+
+                "offline-battle" -> {
+                    val localPlayer = offlinePlayer
+                    val localOpponent = selectedOfflineOpponent
+                    if (localPlayer != null && localOpponent != null) {
+                        LocalBattleScreen(
+                            player = localPlayer,
+                            opponent = localOpponent,
+                            selectedBackgroundSet = selectedBackgroundSet,
+                            onExit = {
+                                selectedOfflineOpponent = null
+                                currentView = "main"
+                            }
+                        )
+                    } else {
+                        currentView = "main"
+                    }
+                }
+
                 "battle-main" -> {
                     BattleScreen(
                         userId = userId,
@@ -2378,7 +2335,8 @@ fun BattlesScreen() {
                             currentView = "battle-results"
                         },
                         context = context,
-                        selectedBackgroundSet = selectedBackgroundSet
+                        selectedBackgroundSet = selectedBackgroundSet,
+                        playerSprites = activeUserCharacter
                     )
                 }
 
@@ -2916,18 +2874,12 @@ fun AnimatedBattleBackground(
         println("DEBUG: Screen dimensions = ${screenWidth.value}x${screenHeight.value}dp")
     }
 
-    // Load background image from external storage
+    // Load the optional single-layer fallback from packaged assets.
     LaunchedEffect(Unit) {
-        try {
-            val externalDir = android.os.Environment.getExternalStorageDirectory()
-            val backgroundFile = File(externalDir, "VBHelper/battle_sprites/extracted_battlebgs/BattleBg_0015_BattleBg_0012.png")
-            if (backgroundFile.exists()) {
-                backgroundBitmap = BitmapFactory.decodeFile(backgroundFile.absolutePath)
-            } else {
-                println("Battle background file not found: ${backgroundFile.absolutePath}")
-            }
-        } catch (e: Exception) {
-            println("Error loading battle background: ${e.message}")
+        backgroundBitmap = withContext(Dispatchers.IO) {
+            context.decodeBattleAsset(
+                BattleAssetPaths.background("BattleBg_0004_BattleBg_0012.png")
+            )
         }
     }
 
@@ -2951,8 +2903,9 @@ fun AnimatedBattleBackground(
             // Calculate how many times to repeat the image to fill the screen width
             val configuration = LocalConfiguration.current
             val isLandscapeMode = configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE
-            val imageWidth = if (isLandscapeMode) screenWidth.value * 1.5f else screenWidth.value
-            val repeatCount = (imageWidth / screenWidth.value).toInt() + 2 // Add 2 for seamless looping
+            val safeScreenWidth = screenWidth.value.coerceAtLeast(1f)
+            val imageWidth = if (isLandscapeMode) safeScreenWidth * 1.5f else safeScreenWidth
+            val repeatCount = (imageWidth / safeScreenWidth).toInt() + 2 // Add 2 for seamless looping
             
             repeat(repeatCount) { index ->
                 Image(
@@ -2978,18 +2931,18 @@ data class BackgroundSet(
 // Define the three background sets
 val backgroundSets = listOf(
     BackgroundSet(
-        backLayer = "BattleBg_0018_BattleBg_0013.png",
-        middleLayer = "BattleBg_0015_BattleBg_0012.png",
+        backLayer = "BattleBg_0014_BattleBg_0013.png",
+        middleLayer = "BattleBg_0003_BattleBg_0012.png",
         frontLayer = "BattleBg_0005_BattleBg_0011.png"
     ),
     BackgroundSet(
-        backLayer = "BattleBg_0014_BattleBg_0013.png",
-        middleLayer = "BattleBg_0010_BattleBg_0012.png",
+        backLayer = "BattleBg_0013_BattleBg_0013.png",
+        middleLayer = "BattleBg_0004_BattleBg_0012.png",
         frontLayer = "BattleBg_0011_BattleBg_0011.png"
     ),
     BackgroundSet(
-        backLayer = "BattleBg_0019_BattleBg_0013.png",
-        middleLayer = "BattleBg_0004_BattleBg_0012.png",
+        backLayer = "BattleBg_0016_BattleBg_0013.png",
+        middleLayer = "BattleBg_0007_BattleBg_0012.png",
         frontLayer = "BattleBg_0009_BattleBg_0011.png"
     )
 )
@@ -3020,38 +2973,16 @@ fun MultiLayerAnimatedBattleBackground(
         screenHeight = with(density) { configuration.screenHeightDp.dp }
     }
 
-    // Load all three background layers from external storage
+    // Load all three background layers from packaged assets.
     LaunchedEffect(backgroundSetIndex) {
-        try {
-            val externalDir = android.os.Environment.getExternalStorageDirectory()
-            val selectedSet = backgroundSets[backgroundSetIndex]
-            
-            // Back layer
-            val backLayerFile = File(externalDir, "VBHelper/battle_sprites/extracted_battlebgs/${selectedSet.backLayer}")
-            if (backLayerFile.exists()) {
-                backLayerBitmap = BitmapFactory.decodeFile(backLayerFile.absolutePath)
-            } else {
-                println("Back layer background file not found: ${backLayerFile.absolutePath}")
-            }
-            
-            // Middle layer
-            val middleLayerFile = File(externalDir, "VBHelper/battle_sprites/extracted_battlebgs/${selectedSet.middleLayer}")
-            if (middleLayerFile.exists()) {
-                middleLayerBitmap = BitmapFactory.decodeFile(middleLayerFile.absolutePath)
-            } else {
-                println("Middle layer background file not found: ${middleLayerFile.absolutePath}")
-            }
-            
-            // Front layer
-            val frontLayerFile = File(externalDir, "VBHelper/battle_sprites/extracted_battlebgs/${selectedSet.frontLayer}")
-            if (frontLayerFile.exists()) {
-                frontLayerBitmap = BitmapFactory.decodeFile(frontLayerFile.absolutePath)
-            } else {
-                println("Front layer background file not found: ${frontLayerFile.absolutePath}")
-            }
-        } catch (e: Exception) {
-            println("Error loading multi-layer battle backgrounds: ${e.message}")
+        val selectedSet = backgroundSets[backgroundSetIndex.coerceIn(backgroundSets.indices)]
+        val layers = withContext(Dispatchers.IO) {
+            listOf(selectedSet.backLayer, selectedSet.middleLayer, selectedSet.frontLayer)
+                .map { fileName -> context.decodeBattleAsset(BattleAssetPaths.background(fileName)) }
         }
+        backLayerBitmap = layers[0]
+        middleLayerBitmap = layers[1]
+        frontLayerBitmap = layers[2]
     }
 
     // Animate all three layers with different speeds (slower in landscape mode)
@@ -3087,10 +3018,15 @@ fun MultiLayerAnimatedBattleBackground(
         }
     }
     
-    Box(modifier = modifier.fillMaxSize()) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(Color(0xFF0A0812))
+    ) {
         // Calculate how many times to repeat the image to fill the screen width
-        val imageWidth = if (isLandscapeMode) screenWidth.value * 1.5f else screenWidth.value
-        val repeatCount = (imageWidth / screenWidth.value).toInt() + 2 // Add 2 for seamless looping
+        val safeScreenWidth = screenWidth.value.coerceAtLeast(1f)
+        val imageWidth = if (isLandscapeMode) safeScreenWidth * 1.5f else safeScreenWidth
+        val repeatCount = (imageWidth / safeScreenWidth).toInt() + 2 // Add 2 for seamless looping
         
         // Back layer (underneath everything)
         backLayerBitmap?.let { bitmap ->

@@ -13,7 +13,7 @@ app/src/test/resources/com/github/nacabaro/vbhelper/source/classes.dex
 
 app/src/main/java/com/github/nacabaro/vbhelper/battle/Battle_Sprites_Reference/
 
-app/src/main/assets/battle_sprites
+# The checked-in battle presentation pack is required by the APK at runtime.
 app/src/main/assets/extracted_audio
 
 API-ACR122USAM-2.01.pdf

@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.BackgroundMusicControlPanel
+import com.github.nacabaro.vbhelper.audio.AppMusicController
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
 import com.github.nacabaro.vbhelper.screens.settingsScreen.dialogs.LlmSettingsDialog
 import com.github.nacabaro.vbhelper.screens.settingsScreen.dialogs.PromptTemplateDialog
@@ -50,6 +52,7 @@ import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 fun SettingsScreen(
     navController: NavController,
     settingsScreenController: SettingsScreenControllerImpl,
+    musicController: AppMusicController
 ) {
     val context = LocalContext.current
 
@@ -112,6 +115,14 @@ fun SettingsScreen(
             ) {
                 showFontDialog = true
             }
+
+            SettingsSection(title = "Audio")
+            BackgroundMusicControlPanel(
+                musicController = musicController,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
 
             SettingsSection(title = stringResource(R.string.settings_section_llm_chat))
             SettingsEntry(
