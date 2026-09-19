@@ -112,7 +112,8 @@ fun AppNavigation(
             composable(NavigationItems.Home.route) {
                 HomeScreen(
                     navController = navController,
-                    homeScreenController = applicationNavigationHandlers.homeScreenController
+                    homeScreenController = applicationNavigationHandlers.homeScreenController,
+                    storageScreenController = applicationNavigationHandlers.storageScreenController
                 )
             }
             composable(NavigationItems.World.route) { WorldScreen(navController = navController) }

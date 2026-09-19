@@ -34,8 +34,10 @@ object CharacterDtos {
         val nameSpriteHeight: Int,
         val isBemCard: Boolean,
         val nickname: String?,
+        val speciesName: String?,
         val isInAdventure: Boolean,
-        val active: Boolean
+        val active: Boolean,
+        val isFavorite: Boolean
     ) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -71,8 +73,10 @@ object CharacterDtos {
             if (nameSpriteHeight != other.nameSpriteHeight) return false
             if (isBemCard != other.isBemCard) return false
             if (nickname != other.nickname) return false
+            if (speciesName != other.speciesName) return false
             if (isInAdventure != other.isInAdventure) return false
             if (active != other.active) return false
+            if (isFavorite != other.isFavorite) return false
 
             return true
         }
@@ -106,8 +110,10 @@ object CharacterDtos {
             result = 31 * result + nameSpriteHeight
             result = 31 * result + isBemCard.hashCode()
             result = 31 * result + (nickname?.hashCode() ?: 0)
+            result = 31 * result + (speciesName?.hashCode() ?: 0)
             result = 31 * result + isInAdventure.hashCode()
             result = 31 * result + active.hashCode()
+            result = 31 * result + isFavorite.hashCode()
             return result
         }
     }

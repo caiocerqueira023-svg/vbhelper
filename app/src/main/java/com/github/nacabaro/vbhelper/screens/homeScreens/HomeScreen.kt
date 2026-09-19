@@ -42,10 +42,13 @@ import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.dtos.CardDtos
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.source.CardRepository
+import com.github.nacabaro.vbhelper.source.DexRepository
 import com.github.nacabaro.vbhelper.source.VitalWearCharacterExporter
 import android.widget.Toast
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.screens.homeScreens.dialogs.DegenerateDialog
+import com.github.nacabaro.vbhelper.screens.cardScreen.dialogs.DexCharaDetailsDialog
+import com.github.nacabaro.vbhelper.screens.storageScreen.StorageScreenControllerImpl
 import kotlinx.coroutines.flow.flowOf
 import kotlin.collections.emptyList
 import kotlinx.coroutines.flow.flatMapLatest
@@ -55,15 +58,48 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 @Composable
 fun HomeScreen(
     navController: NavController,
-    homeScreenController: HomeScreenControllerImpl
+    homeScreenController: HomeScreenControllerImpl,
+    storageScreenController: StorageScreenControllerImpl
 ) {
     val application = LocalContext.current.applicationContext as VBHelper
-    val storageRepository = StorageRepository(application.container.db)
-    val cardRepository = CardRepository(application.container.db)
+    val storageRepository = remember { StorageRepository(application.container.db) }
+    val cardRepository = remember { CardRepository(application.container.db) }
+    val dexRepository = remember { DexRepository(application.container.db) }
 
     val activeMon by storageRepository
         .getActiveCharacter()
         .collectAsState(initial = null)
+
+    val allCharacters by storageRepository
+        .getAllCharacters()
+        .collectAsState(initial = emptyList())
+    val favoriteCharacters = remember(allCharacters) {
+        allCharacters
+            .filter { it.isFavorite && !it.isInAdventure }
+            .sortedBy { it.id }
+    }
+    val favoriteIndex = favoriteCharacters.indexOfFirst { it.id == activeMon?.id }
+    var favoriteTransitionDirection by rememberSaveable { mutableStateOf(1) }
+    var favoriteSwitchInFlight by remember { mutableStateOf(false) }
+    var detailsCharacterId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val detailsCharacterFlow = remember(detailsCharacterId) {
+        detailsCharacterId?.let(dexRepository::getCharacterProgress) ?: flowOf(null)
+    }
+    val detailsCharacter by detailsCharacterFlow.collectAsState(initial = null)
+
+    val cycleFavorite: (Int) -> Unit = { direction ->
+        if (!favoriteSwitchInFlight && favoriteIndex >= 0 && favoriteCharacters.size > 1) {
+            val nextIndex = (favoriteIndex + direction + favoriteCharacters.size) % favoriteCharacters.size
+            val nextCharacter = favoriteCharacters[nextIndex]
+            favoriteTransitionDirection = direction
+            favoriteSwitchInFlight = true
+            storageScreenController.setActive(
+                characterId = nextCharacter.id,
+                announce = false,
+                onCompletion = { favoriteSwitchInFlight = false }
+            )
+        }
+    }
 
     val latestReaction by (
         activeMon?.let { character ->
@@ -201,6 +237,11 @@ fun HomeScreen(
                                 NavigationItems.Chat.route.replace("{characterId}", activeMon!!.id.toString())
                             )
                         },
+                        onLongClickCharacter = { detailsCharacterId = activeMon!!.charId },
+                        onFavoriteSwipe = cycleFavorite,
+                        favoriteTransitionDirection = favoriteTransitionDirection,
+                        favoriteIndex = favoriteIndex,
+                        favoriteCount = favoriteCharacters.size,
                         onClickTransformation = {
                             if (it.stageId != activeMon!!.charId && it.stage <= activeMon!!.stage) {
                                 selectedTransformation = it
@@ -221,6 +262,11 @@ fun HomeScreen(
                                 NavigationItems.Chat.route.replace("{characterId}", activeMon!!.id.toString())
                             )
                         },
+                        onLongClickCharacter = { detailsCharacterId = activeMon!!.charId },
+                        onFavoriteSwipe = cycleFavorite,
+                        favoriteTransitionDirection = favoriteTransitionDirection,
+                        favoriteIndex = favoriteIndex,
+                        favoriteCount = favoriteCharacters.size,
                         onClickTransformation = {
                             if (it.stageId != activeMon!!.charId && it.stage <= activeMon!!.stage) {
                                 selectedTransformation = it
@@ -250,6 +296,11 @@ fun HomeScreen(
                                 NavigationItems.Chat.route.replace("{characterId}", activeMon!!.id.toString())
                             )
                         },
+                        onLongClickCharacter = { detailsCharacterId = activeMon!!.charId },
+                        onFavoriteSwipe = cycleFavorite,
+                        favoriteTransitionDirection = favoriteTransitionDirection,
+                        favoriteIndex = favoriteIndex,
+                        favoriteCount = favoriteCharacters.size,
                         onClickTransformation = {
                             if (it.stageId != activeMon!!.charId && it.stage <= activeMon!!.stage) {
                                 selectedTransformation = it
@@ -292,6 +343,15 @@ fun HomeScreen(
                 collectedItem = null
                 collectedCurrency = null
             }
+        )
+    }
+
+    detailsCharacter?.let { character ->
+        DexCharaDetailsDialog(
+            currentChara = character,
+            obscure = false,
+            onClickClose = { detailsCharacterId = null },
+            onClickCharacter = { detailsCharacterId = it }
         )
     }
 

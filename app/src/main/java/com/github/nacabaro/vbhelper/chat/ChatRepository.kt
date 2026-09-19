@@ -275,8 +275,10 @@ class ChatRepository(
             nameSpriteHeight = 0,
             isBemCard = false,
             nickname = null,
+            speciesName = speciesProfile?.speciesName,
             isInAdventure = false,
-            active = false
+            active = false,
+            isFavorite = false
         )
 
         val prompt = DigimonPersonaBuilder.buildSystemPrompt(

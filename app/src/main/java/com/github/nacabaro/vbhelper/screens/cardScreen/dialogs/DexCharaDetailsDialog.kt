@@ -46,6 +46,7 @@ import com.github.nacabaro.vbhelper.utils.getImageBitmap
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.SpeciesPickerDialog
+import com.github.nacabaro.vbhelper.components.motionEnabled
 import com.github.nacabaro.vbhelper.species.SpeciesRepository
 import com.github.nacabaro.vbhelper.domain.card.OfficialStatus
 import kotlinx.coroutines.Dispatchers
@@ -70,6 +71,7 @@ fun DexCharaDetailsDialog(
         SpeciesRepository(database, application.container.speciesSettingsRepository)
     }
     val coroutineScope = rememberCoroutineScope()
+    val motionEnabled = motionEnabled()
 
     var showFusions by remember { mutableStateOf(false) }
     var showSpeciesPicker by remember { mutableStateOf(false) }
@@ -90,7 +92,11 @@ fun DexCharaDetailsDialog(
         }
     }
 
-    LaunchedEffect(currentChara.id) {
+    LaunchedEffect(currentChara.id, motionEnabled) {
+        if (!motionEnabled) {
+            idleFrame = 0
+            return@LaunchedEffect
+        }
         val animationOffset = (currentChara.id and 0x7fff_ffffL) % 750L
         idleFrame = if (animationOffset > 375L) 1 else 0
         delay(animationOffset)

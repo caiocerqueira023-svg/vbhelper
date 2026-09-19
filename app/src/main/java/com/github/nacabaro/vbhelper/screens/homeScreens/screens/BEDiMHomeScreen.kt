@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import com.github.nacabaro.vbhelper.R
-import com.github.nacabaro.vbhelper.components.CharacterEntry
+import com.github.nacabaro.vbhelper.components.ActiveDigimonCard
 import com.github.nacabaro.vbhelper.components.ItemDisplay
 import com.github.nacabaro.vbhelper.components.TransformationHistoryCard
 import com.github.nacabaro.vbhelper.components.NicknameDisplay
@@ -34,6 +34,11 @@ fun BEDiMHomeScreen(
     contentPadding: PaddingValues,
     speechBubbleText: String? = null,
     onClickCharacter: () -> Unit = {},
+    onLongClickCharacter: () -> Unit = {},
+    onFavoriteSwipe: (Int) -> Unit = {},
+    favoriteTransitionDirection: Int = 1,
+    favoriteIndex: Int = -1,
+    favoriteCount: Int = 0,
     onClickTransformation: (CharacterDtos.TransformationHistory) -> Unit = {}
 ) {
     Column(
@@ -45,25 +50,20 @@ fun BEDiMHomeScreen(
             modifier = Modifier
                 .fillMaxWidth()
         ) {
-            CharacterEntry(
-                icon = BitmapData(
-                    bitmap = activeMon.spriteIdle,
-                    width = activeMon.spriteWidth,
-                    height = activeMon.spriteHeight
-                ),
+            ActiveDigimonCard(
+                activeMon = activeMon,
                 cardIcon = cardIcon,
                 multiplier = 8,
-                idleFrame2 = BitmapData(
-                    bitmap = activeMon.spriteIdle2,
-                    width = activeMon.spriteWidth,
-                    height = activeMon.spriteHeight
-                ),
                 modifier = Modifier
                     .weight(1f)
                     .aspectRatio(1f),
                 speechBubbleText = speechBubbleText,
-                vitalPoints = activeMon.vitalPoints,
-                onClick = onClickCharacter
+                transitionDirection = favoriteTransitionDirection,
+                favoriteIndex = favoriteIndex,
+                favoriteCount = favoriteCount,
+                onClick = onClickCharacter,
+                onLongClick = onLongClickCharacter,
+                onFavoriteSwipe = onFavoriteSwipe
             )
             Column(
                 modifier = Modifier

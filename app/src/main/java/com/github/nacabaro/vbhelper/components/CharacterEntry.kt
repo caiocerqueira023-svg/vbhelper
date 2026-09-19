@@ -4,10 +4,11 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.material3.Card
@@ -53,6 +55,7 @@ import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.getBitmap
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import com.github.cfogrady.vbnfc.vb.SpecialMission
 import com.github.nacabaro.vbhelper.R
@@ -73,6 +76,7 @@ import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import com.github.nacabaro.vbhelper.utils.getObscuredBitmap
 import androidx.compose.ui.res.stringResource
+import kotlin.math.abs
 
 
 @Composable
@@ -93,13 +97,20 @@ fun CharacterEntry(
     cardColors: CardColors = CardDefaults.cardColors(
         containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
     ),
+    onLongClick: (() -> Unit)? = null,
+    longClickLabel: String? = null,
+    onVerticalSwipe: ((Int) -> Unit)? = null,
     onClick: () -> Unit = {  }
 ) {
     val effectiveShape = if (vitalPoints != null) RectangleShape else shape
     val motionEnabled = motionEnabled()
     var hasEntered by remember(animationKey) { mutableStateOf(false) }
     LaunchedEffect(animationKey, motionEnabled) { hasEntered = true }
-    val entranceAlpha by animateFloatAsState(if (hasEntered) 1f else 0f, tween(260), label = "characterEntryIn")
+    val entranceAlpha by animateFloatAsState(
+        targetValue = if (!motionEnabled || hasEntered) 1f else 0f,
+        animationSpec = tween(if (motionEnabled) 260 else 0),
+        label = "characterEntryIn"
+    )
     var animationFrame by remember { mutableIntStateOf(0) }
     val animationTiming = remember(animationKey) {
         // A mixed seed avoids consecutive database IDs producing almost identical timings.
@@ -134,17 +145,47 @@ fun CharacterEntry(
     val density: Float = LocalContext.current.resources.displayMetrics.density
     val dpSize = (icon.width * multiplier / density).dp
 
+    var verticalDrag by remember { mutableStateOf(0f) }
+    val swipeModifier = if (onVerticalSwipe != null) {
+        Modifier.pointerInput(onVerticalSwipe) {
+            val threshold = 40.dp.toPx()
+            detectVerticalDragGestures(
+                onDragStart = { verticalDrag = 0f },
+                onVerticalDrag = { change, dragAmount ->
+                    change.consume()
+                    verticalDrag += dragAmount
+                },
+                onDragEnd = {
+                    if (abs(verticalDrag) >= threshold) {
+                        onVerticalSwipe(if (verticalDrag < 0f) 1 else -1)
+                    }
+                    verticalDrag = 0f
+                },
+                onDragCancel = { verticalDrag = 0f }
+            )
+        }
+    } else {
+        Modifier
+    }
+
     Card(
         shape = effectiveShape,
-        onClick = when (disabled) {
-            true -> { {} }
-            false -> onClick
-        },
         modifier = modifier
             .aspectRatio(1f)
             .padding(8.dp)
             .cyberFrame(active = vitalPoints != null)
-            .graphicsLayer(alpha = entranceAlpha, scaleX = 0.96f + entranceAlpha * 0.04f, scaleY = 0.96f + entranceAlpha * 0.04f),
+            .then(swipeModifier)
+            .combinedClickable(
+                enabled = !disabled,
+                onClick = onClick,
+                onLongClick = onLongClick,
+                onLongClickLabel = longClickLabel
+            )
+            .graphicsLayer(
+                alpha = entranceAlpha,
+                scaleX = 0.96f + entranceAlpha * 0.04f,
+                scaleY = 0.96f + entranceAlpha * 0.04f
+            ),
         colors = cardColors,
         border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceStroke)
     ) {
@@ -181,7 +222,7 @@ fun CharacterEntry(
             ) {
                 if (!statusText.isNullOrBlank()) {
                     Card(
-                        shape = MaterialTheme.shapes.small,
+                        shape = CutCornerShape(4.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surface
                         ),
@@ -201,13 +242,12 @@ fun CharacterEntry(
                 }
                 if (!speechBubbleText.isNullOrBlank()) {
                     Card(
-                        shape = MaterialTheme.shapes.small,
+                        shape = CutCornerShape(4.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                         border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceStroke),
                         modifier = Modifier
                             .align(Alignment.TopCenter)
                             .padding(4.dp)
-                            .clickable(onClick = onClick)
                     ) {
                         Text(
                             text = speechBubbleText.take(40) + if (speechBubbleText.length > 40) "…" else "",
@@ -230,7 +270,6 @@ fun CharacterEntry(
                     modifier = Modifier
                         .size(dpSize)
                         .align(Alignment.BottomCenter)
-                        .clickable(enabled = !disabled, onClick = onClick)
                 )
 
                 if (cardIcon != null) {

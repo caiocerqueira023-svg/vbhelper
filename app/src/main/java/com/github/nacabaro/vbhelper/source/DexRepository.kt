@@ -16,6 +16,10 @@ class DexRepository (
         return db.dexDao().getSingleCardProgress(cardId)
     }
 
+    fun getCharacterProgress(characterId: Long): Flow<CharacterDtos.CardCharaProgress?> {
+        return db.dexDao().getCharacterProgress(characterId)
+    }
+
     fun getCharacterPossibleTransformations(characterId: Long): Flow<List<CharacterDtos.EvolutionRequirementsWithSpritesAndObtained>> {
         return db.characterDao().getEvolutionRequirementsForCard(characterId)
     }

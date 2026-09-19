@@ -13,21 +13,29 @@ class StorageScreenControllerImpl(
     private val application = componentActivity.applicationContext as VBHelper
     private val database = application.container.db
 
-    override fun setActive(characterId: Long, onCompletion: () -> Unit) {
+    override fun setActive(characterId: Long, announce: Boolean, onCompletion: () -> Unit) {
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
-            database.userCharacterDao().clearActiveCharacter()
-            database.userCharacterDao().setActiveCharacter(characterId)
+            database.userCharacterDao().setOnlyActiveCharacter(characterId)
 
             componentActivity.runOnUiThread {
                 com.github.nacabaro.vbhelper.widget.DigimonWidgetProvider
                     .notifyActiveCharacterChanged(componentActivity)
-                Toast.makeText(
-                    componentActivity,
-                    "Active character updated!",
-                    Toast.LENGTH_SHORT
-                ).show()
+                if (announce) {
+                    Toast.makeText(
+                        componentActivity,
+                        "Active character updated!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
                 onCompletion()
             }
+        }
+    }
+
+    override fun setFavorite(characterId: Long, isFavorite: Boolean, onCompletion: () -> Unit) {
+        componentActivity.lifecycleScope.launch(Dispatchers.IO) {
+            database.userCharacterDao().setFavorite(characterId, isFavorite)
+            componentActivity.runOnUiThread(onCompletion)
         }
     }
 

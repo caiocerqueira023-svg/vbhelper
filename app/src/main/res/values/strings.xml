@@ -241,6 +241,27 @@
     <string name="storage_my_characters_title">My characters</string>
     <string name="storage_nothing_to_see_here">Storage is Empty</string>
     <string name="storage_in_adventure_toast">This character is in an adventure</string>
+    <string name="storage_search_label">Search storage</string>
+    <string name="storage_search_hint">Name, attribute, stage…</string>
+    <string name="storage_clear_search">Clear search</string>
+    <string name="storage_filter_all">All</string>
+    <string name="storage_filter_favorites">Favorites</string>
+    <string name="storage_filter_active">Active</string>
+    <string name="storage_filter_vb">VB</string>
+    <string name="storage_filter_be">BE</string>
+    <string name="storage_sort_recent">Newest</string>
+    <string name="storage_sort_name">Name</string>
+    <string name="storage_sort_vitals">Highest vitals</string>
+    <string name="storage_sort_stage">Highest stage</string>
+    <string name="storage_result_count">%1$d Digimon</string>
+    <string name="storage_no_results">No Digimon match this search.</string>
+    <string name="storage_clear_filters">Clear search and filters</string>
+    <string name="storage_pin_character">Add to favorites</string>
+    <string name="storage_unpin_character">Remove from favorites</string>
+    <string name="home_open_dex_details">Show Digimon details</string>
+    <string name="home_next_favorite">Next favorite</string>
+    <string name="home_previous_favorite">Previous favorite</string>
+    <string name="home_favorite_position">%1$d of %2$d favorites</string>
 
     <string name="storage_character_image_description">Character image</string>
     <string name="storage_edit_digimon_info">Edit Digimon information</string>

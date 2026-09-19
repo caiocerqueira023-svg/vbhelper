@@ -41,5 +41,6 @@ data class UserCharacter (
     var activityLevel: Int,
     var heartRateCurrent: Int,
     var characterType: DeviceType,
-    var isActive: Boolean
+    var isActive: Boolean,
+    var isFavorite: Boolean = false
 )

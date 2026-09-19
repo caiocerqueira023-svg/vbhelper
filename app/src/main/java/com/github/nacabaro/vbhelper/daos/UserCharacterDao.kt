@@ -6,6 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Upsert
 import androidx.room.RewriteQueriesToDropUnusedColumns
+import androidx.room.Transaction
 import com.github.nacabaro.vbhelper.domain.card.CardCharacter
 import com.github.nacabaro.vbhelper.domain.device_data.UserCharacter
 import com.github.nacabaro.vbhelper.domain.device_data.BECharacterData
@@ -99,6 +100,7 @@ interface UserCharacterDao {
             c.nameHeight as nameSpriteHeight,
             d.isBEm as isBemCard,
             di.nickname AS nickname,
+            COALESCE(sp.speciesName, sp.matchedName) AS speciesName,
             a.characterId = uc.id as isInAdventure,
             uc.isActive as active
         FROM UserCharacter uc
@@ -107,6 +109,7 @@ interface UserCharacterDao {
         JOIN Sprite s ON s.id = c.spriteId
         LEFT JOIN Adventure a ON a.characterId = uc.id
         LEFT JOIN DigimonIndividual di ON di.individualId = uc.individualId
+        LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = c.id
         """
     )
     fun getAllCharacters(): Flow<List<CharacterDtos.CharacterWithSprites>>
@@ -128,6 +131,7 @@ interface UserCharacterDao {
             c.nameHeight as nameSpriteHeight,
             d.isBEm as isBemCard,
             di.nickname AS nickname,
+            COALESCE(sp.speciesName, sp.matchedName) AS speciesName,
             a.characterId = uc.id as isInAdventure,
             uc.isActive as active
         FROM UserCharacter uc
@@ -136,6 +140,7 @@ interface UserCharacterDao {
         JOIN Sprite s ON s.id = c.spriteId
         LEFT JOIN Adventure a ON a.characterId = uc.id
         LEFT JOIN DigimonIndividual di ON di.individualId = uc.individualId
+        LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = c.id
         WHERE uc.id = :id
     """
     )
@@ -182,6 +187,7 @@ interface UserCharacterDao {
             c.nameHeight as nameSpriteHeight,
             d.isBEm as isBemCard,
             di.nickname AS nickname,
+            COALESCE(sp.speciesName, sp.matchedName) AS speciesName,
             a.characterId as isInAdventure,
             uc.isActive as active
         FROM UserCharacter uc
@@ -190,6 +196,7 @@ interface UserCharacterDao {
         JOIN Sprite s ON s.id = c.spriteId
         LEFT JOIN Adventure a ON a.characterId = uc.id
         LEFT JOIN DigimonIndividual di ON di.individualId = uc.individualId
+        LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = c.id
         WHERE uc.isActive = 1
         LIMIT 1
     """
@@ -204,6 +211,15 @@ interface UserCharacterDao {
 
     @Query("UPDATE UserCharacter SET isActive = 1 WHERE id = :id")
     fun setActiveCharacter(id: Long)
+
+    @Transaction
+    fun setOnlyActiveCharacter(id: Long) {
+        clearActiveCharacter()
+        setActiveCharacter(id)
+    }
+
+    @Query("UPDATE UserCharacter SET isFavorite = :isFavorite WHERE id = :id")
+    fun setFavorite(id: Long, isFavorite: Boolean)
 
     @Query("UPDATE UserCharacter SET charId = :stageId, vitalPoints = 0 WHERE id = :characterId")
     fun degenerateCharacter(characterId: Long, stageId: Long)
@@ -278,6 +294,7 @@ interface UserCharacterDao {
             c.nameHeight as nameSpriteHeight,
             d.isBEm as isBemCard,
             di.nickname AS nickname,
+            COALESCE(sp.speciesName, sp.matchedName) AS speciesName,
             a.characterId = uc.id as isInAdventure,
             uc.isActive as active
         FROM UserCharacter uc
@@ -286,6 +303,7 @@ interface UserCharacterDao {
         JOIN Sprite s ON s.id = c.spriteId
         LEFT JOIN Adventure a ON a.characterId = uc.id
         LEFT JOIN DigimonIndividual di ON di.individualId = uc.individualId
+        LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = c.id
         WHERE uc.characterType = "BEDevice"
         """
     )
@@ -308,6 +326,7 @@ interface UserCharacterDao {
             c.nameHeight as nameSpriteHeight,
             d.isBEm as isBemCard,
             di.nickname AS nickname,
+            COALESCE(sp.speciesName, sp.matchedName) AS speciesName,
             a.characterId = uc.id as isInAdventure,
             uc.isActive as active
         FROM UserCharacter uc
@@ -316,6 +335,7 @@ interface UserCharacterDao {
         JOIN Sprite s ON s.id = c.spriteId
         LEFT JOIN Adventure a ON a.characterId = uc.id
         LEFT JOIN DigimonIndividual di ON di.individualId = uc.individualId
+        LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = c.id
         WHERE uc.characterType = "VBDevice"
         """
     )

@@ -49,6 +49,33 @@ interface DexDao {
 
     @Query(
         """
+        SELECT
+            c.id AS id,
+            s.spriteIdle1 AS spriteIdle,
+            s.spriteIdle2 AS spriteIdle2,
+            s.width AS spriteWidth,
+            s.height AS spriteHeight,
+            c.nameSprite AS nameSprite,
+            c.nameWidth AS nameSpriteWidth,
+            c.nameHeight AS nameSpriteHeight,
+            d.discoveredOn AS discoveredOn,
+            c.baseHp AS baseHp,
+            c.baseBp AS baseBp,
+            c.baseAp AS baseAp,
+            c.stage AS stage,
+            c.attribute AS attribute,
+            EXISTS(SELECT 1 FROM UserCharacter uc WHERE uc.charId = c.id) AS isCurrentlyAvailable
+        FROM CardCharacter c
+        JOIN Sprite s ON c.spriteId = s.id
+        LEFT JOIN Dex d ON c.id = d.id
+        WHERE c.id = :characterId
+        LIMIT 1
+        """
+    )
+    fun getCharacterProgress(characterId: Long): Flow<CharacterDtos.CardCharaProgress?>
+
+    @Query(
+        """
         SELECT 
             c.id as cardId,
             c.name as cardName,

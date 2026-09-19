@@ -187,6 +187,27 @@
     <string name="storage_my_characters_title">Meus personagens</string>
     <string name="storage_nothing_to_see_here">Nada para ver aqui</string>
     <string name="storage_in_adventure_toast">Este personagem está em uma aventura</string>
+    <string name="storage_search_label">Pesquisar no storage</string>
+    <string name="storage_search_hint">Nome, atributo, estágio…</string>
+    <string name="storage_clear_search">Limpar pesquisa</string>
+    <string name="storage_filter_all">Todos</string>
+    <string name="storage_filter_favorites">Favoritos</string>
+    <string name="storage_filter_active">Ativo</string>
+    <string name="storage_filter_vb">VB</string>
+    <string name="storage_filter_be">BE</string>
+    <string name="storage_sort_recent">Mais recentes</string>
+    <string name="storage_sort_name">Nome</string>
+    <string name="storage_sort_vitals">Mais vitais</string>
+    <string name="storage_sort_stage">Maior estágio</string>
+    <string name="storage_result_count">%1$d Digimon</string>
+    <string name="storage_no_results">Nenhum Digimon corresponde à pesquisa.</string>
+    <string name="storage_clear_filters">Limpar pesquisa e filtros</string>
+    <string name="storage_pin_character">Adicionar aos favoritos</string>
+    <string name="storage_unpin_character">Remover dos favoritos</string>
+    <string name="home_open_dex_details">Exibir detalhes do Digimon</string>
+    <string name="home_next_favorite">Próximo favorito</string>
+    <string name="home_previous_favorite">Favorito anterior</string>
+    <string name="home_favorite_position">%1$d de %2$d favoritos</string>
 
     <string name="storage_character_image_description">Imagem do personagem</string>
     <string name="storage_send_to_watch">Enviar para o relógio</string>
