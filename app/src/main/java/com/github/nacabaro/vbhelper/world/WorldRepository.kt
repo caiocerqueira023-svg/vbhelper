@@ -19,6 +19,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlin.math.cos
 import kotlin.math.floor
 import kotlin.math.sin
@@ -28,6 +30,7 @@ import kotlin.random.Random
 class WorldRepository(private val db: AppDatabase) {
     private val spawnDao: WorldSpawnDao = db.worldSpawnDao()
     private val biomeDetector = OpenStreetMapBiomeDetector()
+    private val spawnMutex = Mutex()
     private val _currentBiome = MutableStateFlow(WorldBiome.NULL)
     val currentBiome = _currentBiome.asStateFlow()
 
@@ -68,13 +71,16 @@ class WorldRepository(private val db: AppDatabase) {
         spawnDao.observeMoodByIndividualId(individualId)
 
     suspend fun ensureSpawns(latitude: Double, longitude: Double) {
+        spawnMutex.withLock {
+            ensureSpawnsLocked(latitude, longitude)
+        }
+    }
+
+    private suspend fun ensureSpawnsLocked(latitude: Double, longitude: Double) {
         val now = System.currentTimeMillis()
         spawnDao.deleteExpired(now)
         val biome = biomeDetector.biomeAt(latitude, longitude)
         _currentBiome.value = biome
-
-        if (spawnDao.countActive(now) >= GLOBAL_ACTIVE_CAP) return
-
         val activeSpawns = spawnDao.getActiveSpawnsSync(now)
         val nearbyCount = activeSpawns.count {
             it.recruitmentState == RecruitmentState.WILD &&
@@ -90,15 +96,36 @@ class WorldRepository(private val db: AppDatabase) {
         val nearbyToSpawn = nearbyNeeded.coerceAtMost(MAX_SPAWN_PER_CALL)
         // Outer spawns are additional: the existing nearby spawn rate/count is untouched.
         val outerToSpawn = outerNeeded.coerceAtMost(MAX_OUTER_SPAWN_PER_CALL)
-        val toSpawn = (nearbyToSpawn + outerToSpawn)
-            .coerceAtMost(GLOBAL_ACTIVE_CAP - activeSpawns.size)
-        if (toSpawn <= 0) return
+        val requestedSpawns = nearbyToSpawn + outerToSpawn
+        if (requestedSpawns <= 0) return
 
+        // Resolve the pool before evicting anything. If the user has disabled every
+        // DiM, the map should preserve its current encounters rather than removing
+        // them without being able to replace them.
         val loadedCharacters = db.characterDao().getCharactersForWorldSpawns()
         if (loadedCharacters.isEmpty()) return
         val speciesNames = db.speciesProfileDao().getAll().associate { profile ->
             profile.cardCharacterId to (profile.matchedName ?: profile.speciesName)
         }
+
+        // Keep the cap, but make room for fresh nearby encounters by removing the
+        // farthest untouched wild spawns first. A spawn that has been chatted with
+        // is protected and remains until its normal expiry (or recruitment flow).
+        val evictionsNeeded = (activeSpawns.size + requestedSpawns - GLOBAL_ACTIVE_CAP)
+            .coerceAtLeast(0)
+        val evictions = activeSpawns
+            .asSequence()
+            .filter { it.recruitmentState == RecruitmentState.WILD && !it.interacted }
+            .sortedByDescending {
+                distanceMeters(latitude, longitude, it.latitude, it.longitude)
+            }
+            .take(evictionsNeeded)
+            .toList()
+        evictions.forEach { spawnDao.deleteById(it.id) }
+
+        val availableSlots = GLOBAL_ACTIVE_CAP - (activeSpawns.size - evictions.size)
+        val toSpawn = requestedSpawns.coerceAtMost(availableSlots.coerceAtLeast(0))
+        if (toSpawn <= 0) return
 
         repeat(toSpawn) { spawnIndex ->
             val character = WorldSpawnSelector.selectCharacter(
@@ -389,6 +416,9 @@ class WorldRepository(private val db: AppDatabase) {
     )
 
     suspend fun markInteracted(id: Long) = spawnDao.markInteracted(id)
+
+    suspend fun markInteractedByIndividual(individualId: String) =
+        spawnDao.markInteractedByIndividual(individualId)
 
     suspend fun getSpawn(spawnId: Long): WorldDtos.SpawnWithDetails? = spawnDao.getSpawnById(spawnId)
 }

@@ -62,6 +62,11 @@ fun WorldChatScreen(
     var eventDialog by remember { mutableStateOf<WildChatEvent?>(null) }
     val listState = rememberLazyListState()
 
+    LaunchedEffect(individualId) {
+        // Entering the chat protects this encounter from distance-based eviction.
+        controller.markInteracted(individualId)
+    }
+
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1)
     }

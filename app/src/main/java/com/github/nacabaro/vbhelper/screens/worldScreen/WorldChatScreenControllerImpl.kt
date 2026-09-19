@@ -40,6 +40,12 @@ class WorldChatScreenControllerImpl(
     fun observeIsFollowing(individualId: String): Flow<Boolean?> =
         worldRepository.observeIsFollowing(individualId)
 
+    fun markInteracted(individualId: String) {
+        componentActivity.lifecycleScope.launch(Dispatchers.IO) {
+            worldRepository.markInteractedByIndividual(individualId)
+        }
+    }
+
     fun sendMessage(
         individualId: String,
         cardCharacterId: Long,

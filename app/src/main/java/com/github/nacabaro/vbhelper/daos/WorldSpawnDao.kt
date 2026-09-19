@@ -26,6 +26,9 @@ interface WorldSpawnDao {
     @Query("UPDATE WorldSpawn SET interacted = 1 WHERE id = :id")
     suspend fun markInteracted(id: Long)
 
+    @Query("UPDATE WorldSpawn SET interacted = 1 WHERE individualId = :individualId")
+    suspend fun markInteractedByIndividual(individualId: String)
+
     @Query("UPDATE WorldSpawn SET mood = :mood WHERE individualId = :individualId")
     suspend fun updateMood(individualId: String, mood: Int)
 

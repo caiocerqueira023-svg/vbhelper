@@ -136,7 +136,9 @@ fun WorldScreen(navController: NavController) {
         .collectAsState(initial = emptyList())
     val currentBiome by app.container.worldRepository.currentBiome.collectAsState()
     val scope = rememberCoroutineScope()
-    var zoom by remember { mutableFloatStateOf(2.4f) }
+    // At the default zoom, the entire nearby spawn radius (350 m) is visible.
+    // Users can still zoom in for detail or out to the full 1 km radar range.
+    var zoom by remember { mutableFloatStateOf(1f) }
     var idleFrame by remember { mutableIntStateOf(0) }
     var selectedSpecies by remember { mutableStateOf<CharacterDtos.CardCharaProgress?>(null) }
     var showWorldSpawnSettings by remember { mutableStateOf(false) }
@@ -224,6 +226,26 @@ fun WorldScreen(navController: NavController) {
             val client = LocationServices.getFusedLocationProviderClient(context)
             var lastSpawnRefresh: Location? = null
 
+            fun requestSpawnRefresh(target: Location) {
+                val shouldRefresh = lastSpawnRefresh == null ||
+                    lastSpawnRefresh!!.distanceTo(target) >= 60f
+                if (!shouldRefresh) return
+
+                lastSpawnRefresh = Location(target)
+                scope.launch {
+                    runCatching {
+                        withContext(Dispatchers.IO) {
+                            app.container.worldRepository.ensureSpawns(
+                                target.latitude,
+                                target.longitude
+                            )
+                        }
+                    }.onFailure {
+                        status = resources.getString(R.string.ui_world_load_nearby_failed)
+                    }
+                }
+            }
+
             val callback = object : LocationCallback() {
                 override fun onLocationResult(result: LocationResult) {
                     result.lastLocation?.let { newLocation ->
@@ -258,24 +280,7 @@ fun WorldScreen(navController: NavController) {
                             }
                         }
 
-                        val shouldRefreshSpawns = lastSpawnRefresh == null ||
-                            lastSpawnRefresh!!.distanceTo(newLocation) >= 60f
-
-                        if (shouldRefreshSpawns) {
-                            lastSpawnRefresh = Location(newLocation)
-                            scope.launch {
-                                runCatching {
-                                    withContext(Dispatchers.IO) {
-                                        app.container.worldRepository.ensureSpawns(
-                                            newLocation.latitude,
-                                            newLocation.longitude
-                                        )
-                                    }
-                                }.onFailure {
-                                    status = resources.getString(R.string.ui_world_load_nearby_failed)
-                                }
-                            }
-                        }
+                        requestSpawnRefresh(newLocation)
                     }
                 }
             }
@@ -302,6 +307,9 @@ fun WorldScreen(navController: NavController) {
                         cachedLocation.latitude,
                         cachedLocation.longitude
                     )
+                    // Cached GPS is available before the first live callback on most
+                    // devices, so use it to populate the map immediately.
+                    requestSpawnRefresh(cachedLocation)
                 }
             }
 
@@ -571,6 +579,11 @@ fun WorldScreen(navController: NavController) {
                                     .combinedClickable(
                                         onClick = {
                                             if (withinRange) {
+                                                // Mark immediately so a concurrent location refresh
+                                                // cannot evict the encounter during navigation.
+                                                scope.launch(Dispatchers.IO) {
+                                                    app.container.worldRepository.markInteracted(spawn.id)
+                                                }
                                                 navController.navigate(
                                                     NavigationItems.WorldChat.route.replace(
                                                         "{spawnId}",

@@ -78,19 +78,29 @@ internal fun rememberWorldCompass(location: Location?): CompassReading {
                 expectedField = model.fieldStrength / 1000f // Android model returns nT.
                 lastFix = fix
             }
-            val fresh = kotlin.math.abs(timestamp - fieldTime) <= 500_000_000L &&
+            // The rotation-vector sensor can provide a useful heading immediately.
+            // Magnetometer quality still controls whether we label it as fully
+            // tracked, but it must not gate the first visible compass reading.
+            val poseFresh = poseTime != 0L &&
                 kotlin.math.abs(timestamp - poseTime) <= 500_000_000L
+            val fieldFresh = fieldTime == 0L ||
+                kotlin.math.abs(timestamp - fieldTime) <= 500_000_000L
+            val fresh = poseFresh && fieldFresh
             val trusted = fresh && fieldTrusted()
             if (!trusted) goodSince = null else if (goodSince == null) goodSince = timestamp
             // Require a short run of healthy samples before acquiring/reacquiring north.
             val calibrated = trusted && timestamp - (goodSince ?: timestamp) >= 500_000_000L
             val displayRotation = view.display?.rotation ?: 0
             val magnetic = compassBearing(rotationMatrix, displayRotation)
-            val heading = filter.update(magnetic.takeIf { calibrated }, declination)
+            val heading = filter.update(
+                magnetic.takeIf { poseFresh && it.isFinite() },
+                declination
+            )
             val status = when {
                 calibrated && heading != null -> CompassStatus.TRACKING
                 heading != null -> CompassStatus.APPROXIMATE
-                else -> CompassStatus.CALIBRATE
+                poseFresh -> CompassStatus.CALIBRATE
+                else -> CompassStatus.WAITING
             }
             if (timestamp - lastDiagnosticTime >= 500_000_000L) {
                 lastDiagnosticTime = timestamp
@@ -148,7 +158,10 @@ internal fun rememberWorldCompass(location: Location?): CompassReading {
             val magneticActive = fieldSensor != null && manager.registerListener(
                 listener, fieldSensor, SensorManager.SENSOR_DELAY_GAME, handler
             )
-            active = poseActive && magneticActive
+            // Rotation-vector readings can still provide an immediately useful
+            // approximate heading when the device has no magnetometer (or its
+            // magnetometer is temporarily reporting unreliable accuracy).
+            active = poseActive
             if (!active) {
                 manager.unregisterListener(listener)
                 reading = CompassReading(status = CompassStatus.UNAVAILABLE,
