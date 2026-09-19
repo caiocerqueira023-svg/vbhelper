@@ -13,7 +13,8 @@ import com.github.nacabaro.vbhelper.domain.characters.Sprite
 import java.io.InputStream
 
 class CardImportController(
-    private val database: AppDatabase
+    private val database: AppDatabase,
+    private val speciesRepository: com.github.nacabaro.vbhelper.species.SpeciesRepository? = null
 ) {
     suspend fun importCard(
         fileReader: InputStream?,
@@ -45,6 +46,17 @@ class CardImportController(
         importAdventureMissions(cardId, card)
 
         importCardFusions(cardId, card)
+
+        speciesRepository?.let { repo ->
+            runCatching {
+                val matched = repo.matchOfficialSpeciesForCard(cardId)
+                if (matched > 0) {
+                    database.cardDao().updateOfficialStatus(cardId, com.github.nacabaro.vbhelper.domain.card.OfficialStatus.OFFICIAL)
+                }
+            }.onFailure {
+                Log.w("CardImportController", "Failed to auto-match official species for cardId=$cardId", it)
+            }
+        }
     }
 
     private fun nameFromSourceFile(sourceFileName: String?, fallbackName: String): String {

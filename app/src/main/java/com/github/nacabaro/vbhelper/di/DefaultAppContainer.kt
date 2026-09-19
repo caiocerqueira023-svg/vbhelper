@@ -90,10 +90,22 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
 
     override val speciesSettingsRepository = SpeciesSettingsRepository(context.speciesSettingsStore)
 
+    override val speciesRepository: com.github.nacabaro.vbhelper.species.SpeciesRepository by lazy {
+        com.github.nacabaro.vbhelper.species.SpeciesRepository(
+            database = db,
+            settingsRepository = speciesSettingsRepository,
+            assetLoader = {
+                runCatching {
+                    context.assets.open("species.json").bufferedReader().use { it.readText() }
+                }.getOrNull()
+            }
+        )
+    }
+
     override val lorebookRepository by lazy {
         LorebookRepository(
             lorebookEntryDao = db.lorebookEntryDao(),
-            speciesRepository = SpeciesRepository(db, speciesSettingsRepository)
+            speciesRepository = speciesRepository
         )
     }
 

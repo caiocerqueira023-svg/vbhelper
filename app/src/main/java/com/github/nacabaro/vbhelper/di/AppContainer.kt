@@ -21,6 +21,7 @@ interface AppContainer {
     val companionLogService: CompanionLogService
     val llmSettingsRepository: LlmSettingsRepository
     val speciesSettingsRepository: SpeciesSettingsRepository
+    val speciesRepository: com.github.nacabaro.vbhelper.species.SpeciesRepository
     val chatRepository: ChatRepository
     val reactionRepository: ReactionRepository
     val diaryService: DigimonDiaryService

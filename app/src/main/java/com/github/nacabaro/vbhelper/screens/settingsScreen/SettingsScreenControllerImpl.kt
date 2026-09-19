@@ -256,7 +256,7 @@ class SettingsScreenControllerImpl(
             }
 
             inputStream.use { fileReader ->
-                val cardImportController = CardImportController(database)
+                val cardImportController = CardImportController(database, application.container.speciesRepository)
                 cardImportController.importCard(fileReader, sourceFileName)
             }
 
