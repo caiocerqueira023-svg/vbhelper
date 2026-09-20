@@ -33,4 +33,35 @@ class BirdFarmMapTest {
             }
         }
     }
+
+    @Test
+    fun bothBridgesRouteInBothDirections() {
+        assertEquals(2, BirdFarmMap.bridgePortals.size)
+        BirdFarmMap.bridgePortals.forEach { portal ->
+            assertTrue("${portal.id} north head walkable", BirdFarmMap.isWalkable(portal.north))
+            assertTrue("${portal.id} south head walkable", BirdFarmMap.isWalkable(portal.south))
+            val northToSouth = BirdFarmMap.findPath(portal.north, portal.south)
+            val southToNorth = BirdFarmMap.findPath(portal.south, portal.north)
+            assertTrue("${portal.id} has no north->south route", northToSouth.isNotEmpty())
+            assertTrue("${portal.id} has no south->north route", southToNorth.isNotEmpty())
+            (northToSouth + southToNorth).forEach { point ->
+                assertTrue("${portal.id} path left walkable ground at $point", BirdFarmMap.isWalkable(point))
+            }
+        }
+    }
+
+    @Test
+    fun activityPointsAreWalkableAndManifestIsVersioned() {
+        val manifest = BirdFarmMap.manifest()
+        assertEquals("bird_digifarm", manifest.mapId)
+        assertEquals(1, manifest.version)
+        assertTrue(manifest.walkableTileCount > 100)
+        BirdFarmMap.activityPoints.forEach { (activity, points) ->
+            assertTrue("$activity has no points", points.isNotEmpty())
+            points.forEach { point ->
+                val snapped = BirdFarmMap.closestWalkable(point)
+                assertTrue("$activity point $point resolves outside walkable ground", BirdFarmMap.isWalkable(snapped))
+            }
+        }
+    }
 }

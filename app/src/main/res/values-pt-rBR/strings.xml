@@ -147,6 +147,7 @@
     <string name="obtained_item_dismiss">Fechar</string>
 
     <string name="choose_character_title">Escolher personagem</string>
+    <string name="choose_character_no_available">Nenhum Digimon pode usar este item.</string>
     <string name="choose_character_item_applied">Item aplicado!</string>
 
     <string name="item_dialog_costs_credits">Custa %1$d créditos</string>
@@ -494,8 +495,8 @@
     <string name="ui_digifarm_name_title">Nome da Digifarm</string>
     <string name="ui_digifarm_add_resident">Adicionar</string>
     <string name="ui_digifarm_group">Grupo</string>
-    <string name="ui_digifarm_fit">Enquadrar</string>
-    <string name="ui_digifarm_map_description">Habitat isométrico Bird Digi-Farm</string>
+    <string name="ui_digifarm_map_description">Habitat 3D da Digifarm</string>
+    <string name="ui_digifarm_3d_unavailable">Não foi possível carregar a cena 3D da Digifarm.</string>
     <string name="ui_digifarm_choose_resident">Escolha um Digimon do Storage</string>
     <string name="ui_digifarm_no_available">Todos os Digimon disponíveis no Storage já estão em uma fazenda.</string>
     <string name="ui_digifarm_activity">Atividade: %1$s</string>
@@ -518,6 +519,7 @@
     <string name="ui_digiline_empty_storage">Comece uma conversa privada com um Digimon do Storage para vê-lo aqui.</string>
     <string name="ui_digiline_empty_wild">Eleve a confiança de um Digimon selvagem acima de 75 para manter contato.</string>
     <string name="ui_digiline_empty_farms">Crie uma Digifarm para abrir seu grupo.</string>
+    <string name="ui_digiline_empty_group">Ainda não há mensagens. Inicie uma conversa com a Digifarm.</string>
     <string name="ui_digiline_trust">Confiança: %1$d/100</string>
     <string name="ui_digiline_resident_count">%1$d moradores</string>
     <string name="ui_digiline_to_all">Mensagem para todos</string>
@@ -525,4 +527,10 @@
     <string name="ui_digiline_message_all">Para todos</string>
     <string name="ui_digiline_message_to">Para %1$s</string>
     <string name="storage_in_digifarm">Na %1$s</string>
+    <string name="ui_digifarm_residents">Moradores</string>
+    <string name="ui_digifarm_archive">Arquivar Digifarm</string>
+    <string name="ui_digifarm_follow">Seguir com a câmera</string>
+    <string name="ui_digifarm_stop_follow">Parar de seguir</string>
+    <string name="ui_digifarm_transfer">Mover para outra Digifarm</string>
+    <string name="ui_digifarm_no_other_farm">Crie outra Digifarm para mover moradores entre fazendas.</string>
 </resources>

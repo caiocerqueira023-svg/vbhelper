@@ -40,28 +40,13 @@ data class WorldSpawn(
     val mood: Int = 50,
     val recruitmentState: RecruitmentState = RecruitmentState.WILD,
     /**
-     * When true, this wild Digimon is temporarily following the player so chat
-     * can continue while walking. Activated only if the first message raised mood.
-     * Stops automatically when mood drops below [FOLLOW_STOP_MOOD].
+     * Inert legacy column kept for migration safety (§11). No new code may read or
+     * write follow state; trust lives in WildRelationship and Radar never follows.
      */
+    @Deprecated("Inert after Digiline migration; always false.")
     val isFollowing: Boolean = false,
-    /**
-     * Player latitude recorded at the last follow-distance mood deduction
-     * (or when following started). Used to measure meters walked while followed.
-     */
+    @Deprecated("Inert after Digiline migration; always null.")
     val followLastLat: Double? = null,
-    /**
-     * Player longitude recorded at the last follow-distance mood deduction
-     * (or when following started).
-     */
+    @Deprecated("Inert after Digiline migration; always null.")
     val followLastLon: Double? = null
-) {
-    companion object {
-        /** Mood below this value ends following. */
-        const val FOLLOW_STOP_MOOD = 50
-        /** Distance (meters) that triggers one mood-loss segment while following. */
-        const val FOLLOW_SEGMENT_METERS = 20
-        /** Mood points lost per [FOLLOW_SEGMENT_METERS] walked while following. */
-        const val FOLLOW_MOOD_LOSS_PER_SEGMENT = 5
-    }
-}
+)

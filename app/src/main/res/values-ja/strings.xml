@@ -125,6 +125,7 @@
     <string name="items_purchase_success">購入しました。</string>
     <string name="obtained_item_you_have">%1$d 個入手しました。</string>
     <string name="choose_character_title">キャラクターを選択</string>
+    <string name="choose_character_no_available">このアイテムを使えるデジモンはいません。</string>
     <string name="choose_character_item_applied">アイテムを使用しました。</string>
     <string name="item_dialog_costs_credits">%1$d クレジット</string>
     <string name="dex_chara_stats">HP: %1$d, BP: %2$d, AP: %3$d</string>
@@ -427,8 +428,8 @@
     <string name="ui_digifarm_name_title">デジファーム名</string>
     <string name="ui_digifarm_add_resident">追加</string>
     <string name="ui_digifarm_group">グループ</string>
-    <string name="ui_digifarm_fit">全体表示</string>
-    <string name="ui_digifarm_map_description">バード・デジファームのアイソメトリック環境</string>
+    <string name="ui_digifarm_map_description">3Dデジファームの環境</string>
+    <string name="ui_digifarm_3d_unavailable">デジファームの3Dシーンを読み込めませんでした。</string>
     <string name="ui_digifarm_choose_resident">ストレージのデジモンを選ぶ</string>
     <string name="ui_digifarm_no_available">追加できるストレージのデジモンは全員ファームにいます。</string>
     <string name="ui_digifarm_activity">行動: %1$s</string>
@@ -451,6 +452,7 @@
     <string name="ui_digiline_empty_storage">ストレージのデジモンと会話を始めるとここに表示されます。</string>
     <string name="ui_digiline_empty_wild">野生デジモンの信頼度を75より上にして連絡先を解放します。</string>
     <string name="ui_digiline_empty_farms">デジファームを作成してグループを開きます。</string>
+    <string name="ui_digiline_empty_group">まだメッセージはありません。ファームとの会話を始めましょう。</string>
     <string name="ui_digiline_trust">信頼度: %1$d/100</string>
     <string name="ui_digiline_resident_count">%1$d体</string>
     <string name="ui_digiline_to_all">全員にメッセージ</string>
@@ -458,4 +460,10 @@
     <string name="ui_digiline_message_all">全員宛て</string>
     <string name="ui_digiline_message_to">%1$s宛て</string>
     <string name="storage_in_digifarm">%1$sに滞在中</string>
+    <string name="ui_digifarm_residents">住人</string>
+    <string name="ui_digifarm_archive">デジファームをアーカイブ</string>
+    <string name="ui_digifarm_follow">カメラで追う</string>
+    <string name="ui_digifarm_stop_follow">追跡を停止</string>
+    <string name="ui_digifarm_transfer">別のデジファームへ移動</string>
+    <string name="ui_digifarm_no_other_farm">別のデジファームを作成して住人を移動できます。</string>
 </resources>

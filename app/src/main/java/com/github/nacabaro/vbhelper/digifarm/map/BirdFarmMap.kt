@@ -6,8 +6,17 @@ import kotlin.math.hypot
 data class MapPoint(val x: Float, val y: Float)
 data class IsoTile(val u: Int, val v: Int)
 
-/** Logical isometric navigation data laid over the supplied Bird Digi-Farm art. */
+/**
+ * Logical navigation data laid over the supplied Bird Digi-Farm art.
+ *
+ * DIGIFARM_DIGILINE_PLAN §4-5: the projection below is the measured calibration
+ * for this fixed map (origin + diamond basis), not a claim that every asset uses
+ * 32x16 tiles. [tileWidth]/[tileHeight] are the measured basis vectors of the
+ * ground/crenellation segments of this art, versioned by [mapId]/[mapVersion].
+ */
 object BirdFarmMap {
+    const val mapId = "bird_digifarm"
+    const val mapVersion = 1
     const val width = 512f
     const val height = 736f
     const val tileWidth = 32f
@@ -58,6 +67,53 @@ object BirdFarmMap {
         MapPoint(205f, 153f), MapPoint(112f, 191f), MapPoint(267f, 112f), MapPoint(155f, 130f),
         MapPoint(348f, 322f), MapPoint(430f, 389f), MapPoint(288f, 367f), MapPoint(420f, 300f),
         MapPoint(186f, 614f), MapPoint(249f, 692f), MapPoint(399f, 640f), MapPoint(90f, 705f)
+    )
+
+    /** Link between two walkable surfaces (bridge heads). Both directions must route. */
+    data class Portal(val id: String, val north: MapPoint, val south: MapPoint)
+
+    /**
+     * Measured bridge crossings. North bridge joins the upper plateau to the middle
+     * island; south bridge joins the middle island to the lower meadow. Heads are
+     * walkable feet positions beside the planks, not interior pixels.
+     */
+    val bridgePortals: List<Portal> = listOf(
+        Portal("north_bridge", MapPoint(300f, 232f), MapPoint(318f, 262f)),
+        Portal("south_bridge", MapPoint(342f, 468f), MapPoint(352f, 506f))
+    )
+
+    /** Safe activity spots on walkable ground beside structures, never inside them. */
+    val activityPoints: Map<String, List<MapPoint>> = mapOf(
+        "REST" to listOf(MapPoint(150f, 150f), MapPoint(300f, 380f), MapPoint(220f, 640f)),
+        "EAT" to listOf(MapPoint(230f, 170f), MapPoint(380f, 350f), MapPoint(260f, 620f)),
+        "PLAY" to listOf(MapPoint(180f, 180f), MapPoint(400f, 380f), MapPoint(320f, 650f)),
+        "TRAIN" to listOf(MapPoint(250f, 140f), MapPoint(330f, 330f), MapPoint(200f, 670f)),
+        "SOCIALIZE" to listOf(MapPoint(205f, 153f), MapPoint(348f, 322f), MapPoint(249f, 650f))
+    )
+
+    /** Versioned manifest for debug overlay and asset validation (§4.7). */
+    data class MapManifest(
+        val mapId: String,
+        val version: Int,
+        val width: Float,
+        val height: Float,
+        val tileWidth: Float,
+        val tileHeight: Float,
+        val walkableTileCount: Int,
+        val portalIds: List<String>,
+        val activityKeys: Set<String>
+    )
+
+    fun manifest(): MapManifest = MapManifest(
+        mapId = mapId,
+        version = mapVersion,
+        width = width,
+        height = height,
+        tileWidth = tileWidth,
+        tileHeight = tileHeight,
+        walkableTileCount = walkableTiles.size,
+        portalIds = bridgePortals.map { it.id },
+        activityKeys = activityPoints.keys
     )
 
     fun project(tile: IsoTile): MapPoint = MapPoint(
@@ -122,4 +178,11 @@ object BirdFarmMap {
         IsoTile(tile.u + 1, tile.v), IsoTile(tile.u - 1, tile.v),
         IsoTile(tile.u, tile.v + 1), IsoTile(tile.u, tile.v - 1)
     ).filter(walkableTiles::contains)
+
+    /** True when a walkable route exists between two feet positions. */
+    fun areConnected(a: MapPoint, b: MapPoint): Boolean =
+        closestTile(a) == closestTile(b) || findPath(a, b).isNotEmpty()
+
+    fun distance(a: MapPoint, b: MapPoint): Float =
+        hypot((a.x - b.x).toDouble(), (a.y - b.y).toDouble()).toFloat()
 }

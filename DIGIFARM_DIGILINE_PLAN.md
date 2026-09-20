@@ -1,5 +1,7 @@
 # Digifarm e Digiline — plano de implementação
 
+> **Atualização de renderer:** o plano visual 2D deste documento foi substituído pela cena 2.5D descrita em [DIGIFARM_25D_PLAN.md](DIGIFARM_25D_PLAN.md). As regras de identidade, simulação, persistência, Digiline, Radar e LLM continuam válidas; referências ao PNG e à projeção BirdFarmMap são compatibilidade de migração e não devem permanecer no viewport final.
+
 Data: 19/09/2026. Projeto: VBHelper, Android/Kotlin/Jetpack Compose.
 
 **Status: implementação autorizada e em validação.** Este documento registra o escopo aprovado, as decisões do usuário e os critérios de aceitação da entrega.
@@ -16,7 +18,7 @@ Decisões expressamente confirmadas pelo usuário:
 - Convivência, brincadeiras, descanso, alimentação e treino afetam estados próprios da fazenda; inicialmente não alteram vitais, evolução nem progressão real do Digimon.
 - LLM ativo enquanto o usuário usa a fazenda ou seu grupo na Digiline. Fora dessas superfícies, simulação local resumida ao retornar; nenhuma conversa LLM autônoma em segundo plano.
 - Confiança **maior que 75**, portanto 76–100 para valores inteiros, desbloqueia permanentemente Wild Ones, mesmo após expiração do encontro ou queda posterior da confiança.
-- A implementação só começa após autorização posterior do usuário, que pretende trocar de modelo.
+- A implementação foi autorizada pelo usuário após a troca de modelo; a validação no aparelho fica para o usuário.
 
 Decisões técnicas propostas neste plano: uma única fazenda em simulação detalhada por vez; histórico de grupo público com destinatários explícitos; contatos e grupo preservados independentemente de presença física; primeira entrega usa o Bird Digi-Farm fornecido como mapa fixo. Valores de frequência e balanceamento abaixo são parâmetros iniciais de implementação, sujeitos à validação no aparelho, não novas exigências ao usuário.
 

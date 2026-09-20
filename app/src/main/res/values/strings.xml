@@ -175,6 +175,7 @@
     <string name="obtained_item_dismiss">Dismiss</string>
 
     <string name="choose_character_title">Choose character</string>
+    <string name="choose_character_no_available">No Digimon can use this item.</string>
     <string name="choose_character_item_applied">Item applied!</string>
 
     <string name="item_dialog_costs_credits">Costs %1$d credits</string>
@@ -508,8 +509,8 @@
     <string name="ui_digifarm_name_title">Digifarm name</string>
     <string name="ui_digifarm_add_resident">Add</string>
     <string name="ui_digifarm_group">Group</string>
-    <string name="ui_digifarm_fit">Fit</string>
-    <string name="ui_digifarm_map_description">Bird Digi-Farm isometric habitat</string>
+    <string name="ui_digifarm_map_description">3D Digifarm habitat</string>
+    <string name="ui_digifarm_3d_unavailable">The 3D Digifarm scene could not be loaded.</string>
     <string name="ui_digifarm_choose_resident">Choose a Storage Digimon</string>
     <string name="ui_digifarm_no_available">Every available Storage Digimon is already in a farm.</string>
     <string name="ui_digifarm_activity">Activity: %1$s</string>
@@ -532,6 +533,7 @@
     <string name="ui_digiline_empty_storage">Start a private chat with a Storage Digimon to see it here.</string>
     <string name="ui_digiline_empty_wild">Raise a wild Digimon’s trust above 75 to keep in touch.</string>
     <string name="ui_digiline_empty_farms">Create a Digifarm to open its group.</string>
+    <string name="ui_digiline_empty_group">No messages yet. Start a conversation with the farm.</string>
     <string name="ui_digiline_trust">Trust: %1$d/100</string>
     <string name="ui_digiline_resident_count">%1$d residents</string>
     <string name="ui_digiline_to_all">Message everyone</string>
@@ -539,4 +541,10 @@
     <string name="ui_digiline_message_all">To everyone</string>
     <string name="ui_digiline_message_to">To %1$s</string>
     <string name="storage_in_digifarm">In %1$s</string>
+    <string name="ui_digifarm_residents">Residents</string>
+    <string name="ui_digifarm_archive">Archive Digifarm</string>
+    <string name="ui_digifarm_follow">Follow with camera</string>
+    <string name="ui_digifarm_stop_follow">Stop following</string>
+    <string name="ui_digifarm_transfer">Move to another Digifarm</string>
+    <string name="ui_digifarm_no_other_farm">Create another Digifarm first to move residents between farms.</string>
 </resources>

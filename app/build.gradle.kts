@@ -125,4 +125,7 @@ dependencies {
 
     // HTTP request logging
     implementation(libs.okhttp.logging.interceptor)
+    implementation(libs.filament.android)
+    implementation(libs.filament.gltfio.android)
+    implementation(libs.filament.utils.android)
 }

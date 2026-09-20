@@ -26,6 +26,7 @@ object WorldDtos {
         val speciesName: String?,
         val mood: Int,
         val recruitmentState: RecruitmentState,
+        @Deprecated("Inert after Digiline migration.")
         val isFollowing: Boolean = false
     ) {
         override fun equals(other: Any?): Boolean {

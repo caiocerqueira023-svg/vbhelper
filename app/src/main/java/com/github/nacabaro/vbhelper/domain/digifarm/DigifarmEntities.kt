@@ -10,7 +10,7 @@ import com.github.nacabaro.vbhelper.domain.device_data.DigimonIndividual
 data class Farm(
     @PrimaryKey val id: String,
     val name: String,
-    val mapId: String = "bird_digifarm",
+    val mapId: String = "digi_farm_3d",
     val mapVersion: Int = 1,
     val capacity: Int = 12,
     val createdAt: Long,
@@ -19,6 +19,11 @@ data class Farm(
     val cameraScale: Float = 1f,
     val cameraX: Float = 0f,
     val cameraY: Float = 0f,
+    val cameraYaw: Float = 35f,
+    val cameraPitch: Float = 35f,
+    val cameraDistance: Float = 3.4f,
+    val cameraTargetX: Float = 0f,
+    val cameraTargetZ: Float = 0f,
     val autonomousDialogueEnabled: Boolean = true,
     val archivedAt: Long? = null
 )

@@ -2,7 +2,6 @@ package com.github.nacabaro.vbhelper.screens.storageScreen
 
 import android.util.Log
 import android.widget.Toast
-import androidx.annotation.StringRes
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -79,26 +78,6 @@ import com.github.nacabaro.vbhelper.utils.DeviceType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
-
-private enum class StorageFilter(@StringRes val label: Int) {
-    ALL(R.string.storage_filter_all),
-    FAVORITES(R.string.storage_filter_favorites),
-    ACTIVE(R.string.storage_filter_active),
-    VB(R.string.storage_filter_vb),
-    BE(R.string.storage_filter_be)
-}
-
-private enum class StorageSort(@StringRes val label: Int) {
-    RECENT(R.string.storage_sort_recent),
-    NAME(R.string.storage_sort_name),
-    VITALS(R.string.storage_sort_vitals),
-    STAGE(R.string.storage_sort_stage)
-}
-
-private fun CharacterDtos.CharacterWithSprites.displayName(fallback: String): String =
-    nickname?.takeIf { it.isNotBlank() }
-        ?: speciesName?.takeIf { it.isNotBlank() }
-        ?: "$fallback #$id"
 
 @Composable
 fun StorageScreen(

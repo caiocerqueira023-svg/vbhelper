@@ -1,16 +1,24 @@
 package com.github.nacabaro.vbhelper.screens.digilineScreen
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Checkbox
+import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -25,15 +33,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.components.VitalButton
+import com.github.nacabaro.vbhelper.components.cyberFrame
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.digifarm.social.FarmConversationOrchestrator
+import com.github.nacabaro.vbhelper.ui.theme.SurfaceDeepPurple
+import com.github.nacabaro.vbhelper.ui.theme.SurfaceElevatedPurple
+import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
+import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
+import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -64,10 +80,13 @@ fun FarmGroupScreen(navController: NavController, farmId: String) {
             messagesDesc.associate { it.id to repository.recipientIds(it.id) }
         }
     }
+    val coordinator = app.container.farmSessionCoordinator
     LaunchedEffect(farmId) {
-        while (true) {
-            runCatching { withContext(Dispatchers.IO) { repository.simulateStep(farmId) } }
-            delay(900L)
+        withContext(Dispatchers.IO) { coordinator.acquire(farmId) }
+        try {
+            while (true) delay(900L)
+        } finally {
+            withContext(Dispatchers.IO) { coordinator.release(farmId) }
         }
     }
     LaunchedEffect(farmId, residents.size, farm?.autonomousDialogueEnabled) {
@@ -84,54 +103,156 @@ fun FarmGroupScreen(navController: NavController, farmId: String) {
         }
     }
 
-    Scaffold(topBar = {
-        TopBanner(text = farm?.name ?: stringResource(R.string.ui_digifarm_group), onBackClick = { navController.popBackStack() })
-    }) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
+    Scaffold(
+        topBar = {
+            TopBanner(
+                text = farm?.name ?: stringResource(R.string.ui_digifarm_group),
+                onBackClick = { navController.popBackStack() }
+            )
+        },
+        // MainApplication already reserves the bottom navigation area. Avoid
+        // applying the system bottom inset a second time on this nested screen,
+        // while retaining the top inset for the status bar.
+        contentWindowInsets = WindowInsets.statusBars
+    ) { padding ->
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(start = 16.dp, end = 16.dp, top = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
             if (residents.isNotEmpty()) {
-                LazyRow(Modifier.fillMaxWidth().padding(horizontal = 8.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    items(residents, key = { it.individualId }) { resident ->
-                        Row(Modifier.clickable {
-                            selected = if (resident.individualId in selected) selected - resident.individualId else selected + resident.individualId
-                        }, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                            Checkbox(resident.individualId in selected, onCheckedChange = null)
-                            Text(resident.displayName, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(SurfaceElevatedPurple.copy(alpha = 0.58f))
+                        .cyberFrame()
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        stringResource(R.string.ui_digifarm_residents),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = TextSecondaryOnDark
+                    )
+                    LazyRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(56.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        contentPadding = PaddingValues(horizontal = 4.dp)
+                    ) {
+                        items(residents, key = { it.individualId }) { resident ->
+                            val isSelected = resident.individualId in selected
+                            VitalButton(
+                                onClick = {
+                                    selected = if (isSelected) {
+                                        selected - resident.individualId
+                                    } else {
+                                        selected + resident.individualId
+                                    }
+                                },
+                                modifier = Modifier.height(40.dp),
+                                borderColor = if (isSelected) VitalCyan else SurfaceStroke,
+                                contentColor = if (isSelected) VitalCyan else TextPrimaryOnDark,
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
+                            ) {
+                                Text(
+                                    resident.displayName,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     }
                 }
             }
-            LazyColumn(Modifier.weight(1f).fillMaxWidth().padding(8.dp)) {
-                items(messages, key = { it.id }) { message ->
-                    val fromTamer = message.authorIndividualId == null
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = if (fromTamer) Arrangement.End else Arrangement.Start) {
-                        Surface(
-                            color = if (fromTamer) VitalCyan.copy(alpha = .18f) else MaterialTheme.colorScheme.surfaceVariant,
-                            shape = MaterialTheme.shapes.medium,
-                            modifier = Modifier.padding(vertical = 4.dp).fillMaxWidth(.84f)
-                        ) {
-                            Column(Modifier.padding(10.dp)) {
-                                Text(message.authorNameSnapshot, style = MaterialTheme.typography.labelMedium, color = VitalCyan)
-                                val recipientIds = recipientsByMessage[message.id].orEmpty()
-                                val audience = if (recipientIds.isEmpty()) {
-                                    stringResource(R.string.ui_digiline_message_all)
-                                } else {
-                                    val names = residents.filter { it.individualId in recipientIds }.joinToString { it.displayName }
-                                    if (names.isBlank()) stringResource(R.string.ui_digiline_to_selected, recipientIds.size)
-                                    else stringResource(R.string.ui_digiline_message_to, names)
+            Box(
+                Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+                    .background(SurfaceDeepPurple.copy(alpha = 0.34f))
+                    .cyberFrame()
+                    .padding(horizontal = 4.dp)
+            ) {
+                if (messages.isEmpty()) {
+                    Text(
+                        stringResource(R.string.ui_digiline_empty_group),
+                        color = TextSecondaryOnDark,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.align(Alignment.Center)
+                    )
+                } else {
+                    LazyColumn(
+                        Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 8.dp)
+                    ) {
+                        items(messages, key = { it.id }) { message ->
+                            val fromTamer = message.authorIndividualId == null
+                            Row(
+                                Modifier.fillMaxWidth(),
+                                horizontalArrangement = if (fromTamer) Arrangement.End else Arrangement.Start
+                            ) {
+                                Surface(
+                                    color = if (fromTamer) {
+                                        VitalCyan.copy(alpha = .16f)
+                                    } else {
+                                        SurfaceElevatedPurple.copy(alpha = .72f)
+                                    },
+                                    shape = CutCornerShape(8.dp),
+                                    border = BorderStroke(
+                                        1.dp,
+                                        if (fromTamer) VitalCyan.copy(alpha = .76f) else SurfaceStroke
+                                    ),
+                                    modifier = Modifier
+                                        .padding(vertical = 4.dp)
+                                        .fillMaxWidth(.84f)
+                                ) {
+                                    Column(Modifier.padding(10.dp)) {
+                                        Text(
+                                            message.authorNameSnapshot,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = VitalCyan
+                                        )
+                                        val recipientIds = recipientsByMessage[message.id].orEmpty()
+                                        val audience = if (recipientIds.isEmpty()) {
+                                            stringResource(R.string.ui_digiline_message_all)
+                                        } else {
+                                            val names = residents.filter { it.individualId in recipientIds }.joinToString { it.displayName }
+                                            if (names.isBlank()) stringResource(R.string.ui_digiline_to_selected, recipientIds.size)
+                                            else stringResource(R.string.ui_digiline_message_to, names)
+                                        }
+                                        Text(
+                                            audience,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = TextSecondaryOnDark
+                                        )
+                                        Text(
+                                            message.body,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = TextPrimaryOnDark
+                                        )
+                                    }
                                 }
-                                Text(audience, style = MaterialTheme.typography.labelSmall)
-                                Text(message.body, style = MaterialTheme.typography.bodyMedium)
                             }
                         }
                     }
                 }
             }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 12.dp)) }
-            Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 OutlinedTextField(
                     value = input,
                     onValueChange = { input = it.take(600) },
                     modifier = Modifier.weight(1f),
+                    singleLine = true,
                     placeholder = { Text(if (selected.isEmpty()) stringResource(R.string.ui_digiline_to_all) else stringResource(R.string.ui_digiline_to_selected, selected.size)) }
                 )
                 VitalButton(
@@ -149,8 +270,18 @@ fun FarmGroupScreen(navController: NavController, farmId: String) {
                         }
                     },
                     enabled = !sending,
-                    modifier = Modifier.padding(start = 8.dp)
-                ) { Text(stringResource(R.string.ui_send)) }
+                    modifier = Modifier.height(56.dp)
+                ) {
+                    if (sending) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(18.dp),
+                            color = VitalCyan,
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(stringResource(R.string.ui_send))
+                    }
+                }
             }
         }
     }

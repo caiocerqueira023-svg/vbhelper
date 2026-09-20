@@ -24,7 +24,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.math.cos
-import kotlin.math.floor
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
@@ -35,19 +34,6 @@ class WorldRepository(private val db: AppDatabase) {
     private val spawnMutex = Mutex()
     private val _currentBiome = MutableStateFlow(WorldBiome.NULL)
     val currentBiome = _currentBiome.asStateFlow()
-
-    /** Last GPS fix observed by the world screen; used when starting follow from chat. */
-    @Volatile
-    var lastKnownLatitude: Double? = null
-        private set
-    @Volatile
-    var lastKnownLongitude: Double? = null
-        private set
-
-    fun updateLastKnownLocation(latitude: Double, longitude: Double) {
-        lastKnownLatitude = latitude
-        lastKnownLongitude = longitude
-    }
 
     companion object {
         private const val NEARBY_RADIUS_METERS = 350.0
@@ -198,135 +184,6 @@ class WorldRepository(private val db: AppDatabase) {
         return newMood
     }
 
-    /**
-     * Starts temporary following after the first chat message raised the mood.
-     * The Digimon will track the player so conversation can continue while walking.
-     * Mood decays ~[WorldSpawn.FOLLOW_MOOD_LOSS_PER_SEGMENT] points every
-     * ~[WorldSpawn.FOLLOW_SEGMENT_METERS] meters moved; following ends below
-     * [WorldSpawn.FOLLOW_STOP_MOOD].
-     */
-    suspend fun startFollowing(
-        individualId: String,
-        playerLatitude: Double,
-        playerLongitude: Double
-    ): Boolean {
-        val spawn = spawnDao.getByIndividualId(individualId) ?: return false
-        if (spawn.recruitmentState != RecruitmentState.WILD) return false
-        if (spawn.isFollowing) return true
-        if (spawn.mood < WorldSpawn.FOLLOW_STOP_MOOD) return false
-
-        val now = System.currentTimeMillis()
-        // Keep the spawn alive while following (30 more minutes from now).
-        val newExpires = maxOf(spawn.expiresAt, now + 30 * 60 * 1000L)
-        spawnDao.updateFollowingState(
-            individualId = individualId,
-            isFollowing = true,
-            followLastLat = playerLatitude,
-            followLastLon = playerLongitude,
-            expiresAt = newExpires
-        )
-        return true
-    }
-
-    suspend fun stopFollowing(individualId: String) {
-        val spawn = spawnDao.getByIndividualId(individualId) ?: return
-        if (!spawn.isFollowing) return
-        spawnDao.updateFollowingState(
-            individualId = individualId,
-            isFollowing = false,
-            followLastLat = null,
-            followLastLon = null,
-            expiresAt = spawn.expiresAt
-        )
-    }
-
-    fun observeIsFollowing(individualId: String): Flow<Boolean?> =
-        spawnDao.observeIsFollowing(individualId)
-
-    /**
-     * Called on every meaningful GPS update while the world screen is open.
-     * For each Digimon currently following the player:
-     *  - measures meters walked since the last deduction point
-     *  - deducts mood in segments of [WorldSpawn.FOLLOW_SEGMENT_METERS]
-     *  - relocates the Digimon near the player so it stays in interaction range
-     *  - stops following if mood falls below [WorldSpawn.FOLLOW_STOP_MOOD]
-     *
-     * @return list of individualIds that stopped following on this tick (for UI toasts)
-     */
-    suspend fun processFollowMovement(
-        playerLatitude: Double,
-        playerLongitude: Double
-    ): List<String> {
-        val now = System.currentTimeMillis()
-        val following = spawnDao.getFollowingSpawns(now)
-        if (following.isEmpty()) return emptyList()
-
-        val stopped = mutableListOf<String>()
-        for (spawn in following) {
-            val lastLat = spawn.followLastLat ?: playerLatitude
-            val lastLon = spawn.followLastLon ?: playerLongitude
-            val walked = distanceMeters(lastLat, lastLon, playerLatitude, playerLongitude)
-
-            // How many full 2 m segments were walked since last checkpoint
-            val segments = floor(walked / WorldSpawn.FOLLOW_SEGMENT_METERS).toInt()
-            var newMood = spawn.mood
-            var stillFollowing = true
-            var newLastLat = lastLat
-            var newLastLon = lastLon
-
-            if (segments > 0) {
-                val moodLoss = segments * WorldSpawn.FOLLOW_MOOD_LOSS_PER_SEGMENT
-                newMood = (spawn.mood - moodLoss).coerceIn(0, 100)
-                // Advance the checkpoint by the exact segments consumed so residual meters carry over.
-                val consumedMeters = segments * WorldSpawn.FOLLOW_SEGMENT_METERS
-                val fraction = (consumedMeters / walked).coerceIn(0.0, 1.0)
-                newLastLat = lastLat + (playerLatitude - lastLat) * fraction
-                newLastLon = lastLon + (playerLongitude - lastLon) * fraction
-
-                if (newMood < WorldSpawn.FOLLOW_STOP_MOOD) {
-                    stillFollowing = false
-                    stopped.add(spawn.individualId)
-                }
-            }
-
-            // Keep the Digimon near the player with a stable offset derived from its id
-            // so the radar marker does not jitter on every GPS tick.
-            val digimonLat: Double
-            val digimonLon: Double
-            if (stillFollowing) {
-                val seed = spawn.id * 31L + 17L
-                val offsetDistance = 6.0 + (seed % 5) // 6–10 m
-                val bearing = ((seed % 360) / 360.0) * Math.PI * 2
-                val latOffset = offsetDistance * cos(bearing) / 111_320.0
-                val lonOffset = offsetDistance * sin(bearing) /
-                    (111_320.0 * cos(Math.toRadians(playerLatitude)).coerceAtLeast(0.1))
-                digimonLat = playerLatitude + latOffset
-                digimonLon = playerLongitude + lonOffset
-            } else {
-                digimonLat = spawn.latitude
-                digimonLon = spawn.longitude
-            }
-
-            val newExpires = if (stillFollowing) {
-                maxOf(spawn.expiresAt, now + 30 * 60 * 1000L)
-            } else {
-                spawn.expiresAt
-            }
-
-            spawnDao.updateFollowProgress(
-                id = spawn.id,
-                latitude = digimonLat,
-                longitude = digimonLon,
-                mood = newMood,
-                isFollowing = stillFollowing,
-                followLastLat = if (stillFollowing) newLastLat else null,
-                followLastLon = if (stillFollowing) newLastLon else null,
-                expiresAt = newExpires
-            )
-        }
-        return stopped
-    }
-
     suspend fun meetsRecruitmentRequirements(): Boolean {
         val active = db.userCharacterDao().getActiveCharacter().first() ?: return false
         return active.vitalPoints >= RECRUIT_VITALS_REQUIREMENT
@@ -359,21 +216,30 @@ class WorldRepository(private val db: AppDatabase) {
     suspend fun recruitSpawn(spawnId: Long): Result<Long> {
         val details = spawnDao.getSpawnById(spawnId)
             ?: return Result.failure(IllegalStateException("Spawn not found"))
-        return recruitIndividual(details.individualId)
+        // Spawn-based recruitment carries its own species reference; a missing
+        // WildRelationship (legacy data) must not block it.
+        val relationship = db.wildRelationshipDao().get(details.individualId)
+        return doRecruit(details.individualId, relationship?.cardCharacterId ?: details.cardCharacterId)
     }
 
     /** Recruitment also works from an unlocked Digiline contact after its map spawn expires. */
-    suspend fun recruitIndividual(individualId: String): Result<Long> = runCatching {
+    suspend fun recruitIndividual(individualId: String): Result<Long> {
+        val relationship = db.wildRelationshipDao().get(individualId)
+            ?: return Result.failure(IllegalStateException("Wild contact not found"))
+        return doRecruit(individualId, relationship.cardCharacterId)
+    }
+
+    private suspend fun doRecruit(individualId: String, cardCharacterId: Long): Result<Long> = runCatching {
         check(meetsRecruitmentRequirements()) { "Requirements not met" }
-        val relationship = db.wildRelationshipDao().get(individualId) ?: error("Wild contact not found")
-        check(relationship.recruitmentState != RecruitmentState.RECRUITED.name) { "Already recruited" }
+        db.wildRelationshipDao().get(individualId)?.let {
+            check(it.recruitmentState != RecruitmentState.RECRUITED.name) { "Already recruited" }
+        }
         check(db.userCharacterDao().getByIndividualIdSync(individualId).isEmpty()) { "Already in Storage" }
-        val cardCharacter = db.characterDao().getById(relationship.cardCharacterId) ?: error("Species not found")
-        val spawn = spawnDao.getByIndividualId(individualId)
+        val cardCharacter = db.characterDao().getById(cardCharacterId) ?: error("Species not found")
 
         val userCharacter = UserCharacter(
             individualId = individualId,
-            charId = relationship.cardCharacterId,
+            charId = cardCharacterId,
             ageInDays = 0,
             mood = 80,
             vitalPoints = 0,
@@ -395,8 +261,18 @@ class WorldRepository(private val db: AppDatabase) {
         // watch export both depend on the auxiliary VB rows being present.
         var characterId = 0L
         db.withTransaction {
-            // World/Storage exclusivity is guarded by the database trigger.
-            spawn?.let { check(spawnDao.deleteById(it.id) == 1) { "This Digimon is no longer available." } }
+            // Atomically claim the recruit. A double tap/concurrent recruitment
+            // cannot clone it: the spawn row, or the wild contact, is claimed
+            // exactly once. World/Storage exclusivity is additionally guarded
+            // by the database trigger.
+            val liveSpawn = spawnDao.getByIndividualId(individualId)
+            if (liveSpawn != null) {
+                check(spawnDao.deleteById(liveSpawn.id) == 1) { "This Digimon is no longer available." }
+            } else if (db.wildRelationshipDao().get(individualId) != null) {
+                check(db.wildRelationshipDao().claimForRecruitment(individualId, now) == 1) { "Already recruited" }
+            } else {
+                check(db.userCharacterDao().getByIndividualIdSync(individualId).isEmpty()) { "Already in Storage" }
+            }
             characterId = db.userCharacterDao().insertCharacterData(userCharacter)
 
             db.userCharacterDao().insertVBCharacterData(

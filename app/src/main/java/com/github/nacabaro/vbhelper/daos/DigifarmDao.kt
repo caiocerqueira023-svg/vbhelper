@@ -29,6 +29,16 @@ interface DigifarmDao {
     @Query("UPDATE Farm SET cameraScale = :scale, cameraX = :x, cameraY = :y WHERE id = :farmId")
     suspend fun updateCamera(farmId: String, scale: Float, x: Float, y: Float)
 
+    @Query("UPDATE Farm SET cameraYaw = :yaw, cameraPitch = :pitch, cameraDistance = :distance, cameraTargetX = :targetX, cameraTargetZ = :targetZ WHERE id = :farmId")
+    suspend fun update3dCamera(
+        farmId: String,
+        yaw: Float,
+        pitch: Float,
+        distance: Float,
+        targetX: Float,
+        targetZ: Float
+    )
+
     @Query("UPDATE Farm SET autonomousDialogueEnabled = :enabled WHERE id = :farmId")
     suspend fun setAutonomousDialogue(farmId: String, enabled: Boolean)
 
@@ -37,6 +47,15 @@ interface DigifarmDao {
 
     @Query("SELECT * FROM Farm WHERE id = :farmId LIMIT 1")
     suspend fun getFarm(farmId: String): Farm?
+
+    @Query("UPDATE Farm SET archivedAt = :now WHERE id = :farmId")
+    suspend fun archiveFarm(farmId: String, now: Long)
+
+    @Query("DELETE FROM FarmResident WHERE farmId = :farmId")
+    suspend fun clearResidents(farmId: String)
+
+    @Query("SELECT * FROM FarmResident WHERE individualId = :individualId LIMIT 1")
+    suspend fun getResident(individualId: String): FarmResident?
 
     @Query("SELECT COUNT(*) FROM FarmResident WHERE farmId = :farmId")
     suspend fun residentCount(farmId: String): Int
@@ -98,7 +117,7 @@ interface DigifarmDao {
     }
 
     @Query("SELECT * FROM FarmMessage WHERE farmId = :farmId ORDER BY sequence DESC LIMIT :limit")
-    fun observeMessages(farmId: String, limit: Int = 100): Flow<List<FarmMessage>>
+    fun observeMessages(farmId: String, limit: Int = 50): Flow<List<FarmMessage>>
 
     @Query("SELECT individualId FROM FarmMessageRecipient WHERE messageId = :messageId")
     suspend fun recipientIds(messageId: String): List<String>

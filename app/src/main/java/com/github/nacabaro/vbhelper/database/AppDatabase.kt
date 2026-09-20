@@ -68,7 +68,7 @@ import com.github.nacabaro.vbhelper.domain.digifarm.FarmResident
 import com.github.nacabaro.vbhelper.domain.digifarm.WildRelationship
 
 @Database(
-    version = 21,
+    version = 22,
     exportSchema = true,
     entities = [
         Card::class,
@@ -218,6 +218,7 @@ abstract class AppDatabase : RoomDatabase() {
                         FOREIGN KEY(`farmId`) REFERENCES `Farm`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
                     )
                 """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_FarmReadState_farmId` ON `FarmReadState` (`farmId`)")
                 db.execSQL("""
                     CREATE TABLE IF NOT EXISTS `FarmRelationship` (
                         `observerId` TEXT NOT NULL,
@@ -273,6 +274,29 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_21_22 = object : Migration(21, 22) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                if (!hasColumn(db, "Farm", "cameraYaw")) {
+                    db.execSQL("ALTER TABLE `Farm` ADD COLUMN `cameraYaw` REAL NOT NULL DEFAULT 35.0")
+                }
+                if (!hasColumn(db, "Farm", "cameraPitch")) {
+                    db.execSQL("ALTER TABLE `Farm` ADD COLUMN `cameraPitch` REAL NOT NULL DEFAULT 35.0")
+                }
+                if (!hasColumn(db, "Farm", "cameraDistance")) {
+                    db.execSQL("ALTER TABLE `Farm` ADD COLUMN `cameraDistance` REAL NOT NULL DEFAULT 3.4")
+                }
+                if (!hasColumn(db, "Farm", "cameraTargetX")) {
+                    db.execSQL("ALTER TABLE `Farm` ADD COLUMN `cameraTargetX` REAL NOT NULL DEFAULT 0.0")
+                }
+                if (!hasColumn(db, "Farm", "cameraTargetZ")) {
+                    db.execSQL("ALTER TABLE `Farm` ADD COLUMN `cameraTargetZ` REAL NOT NULL DEFAULT 0.0")
+                }
+                // Existing farms keep their residents/history but use the new
+                // scene. Their old 2D camera values remain available for rollback.
+                db.execSQL("UPDATE `Farm` SET `mapId` = 'digi_farm_3d', `mapVersion` = 1")
+            }
+        }
+
         /** Replaces the old temperament/social-style/speech-quirk record. */
         val MIGRATION_19_20 = object : Migration(19, 20) {
             override fun migrate(db: SupportSQLiteDatabase) {
@@ -308,9 +332,24 @@ abstract class AppDatabase : RoomDatabase() {
 
         val MIGRATION_18_19 = object : Migration(18, 19) {
             override fun migrate(db: SupportSQLiteDatabase) {
-                db.execSQL("ALTER TABLE `UserCharacter` ADD COLUMN `isFavorite` INTEGER NOT NULL DEFAULT 0")
+                // Idempotent: never fail when the column already exists. Real 18
+                // databases always take the ADD COLUMN path; only artificial
+                // version restamps (tests) hit the guard.
+                if (!hasColumn(db, "UserCharacter", "isFavorite")) {
+                    db.execSQL("ALTER TABLE `UserCharacter` ADD COLUMN `isFavorite` INTEGER NOT NULL DEFAULT 0")
+                }
                 db.execSQL("UPDATE `UserCharacter` SET `isFavorite` = 1 WHERE `isActive` = 1")
             }
+        }
+
+        private fun hasColumn(db: SupportSQLiteDatabase, table: String, column: String): Boolean {
+            db.query("PRAGMA table_info(`$table`)").use { cursor ->
+                val nameIndex = cursor.getColumnIndex("name")
+                while (cursor.moveToNext()) {
+                    if (cursor.getString(nameIndex) == column) return true
+                }
+            }
+            return false
         }
 
         val MIGRATION_17_18 = object : Migration(17, 18) {

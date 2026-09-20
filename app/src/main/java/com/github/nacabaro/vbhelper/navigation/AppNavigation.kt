@@ -142,6 +142,11 @@ fun AppNavigation(
                         .tabSwipeNavigation(
                             currentRoute = currentRoute,
                             thresholdPx = tabSwipeThresholdPx,
+                            // The World hub (Radar/Digifarm) owns every
+                            // horizontal gesture — 3D orbit, radar pinch —
+                            // so the global tab swipe is off there to stop
+                            // stealing camera moves into tab switches.
+                            enabled = currentRoute != NavigationItems.World.route,
                             onNavigate = { destination ->
                                 navController.navigatePrimary(destination)
                             }
@@ -368,12 +373,15 @@ fun AppNavigation(
 /**
  * Keeps the primary tabs reachable with a deliberate horizontal swipe while
  * leaving secondary destinations (dialogs, chat, settings, etc.) untouched.
+ * Screens that own horizontal gestures (World hub) opt out via [enabled].
  */
 private fun Modifier.tabSwipeNavigation(
     currentRoute: String?,
     thresholdPx: Float,
+    enabled: Boolean,
     onNavigate: (NavigationItems) -> Unit
-): Modifier = pointerInput(currentRoute, thresholdPx) {
+): Modifier = pointerInput(currentRoute, thresholdPx, enabled) {
+    if (!enabled) return@pointerInput
     val currentIndex = primaryDestinations.indexOfFirst { it.route == currentRoute }
     if (currentIndex < 0) return@pointerInput
 

@@ -26,6 +26,7 @@ retrofit = "3.0.0"
 gson = "2.14.0"
 okhttp = "5.4.0"
 ksp = "2.3.9"
+filament = "1.76.1"
 
 [libraries]
 androidx-compose-material = { module = "androidx.compose.material:material" }
@@ -64,6 +65,9 @@ retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit
 retrofit-converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
 okhttp-logging-interceptor = { module = "com.squareup.okhttp3:logging-interceptor", version.ref = "okhttp" }
+filament-android = { module = "com.google.android.filament:filament-android", version.ref = "filament" }
+filament-gltfio-android = { module = "com.google.android.filament:gltfio-android", version.ref = "filament" }
+filament-utils-android = { module = "com.google.android.filament:filament-utils-android", version.ref = "filament" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

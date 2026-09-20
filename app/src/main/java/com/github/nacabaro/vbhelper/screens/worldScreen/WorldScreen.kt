@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,6 +29,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
@@ -114,7 +116,11 @@ private const val GRID_SIZE_METERS = 60.0
 private const val RADAR_RING_INTERVAL_METERS = 200
 
 @Composable
-fun RadarScreen(navController: NavController) {
+fun RadarScreen(
+    navController: NavController,
+    selectedWorldTab: Int = 0,
+    onWorldTabSelected: (Int) -> Unit = {}
+) {
     val context = LocalContext.current
     val resources = LocalResources.current
     val app = context.applicationContext as VBHelper
@@ -252,11 +258,6 @@ fun RadarScreen(navController: NavController) {
                         location = newLocation
                         status = resources.getString(R.string.ui_world_radar_active)
 
-                        app.container.worldRepository.updateLastKnownLocation(
-                            newLocation.latitude,
-                            newLocation.longitude
-                        )
-
                         requestSpawnRefresh(newLocation)
                     }
                 }
@@ -280,10 +281,6 @@ fun RadarScreen(navController: NavController) {
                         }
                     }
                     location = cachedLocation
-                    app.container.worldRepository.updateLastKnownLocation(
-                        cachedLocation.latitude,
-                        cachedLocation.longitude
-                    )
                     // Cached GPS is available before the first live callback on most
                     // devices, so use it to populate the map immediately.
                     requestSpawnRefresh(cachedLocation)
@@ -304,12 +301,19 @@ fun RadarScreen(navController: NavController) {
 
     Scaffold(
         topBar = {
-            TopBanner(text = if (compass.heading != null) {
-                "${stringResource(R.string.nav_world)} • ${cardinalDirection(heading)}"
-            } else stringResource(R.string.nav_world), onGearClick = {
-                showWorldSpawnSettings = true
-            })
-        }
+            Column {
+                TopBanner(text = if (compass.heading != null) {
+                    "${stringResource(R.string.nav_world)} • ${cardinalDirection(heading)}"
+                } else stringResource(R.string.nav_world), onGearClick = {
+                    showWorldSpawnSettings = true
+                })
+                WorldSectionTabs(
+                    selectedTab = selectedWorldTab,
+                    onTabSelected = onWorldTabSelected
+                )
+            }
+        },
+        contentWindowInsets = WindowInsets.statusBars
     ) { contentPadding ->
         Column(
             Modifier

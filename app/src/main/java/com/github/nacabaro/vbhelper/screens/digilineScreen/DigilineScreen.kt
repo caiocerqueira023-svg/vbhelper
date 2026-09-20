@@ -1,8 +1,9 @@
 package com.github.nacabaro.vbhelper.screens.digilineScreen
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,11 +13,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.material3.Badge
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -27,10 +33,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.R
@@ -40,6 +51,11 @@ import com.github.nacabaro.vbhelper.dtos.DigilineFarmThread
 import com.github.nacabaro.vbhelper.dtos.DigilineStorageThread
 import com.github.nacabaro.vbhelper.dtos.DigilineWildThread
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
+import com.github.nacabaro.vbhelper.ui.theme.SpaceBlack
+import com.github.nacabaro.vbhelper.ui.theme.SurfaceDeepPurple
+import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
+import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
+import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.getBitmap
@@ -53,13 +69,41 @@ fun DigilineScreen(navController: NavController) {
     val farms by repository.observeFarmThreads().collectAsState(emptyList())
     var tab by rememberSaveable { mutableIntStateOf(0) }
 
-    Scaffold(topBar = { TopBanner(text = stringResource(R.string.nav_digiline)) }) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding)) {
-            TabRow(tab, containerColor = MaterialTheme.colorScheme.surface, contentColor = VitalCyan) {
-                Tab(tab == 0, { tab = 0 }, text = { Text(stringResource(R.string.ui_digiline_storage)) })
-                Tab(tab == 1, { tab = 1 }, text = { Text(stringResource(R.string.ui_digiline_wild)) })
-                Tab(tab == 2, { tab = 2 }, text = { Text(stringResource(R.string.ui_digiline_farms)) })
+    Scaffold(
+        topBar = {
+            Column {
+                TopBanner(text = stringResource(R.string.nav_digiline))
+                PrimaryTabRow(
+                    selectedTabIndex = tab,
+                    containerColor = MaterialTheme.colorScheme.background,
+                    indicator = {},
+                    divider = {}
+                ) {
+                    DigilineTab(
+                        selected = tab == 0,
+                        onClick = { tab = 0 },
+                        label = stringResource(R.string.ui_digiline_storage)
+                    )
+                    DigilineTab(
+                        selected = tab == 1,
+                        onClick = { tab = 1 },
+                        label = stringResource(R.string.ui_digiline_wild)
+                    )
+                    DigilineTab(
+                        selected = tab == 2,
+                        onClick = { tab = 2 },
+                        label = stringResource(R.string.ui_digiline_farms)
+                    )
+                }
             }
+        },
+        contentWindowInsets = WindowInsets.statusBars
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = padding.calculateTopPadding())
+        ) {
             when (tab) {
                 0 -> ThreadList(storage, stringResource(R.string.ui_digiline_empty_storage)) { thread ->
                     navController.navigate(NavigationItems.Chat.route.replace("{characterId}", thread.characterId.toString()))
@@ -77,6 +121,31 @@ fun DigilineScreen(navController: NavController) {
             }
         }
     }
+}
+
+@Composable
+private fun DigilineTab(
+    selected: Boolean,
+    onClick: () -> Unit,
+    label: String
+) {
+    Tab(
+        selected = selected,
+        onClick = onClick,
+        selectedContentColor = VitalCyan,
+        unselectedContentColor = TextSecondaryOnDark,
+        modifier = Modifier.drawBehind {
+            if (selected) {
+                drawLine(
+                    color = VitalCyan,
+                    start = Offset(12.dp.toPx(), size.height - 2.dp.toPx()),
+                    end = Offset(size.width - 12.dp.toPx(), size.height - 2.dp.toPx()),
+                    strokeWidth = 3.dp.toPx()
+                )
+            }
+        },
+        text = { Text(label, style = MaterialTheme.typography.labelLarge) }
+    )
 }
 
 @Composable
@@ -112,7 +181,11 @@ private fun FarmThreadList(items: List<DigilineFarmThread>, empty: String, onCli
 @Composable
 private fun EmptyList(text: String) {
     Box(Modifier.fillMaxSize().padding(32.dp), contentAlignment = Alignment.Center) {
-        Text(text, style = MaterialTheme.typography.bodyLarge)
+        Text(
+            text,
+            style = MaterialTheme.typography.bodyLarge,
+            color = TextSecondaryOnDark
+        )
     }
 }
 
@@ -129,15 +202,63 @@ private fun ThreadRow(
     val image = remember(sprite, width, height) {
         sprite?.let { runCatching { BitmapData(it, width, height).getBitmap().asImageBitmap() }.getOrNull() }
     }
-    Row(
-        Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
+    Surface(
+        color = SurfaceDeepPurple.copy(alpha = 0.36f),
+        shape = CutCornerShape(8.dp),
+        border = BorderStroke(1.dp, SurfaceStroke.copy(alpha = 0.72f)),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .clickable(onClick = onClick)
     ) {
-        image?.let { Image(it, title, Modifier.size(48.dp), filterQuality = FilterQuality.None) }
-        Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            preview?.let { Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 2) }
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CutCornerShape(6.dp))
+                    .background(VitalCyan.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                if (image != null) {
+                    Image(image, title, Modifier.size(48.dp), filterQuality = FilterQuality.None)
+                } else {
+                    Icon(
+                        painter = painterResource(R.drawable.baseline_mood_24),
+                        contentDescription = null,
+                        tint = VitalCyan,
+                        modifier = Modifier.size(22.dp)
+                    )
+                }
+            }
+            Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextPrimaryOnDark,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                preview?.takeIf { it.isNotBlank() }?.let {
+                    Text(
+                        it,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondaryOnDark,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            if (unread > 0) {
+                Badge(
+                    containerColor = VitalCyan,
+                    contentColor = SpaceBlack
+                ) { Text(unread.toString()) }
+            }
         }
-        if (unread > 0) Badge { Text(unread.toString()) }
     }
 }

@@ -1,0 +1,1 @@
+I'm not sure how the water is supposed to be setup but I used hex color 59E7E7 with Z Transparency Fresnel 1.0 Blend 2.0

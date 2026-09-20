@@ -25,6 +25,13 @@ interface WildRelationshipDao {
     @Query("UPDATE WildRelationship SET recruitmentState = :state, updatedAt = :now WHERE individualId = :individualId")
     suspend fun updateRecruitmentState(individualId: String, state: String, now: Long)
 
+    /**
+     * Atomically claims an unlocked contact for recruitment. Returns 1 for the
+     * winner; concurrent double-taps get 0 and must fail instead of cloning.
+     */
+    @Query("UPDATE WildRelationship SET recruitmentState = 'RECRUITED', updatedAt = :now WHERE individualId = :individualId AND recruitmentState != 'RECRUITED'")
+    suspend fun claimForRecruitment(individualId: String, now: Long): Int
+
     @Query(
         """
         SELECT wr.individualId AS individualId, wr.cardCharacterId AS cardCharacterId,
