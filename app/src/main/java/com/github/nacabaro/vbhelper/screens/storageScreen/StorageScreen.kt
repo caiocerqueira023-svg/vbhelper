@@ -109,6 +109,9 @@ fun StorageScreen(
     val application = LocalContext.current.applicationContext as VBHelper
     val storageRepository = remember { StorageRepository(application.container.db) }
     val characterList by storageRepository.getAllCharacters().collectAsState(initial = emptyList())
+    val farmAssignments by application.container.digifarmRepository.observeAssignments()
+        .collectAsState(initial = emptyList())
+    val farmByCharacter = remember(farmAssignments) { farmAssignments.associate { it.characterId to it.farmName } }
     val fallbackName = stringResource(R.string.widget_digimon_label)
 
     LaunchedEffect(Unit) {
@@ -398,6 +401,17 @@ fun StorageScreen(
                                         .clickable(onClick = openCharacter)
                                         .padding(horizontal = 4.dp, vertical = 2.dp)
                                 )
+                                farmByCharacter[character.id]?.let { farmName ->
+                                    Text(
+                                        text = stringResource(R.string.storage_in_digifarm, farmName),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = VitalCyan,
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
+                                    )
+                                }
                             }
                         }
                     }

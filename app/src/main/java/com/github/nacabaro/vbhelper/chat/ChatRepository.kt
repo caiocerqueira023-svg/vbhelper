@@ -17,6 +17,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import retrofit2.HttpException
 import java.io.IOException
 
@@ -31,6 +33,7 @@ class ChatRepository(
     class MissingApiKeyException : Exception("Chat API key is not configured.")
 
     private val storageRepository = StorageRepository(database)
+    private val completionMutex = Mutex()
 
     fun getHistory(characterId: Long): Flow<List<ChatMessageEntity>> =
         database.userCharacterDao().getIndividualId(characterId)
@@ -207,6 +210,39 @@ class ChatRepository(
         return cleanReply
     }
 
+    /** Generates one public Digifarm turn without writing to private chat or changing real vitals/mood. */
+    suspend fun generateFarmReply(characterId: Long, farmContext: String): String {
+        val (systemPrompt, _, speciesName) = buildSystemPromptAndIndividualId(characterId)
+        val languageTag = PromptLocalization.currentLanguageTag()
+        val instruction = when {
+            languageTag.startsWith("pt", true) -> """
+                Você está vivendo numa Digifarm com outros Digimon. Responda apenas por você.
+                Produza uma fala natural de uma ou duas frases; ações curtas entre asteriscos são raras.
+                Não narre pensamentos nem controle outros personagens. Use somente pessoas e fatos do contexto.
+
+                Contexto atual:
+                $farmContext
+            """.trimIndent()
+            languageTag.startsWith("ja", true) -> """
+                あなたは他のデジモンとデジファームで暮らしています。自分の発言だけを書いてください。
+                自然な一、二文で返答し、他のキャラクターを操作したり心情を語ったりしないでください。
+
+                現在の状況:
+                $farmContext
+            """.trimIndent()
+            else -> """
+                You live in a Digifarm with other Digimon. Speak only for yourself.
+                Reply naturally in one or two sentences. Brief actions in asterisks should be rare.
+                Do not narrate thoughts or control other characters. Use only people and facts in context.
+
+                Current context:
+                $farmContext
+            """.trimIndent()
+        }
+        val enriched = withLorebookContext(systemPrompt, farmContext, speciesName)
+        return requestCompletionWithoutPrivateHistory(enriched, instruction)
+    }
+
     suspend fun clearHistory(characterId: Long) {
         val individualId = database.userCharacterDao().getCharacter(characterId).individualId
         chatDao.clearHistory(individualId)
@@ -335,7 +371,7 @@ class ChatRepository(
         systemPrompt: String,
         individualId: String,
         extraUserTurn: String?
-    ): String {
+    ): String = completionMutex.withLock {
         val apiKey = llmSettingsRepository.apiKey.first() ?: throw MissingApiKeyException()
         val model = llmSettingsRepository.model.first()
         val baseUrl = llmSettingsRepository.chatCompletionsBaseUrl.first()
@@ -357,6 +393,29 @@ class ChatRepository(
                 if (attempt == 1 || error.code() !in setOf(408, 429, 500, 502, 503, 504)) {
                     throw error
                 }
+            }
+            delay(1_000)
+        }
+        error("The chat service did not return a response.")
+    }
+
+    private suspend fun requestCompletionWithoutPrivateHistory(
+        systemPrompt: String,
+        userTurn: String
+    ): String = completionMutex.withLock {
+        val apiKey = llmSettingsRepository.apiKey.first() ?: throw MissingApiKeyException()
+        val request = ChatCompletionRequest(
+            model = llmSettingsRepository.model.first(),
+            messages = listOf(ChatMessageDto("system", systemPrompt), ChatMessageDto("user", userTurn))
+        )
+        val service = OpenRouterClient.create(llmSettingsRepository.chatCompletionsBaseUrl.first())
+        repeat(2) { attempt ->
+            try {
+                return finalReply(service.getChatCompletion("Bearer $apiKey", request))
+            } catch (error: IOException) {
+                if (attempt == 1) throw error
+            } catch (error: HttpException) {
+                if (attempt == 1 || error.code() !in setOf(408, 429, 500, 502, 503, 504)) throw error
             }
             delay(1_000)
         }

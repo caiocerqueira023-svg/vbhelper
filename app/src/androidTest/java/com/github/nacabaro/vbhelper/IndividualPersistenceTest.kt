@@ -13,6 +13,7 @@ import com.github.nacabaro.vbhelper.domain.device_data.VBCharacterData
 import com.github.nacabaro.vbhelper.domain.identity.IndividualIdentity
 import com.github.nacabaro.vbhelper.domain.identity.TransferFingerprint
 import com.github.nacabaro.vbhelper.domain.identity.WatchTransfer
+import com.github.nacabaro.vbhelper.domain.digifarm.WildRelationship
 import com.github.nacabaro.vbhelper.screens.scanScreen.converters.FromNfcConverter
 import com.github.nacabaro.vbhelper.screens.scanScreen.converters.ToNfcConverter
 import com.github.nacabaro.vbhelper.source.EvolutionHistoryRepository
@@ -36,7 +37,12 @@ class IndividualPersistenceTest {
     private val individual = "00112233445566778899aa"
 
     private fun open() = Room.databaseBuilder(context, AppDatabase::class.java, name)
-        .addMigrations(AppDatabase.MIGRATION_17_18)
+        .addMigrations(
+            AppDatabase.MIGRATION_17_18,
+            AppDatabase.MIGRATION_18_19,
+            AppDatabase.MIGRATION_19_20,
+            AppDatabase.MIGRATION_20_21,
+        )
         .addCallback(IndividualIntegrity.callback).build()
 
     @Before fun setup() {
@@ -481,7 +487,7 @@ class IndividualPersistenceTest {
         assertEquals("1stmaru", db.digimonIndividualDao().getIndividual(individual)?.nickname)
         assertEquals(1, db.chatDao().getMessagesSync(individual).size)
         assertEquals(individual, db.watchTransferDao().get("old-token")?.individualId)
-        assertEquals(18, db.openHelper.writableDatabase.version)
+        assertEquals(21, db.openHelper.writableDatabase.version)
     }
 
     @Test fun missingMigrationFailsWithoutErasingCharacters() {
@@ -495,9 +501,82 @@ class IndividualPersistenceTest {
             sql.rawQuery("SELECT individualId FROM UserCharacter WHERE id=?", arrayOf(key.toString())).use {
                 assertTrue(it.moveToFirst()); assertEquals(individual, it.getString(0))
             }
-            sql.version = 18
+            sql.version = 21
         }
         db = open()
+    }
+
+    @Test fun migrationFrom20PreservesDataAndUnlocksOnlyTrustAbove75() = runBlocking {
+        val first = IndividualIdentity.generate()
+        val second = IndividualIdentity.generate()
+        seed("DigimonIndividual", mapOf("individualId" to first))
+        seed("DigimonIndividual", mapOf("individualId" to second))
+        seed("WorldSpawn", mapOf(
+            "id" to 701,
+            "individualId" to first,
+            "cardCharacterId" to 102,
+            "mood" to 75,
+            "isFollowing" to 1,
+            "recruitmentState" to "WILD",
+        ))
+        seed("WorldSpawn", mapOf(
+            "id" to 702,
+            "individualId" to second,
+            "cardCharacterId" to 103,
+            "mood" to 76,
+            "isFollowing" to 1,
+            "recruitmentState" to "WILD",
+        ))
+        val sql = db.openHelper.writableDatabase
+        listOf(
+            "FarmMessageRecipient", "FarmReadState", "FarmResident", "FarmMessage",
+            "FarmRelationship", "FarmMemory", "WildRelationship", "Farm",
+        ).forEach { sql.execSQL("DROP TABLE `$it`") }
+        sql.version = 20
+        db.close()
+
+        db = open()
+        assertEquals(21, db.openHelper.writableDatabase.version)
+        assertEquals(2, count("WildRelationship"))
+        assertNull(db.wildRelationshipDao().get(first)?.contactUnlockedAt)
+        assertNotNull(db.wildRelationshipDao().get(second)?.contactUnlockedAt)
+        db.openHelper.writableDatabase.query("SELECT COUNT(*) FROM WorldSpawn WHERE isFollowing != 0").use {
+            assertTrue(it.moveToFirst()); assertEquals(0, it.getInt(0))
+        }
+        assertEquals(0, db.openHelper.writableDatabase.query("PRAGMA foreign_key_check").use { it.count })
+    }
+
+    @Test fun wildContactUnlockIsPermanentAfterCrossing76() = runBlocking {
+        val wild = IndividualIdentity.generate()
+        val now = System.currentTimeMillis()
+        db.wildRelationshipDao().insert(WildRelationship(
+            individualId = wild,
+            cardCharacterId = 102,
+            speciesNameSnapshot = "Testmon",
+            trust = 75,
+            createdAt = now,
+            updatedAt = now,
+        ))
+        db.wildRelationshipDao().updateTrust(wild, 75, now + 1)
+        assertNull(db.wildRelationshipDao().get(wild)?.contactUnlockedAt)
+        db.wildRelationshipDao().updateTrust(wild, 76, now + 2)
+        val unlockedAt = db.wildRelationshipDao().get(wild)?.contactUnlockedAt
+        assertNotNull(unlockedAt)
+        db.wildRelationshipDao().updateTrust(wild, 0, now + 3)
+        assertEquals(unlockedAt, db.wildRelationshipDao().get(wild)?.contactUnlockedAt)
+    }
+
+    @Test fun aStoredIndividualCanLiveInOnlyOneFarmAndLeavesOnStorageDeletion() = runBlocking {
+        val characterId = store()
+        val repository = com.github.nacabaro.vbhelper.digifarm.DigifarmRepository(db)
+        val firstFarm = repository.createFarm("First")
+        val secondFarm = repository.createFarm("Second")
+        repository.addResident(firstFarm.id, characterId)
+        fails { runBlocking { repository.addResident(secondFarm.id, characterId) } }
+        assertEquals(1, count("FarmResident"))
+        db.userCharacterDao().deleteCharacterById(characterId)
+        assertEquals(0, count("FarmResident"))
+        assertNotNull(db.digimonIndividualDao().getIndividual(individual))
     }
 
     @Test fun worldRecruitmentPreservesItsOwnIdentityAndConversationUnderDoubleTap() {

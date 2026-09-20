@@ -20,6 +20,7 @@ import com.github.nacabaro.vbhelper.chat.ReactionRepository
 import com.github.nacabaro.vbhelper.chat.lorebook.LorebookRepository
 import com.github.nacabaro.vbhelper.species.SpeciesRepository
 import com.github.nacabaro.vbhelper.world.WorldRepository
+import com.github.nacabaro.vbhelper.digifarm.DigifarmRepository
 
 private const val SECRETS_DATA_STORE_NAME = "secrets.pb"
 private const val USER_PREFERENCES_NAME = "user_preferences"
@@ -69,7 +70,8 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
                 AppDatabase.MIGRATION_16_17,
                 AppDatabase.MIGRATION_17_18,
                 AppDatabase.MIGRATION_18_19,
-                AppDatabase.MIGRATION_19_20
+                AppDatabase.MIGRATION_19_20,
+                AppDatabase.MIGRATION_20_21
             )
             // Missing migrations must preserve the database, never erase individuals/chats.
             .addCallback(com.github.nacabaro.vbhelper.database.IndividualIntegrity.callback)
@@ -119,6 +121,7 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
         ChatRepository(db, llmSettingsRepository, lorebookRepository, speciesRepository)
     }
     override val worldRepository by lazy { WorldRepository(db) }
+    override val digifarmRepository by lazy { DigifarmRepository(db) }
     override val reactionRepository by lazy { ReactionRepository(db, chatRepository) }
     override val diaryService by lazy { DigimonDiaryService(db, chatRepository) }
 }

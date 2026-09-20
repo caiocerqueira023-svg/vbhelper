@@ -56,6 +56,11 @@ kotlin {
     }
 }
 
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+    arg("room.generateKotlin", "true")
+}
+
 protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:4.27.0"

@@ -112,11 +112,9 @@ import kotlin.math.sqrt
 private const val INTERACTION_RANGE_METERS = 40.0
 private const val GRID_SIZE_METERS = 60.0
 private const val RADAR_RING_INTERVAL_METERS = 200
-private const val WALK_SPEED_METERS_PER_SECOND = 0.8f
-private const val RUN_SPEED_METERS_PER_SECOND = 2.2f
 
 @Composable
-fun WorldScreen(navController: NavController) {
+fun RadarScreen(navController: NavController) {
     val context = LocalContext.current
     val resources = LocalResources.current
     val app = context.applicationContext as VBHelper
@@ -161,16 +159,11 @@ fun WorldScreen(navController: NavController) {
         }
     }
 
-    val playerMotion = when {
-        (location?.speed ?: 0f) >= RUN_SPEED_METERS_PER_SECOND -> PlayerMotion.RUN
-        (location?.speed ?: 0f) >= WALK_SPEED_METERS_PER_SECOND -> PlayerMotion.WALK
-        else -> PlayerMotion.IDLE
-    }
-    val spawnBitmaps = remember(spawns, idleFrame, playerMotion) {
+    val spawnBitmaps = remember(spawns, idleFrame) {
         spawns.mapNotNull { spawn ->
             runCatching {
                 val frame = spawn.frameFor(
-                    motion = if (spawn.isFollowing) playerMotion else PlayerMotion.IDLE,
+                    motion = PlayerMotion.IDLE,
                     frame = idleFrame
                 )
                 spawn to BitmapData(
@@ -259,26 +252,10 @@ fun WorldScreen(navController: NavController) {
                         location = newLocation
                         status = resources.getString(R.string.ui_world_radar_active)
 
-                        // Keep follow system and chat start-following in sync with GPS.
                         app.container.worldRepository.updateLastKnownLocation(
                             newLocation.latitude,
                             newLocation.longitude
                         )
-                        scope.launch {
-                            val stopped = withContext(Dispatchers.IO) {
-                                app.container.worldRepository.processFollowMovement(
-                                    newLocation.latitude,
-                                    newLocation.longitude
-                                )
-                            }
-                            if (stopped.isNotEmpty()) {
-                                Toast.makeText(
-                                    context,
-                                    resources.getString(R.string.ui_world_stopped_following_toast),
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                        }
 
                         requestSpawnRefresh(newLocation)
                     }
@@ -440,14 +417,12 @@ fun WorldScreen(navController: NavController) {
                         style = Stroke(width = 2.5f)
                     )
 
-                    if (spawns.none { it.isFollowing }) {
-                        drawCircle(
-                            color = primaryColor.copy(alpha = 0.35f),
-                            radius = interactionRadiusPx,
-                            center = playerOffset,
-                            style = Stroke(width = 3f)
-                        )
-                    }
+                    drawCircle(
+                        color = primaryColor.copy(alpha = 0.35f),
+                        radius = interactionRadiusPx,
+                        center = playerOffset,
+                        style = Stroke(width = 3f)
+                    )
 
                 }
 
@@ -569,13 +544,6 @@ fun WorldScreen(navController: NavController) {
                                         )
                                     }
                                     .size(markerSizeDp)
-                                    .then(
-                                        if (spawn.isFollowing) {
-                                            Modifier
-                                                .clip(CircleShape)
-                                                .border(3.dp, RadarFollower, CircleShape)
-                                        } else Modifier
-                                    )
                                     .combinedClickable(
                                         onClick = {
                                             if (withinRange) {

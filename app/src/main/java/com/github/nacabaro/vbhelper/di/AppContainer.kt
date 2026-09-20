@@ -12,6 +12,7 @@ import com.github.nacabaro.vbhelper.chat.DigimonDiaryService
 import com.github.nacabaro.vbhelper.chat.ReactionRepository
 import com.github.nacabaro.vbhelper.chat.lorebook.LorebookRepository
 import com.github.nacabaro.vbhelper.world.WorldRepository
+import com.github.nacabaro.vbhelper.digifarm.DigifarmRepository
 
 interface AppContainer {
     val db: AppDatabase
@@ -27,4 +28,5 @@ interface AppContainer {
     val diaryService: DigimonDiaryService
     val lorebookRepository: LorebookRepository
     val worldRepository: WorldRepository
+    val digifarmRepository: DigifarmRepository
 }

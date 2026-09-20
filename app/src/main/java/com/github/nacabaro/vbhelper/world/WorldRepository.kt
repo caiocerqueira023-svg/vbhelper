@@ -1,5 +1,6 @@
 package com.github.nacabaro.vbhelper.world
 
+import androidx.room.withTransaction
 import com.github.cfogrady.vbnfc.data.NfcCharacter
 import com.github.nacabaro.vbhelper.daos.WorldSpawnDao
 import com.github.nacabaro.vbhelper.database.AppDatabase
@@ -12,6 +13,7 @@ import com.github.nacabaro.vbhelper.domain.device_data.TransformationHistory
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityGenerator
 import com.github.nacabaro.vbhelper.domain.world.RecruitmentState
 import com.github.nacabaro.vbhelper.domain.world.WorldSpawn
+import com.github.nacabaro.vbhelper.domain.digifarm.WildRelationship
 import com.github.nacabaro.vbhelper.dtos.WorldDtos
 import com.github.nacabaro.vbhelper.domain.identity.IndividualIdentity
 import com.github.nacabaro.vbhelper.utils.DeviceType
@@ -68,7 +70,7 @@ class WorldRepository(private val db: AppDatabase) {
         spawnDao.getPendingRecruitsWithDetails()
 
     fun observeMood(individualId: String): Flow<Int?> =
-        spawnDao.observeMoodByIndividualId(individualId)
+        db.wildRelationshipDao().observeTrust(individualId)
 
     suspend fun ensureSpawns(latitude: Double, longitude: Double) {
         spawnMutex.withLock {
@@ -136,11 +138,6 @@ class WorldRepository(private val db: AppDatabase) {
                 ?: return@repeat
 
             val individualId = IndividualIdentity.generate()
-            db.digimonIndividualDao().insert(DigimonIndividual(individualId, now))
-            db.digimonIndividualDao().upsertPersonality(
-                DigimonPersonalityGenerator.generate(individualId, character.attribute, character.stage, now)
-            )
-
             // Preserve the existing eight nearby spawns. Once they are accounted for,
             // fill the outer ring visible at 50% zoom (350 m to 1 km).
             val isNearbySpawn = spawnIndex < nearbyToSpawn
@@ -153,18 +150,34 @@ class WorldRepository(private val db: AppDatabase) {
             val latOffset = distance * cos(bearing) / 111_320.0
             val lonOffset = distance * sin(bearing) / (111_320.0 * cos(Math.toRadians(latitude)).coerceAtLeast(0.1))
 
-            spawnDao.insert(
-                WorldSpawn(
-                    cardCharacterId = character.id,
-                    individualId = individualId,
-                    latitude = latitude + latOffset,
-                    longitude = longitude + lonOffset,
-                    spawnedAt = now,
-                    expiresAt = now + 30 * 60 * 1000,
-                    mood = 50,
-                    recruitmentState = RecruitmentState.WILD
+            db.withTransaction {
+                db.digimonIndividualDao().insert(DigimonIndividual(individualId, now))
+                db.digimonIndividualDao().upsertPersonality(
+                    DigimonPersonalityGenerator.generate(individualId, character.attribute, character.stage, now)
                 )
-            )
+                spawnDao.insert(
+                    WorldSpawn(
+                        cardCharacterId = character.id,
+                        individualId = individualId,
+                        latitude = latitude + latOffset,
+                        longitude = longitude + lonOffset,
+                        spawnedAt = now,
+                        expiresAt = now + 30 * 60 * 1000,
+                        mood = 50,
+                        recruitmentState = RecruitmentState.WILD
+                    )
+                )
+                db.wildRelationshipDao().insert(
+                    WildRelationship(
+                        individualId = individualId,
+                        cardCharacterId = character.id,
+                        speciesNameSnapshot = speciesNames[character.id],
+                        trust = 50,
+                        createdAt = now,
+                        updatedAt = now
+                    )
+                )
+            }
         }
     }
 
@@ -176,14 +189,12 @@ class WorldRepository(private val db: AppDatabase) {
      * cai mais rápido do que sobe (mais fácil desagradar do que agradar).
      */
     suspend fun applyWildMoodDelta(individualId: String, rawDelta: Int): Int? {
-        val spawn = spawnDao.getByIndividualId(individualId) ?: return null
+        val spawn = spawnDao.getByIndividualId(individualId)
+        val relationship = db.wildRelationshipDao().get(individualId) ?: return null
         val scaledDelta = WildMoodAnalyzer.scaleDelta(rawDelta)
-        val newMood = (spawn.mood + scaledDelta).coerceIn(0, 100)
-        spawnDao.updateMood(individualId, newMood)
-        // If mood fell below the follow threshold while following, stop immediately.
-        if (spawn.isFollowing && newMood < WorldSpawn.FOLLOW_STOP_MOOD) {
-            stopFollowing(individualId)
-        }
+        val newMood = (relationship.trust + scaledDelta).coerceIn(0, 100)
+        db.wildRelationshipDao().updateTrust(individualId, newMood, System.currentTimeMillis())
+        if (spawn != null) spawnDao.updateMood(individualId, newMood)
         return newMood
     }
 
@@ -324,6 +335,20 @@ class WorldRepository(private val db: AppDatabase) {
     suspend fun markPendingRecruitment(spawnId: Long) {
         // expiresAt bem no futuro para não ser limpo pela rotina de expiração.
         spawnDao.updateRecruitmentState(spawnId, RecruitmentState.PENDING_RECRUITMENT.name, Long.MAX_VALUE)
+        spawnDao.getSpawnById(spawnId)?.let {
+            db.wildRelationshipDao().updateRecruitmentState(
+                it.individualId, RecruitmentState.PENDING_RECRUITMENT.name, System.currentTimeMillis()
+            )
+        }
+    }
+
+    suspend fun markPendingRecruitment(individualId: String) {
+        db.wildRelationshipDao().updateRecruitmentState(
+            individualId, RecruitmentState.PENDING_RECRUITMENT.name, System.currentTimeMillis()
+        )
+        spawnDao.getByIndividualId(individualId)?.let {
+            spawnDao.updateRecruitmentState(it.id, RecruitmentState.PENDING_RECRUITMENT.name, Long.MAX_VALUE)
+        }
     }
 
     suspend fun removeSpawn(spawnId: Long) {
@@ -331,14 +356,24 @@ class WorldRepository(private val db: AppDatabase) {
     }
 
     /** Converte o spawn selvagem em um UserCharacter real, no Storage. */
-    suspend fun recruitSpawn(spawnId: Long): Result<Long> = runCatching {
+    suspend fun recruitSpawn(spawnId: Long): Result<Long> {
+        val details = spawnDao.getSpawnById(spawnId)
+            ?: return Result.failure(IllegalStateException("Spawn not found"))
+        return recruitIndividual(details.individualId)
+    }
+
+    /** Recruitment also works from an unlocked Digiline contact after its map spawn expires. */
+    suspend fun recruitIndividual(individualId: String): Result<Long> = runCatching {
         check(meetsRecruitmentRequirements()) { "Requirements not met" }
-        val details = spawnDao.getSpawnById(spawnId) ?: error("Spawn not found")
-        val cardCharacter = db.characterDao().getById(details.cardCharacterId) ?: error("Species not found")
+        val relationship = db.wildRelationshipDao().get(individualId) ?: error("Wild contact not found")
+        check(relationship.recruitmentState != RecruitmentState.RECRUITED.name) { "Already recruited" }
+        check(db.userCharacterDao().getByIndividualIdSync(individualId).isEmpty()) { "Already in Storage" }
+        val cardCharacter = db.characterDao().getById(relationship.cardCharacterId) ?: error("Species not found")
+        val spawn = spawnDao.getByIndividualId(individualId)
 
         val userCharacter = UserCharacter(
-            individualId = details.individualId,
-            charId = details.cardCharacterId,
+            individualId = individualId,
+            charId = relationship.cardCharacterId,
             ageInDays = 0,
             mood = 80,
             vitalPoints = 0,
@@ -359,9 +394,9 @@ class WorldRepository(private val db: AppDatabase) {
         // Character creation is one logical operation. In particular, HomeScreen and
         // watch export both depend on the auxiliary VB rows being present.
         var characterId = 0L
-        db.runInTransaction {
-            // Atomically claim the spawn. A double tap/concurrent recruitment cannot clone it.
-            check(spawnDao.deleteById(spawnId) == 1) { "This Digimon is no longer available in World." }
+        db.withTransaction {
+            // World/Storage exclusivity is guarded by the database trigger.
+            spawn?.let { check(spawnDao.deleteById(it.id) == 1) { "This Digimon is no longer available." } }
             characterId = db.userCharacterDao().insertCharacterData(userCharacter)
 
             db.userCharacterDao().insertVBCharacterData(
@@ -397,9 +432,10 @@ class WorldRepository(private val db: AppDatabase) {
 
             db.dexDao().insertCharacter(cardCharacter.charaIndex, cardCharacter.cardId, now)
             com.github.nacabaro.vbhelper.source.EvolutionHistoryRepository(db).repairCharacter(characterId)
-
+            db.wildRelationshipDao().updateRecruitmentState(
+                individualId, RecruitmentState.RECRUITED.name, now
+            )
         }
-
         characterId
     }
 

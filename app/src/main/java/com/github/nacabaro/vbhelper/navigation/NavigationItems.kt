@@ -118,6 +118,24 @@ sealed class NavigationItems(
         R.string.nav_chat
     )
 
+    object Digiline : NavigationItems(
+        "Digiline",
+        R.drawable.baseline_mood_24,
+        R.string.nav_digiline
+    )
+
+    object FarmGroup : NavigationItems(
+        "FarmGroup/{farmId}",
+        R.drawable.baseline_mood_24,
+        R.string.ui_digifarm_group
+    )
+
+    object WildContact : NavigationItems(
+        "WildContact/{individualId}/{cardCharacterId}",
+        R.drawable.baseline_mood_24,
+        R.string.ui_digiline_wild
+    )
+
     object WorldRecruits : NavigationItems(
         "WorldRecruits",
         R.drawable.baseline_catching_pokemon_24,

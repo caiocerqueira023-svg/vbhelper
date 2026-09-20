@@ -54,6 +54,7 @@ internal val primaryDestinations = listOf(
 )
 
 private val overflowDestinations = listOf(
+    NavigationItems.Digiline,
     NavigationItems.Items,
     NavigationItems.Battles,
     NavigationItems.Settings,

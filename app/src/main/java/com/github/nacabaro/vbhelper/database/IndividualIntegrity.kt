@@ -48,5 +48,12 @@ object IndividualIntegrity {
             WHEN NEW.individualId != OLD.individualId
             BEGIN SELECT RAISE(ABORT, 'An existing World Digimon cannot change individual identity'); END
         """.trimIndent())
+        db.execSQL("""
+            CREATE TRIGGER IF NOT EXISTS remove_farm_resident_before_storage_delete
+            BEFORE DELETE ON UserCharacter
+            BEGIN
+                DELETE FROM FarmResident WHERE individualId = OLD.individualId;
+            END
+        """.trimIndent())
     }
 }

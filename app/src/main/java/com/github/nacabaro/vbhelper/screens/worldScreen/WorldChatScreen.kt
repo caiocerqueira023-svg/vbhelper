@@ -54,7 +54,6 @@ fun WorldChatScreen(
     val resources = LocalResources.current
     val messages by controller.getHistory(individualId).collectAsState(emptyList())
     val mood by controller.observeMood(individualId).collectAsState(initial = null)
-    val isFollowing by controller.observeIsFollowing(individualId).collectAsState(initial = false)
     var input by remember { mutableStateOf("") }
     var sending by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -94,13 +93,6 @@ fun WorldChatScreen(
                         progress = { moodValue / 100f },
                         modifier = Modifier.fillMaxWidth()
                     )
-                    if (isFollowing == true) {
-                        Text(
-                            text = stringResource(R.string.ui_world_following_label),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
                 }
             }
 
@@ -250,7 +242,6 @@ fun WorldChatScreen(
             is WildChatEvent.Recruited -> stringResource(R.string.ui_world_recruited_title) to event.message
             is WildChatEvent.Pending -> stringResource(R.string.ui_world_pending_title) to event.message
             is WildChatEvent.Vanished -> stringResource(R.string.ui_world_vanished_title) to event.message
-            is WildChatEvent.StartedFollowing -> stringResource(R.string.ui_world_following_title) to event.message
             WildChatEvent.None -> return@let
         }
         AlertDialog(
@@ -276,9 +267,6 @@ fun WorldChatScreen(
                         }
                         is WildChatEvent.Pending -> {
                             Toast.makeText(context, resources.getString(R.string.ui_world_pending_toast), Toast.LENGTH_LONG).show()
-                        }
-                        is WildChatEvent.StartedFollowing -> {
-                            Toast.makeText(context, resources.getString(R.string.ui_world_following_toast), Toast.LENGTH_LONG).show()
                         }
                         WildChatEvent.None -> Unit
                     }

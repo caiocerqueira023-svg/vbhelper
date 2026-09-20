@@ -28,6 +28,8 @@ import com.github.nacabaro.vbhelper.daos.VitalWearSettingsDao
 import com.github.nacabaro.vbhelper.daos.CharacterTransferPolicyDao
 import com.github.nacabaro.vbhelper.daos.LorebookEntryDao
 import com.github.nacabaro.vbhelper.daos.WorldSpawnDao
+import com.github.nacabaro.vbhelper.daos.DigifarmDao
+import com.github.nacabaro.vbhelper.daos.WildRelationshipDao
 import com.github.nacabaro.vbhelper.companion.validation.ValidatedCardDao
 import com.github.nacabaro.vbhelper.companion.validation.ValidatedCardEntity
 import com.github.nacabaro.vbhelper.domain.card.Background
@@ -56,10 +58,18 @@ import com.github.nacabaro.vbhelper.domain.items.Items
 import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
 import com.github.nacabaro.vbhelper.domain.lorebook.LorebookEntry
 import com.github.nacabaro.vbhelper.domain.world.WorldSpawn
+import com.github.nacabaro.vbhelper.domain.digifarm.Farm
+import com.github.nacabaro.vbhelper.domain.digifarm.FarmMessage
+import com.github.nacabaro.vbhelper.domain.digifarm.FarmMessageRecipient
+import com.github.nacabaro.vbhelper.domain.digifarm.FarmReadState
+import com.github.nacabaro.vbhelper.domain.digifarm.FarmRelationship
+import com.github.nacabaro.vbhelper.domain.digifarm.FarmMemory
+import com.github.nacabaro.vbhelper.domain.digifarm.FarmResident
+import com.github.nacabaro.vbhelper.domain.digifarm.WildRelationship
 
 @Database(
-    version = 20,
-    exportSchema = false,
+    version = 21,
+    exportSchema = true,
     entities = [
         Card::class,
         CardProgress::class,
@@ -89,7 +99,15 @@ import com.github.nacabaro.vbhelper.domain.world.WorldSpawn
         DigimonPersonalityTraits::class,
         DigimonStateSnapshot::class,
         LorebookEntry::class,
-        WorldSpawn::class
+        WorldSpawn::class,
+        Farm::class,
+        FarmResident::class,
+        FarmMessage::class,
+        FarmMessageRecipient::class,
+        FarmReadState::class,
+        FarmRelationship::class,
+        FarmMemory::class,
+        WildRelationship::class
     ]
 )
 @TypeConverters(SpeciesProfileConverters::class, PersonalityConverters::class)
@@ -116,8 +134,145 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun digimonStateSnapshotDao(): DigimonStateSnapshotDao
     abstract fun lorebookEntryDao(): LorebookEntryDao
     abstract fun worldSpawnDao(): WorldSpawnDao
+    abstract fun digifarmDao(): DigifarmDao
+    abstract fun wildRelationshipDao(): WildRelationshipDao
 
     companion object {
+        val MIGRATION_20_21 = object : Migration(20, 21) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `Farm` (
+                        `id` TEXT NOT NULL,
+                        `name` TEXT NOT NULL,
+                        `mapId` TEXT NOT NULL,
+                        `mapVersion` INTEGER NOT NULL,
+                        `capacity` INTEGER NOT NULL,
+                        `createdAt` INTEGER NOT NULL,
+                        `lastSimulatedAt` INTEGER NOT NULL,
+                        `randomSeed` INTEGER NOT NULL,
+                        `cameraScale` REAL NOT NULL,
+                        `cameraX` REAL NOT NULL,
+                        `cameraY` REAL NOT NULL,
+                        `autonomousDialogueEnabled` INTEGER NOT NULL,
+                        `archivedAt` INTEGER,
+                        PRIMARY KEY(`id`)
+                    )
+                """.trimIndent())
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `FarmResident` (
+                        `individualId` TEXT NOT NULL,
+                        `farmId` TEXT NOT NULL,
+                        `positionX` REAL NOT NULL,
+                        `positionY` REAL NOT NULL,
+                        `targetX` REAL NOT NULL,
+                        `targetY` REAL NOT NULL,
+                        `facingLeft` INTEGER NOT NULL,
+                        `activity` TEXT NOT NULL,
+                        `energy` INTEGER NOT NULL,
+                        `satiety` INTEGER NOT NULL,
+                        `social` INTEGER NOT NULL,
+                        `funLevel` INTEGER NOT NULL,
+                        `activityStartedAt` INTEGER NOT NULL,
+                        `updatedAt` INTEGER NOT NULL,
+                        PRIMARY KEY(`individualId`),
+                        FOREIGN KEY(`farmId`) REFERENCES `Farm`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(`individualId`) REFERENCES `DigimonIndividual`(`individualId`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_FarmResident_farmId` ON `FarmResident` (`farmId`)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_FarmResident_individualId` ON `FarmResident` (`individualId`)")
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `FarmMessage` (
+                        `id` TEXT NOT NULL,
+                        `farmId` TEXT NOT NULL,
+                        `sequence` INTEGER NOT NULL,
+                        `type` TEXT NOT NULL,
+                        `authorIndividualId` TEXT,
+                        `authorNameSnapshot` TEXT NOT NULL,
+                        `body` TEXT NOT NULL,
+                        `audience` TEXT NOT NULL,
+                        `replyToMessageId` TEXT,
+                        `sessionId` TEXT,
+                        `timestamp` INTEGER NOT NULL,
+                        PRIMARY KEY(`id`),
+                        FOREIGN KEY(`farmId`) REFERENCES `Farm`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_FarmMessage_farmId_sequence` ON `FarmMessage` (`farmId`, `sequence`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_FarmMessage_timestamp` ON `FarmMessage` (`timestamp`)")
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `FarmMessageRecipient` (
+                        `messageId` TEXT NOT NULL,
+                        `individualId` TEXT NOT NULL,
+                        PRIMARY KEY(`messageId`, `individualId`),
+                        FOREIGN KEY(`messageId`) REFERENCES `FarmMessage`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_FarmMessageRecipient_messageId` ON `FarmMessageRecipient` (`messageId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_FarmMessageRecipient_individualId` ON `FarmMessageRecipient` (`individualId`)")
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `FarmReadState` (
+                        `farmId` TEXT NOT NULL,
+                        `lastReadSequence` INTEGER NOT NULL,
+                        PRIMARY KEY(`farmId`),
+                        FOREIGN KEY(`farmId`) REFERENCES `Farm`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `FarmRelationship` (
+                        `observerId` TEXT NOT NULL,
+                        `otherId` TEXT NOT NULL,
+                        `affinity` INTEGER NOT NULL,
+                        `familiarity` INTEGER NOT NULL,
+                        `lastInteractionAt` INTEGER NOT NULL,
+                        PRIMARY KEY(`observerId`, `otherId`)
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_FarmRelationship_otherId` ON `FarmRelationship` (`otherId`)")
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `FarmMemory` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `observerId` TEXT NOT NULL,
+                        `relatedIndividualId` TEXT,
+                        `eventId` TEXT NOT NULL,
+                        `summary` TEXT NOT NULL,
+                        `relevance` INTEGER NOT NULL,
+                        `createdAt` INTEGER NOT NULL
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_FarmMemory_observerId` ON `FarmMemory` (`observerId`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_FarmMemory_relatedIndividualId` ON `FarmMemory` (`relatedIndividualId`)")
+                db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_FarmMemory_eventId_observerId` ON `FarmMemory` (`eventId`, `observerId`)")
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `WildRelationship` (
+                        `individualId` TEXT NOT NULL,
+                        `cardCharacterId` INTEGER NOT NULL,
+                        `speciesNameSnapshot` TEXT,
+                        `trust` INTEGER NOT NULL,
+                        `contactUnlockedAt` INTEGER,
+                        `recruitmentState` TEXT NOT NULL,
+                        `createdAt` INTEGER NOT NULL,
+                        `updatedAt` INTEGER NOT NULL,
+                        PRIMARY KEY(`individualId`)
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_WildRelationship_contactUnlockedAt` ON `WildRelationship` (`contactUnlockedAt`)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS `index_WildRelationship_updatedAt` ON `WildRelationship` (`updatedAt`)")
+                db.execSQL("""
+                    INSERT OR IGNORE INTO WildRelationship(
+                        individualId, cardCharacterId, speciesNameSnapshot, trust,
+                        contactUnlockedAt, recruitmentState, createdAt, updatedAt
+                    )
+                    SELECT ws.individualId, ws.cardCharacterId, sp.speciesName, ws.mood,
+                           CASE WHEN ws.mood > 75 THEN CAST(strftime('%s','now') AS INTEGER) * 1000 ELSE NULL END,
+                           ws.recruitmentState, ws.spawnedAt, CAST(strftime('%s','now') AS INTEGER) * 1000
+                    FROM WorldSpawn ws
+                    LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = ws.cardCharacterId
+                """.trimIndent())
+                db.execSQL("UPDATE WorldSpawn SET isFollowing = 0, followLastLat = NULL, followLastLon = NULL")
+            }
+        }
+
         /** Replaces the old temperament/social-style/speech-quirk record. */
         val MIGRATION_19_20 = object : Migration(19, 20) {
             override fun migrate(db: SupportSQLiteDatabase) {

@@ -68,6 +68,8 @@ import com.github.nacabaro.vbhelper.screens.lorebookScreen.LorebookScreenControl
 import com.github.nacabaro.vbhelper.screens.worldScreen.WorldScreen
 import com.github.nacabaro.vbhelper.screens.worldScreen.WorldChatScreen
 import com.github.nacabaro.vbhelper.screens.worldScreen.WorldChatScreenControllerImpl
+import com.github.nacabaro.vbhelper.screens.digilineScreen.DigilineScreen
+import com.github.nacabaro.vbhelper.screens.digilineScreen.FarmGroupScreen
 import com.github.nacabaro.vbhelper.dtos.WorldDtos
 
 data class AppNavigationHandlers(
@@ -190,6 +192,29 @@ fun AppNavigation(
                 )
             }
             composable(NavigationItems.World.route) { WorldScreen(navController = navController) }
+            composable(NavigationItems.Digiline.route) { DigilineScreen(navController) }
+            composable(NavigationItems.FarmGroup.route) { entry ->
+                entry.arguments?.getString("farmId")?.let { FarmGroupScreen(navController, it) }
+            }
+            composable(NavigationItems.WildContact.route) { entry ->
+                val individualId = entry.arguments?.getString("individualId")
+                val cardCharacterId = entry.arguments?.getString("cardCharacterId")?.toLongOrNull()
+                if (individualId != null && cardCharacterId != null) {
+                    val context = LocalContext.current.applicationContext as VBHelper
+                    var speciesName by remember { mutableStateOf("") }
+                    LaunchedEffect(cardCharacterId) {
+                        speciesName = context.container.db.speciesProfileDao()
+                            .getByCardCharacterId(cardCharacterId)?.speciesName.orEmpty()
+                    }
+                    WorldChatScreen(
+                        navController = navController,
+                        controller = applicationNavigationHandlers.worldChatScreenController,
+                        individualId = individualId,
+                        cardCharacterId = cardCharacterId,
+                        speciesName = speciesName
+                    )
+                }
+            }
             composable(NavigationItems.WorldRecruits.route) {
                 com.github.nacabaro.vbhelper.screens.worldScreen.WorldRecruitsScreen(navController = navController)
             }

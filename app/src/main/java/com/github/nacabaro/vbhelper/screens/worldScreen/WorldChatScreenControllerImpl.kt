@@ -7,12 +7,10 @@ import com.github.nacabaro.vbhelper.chat.PromptLocalization
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.domain.chat.ChatMessageEntity
 import com.github.nacabaro.vbhelper.domain.world.RecruitmentState
-import com.github.nacabaro.vbhelper.domain.world.WorldSpawn
 import com.github.nacabaro.vbhelper.world.WildMoodAnalyzer
 import com.github.nacabaro.vbhelper.world.WorldRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 sealed class WildChatEvent {
@@ -20,8 +18,6 @@ sealed class WildChatEvent {
     data class Recruited(val message: String) : WildChatEvent()
     data class Pending(val message: String) : WildChatEvent()
     data class Vanished(val message: String) : WildChatEvent()
-    /** Digimon started following after the first message raised mood. */
-    data class StartedFollowing(val message: String) : WildChatEvent()
 }
 
 class WorldChatScreenControllerImpl(
@@ -37,9 +33,6 @@ class WorldChatScreenControllerImpl(
     fun observeMood(individualId: String): Flow<Int?> =
         worldRepository.observeMood(individualId)
 
-    fun observeIsFollowing(individualId: String): Flow<Boolean?> =
-        worldRepository.observeIsFollowing(individualId)
-
     fun markInteracted(individualId: String) {
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
             worldRepository.markInteractedByIndividual(individualId)
@@ -54,38 +47,19 @@ class WorldChatScreenControllerImpl(
     ) {
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
             val result = runCatching {
-                // Detect first exchange before inserting the new messages.
-                val priorMessages = chatRepository.getHistoryForIndividual(individualId).first()
-                val isFirstMessage = priorMessages.isEmpty()
-
                 val chatResult = chatRepository.sendMessageForWildEncounter(individualId, cardCharacterId, text)
                 val delta = WildMoodAnalyzer.resolveDelta(text, chatResult.reply, chatResult.moodDelta)
-                val scaledDelta = WildMoodAnalyzer.scaleDelta(delta)
                 val newMood = worldRepository.applyWildMoodDelta(individualId, delta)
                     ?: return@runCatching WildChatEvent.None
                 val spawn = worldRepository.getSpawnEntityByIndividualId(individualId)
-                    ?: return@runCatching WildChatEvent.None
-
-                if (spawn.recruitmentState != RecruitmentState.WILD) {
+                if (spawn != null && spawn.recruitmentState != RecruitmentState.WILD) {
                     return@runCatching WildChatEvent.None
                 }
 
                 val languageTag = PromptLocalization.currentLanguageTag()
 
-                // Activate temporary following when the first message raised mood.
-                var startedFollowing = false
-                if (isFirstMessage && scaledDelta > 0 && !spawn.isFollowing &&
-                    newMood >= WorldSpawn.FOLLOW_STOP_MOOD
-                ) {
-                    val lat = worldRepository.lastKnownLatitude
-                    val lon = worldRepository.lastKnownLongitude
-                    if (lat != null && lon != null) {
-                        startedFollowing = worldRepository.startFollowing(individualId, lat, lon)
-                    }
-                }
-
                 when {
-                    newMood <= 0 -> {
+                    newMood <= 0 && spawn != null -> {
                         val farewell = chatRepository.triggerReactionForWildEncounter(
                             individualId, cardCharacterId,
                             PromptLocalization.wildMoodZeroInstruction(languageTag)
@@ -100,14 +74,14 @@ class WorldChatScreenControllerImpl(
                             PromptLocalization.wildMoodMaxedInstruction(languageTag, requirementsMet)
                         )
                         if (requirementsMet) {
-                            worldRepository.recruitSpawn(spawn.id)
+                            if (spawn != null) worldRepository.recruitSpawn(spawn.id)
+                            else worldRepository.recruitIndividual(individualId)
                             WildChatEvent.Recruited(joinMessage)
                         } else {
-                            worldRepository.markPendingRecruitment(spawn.id)
+                            worldRepository.markPendingRecruitment(individualId)
                             WildChatEvent.Pending(joinMessage)
                         }
                     }
-                    startedFollowing -> WildChatEvent.StartedFollowing(chatResult.reply)
                     else -> WildChatEvent.None
                 }
             }
