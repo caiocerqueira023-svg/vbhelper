@@ -417,6 +417,8 @@
     <string name="widget_digimon_label">デジモン</string>
     <string name="settings_section_appearance">外観</string>
     <string name="settings_font_title">アプリのフォント</string>
+    <string name="settings_tron_title">デジファーム・ワイヤーフレーム</string>
+    <string name="settings_tron_desc">紫の水の上にシアンの線で描かれた黒い島とスタジアム</string>
     <string name="nav_digiline">デジライン</string>
     <string name="ui_world_radar_tab">レーダー</string>
     <string name="ui_digifarm_tab">デジファーム</string>

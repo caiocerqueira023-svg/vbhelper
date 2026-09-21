@@ -114,6 +114,12 @@ fun Digifarm3dViewport(
             (container.getChildAt(0) as? Digifarm3dSceneView)?.releaseScene()
             container.removeAllViews()
         },
+        update = { container ->
+            // Toggle path (e.g. wireframe on/off): hot-swap inside the live
+            // Engine. Recreating the whole GL view here crashed on devices.
+            (container.getChildAt(0) as? Digifarm3dSceneView)
+                ?.switchAsset(assetName, onAssetError)
+        },
     )
 }
 
@@ -230,6 +236,28 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
 
     fun loadAsset(assetName: String, onAssetError: ((String) -> Unit)? = null) {
         if (released) return
+        loadGen += 1
+        launchLoad(assetName, loadGen, onAssetError)
+    }
+
+    /**
+     * Hot-swaps the map scene inside the live Engine (wireframe toggle).
+     * Resident billboards live in separate assets and survive the swap, so
+     * the GL view/Engine is never torn down mid-session here.
+     */
+    fun switchAsset(assetName: String, onAssetError: ((String) -> Unit)? = null) {
+        if (released) return
+        if (assetName == loadedAssetName && viewer.asset != null) return
+        runCatching { viewer.destroyModel() }
+        loadGen += 1
+        launchLoad(assetName, loadGen, onAssetError)
+    }
+
+    private var loadedAssetName: String? = null
+    private var loadGen = 0
+
+    private fun launchLoad(assetName: String, gen: Int, onAssetError: ((String) -> Unit)? = null) {
+        if (released) return
         Log.i(logTag, "Starting Digifarm asset load: $assetName")
         // GLB is self-contained. Copying into a direct buffer lets Filament
         // retain the source bytes while the asset loader resolves textures.
@@ -266,34 +294,36 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
                 .put(bytes)
                 .apply { flip() }
             post {
-                if (!released) {
-                    runCatching {
-                        viewer.loadModelGlb(buffer)
-                        check(viewer.asset != null) {
-                            "Filament returned no model for $assetName (${bytes.size} bytes)"
-                        }
-                        // The GLB is exported in canonical coordinates
-                        // (island ~1.9 wide, top at y=0). Never rescale it at
-                        // runtime: transformToUnitCube would frame the water
-                        // plane instead of the island and desync every
-                        // resident position.
-                        viewer.clearRootTransform()
-                        Log.i(logTag, "Digifarm asset loaded: $assetName (${bytes.size} bytes)")
-                    }.onFailure { failure ->
-                        Log.e(logTag, "Could not load Digifarm asset $assetName", failure)
-                        onAssetError?.invoke(
-                            describeDigifarmFailure(
-                                failure,
-                                "Digifarm 3D asset could not be loaded"
-                            )
+                // Stale loads (superseded by a toggle) are dropped; only the
+                // latest generation may touch the viewer.
+                if (released || gen != loadGen) return@post
+                runCatching {
+                    viewer.loadModelGlb(buffer)
+                    check(viewer.asset != null) {
+                        "Filament returned no model for $assetName (${bytes.size} bytes)"
+                    }
+                    // The GLB is exported in canonical coordinates
+                    // (island ~1.9 wide, top at y=0). Never rescale it at
+                    // runtime: transformToUnitCube would frame the water
+                    // plane instead of the island and desync every
+                    // resident position.
+                    viewer.clearRootTransform()
+                    loadedAssetName = assetName
+                    Log.i(logTag, "Digifarm asset loaded: $assetName (${bytes.size} bytes)")
+                }.onFailure { failure ->
+                    Log.e(logTag, "Could not load Digifarm asset $assetName", failure)
+                    onAssetError?.invoke(
+                        describeDigifarmFailure(
+                            failure,
+                            "Digifarm 3D asset could not be loaded"
                         )
-                    }
-                    template?.let { residentTemplate = it }
-                    if (pendingFrames.isNotEmpty()) {
-                        val pending = pendingFrames
-                        pendingFrames = emptyList()
-                        setResidentFrames(pending)
-                    }
+                    )
+                }
+                template?.let { residentTemplate = it }
+                if (pendingFrames.isNotEmpty()) {
+                    val pending = pendingFrames
+                    pendingFrames = emptyList()
+                    setResidentFrames(pending)
                 }
             }
         }.start()
@@ -397,6 +427,12 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
             // isometric instead of wide-angle perspective. Applied here (not
             // in init) because a 0x0 viewport would produce a NaN aspect.
             viewer.cameraFocalLength = DIGIFARM_FOCAL_MM
+            // Tight depth range for the 2-unit farm: the default 0.05/1000
+            // ratio starves precision and makes close layers (sprite grout,
+            // stadium bases) shimmer. Nothing is nearer than ~0.6 or
+            // farther than ~8 from the camera.
+            viewer.cameraNear = DIGIFARM_NEAR
+            viewer.cameraFar = DIGIFARM_FAR
         }
     }
 
@@ -463,7 +499,10 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
                     if (di >= 0) {
                         val x = event.getX(di)
                         val y = event.getY(di)
-                        camYaw -= (x - lastX) * YAW_GAIN
+                        // Horizontal orbit locked to the modeled side: full
+                        // spins would show unfinished backsides.
+                        camYaw = (camYaw - (x - lastX) * YAW_GAIN)
+                            .coerceIn(YAW_MIN, YAW_MAX)
                         camPitch = (camPitch + (y - lastY) * PITCH_GAIN)
                             .coerceIn(PITCH_MIN, PITCH_MAX)
                         lastX = x
@@ -734,7 +773,9 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
             Matrix.setIdentityM(tmpMat, 0)
             Matrix.translateM(tmpMat, 0, entry.worldX, 0f, entry.worldZ)
             Matrix.rotateM(tmpMat, 0, Math.toDegrees(yaw.toDouble()).toFloat(), 0f, 1f, 0f)
-            Matrix.scaleM(tmpMat, 0, worldW, worldH, 1f)
+            // Z shares the sprite width so the contact-shadow blob underneath
+            // stays proportional (it lives in the XZ plane).
+            Matrix.scaleM(tmpMat, 0, worldW, worldH, worldW)
             runCatching {
                 val instance = tm.getInstance(entry.asset.root)
                 if (instance != 0) tm.setTransform(instance, tmpMat)
@@ -796,6 +837,8 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
 
         /** Flattened lens for the oblique 2.5D look (default ModelViewer is 28mm). */
         private const val DIGIFARM_FOCAL_MM = 50f
+        private const val DIGIFARM_NEAR = 0.5f
+        private const val DIGIFARM_FAR = 20f
 
         /** Resident sprite height in world units; the island is ~1.9 wide. */
         private const val RESIDENT_HEIGHT = 0.13f
@@ -810,7 +853,10 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
         private const val HOME_YAW = 0f
         private const val HOME_PITCH = 0.64f
         private const val HOME_DIST = 3.86f
-        private const val PITCH_MIN = 0.42f
+        // Yaw locked around home: only the modeled side is shown.
+        private const val YAW_MIN = -0.65f
+        private const val YAW_MAX = 0.65f
+        private const val PITCH_MIN = 0.52f
         private const val PITCH_MAX = 1.10f
         private const val DIST_MIN = 1.2f
         private const val DIST_MAX = 4.8f

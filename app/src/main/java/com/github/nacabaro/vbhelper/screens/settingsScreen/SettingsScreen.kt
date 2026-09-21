@@ -68,6 +68,7 @@ fun SettingsScreen(
     val showPromptTemplateDialog by settingsScreenController.showPromptTemplateDialog.collectAsState()
     val showWildPromptTemplateDialog by settingsScreenController.showWildPromptTemplateDialog.collectAsState()
     val promptOriginAtImport by settingsScreenController.promptOriginAtImportTime.collectAsState(initial = false)
+    val tronWireframe by settingsScreenController.digifarmTronWireframe.collectAsState(initial = false)
     val currentLanguage by settingsScreenController.currentLanguage.collectAsState()
     val currentFont by settingsScreenController.currentFont.collectAsState()
     var showLanguageDialog by remember { mutableStateOf(false) }
@@ -114,6 +115,23 @@ fun SettingsScreen(
                 description = currentFont.displayName
             ) {
                 showFontDialog = true
+            }
+            Row(
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().padding(16.dp)
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(stringResource(R.string.settings_tron_title))
+                    Text(
+                        stringResource(R.string.settings_tron_desc),
+                        fontSize = 12.sp,
+                        color = VitalCyan
+                    )
+                }
+                Switch(
+                    checked = tronWireframe,
+                    onCheckedChange = settingsScreenController::setDigifarmTronWireframe
+                )
             }
 
             SettingsSection(title = "Audio")

@@ -14,6 +14,7 @@ class SpeciesSettingsRepository(private val dataStore: DataStore<Preferences>) {
         val SPECIES_DATABASE_JSON = stringPreferencesKey("species_db_json_cache")
         val SPECIES_DATABASE_VERSION = intPreferencesKey("species_db_version")
         val PROMPT_ORIGIN_AT_IMPORT_TIME = booleanPreferencesKey("species_prompt_at_import_time")
+        val DIGIFARM_TRON_WIREFRAME = booleanPreferencesKey("digifarm_tron_wireframe")
     }
 
     val cachedDatabaseJson: Flow<String?> = dataStore.data.map { it[SPECIES_DATABASE_JSON] }
@@ -21,9 +22,16 @@ class SpeciesSettingsRepository(private val dataStore: DataStore<Preferences>) {
     val promptOriginAtImportTime: Flow<Boolean> = dataStore.data.map {
         it[PROMPT_ORIGIN_AT_IMPORT_TIME] ?: false
     }
+    val digifarmTronWireframe: Flow<Boolean> = dataStore.data.map {
+        it[DIGIFARM_TRON_WIREFRAME] ?: false
+    }
 
     suspend fun setPromptOriginAtImportTime(value: Boolean) {
         dataStore.edit { it[PROMPT_ORIGIN_AT_IMPORT_TIME] = value }
+    }
+
+    suspend fun setDigifarmTronWireframe(value: Boolean) {
+        dataStore.edit { it[DIGIFARM_TRON_WIREFRAME] = value }
     }
 
     suspend fun cacheDatabase(json: String, version: Int) {

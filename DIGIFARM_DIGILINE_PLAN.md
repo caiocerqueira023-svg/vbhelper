@@ -372,3 +372,59 @@ Documentação consultada: [Compose — gestos de zoom e deslocamento](https://d
 Ao receber autorização de implementação: ler este documento, conferir estado do repositório e diretrizes locais, preservar alterações existentes, começar pela etapa 1 e seguir os critérios de saída. Não reabrir decisões já confirmadas pelo usuário. Pendências de medição do tile, recortes e ajuste de desempenho são trabalho técnico previsto, não motivo para inventar dimensões ou encerrar a implementação parcialmente.
 
 Ao concluir a implementação, entregar resumo de arquivos/funcionalidades, resultado dos testes, evidência visual em aparelho e qualquer lacuna real.
+
+## 22. Registro de implementação realizada
+
+Data: 20/09/2026. Este registro documenta as alterações feitas nesta sequência de trabalho. Alterações preexistentes de outras tarefas do checkout não foram sobrescritas nem atribuídas a esta implementação.
+
+### 22.1 World, Radar e Digifarm
+
+- O contêiner World passou a tratar Radar e Digifarm como subabas irmãs, preservando a identidade visual existente.
+- As subabas de World/Digifarm usam `PrimaryTabRow` contínuo, sem divisor rígido, com indicador inferior ciano e espaçamento lateral seguindo o padrão da aba Itens.
+- Radar e Digifarm passaram a consumir somente o inset superior do status bar nos `Scaffold`s aninhados, evitando o espaço inferior duplicado causado pela navegação principal.
+- A viewport 3D da Digifarm foi alinhada ao Radar: largura completa, proporção quadrada, borda/recorte e tratamento visual equivalentes.
+- A camada escura extra que cobria o fundo da Digifarm foi removida; o fundo animado existente voltou a permanecer visível atrás da cena.
+- Os controles visíveis de zoom e o botão `Fit` foram removidos da interface. A câmera continua aceitando o gesto de pinça e mantém o estado persistido.
+- Ao iniciar um gesto dentro da viewport 3D, o `TextureView` impede que o scroll vertical externo roube o toque; ao terminar/cancelar, a interceptação é liberada.
+- A lista de moradores foi movida para depois da viewport e recebeu altura explícita para não desaparecer nem deixar um espaço vazio.
+- O painel de grupo da Digifarm foi reorganizado para manter as ações principais, a lista de moradores e o composer sem sobreposição visual.
+
+Arquivos principais: `screens/worldScreen/WorldHubScreen.kt`, `screens/worldScreen/WorldScreen.kt`, `screens/digifarmScreen/DigifarmScreen.kt` e `screens/digifarmScreen/Digifarm3dViewport.kt`.
+
+### 22.2 Seletor de Digimon baseado no Storage
+
+- Foi criado `screens/storageScreen/StorageCharacterPicker.kt`, um seletor reutilizável com a mesma linguagem visual do Storage.
+- O seletor inclui pesquisa por nome/atributo/estágio, filtros `Todos`, `Favoritos`, `Ativo`, `VB` e `BE`, ordenação por recentes/nome/vitais/estágio, contador, grid de cards, estados de carregamento e estados vazios.
+- Os cards mantêm sprites animados, vitais, favoritos, formato quadrado e a paleta do Storage.
+- O fluxo de usar item (`ChooseCharacterScreen`) passou a abrir esse seletor completo, preservando a restrição de compatibilidade: itens BE continuam mostrando personagens BE e itens VB/missões especiais continuam mostrando personagens VB.
+- O fluxo de adicionar morador à Digifarm deixou o diálogo simples e passou a abrir o seletor em tela cheia. Moradores já presentes continuam excluídos, e o seletor entra em carregamento durante a operação para evitar toques duplicados.
+- O texto de ausência de Digimon compatível com item foi localizado em inglês, português do Brasil e japonês.
+
+Arquivos principais: `screens/storageScreen/StorageCharacterPicker.kt`, `screens/storageScreen/StorageScreen.kt`, `screens/itemsScreen/ChooseCharacterScreen.kt`, `screens/digifarmScreen/DigifarmScreen.kt` e os três `strings.xml`.
+
+### 22.3 Digiline e grupo da Digifarm
+
+- As abas Storage/Wild Ones/Digifarm foram movidas para o topo junto do `TopBanner` e alinhadas ao padrão de Itens/World: `PrimaryTabRow`, fundo contínuo, sem divisor padrão e indicador ciano desenhado no próprio `Tab`.
+- O `Scaffold` da Digiline passou a usar somente `WindowInsets.statusBars`, eliminando o gap inferior adicional sobre a barra de navegação principal.
+- As linhas de conversa passaram a usar painéis angulares roxos com borda discreta, avatar de 48dp ou placeholder, preview com truncamento e badge de não lidas em ciano.
+- Estados vazios da Digiline receberam cor secundária consistente com o restante do tema.
+- O grupo da fazenda deixou de aplicar padding inferior desnecessário; a área de mensagens e o composer ocupam corretamente o espaço disponível.
+- Os chips de moradores foram centralizados verticalmente e as bolhas de mensagens passaram a usar superfícies angulares, bordas semânticas e cores distintas para mensagens do Tamer e dos moradores.
+- O composer do grupo foi mantido em uma linha, alinhado ao botão de envio, com indicador de carregamento durante o envio.
+- A lógica de repositório, seleção de destinatários, leitura, geração autônoma e envio não foi alterada; as mudanças deste bloco são de composição e feedback visual.
+
+Arquivos principais: `screens/digilineScreen/DigilineScreen.kt` e `screens/digilineScreen/FarmGroupScreen.kt`.
+
+### 22.4 Ícone do aplicativo
+
+- A imagem fornecida pelo usuário foi copiada sem alteração para `app/src/main/res/mipmap-nodpi/vbhelper_app_icon.png`.
+- `AndroidManifest.xml` agora usa `@mipmap/vbhelper_app_icon` tanto em `android:icon` quanto em `android:roundIcon`, substituindo a referência aos ícones adaptativos antigos para que o launcher use exatamente a arte fornecida.
+- O hash SHA-256 do arquivo copiado foi comparado com o arquivo temporário original e ficou idêntico.
+
+### 22.5 Validação realizada
+
+- `./gradlew.bat :app:compileDebugKotlin` passou após as alterações de UI e do seletor.
+- `./gradlew.bat :app:assembleDebug` passou após a integração final do ícone e das alterações da Digiline.
+- APK gerado em `app/build/outputs/apk/debug/app-debug.apk`.
+- `git diff --check` não encontrou erros de whitespace; os avisos restantes são apenas de normalização LF/CRLF do checkout Windows.
+- Durante a etapa anterior da Digifarm, foram observados no aparelho conectado o viewport quadrado, a lista de moradores e o bloqueio do scroll externo ao arrastar dentro da cena. Após a orientação do usuário para reduzir a dependência de ADB, as rodadas posteriores foram validadas por inspeção de código e build, sem nova instalação/captura ADB.

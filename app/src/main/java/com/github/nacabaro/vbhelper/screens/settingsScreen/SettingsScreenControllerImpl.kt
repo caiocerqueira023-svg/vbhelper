@@ -60,6 +60,7 @@ class SettingsScreenControllerImpl(
     val currentTamerName: Flow<String> = llmSettingsRepository.tamerName
     private val speciesSettingsRepository: SpeciesSettingsRepository = application.container.speciesSettingsRepository
     val promptOriginAtImportTime: Flow<Boolean> = speciesSettingsRepository.promptOriginAtImportTime
+    val digifarmTronWireframe: Flow<Boolean> = speciesSettingsRepository.digifarmTronWireframe
 
     private val _showLlmDialog = MutableStateFlow(false)
     val showLlmDialog: StateFlow<Boolean> = _showLlmDialog
@@ -210,6 +211,12 @@ class SettingsScreenControllerImpl(
     fun setPromptOriginAtImportTime(value: Boolean) {
         context.lifecycleScope.launch(Dispatchers.IO) {
             speciesSettingsRepository.setPromptOriginAtImportTime(value)
+        }
+    }
+
+    fun setDigifarmTronWireframe(value: Boolean) {
+        context.lifecycleScope.launch(Dispatchers.IO) {
+            speciesSettingsRepository.setDigifarmTronWireframe(value)
         }
     }
 

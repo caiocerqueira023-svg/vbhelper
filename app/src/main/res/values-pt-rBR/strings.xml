@@ -484,6 +484,8 @@
     <string name="widget_digimon_label">Digimon</string>
     <string name="settings_section_appearance">Aparência</string>
     <string name="settings_font_title">Fonte do app</string>
+    <string name="settings_tron_title">Digifarm wireframe</string>
+    <string name="settings_tron_desc">Ilha e estádios pretos com linhas ciano sobre água roxa</string>
     <string name="nav_digiline">Digiline</string>
     <string name="ui_world_radar_tab">Radar</string>
     <string name="ui_digifarm_tab">Digifarm</string>

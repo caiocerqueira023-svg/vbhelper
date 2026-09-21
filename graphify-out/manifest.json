@@ -1,0 +1,1898 @@
+{
+  "app/src/main/java/com/github/cfogrady/vitalwear/common/data/SharedDatabaseFactory.kt": {
+    "mtime": 1788983347.9681728,
+    "seen": 1789997585.019551,
+    "ast_hash": "2c1d1d735b290832a16cdcdf82e43e8a",
+    "semantic_hash": "2c1d1d735b290832a16cdcdf82e43e8a"
+  },
+  "app/src/main/java/com/github/cfogrady/vitalwear/common/data/SharedTransferDatabase.kt": {
+    "mtime": 1788983347.9544778,
+    "seen": 1789997585.01956,
+    "ast_hash": "a7f41ff35394ef06d564650841e09538",
+    "semantic_hash": "a7f41ff35394ef06d564650841e09538"
+  },
+  "app/src/main/java/com/github/cfogrady/vitalwear/common/data/SharedTransferSeenDao.kt": {
+    "mtime": 1788983347.9610028,
+    "seen": 1789997585.0195649,
+    "ast_hash": "3579d2ef0ae465bc3ed82d9db78d1ec4",
+    "semantic_hash": "3579d2ef0ae465bc3ed82d9db78d1ec4"
+  },
+  "app/src/main/java/com/github/cfogrady/vitalwear/common/data/SharedTransferSeenEntity.kt": {
+    "mtime": 1788983347.947892,
+    "seen": 1789997585.0195673,
+    "ast_hash": "75c1a40e3e313b106688ddf81217590d",
+    "semantic_hash": "75c1a40e3e313b106688ddf81217590d"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/ActivityLifecycleListener.kt": {
+    "mtime": 1788983346.3267102,
+    "seen": 1789997585.0195699,
+    "ast_hash": "232f9db7fe61cbdf526ba265b86cfe42",
+    "semantic_hash": "232f9db7fe61cbdf526ba265b86cfe42"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/MainActivity.kt": {
+    "mtime": 1789317752.774186,
+    "seen": 1789997585.0195718,
+    "ast_hash": "6bdc8da5c319683170ed2041d415233e",
+    "semantic_hash": "6bdc8da5c319683170ed2041d415233e"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/audio/AppMusicController.kt": {
+    "mtime": 1789846600.055293,
+    "seen": 1789997585.0195742,
+    "ast_hash": "360bedebb6f76a505680e1ac14d07d4d",
+    "semantic_hash": "360bedebb6f76a505680e1ac14d07d4d"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/APIBattleCharacter.kt": {
+    "mtime": 1788983346.621183,
+    "seen": 1789997585.0195763,
+    "ast_hash": "a86011a0721689ee281f61a57f3e2e82",
+    "semantic_hash": "a86011a0721689ee281f61a57f3e2e82"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/AnimatedSpriteImage.kt": {
+    "mtime": 1788983346.651864,
+    "seen": 1789997585.0195777,
+    "ast_hash": "5177a958829c9a7f28dc82eb446b6bcd",
+    "semantic_hash": "5177a958829c9a7f28dc82eb446b6bcd"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/ArenaBattleSystem.kt": {
+    "mtime": 1788983346.6923485,
+    "seen": 1789997585.0195804,
+    "ast_hash": "9959b56b940b0bbbacf060099f12d8dc",
+    "semantic_hash": "9959b56b940b0bbbacf060099f12d8dc"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/AssetAudioPlayer.kt": {
+    "mtime": 1789846384.3211741,
+    "seen": 1789997585.019582,
+    "ast_hash": "0aeca7e5502f66e9cee7c9fe7c69f811",
+    "semantic_hash": "0aeca7e5502f66e9cee7c9fe7c69f811"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/AttackSpriteManager.kt": {
+    "mtime": 1789846792.5400157,
+    "seen": 1789997585.0195844,
+    "ast_hash": "dc85ae76a9a665ea915bf9f39d4c58ff",
+    "semantic_hash": "dc85ae76a9a665ea915bf9f39d4c58ff"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/AuthInterceptor.kt": {
+    "mtime": 1788983346.6588707,
+    "seen": 1789997585.0195866,
+    "ast_hash": "4ada72cd8bfc77183c45cdb989386745",
+    "semantic_hash": "4ada72cd8bfc77183c45cdb989386745"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/AuthService.kt": {
+    "mtime": 1788983346.703314,
+    "seen": 1789997585.019588,
+    "ast_hash": "0b5821111f9a192e19e77eb9c6ad17c4",
+    "semantic_hash": "0b5821111f9a192e19e77eb9c6ad17c4"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/AuthenticateRequest.kt": {
+    "mtime": 1788983346.633202,
+    "seen": 1789997585.01959,
+    "ast_hash": "f3163c8d5c9006eab190aefd716825a5",
+    "semantic_hash": "f3163c8d5c9006eab190aefd716825a5"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/AuthenticateResponse.kt": {
+    "mtime": 1788983346.6456902,
+    "seen": 1789997585.0195916,
+    "ast_hash": "3c49e02ee1a6bb2ff27fcdde1930e538",
+    "semantic_hash": "3c49e02ee1a6bb2ff27fcdde1930e538"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/BattleAssetPaths.kt": {
+    "mtime": 1789844018.344789,
+    "seen": 1789997585.0195937,
+    "ast_hash": "876c53ea23cab8c09e35cb165bacbc73",
+    "semantic_hash": "876c53ea23cab8c09e35cb165bacbc73"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/BattleAuthContainer.kt": {
+    "mtime": 1788983346.6389494,
+    "seen": 1789997585.0195951,
+    "ast_hash": "2552795471b5dcde3353cc3a8008d93b",
+    "semantic_hash": "2552795471b5dcde3353cc3a8008d93b"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/BattleSpriteManager.kt": {
+    "mtime": 1788983346.601225,
+    "seen": 1789997585.019597,
+    "ast_hash": "dd76a7492ca785db372858c08b874a64",
+    "semantic_hash": "dd76a7492ca785db372858c08b874a64"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/DatabaseSpriteImage.kt": {
+    "mtime": 1789844546.8117814,
+    "seen": 1789997585.0195985,
+    "ast_hash": "60ad4bc31f95cbadff79842f63b78678",
+    "semantic_hash": "60ad4bc31f95cbadff79842f63b78678"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/DigimonAnimationState.kt": {
+    "mtime": 1788983346.7165806,
+    "seen": 1789997585.0196002,
+    "ast_hash": "3ebb8d11a7047872f594c90a954b1ea7",
+    "semantic_hash": "3ebb8d11a7047872f594c90a954b1ea7"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/HitEffectComposables.kt": {
+    "mtime": 1788983346.6860738,
+    "seen": 1789997585.0196018,
+    "ast_hash": "5801484b1ebd14d217fbe49f82b9c75e",
+    "semantic_hash": "5801484b1ebd14d217fbe49f82b9c75e"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/HitEffectSpriteManager.kt": {
+    "mtime": 1789844057.5558412,
+    "seen": 1789997585.0196047,
+    "ast_hash": "27c9485b6374880402651c3e70990c1f",
+    "semantic_hash": "27c9485b6374880402651c3e70990c1f"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/IndividualSpriteManager.kt": {
+    "mtime": 1789844036.2187839,
+    "seen": 1789997585.0196066,
+    "ast_hash": "adc2487f6eefd8403f623c57a038ea30",
+    "semantic_hash": "adc2487f6eefd8403f623c57a038ea30"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/OpponentService.kt": {
+    "mtime": 1788983346.59467,
+    "seen": 1789997585.0196083,
+    "ast_hash": "ca1dc48200d94715f1f0eb985dd95dcb",
+    "semantic_hash": "ca1dc48200d94715f1f0eb985dd95dcb"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/OpponentsDataModel.kt": {
+    "mtime": 1788983346.6800175,
+    "seen": 1789997585.01961,
+    "ast_hash": "02fc9a84c89ea0ddee9dc311b7cef172",
+    "semantic_hash": "02fc9a84c89ea0ddee9dc311b7cef172"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/PVPDataModel.kt": {
+    "mtime": 1788983346.6732,
+    "seen": 1789997585.0196114,
+    "ast_hash": "f532c94b08b33b80b733292e8727699a",
+    "semantic_hash": "f532c94b08b33b80b733292e8727699a"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/PVPService.kt": {
+    "mtime": 1788983346.7106307,
+    "seen": 1789997585.0196133,
+    "ast_hash": "d33d824c2ffedae37c76149a1fff211a",
+    "semantic_hash": "d33d824c2ffedae37c76149a1fff211a"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/RetrofitHelper.kt": {
+    "mtime": 1789314371.8053348,
+    "seen": 1789997585.019615,
+    "ast_hash": "e2d344e142048153e9c3299f4fd891bf",
+    "semantic_hash": "e2d344e142048153e9c3299f4fd891bf"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/SpriteFileManager.kt": {
+    "mtime": 1788983346.6651545,
+    "seen": 1789997585.0196166,
+    "ast_hash": "617a21890a0be5f9210ce1325a1912e0",
+    "semantic_hash": "617a21890a0be5f9210ce1325a1912e0"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/battle/SpriteImage.kt": {
+    "mtime": 1788983346.698536,
+    "seen": 1789997585.019618,
+    "ast_hash": "16df4116c30457a7fbb235effc1178ae",
+    "semantic_hash": "16df4116c30457a7fbb235effc1178ae"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/chat/ChatApiProvider.kt": {
+    "mtime": 1789253414.9442453,
+    "seen": 1789997585.01962,
+    "ast_hash": "3c76f779224898cd40533bb0d33aaad4",
+    "semantic_hash": "3c76f779224898cd40533bb0d33aaad4"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/chat/ChatRepository.kt": {
+    "mtime": 1789872656.4208746,
+    "seen": 1789997585.0196214,
+    "ast_hash": "5a52293891b7302f41bc176f4d0fdb43",
+    "semantic_hash": "5a52293891b7302f41bc176f4d0fdb43"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/chat/DigimonDiaryService.kt": {
+    "mtime": 1788983346.345575,
+    "seen": 1789997585.0196233,
+    "ast_hash": "e007287411fdc4a3a90d163e0888f24f",
+    "semantic_hash": "e007287411fdc4a3a90d163e0888f24f"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/chat/DigimonPersonaBuilder.kt": {
+    "mtime": 1789854221.1258194,
+    "seen": 1789997585.0196247,
+    "ast_hash": "b3ab2d03b49f6914757adc1edd36b145",
+    "semantic_hash": "b3ab2d03b49f6914757adc1edd36b145"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/chat/OpenRouterClient.kt": {
+    "mtime": 1789254186.6762147,
+    "seen": 1789997585.0196261,
+    "ast_hash": "35acced94bad83567a0db52474480d70",
+    "semantic_hash": "35acced94bad83567a0db52474480d70"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/chat/OpenRouterModels.kt": {
+    "mtime": 1789254186.674977,
+    "seen": 1789997585.019628,
+    "ast_hash": "24eb30f00ca7f02b9224eadb77f331f4",
+    "semantic_hash": "24eb30f00ca7f02b9224eadb77f331f4"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/chat/OpenRouterService.kt": {
+    "mtime": 1789224894.120391,
+    "seen": 1789997585.0196307,
+    "ast_hash": "1cae017d150e3b2004467047417f412b",
+    "semantic_hash": "1cae017d150e3b2004467047417f412b"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/chat/PromptLocalization.kt": {
+    "mtime": 1789854212.861942,
+    "seen": 1789997585.0196338,
+    "ast_hash": "1ada79c94f67a79ed129996bc874e297",
+    "semantic_hash": "1ada79c94f67a79ed129996bc874e297"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/chat/ReactionRepository.kt": {
+    "mtime": 1788983346.3788729,
+    "seen": 1789997585.0196376,
+    "ast_hash": "038ff3f07a7a3471fb17ccbd8f762978",
+    "semantic_hash": "038ff3f07a7a3471fb17ccbd8f762978"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/chat/lorebook/DigimonWorldLore.kt": {
+    "mtime": 1788983346.3985515,
+    "seen": 1789997585.0196407,
+    "ast_hash": "f45745dde685361b8d3b34f567723449",
+    "semantic_hash": "f45745dde685361b8d3b34f567723449"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/chat/lorebook/LorebookRepository.kt": {
+    "mtime": 1788983346.3914635,
+    "seen": 1789997585.0196424,
+    "ast_hash": "0f0611b3fa2586771520a24b7b4cbb5b",
+    "semantic_hash": "0f0611b3fa2586771520a24b7b4cbb5b"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/companion/card/ByteManipulation.kt": {
+    "mtime": 1788983346.8884895,
+    "seen": 1789997585.0196443,
+    "ast_hash": "79784fc3fc5917fa58331e082d1684c4",
+    "semantic_hash": "79784fc3fc5917fa58331e082d1684c4"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/companion/card/CompanionImportCardActivity.kt": {
+    "mtime": 1789837315.187228,
+    "seen": 1789997585.0196476,
+    "ast_hash": "8226dc4be7029f477886f743717eee0e",
+    "semantic_hash": "8226dc4be7029f477886f743717eee0e"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/companion/card/CompanionValidateCardActivity.kt": {
+    "mtime": 1788983346.8764155,
+    "seen": 1789997585.019649,
+    "ast_hash": "438e0569ced1585881c08dbe1f0e3c65",
+    "semantic_hash": "438e0569ced1585881c08dbe1f0e3c65"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/companion/card/VBNfcData.kt": {
+    "mtime": 1788983346.8824544,
+    "seen": 1789997585.0196505,
+    "ast_hash": "8e9dcf12c056d693596748782d71bc65",
+    "semantic_hash": "8e9dcf12c056d693596748782d71bc65"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/companion/common/ChannelTypes.kt": {
+    "mtime": 1788983346.902324,
+    "seen": 1789997585.0196521,
+    "ast_hash": "dbec4df43012e0e8e9439044baf4fa3f",
+    "semantic_hash": "dbec4df43012e0e8e9439044baf4fa3f"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/companion/firmware/CompanionFirmwareImportActivity.kt": {
+    "mtime": 1788983346.8509352,
+    "seen": 1789997585.0196538,
+    "ast_hash": "235ea3baada240cd96b5ecc78d6955d3",
+    "semantic_hash": "235ea3baada240cd96b5ecc78d6955d3"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/companion/logging/TinyLogTree.kt": {
+    "mtime": 1788983346.9100468,
+    "seen": 1789997585.0196555,
+    "ast_hash": "fd26ac778ff48a52a20ed8b4c87252d8",
+    "semantic_hash": "fd26ac778ff48a52a20ed8b4c87252d8"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/companion/logs/CompanionLogService.kt": {
+    "mtime": 1788983346.863604,
+    "seen": 1789997585.0196571,
+    "ast_hash": "5e48160994a3122a1d19f09f14c8c7b6",
+    "semantic_hash": "5e48160994a3122a1d19f09f14c8c7b6"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/companion/logs/CompanionWatchLogsActivity.kt": {
+    "mtime": 1788983346.8696375,
+    "seen": 1789997585.0196586,
+    "ast_hash": "5b16bcd60a959c36428c86142b2f2aaf",
+    "semantic_hash": "5b16bcd60a959c36428c86142b2f2aaf"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/companion/logs/WatchCommunicationService.kt": {
+    "mtime": 1788983346.8574219,
+    "seen": 1789997585.0196602,
+    "ast_hash": "913e25ed3b7d8928be4662eb2aad3460",
+    "semantic_hash": "913e25ed3b7d8928be4662eb2aad3460"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/companion/transfer/CompanionCharacterImportActivity.kt": {
+    "mtime": 1788983346.8044412,
+    "seen": 1789997585.0196621,
+    "ast_hash": "c7bdca84ba3646e47d00a03778fc2351",
+    "semantic_hash": "c7bdca84ba3646e47d00a03778fc2351"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/companion/ui/CompanionConfirmation.kt": {
+    "mtime": 1789837315.1839724,
+    "seen": 1789997585.0196636,
+    "ast_hash": "8a0416e6f57228b1919795397b9813b5",
+    "semantic_hash": "8a0416e6f57228b1919795397b9813b5"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/companion/ui/CompanionLoading.kt": {
+    "mtime": 1788983346.8367875,
+    "seen": 1789997585.0196655,
+    "ast_hash": "559a2d4b865a53398653b6d0bceae331",
+    "semantic_hash": "559a2d4b865a53398653b6d0bceae331"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/companion/validation/CompanionValidatedDatabase.kt": {
+    "mtime": 1788983346.8245423,
+    "seen": 1789997585.019667,
+    "ast_hash": "44b38b0cd0587178b9f449d89b81a02d",
+    "semantic_hash": "44b38b0cd0587178b9f449d89b81a02d"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/companion/validation/ValidatedCardDao.kt": {
+    "mtime": 1788983346.810933,
+    "seen": 1789997585.0196686,
+    "ast_hash": "f9aa481e1d601f718f78936df7976fab",
+    "semantic_hash": "f9aa481e1d601f718f78936df7976fab"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/companion/validation/ValidatedCardEntity.kt": {
+    "mtime": 1788983346.8180013,
+    "seen": 1789997585.0196705,
+    "ast_hash": "9aa7b51fe5362e56a9422abff37feb36",
+    "semantic_hash": "9aa7b51fe5362e56a9422abff37feb36"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/companion/validation/ValidatedCardManager.kt": {
+    "mtime": 1788983346.83069,
+    "seen": 1789997585.0196724,
+    "ast_hash": "cca8ecba6d7e02af3d77be353db93bbc",
+    "semantic_hash": "cca8ecba6d7e02af3d77be353db93bbc"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/components/ActiveDigimonCard.kt": {
+    "mtime": 1789835815.8158545,
+    "seen": 1789997585.019674,
+    "ast_hash": "8eee187e20b0063e1c95f809eff145d5",
+    "semantic_hash": "8eee187e20b0063e1c95f809eff145d5"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/components/AttackSpriteImage.kt": {
+    "mtime": 1788983347.792419,
+    "seen": 1789997585.019676,
+    "ast_hash": "8ab32e8c87e6677a09d8a49a09862d53",
+    "semantic_hash": "8ab32e8c87e6677a09d8a49a09862d53"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/components/BackgroundMusicControlPanel.kt": {
+    "mtime": 1789846390.4156501,
+    "seen": 1789997585.0196774,
+    "ast_hash": "ff7c3b43d382898d39ef51cdce2cb446",
+    "semantic_hash": "ff7c3b43d382898d39ef51cdce2cb446"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/components/CharacterEntry.kt": {
+    "mtime": 1789838805.064417,
+    "seen": 1789997585.0196795,
+    "ast_hash": "21c6c40a6a28bbbb6cf13ec8edadd528",
+    "semantic_hash": "21c6c40a6a28bbbb6cf13ec8edadd528"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/components/CyberUi.kt": {
+    "mtime": 1789837234.8482032,
+    "seen": 1789997585.019681,
+    "ast_hash": "e759ac2cae5674305f52f624781243dc",
+    "semantic_hash": "e759ac2cae5674305f52f624781243dc"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/components/NicknameDisplay.kt": {
+    "mtime": 1789218340.0,
+    "seen": 1789997585.019683,
+    "ast_hash": "a1e328be7b9baeb71dab25a731822d08",
+    "semantic_hash": "a1e328be7b9baeb71dab25a731822d08"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/components/SpeciesPickerDialog.kt": {
+    "mtime": 1788983347.8053188,
+    "seen": 1789997585.0196843,
+    "ast_hash": "34e026b98d81f9c8f18409b143e3e064",
+    "semantic_hash": "34e026b98d81f9c8f18409b143e3e064"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/components/TechBackground.kt": {
+    "mtime": 1789838729.9472208,
+    "seen": 1789997585.019686,
+    "ast_hash": "7ec60c1e101d58f8db327c70924b1f76",
+    "semantic_hash": "7ec60c1e101d58f8db327c70924b1f76"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/components/TopBanner.kt": {
+    "mtime": 1789323360.3000605,
+    "seen": 1789997585.0196874,
+    "ast_hash": "b114765f69353e679412ccafc8e09dfe",
+    "semantic_hash": "b114765f69353e679412ccafc8e09dfe"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/components/TransformationHistoryCard.kt": {
+    "mtime": 1789318617.126447,
+    "seen": 1789997585.0196893,
+    "ast_hash": "86b90dce848b9c4885321e2a29659377",
+    "semantic_hash": "86b90dce848b9c4885321e2a29659377"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/components/VitalsPanel.kt": {
+    "mtime": 1789819958.7612615,
+    "seen": 1789997585.0196905,
+    "ast_hash": "ab409e9d685a3df3241e4e860679c4bf",
+    "semantic_hash": "ab409e9d685a3df3241e4e860679c4bf"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/AdventureDao.kt": {
+    "mtime": 1788983346.4854898,
+    "seen": 1789997585.0196922,
+    "ast_hash": "a671af23a2c7a3ed02327e6417092a92",
+    "semantic_hash": "a671af23a2c7a3ed02327e6417092a92"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/CardAdventureDao.kt": {
+    "mtime": 1788983346.4987924,
+    "seen": 1789997585.0196939,
+    "ast_hash": "289cab3882aa96d694e8a4d628311887",
+    "semantic_hash": "289cab3882aa96d694e8a4d628311887"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/CardDao.kt": {
+    "mtime": 1789246442.1646614,
+    "seen": 1789997585.0196953,
+    "ast_hash": "043069daba32720fc2e0061459c7d1af",
+    "semantic_hash": "043069daba32720fc2e0061459c7d1af"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/CardFusionsDao.kt": {
+    "mtime": 1788983346.4548311,
+    "seen": 1789997585.019697,
+    "ast_hash": "f290316f6e89b8c29ec774d3fbf4006a",
+    "semantic_hash": "f290316f6e89b8c29ec774d3fbf4006a"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/CardProgressDao.kt": {
+    "mtime": 1788983346.4493716,
+    "seen": 1789997585.0196986,
+    "ast_hash": "441e99419bdeb14b9362a4f65bfa6435",
+    "semantic_hash": "441e99419bdeb14b9362a4f65bfa6435"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/CharacterDao.kt": {
+    "mtime": 1789246442.1646614,
+    "seen": 1789997585.0197003,
+    "ast_hash": "6bca6dd57d7ac943806bdfc85ebb56c8",
+    "semantic_hash": "6bca6dd57d7ac943806bdfc85ebb56c8"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/CharacterTransferPolicyDao.kt": {
+    "mtime": 1788983346.5172048,
+    "seen": 1789997585.0197017,
+    "ast_hash": "d1a87777cafa4c8c47734512c215e085",
+    "semantic_hash": "d1a87777cafa4c8c47734512c215e085"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/ChatDao.kt": {
+    "mtime": 1789217726.6533887,
+    "seen": 1789997585.0197034,
+    "ast_hash": "2c3f4c4e1bdc2f4f4c581f9c522f4bc3",
+    "semantic_hash": "2c3f4c4e1bdc2f4f4c581f9c522f4bc3"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/DexDao.kt": {
+    "mtime": 1789821782.0941083,
+    "seen": 1789997585.0197055,
+    "ast_hash": "55ec9b6d154d672245daf085dd68a6eb",
+    "semantic_hash": "55ec9b6d154d672245daf085dd68a6eb"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/DigifarmDao.kt": {
+    "mtime": 1789916624.6513667,
+    "seen": 1789997585.0197072,
+    "ast_hash": "d8800e242da69dbfd3e1f23a21ea6991",
+    "semantic_hash": "d8800e242da69dbfd3e1f23a21ea6991"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/DigimonIndividualDao.kt": {
+    "mtime": 1789852498.4564836,
+    "seen": 1789997585.0197089,
+    "ast_hash": "d95e629cf3a02ded19c8f27bcbd859fb",
+    "semantic_hash": "d95e629cf3a02ded19c8f27bcbd859fb"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/DigimonStateSnapshotDao.kt": {
+    "mtime": 1788983346.4927552,
+    "seen": 1789997585.0197108,
+    "ast_hash": "58b4ada4d28d4b13fd89899fd32cc4b3",
+    "semantic_hash": "58b4ada4d28d4b13fd89899fd32cc4b3"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/EvolutionHistoryDao.kt": {
+    "mtime": 1789852899.3147392,
+    "seen": 1789997585.0197122,
+    "ast_hash": "f9cf7f3458ad75fc59f5afaf8191d8b1",
+    "semantic_hash": "f9cf7f3458ad75fc59f5afaf8191d8b1"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/ItemDao.kt": {
+    "mtime": 1789218479.4649348,
+    "seen": 1789997585.019714,
+    "ast_hash": "e95c49aba1db55ad4504095314c82fc1",
+    "semantic_hash": "e95c49aba1db55ad4504095314c82fc1"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/LorebookEntryDao.kt": {
+    "mtime": 1788983346.511891,
+    "seen": 1789997585.0197155,
+    "ast_hash": "fdbd39c5abbb12ac3862679f4f16d475",
+    "semantic_hash": "fdbd39c5abbb12ac3862679f4f16d475"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/SpecialMissionDao.kt": {
+    "mtime": 1788983346.5420206,
+    "seen": 1789997585.0197175,
+    "ast_hash": "2263461446d12957f462176afeaba4fc",
+    "semantic_hash": "2263461446d12957f462176afeaba4fc"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/SpeciesProfileDao.kt": {
+    "mtime": 1789232444.2603278,
+    "seen": 1789997585.0197217,
+    "ast_hash": "6ed90e508f7cebeb07fb49cc317acfa9",
+    "semantic_hash": "6ed90e508f7cebeb07fb49cc317acfa9"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/SpriteDao.kt": {
+    "mtime": 1788983346.46749,
+    "seen": 1789997585.0197234,
+    "ast_hash": "8d83b84a57c10724b926cfb329218cb1",
+    "semantic_hash": "8d83b84a57c10724b926cfb329218cb1"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/TransferSeenDao.kt": {
+    "mtime": 1788983346.5046115,
+    "seen": 1789997585.019725,
+    "ast_hash": "91fd8c157af3b2880202e5c667433464",
+    "semantic_hash": "91fd8c157af3b2880202e5c667433464"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/UserCharacterDao.kt": {
+    "mtime": 1789821782.0920794,
+    "seen": 1789997585.0197268,
+    "ast_hash": "234b6595bf4b3c797fe5399c532a50d8",
+    "semantic_hash": "234b6595bf4b3c797fe5399c532a50d8"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/VitalWearSettingsDao.kt": {
+    "mtime": 1788983346.4371233,
+    "seen": 1789997585.0197284,
+    "ast_hash": "267796c599fca6dfa6fcc9021f87db88",
+    "semantic_hash": "267796c599fca6dfa6fcc9021f87db88"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/WatchTransferDao.kt": {
+    "mtime": 1789817604.213899,
+    "seen": 1789997585.01973,
+    "ast_hash": "bdfbbd4c078d9f37014971bd90230bc4",
+    "semantic_hash": "bdfbbd4c078d9f37014971bd90230bc4"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/WildRelationshipDao.kt": {
+    "mtime": 1789907204.4608471,
+    "seen": 1789997585.0197318,
+    "ast_hash": "48658eddc1e25b506c70a1d624faf487",
+    "semantic_hash": "48658eddc1e25b506c70a1d624faf487"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/daos/WorldSpawnDao.kt": {
+    "mtime": 1789905947.8440738,
+    "seen": 1789997585.0197334,
+    "ast_hash": "4eaabeada1bd7e7af0fdee0c1ee16810",
+    "semantic_hash": "4eaabeada1bd7e7af0fdee0c1ee16810"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/database/AppDatabase.kt": {
+    "mtime": 1789916624.6543694,
+    "seen": 1789997585.019735,
+    "ast_hash": "fa91083765f09c7b409d28414d4a141a",
+    "semantic_hash": "fa91083765f09c7b409d28414d4a141a"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/database/IndividualIntegrity.kt": {
+    "mtime": 1789872200.3154027,
+    "seen": 1789997585.0197365,
+    "ast_hash": "e7c938a5ca077ddfcf8f14dbc3eaa1a8",
+    "semantic_hash": "e7c938a5ca077ddfcf8f14dbc3eaa1a8"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/database/PersonalityConverters.kt": {
+    "mtime": 1789852492.9012609,
+    "seen": 1789997585.0197384,
+    "ast_hash": "495b07a87e91fe353f94ca69bdef79dd",
+    "semantic_hash": "495b07a87e91fe353f94ca69bdef79dd"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/database/SpeciesProfileConverters.kt": {
+    "mtime": 1789061119.52,
+    "seen": 1789997585.0197399,
+    "ast_hash": "8d1b99fa689afbcc87135f32c8c28300",
+    "semantic_hash": "8d1b99fa689afbcc87135f32c8c28300"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/di/AppContainer.kt": {
+    "mtime": 1789906021.9423287,
+    "seen": 1789997585.0197418,
+    "ast_hash": "d3b520116e300694f6c31cfa8cf857d5",
+    "semantic_hash": "d3b520116e300694f6c31cfa8cf857d5"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/di/DefaultAppContainer.kt": {
+    "mtime": 1789916624.6553693,
+    "seen": 1789997585.0197432,
+    "ast_hash": "d084677aff4e6417d28d527437af609e",
+    "semantic_hash": "d084677aff4e6417d28d527437af609e"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/di/VBHelper.kt": {
+    "mtime": 1789852525.4516094,
+    "seen": 1789997585.0197449,
+    "ast_hash": "d02d6b02be4668b3607e7c33c72e881b",
+    "semantic_hash": "d02d6b02be4668b3607e7c33c72e881b"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/digifarm/DigifarmRepository.kt": {
+    "mtime": 1789916624.65337,
+    "seen": 1789997585.0197463,
+    "ast_hash": "a9b15422cfd2728510aabaf9fa2c0dba",
+    "semantic_hash": "a9b15422cfd2728510aabaf9fa2c0dba"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/digifarm/FarmSessionCoordinator.kt": {
+    "mtime": 1789906004.887605,
+    "seen": 1789997585.0197482,
+    "ast_hash": "63d852246697f08a099bf649aedfadd1",
+    "semantic_hash": "63d852246697f08a099bf649aedfadd1"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/digifarm/map/BirdFarmMap.kt": {
+    "mtime": 1789905827.1110365,
+    "seen": 1789997585.0197496,
+    "ast_hash": "c7f95c6a2d8b81b253ecaccdeb85494d",
+    "semantic_hash": "c7f95c6a2d8b81b253ecaccdeb85494d"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/digifarm/map/Digifarm3dAssetCatalog.kt": {
+    "mtime": 1789920711.4367487,
+    "seen": 1789997585.0197513,
+    "ast_hash": "cd596dad987950a3c8efca1a6f9aed33",
+    "semantic_hash": "cd596dad987950a3c8efca1a6f9aed33"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/digifarm/map/Digifarm3dMap.kt": {
+    "mtime": 1789940333.8009799,
+    "seen": 1789997585.019753,
+    "ast_hash": "0e86bd926eba966f265a92b5bcc001d8",
+    "semantic_hash": "0e86bd926eba966f265a92b5bcc001d8"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/digifarm/social/FarmConversationOrchestrator.kt": {
+    "mtime": 1789906091.411857,
+    "seen": 1789997585.0197544,
+    "ast_hash": "9d5f2025e531a0e86a16803faa84994f",
+    "semantic_hash": "9d5f2025e531a0e86a16803faa84994f"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/Evolutions.kt": {
+    "mtime": 1788983346.9789195,
+    "seen": 1789997585.0197563,
+    "ast_hash": "d92f04cb5f35d7fae362d1498739f0e3",
+    "semantic_hash": "d92f04cb5f35d7fae362d1498739f0e3"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/User.kt": {
+    "mtime": 1788983346.9721158,
+    "seen": 1789997585.0197577,
+    "ast_hash": "7ffff1d619b74ed8988510486e4aac3f",
+    "semantic_hash": "7ffff1d619b74ed8988510486e4aac3f"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/UserHealthData.kt": {
+    "mtime": 1788983346.965973,
+    "seen": 1789997585.0197597,
+    "ast_hash": "3d62d1a5594ab3f0558406c8cb0e0008",
+    "semantic_hash": "3d62d1a5594ab3f0558406c8cb0e0008"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/UserMonsters.kt": {
+    "mtime": 1788983346.9850276,
+    "seen": 1789997585.0197613,
+    "ast_hash": "0e8ab373ef178bf769ca079168e1fc80",
+    "semantic_hash": "0e8ab373ef178bf769ca079168e1fc80"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/UserMonstersSpecialMissions.kt": {
+    "mtime": 1788983346.9525962,
+    "seen": 1789997585.019763,
+    "ast_hash": "176ac9b4f30946f3e3288353f7a520a5",
+    "semantic_hash": "176ac9b4f30946f3e3288353f7a520a5"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/UserStepsData.kt": {
+    "mtime": 1788983346.9591796,
+    "seen": 1789997585.0197647,
+    "ast_hash": "4470d9aca38a80bd9af41dc359757932",
+    "semantic_hash": "4470d9aca38a80bd9af41dc359757932"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/card/Background.kt": {
+    "mtime": 1788983347.1254704,
+    "seen": 1789997585.0197663,
+    "ast_hash": "15d7c63a1577cbd06855623c2b655f8b",
+    "semantic_hash": "15d7c63a1577cbd06855623c2b655f8b"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/card/Card.kt": {
+    "mtime": 1789246442.1636248,
+    "seen": 1789997585.0197678,
+    "ast_hash": "fe1854afcb43043040d4cf20b1f21ad1",
+    "semantic_hash": "fe1854afcb43043040d4cf20b1f21ad1"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/card/CardAdventure.kt": {
+    "mtime": 1788983347.1191304,
+    "seen": 1789997585.0197697,
+    "ast_hash": "de69db78fed071bfbfcae0a0da4fa161",
+    "semantic_hash": "de69db78fed071bfbfcae0a0da4fa161"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/card/CardCharacter.kt": {
+    "mtime": 1788983347.1320407,
+    "seen": 1789997585.019771,
+    "ast_hash": "20b8ed11f5291a6f05b239ee373f7780",
+    "semantic_hash": "20b8ed11f5291a6f05b239ee373f7780"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/card/CardFusions.kt": {
+    "mtime": 1788983347.138654,
+    "seen": 1789997585.0197732,
+    "ast_hash": "a64cd70ed37a442d2fa2702780648aad",
+    "semantic_hash": "a64cd70ed37a442d2fa2702780648aad"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/card/CardProgress.kt": {
+    "mtime": 1788983347.0998316,
+    "seen": 1789997585.0197747,
+    "ast_hash": "0a18a0ffed284e3e629c14c503ea481b",
+    "semantic_hash": "0a18a0ffed284e3e629c14c503ea481b"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/card/OfficialStatus.kt": {
+    "mtime": 1788983347.1120944,
+    "seen": 1789997585.0197763,
+    "ast_hash": "e2b210d917a47941ed9dfbd530402e67",
+    "semantic_hash": "e2b210d917a47941ed9dfbd530402e67"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/card/PossibleTransformations.kt": {
+    "mtime": 1788983347.144906,
+    "seen": 1789997585.0197783,
+    "ast_hash": "aeb32da55da0c5a48beb49a69fe51f11",
+    "semantic_hash": "aeb32da55da0c5a48beb49a69fe51f11"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/characters/Adventure.kt": {
+    "mtime": 1788983347.1977873,
+    "seen": 1789997585.0197802,
+    "ast_hash": "6e1befe943d608f4d01863635aea3b2a",
+    "semantic_hash": "6e1befe943d608f4d01863635aea3b2a"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/characters/Dex.kt": {
+    "mtime": 1788983347.184812,
+    "seen": 1789997585.019782,
+    "ast_hash": "153a49d6f6b3956461cbd2dea5e6acae",
+    "semantic_hash": "153a49d6f6b3956461cbd2dea5e6acae"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/characters/Sprite.kt": {
+    "mtime": 1788983347.1914968,
+    "seen": 1789997585.0197837,
+    "ast_hash": "d3372195951534e873efd09bf55a7205",
+    "semantic_hash": "d3372195951534e873efd09bf55a7205"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/chat/ChatMessageEntity.kt": {
+    "mtime": 1789217725.168518,
+    "seen": 1789997585.0197852,
+    "ast_hash": "57548ad36362d6fa057c91c88078582f",
+    "semantic_hash": "57548ad36362d6fa057c91c88078582f"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/device_data/BECharacterData.kt": {
+    "mtime": 1788983346.998236,
+    "seen": 1789997585.019787,
+    "ast_hash": "3edd542093fbbf91c8e9d3957f2db278",
+    "semantic_hash": "3edd542093fbbf91c8e9d3957f2db278"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/device_data/CharacterTransferPolicy.kt": {
+    "mtime": 1788983347.0548809,
+    "seen": 1789997585.0197885,
+    "ast_hash": "cba6ec2143bfcdbe7adbce0174193bad",
+    "semantic_hash": "cba6ec2143bfcdbe7adbce0174193bad"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/device_data/DigimonIndividual.kt": {
+    "mtime": 1788983347.0294988,
+    "seen": 1789997585.0197902,
+    "ast_hash": "f92b2183dd392e3cb77f6b3461688719",
+    "semantic_hash": "f92b2183dd392e3cb77f6b3461688719"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/device_data/EvolutionHistoryRepair.kt": {
+    "mtime": 1789268524.3988624,
+    "seen": 1789997585.0197916,
+    "ast_hash": "bc08a9ddd1eb881e9a4d23760a8b1815",
+    "semantic_hash": "bc08a9ddd1eb881e9a4d23760a8b1815"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/device_data/NfcEvolutionHistory.kt": {
+    "mtime": 1789260065.3751876,
+    "seen": 1789997585.0197935,
+    "ast_hash": "4ccc8d2bdbcd4aac2854bf71597f62c5",
+    "semantic_hash": "4ccc8d2bdbcd4aac2854bf71597f62c5"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/device_data/SpecialMissions.kt": {
+    "mtime": 1788983347.0423095,
+    "seen": 1789997585.019795,
+    "ast_hash": "68075604bc1ad29e646b0df9cbfa73ed",
+    "semantic_hash": "68075604bc1ad29e646b0df9cbfa73ed"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/device_data/TransformationHistory.kt": {
+    "mtime": 1788983347.0111432,
+    "seen": 1789997585.0197964,
+    "ast_hash": "b77d7456c1d2bdb7e636bc59a5d433bf",
+    "semantic_hash": "b77d7456c1d2bdb7e636bc59a5d433bf"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/device_data/UnifiedCharacter.kt": {
+    "mtime": 1788983347.0168998,
+    "seen": 1789997585.0197983,
+    "ast_hash": "4c7014c26d38b2f1abaa84a67c4e7d14",
+    "semantic_hash": "4c7014c26d38b2f1abaa84a67c4e7d14"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/device_data/UserCharacter.kt": {
+    "mtime": 1789821782.0900404,
+    "seen": 1789997585.0197997,
+    "ast_hash": "191e78e8f5fcba4ac2e5cd8000d7da2d",
+    "semantic_hash": "191e78e8f5fcba4ac2e5cd8000d7da2d"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/device_data/VBCharacterData.kt": {
+    "mtime": 1788983347.0483408,
+    "seen": 1789997585.0198016,
+    "ast_hash": "de312c8db8f3887f34afdb70c8df246f",
+    "semantic_hash": "de312c8db8f3887f34afdb70c8df246f"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/device_data/VitalWearCharacterSettings.kt": {
+    "mtime": 1788983347.0222597,
+    "seen": 1789997585.019803,
+    "ast_hash": "70e6946bcc4ac439f4dd109cd73befef",
+    "semantic_hash": "70e6946bcc4ac439f4dd109cd73befef"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/device_data/VitalsHistory.kt": {
+    "mtime": 1788983347.0039644,
+    "seen": 1789997585.0198047,
+    "ast_hash": "b96c346342fecd4ba02b9cc794e2956f",
+    "semantic_hash": "b96c346342fecd4ba02b9cc794e2956f"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/digifarm/DigifarmEntities.kt": {
+    "mtime": 1789916624.6502583,
+    "seen": 1789997585.0198064,
+    "ast_hash": "0faa9e76118ddea985f05b4aeaa6a1ef",
+    "semantic_hash": "0faa9e76118ddea985f05b4aeaa6a1ef"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/identity/IndividualIdentity.kt": {
+    "mtime": 1788983347.0938497,
+    "seen": 1789997585.019808,
+    "ast_hash": "25d94b2b9cec967c014bbaf0337afad9",
+    "semantic_hash": "25d94b2b9cec967c014bbaf0337afad9"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/identity/TransferFingerprint.kt": {
+    "mtime": 1789271448.4313507,
+    "seen": 1789997585.0198095,
+    "ast_hash": "b9c81ce9606f8bc85a392401ec299135",
+    "semantic_hash": "b9c81ce9606f8bc85a392401ec299135"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/identity/WatchImportReceipt.kt": {
+    "mtime": 1789271085.9123728,
+    "seen": 1789997585.0198114,
+    "ast_hash": "91a586a6a1a969739e978c6e75dda93c",
+    "semantic_hash": "91a586a6a1a969739e978c6e75dda93c"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/identity/WatchTransfer.kt": {
+    "mtime": 1789271584.9955966,
+    "seen": 1789997585.0198128,
+    "ast_hash": "75180e37eac1890b0ea80536129ec9bc",
+    "semantic_hash": "75180e37eac1890b0ea80536129ec9bc"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/identity/WatchTransferSafety.kt": {
+    "mtime": 1789817604.211423,
+    "seen": 1789997585.0198147,
+    "ast_hash": "0e6a2c1d8e512ee6e48a387e7475027d",
+    "semantic_hash": "0e6a2c1d8e512ee6e48a387e7475027d"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/items/Items.kt": {
+    "mtime": 1788983347.0610704,
+    "seen": 1789997585.0198166,
+    "ast_hash": "7c99d68d35668bf03b1e0e246f4effc8",
+    "semantic_hash": "7c99d68d35668bf03b1e0e246f4effc8"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/lorebook/LorebookEntry.kt": {
+    "mtime": 1788983347.1788068,
+    "seen": 1789997585.0198183,
+    "ast_hash": "02fe7e249523f60c699adf458e90d001",
+    "semantic_hash": "02fe7e249523f60c699adf458e90d001"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/mood/MoodDirectiveParser.kt": {
+    "mtime": 1789057069.377,
+    "seen": 1789997585.019825,
+    "ast_hash": "76015fae7407f39d0d0e6d01285ce00c",
+    "semantic_hash": "76015fae7407f39d0d0e6d01285ce00c"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/personality/DigimonPersonalityGenerator.kt": {
+    "mtime": 1789852487.3270845,
+    "seen": 1789997585.0198267,
+    "ast_hash": "733a7c9e9c15b4167403a776a9dfbea2",
+    "semantic_hash": "733a7c9e9c15b4167403a776a9dfbea2"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/personality/DigimonPersonalityTraits.kt": {
+    "mtime": 1789852480.261251,
+    "seen": 1789997585.0198286,
+    "ast_hash": "0f06548ef3253d6b4687c8f202cb1bf2",
+    "semantic_hash": "0f06548ef3253d6b4687c8f202cb1bf2"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/reactions/DigimonReactionEngine.kt": {
+    "mtime": 1788983347.074364,
+    "seen": 1789997585.01983,
+    "ast_hash": "57d4e1ac0b0f4201a66200fc781af3a7",
+    "semantic_hash": "57d4e1ac0b0f4201a66200fc781af3a7"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/reactions/DigimonStateSnapshot.kt": {
+    "mtime": 1788983347.0807433,
+    "seen": 1789997585.019832,
+    "ast_hash": "a0ca5640227619dd13f4a97a9383424d",
+    "semantic_hash": "a0ca5640227619dd13f4a97a9383424d"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/species/SpeciesProfile.kt": {
+    "mtime": 1788983347.170692,
+    "seen": 1789997585.0198333,
+    "ast_hash": "677b31b5ad90676d8b27b9a89d5321fe",
+    "semantic_hash": "677b31b5ad90676d8b27b9a89d5321fe"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/species/SpeciesSource.kt": {
+    "mtime": 1788983347.164687,
+    "seen": 1789997585.0198352,
+    "ast_hash": "7c1fd34982ce309e761507131c9b70ea",
+    "semantic_hash": "7c1fd34982ce309e761507131c9b70ea"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/transfer/TransferSeenEntity.kt": {
+    "mtime": 1788983347.0682635,
+    "seen": 1789997585.019837,
+    "ast_hash": "190efa9bd27ba599b384c07964dfee4c",
+    "semantic_hash": "190efa9bd27ba599b384c07964dfee4c"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/world/RecruitmentState.kt": {
+    "mtime": 1789061103.692,
+    "seen": 1789997585.0198386,
+    "ast_hash": "5cbe0046b300375797f4db6125694727",
+    "semantic_hash": "5cbe0046b300375797f4db6125694727"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/domain/world/WorldSpawn.kt": {
+    "mtime": 1789905958.4036386,
+    "seen": 1789997585.01984,
+    "ast_hash": "f4562226ee2c5b0e407842b4231833cf",
+    "semantic_hash": "f4562226ee2c5b0e407842b4231833cf"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/dtos/CardDtos.kt": {
+    "mtime": 1788983346.7979739,
+    "seen": 1789997585.019842,
+    "ast_hash": "fe770f1636083a1a73a315f4b1673023",
+    "semantic_hash": "fe770f1636083a1a73a315f4b1673023"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/dtos/CharacterDtos.kt": {
+    "mtime": 1789852721.5246122,
+    "seen": 1789997585.0198433,
+    "ast_hash": "bed14a0cd2949ae3a3b0ef0f8c906cdd",
+    "semantic_hash": "bed14a0cd2949ae3a3b0ef0f8c906cdd"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/dtos/DigifarmDtos.kt": {
+    "mtime": 1789898642.6612792,
+    "seen": 1789997585.019845,
+    "ast_hash": "25ca27c570e2e0573741518d041d9236",
+    "semantic_hash": "25ca27c570e2e0573741518d041d9236"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/dtos/ItemDtos.kt": {
+    "mtime": 1788983346.7919686,
+    "seen": 1789997585.019847,
+    "ast_hash": "23830ffcc556690b2c76e7b4df88ac57",
+    "semantic_hash": "23830ffcc556690b2c76e7b4df88ac57"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/dtos/WorldDtos.kt": {
+    "mtime": 1789905966.4797046,
+    "seen": 1789997585.0198486,
+    "ast_hash": "0c6d143b3d588fe2a6a2e94bdbd3ac7a",
+    "semantic_hash": "0c6d143b3d588fe2a6a2e94bdbd3ac7a"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/navigation/AppNavigation.kt": {
+    "mtime": 1789934871.443512,
+    "seen": 1789997585.0198505,
+    "ast_hash": "4d7802a8ae4cc8e57e2ef3e3f3be6ec0",
+    "semantic_hash": "4d7802a8ae4cc8e57e2ef3e3f3be6ec0"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/navigation/BottomNavigationBar.kt": {
+    "mtime": 1789872044.4138389,
+    "seen": 1789997585.019852,
+    "ast_hash": "959f030bc2144f5b75e9f7c3b56e1d41",
+    "semantic_hash": "959f030bc2144f5b75e9f7c3b56e1d41"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/navigation/NavigationExtensions.kt": {
+    "mtime": 1788983346.7409987,
+    "seen": 1789997585.0198538,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/navigation/NavigationItems.kt": {
+    "mtime": 1789872044.4105065,
+    "seen": 1789997585.0198553,
+    "ast_hash": "399278261c0135f2d4e17e625426da0b",
+    "semantic_hash": "399278261c0135f2d4e17e625426da0b"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/BattlesScreen.kt": {
+    "mtime": 1789847103.396744,
+    "seen": 1789997585.019857,
+    "ast_hash": "23ce9b821002ec13381d083be97cc5d9",
+    "semantic_hash": "23ce9b821002ec13381d083be97cc5d9"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/LocalBattleScreen.kt": {
+    "mtime": 1789847103.3902166,
+    "seen": 1789997585.0198586,
+    "ast_hash": "fa91d14a79e3fbfd8658e0f439908ce1",
+    "semantic_hash": "fa91d14a79e3fbfd8658e0f439908ce1"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/adventureScreen/AdventureEntry.kt": {
+    "mtime": 1788983347.226298,
+    "seen": 1789997585.0198603,
+    "ast_hash": "45e5f0e55da5d6014320024d71c0b0d7",
+    "semantic_hash": "45e5f0e55da5d6014320024d71c0b0d7"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/adventureScreen/AdventureScreen.kt": {
+    "mtime": 1789838981.6137803,
+    "seen": 1789997585.019862,
+    "ast_hash": "2bec93ab8a5885423c778c2bcf196690",
+    "semantic_hash": "2bec93ab8a5885423c778c2bcf196690"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/adventureScreen/AdventureScreenController.kt": {
+    "mtime": 1788983347.2197194,
+    "seen": 1789997585.0198636,
+    "ast_hash": "fc23be1dedf9d7c3281168bb93d973a3",
+    "semantic_hash": "fc23be1dedf9d7c3281168bb93d973a3"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/adventureScreen/AdventureScreenControllerImpl.kt": {
+    "mtime": 1788983347.2388496,
+    "seen": 1789997585.019865,
+    "ast_hash": "467a9a8f2c9c97a7b6e23d2015d0697f",
+    "semantic_hash": "467a9a8f2c9c97a7b6e23d2015d0697f"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/adventureScreen/CancelAdventureDialog.kt": {
+    "mtime": 1789837147.0918133,
+    "seen": 1789997585.0198672,
+    "ast_hash": "c120b4a071f853409cc888c470811cc4",
+    "semantic_hash": "c120b4a071f853409cc888c470811cc4"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/cardScreen/CardAdventureEntry.kt": {
+    "mtime": 1788983347.3392484,
+    "seen": 1789997585.0198793,
+    "ast_hash": "e5fd6de575044253aa9f34e1371a5b40",
+    "semantic_hash": "e5fd6de575044253aa9f34e1371a5b40"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/cardScreen/CardAdventureScreen.kt": {
+    "mtime": 1788983347.3462882,
+    "seen": 1789997585.0198812,
+    "ast_hash": "16b122fadc3e7f80e2e04ce411bf9106",
+    "semantic_hash": "16b122fadc3e7f80e2e04ce411bf9106"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/cardScreen/CardEntry.kt": {
+    "mtime": 1789819958.7650573,
+    "seen": 1789997585.019883,
+    "ast_hash": "2cedf7884e0c6fb62d3f887ad6c20a65",
+    "semantic_hash": "2cedf7884e0c6fb62d3f887ad6c20a65"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/cardScreen/CardScreenController.kt": {
+    "mtime": 1788983347.3259706,
+    "seen": 1789997585.0198846,
+    "ast_hash": "04bb3529de5fab2ff742900bc340b10a",
+    "semantic_hash": "04bb3529de5fab2ff742900bc340b10a"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/cardScreen/CardScreenControllerImpl.kt": {
+    "mtime": 1789829794.835662,
+    "seen": 1789997585.019886,
+    "ast_hash": "658ff74b7eaa3e36ce659e26e3d77932",
+    "semantic_hash": "658ff74b7eaa3e36ce659e26e3d77932"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/cardScreen/CardViewScreen.kt": {
+    "mtime": 1789838981.615164,
+    "seen": 1789997585.019888,
+    "ast_hash": "87b76252b988fef09f6990f53280a36b",
+    "semantic_hash": "87b76252b988fef09f6990f53280a36b"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/cardScreen/CardsScreen.kt": {
+    "mtime": 1789838981.6137803,
+    "seen": 1789997585.0198922,
+    "ast_hash": "d13d02df3b9e42de863b6d77d9da7fb7",
+    "semantic_hash": "d13d02df3b9e42de863b6d77d9da7fb7"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/cardScreen/dialogs/CardDeleteDialog.kt": {
+    "mtime": 1789837147.1130292,
+    "seen": 1789997585.0198941,
+    "ast_hash": "20d83af5cba9748f234046525b87f58c",
+    "semantic_hash": "20d83af5cba9748f234046525b87f58c"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/cardScreen/dialogs/CardOriginDialog.kt": {
+    "mtime": 1789837147.109575,
+    "seen": 1789997585.0198958,
+    "ast_hash": "9af6d57271c4a2fda7377826eced8abd",
+    "semantic_hash": "9af6d57271c4a2fda7377826eced8abd"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/cardScreen/dialogs/CardRenameDialog.kt": {
+    "mtime": 1789837147.1116872,
+    "seen": 1789997585.0198975,
+    "ast_hash": "25ddd89572e181e5a24ceae74a657ecc",
+    "semantic_hash": "25ddd89572e181e5a24ceae74a657ecc"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/cardScreen/dialogs/DexCharaDetailsDialog.kt": {
+    "mtime": 1789839067.4005415,
+    "seen": 1789997585.0198991,
+    "ast_hash": "9953313a9abed76c696a3d1493359f9b",
+    "semantic_hash": "9953313a9abed76c696a3d1493359f9b"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/cardScreen/dialogs/DexCharaFusionsDialog.kt": {
+    "mtime": 1789837147.120117,
+    "seen": 1789997585.019901,
+    "ast_hash": "25752050c9a4276643c2f4a1f44882ef",
+    "semantic_hash": "25752050c9a4276643c2f4a1f44882ef"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/chatScreen/ChatScreen.kt": {
+    "mtime": 1789838981.6187212,
+    "seen": 1789997585.0199025,
+    "ast_hash": "48b4da7ee5bb801a9946b8c869590613",
+    "semantic_hash": "48b4da7ee5bb801a9946b8c869590613"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/chatScreen/ChatScreenController.kt": {
+    "mtime": 1789219441.9755392,
+    "seen": 1789997585.019904,
+    "ast_hash": "9d4fd895bc96a4de11b712061a28408a",
+    "semantic_hash": "9d4fd895bc96a4de11b712061a28408a"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/chatScreen/ChatScreenControllerImpl.kt": {
+    "mtime": 1789852899.313285,
+    "seen": 1789997585.0199058,
+    "ast_hash": "7895e92ee9d46a0aab10a50428f8fc2e",
+    "semantic_hash": "7895e92ee9d46a0aab10a50428f8fc2e"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/chatScreen/dialogs/SpeciesManualEditDialog.kt": {
+    "mtime": 1789837147.1035738,
+    "seen": 1789997585.0199072,
+    "ast_hash": "1ea556090bc68c2c5798481676c2326b",
+    "semantic_hash": "1ea556090bc68c2c5798481676c2326b"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/digifarmScreen/Digifarm3dViewport.kt": {
+    "mtime": 1789948687.1563034,
+    "seen": 1789997585.019909,
+    "ast_hash": "c4a3fe59e51a14c0ba20f62f2428fa91",
+    "semantic_hash": "c4a3fe59e51a14c0ba20f62f2428fa91"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/digifarmScreen/DigifarmScreen.kt": {
+    "mtime": 1789941204.4175293,
+    "seen": 1789997585.0199103,
+    "ast_hash": "e9e654f5ddb5fc5b679ed7a0d3055e41",
+    "semantic_hash": "e9e654f5ddb5fc5b679ed7a0d3055e41"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/digilineScreen/DigilineScreen.kt": {
+    "mtime": 1789938966.265848,
+    "seen": 1789997585.0199122,
+    "ast_hash": "177b2309f0873db202a80f4a70350e8c",
+    "semantic_hash": "177b2309f0873db202a80f4a70350e8c"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/digilineScreen/FarmGroupScreen.kt": {
+    "mtime": 1789938937.050867,
+    "seen": 1789997585.0199137,
+    "ast_hash": "e611b8d28000a8e9dc42be3c3825b9fc",
+    "semantic_hash": "e611b8d28000a8e9dc42be3c3825b9fc"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/homeScreens/BetaWarning.kt": {
+    "mtime": 1789837147.1055746,
+    "seen": 1789997585.0199156,
+    "ast_hash": "b94a1987ed4c74335d3cd61034fbdf92",
+    "semantic_hash": "b94a1987ed4c74335d3cd61034fbdf92"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/homeScreens/HomeScreen.kt": {
+    "mtime": 1789846405.3783026,
+    "seen": 1789997585.019917,
+    "ast_hash": "03a09c7f60666d3d3542517ce89199f4",
+    "semantic_hash": "03a09c7f60666d3d3542517ce89199f4"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/homeScreens/HomeScreenController.kt": {
+    "mtime": 1788983347.6997309,
+    "seen": 1789997585.0199187,
+    "ast_hash": "589f66cea987ee1520b1ab3f04e460b2",
+    "semantic_hash": "589f66cea987ee1520b1ab3f04e460b2"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/homeScreens/HomeScreenControllerImpl.kt": {
+    "mtime": 1789268576.479486,
+    "seen": 1789997585.0199203,
+    "ast_hash": "fe0da6f6bbf582a6976932a292c7ed31",
+    "semantic_hash": "fe0da6f6bbf582a6976932a292c7ed31"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/homeScreens/dialogs/DegenerateDialog.kt": {
+    "mtime": 1788983347.7132816,
+    "seen": 1789997585.0199223,
+    "ast_hash": "2f1283da0301b39171c793784e572489",
+    "semantic_hash": "2f1283da0301b39171c793784e572489"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/homeScreens/dialogs/DeleteSpecialMissionDialog.kt": {
+    "mtime": 1789837147.115396,
+    "seen": 1789997585.019924,
+    "ast_hash": "1327a5e6eefc6264985d89e668c46022",
+    "semantic_hash": "1327a5e6eefc6264985d89e668c46022"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/homeScreens/screens/BEBEmHomeScreen.kt": {
+    "mtime": 1789822153.09335,
+    "seen": 1789997585.019926,
+    "ast_hash": "9d870bf7565f28dcd03fcebd1fca624b",
+    "semantic_hash": "9d870bf7565f28dcd03fcebd1fca624b"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/homeScreens/screens/BEDiMHomeScreen.kt": {
+    "mtime": 1789822153.09335,
+    "seen": 1789997585.0199275,
+    "ast_hash": "98f607f40a95ef2fb21f905d1cc7a3c4",
+    "semantic_hash": "98f607f40a95ef2fb21f905d1cc7a3c4"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/homeScreens/screens/UnifiedHomeScreen.kt": {
+    "mtime": 1789820130.7641547,
+    "seen": 1789997585.0199292,
+    "ast_hash": "8db19794fa13a2346954717f884e5874",
+    "semantic_hash": "8db19794fa13a2346954717f884e5874"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/homeScreens/screens/VBDiMHomeScreen.kt": {
+    "mtime": 1789822153.094354,
+    "seen": 1789997585.0199308,
+    "ast_hash": "e6936a86e61a02a4a26e51ebae98b00f",
+    "semantic_hash": "e6936a86e61a02a4a26e51ebae98b00f"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/itemsScreen/ChooseCharacterScreen.kt": {
+    "mtime": 1789938764.7072556,
+    "seen": 1789997585.0199325,
+    "ast_hash": "ee57282f09711aba852d728f3b265bf8",
+    "semantic_hash": "ee57282f09711aba852d728f3b265bf8"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/itemsScreen/ItemDialog.kt": {
+    "mtime": 1789837060.7519085,
+    "seen": 1789997585.019934,
+    "ast_hash": "f411cb1e7b9d10078d3ee117b890545d",
+    "semantic_hash": "f411cb1e7b9d10078d3ee117b890545d"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/itemsScreen/ItemElement.kt": {
+    "mtime": 1789318633.4132936,
+    "seen": 1789997585.0199354,
+    "ast_hash": "2d45b8d4f6deea7979f65e2704f15886",
+    "semantic_hash": "2d45b8d4f6deea7979f65e2704f15886"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/itemsScreen/ItemIcons.kt": {
+    "mtime": 1788983347.2936914,
+    "seen": 1789997585.0199373,
+    "ast_hash": "7f75fc3960e21d5c7bb5373211398e7c",
+    "semantic_hash": "7f75fc3960e21d5c7bb5373211398e7c"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/itemsScreen/ItemsScreen.kt": {
+    "mtime": 1789819958.7602577,
+    "seen": 1789997585.0199387,
+    "ast_hash": "553adf8b84f3f70dbea17e6f6b2a4a75",
+    "semantic_hash": "553adf8b84f3f70dbea17e6f6b2a4a75"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/itemsScreen/ItemsScreenController.kt": {
+    "mtime": 1788983347.266034,
+    "seen": 1789997585.0199406,
+    "ast_hash": "a41cd8afd6aa0649a3eb937784bea937",
+    "semantic_hash": "a41cd8afd6aa0649a3eb937784bea937"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/itemsScreen/ItemsScreenControllerImpl.kt": {
+    "mtime": 1789246129.3865,
+    "seen": 1789997585.019942,
+    "ast_hash": "3563fedaa137037ae6fe6d0c6672428f",
+    "semantic_hash": "3563fedaa137037ae6fe6d0c6672428f"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/itemsScreen/ItemsStore.kt": {
+    "mtime": 1789838981.6163461,
+    "seen": 1789997585.019944,
+    "ast_hash": "991d60ad6ed914f0af7db5c38c47050b",
+    "semantic_hash": "991d60ad6ed914f0af7db5c38c47050b"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/itemsScreen/MyItems.kt": {
+    "mtime": 1789838981.6163461,
+    "seen": 1789997585.019948,
+    "ast_hash": "9b87975618991352c5d7edf200586bc6",
+    "semantic_hash": "9b87975618991352c5d7edf200586bc6"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/itemsScreen/ObtainedItemDialog.kt": {
+    "mtime": 1789837060.756059,
+    "seen": 1789997585.01995,
+    "ast_hash": "43c9909d339d81d14e95020f2c34f92a",
+    "semantic_hash": "43c9909d339d81d14e95020f2c34f92a"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/lorebookScreen/LorebookEntryDialog.kt": {
+    "mtime": 1789837147.100484,
+    "seen": 1789997585.0199516,
+    "ast_hash": "8d3c13ead9b2805aec14961491eea4e2",
+    "semantic_hash": "8d3c13ead9b2805aec14961491eea4e2"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/lorebookScreen/LorebookScreen.kt": {
+    "mtime": 1788983347.6063988,
+    "seen": 1789997585.0199535,
+    "ast_hash": "4c1680710ae8adb0b5a872d7b767d841",
+    "semantic_hash": "4c1680710ae8adb0b5a872d7b767d841"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/lorebookScreen/LorebookScreenControllerImpl.kt": {
+    "mtime": 1788983347.5991426,
+    "seen": 1789997585.019955,
+    "ast_hash": "cf0e5d601dcb84ca25f522c5db9b2cd3",
+    "semantic_hash": "cf0e5d601dcb84ca25f522c5db9b2cd3"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/scanScreen/ChooseConnectionScreen.kt": {
+    "mtime": 1789837176.3366344,
+    "seen": 1789997585.0199566,
+    "ast_hash": "9348667a167242483f7c351e7019f3ae",
+    "semantic_hash": "9348667a167242483f7c351e7019f3ae"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/scanScreen/DetectedTransport.kt": {
+    "mtime": 1788983347.4639184,
+    "seen": 1789997585.0199583,
+    "ast_hash": "8fb7a9359ca7013b75fb24c321117ae1",
+    "semantic_hash": "8fb7a9359ca7013b75fb24c321117ae1"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/scanScreen/ScanScreen.kt": {
+    "mtime": 1789838981.620888,
+    "seen": 1789997585.01996,
+    "ast_hash": "13673d29254e4a33273b91e2164b469c",
+    "semantic_hash": "13673d29254e4a33273b91e2164b469c"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/scanScreen/ScanScreenController.kt": {
+    "mtime": 1788983347.4903917,
+    "seen": 1789997585.0199616,
+    "ast_hash": "a289b653593e3a2277e8fa6520c0f59b",
+    "semantic_hash": "a289b653593e3a2277e8fa6520c0f59b"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/scanScreen/ScanScreenControllerImpl.kt": {
+    "mtime": 1789817604.2171545,
+    "seen": 1789997585.019963,
+    "ast_hash": "b69aeac87a7e3ad7bb88fb3eda3f5f6a",
+    "semantic_hash": "b69aeac87a7e3ad7bb88fb3eda3f5f6a"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/scanScreen/TransferHaptics.kt": {
+    "mtime": 1788983347.4775794,
+    "seen": 1789997585.019965,
+    "ast_hash": "84a8f02f6af0c3ce3a0121a66bce0f16",
+    "semantic_hash": "84a8f02f6af0c3ce3a0121a66bce0f16"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/scanScreen/cardSelect/ChooseCard.kt": {
+    "mtime": 1788983347.5164316,
+    "seen": 1789997585.0199664,
+    "ast_hash": "e3ac29e39ed07776e74bd2bbebc6c37f",
+    "semantic_hash": "e3ac29e39ed07776e74bd2bbebc6c37f"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/scanScreen/cardSelect/ScanCardEntry.kt": {
+    "mtime": 1788983347.5108497,
+    "seen": 1789997585.0199683,
+    "ast_hash": "9a146726ab489866cf8701c8bbab6c70",
+    "semantic_hash": "9a146726ab489866cf8701c8bbab6c70"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/scanScreen/converters/FromNfcConverter.kt": {
+    "mtime": 1789852508.2497792,
+    "seen": 1789997585.0199697,
+    "ast_hash": "8414ff3cf6a1bb6cf4607354d2be6096",
+    "semantic_hash": "8414ff3cf6a1bb6cf4607354d2be6096"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/scanScreen/converters/ToNfcConverter.kt": {
+    "mtime": 1789271529.9926302,
+    "seen": 1789997585.0199718,
+    "ast_hash": "9285508e193f286ed4c2c6d64d10b6e7",
+    "semantic_hash": "9285508e193f286ed4c2c6d64d10b6e7"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/scanScreen/screens/ActionScreen.kt": {
+    "mtime": 1789837176.3386428,
+    "seen": 1789997585.0199733,
+    "ast_hash": "62ed3923384f8d1d249f062cdf467235",
+    "semantic_hash": "62ed3923384f8d1d249f062cdf467235"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/scanScreen/screens/ReadCharacterScreen.kt": {
+    "mtime": 1789837176.3478713,
+    "seen": 1789997585.0199752,
+    "ast_hash": "505cdd958f326f233da33237a6808d85",
+    "semantic_hash": "505cdd958f326f233da33237a6808d85"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/scanScreen/screens/ReadingScreen.kt": {
+    "mtime": 1789271273.312767,
+    "seen": 1789997585.0199766,
+    "ast_hash": "492bbed57add7613371a9ab11c4ebd30",
+    "semantic_hash": "492bbed57add7613371a9ab11c4ebd30"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/scanScreen/screens/TransferAnimationScreen.kt": {
+    "mtime": 1789837176.3512435,
+    "seen": 1789997585.0199785,
+    "ast_hash": "f8cfbe15ef0beb3ce7c2ff35e0a3a841",
+    "semantic_hash": "f8cfbe15ef0beb3ce7c2ff35e0a3a841"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/scanScreen/screens/WriteCardScreen.kt": {
+    "mtime": 1789839067.4005415,
+    "seen": 1789997585.01998,
+    "ast_hash": "f30912782e8274f16f856236695a2df6",
+    "semantic_hash": "f30912782e8274f16f856236695a2df6"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/scanScreen/screens/WriteCharacterScreen.kt": {
+    "mtime": 1789839067.4016197,
+    "seen": 1789997585.0199819,
+    "ast_hash": "406f010b5fdabfbe2b1e050a0a78d489",
+    "semantic_hash": "406f010b5fdabfbe2b1e050a0a78d489"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/scanScreen/screens/WritingScreen.kt": {
+    "mtime": 1789271273.310767,
+    "seen": 1789997585.0199833,
+    "ast_hash": "6dab2841b61f7c180165ec9449c5c004",
+    "semantic_hash": "6dab2841b61f7c180165ec9449c5c004"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/settingsScreen/CreditsScreen.kt": {
+    "mtime": 1788983347.415644,
+    "seen": 1789997585.0199852,
+    "ast_hash": "5231a457adaa4724fa84d9f31852b7f6",
+    "semantic_hash": "5231a457adaa4724fa84d9f31852b7f6"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/settingsScreen/SettingsScreen.kt": {
+    "mtime": 1789941118.1922722,
+    "seen": 1789997585.0199869,
+    "ast_hash": "c5a035b1bd4215b28230c4702be0946d",
+    "semantic_hash": "c5a035b1bd4215b28230c4702be0946d"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/settingsScreen/SettingsScreenController.kt": {
+    "mtime": 1788983347.4008985,
+    "seen": 1789997585.0199885,
+    "ast_hash": "101e6d2c0f0051a0090fdf892110d0f4",
+    "semantic_hash": "101e6d2c0f0051a0090fdf892110d0f4"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/settingsScreen/SettingsScreenControllerImpl.kt": {
+    "mtime": 1789940312.5928059,
+    "seen": 1789997585.0199904,
+    "ast_hash": "307021453d05893030665b9796e2db8e",
+    "semantic_hash": "307021453d05893030665b9796e2db8e"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/settingsScreen/controllers/CardImportController.kt": {
+    "mtime": 1789832343.9302588,
+    "seen": 1789997585.019992,
+    "ast_hash": "39b321237c74860562605d0c74dd837e",
+    "semantic_hash": "39b321237c74860562605d0c74dd837e"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/settingsScreen/controllers/DatabaseManagementController.kt": {
+    "mtime": 1788983347.442908,
+    "seen": 1789997585.0199935,
+    "ast_hash": "1106f51a58ab31d3cd400483f2f19b70",
+    "semantic_hash": "1106f51a58ab31d3cd400483f2f19b70"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/settingsScreen/dialogs/LanguageDialog.kt": {
+    "mtime": 1788983347.4352956,
+    "seen": 1789997585.0199955,
+    "ast_hash": "abf334784aa71c96d4e1c6f784265894",
+    "semantic_hash": "abf334784aa71c96d4e1c6f784265894"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/settingsScreen/dialogs/LlmSettingsDialog.kt": {
+    "mtime": 1789837092.6913953,
+    "seen": 1789997585.019997,
+    "ast_hash": "876802c066eb5261dc8375ba2a4ba4a6",
+    "semantic_hash": "876802c066eb5261dc8375ba2a4ba4a6"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/settingsScreen/dialogs/PromptTemplateDialog.kt": {
+    "mtime": 1789854298.906914,
+    "seen": 1789997585.0199988,
+    "ast_hash": "7036870e61ea8dc3e41c56921f81ad46",
+    "semantic_hash": "7036870e61ea8dc3e41c56921f81ad46"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/spriteViewer/SpriteViewer.kt": {
+    "mtime": 1788983347.6723683,
+    "seen": 1789997585.0200002,
+    "ast_hash": "1e744949fa51e41a436400b3dfe75127",
+    "semantic_hash": "1e744949fa51e41a436400b3dfe75127"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/spriteViewer/SpriteViewerController.kt": {
+    "mtime": 1788983347.6652827,
+    "seen": 1789997585.0200021,
+    "ast_hash": "c4de631bb59fe92a1f211f56daa266ca",
+    "semantic_hash": "c4de631bb59fe92a1f211f56daa266ca"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/spriteViewer/SpriteViewerControllerImpl.kt": {
+    "mtime": 1788983347.6788256,
+    "seen": 1789997585.0200038,
+    "ast_hash": "0a26de8387cdac35d9fcf95f2ca5c36f",
+    "semantic_hash": "0a26de8387cdac35d9fcf95f2ca5c36f"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/storageScreen/DigimonInfoEditDialog.kt": {
+    "mtime": 1789853038.720937,
+    "seen": 1789997585.0200055,
+    "ast_hash": "7b656087f2615258d55f64ad4741f42e",
+    "semantic_hash": "7b656087f2615258d55f64ad4741f42e"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/storageScreen/StorageAdventureTimeDialog.kt": {
+    "mtime": 1789837054.2022252,
+    "seen": 1789997585.0200071,
+    "ast_hash": "52ab56e1ed88707e4893606c0d44652f",
+    "semantic_hash": "52ab56e1ed88707e4893606c0d44652f"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/storageScreen/StorageCharacterPicker.kt": {
+    "mtime": 1789938673.4229262,
+    "seen": 1789997585.0200088,
+    "ast_hash": "67daf11492fced49d11203b70d105dd7",
+    "semantic_hash": "67daf11492fced49d11203b70d105dd7"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/storageScreen/StorageDialog.kt": {
+    "mtime": 1789837035.1158936,
+    "seen": 1789997585.0200105,
+    "ast_hash": "8d1c6adfabfe502cd162e88573ffa7b8",
+    "semantic_hash": "8d1c6adfabfe502cd162e88573ffa7b8"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/storageScreen/StorageScreen.kt": {
+    "mtime": 1789938678.6344275,
+    "seen": 1789997585.0200124,
+    "ast_hash": "e07d2305247b885de57aeacca3d3bcb7",
+    "semantic_hash": "e07d2305247b885de57aeacca3d3bcb7"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/storageScreen/StorageScreenController.kt": {
+    "mtime": 1789821811.8250127,
+    "seen": 1789997585.0200138,
+    "ast_hash": "d2c84f22dbe6591fe76222726819e8ea",
+    "semantic_hash": "d2c84f22dbe6591fe76222726819e8ea"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/storageScreen/StorageScreenControllerImpl.kt": {
+    "mtime": 1789821811.8263109,
+    "seen": 1789997585.0200157,
+    "ast_hash": "e32a1d4198866b741bfed35ee63bfba9",
+    "semantic_hash": "e32a1d4198866b741bfed35ee63bfba9"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/worldScreen/CompassHeading.kt": {
+    "mtime": 1789212410.1685474,
+    "seen": 1789997585.0200171,
+    "ast_hash": "047f096f7bd2e802e6ae75abc65aa309",
+    "semantic_hash": "047f096f7bd2e802e6ae75abc65aa309"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/worldScreen/WorldChatScreen.kt": {
+    "mtime": 1789871929.6295123,
+    "seen": 1789997585.020019,
+    "ast_hash": "2100f7118e886f874028a810c409c8cf",
+    "semantic_hash": "2100f7118e886f874028a810c409c8cf"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/worldScreen/WorldChatScreenControllerImpl.kt": {
+    "mtime": 1789872335.2999678,
+    "seen": 1789997585.0200205,
+    "ast_hash": "c6e331ee3012ae313f81ac3726ec29bd",
+    "semantic_hash": "c6e331ee3012ae313f81ac3726ec29bd"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/worldScreen/WorldCompass.kt": {
+    "mtime": 1789848489.8952036,
+    "seen": 1789997585.0200222,
+    "ast_hash": "24ca6cbeeb605e49211a81c4fc5b89fa",
+    "semantic_hash": "24ca6cbeeb605e49211a81c4fc5b89fa"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/worldScreen/WorldHubScreen.kt": {
+    "mtime": 1789938225.903589,
+    "seen": 1789997585.0200238,
+    "ast_hash": "7fc2753bd7ea7dafa51fb7c9a93da2c6",
+    "semantic_hash": "7fc2753bd7ea7dafa51fb7c9a93da2c6"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/worldScreen/WorldRecruitsScreen.kt": {
+    "mtime": 1789838981.6177194,
+    "seen": 1789997585.0200255,
+    "ast_hash": "211b3123bc85de42431dacddb814e4b6",
+    "semantic_hash": "211b3123bc85de42431dacddb814e4b6"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/screens/worldScreen/WorldScreen.kt": {
+    "mtime": 1789937440.4257731,
+    "seen": 1789997585.0200274,
+    "ast_hash": "b48e9328d292e4c6d1d8551443c1bac1",
+    "semantic_hash": "b48e9328d292e4c6d1d8551443c1bac1"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/ApkSecretsImporter.kt": {
+    "mtime": 1788983347.8771691,
+    "seen": 1789997585.020029,
+    "ast_hash": "14fa43d91f9ac698d128d0e32dba102b",
+    "semantic_hash": "14fa43d91f9ac698d128d0e32dba102b"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/AuthRepository.kt": {
+    "mtime": 1788983347.888761,
+    "seen": 1789997585.0200307,
+    "ast_hash": "602ff291762f456f08a518405133512d",
+    "semantic_hash": "602ff291762f456f08a518405133512d"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/CardRepository.kt": {
+    "mtime": 1788983347.8949227,
+    "seen": 1789997585.0200324,
+    "ast_hash": "066ba8c5aa5ff4a0f4f7f3f13825eda5",
+    "semantic_hash": "066ba8c5aa5ff4a0f4f7f3f13825eda5"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/CardSettingsRepository.kt": {
+    "mtime": 1788983347.9074268,
+    "seen": 1789997585.0200343,
+    "ast_hash": "adf6cd112ab75aa8f983f9a5a56ac162",
+    "semantic_hash": "adf6cd112ab75aa8f983f9a5a56ac162"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/CurrencyRepository.kt": {
+    "mtime": 1788983347.9014642,
+    "seen": 1789997585.0200357,
+    "ast_hash": "2798a954a89756b0c8b370cbff779dcc",
+    "semantic_hash": "2798a954a89756b0c8b370cbff779dcc"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/DataStoreSecretsRepository.kt": {
+    "mtime": 1788983347.8314116,
+    "seen": 1789997585.0200374,
+    "ast_hash": "f5297e5d3b5b61ff0ef6a1c15d80a72a",
+    "semantic_hash": "f5297e5d3b5b61ff0ef6a1c15d80a72a"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/DeviceTypeConverter.kt": {
+    "mtime": 1788983347.8700101,
+    "seen": 1789997585.020039,
+    "ast_hash": "c4ab5219c6d2343e4ed65d421a31fa97",
+    "semantic_hash": "c4ab5219c6d2343e4ed65d421a31fa97"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/DexFileSecretsImporter.kt": {
+    "mtime": 1788983347.920885,
+    "seen": 1789997585.020041,
+    "ast_hash": "e899bcf52068346d5dd96ac281d45839",
+    "semantic_hash": "e899bcf52068346d5dd96ac281d45839"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/DexRepository.kt": {
+    "mtime": 1789821782.0951421,
+    "seen": 1789997585.0200424,
+    "ast_hash": "9dc0868c97cafac2103bf43ce4d7b4ee",
+    "semantic_hash": "9dc0868c97cafac2103bf43ce4d7b4ee"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/EvolutionHistoryRepository.kt": {
+    "mtime": 1789268524.404087,
+    "seen": 1789997585.0200443,
+    "ast_hash": "4e9c95ebada18f4d95adbe98ceb4d73e",
+    "semantic_hash": "4e9c95ebada18f4d95adbe98ceb4d73e"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/ItemsRepository.kt": {
+    "mtime": 1788983347.8370175,
+    "seen": 1789997585.0200458,
+    "ast_hash": "d5d4c408b26406d1015a2647f58599b0",
+    "semantic_hash": "d5d4c408b26406d1015a2647f58599b0"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/LlmSettingsRepository.kt": {
+    "mtime": 1789251968.8966587,
+    "seen": 1789997585.0200477,
+    "ast_hash": "1c8e379d614eb4313fe0d55d8e37cb95",
+    "semantic_hash": "1c8e379d614eb4313fe0d55d8e37cb95"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/ScanRepository.kt": {
+    "mtime": 1788983347.8448515,
+    "seen": 1789997585.020049,
+    "ast_hash": "00168fac6ed73a2c78b60eefcabaaf4b",
+    "semantic_hash": "00168fac6ed73a2c78b60eefcabaaf4b"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/SecretsImporter.kt": {
+    "mtime": 1788983347.9329882,
+    "seen": 1789997585.020051,
+    "ast_hash": "efb37817a25c7ddfec2abfe5018acb67",
+    "semantic_hash": "efb37817a25c7ddfec2abfe5018acb67"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/SecretsRepository.kt": {
+    "mtime": 1788983347.8827336,
+    "seen": 1789997585.0200524,
+    "ast_hash": "b3c8dc0cc1558f9a998c2589156a5a9b",
+    "semantic_hash": "b3c8dc0cc1558f9a998c2589156a5a9b"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/SecretsSerializer.kt": {
+    "mtime": 1788983347.8233802,
+    "seen": 1789997585.0200546,
+    "ast_hash": "2966d4009e8823ccc1a98eac4c0da958",
+    "semantic_hash": "2966d4009e8823ccc1a98eac4c0da958"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/SpeciesSettingsRepository.kt": {
+    "mtime": 1789940312.567826,
+    "seen": 1789997585.0200562,
+    "ast_hash": "7e806455ee39d22a288b89a374bd3ef2",
+    "semantic_hash": "7e806455ee39d22a288b89a374bd3ef2"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/StorageRepository.kt": {
+    "mtime": 1789852508.2511423,
+    "seen": 1789997585.0200582,
+    "ast_hash": "d09f53f1f384dfc713233e2a81e9dd2c",
+    "semantic_hash": "d09f53f1f384dfc713233e2a81e9dd2c"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/VitalWearCharacterExporter.kt": {
+    "mtime": 1789268576.4784656,
+    "seen": 1789997585.0200598,
+    "ast_hash": "f83e49f2d52c4440ef66406d66f47499",
+    "semantic_hash": "f83e49f2d52c4440ef66406d66f47499"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/VitalWearCharacterImporter.kt": {
+    "mtime": 1789271448.432648,
+    "seen": 1789997585.0200615,
+    "ast_hash": "930d8f5982889185d85dc424383ca967",
+    "semantic_hash": "930d8f5982889185d85dc424383ca967"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/VitalWearTransformationCountdown.kt": {
+    "mtime": 1788983347.850057,
+    "seen": 1789997585.020063,
+    "ast_hash": "7251f9188f32f5838ab82f94cfd758b4",
+    "semantic_hash": "7251f9188f32f5838ab82f94cfd758b4"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/source/WatchTransferRepository.kt": {
+    "mtime": 1789817604.2159078,
+    "seen": 1789997585.0200648,
+    "ast_hash": "de0cf776331e7f0783974f2f4695d589",
+    "semantic_hash": "de0cf776331e7f0783974f2f4695d589"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/species/SpeciesDatabaseClient.kt": {
+    "mtime": 1788983347.7661207,
+    "seen": 1789997585.0200665,
+    "ast_hash": "1d83125e7ed9d6f418f8158810b02f45",
+    "semantic_hash": "1d83125e7ed9d6f418f8158810b02f45"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/species/SpeciesDatabaseModels.kt": {
+    "mtime": 1789852721.521174,
+    "seen": 1789997585.0200682,
+    "ast_hash": "a857cffaf44e1b64b13782bf7f6a7020",
+    "semantic_hash": "a857cffaf44e1b64b13782bf7f6a7020"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/species/SpeciesDatabaseService.kt": {
+    "mtime": 1788983347.7528076,
+    "seen": 1789997585.0200698,
+    "ast_hash": "82080b017fb0dab91318a7202ff1468f",
+    "semantic_hash": "82080b017fb0dab91318a7202ff1468f"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/species/SpeciesRepository.kt": {
+    "mtime": 1789853386.5661604,
+    "seen": 1789997585.0200715,
+    "ast_hash": "6e6e17cf4c742c0cbb379edec4058c8a",
+    "semantic_hash": "6e6e17cf4c742c0cbb379edec4058c8a"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/transfer/CardImportProvider.kt": {
+    "mtime": 1788983346.5668347,
+    "seen": 1789997585.0200732,
+    "ast_hash": "409781ee540d93b7e28c703522ea1664",
+    "semantic_hash": "409781ee540d93b7e28c703522ea1664"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/transfer/CharacterTransferPolicyResolver.kt": {
+    "mtime": 1788983346.5618575,
+    "seen": 1789997585.020075,
+    "ast_hash": "ac1d7b8c561065d68cafa85d0bd531a6",
+    "semantic_hash": "ac1d7b8c561065d68cafa85d0bd531a6"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/transfer/SharedTransferSeenProvider.kt": {
+    "mtime": 1788983346.5489752,
+    "seen": 1789997585.0200768,
+    "ast_hash": "bceafd6172f1804b3c213af257beb9f3",
+    "semantic_hash": "bceafd6172f1804b3c213af257beb9f3"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/transfer/TransferRoute.kt": {
+    "mtime": 1788983346.554468,
+    "seen": 1789997585.0200784,
+    "ast_hash": "56569d8fc6994c7f602e91a15783e046",
+    "semantic_hash": "56569d8fc6994c7f602e91a15783e046"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/transfer/hce/VitalWearHceReaderClient.kt": {
+    "mtime": 1789295820.1801066,
+    "seen": 1789997585.02008,
+    "ast_hash": "9863d7173b9c40d4cf17c1072b9e8af0",
+    "semantic_hash": "9863d7173b9c40d4cf17c1072b9e8af0"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/transfer/hce/VitalWearHceSession.kt": {
+    "mtime": 1788983346.581371,
+    "seen": 1789997585.0200818,
+    "ast_hash": "320f4fe1dffae560585186bbe20bb6b9",
+    "semantic_hash": "320f4fe1dffae560585186bbe20bb6b9"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/ui/theme/AppFont.kt": {
+    "mtime": 1789246129.3826535,
+    "seen": 1789997585.0200834,
+    "ast_hash": "daf7a681c697c3a1b9150e5f8abf7f50",
+    "semantic_hash": "daf7a681c697c3a1b9150e5f8abf7f50"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/ui/theme/Color.kt": {
+    "mtime": 1789322087.8415442,
+    "seen": 1789997585.0200853,
+    "ast_hash": "2fa0b9304692e7ee306ed62effccf8ea",
+    "semantic_hash": "2fa0b9304692e7ee306ed62effccf8ea"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/ui/theme/Shape.kt": {
+    "mtime": 1789317752.7701826,
+    "seen": 1789997585.020087,
+    "ast_hash": "8ace17836d2a3fe83951431354fe5dfd",
+    "semantic_hash": "8ace17836d2a3fe83951431354fe5dfd"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/ui/theme/Theme.kt": {
+    "mtime": 1789317960.5976286,
+    "seen": 1789997585.0200887,
+    "ast_hash": "d7e4ad6d2e76c3cc71d76682b8634fa5",
+    "semantic_hash": "d7e4ad6d2e76c3cc71d76682b8634fa5"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/ui/theme/Type.kt": {
+    "mtime": 1789224582.69826,
+    "seen": 1789997585.0200903,
+    "ast_hash": "3ea897a83ad7e8b6eca82a9574955ac6",
+    "semantic_hash": "3ea897a83ad7e8b6eca82a9574955ac6"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/utils/BitmapData.kt": {
+    "mtime": 1788983346.753853,
+    "seen": 1789997585.020092,
+    "ast_hash": "c1bfdc53b57574148318ab557b077d5b",
+    "semantic_hash": "c1bfdc53b57574148318ab557b077d5b"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/utils/DeviceType.kt": {
+    "mtime": 1788983346.748313,
+    "seen": 1789997585.0200937,
+    "ast_hash": "a1c0a668b7c09683c7f5d81872233d7a",
+    "semantic_hash": "a1c0a668b7c09683c7f5d81872233d7a"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/widget/DigimonWidgetProvider.kt": {
+    "mtime": 1789158095.8107138,
+    "seen": 1789997585.0200956,
+    "ast_hash": "a38b4a0cce53927569bfbf3d0704b89c",
+    "semantic_hash": "a38b4a0cce53927569bfbf3d0704b89c"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/world/OpenStreetMapBiomeDetector.kt": {
+    "mtime": 1789848558.9176457,
+    "seen": 1789997585.0200973,
+    "ast_hash": "92c4928d067de20a5bba78502308e682",
+    "semantic_hash": "92c4928d067de20a5bba78502308e682"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/world/WildMoodAnalyzer.kt": {
+    "mtime": 1789218771.7773106,
+    "seen": 1789997585.0200992,
+    "ast_hash": "20ea34462c582eaec5e2fe2b24141a59",
+    "semantic_hash": "20ea34462c582eaec5e2fe2b24141a59"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/world/WorldAfkScheduler.kt": {
+    "mtime": 1788983346.7598605,
+    "seen": 1789997585.0201008,
+    "ast_hash": "906d22f395b49fa6f50ef10676eb55a8",
+    "semantic_hash": "906d22f395b49fa6f50ef10676eb55a8"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/world/WorldAfkWorker.kt": {
+    "mtime": 1789314429.4760075,
+    "seen": 1789997585.0201042,
+    "ast_hash": "6108eee8ef810547a104c45431ced3af",
+    "semantic_hash": "6108eee8ef810547a104c45431ced3af"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/world/WorldBiome.kt": {
+    "mtime": 1789243923.8317518,
+    "seen": 1789997585.0201077,
+    "ast_hash": "47ebf5bea22964f857198558d947fe68",
+    "semantic_hash": "47ebf5bea22964f857198558d947fe68"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/world/WorldRepository.kt": {
+    "mtime": 1789907219.7567484,
+    "seen": 1789997585.0201116,
+    "ast_hash": "7f62179919b0b59d6bb498e521182013",
+    "semantic_hash": "7f62179919b0b59d6bb498e521182013"
+  },
+  "app/src/main/java/com/github/nacabaro/vbhelper/world/WorldSpawnSelector.kt": {
+    "mtime": 1789245552.5702732,
+    "seen": 1789997585.0201151,
+    "ast_hash": "89d525674e967f919af521bf8aa943a6",
+    "semantic_hash": "89d525674e967f919af521bf8aa943a6"
+  },
+  ".impeccable/critique/2026-09-13T17-28-13Z__app-src-main-java-com-github-nacabaro-vbhelper.md": {
+    "mtime": 1789320493.0539038,
+    "seen": 1789997585.0201185,
+    "ast_hash": "078f2a63ac549565efa61077e81addaa",
+    "semantic_hash": "078f2a63ac549565efa61077e81addaa"
+  },
+  "DESIGN.md": {
+    "mtime": 1789320168.8385034,
+    "seen": 1789997585.0201204,
+    "ast_hash": "316f8ae8b7b457fff6415892a055e7f5",
+    "semantic_hash": "316f8ae8b7b457fff6415892a055e7f5"
+  },
+  "DIGIFARM_25D_PLAN.md": {
+    "mtime": 1789954272.293051,
+    "seen": 1789997585.020122,
+    "ast_hash": "c7e8d8270c55b42128c8f8ce8ed37580",
+    "semantic_hash": "c7e8d8270c55b42128c8f8ce8ed37580"
+  },
+  "DIGIFARM_DIGILINE_PLAN.md": {
+    "mtime": 1789940160.2277074,
+    "seen": 1789997585.020124,
+    "ast_hash": "49016a15ba75c9bdd882b87d3009ae82",
+    "semantic_hash": "49016a15ba75c9bdd882b87d3009ae82"
+  },
+  "DigifarmAssets/README.md": {
+    "mtime": 1789917831.0762901,
+    "seen": 1789997585.0201256,
+    "ast_hash": "4ad0d7376213b47d79e0717a54bd4c9a",
+    "semantic_hash": "4ad0d7376213b47d79e0717a54bd4c9a"
+  },
+  "PRODUCT.md": {
+    "mtime": 1789319794.985736,
+    "seen": 1789997585.0201273,
+    "ast_hash": "83f33ebf279b751b73c5e73adcbca64d",
+    "semantic_hash": "83f33ebf279b751b73c5e73adcbca64d"
+  },
+  "README.md": {
+    "mtime": 1788983349.4865177,
+    "seen": 1789997585.0201292,
+    "ast_hash": "9e32cc418ad4349efe516b5362b23ad4",
+    "semantic_hash": "9e32cc418ad4349efe516b5362b23ad4"
+  },
+  "TESTING.md": {
+    "mtime": 1789817787.3100314,
+    "seen": 1789997585.0201309,
+    "ast_hash": "ffef9073757dd1d2c4cdc7bfa176187f",
+    "semantic_hash": "ffef9073757dd1d2c4cdc7bfa176187f"
+  },
+  "tools/filament-inspect/R.txt": {
+    "mtime": 318222000.0,
+    "seen": 1789997585.0201325,
+    "ast_hash": "9549c45f367d83102034ff1c523a25e4",
+    "semantic_hash": "9549c45f367d83102034ff1c523a25e4"
+  },
+  "tools/filament-inspect/proguard.txt": {
+    "mtime": 318222000.0,
+    "seen": 1789997585.0201342,
+    "ast_hash": "8aa8a0f9a335dfad618c385218ba9626",
+    "semantic_hash": "8aa8a0f9a335dfad618c385218ba9626"
+  },
+  "vb-dim-reader/LICENSE.md": {
+    "mtime": 1788983348.549357,
+    "seen": 1789997585.0201359,
+    "ast_hash": "41790e9ee4171958529dc6cb547d9fea",
+    "semantic_hash": "41790e9ee4171958529dc6cb547d9fea"
+  },
+  "vb-dim-reader/README.md": {
+    "mtime": 1788983348.569319,
+    "seen": 1789997585.0201378,
+    "ast_hash": "1a309875f2a92b637a56cf92330f3f00",
+    "semantic_hash": "1a309875f2a92b637a56cf92330f3f00"
+  }
+}

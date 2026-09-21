@@ -37,6 +37,8 @@ object Digifarm3dMap {
     const val mapId = "digi_farm_3d"
     const val mapVersion = 1
     const val runtimeAsset = "digifarm/3d/digi_farm_3d.glb"
+    /** Tron variant: same geometry/bounds, black + cyan edges over purple sea. */
+    const val tronRuntimeAsset = "digifarm/3d/digi_farm_3d_tron.glb"
     const val legacyWidth = 512f
     const val legacyHeight = 736f
 

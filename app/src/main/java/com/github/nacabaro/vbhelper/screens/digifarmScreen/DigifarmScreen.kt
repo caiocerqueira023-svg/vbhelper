@@ -225,6 +225,10 @@ private fun FarmWorld(
     var frame by remember { mutableIntStateOf(0) }
     var sceneView by remember { mutableStateOf<Digifarm3dSceneView?>(null) }
     var sceneIssue by remember(farm.id) { mutableStateOf<String?>(null) }
+    // Tron wireframe toggle from general settings; key() below rebuilds the
+    // GL view with the matching scene when it changes.
+    val tronWireframe by app.container.speciesSettingsRepository.digifarmTronWireframe
+        .collectAsState(initial = false)
     var dialogueIssue by remember { mutableStateOf<String?>(null) }
     var offlineSummary by remember(farm.id) { mutableStateOf<String?>(null) }
 
@@ -482,8 +486,15 @@ private fun FarmWorld(
                     (selected.sortedByDescending { it.timestamp } + others).distinctBy { it.authorIndividualId }.take(3)
                 }
                 Box(Modifier.fillMaxSize()) {
+                    // The scene hot-swaps inside the live GL view (see the
+                    // update block): toggling never tears the Engine down.
                     Digifarm3dViewport(
                         modifier = Modifier.fillMaxSize(),
+                        assetName = if (tronWireframe) {
+                            Digifarm3dMap.tronRuntimeAsset
+                        } else {
+                            Digifarm3dMap.runtimeAsset
+                        },
                         onReady = {
                             sceneView = it
                             // A recreated AndroidView starts a fresh load; do
