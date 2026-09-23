@@ -355,6 +355,7 @@
     <string name="ui_optional_profile">Profile (optional)</string>
     <string name="ui_skip">Skip</string>
     <string name="ui_chat_placeholder">Talk to your Digimon...</string>
+    <string name="ui_chat_empty">No messages yet. Say hello to your Digimon.</string>
     <string name="ui_chat_mood_title">Chat • Mood %1$d</string>
     <string name="ui_send">Send</string>
     <string name="ui_official_card">%1$s is an official card?</string>
@@ -493,8 +494,6 @@
     <string name="widget_digimon_label">Digimon</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_font_title">App font</string>
-    <string name="settings_tron_title">Digifarm wireframe</string>
-    <string name="settings_tron_desc">Black island and stadiums with cyan lines over purple water</string>
     <string name="ui_world_compass_waiting">Waiting for compass readings. Map is north-up until north is calibrated.</string>
     <string name="ui_world_compass_calibrate">Compass needs calibration. Move away from magnets and metal, then move the phone in a figure-eight. Map is north-up until calibration completes.</string>
     <string name="ui_world_compass_approximate">Compass paused: north is unreliable. The last direction is held. Move away from magnets and metal and make a figure-eight to recalibrate.</string>
@@ -504,6 +503,7 @@
     <string name="ui_world_radar_tab">Radar</string>
     <string name="ui_digifarm_tab">Digifarm</string>
     <string name="ui_digifarm_title">Digifarm</string>
+    <string name="ui_digifarm_select_farm">Select a Digifarm</string>
     <string name="ui_digifarm_empty_title">Create your first Digifarm</string>
     <string name="ui_digifarm_empty_body">A living habitat where Digimon from Storage can explore, rest, train, play and talk to one another.</string>
     <string name="ui_digifarm_create">Create Digifarm</string>
@@ -516,7 +516,19 @@
     <string name="ui_digifarm_choose_resident">Choose a Storage Digimon</string>
     <string name="ui_digifarm_no_available">Every available Storage Digimon is already in a farm.</string>
     <string name="ui_digifarm_activity">Activity: %1$s</string>
+    <string name="ui_digifarm_activity_failed">Could not change activity. Try again.</string>
     <string name="ui_digifarm_needs">Energy %1$d · Food %2$d · Social %3$d · Fun %4$d</string>
+    <string name="ui_digifarm_needs_title">Needs</string>
+    <string name="ui_digifarm_energy">Energy</string>
+    <string name="ui_digifarm_food">Food</string>
+    <string name="ui_digifarm_social">Social</string>
+    <string name="ui_digifarm_fun">Fun</string>
+    <string name="ui_digifarm_more_actions">More actions</string>
+    <string name="ui_digifarm_activities">Activities</string>
+    <string name="ui_digifarm_resident_interaction_hint">Tap a name to follow. Press and hold to open settings.</string>
+    <string name="ui_digifarm_open_settings">Open resident settings</string>
+    <string name="ui_digifarm_follow_resident">Follow resident with camera</string>
+    <string name="ui_digifarm_following">Following</string>
     <string name="ui_digifarm_private_chat">Private chat</string>
     <string name="ui_digifarm_remove">Remove from Digifarm</string>
     <string name="ui_digifarm_play">Play</string>
@@ -528,6 +540,7 @@
     <string name="ui_digifarm_idle">Relaxing</string>
     <string name="ui_digifarm_pause_dialogue">Pause autonomous dialogue</string>
     <string name="ui_digifarm_enable_dialogue">Enable autonomous dialogue</string>
+    <string name="ui_digifarm_autonomous_dialogue">Autonomous dialogue</string>
     <string name="ui_digifarm_dialogue_unavailable">Autonomous dialogue is paused until the chat provider is available.</string>
     <string name="ui_digiline_storage">Storage</string>
     <string name="ui_digiline_wild">Wild Ones</string>

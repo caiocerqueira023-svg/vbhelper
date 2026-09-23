@@ -2,12 +2,11 @@ package com.github.nacabaro.vbhelper.digifarm.social
 
 import com.github.nacabaro.vbhelper.chat.ChatRepository
 import com.github.nacabaro.vbhelper.digifarm.DigifarmRepository
-import com.github.nacabaro.vbhelper.digifarm.map.BirdFarmMap
-import com.github.nacabaro.vbhelper.digifarm.map.MapPoint
 import com.github.nacabaro.vbhelper.domain.digifarm.FarmMessage
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.UUID
+import kotlin.math.hypot
 
 /**
  * Validated public utterance envelope (§8). The app binds the author; the model
@@ -130,20 +129,12 @@ class FarmConversationOrchestrator(
         // Prefer a nearby listener; otherwise approach instead of talking across the map.
         val candidates = residents.filter { it.individualId != author.individualId }
         val listener = candidates.minByOrNull {
-            BirdFarmMap.distance(
-                MapPoint(it.positionX, it.positionY),
-                MapPoint(author.positionX, author.positionY)
-            )
+            hypot((it.positionX - author.positionX).toDouble(),
+                (it.positionY - author.positionY).toDouble())
         } ?: return null
-        val distance = BirdFarmMap.distance(
-            MapPoint(listener.positionX, listener.positionY),
-            MapPoint(author.positionX, author.positionY)
-        )
-        val connected = BirdFarmMap.areConnected(
-            MapPoint(author.positionX, author.positionY),
-            MapPoint(listener.positionX, listener.positionY)
-        )
-        if (!connected || distance > TALK_PROXIMITY_PX) {
+        val distance = hypot((listener.positionX - author.positionX).toDouble(),
+            (listener.positionY - author.positionY).toDouble())
+        if (distance > TALK_PROXIMITY_PX) {
             farmRepository.steerToward(farmId, author.individualId, listener.positionX, listener.positionY)
             return null
         }

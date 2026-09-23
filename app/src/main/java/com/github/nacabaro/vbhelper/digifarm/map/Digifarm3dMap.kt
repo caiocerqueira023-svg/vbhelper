@@ -29,16 +29,14 @@ data class Digifarm3dManifest(
 )
 
 /**
- * Coordinate conversion shared by simulation, hit testing and the Compose
- * compatibility sprite layer. The old logical positions are only an import
- * format for existing residents; new pathfinding uses FarmWorldPoint.
+ * Coordinate conversion shared by simulation and rendered residents. Stored
+ * positions retain the legacy range, while DigifarmGround moves through that
+ * range continuously and this maps each point onto the 3D island.
  */
 object Digifarm3dMap {
     const val mapId = "digi_farm_3d"
     const val mapVersion = 1
     const val runtimeAsset = "digifarm/3d/digi_farm_3d.glb"
-    /** Tron variant: same geometry/bounds, black + cyan edges over purple sea. */
-    const val tronRuntimeAsset = "digifarm/3d/digi_farm_3d_tron.glb"
     const val legacyWidth = 512f
     const val legacyHeight = 736f
 

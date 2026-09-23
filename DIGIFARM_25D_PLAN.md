@@ -1,6 +1,6 @@
 # Digifarm 2.5D — plano de implementação
 
-**Status:** fundação 3D em implementação local; o aparelho será validado pelo usuário.
+**Status:** cena de ilha única implementada em 22/09/2026; a nova versão ainda precisa de validação no aparelho. As seções datadas abaixo registram tentativas anteriores; estádios e variante Tron foram descartados.
 
 ## Decisão de produto
 
@@ -214,3 +214,73 @@ Arquivos: `screens/digilineScreen/DigilineScreen.kt` e `screens/digilineScreen/F
 - O enquadramento da câmera, o alvo, o zoom e a composição da viewport não foram alterados nesta rodada. O preview final está em `build/digifarm-debug/final-connected-preview.png`; ele é apenas a verificação offline da malha/exportação.
 - A mesma geometria e o mesmo pós-processamento de alpha foram regenerados em `digi_farm_3d_tron.glb`/`manifest_tron.json`, para que o modo wireframe não reintroduza a lateral antiga quando for ativado.
 - `:app:compileDebugKotlin` e `:app:assembleDebug` concluíram com sucesso. O APK final está em `app/build/outputs/apk/debug/app-debug.apk` (SHA-256 `D1FD1400F6EB75CB1E39DF8F347A17298DBC5E97FC66365B1FE9204804488286`). O GLB dentro do APK passou por checagem de header, tamanho e `alphaMode: BLEND`; não foi feita nova instalação via ADB.
+
+## Revisão da cena — 22/09/2026
+
+### Direção implementada
+
+- A Digifarm usa uma única ilha principal. Os dois ilhéus, os estádios e a variante Tron foram removidos da cena e do aplicativo. A cena mantém as posições jogáveis e as coordenadas dos moradores.
+- A malha original de grama foi mantida. Suas 217 arestas de contorno geram uma parede lateral contínua em todo o perímetro, com afunilamento discreto. Isso substitui a lateral incompleta e suas tentativas anteriores de fechamento traseiro.
+- A textura da parede começa opaca na borda clara e chega a alpha zero antes da última faixa da malha. Não há tampa, quilha ou silhueta no pé. O GLB usa `alphaMode: BLEND` com a mesma imagem no canal de cor base, necessário para o alpha funcionar no Filament.
+- A câmera orbita a ilha em 360° com elevação limitada acima do horizonte; o alvo inicial fica no centro da ilha. Pinça, seleção, moradores e simulação mantêm seus contratos atuais.
+- O pipeline agora exporta apenas `Island`, dois materiais e um GLB. `tools/digifarm/validate_asset.py` verifica a estrutura, a ausência de estádios e a faixa inferior totalmente transparente. A captura do usuário documenta o problema antigo; os renders locais da nova frente e traseira são evidência de asset, não de aparelho.
+
+### Melhorias visuais planejadas
+
+1. **Terreno com hierarquia:** suavizar a repetição da grade verde sem perder a leitura dos tiles; reservar um miolo calmo para os Digimon e introduzir pequenas áreas de textura/piso próximas à borda. Usar verdes menos saturados, rocha em violeta escuro e ciano apenas para estado ativo ou seleção, seguindo o Design System.
+2. **Ponto de referência central:** estudar uma plataforma ou marco digital baixo no centro da ilha, sem obstruir moradores nem sugerir um estádio. O elemento deve ajudar na orientação da câmera e ter presença discreta mesmo com 12 residentes.
+3. **Profundidade do ambiente:** trocar o vazio preto por um fundo violeta profundo coerente com o app, com uma transição suave atrás da ilha. Avaliar sombra de contato leve sob sprites e props; evitar brilho global, água ou partículas constantes que disputem atenção.
+4. **Vida sem poluição visual:** acrescentar poucos detalhes estáticos de pequena escala, como placas técnicas, fragmentos de circuito ou vegetação digital angular em zonas não jogáveis. A densidade deve ser checada nas vistas frontal, lateral e traseira e em telas compactas.
+5. **Acabamento e desempenho:** conferir o resultado em aparelho nas duas orientações de giro e nos limites de zoom/pitch; validar ausência de filetes no fade, leitura dos sprites e custo de GPU com 12 moradores. Implementar o restante em lotes visuais pequenos após escolher a direção do terreno e do marco central.
+
+Essas propostas são visuais. Não mudam Radar, Digiline, banco, conversas, vitais ou movimentação lógica. A próxima decisão de arte é escolher se a superfície permanece predominantemente verde ou se adota uma base mais violeta com verde concentrado nas áreas habitáveis.
+
+### Correção do contorno inferior e câmera — 22/09/2026
+
+- A captura do aparelho após a conversão para ilha única ainda mostrava um fio claro no pé do penhasco. O PNG tinha alpha zero no rodapé, mas o GLB usava o sampler padrão do glTF, que repete a textura verticalmente. Na coordenada V=1, a filtragem misturava o rodapé transparente com a primeira linha clara da borda superior.
+- O pós-processamento do GLB agora cria um sampler próprio para a lateral com `wrapT=33071` (`CLAMP_TO_EDGE`) e mantém `wrapS=10497` (`REPEAT`) ao redor do perímetro. O validador exige essa configuração e a faixa inferior com alpha zero. A textura do topo conserva seu sampler original.
+- O pitch orbital passa de 0,52–1,10 rad para 0,42–1,22 rad. O ângulo inicial continua 0,64 rad e os limites ainda impedem a câmera de passar abaixo da ilha.
+- `:app:compileDebugKotlin` e `:app:assembleDebug` passaram; o GLB validado é idêntico ao empacotado no APK. O APK foi instalado com `adb install -r`, preservando os dados, e a captura no aparelho na vista observada mostra o fade sem a linha clara. Um arrasto vertical dentro da viewport também confirmou a maior amplitude. A inspeção não cobriu todos os níveis de zoom nem uma volta completa de 360° nesta rodada.
+
+### Fragmentos digitais inspirados na referência do usuário — 22/09/2026
+
+- A referência visual mostra uma plataforma quadriculada com trechos digitais expostos e blocos suspensos ao redor. A cena normal da Digifarm agora traduz essa composição para a paleta do VBHelper: preto violeta e linhas roxas nos fragmentos, mantendo o terreno verde no centro onde os Digimon circulam. Isso não reintroduz a antiga variante Tron.
+- `build_reference_textures.py` desenha rupturas irregulares nos tiles periféricos de `island_top.png` e gera dois painéis de cubo, escuro e iluminado. A distribuição evita um anel uniforme e preserva a legibilidade dos moradores.
+- `build_assets.py` adiciona `VoxelFragments` com 14 blocos pequenos em seis agrupamentos ao redor da ilha, fora dos limites jogáveis. São elementos puramente visuais; colisão, spawns, simulação e câmera mantêm suas regras.
+- O GLB continua com um único penhasco de fade transparente e sampler vertical `CLAMP_TO_EDGE`. O manifesto lista `Island` e `VoxelFragments`; o validador exige esses nós, os quatro materiais e a transparência do rodapé.
+
+### Ajuste dos blocos e da lateral — 22/09/2026
+
+- Os 14 blocos originais permanecem nas mesmas posições. Foram divididos em seis grupos para receber uma oscilação vertical lenta e discreta no renderizador.
+- A proposta de novos conglomerados distantes e de substituir a lateral por cubos foi desfeita a pedido do usuário. O enquadramento e os limites da câmera permanecem como antes desta rodada.
+- Onde os patches do topo encontram a borda, a grade roxa avança cerca de um tile pela textura da lateral e volta gradualmente à rocha. A parede segue contínua e mantém o fade transparente no rodapé.
+
+### Paleta e flutuação — 22/09/2026
+
+- A extensão dos patches pela lateral foi retirada. O wireframe permanece apenas no topo; a lateral inteira usa uma única textura de rocha.
+- A grama passou para jade suave (`#70A989`) com linhas verde profundo. A rocha usa malva e violeta escuros, de `#BBAAC2` na borda até `#171327` no fade. O fundo da viewport usa o token existente `DeepPurpleBgAlt` (`#171327`). A paleta conserva o contraste do wireframe roxo sem usar ciano decorativo.
+- Os seis grupos formados pelos 14 blocos originais oscilam em alturas e fases diferentes, com deslocamento horizontal muito pequeno. A ilha, a câmera, os moradores e a lógica da fazenda não se movem.
+
+### Ajuste de movimento e hierarquia da tela — 22/09/2026
+
+- A flutuação anterior não foi perceptível no aparelho. O renderizador agora encontra os seis grupos por nome exato, registra quantos carregou e aplica uma oscilação vertical visível a cada frame, com fases e velocidades diferentes.
+- O limite inferior do pitch passa de `0.42` para `0.18` radiano, mantendo a câmera acima do plano da ilha mesmo no zoom mais próximo.
+- A viewport da ilha passa a ser o primeiro conteúdo da Digifarm, abaixo das abas. O controle para parar de seguir um morador aparece imediatamente sob a cena quando necessário; Add, Group e o resumo de retorno AFK vêm depois, dentro da mesma rolagem. O resumo pode usar até quatro linhas e uma cor de texto mais legível.
+
+### Movimento individual dos blocos e flutuação da ilha — 23/09/2026
+
+- Cada cubo agora é um nó e uma malha separados, mantendo seus seis grupos e o movimento maior já existente. Os 14 cubos recebem pequenas amplitudes, velocidades e fases próprias.
+- A ilha oscila lentamente cerca de 0,012 unidade no eixo vertical. Os moradores acompanham esse deslocamento, e as projeções de balões e áreas de toque usam a mesma altura para continuarem alinhadas.
+- O preview e o validador confirmam os seis pivôs, 14 malhas independentes e a integridade do GLB; `:app:assembleDebug` passou e o APK contém o mesmo asset validado.
+
+### Moradores com profundidade e caminhada contínua — 23/09/2026
+
+- As seis poses de cada morador são convertidas em um GLB leve quando a arte é carregada. A frente e o verso conservam os pixels originais; cada aresta exposta da silhueta ganha uma lateral escurecida, com profundidade real e textura sem suavização. A sombra de contato acompanha o modelo. A rotação segue a direção da caminhada, permitindo ver as laterais e o verso ao orbitar a câmera.
+- Os moradores deixam de usar a rota por centros de tiles. Destinos e posições passam a ocupar pontos contínuos dentro de uma área segura da ilha. A simulação mantém as coordenadas salvas existentes e avança em velocidade constante; o renderizador interpola a caminhada a cada frame e limita a antecipação quando outro morador bloqueia a passagem.
+- Um retorno após tempo longe ainda atualiza as necessidades como antes, mas o deslocamento físico é limitado a um passo visível para evitar um salto pela ilha. Seleção, acompanhamento da câmera, balões e áreas de toque seguem as posições interpoladas.
+- Testes locais verificam geometria, PNG embutido, spawns e velocidade. A verificação final de aparência e desempenho no aparelho continua necessária porque a compilação não executa o Filament no dispositivo.
+
+### Correção dos moradores invisíveis — 23/09/2026
+
+- O teste inicial de GLB passou no JVM, mas no Android o `JSONObject` serializou o MIME das imagens como `image\/png`. O `gltfio` registrou `Missing texture provider for image\/png`; sem as texturas, as malhas com alpha não apareciam.
+- O JSON do GLB agora normaliza a barra antes de gravar o chunk. Um teste de regressão cobre explicitamente a forma escapada. O APK atualizado foi instalado uma vez com preservação dos dados: a captura da Digifarm mostrou os moradores extrudados, e o log novo carregou os seis moradores sem o erro de MIME.

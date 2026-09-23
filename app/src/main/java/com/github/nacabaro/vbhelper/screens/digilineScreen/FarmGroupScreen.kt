@@ -1,8 +1,6 @@
 package com.github.nacabaro.vbhelper.screens.digilineScreen
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -11,18 +9,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CutCornerShape
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -40,13 +33,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.components.ChatComposer
+import com.github.nacabaro.vbhelper.components.ChatContextPanel
+import com.github.nacabaro.vbhelper.components.ChatHistoryPanel
+import com.github.nacabaro.vbhelper.components.ChatMessageBubble
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.components.VitalButton
-import com.github.nacabaro.vbhelper.components.cyberFrame
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.digifarm.social.FarmConversationOrchestrator
-import com.github.nacabaro.vbhelper.ui.theme.SurfaceDeepPurple
-import com.github.nacabaro.vbhelper.ui.theme.SurfaceElevatedPurple
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
@@ -65,6 +59,8 @@ fun FarmGroupScreen(navController: NavController, farmId: String) {
     val residents by repository.observeResidents(farmId).collectAsState(emptyList())
     val messagesDesc by repository.observeMessages(farmId).collectAsState(emptyList())
     val messages = messagesDesc.asReversed()
+    val messageListState = rememberLazyListState()
+    var previousMessageCount by remember(farmId) { mutableStateOf(0) }
     val orchestrator = remember { FarmConversationOrchestrator(repository, app.container.chatRepository) }
     val scope = rememberCoroutineScope()
     var input by remember { mutableStateOf("") }
@@ -73,6 +69,19 @@ fun FarmGroupScreen(navController: NavController, farmId: String) {
     var error by remember { mutableStateOf<String?>(null) }
     var recipientsByMessage by remember { mutableStateOf<Map<String, List<String>>>(emptyMap()) }
     val dialogueUnavailable = stringResource(R.string.ui_digifarm_dialogue_unavailable)
+
+    LaunchedEffect(farmId, messagesDesc.firstOrNull()?.id, messages.size) {
+        if (messages.isEmpty()) return@LaunchedEffect
+        if (previousMessageCount == 0) {
+            messageListState.scrollToItem(messages.lastIndex)
+        } else {
+            val lastVisibleIndex = messageListState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
+            if (lastVisibleIndex >= previousMessageCount - 1) {
+                messageListState.animateScrollToItem(messages.lastIndex)
+            }
+        }
+        previousMessageCount = messages.size
+    }
 
     LaunchedEffect(messagesDesc.firstOrNull()?.sequence) {
         messagesDesc.firstOrNull()?.let { repository.markRead(farmId, it.sequence) }
@@ -120,17 +129,10 @@ fun FarmGroupScreen(navController: NavController, farmId: String) {
                 .fillMaxSize()
                 .padding(padding)
                 .padding(start = 16.dp, end = 16.dp, top = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             if (residents.isNotEmpty()) {
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .background(SurfaceElevatedPurple.copy(alpha = 0.58f))
-                        .cyberFrame()
-                        .padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                ChatContextPanel {
                     Text(
                         stringResource(R.string.ui_digifarm_residents),
                         style = MaterialTheme.typography.labelLarge,
@@ -154,7 +156,7 @@ fun FarmGroupScreen(navController: NavController, farmId: String) {
                                         selected + resident.individualId
                                     }
                                 },
-                                modifier = Modifier.height(40.dp),
+                                modifier = Modifier.height(48.dp),
                                 borderColor = if (isSelected) VitalCyan else SurfaceStroke,
                                 contentColor = if (isSelected) VitalCyan else TextPrimaryOnDark,
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
@@ -169,120 +171,69 @@ fun FarmGroupScreen(navController: NavController, farmId: String) {
                     }
                 }
             }
-            Box(
-                Modifier
+            ChatHistoryPanel(
+                isEmpty = messagesDesc.isEmpty(),
+                emptyMessage = stringResource(R.string.ui_digiline_empty_group),
+                modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .background(SurfaceDeepPurple.copy(alpha = 0.34f))
-                    .cyberFrame()
-                    .padding(horizontal = 4.dp)
             ) {
-                if (messages.isEmpty()) {
-                    Text(
-                        stringResource(R.string.ui_digiline_empty_group),
-                        color = TextSecondaryOnDark,
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                } else {
-                    LazyColumn(
-                        Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 8.dp)
-                    ) {
-                        items(messages, key = { it.id }) { message ->
-                            val fromTamer = message.authorIndividualId == null
-                            Row(
-                                Modifier.fillMaxWidth(),
-                                horizontalArrangement = if (fromTamer) Arrangement.End else Arrangement.Start
-                            ) {
-                                Surface(
-                                    color = if (fromTamer) {
-                                        VitalCyan.copy(alpha = .16f)
-                                    } else {
-                                        SurfaceElevatedPurple.copy(alpha = .72f)
-                                    },
-                                    shape = CutCornerShape(8.dp),
-                                    border = BorderStroke(
-                                        1.dp,
-                                        if (fromTamer) VitalCyan.copy(alpha = .76f) else SurfaceStroke
-                                    ),
-                                    modifier = Modifier
-                                        .padding(vertical = 4.dp)
-                                        .fillMaxWidth(.84f)
-                                ) {
-                                    Column(Modifier.padding(10.dp)) {
-                                        Text(
-                                            message.authorNameSnapshot,
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = VitalCyan
-                                        )
-                                        val recipientIds = recipientsByMessage[message.id].orEmpty()
-                                        val audience = if (recipientIds.isEmpty()) {
-                                            stringResource(R.string.ui_digiline_message_all)
-                                        } else {
-                                            val names = residents.filter { it.individualId in recipientIds }.joinToString { it.displayName }
-                                            if (names.isBlank()) stringResource(R.string.ui_digiline_to_selected, recipientIds.size)
-                                            else stringResource(R.string.ui_digiline_message_to, names)
-                                        }
-                                        Text(
-                                            audience,
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = TextSecondaryOnDark
-                                        )
-                                        Text(
-                                            message.body,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = TextPrimaryOnDark
-                                        )
-                                    }
-                                }
-                            }
+                LazyColumn(
+                    Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 8.dp),
+                    state = messageListState
+                ) {
+                    items(messages, key = { it.id }) { message ->
+                        val fromTamer = message.authorIndividualId == null
+                        val recipientIds = recipientsByMessage[message.id].orEmpty()
+                        val audience = if (recipientIds.isEmpty()) {
+                            stringResource(R.string.ui_digiline_message_all)
+                        } else {
+                            val names = residents.filter { it.individualId in recipientIds }.joinToString { it.displayName }
+                            if (names.isBlank()) stringResource(R.string.ui_digiline_to_selected, recipientIds.size)
+                            else stringResource(R.string.ui_digiline_message_to, names)
                         }
+                        ChatMessageBubble(
+                            text = message.body,
+                            isUser = fromTamer,
+                            authorLabel = message.authorNameSnapshot,
+                            contextLabel = audience
+                        )
                     }
                 }
             }
-            error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(horizontal = 12.dp)) }
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                OutlinedTextField(
-                    value = input,
-                    onValueChange = { input = it.take(600) },
-                    modifier = Modifier.weight(1f),
-                    singleLine = true,
-                    placeholder = { Text(if (selected.isEmpty()) stringResource(R.string.ui_digiline_to_all) else stringResource(R.string.ui_digiline_to_selected, selected.size)) }
-                )
-                VitalButton(
-                    onClick = {
-                        val text = input.trim()
-                        if (text.isEmpty()) return@VitalButton
-                        input = ""
+            ChatComposer(
+                value = input,
+                onValueChange = { input = it },
+                placeholder = if (selected.isEmpty()) {
+                    stringResource(R.string.ui_digiline_to_all)
+                } else {
+                    stringResource(R.string.ui_digiline_to_selected, selected.size)
+                },
+                sendLabel = stringResource(R.string.ui_send),
+                sending = sending,
+                singleLine = true,
+                maxLength = 600,
+                errorMessage = error,
+                onSend = {
+                    val text = input.trim()
+                    if (text.isNotEmpty()) {
                         sending = true
+                        error = null
                         scope.launch(Dispatchers.IO) {
                             val result = runCatching { orchestrator.sendTamerMessage(farmId, text, selected.toList()) }
                             withContext(Dispatchers.Main) {
                                 sending = false
+                                result.onSuccess {
+                                    if (input.trim() == text) input = ""
+                                }
                                 error = result.exceptionOrNull()?.message
                             }
                         }
-                    },
-                    enabled = !sending,
-                    modifier = Modifier.height(56.dp)
-                ) {
-                    if (sending) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(18.dp),
-                            color = VitalCyan,
-                            strokeWidth = 2.dp
-                        )
-                    } else {
-                        Text(stringResource(R.string.ui_send))
                     }
                 }
-            }
+            )
         }
     }
 }

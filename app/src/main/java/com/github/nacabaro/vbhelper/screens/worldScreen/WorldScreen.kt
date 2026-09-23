@@ -34,9 +34,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -76,6 +79,7 @@ import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.components.VitalButton
+import com.github.nacabaro.vbhelper.components.cyberFrame
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.dtos.WorldDtos
@@ -85,10 +89,13 @@ import com.github.nacabaro.vbhelper.screens.cardScreen.dialogs.DexCharaDetailsDi
 import com.github.nacabaro.vbhelper.source.DexRepository
 import com.github.nacabaro.vbhelper.world.WorldBiome
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
+import com.github.nacabaro.vbhelper.ui.theme.SurfaceDeepPurple
+import com.github.nacabaro.vbhelper.ui.theme.SurfaceElevatedPurple
 import com.github.nacabaro.vbhelper.ui.theme.SpaceBlack
 import com.github.nacabaro.vbhelper.ui.theme.RadarCompass
 import com.github.nacabaro.vbhelper.ui.theme.RadarFollower
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
+import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.getBitmap
@@ -735,6 +742,7 @@ private data class WorldDimSpecies(
     val fallbackNumber: Int
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun WorldSpawnDimSettingsDialog(
     cards: List<Card>,
@@ -742,38 +750,59 @@ private fun WorldSpawnDimSettingsDialog(
     onEnabledChange: (Card, Boolean) -> Unit,
     onLongClickCard: (Card) -> Unit
 ) {
-    AlertDialog(
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.ui_world_spawn_dims_title)) },
-        text = {
+        containerColor = SurfaceDeepPurple,
+        contentColor = TextPrimaryOnDark
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Text(
+                stringResource(R.string.ui_world_spawn_dims_title),
+                style = MaterialTheme.typography.headlineSmall,
+                maxLines = 1
+            )
             if (cards.isEmpty()) {
-                Text(stringResource(R.string.ui_world_spawn_dims_empty))
-            } else {
-                Column {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(SurfaceElevatedPurple.copy(alpha = 0.58f))
+                        .cyberFrame()
+                        .padding(16.dp)
+                ) {
                     Text(
-                        stringResource(R.string.ui_world_spawn_dims_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        stringResource(R.string.ui_world_spawn_dims_empty),
+                        color = TextSecondaryOnDark,
+                        style = MaterialTheme.typography.bodyMedium
                     )
-                    LazyColumn(modifier = Modifier.heightIn(max = 360.dp)) {
-                        items(cards, key = { it.id }) { card ->
-                            WorldSpawnDimRow(
-                                card = card,
-                                onClick = { onEnabledChange(card, !card.worldSpawnsEnabled) },
-                                onLongClick = { onLongClickCard(card) },
-                                onCheckedChange = { enabled -> onEnabledChange(card, enabled) }
-                            )
-                        }
+                }
+            } else {
+                Text(
+                    stringResource(R.string.ui_world_spawn_dims_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondaryOnDark
+                )
+                LazyColumn(
+                    modifier = Modifier.heightIn(max = 360.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(cards, key = { it.id }) { card ->
+                        WorldSpawnDimRow(
+                            card = card,
+                            onClick = { onEnabledChange(card, !card.worldSpawnsEnabled) },
+                            onLongClick = { onLongClickCard(card) },
+                            onCheckedChange = { enabled -> onEnabledChange(card, enabled) }
+                        )
                     }
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.ui_close))
-            }
         }
-    )
+    }
 }
 
 @Composable
@@ -792,9 +821,12 @@ private fun WorldSpawnDimRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 64.dp)
+            .background(SurfaceElevatedPurple.copy(alpha = 0.62f))
+            .cyberFrame()
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
-            .padding(vertical = 8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         logo?.let { image ->
@@ -802,9 +834,7 @@ private fun WorldSpawnDimRow(
                 bitmap = image,
                 contentDescription = card.name,
                 filterQuality = FilterQuality.None,
-                modifier = Modifier
-                    .size(40.dp)
-                    .padding(end = 8.dp)
+                modifier = Modifier.size(40.dp)
             )
         }
         Column(modifier = Modifier.weight(1f)) {
@@ -818,12 +848,19 @@ private fun WorldSpawnDimRow(
                     }
                 ),
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (card.worldSpawnsEnabled) VitalCyan else TextSecondaryOnDark,
+                maxLines = 1
             )
         }
         Switch(
             checked = card.worldSpawnsEnabled,
-            onCheckedChange = onCheckedChange
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = SurfaceDeepPurple,
+                checkedTrackColor = VitalCyan,
+                uncheckedThumbColor = TextSecondaryOnDark,
+                uncheckedTrackColor = SurfaceStroke
+            )
         )
     }
 }

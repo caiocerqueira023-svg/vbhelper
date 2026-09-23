@@ -2,7 +2,8 @@ package com.github.nacabaro.vbhelper.digifarm
 
 import androidx.room.withTransaction
 import com.github.nacabaro.vbhelper.database.AppDatabase
-import com.github.nacabaro.vbhelper.digifarm.map.BirdFarmMap
+import com.github.nacabaro.vbhelper.digifarm.map.DigifarmGround
+import com.github.nacabaro.vbhelper.digifarm.map.MapPoint
 import com.github.nacabaro.vbhelper.domain.digifarm.Farm
 import com.github.nacabaro.vbhelper.domain.digifarm.FarmMessage
 import com.github.nacabaro.vbhelper.domain.digifarm.FarmMessageRecipient
@@ -13,7 +14,6 @@ import com.github.nacabaro.vbhelper.dtos.FarmResidentWithDetails
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import java.util.UUID
-import kotlin.math.hypot
 import kotlin.random.Random
 
 class DigifarmRepository(private val db: AppDatabase) {
@@ -50,7 +50,7 @@ class DigifarmRepository(private val db: AppDatabase) {
         val farm = dao.getFarm(farmId) ?: error("Digifarm not found")
         check(dao.residentCount(farmId) < farm.capacity) { "This Digifarm is full" }
         val character = db.userCharacterDao().getCharacter(characterId)
-        val slot = BirdFarmMap.safeSpawns[dao.residentCount(farmId) % BirdFarmMap.safeSpawns.size]
+        val slot = DigifarmGround.safeSpawns[dao.residentCount(farmId) % DigifarmGround.safeSpawns.size]
         val now = System.currentTimeMillis()
         dao.insertResident(
             FarmResident(
@@ -80,7 +80,7 @@ class DigifarmRepository(private val db: AppDatabase) {
         val target = dao.getFarm(targetFarmId) ?: error("Digifarm not found")
         check(target.archivedAt == null) { "Digifarm is archived" }
         check(dao.residentCount(targetFarmId) < target.capacity) { "This Digifarm is full" }
-        val slot = BirdFarmMap.safeSpawns[dao.residentCount(targetFarmId) % BirdFarmMap.safeSpawns.size]
+        val slot = DigifarmGround.safeSpawns[dao.residentCount(targetFarmId) % DigifarmGround.safeSpawns.size]
         val now = System.currentTimeMillis()
         dao.updateResident(
             resident.copy(
@@ -127,16 +127,23 @@ class DigifarmRepository(private val db: AppDatabase) {
         }
     }
 
-    suspend fun setActivity(individualId: String, farmId: String, activity: String) {
-        val resident = dao.getResidentEntities(farmId).firstOrNull { it.individualId == individualId } ?: return
+    suspend fun setActivity(individualId: String, farmId: String, activity: String) = db.withTransaction {
+        require(activity in setOf("PLAY", "TRAIN", "EAT", "REST"))
+        val resident = dao.getResident(individualId)?.takeIf { it.farmId == farmId } ?: return@withTransaction
         val now = System.currentTimeMillis()
-        dao.updateResident(resident.copy(activity = activity, activityStartedAt = now, updatedAt = now))
+        dao.updateResident(resident.copy(
+            activity = activity,
+            activityStartedAt = now,
+            targetX = resident.positionX,
+            targetY = resident.positionY,
+            updatedAt = now,
+        ))
     }
 
     /** Nudges a resident toward a point (approach before talking, §8). */
     suspend fun steerToward(farmId: String, individualId: String, x: Float, y: Float) {
         val resident = dao.getResidentEntities(farmId).firstOrNull { it.individualId == individualId } ?: return
-        val safe = BirdFarmMap.closestWalkable(com.github.nacabaro.vbhelper.digifarm.map.MapPoint(x, y))
+        val safe = DigifarmGround.clamp(MapPoint(x, y))
         dao.updateResident(
             resident.copy(
                 targetX = safe.x,
@@ -163,72 +170,56 @@ class DigifarmRepository(private val db: AppDatabase) {
     suspend fun setAutonomousDialogue(farmId: String, enabled: Boolean) =
         dao.setAutonomousDialogue(farmId, enabled)
 
-    suspend fun simulateStep(farmId: String, now: Long = System.currentTimeMillis()) {
-        val farm = dao.getFarm(farmId) ?: return
+    suspend fun simulateStep(farmId: String, now: Long = System.currentTimeMillis()) = db.withTransaction {
+        val farm = dao.getFarm(farmId) ?: return@withTransaction
         val residents = dao.getResidentEntities(farmId)
         val reservedPositions = residents.associate { resident ->
-            resident.individualId to com.github.nacabaro.vbhelper.digifarm.map.MapPoint(
-                resident.positionX,
-                resident.positionY
-            )
+            resident.individualId to DigifarmGround.clamp(MapPoint(resident.positionX, resident.positionY))
         }.toMutableMap()
         residents.forEachIndexed { index, resident ->
-            val elapsedSeconds = ((now - resident.updatedAt).coerceAtLeast(0) / 1000f).coerceAtMost(30f)
-            // Exceptional recovery: feet outside walkable ground return to a safe cell
-            // of the same map and emit no teleport across islands (diagnostic via target reset).
-            var current = com.github.nacabaro.vbhelper.digifarm.map.MapPoint(resident.positionX, resident.positionY)
-            if (!BirdFarmMap.isWalkable(current)) {
-                current = BirdFarmMap.closestWalkable(current)
-            }
-            var target = BirdFarmMap.closestWalkable(com.github.nacabaro.vbhelper.digifarm.map.MapPoint(resident.targetX, resident.targetY))
-            val distance = hypot((target.x - current.x).toDouble(), (target.y - current.y).toDouble()).toFloat()
-            if (distance < 5f || now - resident.activityStartedAt > 25_000L) {
+            // Offline state is accounted for below; position only advances by
+            // one visible step so reopening the farm cannot teleport a resident.
+            val elapsedSeconds = ((now - resident.updatedAt).coerceAtLeast(0) / 1000f).coerceAtMost(1.2f)
+            val current = DigifarmGround.clamp(MapPoint(resident.positionX, resident.positionY))
+            val nextActivity = activityFor(resident, now)
+            val moving = nextActivity in DigifarmGround.movingActivities
+            var target = if (moving) DigifarmGround.clamp(MapPoint(resident.targetX, resident.targetY))
+                else current
+            val distance = DigifarmGround.worldDistance(current, target)
+            if (moving && (nextActivity != resident.activity || distance < 0.018f)) {
                 val choice = Random(farm.randomSeed xor now / 10_000L xor index.toLong())
-                val nextActivity = activityFor(resident, now)
-                val spots = BirdFarmMap.activityPoints[nextActivity]
+                val spots = DigifarmGround.activityPoints[nextActivity]
                 val raw = if (spots != null && choice.nextBoolean()) {
                     spots[choice.nextInt(spots.size)]
                 } else {
-                    BirdFarmMap.safeSpawns[choice.nextInt(BirdFarmMap.safeSpawns.size)]
+                    DigifarmGround.randomPoint(choice)
                 }
-                target = BirdFarmMap.closestWalkable(raw)
+                target = DigifarmGround.clamp(raw)
             }
-            val path = BirdFarmMap.findPath(current, target)
-            val next = path.firstOrNull() ?: current
-            val dx = next.x - current.x
-            val dy = next.y - current.y
-            val segment = hypot(dx.toDouble(), dy.toDouble()).toFloat().coerceAtLeast(1f)
-            val travel = (24f * elapsedSeconds).coerceAtMost(segment)
-            val candidate = if (resident.activity in MOVING_ACTIVITIES) {
-                com.github.nacabaro.vbhelper.digifarm.map.MapPoint(
-                    current.x + dx / segment * travel,
-                    current.y + dy / segment * travel
+            val position = if (moving) {
+                DigifarmGround.advanceAvoidingResidents(
+                    current = current,
+                    target = target,
+                    elapsedSeconds = elapsedSeconds,
+                    obstacles = reservedPositions.filterKeys { it != resident.individualId }.values,
+                    preferClockwise = resident.individualId.hashCode() and 1 == 0,
                 )
             } else {
                 current
             }
-            val isReserved = reservedPositions.any { (otherId, position) ->
-                otherId != resident.individualId &&
-                    hypot(
-                        (position.x - candidate.x).toDouble(),
-                        (position.y - candidate.y).toDouble()
-                    ) < MIN_RESIDENT_DISTANCE
-            }
-            val position = if (isReserved) current else candidate
             reservedPositions[resident.individualId] = position
-            // State changes use coarse time buckets so the 900 ms animation loop cannot
+            // State changes use coarse time buckets so the 900 ms simulation loop cannot
             // inflate needs, while a return after time away is still summarized locally.
             val stateTicks = ((now / STATE_TICK_MILLIS) - (resident.updatedAt / STATE_TICK_MILLIS))
                 .coerceIn(0L, MAX_OFFLINE_STATE_TICKS)
                 .toInt()
-            val nextActivity = activityFor(resident, now)
             dao.updateResident(
                 resident.copy(
                     positionX = position.x,
                     positionY = position.y,
                     targetX = target.x,
                     targetY = target.y,
-                    facingLeft = dx < 0,
+                    facingLeft = if (position.x != current.x) position.x < current.x else resident.facingLeft,
                     activity = nextActivity,
                     energy = (resident.energy - stateTicks / 2 + when (resident.activity) {
                         "REST" -> stateTicks * 2
@@ -238,9 +229,7 @@ class DigifarmRepository(private val db: AppDatabase) {
                     satiety = (resident.satiety - stateTicks / 3 + if (resident.activity == "EAT") stateTicks * 3 else 0).coerceIn(10, 100),
                     social = (resident.social - stateTicks / 6 + if (resident.activity in setOf("PLAY", "SOCIALIZE")) stateTicks else 0).coerceIn(10, 100),
                     funLevel = (resident.funLevel - stateTicks / 6 + if (resident.activity == "PLAY") stateTicks * 2 else 0).coerceIn(10, 100),
-                    activityStartedAt = if (
-                        target.x != resident.targetX || target.y != resident.targetY || nextActivity != resident.activity
-                    ) now else resident.activityStartedAt,
+                    activityStartedAt = if (nextActivity != resident.activity) now else resident.activityStartedAt,
                     updatedAt = now
                 )
             )
@@ -314,9 +303,7 @@ class DigifarmRepository(private val db: AppDatabase) {
     }
 
     private companion object {
-        const val MIN_RESIDENT_DISTANCE = 24.0
         const val STATE_TICK_MILLIS = 30_000L
         const val MAX_OFFLINE_STATE_TICKS = 960L
-        val MOVING_ACTIVITIES = setOf("EXPLORE", "PLAY", "SOCIALIZE")
     }
 }

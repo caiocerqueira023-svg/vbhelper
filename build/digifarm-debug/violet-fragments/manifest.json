@@ -1,0 +1,76 @@
+{
+  "schema": 1,
+  "mapId": "digi_farm_3d",
+  "mapVersion": 1,
+  "asset": "digifarm/3d/digi_farm_3d.glb",
+  "source": "farm_01.fbx",
+  "sourceSha256": "7bb7d3439ffae066577d71719b5dd07b7ce9ff492499b64aeb6fe4c10c1bd425",
+  "coordinateSystem": "canonical-y-up-ground-zero",
+  "groundHeight": 0,
+  "playableBounds": {
+    "min": [
+      -0.68,
+      -0.43
+    ],
+    "max": [
+      0.68,
+      0.43
+    ]
+  },
+  "safeSpawns": [
+    [
+      -0.48,
+      -0.28
+    ],
+    [
+      -0.16,
+      -0.28
+    ],
+    [
+      0.16,
+      -0.28
+    ],
+    [
+      0.48,
+      -0.28
+    ],
+    [
+      -0.48,
+      0
+    ],
+    [
+      -0.16,
+      0
+    ],
+    [
+      0.16,
+      0
+    ],
+    [
+      0.48,
+      0
+    ],
+    [
+      -0.48,
+      0.28
+    ],
+    [
+      -0.16,
+      0.28
+    ],
+    [
+      0.16,
+      0.28
+    ],
+    [
+      0.48,
+      0.28
+    ]
+  ],
+  "staticNodes": [
+    "Island",
+    "VoxelFragments"
+  ],
+  "facilityNodes": [],
+  "notes": "Single central island with broken violet wire grid patches and detached voxel blocks; complete cliff with transparent lower fade; no stadium islets or sea."
+}

@@ -4,6 +4,7 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -24,14 +26,22 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import androidx.compose.material3.RadioButtonDefaults
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedTextField
@@ -52,7 +62,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -73,10 +85,10 @@ import com.github.nacabaro.vbhelper.source.StorageRepository
 import com.github.nacabaro.vbhelper.components.cyberFrame
 import com.github.nacabaro.vbhelper.screens.worldScreen.WorldSectionTabs
 import com.github.nacabaro.vbhelper.ui.theme.SpaceBlack
+import com.github.nacabaro.vbhelper.ui.theme.DeepPurpleBgAlt
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceDeepPurple
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceElevatedPurple
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
-import com.github.nacabaro.vbhelper.ui.theme.TextMutedOnDark
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
@@ -84,6 +96,7 @@ import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.createARGBIntArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.roundToInt
@@ -205,6 +218,12 @@ private fun FarmWorld(
     val repository = app.container.digifarmRepository
     val storageRepository = remember { StorageRepository(app.container.db) }
     val residents by repository.observeResidents(farm.id).collectAsState(emptyList())
+    val residentsByName = remember(residents) {
+        residents.sortedWith(
+            compareBy<FarmResidentWithDetails> { it.displayName.lowercase() }
+                .thenBy { it.individualId }
+        )
+    }
     val messages by repository.observeMessages(farm.id).collectAsState(emptyList())
     val storageCharacters by storageRepository.getAllCharacters().collectAsState(emptyList())
     val residentCharacterIds by repository.observeResidentCharacterIds().collectAsState(emptyList())
@@ -218,29 +237,22 @@ private fun FarmWorld(
     var showTransfer by remember { mutableStateOf<FarmResidentWithDetails?>(null) }
     var showResidentList by remember { mutableStateOf(false) }
     var followId by remember(farm.id) { mutableStateOf<String?>(null) }
-    var farmMenu by remember { mutableStateOf(false) }
+    var showFarmSettings by remember { mutableStateOf(false) }
     var scale by remember(farm.id) { mutableFloatStateOf(farm.cameraScale) }
     var panX by remember(farm.id) { mutableFloatStateOf(farm.cameraX) }
     var panY by remember(farm.id) { mutableFloatStateOf(farm.cameraY) }
-    var frame by remember { mutableIntStateOf(0) }
     var sceneView by remember { mutableStateOf<Digifarm3dSceneView?>(null) }
     var sceneIssue by remember(farm.id) { mutableStateOf<String?>(null) }
-    // Tron wireframe toggle from general settings; key() below rebuilds the
-    // GL view with the matching scene when it changes.
-    val tronWireframe by app.container.speciesSettingsRepository.digifarmTronWireframe
-        .collectAsState(initial = false)
     var dialogueIssue by remember { mutableStateOf<String?>(null) }
     var offlineSummary by remember(farm.id) { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     // Single detailed session per app (§13): map and group share the coordinator.
     LaunchedEffect(farm.id) {
         withContext(Dispatchers.IO) { coordinator.acquire(farm.id) }
         offlineSummary = withContext(Dispatchers.IO) { repository.summarizeReturn(farm.id) }
         try {
-            while (true) {
-                delay(900L)
-                frame = 1 - frame
-            }
+            awaitCancellation()
         } finally {
             withContext(Dispatchers.IO) { coordinator.release(farm.id) }
         }
@@ -275,11 +287,12 @@ private fun FarmWorld(
             Column {
                 TopBanner(
                     text = "${farm.name}  •  ${residents.size}/${farm.capacity}",
-                    onGearClick = { farmMenu = true }
+                    onGearClick = { showFarmSettings = true }
                 )
                 WorldSectionTabs(selectedWorldTab, onWorldTabSelected)
             }
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         contentWindowInsets = WindowInsets.statusBars
     ) { padding ->
         Column(
@@ -290,109 +303,7 @@ private fun FarmWorld(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Box(Modifier.fillMaxWidth()) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    VitalButton(
-                        onClick = { showAdd = true },
-                        enabled = residents.size < farm.capacity,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            stringResource(R.string.ui_digifarm_add_resident),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                    VitalButton(
-                        onClick = {
-                            navController.navigate(NavigationItems.FarmGroup.route.replace("{farmId}", farm.id))
-                        },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(
-                            stringResource(R.string.ui_digifarm_group),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-                DropdownMenu(expanded = farmMenu, onDismissRequest = { farmMenu = false }) {
-                    farms.forEach { item ->
-                        DropdownMenuItem(text = { Text(item.name) }, onClick = {
-                            farmMenu = false
-                            onSelectFarm(item.id)
-                        })
-                    }
-                    DropdownMenuItem(text = { Text(stringResource(R.string.ui_digifarm_create_another)) }, onClick = {
-                        farmMenu = false
-                        showCreate = true
-                    })
-                    DropdownMenuItem(
-                        text = {
-                            Text(stringResource(if (farm.autonomousDialogueEnabled) R.string.ui_digifarm_pause_dialogue else R.string.ui_digifarm_enable_dialogue))
-                        },
-                        onClick = {
-                            farmMenu = false
-                            scope.launch(Dispatchers.IO) {
-                                repository.setAutonomousDialogue(farm.id, !farm.autonomousDialogueEnabled)
-                            }
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.ui_digifarm_residents)) },
-                        onClick = {
-                            farmMenu = false
-                            showResidentList = true
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text(stringResource(R.string.ui_digifarm_archive)) },
-                        onClick = {
-                            farmMenu = false
-                            scope.launch(Dispatchers.IO) {
-                                repository.archiveFarm(farm.id)
-                                withContext(Dispatchers.Main) {
-                                    onSelectFarm(farms.firstOrNull { it.id != farm.id }?.id ?: "")
-                                }
-                            }
-                        }
-                    )
-                }
-            }
-
-            if (dialogueIssue != null || offlineSummary != null) {
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .background(SurfaceDeepPurple.copy(alpha = 0.72f))
-                        .cyberFrame()
-                        .padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    dialogueIssue?.let {
-                        Text(
-                            stringResource(R.string.ui_digifarm_dialogue_unavailable),
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                    offlineSummary?.let {
-                        Text(
-                            it,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextMutedOnDark,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
-                }
-            }
-
-            // Canonical island positions shared by the Filament billboards,
+            // Canonical island positions shared by the Filament residents,
             // the invisible tap targets and the speech bubbles.
             val worldPositions = remember(residents) {
                 residents.associate { resident ->
@@ -414,9 +325,8 @@ private fun FarmWorld(
                     followId = null
                 }
             }
-            // Full sprite sets go to Filament only when the roster or the
-            // sprite art changes. Animation ticks only swap already-uploaded
-            // textures (no GL create/destroy churn while the farm is open).
+            // Build silhouette-extruded pose meshes off the UI thread, once
+            // per roster/art change. The renderer switches poses with motion.
             val rosterKey = remember(residents) {
                 residents.associate { it.individualId to residentSpriteSetKey(it) }
             }
@@ -424,47 +334,47 @@ private fun FarmWorld(
                 val view = sceneView ?: return@LaunchedEffect
                 val sets = withContext(Dispatchers.Default) {
                     residents.map { resident ->
+                        val poses = mapOf(
+                            "idle" to residentFrameImage(resident.spriteIdle, resident),
+                            "idle2" to residentFrameImage(resident.spriteIdle2, resident),
+                            "sleep" to residentFrameImage(resident.spriteSleep, resident),
+                            "train" to residentFrameImage(resident.spriteTrain, resident),
+                            "train2" to residentFrameImage(resident.spriteTrain2, resident),
+                            "happy" to residentFrameImage(resident.spriteHappy, resident),
+                            "happy2" to residentFrameImage(resident.spriteIdle2, resident),
+                            "walk" to residentFrameImage(resident.spriteWalk, resident),
+                            "walk2" to residentFrameImage(resident.spriteWalk2, resident)
+                        )
                         ResidentFrames(
                             id = resident.individualId,
-                            poses = mapOf(
-                                "sleep" to residentFrameImage(resident.spriteSleep, resident),
-                                "train" to residentFrameImage(resident.spriteTrain, resident),
-                                "train2" to residentFrameImage(resident.spriteTrain2, resident),
-                                "happy" to residentFrameImage(resident.spriteHappy, resident),
-                                "walk" to residentFrameImage(resident.spriteWalk, resident),
-                                "walk2" to residentFrameImage(resident.spriteWalk2, resident)
-                            ),
-                            setKey = rosterKey[resident.individualId] ?: resident.individualId,
-                            facingLeft = resident.facingLeft
+                            poses = poses,
+                            modelGlb = ResidentExtrusionGlb.build(poses),
+                            setKey = rosterKey[resident.individualId] ?: resident.individualId
                         )
                     }
                 }
                 view.setResidentFrames(sets)
             }
-            // Cheap per-tick update: pose swap + position/facing/selection.
-            // Compose draws no Digimon copy: the 3D scene owns sprites.
-            LaunchedEffect(residents, frame, selectedResident?.individualId, sceneView) {
+            // DB updates provide collision-checked steps; Filament interpolates
+            // those steps and turns each model toward its actual travel.
+            LaunchedEffect(residents, followId, selectedResident?.individualId, sceneView) {
                 val view = sceneView ?: return@LaunchedEffect
                 view.updateResidentPoses(residents.map { resident ->
-                    val pose = when (resident.activity) {
-                        "REST" -> "sleep"
-                        "TRAIN" -> if (frame == 0) "train" else "train2"
-                        "PLAY" -> "happy"
-                        else -> if (frame == 0) "walk" else "walk2"
-                    }
                     val world = worldPositions[resident.individualId]
                     ResidentPose(
                         id = resident.individualId,
-                        pose = pose,
                         worldX = world?.x ?: 0f,
                         worldZ = world?.z ?: 0f,
-                        selected = selectedResident?.individualId == resident.individualId
+                        activity = resident.activity,
+                        facingLeft = resident.facingLeft,
+                        selected = followId == resident.individualId ||
+                            selectedResident?.individualId == resident.individualId
                     )
                 })
             }
             // The viewport is a real GLB scene. Compose only layers UI above
-            // it: speech bubbles and invisible tap targets positioned with
-            // the same camera projection as the 3D billboards.
+            // it: speech bubbles and invisible tap targets projected onto
+            // the interpolated 3D residents.
             val mapDescription = stringResource(R.string.ui_digifarm_map_description)
             BoxWithConstraints(
                 Modifier
@@ -472,7 +382,7 @@ private fun FarmWorld(
                     .aspectRatio(1f)
                     .border(2.dp, SurfaceStroke, MaterialTheme.shapes.medium)
                     .clip(MaterialTheme.shapes.medium)
-                    .background(SpaceBlack)
+                    .background(DeepPurpleBgAlt)
                     .semantics {
                         contentDescription = mapDescription
                     }
@@ -481,20 +391,15 @@ private fun FarmWorld(
                 val now = System.currentTimeMillis()
                 val visibleBubbles = remember(messages, selectedResident) {
                     val recent = messages.filter { it.authorIndividualId != null && now - it.timestamp <= SPEECH_BUBBLE_MILLIS }
-                    val selected = selectedResident?.individualId?.let { id -> recent.filter { it.authorIndividualId == id } } ?: emptyList()
+                val focusId = selectedResident?.individualId ?: followId
+                val selected = focusId?.let { id -> recent.filter { it.authorIndividualId == id } } ?: emptyList()
                     val others = recent.filter { it !in selected }.sortedByDescending { it.timestamp }
                     (selected.sortedByDescending { it.timestamp } + others).distinctBy { it.authorIndividualId }.take(3)
                 }
                 Box(Modifier.fillMaxSize()) {
-                    // The scene hot-swaps inside the live GL view (see the
-                    // update block): toggling never tears the Engine down.
                     Digifarm3dViewport(
                         modifier = Modifier.fillMaxSize(),
-                        assetName = if (tronWireframe) {
-                            Digifarm3dMap.tronRuntimeAsset
-                        } else {
-                            Digifarm3dMap.runtimeAsset
-                        },
+                        assetName = Digifarm3dMap.runtimeAsset,
                         onReady = {
                             sceneView = it
                             // A recreated AndroidView starts a fresh load; do
@@ -525,18 +430,14 @@ private fun FarmWorld(
                             }
                         }
                     }
-                    // Subscribe to camera motion so the overlay below follows.
+                    // Subscribe to scene motion so tap targets and bubbles follow.
                     @Suppress("UNUSED_EXPRESSION")
                     projectionTick
-                    // Invisible tap targets over the 3D billboards, projected
-                    // with the same camera. The sprite itself lives in
-                    // Filament (depth-tested, feet-anchored, with shadow).
+                    // Invisible tap targets over the extruded residents.
                     residents.forEach { resident ->
-                        val world = worldPositions[resident.individualId] ?: return@forEach
-                        val activityLabel = farmActivityLabel(resident.activity)
                         val view = sceneView ?: return@forEach
-                        val foot = view.projectWorld(world.x, 0f, world.z) ?: return@forEach
-                        val head = view.projectWorld(world.x, TAP_HEAD_WORLD_Y, world.z) ?: return@forEach
+                        val foot = view.projectResident(resident.individualId, 0f) ?: return@forEach
+                        val head = view.projectResident(resident.individualId, TAP_HEAD_WORLD_Y) ?: return@forEach
                         val pixelH = (foot.second - head.second).coerceAtLeast(24f)
                         val aspect = if (resident.spriteHeight > 0) {
                             (resident.spriteWidth.toFloat() / resident.spriteHeight.toFloat()).coerceIn(0.4f, 2.5f)
@@ -551,15 +452,14 @@ private fun FarmWorld(
                                     head.second.roundToInt()
                                 )
                             }.size(tapW, tapH)
-                                .clickable(onClickLabel = "${resident.displayName}: $activityLabel") {
+                                .clickable(onClickLabel = stringResource(R.string.ui_digifarm_open_settings)) {
                                     selectedResident = resident
                                 }
                         )
                     }
                     visibleBubbles.forEach { message ->
                         val authorId = message.authorIndividualId ?: return@forEach
-                        val world = worldPositions[authorId] ?: return@forEach
-                        val anchor = sceneView?.projectWorld(world.x, BUBBLE_WORLD_Y, world.z) ?: return@forEach
+                        val anchor = sceneView?.projectResident(authorId, BUBBLE_WORLD_Y) ?: return@forEach
                         Surface(
                             color = MaterialTheme.colorScheme.surface.copy(alpha = .94f),
                             shape = MaterialTheme.shapes.small,
@@ -589,7 +489,62 @@ private fun FarmWorld(
                     )
                 }
             }
-
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                VitalButton(
+                    onClick = { showAdd = true },
+                    enabled = residents.size < farm.capacity,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        stringResource(R.string.ui_digifarm_add_resident),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                VitalButton(
+                    onClick = {
+                        navController.navigate(NavigationItems.FarmGroup.route.replace("{farmId}", farm.id))
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        stringResource(R.string.ui_digifarm_group),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+            if (dialogueIssue != null || offlineSummary != null) {
+                Column(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(SurfaceDeepPurple.copy(alpha = 0.72f))
+                        .cyberFrame()
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    dialogueIssue?.let {
+                        Text(
+                            stringResource(R.string.ui_digifarm_dialogue_unavailable),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                    offlineSummary?.let {
+                        Text(
+                            it,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = TextSecondaryOnDark,
+                            maxLines = 4,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
+            }
             if (residents.isNotEmpty()) {
                 Column(
                     Modifier
@@ -610,23 +565,39 @@ private fun FarmWorld(
                             .height(56.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(residents, key = { it.individualId }) { resident ->
+                        items(residentsByName, key = { it.individualId }) { resident ->
                             val following = followId == resident.individualId
-                            VitalButton(
-                                onClick = {
-                                    selectedResident = resident
-                                    followId = resident.individualId
-                                },
-                                modifier = Modifier.height(40.dp),
-                                borderColor = if (following) VitalCyan else SurfaceStroke,
+                            Surface(
+                                modifier = Modifier
+                                    .width(132.dp)
+                                    .height(48.dp)
+                                    .combinedClickable(
+                                        role = Role.Button,
+                                        onClickLabel = stringResource(R.string.ui_digifarm_follow_resident),
+                                        onLongClickLabel = stringResource(R.string.ui_digifarm_open_settings),
+                                        onClick = { followId = resident.individualId },
+                                        onLongClick = { selectedResident = resident }
+                                    ),
+                                shape = MaterialTheme.shapes.small,
+                                color = if (following) VitalCyan.copy(alpha = 0.12f) else SurfaceDeepPurple,
                                 contentColor = if (following) VitalCyan else TextPrimaryOnDark,
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp)
-                            ) {
-                                Text(
-                                    resident.displayName,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                border = androidx.compose.foundation.BorderStroke(
+                                    1.dp,
+                                    if (following) VitalCyan else SurfaceStroke
                                 )
+                            ) {
+                                Box(
+                                    Modifier.fillMaxSize().padding(horizontal = 10.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        resident.displayName,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
                             }
                         }
                     }
@@ -659,11 +630,46 @@ private fun FarmWorld(
             }
         )
     }
+    if (showFarmSettings) {
+        FarmSettingsSheet(
+            farm = farm,
+            farms = farms,
+            residentCount = residents.size,
+            onDismiss = { showFarmSettings = false },
+            onSelectFarm = { selectedFarmId ->
+                showFarmSettings = false
+                onSelectFarm(selectedFarmId)
+            },
+            onCreateFarm = {
+                showFarmSettings = false
+                showCreate = true
+            },
+            onToggleDialogue = {
+                scope.launch(Dispatchers.IO) {
+                    repository.setAutonomousDialogue(farm.id, !farm.autonomousDialogueEnabled)
+                }
+            },
+            onOpenResidents = {
+                showFarmSettings = false
+                showResidentList = true
+            },
+            onArchive = {
+                showFarmSettings = false
+                scope.launch(Dispatchers.IO) {
+                    repository.archiveFarm(farm.id)
+                    withContext(Dispatchers.Main) {
+                        onSelectFarm(farms.firstOrNull { it.id != farm.id }?.id ?: "")
+                    }
+                }
+            }
+        )
+    }
     if (showCreate) FarmNameDialog(onDismiss = { showCreate = false }) {
         showCreate = false
         onCreateFarm(it)
     }
-    selectedResident?.let { resident ->
+    selectedResident?.let { selected ->
+        val resident = residents.firstOrNull { it.individualId == selected.individualId } ?: selected
         ResidentDialog(
             resident = resident,
             onDismiss = { selectedResident = null },
@@ -682,7 +688,21 @@ private fun FarmWorld(
             onTransfer = { showTransfer = resident; selectedResident = null },
             onActivity = { activity ->
                 selectedResident = null
-                scope.launch(Dispatchers.IO) { repository.setActivity(resident.individualId, farm.id, activity) }
+                scope.launch(Dispatchers.IO) {
+                    val result = runCatching { repository.setActivity(resident.individualId, farm.id, activity) }
+                    withContext(Dispatchers.Main) {
+                        val message = if (result.isSuccess) {
+                            context.getString(
+                                R.string.ui_digifarm_activity,
+                                context.getString(farmActivityLabelRes(activity))
+                            )
+                        } else {
+                            result.exceptionOrNull()?.localizedMessage?.takeIf(String::isNotBlank)
+                                ?: context.getString(R.string.ui_digifarm_activity_failed)
+                        }
+                        snackbarHostState.showSnackbar(message)
+                    }
+                }
             },
             onRemove = {
                 selectedResident = null
@@ -707,21 +727,18 @@ private fun FarmWorld(
         )
     }
     if (showResidentList) {
-        AlertDialog(
-            onDismissRequest = { showResidentList = false },
-            title = { Text(stringResource(R.string.ui_digifarm_residents)) },
-            text = {
-                if (residents.isEmpty()) Text(stringResource(R.string.ui_digifarm_empty_body))
-                else LazyColumn(Modifier.height(360.dp)) {
-                    items(residents, key = { it.individualId }) { resident ->
-                        TextButton(
-                            onClick = { selectedResident = resident; showResidentList = false },
-                            modifier = Modifier.fillMaxWidth()
-                        ) { Text("${resident.displayName} • ${farmActivityLabel(resident.activity)}") }
-                    }
-                }
+        ResidentsSheet(
+            residents = residentsByName,
+            followId = followId,
+            onDismiss = { showResidentList = false },
+            onFollow = { resident ->
+                followId = resident.individualId
+                showResidentList = false
             },
-            confirmButton = { TextButton(onClick = { showResidentList = false }) { Text(stringResource(R.string.ui_close)) } }
+            onOpenSettings = { resident ->
+                selectedResident = resident
+                showResidentList = false
+            }
         )
     }
 }
@@ -738,6 +755,173 @@ private fun FarmNameDialog(onDismiss: () -> Unit, onCreate: (String) -> Unit) {
     )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun FarmSettingsSheet(
+    farm: Farm,
+    farms: List<Farm>,
+    residentCount: Int,
+    onDismiss: () -> Unit,
+    onSelectFarm: (String) -> Unit,
+    onCreateFarm: () -> Unit,
+    onToggleDialogue: () -> Unit,
+    onOpenResidents: () -> Unit,
+    onArchive: () -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = SurfaceDeepPurple,
+        contentColor = TextPrimaryOnDark
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    farm.name,
+                    style = MaterialTheme.typography.headlineSmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    "$residentCount/${farm.capacity} · ${stringResource(R.string.ui_digifarm_residents)}",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = TextSecondaryOnDark
+                )
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    stringResource(R.string.ui_digifarm_select_farm),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = VitalCyan
+                )
+                farms.forEach { item ->
+                    val selected = item.id == farm.id
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 52.dp)
+                            .background(
+                                if (selected) VitalCyan.copy(alpha = 0.12f)
+                                else SurfaceElevatedPurple.copy(alpha = 0.6f)
+                            )
+                            .cyberFrame()
+                            .clickable(role = Role.RadioButton) {
+                                if (!selected) onSelectFarm(item.id)
+                            }
+                            .padding(start = 12.dp, end = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            item.name,
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = if (selected) VitalCyan else TextPrimaryOnDark,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        RadioButton(
+                            selected = selected,
+                            onClick = { if (!selected) onSelectFarm(item.id) },
+                            colors = RadioButtonDefaults.colors(
+                                selectedColor = VitalCyan,
+                                unselectedColor = SurfaceStroke
+                            )
+                        )
+                    }
+                }
+            }
+
+            Box(Modifier.fillMaxWidth().height(1.dp).background(SurfaceStroke.copy(alpha = 0.7f)))
+
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp)
+                    .background(SurfaceElevatedPurple.copy(alpha = 0.62f))
+                    .cyberFrame()
+                    .padding(start = 12.dp, end = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    stringResource(R.string.ui_digifarm_autonomous_dialogue),
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.bodyLarge
+                )
+                Switch(
+                    checked = farm.autonomousDialogueEnabled,
+                    onCheckedChange = { onToggleDialogue() },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = SurfaceDeepPurple,
+                        checkedTrackColor = VitalCyan,
+                        uncheckedThumbColor = TextSecondaryOnDark,
+                        uncheckedTrackColor = SurfaceStroke
+                    )
+                )
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                FarmSettingsActionRow(
+                    text = stringResource(R.string.ui_digifarm_create_another),
+                    onClick = onCreateFarm,
+                    highlighted = true
+                )
+                FarmSettingsActionRow(
+                    text = stringResource(R.string.ui_digifarm_residents),
+                    onClick = onOpenResidents
+                )
+                FarmSettingsActionRow(
+                    text = stringResource(R.string.ui_digifarm_archive),
+                    onClick = onArchive,
+                    destructive = true
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun FarmSettingsActionRow(
+    text: String,
+    onClick: () -> Unit,
+    highlighted: Boolean = false,
+    destructive: Boolean = false
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 52.dp)
+            .background(
+                when {
+                    destructive -> MaterialTheme.colorScheme.error.copy(alpha = 0.1f)
+                    highlighted -> VitalCyan.copy(alpha = 0.12f)
+                    else -> SurfaceElevatedPurple.copy(alpha = 0.6f)
+                }
+            )
+            .cyberFrame()
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text,
+            style = MaterialTheme.typography.labelLarge,
+            color = when {
+                destructive -> MaterialTheme.colorScheme.error
+                highlighted -> VitalCyan
+                else -> TextPrimaryOnDark
+            }
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ResidentDialog(
     resident: FarmResidentWithDetails,
@@ -749,30 +933,246 @@ private fun ResidentDialog(
     onActivity: (String) -> Unit,
     onRemove: () -> Unit
 ) {
-    AlertDialog(
+    ModalBottomSheet(
         onDismissRequest = onDismiss,
-        title = { Text(resident.displayName) },
-        text = {
-            Column {
-                Text(stringResource(R.string.ui_digifarm_activity, farmActivityLabel(resident.activity)))
-                Text(stringResource(R.string.ui_digifarm_needs, resident.energy, resident.satiety, resident.social, resident.funLevel))
-                TextButton(onClick = onPrivateChat) { Text(stringResource(R.string.ui_digifarm_private_chat)) }
-                TextButton(onClick = onGroup) { Text(stringResource(R.string.ui_digifarm_group)) }
-                TextButton(onClick = onFollow) { Text(stringResource(R.string.ui_digifarm_follow)) }
-                TextButton(onClick = onTransfer) { Text(stringResource(R.string.ui_digifarm_transfer)) }
-                Row {
-                    TextButton(onClick = { onActivity("PLAY") }) { Text(stringResource(R.string.ui_digifarm_play)) }
-                    TextButton(onClick = { onActivity("TRAIN") }) { Text(stringResource(R.string.ui_digifarm_train)) }
-                }
-                Row {
-                    TextButton(onClick = { onActivity("EAT") }) { Text(stringResource(R.string.ui_digifarm_feed)) }
-                    TextButton(onClick = { onActivity("REST") }) { Text(stringResource(R.string.ui_digifarm_rest)) }
-                }
-                TextButton(onClick = onRemove) { Text(stringResource(R.string.ui_digifarm_remove)) }
+        containerColor = SurfaceDeepPurple,
+        contentColor = TextPrimaryOnDark
+    ) {
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp)
+                .padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    resident.displayName,
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    stringResource(R.string.ui_digifarm_activity, farmActivityLabel(resident.activity)),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = VitalCyan
+                )
             }
-        },
-        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.ui_close)) } }
-    )
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .background(SurfaceElevatedPurple.copy(alpha = 0.68f))
+                    .cyberFrame()
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Text(
+                    stringResource(R.string.ui_digifarm_needs_title),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = TextSecondaryOnDark
+                )
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FarmNeedMetric(stringResource(R.string.ui_digifarm_energy), resident.energy, Modifier.weight(1f))
+                    FarmNeedMetric(stringResource(R.string.ui_digifarm_food), resident.satiety, Modifier.weight(1f))
+                    FarmNeedMetric(stringResource(R.string.ui_digifarm_social), resident.social, Modifier.weight(1f))
+                    FarmNeedMetric(stringResource(R.string.ui_digifarm_fun), resident.funLevel, Modifier.weight(1f))
+                }
+            }
+            Text(
+                stringResource(R.string.ui_digifarm_activities),
+                style = MaterialTheme.typography.titleSmall,
+                color = VitalCyan
+            )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                VitalButton(
+                    onClick = { onActivity("PLAY") },
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                    borderColor = if (resident.activity == "PLAY") VitalCyan else SurfaceStroke,
+                    contentColor = if (resident.activity == "PLAY") VitalCyan else TextPrimaryOnDark,
+                    containerColor = if (resident.activity == "PLAY") VitalCyan.copy(alpha = 0.12f) else SurfaceDeepPurple
+                ) {
+                    Text(stringResource(R.string.ui_digifarm_play), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                VitalButton(
+                    onClick = { onActivity("TRAIN") },
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                    borderColor = if (resident.activity == "TRAIN") VitalCyan else SurfaceStroke,
+                    contentColor = if (resident.activity == "TRAIN") VitalCyan else TextPrimaryOnDark,
+                    containerColor = if (resident.activity == "TRAIN") VitalCyan.copy(alpha = 0.12f) else SurfaceDeepPurple
+                ) {
+                    Text(stringResource(R.string.ui_digifarm_train), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                VitalButton(
+                    onClick = { onActivity("EAT") },
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                    borderColor = if (resident.activity == "EAT") VitalCyan else SurfaceStroke,
+                    contentColor = if (resident.activity == "EAT") VitalCyan else TextPrimaryOnDark,
+                    containerColor = if (resident.activity == "EAT") VitalCyan.copy(alpha = 0.12f) else SurfaceDeepPurple
+                ) {
+                    Text(stringResource(R.string.ui_digifarm_feed), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                VitalButton(
+                    onClick = { onActivity("REST") },
+                    modifier = Modifier.weight(1f).heightIn(min = 48.dp),
+                    borderColor = if (resident.activity == "REST") VitalCyan else SurfaceStroke,
+                    contentColor = if (resident.activity == "REST") VitalCyan else TextPrimaryOnDark,
+                    containerColor = if (resident.activity == "REST") VitalCyan.copy(alpha = 0.12f) else SurfaceDeepPurple
+                ) {
+                    Text(stringResource(R.string.ui_digifarm_rest), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+            Box(Modifier.fillMaxWidth().height(1.dp).background(SurfaceStroke.copy(alpha = 0.7f)))
+            Text(
+                stringResource(R.string.ui_digifarm_more_actions),
+                style = MaterialTheme.typography.labelLarge,
+                color = TextSecondaryOnDark
+            )
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onPrivateChat, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.ui_digifarm_private_chat), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                TextButton(onClick = onGroup, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.ui_digifarm_group), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                TextButton(onClick = onFollow, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.ui_digifarm_follow), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                TextButton(onClick = onTransfer, modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.ui_digifarm_transfer), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+            TextButton(onClick = onRemove, modifier = Modifier.align(Alignment.End)) {
+                Text(stringResource(R.string.ui_digifarm_remove), color = MaterialTheme.colorScheme.error)
+            }
+        }
+    }
+}
+
+@Composable
+private fun FarmNeedMetric(label: String, value: Int, modifier: Modifier = Modifier) {
+    Column(
+        modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            value.toString(),
+            style = MaterialTheme.typography.titleSmall,
+            color = TextPrimaryOnDark
+        )
+        Text(
+            label,
+            modifier = Modifier.fillMaxWidth(),
+            style = MaterialTheme.typography.labelSmall,
+            color = TextSecondaryOnDark,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
+        LinearProgressIndicator(
+            progress = { value.coerceIn(0, 100) / 100f },
+            modifier = Modifier.fillMaxWidth().height(4.dp),
+            color = VitalCyan,
+            trackColor = SurfaceStroke
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ResidentsSheet(
+    residents: List<FarmResidentWithDetails>,
+    followId: String?,
+    onDismiss: () -> Unit,
+    onFollow: (FarmResidentWithDetails) -> Unit,
+    onOpenSettings: (FarmResidentWithDetails) -> Unit
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = SurfaceDeepPurple,
+        contentColor = TextPrimaryOnDark
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(stringResource(R.string.ui_digifarm_residents), style = MaterialTheme.typography.titleLarge)
+            Text(
+                stringResource(R.string.ui_digifarm_resident_interaction_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondaryOnDark
+            )
+            if (residents.isEmpty()) {
+                Text(
+                    stringResource(R.string.ui_digifarm_empty_body),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                    color = TextSecondaryOnDark,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 460.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    contentPadding = PaddingValues(bottom = 8.dp)
+                ) {
+                    items(residents, key = { it.individualId }) { resident ->
+                        val following = followId == resident.individualId
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .combinedClickable(
+                                    role = Role.Button,
+                                    onClickLabel = stringResource(R.string.ui_digifarm_follow_resident),
+                                    onLongClickLabel = stringResource(R.string.ui_digifarm_open_settings),
+                                    onClick = { onFollow(resident) },
+                                    onLongClick = { onOpenSettings(resident) }
+                                ),
+                            shape = MaterialTheme.shapes.small,
+                            color = if (following) VitalCyan.copy(alpha = 0.12f) else SurfaceElevatedPurple.copy(alpha = 0.58f),
+                            contentColor = if (following) VitalCyan else TextPrimaryOnDark,
+                            border = androidx.compose.foundation.BorderStroke(
+                                1.dp,
+                                if (following) VitalCyan else SurfaceStroke
+                            )
+                        ) {
+                            Row(
+                                Modifier.heightIn(min = 60.dp).padding(horizontal = 14.dp, vertical = 8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text(
+                                        resident.displayName,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    Text(
+                                        farmActivityLabel(resident.activity),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = if (following) VitalCyan else TextSecondaryOnDark
+                                    )
+                                }
+                                if (following) {
+                                    Text(
+                                        stringResource(R.string.ui_digifarm_following),
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = VitalCyan
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -800,6 +1200,10 @@ private fun TransferResidentDialog(
 
 @Composable
 private fun farmActivityLabel(activity: String): String = stringResource(
+    farmActivityLabelRes(activity)
+)
+
+private fun farmActivityLabelRes(activity: String): Int =
     when (activity) {
         "EXPLORE" -> R.string.ui_digifarm_explore
         "PLAY" -> R.string.ui_digifarm_play
@@ -809,7 +1213,6 @@ private fun farmActivityLabel(activity: String): String = stringResource(
         "REST" -> R.string.ui_digifarm_rest
         else -> R.string.ui_digifarm_idle
     }
-)
 
 private const val SPEECH_BUBBLE_MILLIS = 12_000L
 // Farms already given the reference-like default this process lifetime, so an
@@ -821,7 +1224,7 @@ private const val MIN_FARM_SCALE = 1f
 private const val DEFAULT_FARM_SCALE = 4f
 // Estimated bubble height + gap, in dp, above the projected head anchor.
 private const val BUBBLE_ABOVE_DP = 56
-// World-space heights matching the Filament billboards (island ~1.9 wide).
+// World-space heights matching the extruded residents (island ~1.9 wide).
 private const val TAP_HEAD_WORLD_Y = 0.18f
 private const val BUBBLE_WORLD_Y = 0.24f
 
@@ -835,6 +1238,8 @@ private fun residentFrameImage(frameBytes: ByteArray, resident: FarmResidentWith
 
 private fun residentSpriteSetKey(resident: FarmResidentWithDetails): String = buildString {
     append(resident.spriteWidth).append('x').append(resident.spriteHeight).append(':')
+    append(resident.spriteIdle.contentHashCode()).append(',')
+    append(resident.spriteIdle2.contentHashCode()).append(',')
     append(resident.spriteSleep.contentHashCode()).append(',')
     append(resident.spriteTrain.contentHashCode()).append(',')
     append(resident.spriteTrain2.contentHashCode()).append(',')

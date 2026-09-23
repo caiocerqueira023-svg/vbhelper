@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,6 +15,10 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.components.ChatComposer
+import com.github.nacabaro.vbhelper.components.ChatHistoryPanel
+import com.github.nacabaro.vbhelper.components.ChatMessageBubble
+import com.github.nacabaro.vbhelper.components.ChatStatusPanel
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.screens.chatScreen.dialogs.SpeciesManualEditDialog
@@ -29,6 +32,9 @@ fun ChatScreen(
     var speciesContext by remember { mutableStateOf<SpeciesContext?>(null) }
     var showManualDialog by remember { mutableStateOf(false) }
     var speciesGateResolved by remember { mutableStateOf(false) }
+    val conversationTitle = speciesContext?.existingProfile?.speciesName?.takeIf { it.isNotBlank() }
+        ?: speciesContext?.cardName?.takeIf { it.isNotBlank() }
+        ?: stringResource(R.string.nav_chat)
 
     LaunchedEffect(characterId) {
         chatScreenController.getSpeciesContext(characterId) { context ->
@@ -61,8 +67,8 @@ fun ChatScreen(
 
     if (!speciesGateResolved) {
         Scaffold(
-            topBar = { TopBanner(text = stringResource(R.string.nav_chat), onBackClick = { navController.popBackStack() }) },
-            contentWindowInsets = WindowInsets(0, 0, 0, 0)
+            topBar = { TopBanner(text = conversationTitle, onBackClick = { navController.popBackStack() }) },
+            contentWindowInsets = WindowInsets.statusBars
         ) { padding ->
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
@@ -88,57 +94,48 @@ fun ChatScreen(
     Scaffold(
         topBar = {
             TopBanner(
-                text = stringResource(R.string.ui_chat_mood_title, mood),
+                text = conversationTitle,
                 onBackClick = { navController.popBackStack() }
             )
         },
-        contentWindowInsets = WindowInsets(0, 0, 0, 0)
+        contentWindowInsets = WindowInsets.statusBars
     ) { contentPadding ->
         Column(
             modifier = Modifier
                 .padding(contentPadding)
                 .fillMaxSize()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            LazyColumn(
-                state = listState,
+            ChatStatusPanel(
+                label = stringResource(R.string.ui_chat_mood_title, mood),
+                value = mood
+            )
+
+            ChatHistoryPanel(
+                isEmpty = messages.isEmpty(),
+                emptyMessage = stringResource(R.string.ui_chat_empty),
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
-                    .padding(8.dp)
             ) {
-                items(
-                    items = messages,
-                    key = { it.id },
-                    contentType = { "chat-message" }
-                ) { message ->
-                    val isUser = message.role == "user"
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 4.dp),
-                        horizontalArrangement = if (isUser) Arrangement.End else Arrangement.Start
-                    ) {
-                        Card(
-                            modifier = Modifier.combinedClickable(
-                                onClick = {},
-                                onLongClick = {
-                                    selectedMessage = message
-                                }
-                            ),
-                            colors = CardDefaults.cardColors(
-                                containerColor = if (isUser)
-                                    MaterialTheme.colorScheme.primary
-                                else
-                                    MaterialTheme.colorScheme.surfaceVariant
-                            )
-                        ) {
-                            Text(
-                                text = message.content,
-                                modifier = Modifier.padding(12.dp)
-                            )
-                        }
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 8.dp)
+                ) {
+                    items(
+                        items = messages,
+                        key = { it.id },
+                        contentType = { "chat-message" }
+                    ) { message ->
+                        ChatMessageBubble(
+                            text = message.content,
+                            isUser = message.role == "user",
+                            onLongClick = { selectedMessage = message }
+                        )
                     }
-
                 }
             }
 
@@ -191,44 +188,26 @@ fun ChatScreen(
                 )
             }
 
-            error?.let {
-                Text(
-                    text = it,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                )
-            }
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                TextField(
-                    value = input,
-                    onValueChange = { input = it },
-                    modifier = Modifier.weight(1f),
-                    placeholder = { Text(stringResource(R.string.ui_chat_placeholder)) },
-                    enabled = !sending
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                VitalButton(
-                    enabled = input.isNotBlank() && !sending,
-                    onClick = {
-                        val text = input
-                        input = ""
-                        sending = true
-                        error = null
-                        chatScreenController.sendMessage(characterId, text) { result ->
-                            sending = false
-                            result.onFailure { e -> error = e.message }
+            ChatComposer(
+                value = input,
+                onValueChange = { input = it },
+                placeholder = stringResource(R.string.ui_chat_placeholder),
+                sendLabel = stringResource(R.string.ui_send),
+                sending = sending,
+                errorMessage = error,
+                onSend = {
+                    val text = input
+                    sending = true
+                    error = null
+                    chatScreenController.sendMessage(characterId, text) { result ->
+                        sending = false
+                        result.onSuccess {
+                            if (input == text) input = ""
                         }
+                        result.onFailure { e -> error = e.message }
                     }
-                ) {
-                    Text(stringResource(R.string.ui_send))
                 }
-            }
+            )
         }
     }
 }

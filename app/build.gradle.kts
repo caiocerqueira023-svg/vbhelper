@@ -110,6 +110,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     testImplementation(libs.junit)
+    testImplementation("org.json:json:20240303")
 
     ksp(libs.androidx.room.compiler)
     annotationProcessor(libs.androidx.room.compiler)

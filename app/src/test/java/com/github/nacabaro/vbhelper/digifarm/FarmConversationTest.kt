@@ -1,6 +1,6 @@
 package com.github.nacabaro.vbhelper.digifarm
 
-import com.github.nacabaro.vbhelper.digifarm.map.BirdFarmMap
+import com.github.nacabaro.vbhelper.digifarm.map.DigifarmGround
 import com.github.nacabaro.vbhelper.digifarm.map.MapPoint
 import com.github.nacabaro.vbhelper.digifarm.social.ConversationSession
 import com.github.nacabaro.vbhelper.digifarm.social.FarmUtteranceValidator
@@ -46,10 +46,11 @@ class FarmConversationTest {
     }
 
     @Test
-    fun nearbyResidentsAreConnectedWhileFarOnesApproachFirst() {
+    fun nearbyResidentsShareTheContinuousIsland() {
         val a = MapPoint(205f, 153f)
         val near = MapPoint(212f, 160f)
-        assertTrue(BirdFarmMap.distance(a, near) < 220f)
-        assertTrue(BirdFarmMap.areConnected(a, near))
+        assertTrue(DigifarmGround.isWalkable(a))
+        assertTrue(DigifarmGround.isWalkable(near))
+        assertTrue(DigifarmGround.worldDistance(a, near) < 0.05f)
     }
 }

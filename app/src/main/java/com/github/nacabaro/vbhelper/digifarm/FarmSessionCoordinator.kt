@@ -1,5 +1,7 @@
 package com.github.nacabaro.vbhelper.digifarm
 
+import android.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -15,7 +17,7 @@ import kotlinx.coroutines.sync.withLock
  *
  * The map and the group observe the same farm; recomposition must not start two
  * engines. Surfaces call [acquire]/[release]; only the most recently acquired
- * farm ticks at 10-20 ticks/s equivalent (900 ms coarse step + interpolated draw).
+ * farm advances in 900 ms simulation steps with per-frame interpolation.
  * Leaving both surfaces cancels new generations and checkpoints via [onSuspend].
  */
 class FarmSessionCoordinator(
@@ -70,7 +72,13 @@ class FarmSessionCoordinator(
         loopJob?.cancel()
         loopJob = externalScope.launch {
             while (isActive) {
-                runCatching { repository.simulateStep(farmId) }
+                try {
+                    repository.simulateStep(farmId)
+                } catch (failure: CancellationException) {
+                    throw failure
+                } catch (failure: Exception) {
+                    Log.w("FarmSession", "Simulation tick failed for $farmId", failure)
+                }
                 delay(900L)
             }
         }

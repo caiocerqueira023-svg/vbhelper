@@ -2,8 +2,6 @@ package com.github.nacabaro.vbhelper.screens.digifarmScreen
 
 import android.content.Context
 import android.opengl.Matrix
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.view.Choreographer
 import android.view.MotionEvent
@@ -14,11 +12,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.filament.Engine
+import com.google.android.filament.Colors
 import com.google.android.filament.EntityManager
 import com.google.android.filament.Filament
-import com.google.android.filament.MaterialInstance
-import com.google.android.filament.Texture
-import com.google.android.filament.TextureSampler
+import com.google.android.filament.Skybox
 import com.google.android.filament.android.UiHelper
 import com.google.android.filament.gltfio.AssetLoader
 import com.google.android.filament.gltfio.FilamentAsset
@@ -26,11 +23,13 @@ import com.google.android.filament.gltfio.ResourceLoader
 import com.google.android.filament.gltfio.UbershaderProvider
 import com.google.android.filament.utils.ModelViewer
 import com.github.nacabaro.vbhelper.digifarm.map.Digifarm3dAssetCatalog
+import com.github.nacabaro.vbhelper.ui.theme.DeepPurpleBgAlt
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.atan2
 import kotlin.math.cos
+import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.math.sqrt
 
@@ -44,31 +43,31 @@ data class ResidentFrameImage(
 /**
  * Full sprite set of one resident. Sent once per roster/art change —
  * never per animation tick — so the GL driver sees no create/destroy churn.
- * Pose keys: sleep, train, train2, happy, walk, walk2.
+ * Pose keys: idle, idle2, walk, walk2.
  */
 data class ResidentFrames(
     val id: String,
     val poses: Map<String, ResidentFrameImage>,
+    val modelGlb: ByteArray,
     val setKey: String,
-    /** Initial mirror until motion in camera space takes over. */
-    val facingLeft: Boolean,
 )
 
-/** Per-tick state: which cached texture is bound plus where the billboard stands. */
+/** Persisted position; the renderer interpolates each confirmed simulation step. */
 data class ResidentPose(
     val id: String,
-    val pose: String,
     val worldX: Float,
     val worldZ: Float,
+    val activity: String,
+    val facingLeft: Boolean,
     val selected: Boolean,
 )
 
 /**
  * Compose host for the 2.5D Digifarm scene.
  *
- * The Filament scene owns the island AND the Digimon billboards. Compose
+ * The Filament scene owns the island and the extruded Digimon models. Compose
  * above it only draws UI (speech bubbles, invisible tap targets, resident
- * controls) positioned with the same camera projection, so sprites sit on
+ * controls) positioned with the same camera projection, so residents sit on
  * the terrain with real depth and occlusion instead of floating over it.
  */
 @Composable
@@ -128,6 +127,7 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
     private val logTag = "Digifarm3d"
     private val engine: Engine
     private val viewer: ModelViewer
+    private var backgroundSkybox: Skybox? = null
     private var released = false
     private var residentsReleased = false
     private var frameStarted = false
@@ -136,8 +136,6 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
 
     /** Fired on the main thread while the camera moves, so Compose bubbles follow. */
     var onCameraChange: (() -> Unit)? = null
-    private val lastEye = FloatArray(3)
-    private var hasLastEye = false
     private var lastNotifyNanos = 0L
 
     /**
@@ -149,10 +147,8 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
     private var curTargetX = TARGET_X
     private var curTargetZ = TARGET_Z
 
-    // Constrained orbit camera (replaces the Filament Manipulator, which has
-    // no angle clamps and a hot gain for a farm this small). The target is
-    // fixed on the island and the elevation never drops to the horizon, so
-    // the hollow underside / untextured backs can never come into view.
+    // Orbit camera with a bounded elevation and zoom. The island now has a
+    // complete cliff around its perimeter, so horizontal orbit is unrestricted.
     private var camYaw = HOME_YAW
     private var camPitch = HOME_PITCH
     private var camDist = HOME_DIST
@@ -162,35 +158,55 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
     private var lastX = 0f
     private var lastY = 0f
     private var lastPinch = 0f
-    private val tmpCam = FloatArray(3)
     private val tmpMat = FloatArray(16)
 
-    // Resident billboard resources. Created lazily from resident.glb; every
-    // resident gets its own asset so each sprite texture is independent.
-    // Pose textures are uploaded once and only rebound per animation tick:
-    // no GL create/destroy churn while the farm is open.
+    private data class FloatingBlocks(
+        val transformInstance: Int,
+        val base: FloatArray,
+        val animated: FloatArray,
+        val amplitude: Float,
+        val angularSpeed: Double,
+        val phase: Double,
+    )
+
+    private data class FloatingCube(
+        val transformInstance: Int,
+        val base: FloatArray,
+        val animated: FloatArray,
+        val amplitude: Float,
+        val angularSpeed: Double,
+        val phase: Double,
+    )
+
+    private data class FloatingIsland(
+        val transformInstance: Int,
+        val base: FloatArray,
+        val animated: FloatArray,
+    )
+
+    private var floatingBlocks: List<FloatingBlocks> = emptyList()
+    private var floatingCubes: List<FloatingCube> = emptyList()
+    private var floatingIsland: FloatingIsland? = null
+    private var islandFloatOffsetY = 0f
+    private var floatingStartNanos = 0L
+
+    // One generated GLB per resident contains the activity and walking poses plus a
+    // contact shadow. Pose changes toggle renderable layers without rebuilding.
     private var residentProvider: UbershaderProvider? = null
     private var residentLoader: AssetLoader? = null
     private var residentResources: ResourceLoader? = null
-    private var residentTemplate: ByteArray? = null
     private var pendingFrames: List<ResidentFrames> = emptyList()
+    private var latestResidentPoses: List<ResidentPose> = emptyList()
     private val residents = LinkedHashMap<String, ResidentEntry>()
-    // Lazy: TextureSampler calls into filament-jni, so it must only be
-    // created after ensureFilament() ran in init. An eager val would throw
-    // UnsatisfiedLinkError during view construction (before Filament.init).
-    private val pixelSampler: TextureSampler by lazy {
-        TextureSampler(
-            TextureSampler.MinFilter.NEAREST,
-            TextureSampler.MagFilter.NEAREST,
-            TextureSampler.WrapMode.CLAMP_TO_EDGE
-        )
-    }
+    private var lastMotionFrameNanos = 0L
 
     private val frameCallback = object : Choreographer.FrameCallback {
         override fun doFrame(frameTimeNanos: Long) {
             if (released) return
+            updateResidentMotion(frameTimeNanos)
             updateFollowTarget()
             applyCamera()
+            updateFloatingBlocks(frameTimeNanos)
             updateResidentTransforms()
             viewer.render(frameTimeNanos)
             notifyCameraChangeIfMoved(frameTimeNanos)
@@ -204,6 +220,14 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
         engine = Engine.create()
         val helper = UiHelper(UiHelper.ContextErrorPolicy.DONT_CHECK)
         viewer = ModelViewer(this, engine, helper, null)
+        val backdrop = Colors.toLinear(
+            Colors.RgbType.SRGB,
+            DeepPurpleBgAlt.red, DeepPurpleBgAlt.green, DeepPurpleBgAlt.blue,
+        )
+        backgroundSkybox = Skybox.Builder()
+            .color(backdrop[0], backdrop[1], backdrop[2], 1f)
+            .build(engine)
+            .also { viewer.scene.skybox = it }
         Log.i(logTag, "Filament Digifarm scene view ready")
         // ModelViewer applies the lens projection when UiHelper reports a
         // non-zero surface viewport. Do not set camera properties here: a new
@@ -241,13 +265,18 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
     }
 
     /**
-     * Hot-swaps the map scene inside the live Engine (wireframe toggle).
-     * Resident billboards live in separate assets and survive the swap, so
+     * Hot-swaps the map scene inside the live Engine.
+     * Resident solids live in separate assets and survive the swap, so
      * the GL view/Engine is never torn down mid-session here.
      */
     fun switchAsset(assetName: String, onAssetError: ((String) -> Unit)? = null) {
         if (released) return
         if (assetName == loadedAssetName && viewer.asset != null) return
+        floatingBlocks = emptyList()
+        floatingCubes = emptyList()
+        floatingIsland = null
+        islandFloatOffsetY = 0f
+        floatingStartNanos = 0L
         runCatching { viewer.destroyModel() }
         loadGen += 1
         launchLoad(assetName, loadGen, onAssetError)
@@ -283,11 +312,6 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
                 }
                 return@Thread
             }
-            val template = runCatching {
-                context.assets.open("digifarm/3d/resident.glb").use { it.readBytes() }
-            }.onFailure { failure ->
-                Log.w(logTag, "Resident billboard template unavailable; sprites hidden", failure)
-            }.getOrNull()
             Log.d(logTag, "Read Digifarm asset $assetName (${bytes.size} bytes)")
             val buffer = ByteBuffer.allocateDirect(bytes.size)
                 .order(ByteOrder.nativeOrder())
@@ -308,6 +332,7 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
                     // plane instead of the island and desync every
                     // resident position.
                     viewer.clearRootTransform()
+                    collectFloatingBlocks(checkNotNull(viewer.asset))
                     loadedAssetName = assetName
                     Log.i(logTag, "Digifarm asset loaded: $assetName (${bytes.size} bytes)")
                 }.onFailure { failure ->
@@ -319,7 +344,6 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
                         )
                     )
                 }
-                template?.let { residentTemplate = it }
                 if (pendingFrames.isNotEmpty()) {
                     val pending = pendingFrames
                     pendingFrames = emptyList()
@@ -329,15 +353,107 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
         }.start()
     }
 
-    /**
-     * Uploads full sprite sets. Call only when the roster or the sprite art
-     * changes; per-tick animation goes through [updateResidentPoses], which
-     * only rebinds already-uploaded textures. Main thread.
-     */
+    private fun collectFloatingBlocks(asset: FilamentAsset) {
+        val manager = engine.transformManager
+        val groups = ArrayList<FloatingBlocks>()
+        val cubes = ArrayList<FloatingCube>()
+        for (index in 1..6) {
+            val name = "VoxelFragmentsNear${index.toString().padStart(2, '0')}"
+            val entity = asset.getFirstEntityByName(name)
+            if (entity == 0) {
+                Log.w(logTag, "Floating block node missing: $name")
+                continue
+            }
+            val instance = manager.getInstance(entity)
+            if (instance == 0) {
+                Log.w(logTag, "Floating block transform missing: $name")
+                continue
+            }
+            val base = manager.getTransform(instance, FloatArray(16))
+            groups += FloatingBlocks(
+                instance, base, base.copyOf(), 0.052f + groups.size * 0.003f,
+                1.25 + groups.size * 0.11, groups.size * 1.19,
+            )
+            val blockCount = BLOCKS_PER_GROUP[index - 1]
+            for (blockIndex in 1..blockCount) {
+                val blockName = "VoxelBlockNear${index.toString().padStart(2, '0')}_" +
+                    blockIndex.toString().padStart(2, '0')
+                val blockEntity = asset.getFirstEntityByName(blockName)
+                if (blockEntity == 0) {
+                    Log.w(logTag, "Individual floating cube missing: $blockName")
+                    continue
+                }
+                val blockTransform = manager.getInstance(blockEntity)
+                if (blockTransform == 0) {
+                    Log.w(logTag, "Individual cube transform missing: $blockName")
+                    continue
+                }
+                val blockBase = manager.getTransform(blockTransform, FloatArray(16))
+                val ordinal = cubes.size
+                cubes += FloatingCube(
+                    blockTransform,
+                    blockBase,
+                    blockBase.copyOf(),
+                    0.018f + (ordinal % 5) * 0.0035f,
+                    1.7 + (ordinal % 6) * 0.13,
+                    ordinal * 1.37,
+                )
+            }
+        }
+        val islandEntity = asset.getFirstEntityByName("Island")
+        floatingIsland = if (islandEntity != 0) {
+            val instance = manager.getInstance(islandEntity)
+            if (instance != 0) {
+                val base = manager.getTransform(instance, FloatArray(16))
+                FloatingIsland(instance, base, base.copyOf())
+            } else {
+                Log.w(logTag, "Island transform missing; island bob disabled")
+                null
+            }
+        } else {
+            Log.w(logTag, "Island node missing; island bob disabled")
+            null
+        }
+        floatingBlocks = groups
+        floatingCubes = cubes
+        islandFloatOffsetY = 0f
+        floatingStartNanos = 0L
+        Log.i(logTag, "Loaded ${groups.size}/6 floating voxel groups")
+        Log.i(logTag, "Loaded ${cubes.size}/14 individually floating cubes")
+    }
+
+    private fun updateFloatingBlocks(frameTimeNanos: Long) {
+        if (floatingBlocks.isEmpty() && floatingCubes.isEmpty() && floatingIsland == null) return
+        if (floatingStartNanos == 0L) floatingStartNanos = frameTimeNanos
+        val elapsed = (frameTimeNanos - floatingStartNanos) / 1_000_000_000.0
+        val manager = engine.transformManager
+        for (group in floatingBlocks) {
+            group.animated[12] = group.base[12] +
+                (sin(elapsed * group.angularSpeed * 0.62 + group.phase) * 0.012).toFloat()
+            group.animated[13] = group.base[13] +
+                (sin(elapsed * group.angularSpeed + group.phase) * group.amplitude).toFloat()
+            manager.setTransform(group.transformInstance, group.animated)
+        }
+        for (cube in floatingCubes) {
+            cube.animated[12] = cube.base[12] +
+                (sin(elapsed * cube.angularSpeed * 0.58 + cube.phase) * 0.0045).toFloat()
+            cube.animated[13] = cube.base[13] +
+                (sin(elapsed * cube.angularSpeed + cube.phase) * cube.amplitude).toFloat()
+            cube.animated[14] = cube.base[14] +
+                (cos(elapsed * cube.angularSpeed * 0.47 + cube.phase) * 0.003).toFloat()
+            manager.setTransform(cube.transformInstance, cube.animated)
+        }
+        floatingIsland?.let { island ->
+            islandFloatOffsetY = (sin(elapsed * ISLAND_FLOAT_SPEED) * ISLAND_FLOAT_AMPLITUDE).toFloat()
+            island.animated[13] = island.base[13] + islandFloatOffsetY
+            manager.setTransform(island.transformInstance, island.animated)
+        }
+    }
+
+    /** Loads resident solids once per art change; pose ticks only change visible layers. */
     fun setResidentFrames(frames: List<ResidentFrames>) {
         if (released || residentsReleased) return
-        val template = residentTemplate
-        if (template == null) {
+        if (viewer.asset == null) {
             pendingFrames = frames
             return
         }
@@ -355,27 +471,55 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
             val existing = residents[set.id]
             if (existing != null && existing.setKey == set.setKey) continue
             if (existing != null) destroyResident(set.id)
-            runCatching { createResident(set, template) }
+            runCatching { createResident(set) }
                 .onFailure { failure ->
-                    Log.w(logTag, "Could not create billboard for ${set.id}", failure)
+                    Log.w(logTag, "Could not create extruded resident for ${set.id}", failure)
                 }
         }
+        updateResidentPoses(latestResidentPoses)
     }
 
-    /** Per-tick update: pose binding swap + position/selection. Main thread. */
+    /** Per-tick update: interpolate only the collision-checked positions from Room. */
     fun updateResidentPoses(poses: List<ResidentPose>) {
         if (released || residentsReleased) return
+        latestResidentPoses = poses
         for (pose in poses) {
             val entry = residents[pose.id] ?: continue
+            if (!entry.hasVisualPosition) {
+                entry.visualX = pose.worldX
+                entry.visualZ = pose.worldZ
+                entry.headingYaw = if (pose.facingLeft) -PI.toFloat() else 0f
+                entry.desiredYaw = entry.headingYaw
+                entry.hasVisualPosition = true
+            } else {
+                val dx = pose.worldX - entry.worldX
+                val dz = pose.worldZ - entry.worldZ
+                val distanceSquared = dx * dx + dz * dz
+                if (distanceSquared >= MIN_MOVEMENT_DISTANCE_SQ) {
+                    if (distanceSquared > MAX_INTERPOLATED_STEP_SQ) {
+                        entry.visualX = pose.worldX
+                        entry.visualZ = pose.worldZ
+                        entry.segmentActive = false
+                    } else {
+                        entry.segmentStartX = entry.visualX
+                        entry.segmentStartZ = entry.visualZ
+                        entry.segmentEndX = pose.worldX
+                        entry.segmentEndZ = pose.worldZ
+                        entry.segmentStartNanos = lastMotionFrameNanos.takeIf { it > 0L } ?: System.nanoTime()
+                        entry.segmentActive = true
+                        entry.desiredYaw = atan2(-dz, dx)
+                        val turn = atan2(
+                            sin(entry.desiredYaw - entry.headingYaw),
+                            cos(entry.desiredYaw - entry.headingYaw),
+                        )
+                        if (kotlin.math.abs(turn) > PI / 2) entry.headingYaw = entry.desiredYaw
+                    }
+                }
+            }
             entry.worldX = pose.worldX
             entry.worldZ = pose.worldZ
+            entry.activity = pose.activity
             entry.selected = pose.selected
-            if (entry.currentPose != pose.pose) {
-                runCatching { bindPose(entry, pose.pose) }
-                    .onFailure { failure ->
-                        Log.w(logTag, "Could not bind pose ${pose.pose} for ${pose.id}", failure)
-                    }
-            }
         }
     }
 
@@ -395,12 +539,17 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
             val vp = FloatArray(16)
             Matrix.multiplyMM(vp, 0, proj, 0, view, 0)
             val out = FloatArray(4)
-            Matrix.multiplyMV(out, 0, vp, 0, floatArrayOf(x, y, z, 1f), 0)
+            Matrix.multiplyMV(out, 0, vp, 0, floatArrayOf(x, y + islandFloatOffsetY, z, 1f), 0)
             if (out[3] <= 0f) return null
             val ndcX = out[0] / out[3]
             val ndcY = out[1] / out[3]
             Pair((ndcX * 0.5f + 0.5f) * w, (1f - (ndcY * 0.5f + 0.5f)) * h)
         }.getOrNull()
+    }
+
+    fun projectResident(id: String, height: Float): Pair<Float, Float>? {
+        val resident = residents[id] ?: return null
+        return projectWorld(resident.visualX, height, resident.visualZ)
     }
 
     fun resetCamera() {
@@ -447,6 +596,7 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
         released = true
         Choreographer.getInstance().removeFrameCallback(frameCallback)
         destroyResidents()
+        releaseBackgroundSkybox()
         // ModelViewer registers its own detach listener and owns destruction
         // of the Engine. Marking the view released here prevents another frame
         // while that listener performs the single native teardown.
@@ -460,7 +610,15 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
         // Resident textures, assets and loaders must be freed BEFORE
         // ModelViewer's detach listener destroys the Engine.
         destroyResidents()
+        releaseBackgroundSkybox()
         super.onDetachedFromWindow()
+    }
+
+    private fun releaseBackgroundSkybox() {
+        val skybox = backgroundSkybox ?: return
+        backgroundSkybox = null
+        viewer.scene.skybox = null
+        engine.destroySkybox(skybox)
     }
 
     // ---- Constrained orbit camera ----
@@ -499,10 +657,8 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
                     if (di >= 0) {
                         val x = event.getX(di)
                         val y = event.getY(di)
-                        // Horizontal orbit locked to the modeled side: full
-                        // spins would show unfinished backsides.
-                        camYaw = (camYaw - (x - lastX) * YAW_GAIN)
-                            .coerceIn(YAW_MIN, YAW_MAX)
+                        val nextYaw = camYaw - (x - lastX) * YAW_GAIN
+                        camYaw = atan2(sin(nextYaw), cos(nextYaw))
                         camPitch = (camPitch + (y - lastY) * PITCH_GAIN)
                             .coerceIn(PITCH_MIN, PITCH_MAX)
                         lastX = x
@@ -569,59 +725,58 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
     /** Eases the orbit target toward the followed resident (or back home). */
     private fun updateFollowTarget() {
         val followed = followId?.let { residents[it] }
-        val tx = followed?.worldX ?: TARGET_X
-        val tz = followed?.worldZ ?: TARGET_Z
+        val tx = followed?.visualX ?: TARGET_X
+        val tz = followed?.visualZ ?: TARGET_Z
         curTargetX += (tx - curTargetX) * FOLLOW_LERP
         curTargetZ += (tz - curTargetZ) * FOLLOW_LERP
         if (kotlin.math.abs(tx - curTargetX) < 0.001f) curTargetX = tx
         if (kotlin.math.abs(tz - curTargetZ) < 0.001f) curTargetZ = tz
     }
 
-    // ---- Resident billboards ----
+    // ---- Extruded residents ----
 
     private class ResidentEntry(
         val asset: FilamentAsset,
-        val spriteMaterial: MaterialInstance,
         val setKey: String,
-        val textures: MutableMap<String, Texture> = LinkedHashMap(),
-        val pixelBuffers: MutableMap<String, ByteBuffer> = LinkedHashMap(),
-        val aspects: MutableMap<String, Float> = LinkedHashMap(),
+        val poseEntities: Map<String, Int>,
         var currentPose: String? = null,
         var worldX: Float = 0f,
         var worldZ: Float = 0f,
+        var visualX: Float = 0f,
+        var visualZ: Float = 0f,
+        var segmentStartX: Float = 0f,
+        var segmentStartZ: Float = 0f,
+        var segmentEndX: Float = 0f,
+        var segmentEndZ: Float = 0f,
+        var segmentStartNanos: Long = 0L,
+        var segmentActive: Boolean = false,
+        var hasVisualPosition: Boolean = false,
         var selected: Boolean = false,
-        // Mirror is resolved from motion in CAMERA space every frame. The
-        // simulation flag is legacy-map space and reads backwards as soon as
-        // the user orbits, so it only seeds the initial value (inverted:
-        // VB art faces left, so facingLeft means unmirrored).
-        var mirror: Boolean = false,
-        var prevX: Float = 0f,
-        var prevZ: Float = 0f,
-        var hasPrev: Boolean = false,
+        var activity: String = "EXPLORE",
+        var headingYaw: Float = 0f,
+        var desiredYaw: Float = 0f,
+        var mirrorSprite: Boolean = false,
+        var animationMode: String? = null,
+        var animationFrame: Int = 0,
+        var lastAnimationFrameNanos: Long = 0L,
     )
 
-    private fun aspectOf(image: ResidentFrameImage): Float {
-        if (image.width <= 0 || image.height <= 0) return 1f
-        return (image.width.toFloat() / image.height.toFloat()).coerceIn(0.5f, 1.8f)
-    }
-
-    private fun createResident(set: ResidentFrames, template: ByteArray) {
+    private fun createResident(set: ResidentFrames) {
         val loader = residentLoader ?: return
         val resources = residentResources ?: return
-        val buffer = ByteBuffer.allocateDirect(template.size)
+        val buffer = ByteBuffer.allocateDirect(set.modelGlb.size)
             .order(ByteOrder.nativeOrder())
-            .put(template)
+            .put(set.modelGlb)
             .apply { flip() }
         val asset = loader.createAsset(buffer) ?: run {
-            Log.w(logTag, "Resident template parse returned null; skipping ${set.id}")
+            Log.w(logTag, "Extruded resident GLB parse returned null: ${set.id}")
             return
         }
         resources.loadResources(asset)
         asset.releaseSourceData()
         viewer.scene.addEntities(asset.entities)
         val rcm = engine.renderableManager
-        // The sprite and its contact shadow are fake 2D planes: they must
-        // never cast or receive real shadows.
+        val poseEntities = LinkedHashMap<String, Int>()
         for (entity in asset.entities) {
             if (rcm.hasComponent(entity)) {
                 val instance = rcm.getInstance(entity)
@@ -629,153 +784,141 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
                 rcm.setReceiveShadows(instance, false)
             }
         }
-        // Find the sprite material through its entity, not by array order:
-        // binding the sprite texture to the shadow material (or vice versa)
-        // leaves an opaque white quad on screen.
-        val spriteMaterial = findSpriteMaterial(asset)
-        if (spriteMaterial == null) {
-            Log.w(logTag, "Resident template has no sprite material; skipping ${set.id}")
+        for (pose in set.poses.keys) {
+            val entity = asset.getFirstEntityByName("pose_$pose")
+            if (entity != 0 && rcm.hasComponent(entity)) {
+                poseEntities[pose] = entity
+                rcm.setLayerMask(rcm.getInstance(entity), 0xFF, 0)
+            }
+        }
+        if (poseEntities.isEmpty()) {
+            Log.w(logTag, "Extruded resident has no pose meshes: ${set.id}")
             runCatching {
                 viewer.scene.removeEntities(asset.entities)
                 loader.destroyAsset(asset)
             }
             return
         }
-        val entry = ResidentEntry(asset = asset, spriteMaterial = spriteMaterial, setKey = set.setKey)
-        // VB sprite art faces left unmirrored: facingLeft (moving legacy-left)
-        // starts unmirrored; motion in camera space takes over below.
-        entry.mirror = !set.facingLeft
-        entry.prevX = 0f
-        entry.prevZ = 0f
-        entry.hasPrev = false
+        val entry = ResidentEntry(asset = asset, setKey = set.setKey, poseEntities = poseEntities)
         residents[set.id] = entry
-        for ((pose, image) in set.poses) {
-            runCatching { uploadPose(entry, pose, image) }
-                .onFailure { failure ->
-                    Log.w(logTag, "Could not upload pose $pose for ${set.id}", failure)
-                }
-        }
-        Log.i(logTag, "Billboard created for ${set.id} (${entry.textures.size} poses)")
-    }
-
-    /** Sprite material via the "sprite" entity; falls back to the first instance. */
-    private fun findSpriteMaterial(asset: FilamentAsset): MaterialInstance? {
-        val rcm = engine.renderableManager
-        runCatching {
-            val spriteEntity = asset.getFirstEntityByName("sprite")
-            if (spriteEntity != 0 && rcm.hasComponent(spriteEntity)) {
-                return rcm.getMaterialInstanceAt(rcm.getInstance(spriteEntity), 0)
-            }
-        }.onFailure { failure ->
-            Log.w(logTag, "Sprite entity lookup failed, using first material", failure)
-        }
-        return asset.instance.materialInstances.firstOrNull()
-    }
-
-    private fun uploadPose(entry: ResidentEntry, pose: String, image: ResidentFrameImage) {
-        if (image.width <= 0 || image.height <= 0) return
-        if (image.argb.size < image.width * image.height) return
-        val texture = Texture.Builder()
-            .width(image.width)
-            .height(image.height)
-            .levels(1)
-            .sampler(Texture.Sampler.SAMPLER_2D)
-            .format(Texture.InternalFormat.SRGB8_A8)
-            .usage(Texture.Usage.SAMPLEABLE or Texture.Usage.UPLOADABLE)
-            .build(engine)
-        val rgba = ByteBuffer.allocateDirect(image.width * image.height * 4)
-            .order(ByteOrder.nativeOrder())
-        for (pixel in image.argb.take(image.width * image.height)) {
-            val a = (pixel ushr 24) and 0xFF
-            rgba.put(((pixel ushr 16) and 0xFF).toByte())
-            rgba.put(((pixel ushr 8) and 0xFF).toByte())
-            rgba.put((pixel and 0xFF).toByte())
-            rgba.put(a.toByte())
-        }
-        rgba.flip()
-        // Keep our own reference per pose, and use a completion callback so
-        // the driver never reads a released buffer (white-quad sampling).
-        entry.pixelBuffers[pose] = rgba
-        texture.setImage(
-            engine, 0,
-            Texture.PixelBufferDescriptor(
-                rgba, Texture.Format.RGBA, Texture.Type.UBYTE,
-                1, 0, 0, 0,
-                Handler(Looper.getMainLooper())
-            ) {
-                // Upload consumed; the entry reference keeps it alive anyway.
-            }
-        )
-        entry.textures[pose]?.let { runCatching { engine.destroyTexture(it) } }
-        entry.textures[pose] = texture
-        entry.aspects[pose] = aspectOf(image)
+        bindPose(entry, "idle")
+        Log.i(logTag, "Extruded resident created: ${set.id} (${poseEntities.size} poses)")
     }
 
     private fun bindPose(entry: ResidentEntry, pose: String) {
-        val texture = entry.textures[pose] ?: entry.textures.values.firstOrNull() ?: return
-        if (entry.currentPose != pose) {
-            entry.spriteMaterial.setParameter("baseColorMap", texture, pixelSampler)
-            entry.currentPose = pose
+        val nextPose = if (pose in entry.poseEntities) pose else entry.poseEntities.keys.firstOrNull() ?: return
+        if (entry.currentPose == nextPose) return
+        val rcm = engine.renderableManager
+        entry.currentPose?.let { old ->
+            entry.poseEntities[old]?.let { entity ->
+                rcm.setLayerMask(rcm.getInstance(entity), 0xFF, 0)
+            }
         }
+        val entity = entry.poseEntities.getValue(nextPose)
+        rcm.setLayerMask(rcm.getInstance(entity), 0xFF, 0x01)
+        entry.currentPose = nextPose
     }
 
     private fun destroyResident(id: String) {
         val entry = residents.remove(id) ?: return
         runCatching {
             viewer.scene.removeEntities(entry.asset.entities)
-            for (texture in entry.textures.values) {
-                runCatching { engine.destroyTexture(texture) }
-            }
-            entry.textures.clear()
-            entry.pixelBuffers.clear()
             residentLoader?.destroyAsset(entry.asset)
         }.onFailure { failure ->
-            Log.w(logTag, "Could not destroy billboard for $id", failure)
+            Log.w(logTag, "Could not destroy extruded resident for $id", failure)
         }
+    }
+
+    private fun updateResidentMotion(frameTimeNanos: Long) {
+        val previous = lastMotionFrameNanos
+        lastMotionFrameNanos = frameTimeNanos
+        val dt = if (previous == 0L) 0f else
+            ((frameTimeNanos - previous) / 1_000_000_000f).coerceIn(0f, 0.05f)
+        for (entry in residents.values) {
+            if (!entry.hasVisualPosition) continue
+            var walking = false
+            if (entry.segmentActive) {
+                val progress = ((frameTimeNanos - entry.segmentStartNanos).toFloat() /
+                    RESIDENT_STEP_NANOS).coerceIn(0f, 1f)
+                entry.visualX = entry.segmentStartX + (entry.segmentEndX - entry.segmentStartX) * progress
+                entry.visualZ = entry.segmentStartZ + (entry.segmentEndZ - entry.segmentStartZ) * progress
+                walking = progress < 1f
+                if (!walking) entry.segmentActive = false
+            }
+            if (walking) {
+                val turn = atan2(
+                    sin(entry.desiredYaw - entry.headingYaw),
+                    cos(entry.desiredYaw - entry.headingYaw),
+                )
+                entry.headingYaw += turn.coerceIn(-TURN_SPEED_RADIANS_PER_SECOND * dt,
+                    TURN_SPEED_RADIANS_PER_SECOND * dt)
+            }
+            updateResidentAnimation(entry, walking, frameTimeNanos)
+        }
+    }
+
+    private fun updateResidentAnimation(entry: ResidentEntry, walking: Boolean, frameTimeNanos: Long) {
+        val mode = when {
+            walking -> "walk"
+            entry.activity == "REST" -> "sleep"
+            entry.activity == "TRAIN" -> "train"
+            entry.activity == "PLAY" || entry.activity == "EAT" ||
+                entry.activity == "SOCIALIZE" -> "happy"
+            else -> "idle"
+        }
+        if (entry.animationMode != mode) {
+            entry.animationMode = mode
+            entry.animationFrame = 0
+            entry.lastAnimationFrameNanos = frameTimeNanos
+            bindPose(entry, mode)
+            return
+        }
+        val alternate = when (mode) {
+            "walk" -> "walk2"
+            "train" -> "train2"
+            "idle" -> "idle2"
+            "happy" -> "happy2"
+            else -> return
+        }
+        val frameDuration = when (mode) {
+            "walk" -> WALK_FRAME_NANOS
+            "train" -> TRAIN_FRAME_NANOS
+            "happy" -> ACTION_FRAME_NANOS
+            else -> IDLE_FRAME_NANOS
+        }
+        val elapsed = frameTimeNanos - entry.lastAnimationFrameNanos
+        if (elapsed < frameDuration) return
+        val frameSteps = (elapsed / frameDuration).toInt()
+        entry.animationFrame = (entry.animationFrame + frameSteps) % 2
+        entry.lastAnimationFrameNanos += frameSteps * frameDuration
+        bindPose(entry, if (entry.animationFrame == 0) mode else alternate)
     }
 
     private fun updateResidentTransforms() {
         if (residents.isEmpty()) return
         val tm = engine.transformManager
-        val hasCam = runCatching {
-            viewer.camera.getPosition(tmpCam)
-            true
-        }.getOrDefault(false)
-        if (!hasCam) return
-        // Camera-right on the ground plane; mirror comes from motion along it.
-        val rightX = cos(camYaw)
-        val rightZ = -sin(camYaw)
         for (entry in residents.values) {
-            if (!entry.hasPrev) {
-                entry.prevX = entry.worldX
-                entry.prevZ = entry.worldZ
-                entry.hasPrev = true
-            } else {
-                val dx = entry.worldX - entry.prevX
-                val dz = entry.worldZ - entry.prevZ
-                if (dx * dx + dz * dz > MOVE_EPS_SQ) {
-                    // VB art faces left unmirrored: mirror only when moving
-                    // screen-right, so the sprite faces its travel direction.
-                    val screenVel = dx * rightX + dz * rightZ
-                    if (screenVel < -VEL_EPS) entry.mirror = false
-                    else if (screenVel > VEL_EPS) entry.mirror = true
-                    // Moving straight toward/away from the viewer keeps facing.
-                    entry.prevX = entry.worldX
-                    entry.prevZ = entry.worldZ
-                }
-            }
-            // Cylindrical billboard: rotate around Y so the sprite plane
-            // faces the camera, but keep the feet planted on the ground.
-            val yaw = atan2(tmpCam[0] - entry.worldX, tmpCam[2] - entry.worldZ)
+            if (!entry.hasVisualPosition) continue
             val worldH = if (entry.selected) SELECTED_HEIGHT else RESIDENT_HEIGHT
-            val aspect = entry.aspects[entry.currentPose] ?: 1f
-            val worldW = worldH * aspect * if (entry.mirror) -1f else 1f
+            // The solid is intentionally thin. A full physical yaw makes it
+            // disappear edge-on. Keep the sprite legible from the orbit camera
+            // while its lean and horizontal flip still show travel direction.
+            val relativeHeading = atan2(
+                sin(entry.headingYaw - camYaw),
+                cos(entry.headingYaw - camYaw),
+            )
+            val lateral = cos(relativeHeading)
+            // Imported walk frames face left in their native orientation.
+            // Mirror them only for travel toward screen right.
+            if (lateral > FACING_FLIP_THRESHOLD) entry.mirrorSprite = true
+            if (lateral < -FACING_FLIP_THRESHOLD) entry.mirrorSprite = false
+            val visibleYaw = camYaw + sin(relativeHeading) * MAX_VISIBLE_RESIDENT_YAW
             Matrix.setIdentityM(tmpMat, 0)
-            Matrix.translateM(tmpMat, 0, entry.worldX, 0f, entry.worldZ)
-            Matrix.rotateM(tmpMat, 0, Math.toDegrees(yaw.toDouble()).toFloat(), 0f, 1f, 0f)
-            // Z shares the sprite width so the contact-shadow blob underneath
-            // stays proportional (it lives in the XZ plane).
-            Matrix.scaleM(tmpMat, 0, worldW, worldH, worldW)
+            Matrix.translateM(tmpMat, 0, entry.visualX, islandFloatOffsetY, entry.visualZ)
+            Matrix.rotateM(tmpMat, 0,
+                Math.toDegrees(visibleYaw.toDouble()).toFloat(), 0f, 1f, 0f)
+            Matrix.scaleM(tmpMat, 0,
+                if (entry.mirrorSprite) -worldH else worldH, worldH, worldH)
             runCatching {
                 val instance = tm.getInstance(entry.asset.root)
                 if (instance != 0) tm.setTransform(instance, tmpMat)
@@ -785,29 +928,10 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
 
     private fun notifyCameraChangeIfMoved(frameTimeNanos: Long) {
         val cb = onCameraChange ?: return
-        val eye = runCatching {
-            viewer.camera.getPosition(FloatArray(3))
-        }.getOrNull() ?: return
-        if (!hasLastEye) {
-            lastEye[0] = eye[0]
-            lastEye[1] = eye[1]
-            lastEye[2] = eye[2]
-            hasLastEye = true
-            return
-        }
-        val dx = eye[0] - lastEye[0]
-        val dy = eye[1] - lastEye[1]
-        val dz = eye[2] - lastEye[2]
-        if (dx * dx + dy * dy + dz * dz <= CAMERA_EPS_SQ) return
-        lastEye[0] = eye[0]
-        lastEye[1] = eye[1]
-        lastEye[2] = eye[2]
-        // Throttled: bubbles/tap targets at ~8Hz during motion is plenty,
-        // while per-frame recomposition caused visible stutter.
-        if (frameTimeNanos - lastNotifyNanos < CAMERA_NOTIFY_MIN_NANOS) return
+        if (residents.isEmpty() || frameTimeNanos - lastNotifyNanos < CAMERA_NOTIFY_MIN_NANOS) return
         lastNotifyNanos = frameTimeNanos
         runCatching { cb() }.onFailure { failure ->
-            Log.w(logTag, "Camera change callback failed", failure)
+            Log.w(logTag, "Resident projection callback failed", failure)
         }
     }
 
@@ -815,6 +939,7 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
         if (residentsReleased) return
         residentsReleased = true
         pendingFrames = emptyList()
+        latestResidentPoses = emptyList()
         runCatching {
             for (id in residents.keys.toList()) {
                 destroyResident(id)
@@ -824,12 +949,11 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
             residentProvider?.destroyMaterials()
             residentProvider?.destroy()
         }.onFailure { failure ->
-            Log.w(logTag, "Could not release resident billboards", failure)
+            Log.w(logTag, "Could not release extruded residents", failure)
         }
         residentLoader = null
         residentResources = null
         residentProvider = null
-        residentTemplate = null
     }
 
     companion object {
@@ -840,24 +964,33 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
         private const val DIGIFARM_NEAR = 0.5f
         private const val DIGIFARM_FAR = 20f
 
-        /** Resident sprite height in world units; the island is ~1.9 wide. */
+        /** Extruded resident height in world units; the island is ~1.9 wide. */
         private const val RESIDENT_HEIGHT = 0.13f
         private const val SELECTED_HEIGHT = 0.15f
+        private const val MAX_INTERPOLATED_STEP_SQ = 0.35f * 0.35f
+        private const val MIN_MOVEMENT_DISTANCE = 0.0002f
+        private const val MIN_MOVEMENT_DISTANCE_SQ = MIN_MOVEMENT_DISTANCE * MIN_MOVEMENT_DISTANCE
+        private const val RESIDENT_STEP_NANOS = 1_100_000_000f
+        private const val TURN_SPEED_RADIANS_PER_SECOND = 12f
+        private const val MAX_VISIBLE_RESIDENT_YAW = 0.7f
+        private const val FACING_FLIP_THRESHOLD = 0.16f
+        private const val WALK_FRAME_NANOS = 250_000_000L
+        private const val TRAIN_FRAME_NANOS = 340_000_000L
+        private const val ACTION_FRAME_NANOS = 460_000_000L
+        private const val IDLE_FRAME_NANOS = 950_000_000L
+        private const val ISLAND_FLOAT_AMPLITUDE = 0.012f
+        private const val ISLAND_FLOAT_SPEED = 0.52
+        private val BLOCKS_PER_GROUP = intArrayOf(3, 3, 2, 2, 2, 2)
 
-        // Constrained orbit camera. Home matches the previous oblique frame
-        // (eye ~0/2.35/3.0 over target 0/0.05/-0.1). Elevation never reaches
-        // the horizon, so the island underside stays out of view.
+        // Orbit around the single island. Elevation stays above the horizon.
         private const val TARGET_X = 0f
-        private const val TARGET_Y = 0.05f
-        private const val TARGET_Z = -0.1f
+        private const val TARGET_Y = -0.05f
+        private const val TARGET_Z = 0f
         private const val HOME_YAW = 0f
         private const val HOME_PITCH = 0.64f
         private const val HOME_DIST = 3.86f
-        // Yaw locked around home: only the modeled side is shown.
-        private const val YAW_MIN = -0.65f
-        private const val YAW_MAX = 0.65f
-        private const val PITCH_MIN = 0.52f
-        private const val PITCH_MAX = 1.10f
+        private const val PITCH_MIN = 0.18f
+        private const val PITCH_MAX = 1.22f
         private const val DIST_MIN = 1.2f
         private const val DIST_MAX = 4.8f
         private const val FOLLOW_LERP = 0.08f
@@ -867,14 +1000,7 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
         private const val TOUCH_DRAG = 1
         private const val TOUCH_PINCH = 2
 
-        private const val CAMERA_EPS_SQ = 1e-8f
         private const val CAMERA_NOTIFY_MIN_NANOS = 120_000_000L
-
-        // Camera-space facing: any real step updates the mirror from the
-        // velocity along camera-right (art faces left unmirrored); near-zero
-        // screen velocity keeps facing.
-        private const val MOVE_EPS_SQ = 1e-10f
-        private const val VEL_EPS = 1e-6f
 
         @Synchronized
         private fun ensureFilament() {

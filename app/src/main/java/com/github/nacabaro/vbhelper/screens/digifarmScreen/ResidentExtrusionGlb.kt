@@ -1,0 +1,353 @@
+package com.github.nacabaro.vbhelper.screens.digifarmScreen
+
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.ByteArrayOutputStream
+import java.io.DataOutputStream
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.util.zip.CRC32
+import java.util.zip.DeflaterOutputStream
+import kotlin.math.max
+
+/** Turns the alpha outline of each pixel-art pose into a shallow 3D solid. */
+internal object ResidentExtrusionGlb {
+    private const val HALF_DEPTH = 0.045f
+    private const val ALPHA_CUTOFF = 128
+    private const val OUTLINE_COLOR = 0xFF000000.toInt()
+
+    internal fun normalizeJson(raw: String): String = raw.replace("\\/", "/")
+
+    fun build(poses: Map<String, ResidentFrameImage>): ByteArray {
+        val firstUsable = poses.values.firstOrNull(::hasVisiblePixels)
+            ?: ResidentFrameImage(intArrayOf(0xFFA78BFA.toInt()), 1, 1)
+        val frames = poses.ifEmpty { mapOf("walk" to firstUsable) }
+            .mapValues { (_, frame) -> outline(if (hasVisiblePixels(frame)) frame else firstUsable) }
+        val glb = GlbData()
+        val images = JSONArray()
+        val textures = JSONArray()
+        val materials = JSONArray()
+        val meshes = JSONArray()
+        val nodes = JSONArray()
+        val children = JSONArray()
+        nodes.put(JSONObject().put("name", "resident").put("children", children))
+
+        fun addTexture(png: ByteArray): Int {
+            val image = images.length()
+            images.put(JSONObject().put("bufferView", glb.view(png)).put("mimeType", "image/png"))
+            textures.put(JSONObject().put("source", image).put("sampler", 0))
+            return textures.length() - 1
+        }
+
+        fun addMaterial(name: String, texture: Int, shade: Float, blend: Boolean = false): Int {
+            val factor = JSONArray().put(shade).put(shade).put(shade).put(1)
+            val pbr = JSONObject()
+                .put("baseColorTexture", JSONObject().put("index", texture))
+                .put("baseColorFactor", factor)
+                .put("metallicFactor", 0)
+                .put("roughnessFactor", 1)
+            materials.put(JSONObject()
+                .put("name", name)
+                .put("extensions", JSONObject().put("KHR_materials_unlit", JSONObject()))
+                .put("doubleSided", true)
+                .put("alphaMode", if (blend) "BLEND" else "MASK")
+                .put("alphaCutoff", 0.5)
+                .put("pbrMetallicRoughness", pbr))
+            return materials.length() - 1
+        }
+
+        for ((pose, frame) in frames) {
+            val texture = addTexture(png(frame))
+            val faceMaterial = addMaterial("${pose}_face", texture, 1f)
+            val edgeMaterial = addMaterial("${pose}_edge", texture, 0.62f)
+            val face = Geometry()
+            val edge = Geometry()
+            buildPoseGeometry(frame, face, edge)
+            val primitives = JSONArray().put(glb.primitive(face, faceMaterial))
+            if (edge.indices.isNotEmpty()) primitives.put(glb.primitive(edge, edgeMaterial))
+            val meshIndex = meshes.length()
+            meshes.put(JSONObject().put("name", "${pose}_solid").put("primitives", primitives))
+            children.put(nodes.length())
+            nodes.put(JSONObject().put("name", "pose_$pose").put("mesh", meshIndex))
+        }
+
+        val shadowTexture = addTexture(shadowPng())
+        val shadowMaterial = addMaterial("contact_shadow", shadowTexture, 1f, blend = true)
+        val shadow = Geometry().apply {
+            quad(
+                floatArrayOf(-0.56f, 0.012f, 0.30f), floatArrayOf(0.56f, 0.012f, 0.30f),
+                floatArrayOf(0.56f, 0.012f, -0.30f), floatArrayOf(-0.56f, 0.012f, -0.30f),
+                floatArrayOf(0f, 1f), floatArrayOf(1f, 1f),
+                floatArrayOf(1f, 0f), floatArrayOf(0f, 0f),
+            )
+        }
+        val shadowMesh = meshes.length()
+        meshes.put(JSONObject().put("name", "shadow").put("primitives",
+            JSONArray().put(glb.primitive(shadow, shadowMaterial))))
+        children.put(nodes.length())
+        nodes.put(JSONObject().put("name", "shadow").put("mesh", shadowMesh))
+
+        val document = JSONObject()
+            .put("asset", JSONObject().put("version", "2.0"))
+            .put("extensionsUsed", JSONArray().put("KHR_materials_unlit"))
+            .put("scene", 0)
+            .put("scenes", JSONArray().put(JSONObject().put("nodes", JSONArray().put(0))))
+            .put("nodes", nodes)
+            .put("meshes", meshes)
+            .put("materials", materials)
+            .put("images", images)
+            .put("textures", textures)
+            .put("samplers", JSONArray().put(JSONObject()
+                .put("magFilter", 9728).put("minFilter", 9728)
+                .put("wrapS", 33071).put("wrapT", 33071)))
+            .put("bufferViews", glb.views)
+            .put("accessors", glb.accessors)
+            .put("buffers", JSONArray().put(JSONObject().put("byteLength", glb.binarySize())))
+        return glb.finish(document)
+    }
+
+    private fun hasVisiblePixels(frame: ResidentFrameImage): Boolean =
+        frame.width > 0 && frame.height > 0 &&
+            frame.argb.size >= frame.width * frame.height &&
+            frame.argb.take(frame.width * frame.height).any { (it ushr 24) >= ALPHA_CUTOFF }
+
+    /** Adds one sharp black pixel around the imported silhouette before extrusion. */
+    private fun outline(frame: ResidentFrameImage): ResidentFrameImage {
+        val sourceWidth = frame.width
+        val sourceHeight = frame.height
+        val width = sourceWidth + 2
+        val height = sourceHeight + 2
+        val outlined = IntArray(width * height)
+        for (y in 0 until sourceHeight) for (x in 0 until sourceWidth) {
+            val color = frame.argb[y * sourceWidth + x]
+            if ((color ushr 24) < ALPHA_CUTOFF) continue
+            val outX = x + 1
+            val outY = y + 1
+            for (dy in -1..1) for (dx in -1..1) {
+                val edgeIndex = (outY + dy) * width + outX + dx
+                if (outlined[edgeIndex] == 0) outlined[edgeIndex] = OUTLINE_COLOR
+            }
+            outlined[outY * width + outX] = color
+        }
+        return ResidentFrameImage(outlined, width, height)
+    }
+
+    private fun buildPoseGeometry(frame: ResidentFrameImage, face: Geometry, edge: Geometry) {
+        val w = frame.width
+        val h = frame.height
+        val aspect = (w.toFloat() / h).coerceIn(0.5f, 1.8f)
+        val left = -aspect / 2f
+        val right = aspect / 2f
+        face.quad(
+            floatArrayOf(left, 0f, HALF_DEPTH), floatArrayOf(right, 0f, HALF_DEPTH),
+            floatArrayOf(right, 1f, HALF_DEPTH), floatArrayOf(left, 1f, HALF_DEPTH),
+            floatArrayOf(0f, 1f), floatArrayOf(1f, 1f),
+            floatArrayOf(1f, 0f), floatArrayOf(0f, 0f),
+        )
+        face.quad(
+            floatArrayOf(right, 0f, -HALF_DEPTH), floatArrayOf(left, 0f, -HALF_DEPTH),
+            floatArrayOf(left, 1f, -HALF_DEPTH), floatArrayOf(right, 1f, -HALF_DEPTH),
+            floatArrayOf(1f, 1f), floatArrayOf(0f, 1f),
+            floatArrayOf(0f, 0f), floatArrayOf(1f, 0f),
+        )
+        fun solid(x: Int, y: Int): Boolean = x in 0 until w && y in 0 until h &&
+            (frame.argb[y * w + x] ushr 24) >= ALPHA_CUTOFF
+
+        for (y in 0 until h) for (x in 0 until w) {
+            if (!solid(x, y)) continue
+            val x0 = left + aspect * x / w
+            val x1 = left + aspect * (x + 1) / w
+            val y0 = 1f - (y + 1f) / h
+            val y1 = 1f - y.toFloat() / h
+            val uv = floatArrayOf((x + 0.5f) / w, (y + 0.5f) / h)
+            if (!solid(x - 1, y)) edge.quad(
+                floatArrayOf(x0, y0, HALF_DEPTH), floatArrayOf(x0, y1, HALF_DEPTH),
+                floatArrayOf(x0, y1, -HALF_DEPTH), floatArrayOf(x0, y0, -HALF_DEPTH),
+                uv, uv, uv, uv,
+            )
+            if (!solid(x + 1, y)) edge.quad(
+                floatArrayOf(x1, y0, -HALF_DEPTH), floatArrayOf(x1, y1, -HALF_DEPTH),
+                floatArrayOf(x1, y1, HALF_DEPTH), floatArrayOf(x1, y0, HALF_DEPTH),
+                uv, uv, uv, uv,
+            )
+            if (!solid(x, y - 1)) edge.quad(
+                floatArrayOf(x0, y1, -HALF_DEPTH), floatArrayOf(x1, y1, -HALF_DEPTH),
+                floatArrayOf(x1, y1, HALF_DEPTH), floatArrayOf(x0, y1, HALF_DEPTH),
+                uv, uv, uv, uv,
+            )
+            if (!solid(x, y + 1)) edge.quad(
+                floatArrayOf(x0, y0, HALF_DEPTH), floatArrayOf(x1, y0, HALF_DEPTH),
+                floatArrayOf(x1, y0, -HALF_DEPTH), floatArrayOf(x0, y0, -HALF_DEPTH),
+                uv, uv, uv, uv,
+            )
+        }
+    }
+
+    private class Geometry {
+        val positions = ArrayList<Float>()
+        val uvs = ArrayList<Float>()
+        val indices = ArrayList<Int>()
+
+        fun quad(a: FloatArray, b: FloatArray, c: FloatArray, d: FloatArray,
+                 ua: FloatArray, ub: FloatArray, uc: FloatArray, ud: FloatArray) {
+            val base = positions.size / 3
+            for (point in arrayOf(a, b, c, d)) for (value in point) positions.add(value)
+            for (uv in arrayOf(ua, ub, uc, ud)) for (value in uv) uvs.add(value)
+            indices.addAll(listOf(base, base + 1, base + 2, base, base + 2, base + 3))
+        }
+    }
+
+    private class GlbData {
+        private val binary = ByteArrayOutputStream()
+        val views = JSONArray()
+        val accessors = JSONArray()
+
+        fun binarySize(): Int = binary.size()
+
+        fun view(bytes: ByteArray, target: Int? = null): Int {
+            while (binary.size() % 4 != 0) binary.write(0)
+            val result = views.length()
+            val item = JSONObject().put("buffer", 0)
+                .put("byteOffset", binary.size()).put("byteLength", bytes.size)
+            if (target != null) item.put("target", target)
+            views.put(item)
+            binary.write(bytes)
+            return result
+        }
+
+        private fun floats(values: List<Float>, type: String, size: Int, position: Boolean): Int {
+            val bytes = ByteBuffer.allocate(values.size * 4).order(ByteOrder.LITTLE_ENDIAN)
+            values.forEach(bytes::putFloat)
+            val accessor = JSONObject()
+                .put("bufferView", view(bytes.array(), 34962))
+                .put("componentType", 5126)
+                .put("count", values.size / size)
+                .put("type", type)
+            if (position) {
+                val mins = JSONArray()
+                val maxs = JSONArray()
+                for (axis in 0 until size) {
+                    val coordinates = values.indices.asSequence()
+                        .filter { it % size == axis }.map(values::get).toList()
+                    mins.put(coordinates.minOrNull() ?: 0f)
+                    maxs.put(coordinates.maxOrNull() ?: 0f)
+                }
+                accessor.put("min", mins).put("max", maxs)
+            }
+            accessors.put(accessor)
+            return accessors.length() - 1
+        }
+
+        fun primitive(geometry: Geometry, material: Int): JSONObject {
+            val positions = floats(geometry.positions, "VEC3", 3, position = true)
+            val uvs = floats(geometry.uvs, "VEC2", 2, position = false)
+            val bytes = ByteBuffer.allocate(geometry.indices.size * 4).order(ByteOrder.LITTLE_ENDIAN)
+            geometry.indices.forEach(bytes::putInt)
+            val indices = accessors.length()
+            accessors.put(JSONObject()
+                .put("bufferView", view(bytes.array(), 34963))
+                .put("componentType", 5125)
+                .put("count", geometry.indices.size)
+                .put("type", "SCALAR"))
+            return JSONObject()
+                .put("attributes", JSONObject().put("POSITION", positions).put("TEXCOORD_0", uvs))
+                .put("indices", indices)
+                .put("material", material)
+        }
+
+        fun finish(document: JSONObject): ByteArray {
+            // Android's JSONObject escapes MIME slashes as "image\/png".
+            // gltfio compares the raw MIME string and then fails to find its
+            // PNG texture provider, leaving every alpha-masked pose invisible.
+            val json = normalizeJson(document.toString()).toByteArray(Charsets.UTF_8)
+            val jsonPadding = (4 - json.size % 4) % 4
+            val payload = binary.toByteArray()
+            val binaryPadding = (4 - payload.size % 4) % 4
+            val total = 12 + 8 + json.size + jsonPadding + 8 + payload.size + binaryPadding
+            val result = ByteArrayOutputStream(total)
+            writeLittleInt(result, 0x46546C67)
+            writeLittleInt(result, 2)
+            writeLittleInt(result, total)
+            writeLittleInt(result, json.size + jsonPadding)
+            writeLittleInt(result, 0x4E4F534A)
+            result.write(json)
+            repeat(jsonPadding) { result.write(0x20) }
+            writeLittleInt(result, payload.size + binaryPadding)
+            writeLittleInt(result, 0x004E4942)
+            result.write(payload)
+            repeat(binaryPadding) { result.write(0) }
+            return result.toByteArray()
+        }
+    }
+
+    private fun png(frame: ResidentFrameImage): ByteArray {
+        val pixels = ByteArrayOutputStream(frame.width * frame.height * 4 + frame.height)
+        for (y in 0 until frame.height) {
+            pixels.write(0)
+            for (x in 0 until frame.width) {
+                val argb = frame.argb[y * frame.width + x]
+                pixels.write((argb ushr 16) and 255)
+                pixels.write((argb ushr 8) and 255)
+                pixels.write(argb and 255)
+                pixels.write((argb ushr 24) and 255)
+            }
+        }
+        return pngBytes(frame.width, frame.height, pixels.toByteArray())
+    }
+
+    private fun shadowPng(): ByteArray {
+        val pixels = ByteArrayOutputStream(32 * 32 * 4 + 32)
+        for (y in 0 until 32) {
+            pixels.write(0)
+            for (x in 0 until 32) {
+                val dx = (x - 15.5f) / 15.5f
+                val dy = (y - 15.5f) / 15.5f
+                val alpha = (85f * max(0f, 1f - dx * dx - dy * dy)).toInt()
+                pixels.write(0)
+                pixels.write(0)
+                pixels.write(0)
+                pixels.write(alpha)
+            }
+        }
+        return pngBytes(32, 32, pixels.toByteArray())
+    }
+
+    private fun pngBytes(width: Int, height: Int, pixels: ByteArray): ByteArray {
+        val compressed = ByteArrayOutputStream()
+        DeflaterOutputStream(compressed).use { it.write(pixels) }
+        val png = ByteArrayOutputStream()
+        png.write(byteArrayOf(137.toByte(), 80, 78, 71, 13, 10, 26, 10))
+        val header = ByteArrayOutputStream()
+        DataOutputStream(header).use {
+            it.writeInt(width)
+            it.writeInt(height)
+            it.writeByte(8)
+            it.writeByte(6)
+            it.writeByte(0)
+            it.writeByte(0)
+            it.writeByte(0)
+        }
+        pngChunk(png, "IHDR", header.toByteArray())
+        pngChunk(png, "IDAT", compressed.toByteArray())
+        pngChunk(png, "IEND", ByteArray(0))
+        return png.toByteArray()
+    }
+
+    private fun pngChunk(output: ByteArrayOutputStream, name: String, bytes: ByteArray) {
+        val type = name.toByteArray(Charsets.US_ASCII)
+        DataOutputStream(output).writeInt(bytes.size)
+        output.write(type)
+        output.write(bytes)
+        val crc = CRC32()
+        crc.update(type)
+        crc.update(bytes)
+        DataOutputStream(output).writeInt(crc.value.toInt())
+    }
+
+    private fun writeLittleInt(output: ByteArrayOutputStream, value: Int) {
+        output.write(value and 255)
+        output.write((value ushr 8) and 255)
+        output.write((value ushr 16) and 255)
+        output.write((value ushr 24) and 255)
+    }
+}
