@@ -15,6 +15,7 @@ import com.google.android.filament.Engine
 import com.google.android.filament.Colors
 import com.google.android.filament.EntityManager
 import com.google.android.filament.Filament
+import com.google.android.filament.MaterialInstance
 import com.google.android.filament.Skybox
 import com.google.android.filament.android.UiHelper
 import com.google.android.filament.gltfio.AssetLoader
@@ -23,6 +24,8 @@ import com.google.android.filament.gltfio.ResourceLoader
 import com.google.android.filament.gltfio.UbershaderProvider
 import com.google.android.filament.utils.ModelViewer
 import com.github.nacabaro.vbhelper.digifarm.map.Digifarm3dAssetCatalog
+import com.github.nacabaro.vbhelper.rendering.sprite3d.ResidentFrameImage
+import com.github.nacabaro.vbhelper.rendering.sprite3d.cameraAssistedSpriteYaw
 import com.github.nacabaro.vbhelper.ui.theme.DeepPurpleBgAlt
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -32,13 +35,6 @@ import kotlin.math.cos
 import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.math.sqrt
-
-/** One decoded sprite frame. [argb] uses Android ARGB packing, alpha 0 = transparent. */
-data class ResidentFrameImage(
-    val argb: IntArray,
-    val width: Int,
-    val height: Int,
-)
 
 /**
  * Full sprite set of one resident. Sent once per roster/art change —
@@ -184,9 +180,16 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
         val animated: FloatArray,
     )
 
+    private data class PulsingGlow(
+        val material: MaterialInstance,
+        val phase: Double,
+        val amplitude: Float,
+    )
+
     private var floatingBlocks: List<FloatingBlocks> = emptyList()
     private var floatingCubes: List<FloatingCube> = emptyList()
     private var floatingIsland: FloatingIsland? = null
+    private var pulsingGlows: List<PulsingGlow> = emptyList()
     private var islandFloatOffsetY = 0f
     private var floatingStartNanos = 0L
 
@@ -220,6 +223,13 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
         engine = Engine.create()
         val helper = UiHelper(UiHelper.ContextErrorPolicy.DONT_CHECK)
         viewer = ModelViewer(this, engine, helper, null)
+        viewer.view.setPostProcessingEnabled(true)
+        viewer.view.bloomOptions = viewer.view.bloomOptions.apply {
+            enabled = true
+            strength = 0.35f
+            resolution = 256
+            threshold = true
+        }
         val backdrop = Colors.toLinear(
             Colors.RgbType.SRGB,
             DeepPurpleBgAlt.red, DeepPurpleBgAlt.green, DeepPurpleBgAlt.blue,
@@ -275,6 +285,7 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
         floatingBlocks = emptyList()
         floatingCubes = emptyList()
         floatingIsland = null
+        pulsingGlows = emptyList()
         islandFloatOffsetY = 0f
         floatingStartNanos = 0L
         runCatching { viewer.destroyModel() }
@@ -333,6 +344,7 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
                     // resident position.
                     viewer.clearRootTransform()
                     collectFloatingBlocks(checkNotNull(viewer.asset))
+                    collectPulsingGlows(checkNotNull(viewer.asset))
                     loadedAssetName = assetName
                     Log.i(logTag, "Digifarm asset loaded: $assetName (${bytes.size} bytes)")
                 }.onFailure { failure ->
@@ -423,7 +435,8 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
     }
 
     private fun updateFloatingBlocks(frameTimeNanos: Long) {
-        if (floatingBlocks.isEmpty() && floatingCubes.isEmpty() && floatingIsland == null) return
+        if (floatingBlocks.isEmpty() && floatingCubes.isEmpty() &&
+            floatingIsland == null && pulsingGlows.isEmpty()) return
         if (floatingStartNanos == 0L) floatingStartNanos = frameTimeNanos
         val elapsed = (frameTimeNanos - floatingStartNanos) / 1_000_000_000.0
         val manager = engine.transformManager
@@ -448,6 +461,50 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
             island.animated[13] = island.base[13] + islandFloatOffsetY
             manager.setTransform(island.transformInstance, island.animated)
         }
+        pulsingGlows.forEach { glow ->
+            val pulse = (0.5 + 0.5 * sin(elapsed * GLOW_PULSE_SPEED + glow.phase)).toFloat()
+            val strength = GLOW_BASE_INTENSITY + glow.amplitude * pulse
+            glow.material.setParameter("emissiveFactor", strength, strength, strength)
+        }
+    }
+
+    private fun collectPulsingGlows(asset: FilamentAsset) {
+        val renderables = engine.renderableManager
+        val materials = LinkedHashMap<Long, PulsingGlow>()
+
+        fun add(entityName: String, primitiveIndex: Int, phase: Double, amplitude: Float) {
+            val entity = asset.getFirstEntityByName(entityName)
+            if (entity == 0 || !renderables.hasComponent(entity)) return
+            val instance = renderables.getInstance(entity)
+            if (instance == 0 || primitiveIndex !in 0 until renderables.getPrimitiveCount(instance)) return
+            val material = renderables.getMaterialInstanceAt(instance, primitiveIndex)
+            val nativeMaterial = material.getNativeObject()
+            if (!materials.containsKey(nativeMaterial)) {
+                materials[nativeMaterial] = PulsingGlow(material, phase, amplitude)
+            }
+        }
+
+        // The island top contains the violet wireframe texture; keep its pulse
+        // restrained because the grass shares this baked material.
+        add("Island", primitiveIndex = 0, phase = 0.0, amplitude = 0.48f)
+
+        var blockOrdinal = 0
+        for (groupIndex in BLOCKS_PER_GROUP.indices) {
+            val groupNumber = groupIndex + 1
+            for (blockIndex in 1..BLOCKS_PER_GROUP[groupIndex]) {
+                val name = "VoxelBlockNear${groupNumber.toString().padStart(2, '0')}_" +
+                    blockIndex.toString().padStart(2, '0')
+                add(
+                    name,
+                    primitiveIndex = 0,
+                    phase = blockOrdinal * 0.37,
+                    amplitude = 0.68f,
+                )
+                blockOrdinal += 1
+            }
+        }
+        pulsingGlows = materials.values.toList()
+        Log.i(logTag, "Loaded ${pulsingGlows.size} pulsing Digifarm emissive materials")
     }
 
     /** Loads resident solids once per art change; pose ticks only change visible layers. */
@@ -900,9 +957,8 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
         for (entry in residents.values) {
             if (!entry.hasVisualPosition) continue
             val worldH = if (entry.selected) SELECTED_HEIGHT else RESIDENT_HEIGHT
-            // The solid is intentionally thin. A full physical yaw makes it
-            // disappear edge-on. Keep the sprite legible from the orbit camera
-            // while its lean and horizontal flip still show travel direction.
+            // Keep some camera assistance for readability, but preserve most of
+            // the resident's physical heading so orbiting does not drag it along.
             val relativeHeading = atan2(
                 sin(entry.headingYaw - camYaw),
                 cos(entry.headingYaw - camYaw),
@@ -912,7 +968,7 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
             // Mirror them only for travel toward screen right.
             if (lateral > FACING_FLIP_THRESHOLD) entry.mirrorSprite = true
             if (lateral < -FACING_FLIP_THRESHOLD) entry.mirrorSprite = false
-            val visibleYaw = camYaw + sin(relativeHeading) * MAX_VISIBLE_RESIDENT_YAW
+            val visibleYaw = cameraAssistedSpriteYaw(entry.headingYaw, camYaw)
             Matrix.setIdentityM(tmpMat, 0)
             Matrix.translateM(tmpMat, 0, entry.visualX, islandFloatOffsetY, entry.visualZ)
             Matrix.rotateM(tmpMat, 0,
@@ -972,7 +1028,6 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
         private const val MIN_MOVEMENT_DISTANCE_SQ = MIN_MOVEMENT_DISTANCE * MIN_MOVEMENT_DISTANCE
         private const val RESIDENT_STEP_NANOS = 1_100_000_000f
         private const val TURN_SPEED_RADIANS_PER_SECOND = 12f
-        private const val MAX_VISIBLE_RESIDENT_YAW = 0.7f
         private const val FACING_FLIP_THRESHOLD = 0.16f
         private const val WALK_FRAME_NANOS = 250_000_000L
         private const val TRAIN_FRAME_NANOS = 340_000_000L
@@ -980,6 +1035,8 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
         private const val IDLE_FRAME_NANOS = 950_000_000L
         private const val ISLAND_FLOAT_AMPLITUDE = 0.012f
         private const val ISLAND_FLOAT_SPEED = 0.52
+        private const val GLOW_PULSE_SPEED = 1.15
+        private const val GLOW_BASE_INTENSITY = 0.9f
         private val BLOCKS_PER_GROUP = intArrayOf(3, 3, 2, 2, 2, 2)
 
         // Orbit around the single island. Elevation stays above the horizon.

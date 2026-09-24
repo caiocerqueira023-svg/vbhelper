@@ -1,0 +1,174 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/C:/Users/julye/.gradle/wrapper/dists/gradle-9.6.1-bin/4ticwg1pgcbps2hj28r8so764/gradle-9.6.1/lib/native-platform-0.22-milestone-29.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+
+> Configure project :app
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :vb-nfc-reader
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Task :vb-dim-reader:compileJava UP-TO-DATE
+> Task :vb-dim-reader:processResources NO-SOURCE
+> Task :vb-dim-reader:classes UP-TO-DATE
+> Task :vb-dim-reader:jar UP-TO-DATE
+> Task :app:protobufDummy UP-TO-DATE
+> Task :vb-nfc-reader:preBuild UP-TO-DATE
+> Task :vb-nfc-reader:preDebugBuild UP-TO-DATE
+> Task :vb-nfc-reader:generateDebugResources UP-TO-DATE
+> Task :vb-nfc-reader:packageDebugResources UP-TO-DATE
+> Task :vb-nfc-reader:processDebugNavigationResources UP-TO-DATE
+> Task :vb-nfc-reader:parseDebugLocalResources UP-TO-DATE
+> Task :vb-nfc-reader:generateDebugRFile UP-TO-DATE
+> Task :vb-nfc-reader:compileDebugKotlin UP-TO-DATE
+> Task :vb-nfc-reader:javaPreCompileDebug UP-TO-DATE
+> Task :vb-nfc-reader:compileDebugJavaWithJavac NO-SOURCE
+> Task :vb-nfc-reader:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :vb-nfc-reader:processDebugJavaRes UP-TO-DATE
+> Task :vb-nfc-reader:createFullJarDebug UP-TO-DATE
+> Task :app:extractIncludeIntegrityCheckProto
+> Task :app:extractIntegrityCheckProto UP-TO-DATE
+> Task :app:extractProto UP-TO-DATE
+> Task :app:generateIntegrityCheckProto UP-TO-DATE
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preIntegrityCheckBuild UP-TO-DATE
+> Task :app:generateIntegrityCheckResources UP-TO-DATE
+> Task :app:packageIntegrityCheckResources UP-TO-DATE
+> Task :app:processIntegrityCheckNavigationResources UP-TO-DATE
+> Task :app:parseIntegrityCheckLocalResources UP-TO-DATE
+> Task :app:generateIntegrityCheckRFile UP-TO-DATE
+> Task :vb-nfc-reader:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :app:javaPreCompileIntegrityCheck UP-TO-DATE
+> Task :vb-nfc-reader:writeDebugAarMetadata UP-TO-DATE
+> Task :app:mapIntegrityCheckSourceSetPaths UP-TO-DATE
+> Task :app:compileIntegrityCheckNavigationResources UP-TO-DATE
+> Task :app:checkIntegrityCheckAarMetadata
+> Task :app:createIntegrityCheckCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksIntegrityCheck UP-TO-DATE
+> Task :vb-nfc-reader:extractDeepLinksDebug UP-TO-DATE
+> Task :vb-nfc-reader:processDebugManifest UP-TO-DATE
+> Task :app:processIntegrityCheckMainManifest
+> Task :app:processIntegrityCheckManifest
+> Task :vb-nfc-reader:mapDebugSourceSetPaths UP-TO-DATE
+> Task :vb-nfc-reader:compileDebugLibraryResources UP-TO-DATE
+> Task :app:extractTestProto UP-TO-DATE
+> Task :app:preIntegrityCheckUnitTestBuild UP-TO-DATE
+> Task :app:javaPreCompileIntegrityCheckUnitTest UP-TO-DATE
+> Task :app:mergeIntegrityCheckNativeDebugMetadata NO-SOURCE
+> Task :app:generateIntegrityCheckAssets UP-TO-DATE
+> Task :vb-nfc-reader:generateDebugAssets UP-TO-DATE
+> Task :vb-nfc-reader:mergeDebugAssets UP-TO-DATE
+> Task :app:mergeIntegrityCheckResources
+> Task :app:mergeIntegrityCheckAssets UP-TO-DATE
+> Task :app:compressIntegrityCheckAssets UP-TO-DATE
+> Task :app:generateIntegrityCheckGlobalSynthetics UP-TO-DATE
+> Task :app:desugarIntegrityCheckFileDependencies UP-TO-DATE
+> Task :vb-nfc-reader:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :app:mergeIntegrityCheckJniLibFolders UP-TO-DATE
+> Task :vb-nfc-reader:mergeDebugJniLibFolders UP-TO-DATE
+> Task :vb-nfc-reader:mergeDebugNativeLibs NO-SOURCE
+> Task :vb-nfc-reader:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :app:mergeIntegrityCheckNativeLibs UP-TO-DATE
+> Task :app:stripIntegrityCheckDebugSymbols UP-TO-DATE
+> Task :app:validateSigningIntegrityCheck UP-TO-DATE
+> Task :app:writeIntegrityCheckAppMetadata UP-TO-DATE
+> Task :app:writeIntegrityCheckSigningConfigVersions UP-TO-DATE
+> Task :app:extractAndroidTestProto UP-TO-DATE
+> Task :app:preIntegrityCheckAndroidTestBuild SKIPPED
+> Task :app:generateIntegrityCheckAndroidTestResources UP-TO-DATE
+> Task :app:packageIntegrityCheckAndroidTestResources UP-TO-DATE
+> Task :app:processIntegrityCheckAndroidTestNavigationResources UP-TO-DATE
+> Task :app:parseIntegrityCheckAndroidTestLocalResources UP-TO-DATE
+> Task :app:generateIntegrityCheckAndroidTestRFile UP-TO-DATE
+> Task :app:javaPreCompileIntegrityCheckAndroidTest UP-TO-DATE
+> Task :app:generateIntegrityCheckAndroidTestAssets UP-TO-DATE
+> Task :app:mergeIntegrityCheckAndroidTestAssets UP-TO-DATE
+> Task :app:compressIntegrityCheckAndroidTestAssets UP-TO-DATE
+> Task :app:generateIntegrityCheckAndroidTestGlobalSynthetics UP-TO-DATE
+> Task :app:checkIntegrityCheckAndroidTestDuplicateClasses UP-TO-DATE
+> Task :app:desugarIntegrityCheckAndroidTestFileDependencies UP-TO-DATE
+> Task :app:mergeExtDexIntegrityCheckAndroidTest UP-TO-DATE
+> Task :app:mergeLibDexIntegrityCheckAndroidTest UP-TO-DATE
+> Task :app:checkIntegrityCheckAndroidTestAarMetadata UP-TO-DATE
+> Task :app:mapIntegrityCheckAndroidTestSourceSetPaths UP-TO-DATE
+> Task :app:compileIntegrityCheckAndroidTestNavigationResources UP-TO-DATE
+> Task :app:mergeIntegrityCheckAndroidTestResources UP-TO-DATE
+> Task :app:checkIntegrityCheckDuplicateClasses
+> Task :app:processIntegrityCheckAndroidTestManifest
+> Task :app:mergeExtDexIntegrityCheck UP-TO-DATE
+> Task :app:mergeLibDexIntegrityCheck UP-TO-DATE
+> Task :app:mergeIntegrityCheckAndroidTestJniLibFolders
+> Task :app:mergeIntegrityCheckAndroidTestNativeLibs NO-SOURCE
+> Task :app:processIntegrityCheckManifestForPackage
+> Task :app:stripIntegrityCheckAndroidTestDebugSymbols NO-SOURCE
+> Task :app:validateSigningIntegrityCheckAndroidTest
+> Task :app:writeIntegrityCheckAndroidTestSigningConfigVersions
+> Task :app:processIntegrityCheckAndroidTestResources
+> Task :app:processIntegrityCheckResources
+> Task :app:kspIntegrityCheckKotlin
+
+> Task :app:compileIntegrityCheckKotlin
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/github/nacabaro/vbhelper/screens/offlineBattle/OfflineTrainingBattleScreen.kt:693:21 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CombatantSnapshot'.
+
+> Task :app:compileIntegrityCheckJavaWithJavac UP-TO-DATE
+> Task :app:processIntegrityCheckJavaRes UP-TO-DATE
+> Task :app:bundleIntegrityCheckClassesToCompileJar
+> Task :app:bundleIntegrityCheckClassesToRuntimeJar
+> Task :app:mergeIntegrityCheckJavaResource
+> Task :app:dexBuilderIntegrityCheck
+> Task :app:extractIncludeIntegrityCheckUnitTestProto
+> Task :app:generateIntegrityCheckUnitTestProto NO-SOURCE
+> Task :app:mergeProjectDexIntegrityCheck
+> Task :app:kspIntegrityCheckUnitTestKotlin
+> Task :app:extractIncludeIntegrityCheckAndroidTestProto
+> Task :app:generateIntegrityCheckAndroidTestProto NO-SOURCE
+> Task :app:compileIntegrityCheckUnitTestKotlin
+> Task :app:compileIntegrityCheckUnitTestJavaWithJavac UP-TO-DATE
+> Task :app:processIntegrityCheckUnitTestJavaRes UP-TO-DATE
+> Task :app:kspIntegrityCheckAndroidTestKotlin
+> Task :app:testIntegrityCheckUnitTest
+> Task :app:packageIntegrityCheck
+> Task :app:createIntegrityCheckApkListingFileRedirect UP-TO-DATE
+> Task :app:assembleIntegrityCheck
+
+> Task :app:compileIntegrityCheckAndroidTestKotlin
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/androidTest/java/com/github/nacabaro/vbhelper/OfflineBattleRuntimeTest.kt:22:29 'fun <reified A : ComponentActivity> createAndroidComposeRule(effectContext: CoroutineContext = ...): AndroidComposeTestRule<ActivityScenarioRule<A>, A>' is deprecated. Use `androidx.compose.ui.test.junit4.v2.createAndroidComposeRule` instead. The v2 APIs use StandardTestDispatcher instead of UnconfinedTestDispatcher, which aligns with standard coroutine behavior by queuing tasks rather than executing them immediately. Tests relying on immediate execution may require explicit synchronization. Please refer to the migration guide for more details.
+
+> Task :app:compileIntegrityCheckAndroidTestJavaWithJavac NO-SOURCE
+> Task :app:processIntegrityCheckAndroidTestJavaRes
+> Task :app:mergeIntegrityCheckAndroidTestJavaResource
+> Task :app:dexBuilderIntegrityCheckAndroidTest
+> Task :app:mergeProjectDexIntegrityCheckAndroidTest
+> Task :app:packageIntegrityCheckAndroidTest
+> Task :app:createIntegrityCheckAndroidTestApkListingFileRedirect
+> Task :app:assembleIntegrityCheckAndroidTest
+
+[Incubating] Problems report is available at: file:///C:/Users/julye/IdeaProjects/vbhelper/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.6.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 1m 9s
+106 actionable tasks: 34 executed, 72 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.6.1/userguide/configuration_cache_enabling.html

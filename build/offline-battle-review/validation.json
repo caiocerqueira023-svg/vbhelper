@@ -1,0 +1,22 @@
+{
+  "apk": "C:\\Users\\julye\\IdeaProjects\\vbhelper\\app\\build\\outputs\\apk\\debug\\app-debug.apk",
+  "bytes": 183852587,
+  "sha256": "aa017abcc17fe85e843db7145656a8e5a3fb9b20d1ef0ca14fff501a3566fa2e",
+  "unit_tests": 166,
+  "failures": 0,
+  "skipped": 3,
+  "packaged_arena_matches_sources": true,
+  "android_runtime": {
+    "variant": "integrityCheck",
+    "formats": [
+      "1v1",
+      "1v2",
+      "2v2"
+    ],
+    "test": "OfflineBattleRuntimeTest",
+    "seconds": 44.174,
+    "device": "Samsung Galaxy A34 (SM-A346M)",
+    "main_app_installed": false,
+    "result": "OK (1 test)"
+  }
+}

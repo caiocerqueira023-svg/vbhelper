@@ -1,4 +1,4 @@
-package com.github.nacabaro.vbhelper.screens.digifarmScreen
+package com.github.nacabaro.vbhelper.rendering.sprite3d
 
 import org.json.JSONArray
 import org.json.JSONObject
@@ -6,19 +6,30 @@ import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.security.MessageDigest
+import java.util.LinkedHashMap
 import java.util.zip.CRC32
 import java.util.zip.DeflaterOutputStream
 import kotlin.math.max
 
 /** Turns the alpha outline of each pixel-art pose into a shallow 3D solid. */
-internal object ResidentExtrusionGlb {
+internal object SpriteExtrusionGlb {
+    private const val GENERATOR_VERSION = "sprite-extrusion-v2"
+    private const val MAX_CACHED_MODEL_BYTES = 8 * 1024 * 1024
     private const val HALF_DEPTH = 0.045f
     private const val ALPHA_CUTOFF = 128
+    private const val OUTLINE_SUPERSAMPLE = 2
     private const val OUTLINE_COLOR = 0xFF000000.toInt()
+
+    private val modelCache = LinkedHashMap<String, ByteArray>(8, 0.75f, true)
+    private var cachedModelBytes = 0
 
     internal fun normalizeJson(raw: String): String = raw.replace("\\/", "/")
 
+    @Synchronized
     fun build(poses: Map<String, ResidentFrameImage>): ByteArray {
+        val cacheKey = contentKey(poses)
+        modelCache[cacheKey]?.let { return it }
         val firstUsable = poses.values.firstOrNull(::hasVisiblePixels)
             ?: ResidentFrameImage(intArrayOf(0xFFA78BFA.toInt()), 1, 1)
         val frames = poses.ifEmpty { mapOf("walk" to firstUsable) }
@@ -103,7 +114,40 @@ internal object ResidentExtrusionGlb {
             .put("bufferViews", glb.views)
             .put("accessors", glb.accessors)
             .put("buffers", JSONArray().put(JSONObject().put("byteLength", glb.binarySize())))
-        return glb.finish(document)
+        val result = glb.finish(document)
+        if (result.size <= MAX_CACHED_MODEL_BYTES) {
+            modelCache[cacheKey] = result
+            cachedModelBytes += result.size
+            while (cachedModelBytes > MAX_CACHED_MODEL_BYTES && modelCache.isNotEmpty()) {
+                val eldestKey = modelCache.entries.first().key
+                cachedModelBytes -= modelCache.remove(eldestKey)?.size ?: 0
+            }
+        }
+        return result
+    }
+
+    private fun contentKey(poses: Map<String, ResidentFrameImage>): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        digest.update(GENERATOR_VERSION.toByteArray(Charsets.UTF_8))
+        updateInt(digest, poses.size)
+        poses.forEach { (name, frame) ->
+            val nameBytes = name.toByteArray(Charsets.UTF_8)
+            updateInt(digest, nameBytes.size)
+            digest.update(nameBytes)
+            updateInt(digest, frame.width)
+            updateInt(digest, frame.height)
+            val count = (frame.width.toLong() * frame.height).coerceIn(0L, frame.argb.size.toLong()).toInt()
+            updateInt(digest, count)
+            for (index in 0 until count) updateInt(digest, frame.argb[index])
+        }
+        return digest.digest().joinToString(separator = "") { it.toUByte().toString(16).padStart(2, '0') }
+    }
+
+    private fun updateInt(digest: MessageDigest, value: Int) {
+        digest.update((value ushr 24).toByte())
+        digest.update((value ushr 16).toByte())
+        digest.update((value ushr 8).toByte())
+        digest.update(value.toByte())
     }
 
     private fun hasVisiblePixels(frame: ResidentFrameImage): Boolean =
@@ -111,23 +155,27 @@ internal object ResidentExtrusionGlb {
             frame.argb.size >= frame.width * frame.height &&
             frame.argb.take(frame.width * frame.height).any { (it ushr 24) >= ALPHA_CUTOFF }
 
-    /** Adds one sharp black pixel around the imported silhouette before extrusion. */
+    /** Adds a half-source-pixel black border by rasterizing the silhouette at 2x. */
     private fun outline(frame: ResidentFrameImage): ResidentFrameImage {
         val sourceWidth = frame.width
         val sourceHeight = frame.height
-        val width = sourceWidth + 2
-        val height = sourceHeight + 2
+        val width = sourceWidth * OUTLINE_SUPERSAMPLE + 2
+        val height = sourceHeight * OUTLINE_SUPERSAMPLE + 2
         val outlined = IntArray(width * height)
         for (y in 0 until sourceHeight) for (x in 0 until sourceWidth) {
             val color = frame.argb[y * sourceWidth + x]
             if ((color ushr 24) < ALPHA_CUTOFF) continue
-            val outX = x + 1
-            val outY = y + 1
-            for (dy in -1..1) for (dx in -1..1) {
+            val outX = x * OUTLINE_SUPERSAMPLE + 1
+            val outY = y * OUTLINE_SUPERSAMPLE + 1
+            for (dy in -1..OUTLINE_SUPERSAMPLE) for (dx in -1..OUTLINE_SUPERSAMPLE) {
                 val edgeIndex = (outY + dy) * width + outX + dx
                 if (outlined[edgeIndex] == 0) outlined[edgeIndex] = OUTLINE_COLOR
             }
-            outlined[outY * width + outX] = color
+            for (dy in 0 until OUTLINE_SUPERSAMPLE) {
+                for (dx in 0 until OUTLINE_SUPERSAMPLE) {
+                    outlined[(outY + dy) * width + outX + dx] = color
+                }
+            }
         }
         return ResidentFrameImage(outlined, width, height)
     }

@@ -1,0 +1,20 @@
+<!doctype html><meta charset="utf-8"><title>Inspeção do asset do Coliseu — não é o renderer Android</title>
+<style>body{margin:0;background:#171327;color:white;font:15px sans-serif}p{position:fixed;left:12px;top:0;background:#171327cc;padding:10px}canvas{display:block}</style>
+<p id="status">Inspeção do GLB e câmera · WebGL auxiliar, não validação Android</p>
+<script type="importmap">{"imports":{"three":"https://threejs.org/build/three.module.js","three/addons/":"https://threejs.org/examples/jsm/"}}</script>
+<script type="module">
+import * as T from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const base='/app/src/main/assets/';
+const m=await (await fetch(base+'Arena/Colosseum/arena.json')).json();
+const scene=new T.Scene(); const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+renderer.setSize(900,700); document.body.append(renderer.domElement);
+const camera=new T.PerspectiveCamera(46.4,900/700,.05,140);
+camera.position.set(0,m.camera.targetY+m.camera.distance*Math.sin(m.camera.pitchRadians),m.camera.distance*Math.cos(m.camera.pitchRadians));
+camera.lookAt(0,m.camera.targetY,0);
+const arena=await new GLTFLoader().loadAsync(base+m.assetPath);arena.scene.scale.setScalar(m.visualScale);scene.add(arena.scene);
+for(const [x,z,color] of [[-3.04,-1.7,0x2de1fc],[-3.04,1.7,0x2de1fc],[3.04,-1.7,0xff7899],[3.04,1.7,0xff7899]]){
+ const mesh=new T.Mesh(new T.BoxGeometry(1,1.65,.1),new T.MeshBasicMaterial({color}));mesh.position.set(x,.825,z);scene.add(mesh);
+}
+renderer.render(scene,camera);document.querySelector('#status').textContent+=' · carregado';
+</script>

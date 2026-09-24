@@ -1,7 +1,9 @@
-package com.github.nacabaro.vbhelper.screens.digifarmScreen
+package com.github.nacabaro.vbhelper.rendering.sprite3d
 
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotSame
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.ByteArrayInputStream
@@ -9,17 +11,17 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import javax.imageio.ImageIO
 
-class ResidentExtrusionGlbTest {
+class SpriteExtrusionGlbTest {
     @Test
     fun androidEscapedMimeTypeIsNormalizedForGltfio() {
-        assertEquals("image/png", ResidentExtrusionGlb.normalizeJson("image\\/png"))
+        assertEquals("image/png", SpriteExtrusionGlb.normalizeJson("image\\/png"))
     }
 
     @Test
-    fun opaquePixelHasFourDepthEdgesAndEmbeddedArt() {
+    fun opaquePixelHasSupersampledDepthEdgesAndEmbeddedArt() {
         val pixels = IntArray(9)
         pixels[4] = 0xFFFF3048.toInt()
-        val bytes = ResidentExtrusionGlb.build(
+        val bytes = SpriteExtrusionGlb.build(
             mapOf("walk" to ResidentFrameImage(pixels, 3, 3))
         )
         val header = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
@@ -39,7 +41,7 @@ class ResidentExtrusionGlbTest {
         assertEquals(2, primitives.length())
         val edgePosition = primitives.getJSONObject(1).getJSONObject("attributes").getInt("POSITION")
         val edgeAccessor = document.getJSONArray("accessors").getJSONObject(edgePosition)
-        assertEquals(48, edgeAccessor.getInt("count"))
+        assertEquals(64, edgeAccessor.getInt("count"))
         assertEquals(-0.045, edgeAccessor.getJSONArray("min").getDouble(2), 0.00001)
         assertEquals(0.045, edgeAccessor.getJSONArray("max").getDouble(2), 0.00001)
 
@@ -48,10 +50,22 @@ class ResidentExtrusionGlbTest {
         val view = document.getJSONArray("bufferViews").getJSONObject(imageView)
         val offset = binaryStart + view.getInt("byteOffset")
         val image = ImageIO.read(ByteArrayInputStream(bytes, offset, view.getInt("byteLength")))
-        assertEquals(5, image.width)
-        assertEquals(5, image.height)
-        assertEquals(0xFFFF3048.toInt(), image.getRGB(2, 2))
-        assertEquals(0xFF4C3A82.toInt(), image.getRGB(1, 1))
+        assertEquals(8, image.width)
+        assertEquals(8, image.height)
+        assertEquals(0xFFFF3048.toInt(), image.getRGB(3, 3))
+        assertEquals(0xFF000000.toInt(), image.getRGB(2, 2))
         assertTrue((image.getRGB(0, 0) ushr 24) == 0)
+    }
+
+    @Test
+    fun identicalSpriteContentReusesTheExtrudedModelButPixelChangesDoNot() {
+        val pixels = intArrayOf(0x00000000, 0xFF21D4E8.toInt(), 0x00000000, 0xFF814BFF.toInt())
+        val first = SpriteExtrusionGlb.build(mapOf("cache-check" to ResidentFrameImage(pixels, 2, 2)))
+        val identical = SpriteExtrusionGlb.build(mapOf("cache-check" to ResidentFrameImage(pixels.copyOf(), 2, 2)))
+        val changedPixels = pixels.copyOf().apply { this[1] = 0xFFFF3048.toInt() }
+        val changed = SpriteExtrusionGlb.build(mapOf("cache-check" to ResidentFrameImage(changedPixels, 2, 2)))
+
+        assertSame(first, identical)
+        assertNotSame(first, changed)
     }
 }

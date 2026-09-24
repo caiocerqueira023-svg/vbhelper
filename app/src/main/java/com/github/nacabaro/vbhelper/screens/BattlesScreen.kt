@@ -49,6 +49,7 @@ import android.net.Uri
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.compose.foundation.background
 import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.ButtonDefaults
@@ -67,6 +68,7 @@ import com.github.nacabaro.vbhelper.battle.DigimonAnimationType
 import com.github.nacabaro.vbhelper.battle.AnimatedSpriteImage
 import com.github.nacabaro.vbhelper.battle.HitEffectOverlay
 import com.github.nacabaro.vbhelper.battle.BattleAuthContainer
+import com.github.nacabaro.vbhelper.battle.offline.core.BattleAttribute
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.audio.AppMusicController
 import kotlinx.coroutines.flow.first
@@ -84,6 +86,11 @@ import androidx.compose.foundation.layout.width
 import com.github.nacabaro.vbhelper.di.VBHelper
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.github.nacabaro.vbhelper.screens.offlineBattle.OfflineTrainingBattleScreen
+import com.github.nacabaro.vbhelper.screens.offlineBattle.TrainingBattlePreparation
+import com.github.nacabaro.vbhelper.screens.offlineBattle.OfflineBattleSessionViewModel
+import com.github.nacabaro.vbhelper.screens.offlineBattle.offlineBattleViewModel
+import java.util.UUID
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -1512,7 +1519,10 @@ fun BattlesScreen(musicController: AppMusicController) {
     val TAG = "BattleScreen"
     val context = LocalContext.current
     val resources = LocalResources.current
-    var currentView by remember { mutableStateOf("main") }
+    var currentView by rememberSaveable { mutableStateOf("main") }
+    val offlineBattleViewModel = offlineBattleViewModel(
+        LocalViewModelStoreOwner.current ?: error("BattlesScreen precisa de um ViewModelStoreOwner.")
+    )
 
     LaunchedEffect(currentView) {
         val track = if (currentView == "battle-main" || currentView == "offline-battle") {
@@ -1543,7 +1553,6 @@ fun BattlesScreen(musicController: AppMusicController) {
 
     var offlinePlayer by remember { mutableStateOf<OfflineBattleParticipant?>(null) }
     var offlineOpponents by remember { mutableStateOf<List<OfflineBattleParticipant>>(emptyList()) }
-    var selectedOfflineOpponent by remember { mutableStateOf<OfflineBattleParticipant?>(null) }
 
     var expanded by remember { mutableStateOf(false) }
     var selectedStage by remember { mutableStateOf("") }
@@ -1711,18 +1720,8 @@ fun BattlesScreen(musicController: AppMusicController) {
                             kotlinx.coroutines.CoroutineScope(Dispatchers.Main).launch {
                                 isAuthenticated = false
                                 isCheckingAuth = false
-                                // Small delay to ensure state is updated
-                                kotlinx.coroutines.delay(100)
-                                // Open auth URL to get a fresh token
-                                val authUrl = "http://auth.nacatech.es/begin?app=443654920&redirect_uri=vbhelper://auth?token="
-                                val authIntent = Intent(Intent.ACTION_VIEW, Uri.parse(authUrl))
-                                try {
-                                    context.startActivity(authIntent)
-                                    println("BATTLESCREEN: Opened auth URL after token expiration: $authUrl")
-                        } catch (e: Exception) {
-                                    println("BATTLESCREEN: Failed to open auth URL: ${e.message}")
-                            e.printStackTrace()
-                        }
+                                // Keep the user in the battle screen; re-authentication is now explicit.
+                                println("BATTLESCREEN: Session expired; showing the NacaBattle sign-in action")
                     }
                         } else {
                             // For other errors, remove from processed set to allow retry with a new token
@@ -1823,17 +1822,12 @@ fun BattlesScreen(musicController: AppMusicController) {
                             
                             if (isCriticalError) {
                                 // Critical error - token is invalid, need to re-authenticate
-                                println("BATTLESCREEN: Critical authentication error, clearing state and redirecting")
+                                println("BATTLESCREEN: Critical authentication error, clearing state and showing sign-in action")
                                 kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
                                     authRepository.logout()
                                 }
                                 isAuthenticated = false
                                 isCheckingAuth = false
-                                // Open auth URL
-                                val authUrl = "http://auth.nacatech.es/begin?app=443654920&redirect_uri=vbhelper://auth?token="
-                                val authIntent = Intent(Intent.ACTION_VIEW, Uri.parse(authUrl))
-                                context.startActivity(authIntent)
-                                println("BATTLESCREEN: Opened auth URL after critical validation failure: $authUrl")
                             } else {
                                 // Non-critical error (e.g., network issue) - keep authenticated state
                                 println("BATTLESCREEN: Non-critical validation error, keeping authenticated state")
@@ -1847,11 +1841,8 @@ fun BattlesScreen(musicController: AppMusicController) {
                 // No stored token or not authenticated locally
                 isAuthenticated = false
                 isCheckingAuth = false
-                // If not authenticated and no fresh token in intent, open auth URL
-                val authUrl = "http://auth.nacatech.es/begin?app=443654920&redirect_uri=vbhelper://auth?token="
-                val authIntent = Intent(Intent.ACTION_VIEW, Uri.parse(authUrl))
-                context.startActivity(authIntent)
-                println("BATTLESCREEN: Opened auth URL: $authUrl")
+                // Stay on this screen until the user chooses to open NacaBattle.
+                println("BATTLESCREEN: No saved session; waiting for an explicit sign-in action")
             }
         } catch (e: Exception) {
             println("BATTLESCREEN: Error checking authentication status: ${e.message}")
@@ -1930,19 +1921,9 @@ fun BattlesScreen(musicController: AppMusicController) {
         battleAuthContainer.authRepository.isAuthenticated.collect { authState ->
             if (!authState && isAuthenticated) {
                 // Auth state was cleared (e.g., by RetrofitHelper due to expired token)
-                println("BATTLESCREEN: Auth state cleared, triggering re-authentication")
+                println("BATTLESCREEN: Auth state cleared; showing the NacaBattle sign-in action")
                 isAuthenticated = false
                 isCheckingAuth = false
-                // Open auth URL to get a fresh token
-                val authUrl = "http://auth.nacatech.es/begin?app=443654920&redirect_uri=vbhelper://auth?token="
-                val authIntent = Intent(Intent.ACTION_VIEW, Uri.parse(authUrl))
-                try {
-                    context.startActivity(authIntent)
-                    println("BATTLESCREEN: Opened auth URL after token expiration: $authUrl")
-                } catch (e: Exception) {
-                    println("BATTLESCREEN: Failed to open auth URL: ${e.message}")
-                    e.printStackTrace()
-                }
             }
         }
     }
@@ -2017,6 +1998,10 @@ fun BattlesScreen(musicController: AppMusicController) {
                     val cardsById = database.characterDao().getAllCharacters().associateBy { it.id }
                     val offlineParticipants = allCharacters.map { storedCharacter ->
                         val storedCard = cardsById[storedCharacter.charId]
+                        val storedInfo = database.characterDao().getCharacterInfo(storedCharacter.charId)
+                        val beTraining = if (storedCharacter.isBemCard) {
+                            database.userCharacterDao().getBeDataOrNull(storedCharacter.id)
+                        } else null
                         val defaultHp = when {
                             storedCharacter.stage <= 1 -> 1800
                             storedCharacter.stage == 2 -> 2600
@@ -2032,14 +2017,22 @@ fun BattlesScreen(musicController: AppMusicController) {
                         offlineBattleParticipant(
                             character = storedCharacter,
                             maxHp = storedCard?.baseHp?.takeIf { it > 0 } ?: defaultHp,
-                            attackPower = storedCard?.baseAp?.takeIf { it > 0 } ?: defaultAttack
+                            attackPower = storedCard?.baseAp?.takeIf { it > 0 } ?: defaultAttack,
+                            baseBp = storedCard?.baseBp ?: 0,
+                            trainingHp = beTraining?.trainingHp ?: 0,
+                            trainingBp = beTraining?.trainingBp ?: 0,
+                            trainingAp = beTraining?.trainingAp ?: 0,
+                            externalCharacterId = "dim${storedInfo.cardId.toString().padStart(3, '0')}_mon${(storedInfo.charId + 1).toString().padStart(2, '0')}"
                         )
                     }
                     val packagedOfflineOpponents = listOf(
-                        assetOfflineBattleParticipant("dim000_mon03", "Pulsemon", 1800, 700),
-                        assetOfflineBattleParticipant("dim012_mon03", "Agumon", 2200, 820),
-                        assetOfflineBattleParticipant("dim014_mon05", "Arena challenger", 3000, 1100),
-                        assetOfflineBattleParticipant("dim137_mon03", "Dorumon", 3600, 1350)
+                        assetOfflineBattleParticipant("dim000_mon03", "Pulsemon", 1800, 700, stage = 1,
+                            attribute = BattleAttribute.VACCINE),
+                        assetOfflineBattleParticipant("dim012_mon03", "Agumon", 2200, 820, stage = 2,
+                            attribute = BattleAttribute.VACCINE),
+                        assetOfflineBattleParticipant("dim014_mon05", "Arena challenger", 3000, 1100, stage = 3),
+                        assetOfflineBattleParticipant("dim137_mon03", "Dorumon", 3600, 1350, stage = 4,
+                            attribute = BattleAttribute.DATA)
                     )
                     val activeOfflineParticipant = offlineParticipants.firstOrNull { it.character?.id == activeChar.id }
                     
@@ -2106,7 +2099,8 @@ fun BattlesScreen(musicController: AppMusicController) {
     Scaffold (
         topBar = {
             // Only show TopBanner when not in battle mode
-            if (currentView != "battle-main" && currentView != "battle-results" && currentView != "offline-battle") {
+            if (currentView != "battle-main" && currentView != "battle-results" &&
+                currentView != "offline-battle" && currentView != "offline-setup") {
             TopBanner(
                 text = "Battles"
             )
@@ -2134,10 +2128,8 @@ fun BattlesScreen(musicController: AppMusicController) {
                         OfflineBattleEntryPanel(
                             player = player,
                             opponents = offlineOpponents,
-                            onStartBattle = { opponent ->
-                                selectedOfflineOpponent = opponent
-                                selectedBackgroundSet = kotlin.random.Random.nextInt(3)
-                                currentView = "offline-battle"
+                            onStartBattle = {
+                                currentView = "offline-setup"
                             },
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -2147,35 +2139,21 @@ fun BattlesScreen(musicController: AppMusicController) {
 
                     // Show loading/authentication message if not authenticated
                     if (isCheckingAuth || !isAuthenticated) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(32.dp)
-                        ) {
-                            if (isCheckingAuth) {
-                                Text(
-                                    text = "Checking authentication...",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            } else {
-                                Text(
-                                    text = "Please complete authentication in your browser",
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.padding(bottom = 16.dp)
-                                )
-                                Text(
-                                    text = "You will be redirected back to the app after logging in",
-                                    fontSize = 14.sp,
-                                    color = Color.Gray,
-                                    textAlign = TextAlign.Center
-                                )
+                        BattleAuthenticationPrompt(
+                            isCheckingAuth = isCheckingAuth,
+                            onOpenNacaBattle = {
+                                val authUrl = "http://auth.nacatech.es/begin?app=443654920&redirect_uri=vbhelper://auth?token="
+                                try {
+                                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)))
+                                } catch (e: Exception) {
+                                    android.widget.Toast.makeText(
+                                        context,
+                                        R.string.ui_battle_auth_open_failed,
+                                        android.widget.Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             }
-                        }
+                        )
                     }
                     else {
                         Column(
@@ -2304,23 +2282,28 @@ fun BattlesScreen(musicController: AppMusicController) {
 
                 }
 
-                "offline-battle" -> {
-                    val localPlayer = offlinePlayer
-                    val localOpponent = selectedOfflineOpponent
-                    if (localPlayer != null && localOpponent != null) {
-                        LocalBattleScreen(
-                            player = localPlayer,
-                            opponent = localOpponent,
-                            selectedBackgroundSet = selectedBackgroundSet,
-                            onExit = {
-                                selectedOfflineOpponent = null
-                                currentView = "main"
-                            }
-                        )
-                    } else {
-                        currentView = "main"
-                    }
+                "offline-setup" -> {
+                    TrainingBattlePreparation(
+                        activePartner = offlinePlayer,
+                        availablePartners = buildList {
+                            offlinePlayer?.let(::add)
+                            addAll(offlineOpponents.filter { it.character != null })
+                        },
+                        availableOpponents = offlineOpponents,
+                        onBack = { currentView = "main" },
+                        onStart = { allies, foes ->
+                            offlineBattleViewModel.start(context, UUID.randomUUID().toString(), allies, foes)
+                            currentView = "offline-battle"
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    )
                 }
+
+                "offline-battle" -> OfflineTrainingBattleScreen(
+                    viewModel = offlineBattleViewModel,
+                    onExit = { currentView = "main" },
+                    modifier = Modifier.fillMaxSize()
+                )
 
                 "battle-main" -> {
                     BattleScreen(

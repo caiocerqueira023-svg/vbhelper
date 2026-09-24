@@ -291,7 +291,10 @@
     <string name="ui_hide_key">キーを隠す</string>
     <string name="ui_show_key">キーを表示</string>
     <string name="ui_model">モデル</string>
-    <string name="ui_model_example">例: meta-llama/llama-3.1-8b-instruct:free</string>
+    <string name="ui_model_example">例: google/gemma-4-26b-a4b-it:free</string>
+    <string name="ui_use_recommended_model">推奨モデルを使う: %1$s</string>
+    <string name="ui_roleplay_temperature">ロールプレイの温度</string>
+    <string name="ui_roleplay_temperature_help">0.0〜2.0の範囲で指定します。生き生きしたロールプレイには0.95前後が目安です。</string>
     <string name="ui_ok">OK</string>
     <string name="ui_transferred_character">転送されたキャラクター画像</string>
     <string name="ui_card_transfer_failed">カード転送に失敗しました: %1$s</string>
@@ -309,6 +312,11 @@
     <string name="ui_request_failed">リクエストに失敗しました: %1$s</string>
     <string name="ui_too_many_requests">リクエストが多すぎます。しばらくお待ちください。</string>
     <string name="ui_auth_required">認証が必要です。ログインしてください。</string>
+    <string name="ui_battle_auth_checking">認証状態を確認しています…</string>
+    <string name="ui_battle_auth_required_title">オンラインバトルにはNacaBattleへのログインが必要です</string>
+    <string name="ui_battle_auth_required_message">ログインなしでもローカルバトルは利用できます。</string>
+    <string name="ui_open_nacabattle">NacaBattleを開く</string>
+    <string name="ui_battle_auth_open_failed">NacaBattleを開けませんでした。</string>
     <string name="ui_request_fail">リクエストに失敗しました</string>
     <string name="ui_auth_token_empty">認証に失敗しました: トークンが空です</string>
     <string name="ui_auth_invalid_response">認証に失敗しました: 無効な応答</string>

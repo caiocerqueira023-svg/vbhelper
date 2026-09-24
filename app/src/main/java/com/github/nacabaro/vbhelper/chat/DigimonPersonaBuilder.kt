@@ -2,6 +2,7 @@ package com.github.nacabaro.vbhelper.chat
 
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityType
+import com.github.nacabaro.vbhelper.domain.personality.DigimonRoleplayVoice
 import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.species.SpeciesConversationEntry
@@ -23,7 +24,8 @@ object DigimonPersonaBuilder {
         languageTag: String = PromptLocalization.currentLanguageTag(),
         defaultTemplate: (String) -> String = PromptLocalization::defaultSystemPrompt,
         conversationExamples: List<SpeciesConversationEntry> = emptyList(),
-        evolutionHistory: List<CharacterDtos.EvolutionHistoryPromptEntry> = emptyList()
+        evolutionHistory: List<CharacterDtos.EvolutionHistoryPromptEntry> = emptyList(),
+        individualId: String = ""
     ): String {
         val speciesName = speciesProfile?.speciesName?.takeIf { it.isNotBlank() } ?: unknown(languageTag)
         val resolvedTamerName = tamerName.trim().ifBlank { tamer(languageTag) }
@@ -41,6 +43,15 @@ object DigimonPersonaBuilder {
             languageTag = languageTag
         )
         val examplesBlock = conversationExamplesBlock(conversationExamples, languageTag)
+        val resolvedVoiceId = individualId.ifBlank {
+            character.id.takeIf { it > 0 }?.toString().orEmpty().ifBlank { speciesName }
+        }
+        val roleplayVoiceBlock = DigimonRoleplayVoice.create(
+            individualId = resolvedVoiceId,
+            personalityType = resolvedPersonality,
+            stage = character.stage,
+            attributeOrdinal = character.attribute.ordinal
+        ).promptInstruction(languageTag)
         val historyBlock = evolutionHistoryBlock(evolutionHistory, languageTag)
         val personalityTypeName = resolvedPersonality.displayName(languageTag)
 
@@ -57,6 +68,7 @@ object DigimonPersonaBuilder {
             "{special_moves}" to (speciesProfile?.specialMoves?.joinToString() ?: ""),
             "{personality_type}" to personalityTypeName,
             "{personality_block}" to personalityBlock,
+            "{roleplay_voice}" to roleplayVoiceBlock,
             "{species_profile_block}" to speciesBlock,
             "{conversation_examples}" to examplesBlock,
             "{evolution_history}" to historyBlock,
@@ -76,18 +88,18 @@ object DigimonPersonaBuilder {
 
         val gameplayContext = if (languageTag.startsWith("ja", ignoreCase = true)) {
             """
-            時計の現在のコンテキスト（ユーザーは変更できません）:
+            端末の現在の状況（ユーザーでは変更できません）:
             - カード: $cardName
             - 現在のステージ: $stageName（内部コード ${character.stage}）
             - バイタル: ${character.vitalPoints}
             - トロフィー: ${character.trophies}
             - 気分: ${character.mood}（$moodDescription）
-            - 総勝利数: ${character.totalBattlesWon}、敗北数: ${character.totalBattlesLost}
+            - 総勝利回数: ${character.totalBattlesWon}、総敗北回数: ${character.totalBattlesLost}
             """.trimIndent()
         } else if (languageTag.startsWith("pt", ignoreCase = true)) {
             """
             Contexto atual do relógio (não é configurável pelo usuário):
-            - Card: $cardName
+            - Cartão: $cardName
             - Estágio atual: $stageName (código interno ${character.stage})
             - Vitais: ${character.vitalPoints}
             - Troféus: ${character.trophies}
@@ -108,14 +120,14 @@ object DigimonPersonaBuilder {
 
         val identityContext = if (languageTag.startsWith("ja", ignoreCase = true)) {
             """
-            デジモンのアイデンティティ:
+            デジモンの身元情報:
             - 呼び名: $digimonName
             - 種族名: $speciesName
             - ニックネーム: ${nickname ?: "未設定"}
             - ステージ: $stageName
             - 性格タイプ: $personalityTypeName
             - 種族プロフィール: ${speciesProfile?.profileDescription?.takeIf { it.isNotBlank() } ?: "未設定"}
-            テイマーのアイデンティティ:
+            テイマーの身元情報:
             - 名前: $resolvedTamerName
             """.trimIndent()
         } else if (languageTag.startsWith("pt", ignoreCase = true)) {
@@ -161,6 +173,10 @@ object DigimonPersonaBuilder {
                 !template.contains("{personality_block}")) {
                 append("\n\n")
                 append(personalityBlock)
+            }
+            if (!template.contains("{roleplay_voice}")) {
+                append("\n\n")
+                append(roleplayVoiceBlock)
             }
             if (examplesBlock.isNotBlank() && !template.contains("{conversation_examples}")) {
                 append("\n\n")
@@ -359,9 +375,9 @@ object DigimonPersonaBuilder {
         val isJapanese = languageTag.startsWith("ja", ignoreCase = true)
         val isPortuguese = languageTag.startsWith("pt", ignoreCase = true)
         return when {
-            isJapanese -> "プロフィール適用の必須規則: 通常のメッセージでもリアクションでも、返答を組み立てる前にこのプロフィールのすべての情報を考慮してください。関連する時だけ選択的に使い、知覚、言葉選び、優先順位、判断、感情、行動を自然に形作ってください。無関係な詳細を無理に出さず、プロフィールを読み上げたり事実を羅列したりせず、種族の事実を個人的な記憶、実績、経験として扱わないでください。プロフィールと会話に裏付けられない身体、能力、記憶、経験を作らないでください。"
-            isPortuguese -> "Regra obrigatória de aplicação do perfil: antes de construir cada mensagem normal ou reação, leve em consideração todas as informações deste perfil. Use-as seletivamente quando forem pertinentes para orientar percepção, vocabulário, prioridades, decisões, emoções e ações de forma natural. Não force detalhes irrelevantes, não recite o perfil nem despeje fatos, e não trate fatos da espécie como memórias, feitos ou experiências pessoais. Nunca invente anatomia, habilidades, memórias ou experiências que o perfil e a conversa não sustentem."
-            else -> "Mandatory profile-use rule: before constructing every ordinary message or reaction, consider every piece of information in this profile. Use it selectively when relevant to shape perception, wording, priorities, decisions, emotions, and actions naturally. Do not force irrelevant details, recite the profile, or dump facts, and do not treat species facts as personal memories, accomplishments, or experiences. Never invent anatomy, abilities, memories, or experiences unsupported by the profile and conversation."
+            isJapanese -> "プロフィールの適用ルール: 返答を組み立てる前にプロフィールを考慮し、状況に関係する事実だけを使って、言葉選び、優先順位、判断、感情、行動を自然に形作ってください。関係のない詳細を過剰に語り出さず、プロフィールを読み上げたり事実を羅列したりせず、種族の事実を個人的な記憶や経験として扱わないでください。プロフィールと会話に裏付けられない身体、能力、記憶、経験を作らないでください。"
+            isPortuguese -> "Regra de aplicação do perfil: antes de responder, considere o perfil e use somente os fatos relevantes para orientar percepção, vocabulário, prioridades, decisões, emoções e ações. Não force detalhes irrelevantes, não recite o perfil nem despeje fatos, e não trate fatos da espécie como memórias, feitos ou experiências pessoais. Nunca invente anatomia, habilidades, memórias ou experiências que o perfil e a conversa não sustentem."
+            else -> "Profile-use rule: before replying, consider the profile and use only the facts relevant to perception, wording, priorities, decisions, emotions, and actions. Do not force irrelevant details, recite the profile, or dump facts, and do not treat species facts as personal memories, accomplishments, or experiences. Never invent anatomy, abilities, memories, or experiences unsupported by the profile and conversation."
         }
     }
 
@@ -388,7 +404,7 @@ object DigimonPersonaBuilder {
             else -> "Behavior rules to execute"
         }
         val bindingRule = when {
-            isJapanese -> "これは説明用のプロフィール情報ではありません。通常の返答とリアクションの言葉選び、優先順位、判断、感情表現に自然に反映し、性格名や規則自体を口にしないでください。"
+            isJapanese -> "これは説明用のプロフィール情報ではありません。性格の指示を、通常の返答やリアクションでの言葉選び、優先順位、判断、感情表現に自然に反映してください。性格名や規則そのものを口にししないでください。"
             isPortuguese -> "Isto não é uma sugestão nem uma informação para recitar. Execute estas regras naturalmente nas falas e reações: elas devem mudar escolhas de palavras, prioridades, decisões e expressão emocional sem mencionar o tipo ou as regras."
             else -> "This is not an optional suggestion or information to recite. Execute these rules naturally in ordinary replies and reactions: they must shape word choice, priorities, decisions and emotional expression without naming the type or the rules."
         }
@@ -418,27 +434,34 @@ object DigimonPersonaBuilder {
             else -> "Species conversation examples (reference for the current reply):"
         }
         val instruction = when {
-            isJapanese -> "これらは会話のリズムと反応の参考です。逐語的にコピーせず、現在の発言、個体の性格、プロフィールに合う場合だけ応用してください。テイマーの台詞を代弁しないでください。"
-            isPortuguese -> "Use estes exemplos apenas como referência de ritmo, tom e possibilidades de reação. Não copie falas literalmente nem trate-as como memórias; adapte-as somente quando combinarem com a mensagem atual, a personalidade individual e o perfil. Nunca fale pelo Tamer."
-            else -> "Use these only as references for rhythm, tone and possible reactions. Do not copy lines literally or treat them as memories; adapt them only when they fit the current message, the individual personality and the profile. Never speak for the Tamer."
+            isJapanese -> "これらは会話のリズム、語彙、反応の型を示す重要な手がかりです。原文の言語や表現をそのまま複製せず、現在の日本語の会話として自然に組み替えてください。性格とプロファイルに従い、必ず自分の言葉で組み立ててください。テイマーの台詞を代弁しないでください。"
+            isPortuguese -> "Estes exemplos são pistas importantes de ritmo, vocabulário e reação. Não traduza nem copie literalmente; transforme o estilo em uma fala nova em português, marcada pela personalidade individual e pelo perfil. Nunca fale pelo Tamer nem trate os exemplos como memórias."
+            else -> "These examples are strong clues to cadence, vocabulary, and reaction style. Do not translate or copy them literally; turn their style into a new reply in English shaped by the individual personality and profile. Never speak for the Tamer or treat the examples as memories."
         }
+        val openingLabel = when {
+            isJapanese -> "デジモンの最初の発言"
+            isPortuguese -> "Abertura do Digimon"
+            else -> "Digimon opening"
+        }
+        val tamerLabel = if (isJapanese) "テイマー" else "Tamer"
+        val digimonLabel = if (isJapanese) "デジモン" else "Digimon"
         return buildString {
             append(title)
             append('\n')
-            entries.take(4).forEachIndexed { entryIndex, entry ->
+            entries.take(3).forEachIndexed { entryIndex, entry ->
                 entry.opening?.takeIf { it.isNotBlank() }?.let {
-                    append("- Digimon opening ${entryIndex + 1}: \"")
+                    append("- $openingLabel ${entryIndex + 1}: \"")
                     append(it.replace('\n', ' ').trim())
                     append("\"\n")
                 }
-                entry.exchanges.take(4).forEach { exchange ->
+                entry.exchanges.take(6).forEach { exchange ->
                     if (exchange.tamer.isNotBlank()) {
-                        append("  Tamer: \"")
+                        append("  $tamerLabel: \"")
                         append(exchange.tamer.replace('\n', ' ').trim())
                         append("\"\n")
                     }
                     if (exchange.digimon.isNotBlank()) {
-                        append("  Digimon: \"")
+                        append("  $digimonLabel: \"")
                         append(exchange.digimon.replace('\n', ' ').trim())
                         append("\"\n")
                     }
@@ -456,12 +479,12 @@ object DigimonPersonaBuilder {
         val isJapanese = languageTag.startsWith("ja", ignoreCase = true)
         val isPortuguese = languageTag.startsWith("pt", ignoreCase = true)
         val title = when {
-            isJapanese -> "この個体が実際に通過した進化履歴:"
+            isJapanese -> "この個体が進化してきた履歴："
             isPortuguese -> "Histórico real de evolução deste indivíduo:"
             else -> "This individual's real evolution history:"
         }
         val instruction = when {
-            isJapanese -> "この一覧は知っている形態の順序です。必要な時だけ自然に参照し、一覧にない出来事、記憶、経験を作らないでください。"
+            isJapanese -> "この一覧は知っている形態の変遷順です。必要な時だけ自然に参照し、一覧にない出来事、記憶、経験を作らないでください。"
             isPortuguese -> "A lista informa as formas que este indivíduo realmente teve. Consulte-a naturalmente apenas quando for relevante; não invente acontecimentos, memórias ou experiências que ela não sustente."
             else -> "This list records forms this individual actually had. Refer to it naturally only when relevant; do not invent events, memories or experiences that it does not support."
         }

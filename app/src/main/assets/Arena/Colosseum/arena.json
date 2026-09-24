@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "assetPath": "Arena/Colosseum/Colosseum.glb",
+  "upAxis": "Y",
+  "playPlane": "XZ",
+  "sourceUnits": "Collada units scaled for the Filament scene",
+  "visualScale": 0.7,
+  "positionScale": 1.0,
+  "fighterScale": 1.65,
+  "playableRadius": 8.0,
+  "cameraCollisionRadius": 15.2,
+  "lineupRowSpacing": 3.4,
+  "lineupDepthRatio": 0.38,
+  "minimumLineupDepth": 1.2,
+  "camera": {
+    "distance": 19.0,
+    "pitchRadians": 0.62,
+    "targetY": 0.7,
+    "minDistance": 10.0,
+    "maxDistance": 22.0,
+    "minPitchRadians": 0.2,
+    "maxPitchRadians": 1.15
+  },
+  "meshes": {
+    "floor": "Ground",
+    "dome": "Sphere001"
+  },
+  "blockedRegions": []
+}

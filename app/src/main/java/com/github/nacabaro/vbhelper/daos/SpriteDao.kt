@@ -13,4 +13,7 @@ interface SpriteDao {
 
     @Query("SELECT * FROM Sprite")
     suspend fun getAllSprites(): List<Sprite>
+
+    @Query("SELECT s.* FROM Sprite s JOIN CardCharacter c ON c.spriteId = s.id WHERE c.id = :characterId LIMIT 1")
+    suspend fun getForCharacter(characterId: Long): Sprite?
 }

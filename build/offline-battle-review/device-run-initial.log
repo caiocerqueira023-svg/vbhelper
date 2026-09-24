@@ -1,0 +1,33 @@
+
+com.github.nacabaro.vbhelper.OfflineBattleRuntimeTest:
+Error in arenaLoadsCombatAdvancesAndTacticalMenuFreezesTheSession(com.github.nacabaro.vbhelper.OfflineBattleRuntimeTest):
+java.lang.AssertionError: Failed to inject touch input.
+Reason: Expected exactly '1' node but could not find any node that satisfies: (Text + InputText + EditableText contains 'Técnicas' (ignoreCase: false))
+
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow(SemanticsNodeInteraction.kt:178)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow$default(SemanticsNodeInteraction.kt:150)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchSemanticsNode(SemanticsNodeInteraction.kt:84)
+	at androidx.compose.ui.test.ActionsKt.performTouchInput(Actions.kt:401)
+	at androidx.compose.ui.test.AndroidActions.performClickImpl(Actions.android.kt:23)
+	at androidx.compose.ui.test.ActionsKt.performClick(Actions.kt:59)
+	at com.github.nacabaro.vbhelper.OfflineBattleRuntimeTest.arenaLoadsCombatAdvancesAndTacticalMenuFreezesTheSession(OfflineBattleRuntimeTest.kt:34)
+
+
+Time: 83,638
+There was 1 failure:
+1) arenaLoadsCombatAdvancesAndTacticalMenuFreezesTheSession(com.github.nacabaro.vbhelper.OfflineBattleRuntimeTest)
+java.lang.AssertionError: Failed to inject touch input.
+Reason: Expected exactly '1' node but could not find any node that satisfies: (Text + InputText + EditableText contains 'Técnicas' (ignoreCase: false))
+
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow(SemanticsNodeInteraction.kt:178)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchOneOrThrow$default(SemanticsNodeInteraction.kt:150)
+	at androidx.compose.ui.test.SemanticsNodeInteraction.fetchSemanticsNode(SemanticsNodeInteraction.kt:84)
+	at androidx.compose.ui.test.ActionsKt.performTouchInput(Actions.kt:401)
+	at androidx.compose.ui.test.AndroidActions.performClickImpl(Actions.android.kt:23)
+	at androidx.compose.ui.test.ActionsKt.performClick(Actions.kt:59)
+	at com.github.nacabaro.vbhelper.OfflineBattleRuntimeTest.arenaLoadsCombatAdvancesAndTacticalMenuFreezesTheSession(OfflineBattleRuntimeTest.kt:34)
+
+FAILURES!!!
+Tests run: 1,  Failures: 1
+
+

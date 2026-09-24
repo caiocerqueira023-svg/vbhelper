@@ -8,6 +8,7 @@ import com.github.nacabaro.vbhelper.source.SpeciesSettingsRepository
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.first
 import timber.log.Timber
+import java.text.Normalizer
 import java.util.Locale
 
 class SpeciesRepository(
@@ -187,9 +188,23 @@ class SpeciesRepository(
             conversationExamplesCache = it
         }
         val normalizedRequestedName = canonicalConversationName(requestedName)
-        return entries.filter {
-            canonicalConversationName(it.speciesName) == normalizedRequestedName
+        val requestedStem = conversationFormStem(normalizedRequestedName)
+        val namedEntries = entries.map { entry ->
+            canonicalConversationName(entry.speciesName) to entry
         }
+        val exactMatches = namedEntries.filter { it.first == normalizedRequestedName }
+        if (exactMatches.isNotEmpty()) {
+            val baseMatches = namedEntries.filter {
+                it.first == requestedStem && it.first == conversationFormStem(it.first)
+            }
+            return (exactMatches + baseMatches)
+                .distinctBy { it.second }
+                .map { it.second }
+        }
+        val relatedForms = namedEntries.filter {
+            conversationFormStem(it.first) == requestedStem
+        }
+        return if (relatedForms.size == 1) relatedForms.map { it.second } else emptyList()
     }
 
     suspend fun saveManualProfile(
@@ -234,7 +249,9 @@ class SpeciesRepository(
         name.trim().lowercase(Locale.ROOT)
 
     private fun normalizeConversationName(name: String): String =
-        name.lowercase(Locale.ROOT).replace(Regex("[^a-z0-9]"), "")
+        Normalizer.normalize(name.trim().lowercase(Locale.ROOT), Normalizer.Form.NFD)
+            .replace(Regex("\\p{M}+"), "")
+            .replace(Regex("[^a-z0-9]"), "")
 
     /** Handles official-name spelling and form abbreviations used by the source sheet. */
     private fun canonicalConversationName(name: String): String = when (normalizeConversationName(name)) {
@@ -253,7 +270,6 @@ class SpeciesRepository(
         "lucemonfm" -> "lucemonfalldownmode"
         "imperialdramonfm" -> "imperialdramonfightermode"
         "miragegaogamonbm" -> "miragegaogamonburstmode"
-        "magnagarurumonseparation" -> "magnagarurumon"
         "dukemoncm" -> "dukemoncrimsonmode"
         "duftmonlm" -> "duftmonleopardmode"
         "beelzemonbm" -> "beelzebumonblastmode"
@@ -261,6 +277,51 @@ class SpeciesRepository(
         "belphemonsm" -> "belphemonsleepmode"
         "lucemonsm" -> "lucemonsatanmode"
         else -> normalizeConversationName(name)
+    }
+
+    private fun conversationFormStem(name: String): String {
+        var stem = name
+        if (stem.endsWith("mode") && stem.length > "mode".length + 3) {
+            stem = stem.dropLast("mode".length)
+        }
+        listOf(
+            "hysteric",
+            "separation",
+            "wonderland",
+            "prominence",
+            "falldown",
+            "burst",
+            "blast",
+            "destroy",
+            "wrath",
+            "infernal",
+            "bastion",
+            "goddess",
+            "leopard",
+            "crimson",
+            "inferno",
+            "dragon",
+            "satan",
+            "rapid",
+            "flame",
+            "fiery",
+            "hero",
+            "dark",
+            "light",
+            "rage",
+            "sleep",
+            "fist"
+        ).forEach { qualifier ->
+            if (stem.endsWith(qualifier) && stem.length > qualifier.length + 3) {
+                stem = stem.dropLast(qualifier.length)
+            }
+        }
+        listOf("bm", "fm", "lm", "rm", "sm", "cm", "vs").forEach { suffix ->
+            if (stem.endsWith(suffix) && stem.length > suffix.length + 3) {
+                stem = stem.dropLast(suffix.length)
+            }
+        }
+        return stem
     }
 
     private fun loadConversationExamples(): List<SpeciesConversationEntry> {

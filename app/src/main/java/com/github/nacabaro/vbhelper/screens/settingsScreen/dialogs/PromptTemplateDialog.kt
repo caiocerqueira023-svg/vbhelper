@@ -48,7 +48,7 @@ fun PromptTemplateDialog(
                     color = MaterialTheme.colorScheme.outline
                 )
                 Text(
-                    "{Tamer}, {species_name}, {matched_name}, {profile_level}, {species_profile}, {species_profile_block}, {species_level}, {species_type}, {special_moves}, {personality_type}, {personality_block}, {conversation_examples}, {evolution_history}",
+                    "{Tamer}, {species_name}, {matched_name}, {profile_level}, {species_profile}, {species_profile_block}, {species_level}, {species_type}, {special_moves}, {personality_type}, {personality_block}, {roleplay_voice}, {conversation_examples}, {evolution_history}",
                     style = MaterialTheme.typography.labelSmall,
                     modifier = Modifier.padding(vertical = 8.dp)
                 )

@@ -77,6 +77,8 @@ import com.github.nacabaro.vbhelper.digifarm.social.FarmConversationOrchestrator
 import com.github.nacabaro.vbhelper.digifarm.map.Digifarm3dManifest
 import com.github.nacabaro.vbhelper.digifarm.map.Digifarm3dMap
 import com.github.nacabaro.vbhelper.digifarm.map.MapPoint
+import com.github.nacabaro.vbhelper.rendering.sprite3d.ResidentFrameImage
+import com.github.nacabaro.vbhelper.rendering.sprite3d.SpriteExtrusionGlb
 import com.github.nacabaro.vbhelper.domain.digifarm.Farm
 import com.github.nacabaro.vbhelper.dtos.FarmResidentWithDetails
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
@@ -348,7 +350,7 @@ private fun FarmWorld(
                         ResidentFrames(
                             id = resident.individualId,
                             poses = poses,
-                            modelGlb = ResidentExtrusionGlb.build(poses),
+                            modelGlb = SpriteExtrusionGlb.build(poses),
                             setKey = rosterKey[resident.individualId] ?: resident.individualId
                         )
                     }

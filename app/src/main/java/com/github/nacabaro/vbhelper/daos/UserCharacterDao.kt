@@ -161,6 +161,9 @@ interface UserCharacterDao {
     @Query("SELECT * FROM BECharacterData WHERE id = :id")
     fun getBeData(id: Long): Flow<BECharacterData>
 
+    @Query("SELECT * FROM BECharacterData WHERE id = :id")
+    suspend fun getBeDataOrNull(id: Long): BECharacterData?
+
     @Query("SELECT * FROM VBCharacterData WHERE id = :id")
     fun getVbData(id: Long): Flow<VBCharacterData>
 

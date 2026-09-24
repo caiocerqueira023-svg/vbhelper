@@ -45,6 +45,7 @@ import androidx.compose.material3.TextButton
 import com.github.nacabaro.vbhelper.ui.theme.AppFont
 import com.github.nacabaro.vbhelper.ui.theme.appFontFamily
 import com.github.nacabaro.vbhelper.chat.ChatApiProvider
+import com.github.nacabaro.vbhelper.source.DEFAULT_ROLEPLAY_TEMPERATURE
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 
 
@@ -58,7 +59,12 @@ fun SettingsScreen(
 
     val showLlmDialog by settingsScreenController.showLlmDialog.collectAsState()
     val currentApiKey by settingsScreenController.currentLlmApiKey.collectAsState(initial = null)
-    val currentModel by settingsScreenController.currentLlmModel.collectAsState(initial = "openrouter/auto")
+    val currentModel by settingsScreenController.currentLlmModel.collectAsState(
+        initial = ChatApiProvider.OPENROUTER.suggestedModel.orEmpty()
+    )
+    val currentTemperature by settingsScreenController.currentLlmTemperature.collectAsState(
+        initial = DEFAULT_ROLEPLAY_TEMPERATURE
+    )
     val currentBaseUrl by settingsScreenController.currentLlmBaseUrl.collectAsState(initial = "https://openrouter.ai/api/v1/")
     val currentProvider by settingsScreenController.currentLlmProvider.collectAsState(initial = ChatApiProvider.OPENROUTER)
     val savedProviderSettings by settingsScreenController.savedLlmProviderSettings.collectAsState(initial = emptyMap())
@@ -235,12 +241,19 @@ fun SettingsScreen(
         LlmSettingsDialog(
             currentApiKey = currentApiKey,
             currentModel = currentModel,
+            currentTemperature = currentTemperature,
             currentBaseUrl = currentBaseUrl,
             currentProvider = currentProvider,
             savedProviderSettings = savedProviderSettings,
             onDismiss = { settingsScreenController.dismissLlmDialog() },
-            onSave = { provider, apiKey, model, baseUrl ->
-                settingsScreenController.saveLlmSettings(provider, apiKey, model, baseUrl)
+            onSave = { provider, apiKey, model, baseUrl, temperature ->
+                settingsScreenController.saveLlmSettings(
+                    provider,
+                    apiKey,
+                    model,
+                    baseUrl,
+                    temperature
+                )
             }
         )
     }

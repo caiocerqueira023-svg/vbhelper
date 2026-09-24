@@ -1,5 +1,7 @@
 package com.github.nacabaro.vbhelper.chat
 
+const val OPENROUTER_FREE_ROLEPLAY_MODEL = "google/gemma-4-26b-a4b-it:free"
+
 /** Known OpenAI Chat Completions-compatible gateways. */
 enum class ChatApiProvider(
     val displayName: String,
@@ -9,7 +11,7 @@ enum class ChatApiProvider(
     OPENROUTER(
         displayName = "OpenRouter",
         baseUrl = "https://openrouter.ai/api/v1/",
-        suggestedModel = "openrouter/auto"
+        suggestedModel = OPENROUTER_FREE_ROLEPLAY_MODEL
     ),
     AIRFORCE(
         displayName = "Api.Airforce",

@@ -8,7 +8,7 @@ data class ChatMessageDto(
 data class ChatCompletionRequest(
     val model: String,
     val messages: List<ChatMessageDto>,
-    val temperature: Double = 0.9,
+    val temperature: Double = 0.95,
     val max_tokens: Int = 400
 )
 

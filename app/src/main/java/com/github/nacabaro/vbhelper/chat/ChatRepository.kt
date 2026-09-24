@@ -45,7 +45,7 @@ class ChatRepository(
     /**
      * Sends a message to a wild Digimon found on the World map that is not in storage.
      * Uses species data (CardCharacter) and the personality generated for this individualId at spawn.
-     * Returns the reply along with the mood delta requested by the LLM via the hidden [[MOOD:+N/-N]] marker.
+     * Returns the reply and an optional mood marker; the caller applies the fallback when absent.
      */
     data class WildChatResult(val reply: String, val moodDelta: Int?)
 
@@ -55,9 +55,7 @@ class ChatRepository(
         userText: String
     ): WildChatResult {
         val (systemPrompt, speciesName) = buildWildSystemPrompt(cardCharacterId, individualId)
-        val languageTag = PromptLocalization.currentLanguageTag()
-        val enrichedSystemPrompt = withLorebookContext(systemPrompt, userText, speciesName) +
-            "\n\n" + PromptLocalization.moodDirectiveInstruction(languageTag)
+        val enrichedSystemPrompt = withLorebookContext(systemPrompt, userText, speciesName)
 
         chatDao.insertMessage(
             ChatMessageEntity(
@@ -77,34 +75,7 @@ class ChatRepository(
                 timestamp = System.currentTimeMillis()
             )
         )
-        // If the LLM omitted the mood marker, make a single lightweight follow-up
-        // call asking it to output ONLY the marker. The conversation history is
-        // already in the DB (user message + assistant reply), so the LLM has full
-        // context. This is cheap because the response is just the marker itself.
-        val resolvedDelta = if (moodDelta != null) {
-            moodDelta
-        } else {
-            requestMoodDelta(enrichedSystemPrompt, individualId, languageTag)
-        }
-        return WildChatResult(cleanReply, resolvedDelta)
-    }
-
-    /**
-     * Lightweight follow-up: asks the LLM to output ONLY the [[MOOD:+N/-N]] marker
-     * based on the conversation already stored in the DB. Returns null if the LLM
-     * still refuses to emit a valid marker (the analyzer fallback handles that case).
-     */
-    private suspend fun requestMoodDelta(
-        systemPrompt: String,
-        individualId: String,
-        languageTag: String
-    ): Int? {
-        val followUp = PromptLocalization.moodRatingFollowUpInstruction(languageTag)
-        val rawReply = runCatching {
-            requestCompletion(systemPrompt, individualId, followUp)
-        }.getOrNull() ?: return null
-        val (_, delta) = MoodDirectiveParser.extract(rawReply)
-        return delta
+        return WildChatResult(cleanReply, moodDelta)
     }
 
     /**
@@ -149,9 +120,7 @@ class ChatRepository(
 
     suspend fun sendMessage(characterId: Long, userText: String): String {
         val (systemPrompt, individualId, speciesName) = buildSystemPromptAndIndividualId(characterId)
-        val languageTag = PromptLocalization.currentLanguageTag()
-        val enrichedSystemPrompt = withLorebookContext(systemPrompt, userText, speciesName) +
-            "\n\n" + PromptLocalization.moodDirectiveInstruction(languageTag)
+        val enrichedSystemPrompt = withLorebookContext(systemPrompt, userText, speciesName)
 
         chatDao.insertMessage(
             ChatMessageEntity(
@@ -191,8 +160,7 @@ class ChatRepository(
     suspend fun triggerReaction(characterId: Long, eventDescription: String): String {
         val (systemPrompt, individualId, speciesName) = buildSystemPromptAndIndividualId(characterId)
         val languageTag = PromptLocalization.currentLanguageTag()
-        val enrichedSystemPrompt = withLorebookContext(systemPrompt, eventDescription, speciesName) +
-            "\n\n" + PromptLocalization.moodDirectiveInstruction(languageTag)
+        val enrichedSystemPrompt = withLorebookContext(systemPrompt, eventDescription, speciesName)
         val instruction = PromptLocalization.reactionInstruction(languageTag, eventDescription)
         val rawReply = requestCompletion(enrichedSystemPrompt, individualId, instruction)
         val (cleanReply, moodDelta) = MoodDirectiveParser.extract(rawReply)
@@ -204,9 +172,8 @@ class ChatRepository(
                 timestamp = System.currentTimeMillis()
             )
         )
-        if (moodDelta != null) {
-            runCatching { database.userCharacterDao().adjustMood(characterId, moodDelta) }
-        }
+        val resolvedDelta = WildMoodAnalyzer.resolveDelta(eventDescription, cleanReply, moodDelta)
+        runCatching { database.userCharacterDao().adjustMood(characterId, resolvedDelta) }
         return cleanReply
     }
 
@@ -273,6 +240,7 @@ class ChatRepository(
             speciesProfile = speciesProfile,
             promptTemplate = promptTemplate,
             personality = personality,
+            individualId = userCharacter.individualId,
             tamerName = tamerName,
             languageTag = languageTag,
             conversationExamples = conversationExamples,
@@ -341,6 +309,7 @@ class ChatRepository(
             speciesProfile = speciesProfile,
             promptTemplate = promptTemplate,
             personality = personality,
+            individualId = individualId,
             tamerName = tamerName,
             languageTag = languageTag,
             defaultTemplate = PromptLocalization::defaultWildSystemPrompt,
@@ -374,6 +343,7 @@ class ChatRepository(
     ): String = completionMutex.withLock {
         val apiKey = llmSettingsRepository.apiKey.first() ?: throw MissingApiKeyException()
         val model = llmSettingsRepository.model.first()
+        val temperature = llmSettingsRepository.temperature.first()
         val baseUrl = llmSettingsRepository.chatCompletionsBaseUrl.first()
         val messages = mutableListOf(ChatMessageDto("system", systemPrompt))
         messages += chatDao.getMessagesSync(individualId).takeLast(20)
@@ -384,7 +354,11 @@ class ChatRepository(
             try {
                 val response = service.getChatCompletion(
                     authorization = "Bearer $apiKey",
-                    request = ChatCompletionRequest(model = model, messages = messages)
+                    request = ChatCompletionRequest(
+                        model = model,
+                        messages = messages,
+                        temperature = temperature
+                    )
                 )
                 return finalReply(response)
             } catch (error: IOException) {
@@ -406,7 +380,8 @@ class ChatRepository(
         val apiKey = llmSettingsRepository.apiKey.first() ?: throw MissingApiKeyException()
         val request = ChatCompletionRequest(
             model = llmSettingsRepository.model.first(),
-            messages = listOf(ChatMessageDto("system", systemPrompt), ChatMessageDto("user", userTurn))
+            messages = listOf(ChatMessageDto("system", systemPrompt), ChatMessageDto("user", userTurn)),
+            temperature = llmSettingsRepository.temperature.first()
         )
         val service = OpenRouterClient.create(llmSettingsRepository.chatCompletionsBaseUrl.first())
         repeat(2) { attempt ->

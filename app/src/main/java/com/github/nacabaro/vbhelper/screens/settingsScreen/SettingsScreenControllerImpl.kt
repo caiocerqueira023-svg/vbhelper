@@ -51,6 +51,7 @@ class SettingsScreenControllerImpl(
     val llmSettingsRepository: LlmSettingsRepository = application.container.llmSettingsRepository
     val currentLlmApiKey: Flow<String?> = llmSettingsRepository.apiKey
     val currentLlmModel: Flow<String> = llmSettingsRepository.model
+    val currentLlmTemperature: Flow<Double> = llmSettingsRepository.temperature
     val currentLlmBaseUrl: Flow<String> = llmSettingsRepository.chatCompletionsBaseUrl
     val currentLlmProvider: Flow<ChatApiProvider> = llmSettingsRepository.activeProvider
     val savedLlmProviderSettings: Flow<Map<ChatApiProvider, LlmProviderSettings>> =
@@ -156,10 +157,17 @@ class SettingsScreenControllerImpl(
         provider: ChatApiProvider,
         apiKey: String,
         model: String,
-        baseUrl: String
+        baseUrl: String,
+        temperature: Double
     ) {
         context.lifecycleScope.launch(Dispatchers.IO) {
-            llmSettingsRepository.saveProviderSettings(provider, apiKey, model, baseUrl)
+            llmSettingsRepository.saveProviderSettings(
+                provider = provider,
+                apiKey = apiKey,
+                model = model,
+                baseUrl = baseUrl,
+                temperature = temperature
+            )
 
             context.runOnUiThread {
                 Toast.makeText(context, context.getString(R.string.ui_chat_saved), Toast.LENGTH_SHORT).show()

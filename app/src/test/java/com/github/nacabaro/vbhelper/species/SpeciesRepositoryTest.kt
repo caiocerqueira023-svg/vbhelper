@@ -2,6 +2,7 @@ package com.github.nacabaro.vbhelper.species
 
 import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.source.SpeciesSettingsRepository
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import okhttp3.ResponseBody.Companion.toResponseBody
@@ -17,13 +18,15 @@ class SpeciesRepositoryTest {
         database: AppDatabase? = null,
         settingsRepository: SpeciesSettingsRepository = createMockSettingsRepository(),
         service: SpeciesDatabaseService = createMockService(),
-        assetLoader: (() -> String?)? = null
+        assetLoader: (() -> String?)? = null,
+        conversationExamplesLoader: (() -> String?)? = null
     ): SpeciesRepository {
         return SpeciesRepository(
             database = database,
             settingsRepository = settingsRepository,
             service = service,
-            assetLoader = assetLoader
+            assetLoader = assetLoader,
+            conversationExamplesLoader = conversationExamplesLoader
         )
     }
 
@@ -318,6 +321,141 @@ class SpeciesRepositoryTest {
 
         val allEntries = repo.getAllSpeciesEntries()
         assertTrue("Must have hundreds of Digimon entries", allEntries.size > 500)
+    }
+
+    @Test
+    fun conversationExamples_matchBaseAndFormWithExactFormFirst() {
+        val json = """
+            {
+              "version": 1,
+              "source": "test",
+              "entries": [
+                {
+                  "characterId": "JUNOMON",
+                  "speciesName": "Junomon",
+                  "opening": "Am I... the jealous type?",
+                  "exchanges": [{"tamer": "Not jealous.", "digimon": "Good."}]
+                },
+                {
+                  "characterId": "JUNOMON_HYSTERICMODE",
+                  "speciesName": "Junomon(Hysteric Mode)",
+                  "opening": "What is wrong with being jealous?",
+                  "exchanges": [{"tamer": "Nothing.", "digimon": "Then stay close."}]
+                },
+                {
+                  "characterId": "JUNOMON_X",
+                  "speciesName": "JunoMon X",
+                  "opening": "Unrelated",
+                  "exchanges": [{"tamer": "Hello", "digimon": "Hi"}]
+                }
+              ]
+            }
+        """.trimIndent()
+        val repo = createRepository(conversationExamplesLoader = { json })
+
+        val baseMatches = repo.getConversationExamples("Junomon")
+        val formMatches = repo.getConversationExamples("Junomon(Hysteric Mode)")
+
+        assertEquals(listOf("JUNOMON"), baseMatches.map { it.characterId })
+        assertEquals(listOf("JUNOMON_HYSTERICMODE", "JUNOMON"), formMatches.map { it.characterId })
+        assertTrue(repo.getConversationExamples("Juno").isEmpty())
+    }
+
+    @Test
+    fun conversationExamples_doNotMixSiblingForms() {
+        val json = """
+            {
+              "version": 1,
+              "entries": [
+                {"characterId":"BELPHEMON","speciesName":"Belphemon","exchanges":[{"tamer":"Hello","digimon":"Hi"}]},
+                {"characterId":"BELPHEMON_RM","speciesName":"Belphemon RM","exchanges":[{"tamer":"Rage","digimon":"Rage"}]},
+                {"characterId":"BELPHEMON_SM","speciesName":"Belphemon SM","exchanges":[{"tamer":"Sleep","digimon":"Sleep"}]}
+              ]
+            }
+        """.trimIndent()
+        val repo = createRepository(conversationExamplesLoader = { json })
+
+        assertEquals(listOf("BELPHEMON"), repo.getConversationExamples("Belphemon").map { it.characterId })
+        assertEquals(
+            listOf("BELPHEMON_RM", "BELPHEMON"),
+            repo.getConversationExamples("Belphemon RM").map { it.characterId }
+        )
+        assertEquals(
+            listOf("BELPHEMON_SM", "BELPHEMON"),
+            repo.getConversationExamples("Belphemon SM").map { it.characterId }
+        )
+    }
+
+    @Test
+    fun conversationExamples_keepSeparationFormDistinctFromBase() {
+        val json = """
+            {
+              "version": 1,
+              "entries": [
+                {"characterId":"MAGNAGARURUMON","speciesName":"Magna Garurumon","exchanges":[{"tamer":"Base","digimon":"Base"}]},
+                {"characterId":"MAGNAGARURUMON_SEPARATION","speciesName":"Magna Garurumon Separation","exchanges":[{"tamer":"Form","digimon":"Form"}]}
+              ]
+            }
+        """.trimIndent()
+        val repo = createRepository(conversationExamplesLoader = { json })
+
+        assertEquals(
+            listOf("MAGNAGARURUMON"),
+            repo.getConversationExamples("Magna Garurumon").map { it.characterId }
+        )
+        assertEquals(
+            listOf("MAGNAGARURUMON_SEPARATION", "MAGNAGARURUMON"),
+            repo.getConversationExamples("Magna Garurumon Separation").map { it.characterId }
+        )
+    }
+
+    @Test
+    fun conversationExamples_useExistingCanonicalAliases() {
+        val json = """
+            {
+              "version": 1,
+              "entries": [
+                {
+                  "characterId": "LILIMON",
+                  "speciesName": "Lilimon",
+                  "exchanges": [{"tamer": "Hello", "digimon": "Hi"}]
+                }
+              ]
+            }
+        """.trimIndent()
+        val repo = createRepository(conversationExamplesLoader = { json })
+
+        assertEquals("LILIMON", repo.getConversationExamples("Lillymon").single().characterId)
+    }
+
+    @Test
+    fun bundledConversationExamples_includeJunomonBaseAndHystericMode() {
+        val assetFile = java.io.File("src/main/assets/species_chat_examples.json")
+        assertTrue("species_chat_examples.json asset must exist", assetFile.exists())
+        val repo = createRepository(conversationExamplesLoader = { assetFile.readText(Charsets.UTF_8) })
+
+        val entries = repo.getConversationExamples("Junomon")
+        val formEntries = repo.getConversationExamples("Junomon(Hysteric Mode)")
+
+        assertEquals(listOf("JUNOMON"), entries.map { it.characterId })
+        assertEquals("Am I... the jealous type?", entries.first().opening)
+        assertEquals(4, entries.first().exchanges.size)
+        assertEquals(listOf("JUNOMON_HYSTERICMODE", "JUNOMON"), formEntries.map { it.characterId })
+    }
+
+    @Test
+    fun bundledConversationExamples_resolveEveryEntryByItsOwnName() {
+        val assetFile = java.io.File("src/main/assets/species_chat_examples.json")
+        val json = assetFile.readText(Charsets.UTF_8)
+        val database = Gson().fromJson(json, SpeciesConversationDatabase::class.java)
+        val repo = createRepository(conversationExamplesLoader = { json })
+
+        database.entries.forEach { entry ->
+            assertTrue(
+                "No conversation example resolved for ${entry.speciesName}",
+                repo.getConversationExamples(entry.speciesName).isNotEmpty()
+            )
+        }
     }
 }
 

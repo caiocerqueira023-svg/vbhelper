@@ -383,7 +383,10 @@
     <string name="ui_hide_key">Hide key</string>
     <string name="ui_show_key">Show key</string>
     <string name="ui_model">Model</string>
-    <string name="ui_model_example">e.g. meta-llama/llama-3.1-8b-instruct:free</string>
+    <string name="ui_model_example">e.g. google/gemma-4-26b-a4b-it:free</string>
+    <string name="ui_use_recommended_model">Use recommended: %1$s</string>
+    <string name="ui_roleplay_temperature">Roleplay temperature</string>
+    <string name="ui_roleplay_temperature_help">Use 0.0–2.0. A value around 0.95 is a good starting point for expressive roleplay.</string>
     <string name="ui_ok">OK</string>
     <string name="ui_transferred_character">Transferred character sprite</string>
     <string name="ui_card_transfer_failed">Card transfer failed: %1$s</string>
@@ -401,6 +404,11 @@
     <string name="ui_request_failed">Request failed: %1$s</string>
     <string name="ui_too_many_requests">Too many requests. Please wait a moment.</string>
     <string name="ui_auth_required">Authentication required. Please log in.</string>
+    <string name="ui_battle_auth_checking">Checking authentication…</string>
+    <string name="ui_battle_auth_required_title">Sign in to NacaBattle for online battles</string>
+    <string name="ui_battle_auth_required_message">Local battles remain available without signing in.</string>
+    <string name="ui_open_nacabattle">Open NacaBattle</string>
+    <string name="ui_battle_auth_open_failed">Could not open NacaBattle.</string>
     <string name="ui_request_fail">Request failed</string>
     <string name="ui_auth_token_empty">Authentication failed: Token is empty</string>
     <string name="ui_auth_invalid_response">Authentication failed: Invalid response</string>

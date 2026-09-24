@@ -2,16 +2,20 @@ package com.github.nacabaro.vbhelper.source
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.doublePreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.github.nacabaro.vbhelper.chat.ChatApiProvider
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+const val DEFAULT_ROLEPLAY_TEMPERATURE = 0.95
+
 data class LlmProviderSettings(
     val apiKey: String? = null,
-    val model: String = "openrouter/auto",
-    val baseUrl: String = ""
+    val model: String = "",
+    val baseUrl: String = "",
+    val temperature: Double = DEFAULT_ROLEPLAY_TEMPERATURE
 )
 
 class LlmSettingsRepository(
@@ -37,6 +41,7 @@ class LlmSettingsRepository(
     }
     val apiKey: Flow<String?> = activeSettings.map { it.apiKey }
     val model: Flow<String> = activeSettings.map { it.model }
+    val temperature: Flow<Double> = activeSettings.map { it.temperature }
     val chatCompletionsBaseUrl: Flow<String> = activeSettings.map { it.baseUrl }
     val systemPromptTemplate: Flow<String?> = dataStore.data.map { it[SYSTEM_PROMPT_TEMPLATE] }
     val wildSystemPromptTemplate: Flow<String?> = dataStore.data.map { it[WILD_SYSTEM_PROMPT_TEMPLATE] }
@@ -53,8 +58,17 @@ class LlmSettingsRepository(
     suspend fun setModel(model: String) {
         dataStore.edit { preferences ->
             val provider = activeProvider(preferences)
-            preferences[modelKey(provider)] = model
-            preferences[MODEL] = model
+            val resolvedModel = resolveModel(provider, model)
+            preferences[modelKey(provider)] = resolvedModel
+            preferences[MODEL] = resolvedModel
+        }
+    }
+
+    suspend fun setTemperature(temperature: Double) {
+        dataStore.edit { preferences ->
+            val provider = activeProvider(preferences)
+            val normalizedTemperature = normalizeTemperature(temperature)
+            preferences[temperatureKey(provider)] = normalizedTemperature
         }
     }
 
@@ -71,18 +85,22 @@ class LlmSettingsRepository(
         provider: ChatApiProvider,
         apiKey: String,
         model: String,
-        baseUrl: String
+        baseUrl: String,
+        temperature: Double = DEFAULT_ROLEPLAY_TEMPERATURE
     ) {
         val normalizedUrl = baseUrl.trim().ensureTrailingSlash()
+        val resolvedModel = resolveModel(provider, model)
+        val normalizedTemperature = normalizeTemperature(temperature)
         dataStore.edit { preferences ->
             preferences[ACTIVE_PROVIDER] = provider.name
             preferences[apiKeyKey(provider)] = apiKey.trim()
-            preferences[modelKey(provider)] = model.trim().ifBlank { provider.suggestedModel ?: "openrouter/auto" }
+            preferences[modelKey(provider)] = resolvedModel
             preferences[baseUrlKey(provider)] = normalizedUrl
+            preferences[temperatureKey(provider)] = normalizedTemperature
 
             // Keep legacy values in sync so existing installations retain their active setup.
             preferences[API_KEY] = apiKey.trim()
-            preferences[MODEL] = model.trim().ifBlank { provider.suggestedModel ?: "openrouter/auto" }
+            preferences[MODEL] = resolvedModel
             preferences[CHAT_COMPLETIONS_BASE_URL] = normalizedUrl
         }
     }
@@ -132,8 +150,9 @@ class LlmSettingsRepository(
             ?: if (isLegacyActiveProvider) preferences[CHAT_COMPLETIONS_BASE_URL] else null
         return LlmProviderSettings(
             apiKey = savedApiKey,
-            model = savedModel ?: provider.suggestedModel ?: "openrouter/auto",
-            baseUrl = savedBaseUrl ?: defaultUrl
+            model = resolveModel(provider, savedModel.orEmpty()),
+            baseUrl = savedBaseUrl ?: defaultUrl,
+            temperature = normalizeTemperature(preferences[temperatureKey(provider)])
         )
     }
 
@@ -145,5 +164,21 @@ class LlmSettingsRepository(
 
     private fun baseUrlKey(provider: ChatApiProvider) =
         stringPreferencesKey("chat_api_${provider.name.lowercase()}_base_url")
+
+    private fun temperatureKey(provider: ChatApiProvider) =
+        doublePreferencesKey("chat_api_${provider.name.lowercase()}_temperature")
+
+    private fun resolveModel(provider: ChatApiProvider, model: String): String {
+        val normalized = model.trim()
+        if (normalized.isNotBlank() && normalized != "openrouter/auto") {
+            return normalized
+        }
+        return provider.suggestedModel.orEmpty()
+    }
+
+    private fun normalizeTemperature(value: Double?): Double = when {
+        value == null || !value.isFinite() -> DEFAULT_ROLEPLAY_TEMPERATURE
+        else -> value.coerceIn(0.0, 2.0)
+    }
 
 }
