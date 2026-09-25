@@ -1,0 +1,3633 @@
+# SISTEMA DE BATALHA — RPG DE DOMADOR E CRIATURA AUTÔNOMA
+
+## 1. VISÃO GERAL
+
+Implementar um sistema de batalha em tempo real inspirado conceitualmente em Digimon World Re:Digitize Decode e Digimon World: Next Order. A relação com Digimon World deve ser analisada em uma seção própria antes de ser apresentada como referência histórica.
+
+O princípio fundamental do sistema é:
+
+**O jogador controla o treinador, mas não controla diretamente a criatura parceira.**
+
+A criatura é uma entidade autônoma controlada por IA. Ela deve ser capaz de identificar inimigos, movimentar-se pela arena, escolher ataques, aproximar-se ou afastar-se, defender-se e tomar decisões sem exigir comandos constantes.
+
+O jogador atua como treinador e interfere no comportamento da criatura por meio de:
+
+* ordens;
+* mudanças de estratégia;
+* escolha de alvos;
+* comandos de técnicas específicas;
+* defesa;
+* itens;
+* incentivo/suporte;
+* habilidades especiais.
+
+O objetivo não é criar um action RPG no qual o jogador controla diretamente a criatura, nem um sistema por turnos.
+
+O sistema deve funcionar como um híbrido de:
+
+**combate em tempo real + IA autônoma + gerenciamento de criatura + comandos táticos do treinador.**
+
+A criatura deve parecer um agente independente que recebe instruções do jogador, e não um avatar diretamente controlado.
+
+> **Nota de versionamento:** as regras desta especificação descrevem um sistema original. Regras históricas inspiradas em Decode ou Next Order devem ficar em `BattleRuleset` versionados, com plataforma, versão, origem, confiança e testes separados.
+
+---
+
+# 2. PRINCÍPIO DE DESIGN
+
+Separar claramente duas entidades:
+
+### TREINADOR
+
+Responsável por decisões estratégicas.
+
+Pode:
+
+* observar a batalha;
+* selecionar inimigos;
+* emitir ordens;
+* mudar estratégia;
+* incentivar o parceiro;
+* utilizar itens;
+* ordenar técnicas;
+* ordenar defesa;
+* ativar habilidades especiais;
+* interromper decisões automáticas quando permitido.
+
+### CRIATURA
+
+Responsável pela execução física da batalha.
+
+Pode autonomamente:
+
+* procurar alvos;
+* escolher ataques;
+* movimentar-se;
+* aproximar-se;
+* afastar-se;
+* perseguir inimigos;
+* manter distância;
+* atacar;
+* defender;
+* esperar;
+* reposicionar-se;
+* reagir a ameaças;
+* executar ordens recebidas.
+
+A IA da criatura deve continuar funcionando mesmo que o jogador não forneça nenhuma ordem.
+
+---
+
+# 3. MODELO GERAL DA BATALHA
+
+O combate ocorre continuamente em tempo real.
+
+Fluxo básico:
+
+EXPLORAÇÃO
+↓
+DETECÇÃO/CONTATO COM INIMIGO
+↓
+INÍCIO DA BATALHA
+↓
+DEFINIÇÃO DOS PARTICIPANTES
+↓
+IA SELECIONA ALVO
+↓
+CRIATURAS COMEÇAM A AGIR AUTONOMAMENTE
+↓
+JOGADOR OBSERVA E INTERFERE
+↓
+IA E ORDENS DO JOGADOR DISPUTAM/COMPARTILHAM A TOMADA DE DECISÃO
+↓
+ATAQUES, MOVIMENTAÇÃO E EFEITOS OCORREM EM TEMPO REAL
+↓
+HP DE TODOS OS COMBATENTES DE UM DOS LADOS CHEGA A ZERO
+↓
+VITÓRIA / DERROTA
+↓
+RECOMPENSAS E ENCERRAMENTO
+
+Não utilizar rodadas globais.
+
+Cada combatente deve possuir seu próprio ciclo de decisão e execução.
+
+---
+
+# 4. ARENA
+
+A batalha deve ocorrer em uma área espacial real.
+
+Cada entidade possui:
+
+* posição;
+* direção;
+* velocidade de movimento;
+* distância para cada alvo;
+* alcance das técnicas;
+* raio/tamanho de colisão;
+* estado atual.
+
+A IA deve utilizar essas informações para decidir ações.
+
+Exemplo:
+
+Se uma técnica possui alcance de 2 metros e o inimigo está a 6 metros:
+
+não executar imediatamente a técnica.
+
+A IA deve decidir:
+
+`MOVE_TO_TARGET`
+
+e somente quando:
+
+`distance <= attackRange`
+
+passar para:
+
+`ATTACK`.
+
+Para técnicas de longa distância, a IA pode preferir manter distância do inimigo.
+
+---
+
+# 5. MÁQUINA DE ESTADOS DO COMBATENTE
+
+Cada criatura deve possuir uma máquina de estados.
+
+Estados mínimos:
+
+`IDLE`
+
+`SELECT_TARGET`
+
+`MOVE_TO_TARGET`
+
+`MOVE_AWAY`
+
+`POSITIONING`
+
+`ATTACK`
+
+`DEFEND`
+
+`STUNNED`
+
+`KNOCKBACK`
+
+`USING_SPECIAL`
+
+`USING_ITEM_EFFECT`
+
+`WAITING`
+
+`DEFEATED`
+
+Estados opcionais:
+
+`FLEEING`
+
+`TAUNTED`
+
+`CONFUSED`
+
+`PARALYZED`
+
+`CASTING`
+
+`RECOVERING`
+
+`INTERRUPTED`
+
+Exemplo de fluxo:
+
+`SELECT_TARGET`
+
+→ encontrou alvo
+
+`MOVE_TO_TARGET`
+
+→ entrou no alcance
+
+`ATTACK`
+
+→ ataque terminou
+
+`RECOVERING`
+
+→ o período de recuperação terminou
+
+`SELECT_TARGET`
+
+O tempo de recarga (`cooldown`) é um relógio independente e não precisa estar concluído para que a criatura retome a decisão.
+
+A máquina de estados deve impedir ações incompatíveis.
+
+Uma criatura em:
+
+`STUNNED`
+
+não pode iniciar um ataque.
+
+Uma criatura em:
+
+`ATTACK`
+
+não deve iniciar outro ataque até que a ação atual seja cancelada ou concluída.
+
+---
+
+# 6. DECISÃO DA IA
+
+A criatura deve possuir um sistema periódico de decisão.
+
+Exemplo conceitual:
+
+`think()`
+
+executado em intervalos definidos.
+
+O sistema deve avaliar:
+
+1. Estou vivo?
+2. Estou incapacitado?
+3. Existe uma ordem obrigatória do jogador?
+4. Tenho alvo válido?
+5. Existe uma ameaça imediata?
+6. Qual técnica está disponível?
+7. Tenho recursos suficientes?
+8. Estou no alcance adequado?
+9. Devo atacar, defender ou reposicionar?
+10. Qual ação possui maior prioridade?
+
+Não é necessário recalcular decisões em todos os frames.
+
+Separar:
+
+`Atualização visual/física`
+
+de
+
+`tique de decisão da IA`.
+
+Por exemplo:
+
+renderização: 60 FPS
+
+IA: 4 a 10 decisões por segundo.
+
+Isso reduz processamento e impede comportamento excessivamente nervoso.
+
+---
+
+# 7. PRIORIDADE DAS DECISÕES
+
+Utilizar uma hierarquia semelhante a:
+
+1. morte/incapacitação;
+2. reação obrigatória;
+3. ordem direta do treinador;
+4. defesa contra ameaça crítica;
+5. manutenção de alvo;
+6. posicionamento;
+7. ataque;
+8. comportamento padrão;
+9. ociosidade (`IDLE`).
+
+Uma ordem direta deve normalmente possuir prioridade maior que uma decisão automática.
+
+Exemplo:
+
+IA decidiu:
+
+`USE_FIREBALL`
+
+Jogador ordena:
+
+`DEFEND`
+
+Se o uso de Fireball ainda puder ser cancelado:
+
+cancelar o uso de Fireball.
+
+Executar:
+
+`DEFEND`.
+
+Se a animação já estiver em uma fase não cancelável:
+
+guardar `DEFEND` como próxima ação.
+
+---
+
+# 8. SISTEMA DE ORDENS
+
+O treinador não movimenta diretamente a criatura.
+
+Em vez disso, envia objetos/comandos para ela.
+
+Estrutura conceitual:
+
+`BattleOrder`
+
+Campos:
+
+`orderType`
+
+`target`
+
+`skill`
+
+`priority`
+
+`timestamp`
+
+`expirationTime`
+
+`resourceCost`
+
+`interruptCurrentAction`
+
+Tipos possíveis:
+
+`ATTACK`
+
+`DEFEND`
+
+`MOVE_CLOSER`
+
+`KEEP_DISTANCE`
+
+`FOCUS_TARGET`
+
+`USE_SKILL`
+
+`USE_SPECIAL`
+
+`CHANGE_STRATEGY`
+
+`RETREAT`
+
+Uma ordem deve ser interpretada pela IA, que ajusta o comportamento da criatura sem substituí-lo arbitrariamente por uma sequência fixa.
+
+---
+
+# 9. FILA DE ORDENS
+
+Criar uma fila de comandos.
+
+Exemplo:
+
+`OrderQueue`
+
+Isso permite:
+
+O jogador ordena o uso de uma técnica.
+
+A criatura ainda está terminando outra animação.
+
+A ordem permanece:
+
+`QUEUED`
+
+Quando a criatura fica disponível:
+
+`QUEUED → EXECUTING`
+
+Depois:
+
+`EXECUTING → COMPLETED`
+
+Outros estados:
+
+`FAILED`
+
+`CANCELLED`
+
+`EXPIRED`
+
+Uma ordem pode falhar porque:
+
+* alvo morreu;
+* alvo desapareceu;
+* criatura ficou incapacitada;
+* recurso acabou;
+* técnica entrou em cooldown;
+* batalha terminou.
+
+---
+
+# 10. AUTONOMIA VS ORDEM
+
+Este é um dos princípios mais importantes.
+
+A IA deve distinguir:
+
+`AUTO ACTION`
+
+e
+
+`PLAYER ORDER`.
+
+Exemplo:
+
+A IA normalmente escolheria:
+
+`BasicAttack`.
+
+Mas o jogador ordenou:
+
+`HeavyAttack`.
+
+A IA deve dar prioridade temporária à ordem.
+
+Depois que a ordem terminar:
+
+`PLAYER ORDER COMPLETE`
+
+↓
+
+`RETURN TO AUTONOMOUS AI`
+
+O jogador, portanto, nunca precisa controlar continuamente o parceiro.
+
+---
+
+# 11. ESTRATÉGIAS DE IA
+
+Cada parceiro deve possuir um perfil tático selecionável.
+
+Exemplos:
+
+### AGGRESSIVE
+
+Priorizar:
+
+* dano;
+* aproximação;
+* técnicas fortes;
+* pressão constante.
+
+Aceitar maior gasto de recurso.
+
+### BALANCED
+
+Equilibrar:
+
+* dano;
+* consumo;
+* posicionamento;
+* sobrevivência.
+
+### CONSERVATIVE
+
+Priorizar:
+
+* técnicas eficientes;
+* conservação de MP/energia;
+* menor utilização de ataques caros.
+
+### DEFENSIVE
+
+Priorizar:
+
+* sobrevivência;
+* distância;
+* defesa;
+* interrupções;
+* ataques seguros.
+
+### RANGED
+
+Tentar manter distância ideal.
+
+### SUPPORT
+
+Priorizar:
+
+* buffs;
+* debuffs;
+* cura;
+* suporte aos aliados.
+
+Essas estratégias modificam pesos da IA e não precisam conter lógicas completamente separadas.
+
+---
+
+# 12. UTILITY AI
+
+Preferencialmente utilizar IA utilitária para escolha de técnicas.
+
+Cada ação recebe uma pontuação.
+
+Exemplo:
+
+`scoreAttack = basePriority`
+
+Modificar por:
+
+* distância;
+* HP próprio;
+* HP inimigo;
+* MP;
+* cooldown;
+* tipo do inimigo;
+* estratégia atual;
+* quantidade de inimigos;
+* status;
+* risco;
+* poder;
+* custo.
+
+Exemplo conceitual:
+
+`FireballScore = 50`
+
+Inimigo longe:
+
+`+20`
+
+Inimigo vulnerável a fogo:
+
+`+30`
+
+MP baixo:
+
+`-25`
+
+Fireball em cooldown:
+
+`INVALID`
+
+Resultado:
+
+`75`
+
+Comparar com as outras ações disponíveis.
+
+Executar a ação válida com maior score.
+
+---
+
+# 13. TÉCNICAS
+
+Criar ataques como dados independentes dos combatentes.
+
+Estrutura:
+
+`Skill`
+
+Campos recomendados:
+
+`id`
+
+`name`
+
+`type`
+
+`element`
+
+`power`
+
+`resourceCost`
+
+`commandCost`
+
+`cooldown`
+
+`rangeMin`
+
+`rangeMax`
+
+`areaRadius`
+
+`castTime`
+
+`startupTime`
+
+`activeTime`
+
+`recoveryTime`
+
+`interruptible`
+
+`priority`
+
+`targetType`
+
+`statusEffects`
+
+`animation`
+
+`vfx`
+
+`sfx`
+
+Cada criatura referencia um conjunto de técnicas.
+
+Não implementar cada ataque diretamente dentro da classe da criatura.
+
+Isso permite criar novos ataques principalmente por dados.
+
+---
+
+# 14. FASES DE UMA TÉCNICA
+
+Uma técnica deve possuir fases.
+
+`STARTUP`
+
+↓
+
+`ACTIVE`
+
+↓
+
+`RECOVERY`
+
+STARTUP:
+
+preparação/animação inicial.
+
+ACTIVE:
+
+momento em que hitbox/projétil/efeito é criado.
+
+RECOVERY:
+
+tempo até a criatura poder agir novamente.
+
+Isso permite:
+
+* interrupções;
+* ataques rápidos;
+* ataques lentos;
+* ataques de alto risco;
+* esquivas;
+* contra-ataques;
+* o momento da defesa.
+
+---
+
+# 15. ALCANCE
+
+Tipos gerais:
+
+`MELEE`
+
+`SHORT_RANGE`
+
+`MID_RANGE`
+
+`LONG_RANGE`
+
+`SELF`
+
+`AREA`
+
+`PROJECTILE`
+
+Não depender somente desses nomes.
+
+Cada técnica deve possuir valores reais:
+
+`minimumRange`
+
+`maximumRange`
+
+Por exemplo:
+
+Ataque corpo a corpo:
+
+`0 – 2m`
+
+Projétil:
+
+`3 – 15m`
+
+A IA utiliza esses valores para posicionamento.
+
+---
+
+# 16. COOLDOWN
+
+Cada técnica possui um tempo de recarga (`cooldown`) independente.
+
+Exemplo:
+
+`BasicAttack = 1.0s`
+
+`HeavyAttack = 5.0s`
+
+`Ultimate = 30.0s`
+
+A IA somente considera técnicas:
+
+`cooldown <= 0`.
+
+Cooldown impede repetição infinita do melhor ataque e força variedade.
+
+---
+
+# 17. RECURSO DE TÉCNICAS
+
+Criar um recurso equivalente conceitualmente a MP.
+
+Pode ser chamado conforme o universo do projeto.
+
+Cada ataque possui:
+
+`resourceCost`.
+
+A IA verifica:
+
+`currentResource >= resourceCost`
+
+antes de executar.
+
+Estratégias podem determinar quanto recurso a IA aceita gastar.
+
+Exemplo:
+
+AGGRESSIVE:
+
+pode gastar até quase zero.
+
+CONSERVATIVE:
+
+evita técnicas caras quando:
+
+`currentResource < 0.40 × maximumResource`.
+
+---
+
+# 18. RECURSO DO TREINADOR
+
+Separar o recurso da criatura do recurso de comando do treinador.
+
+Criar:
+
+`CommandPoints`, `OrderPoints` ou equivalente.
+
+Este recurso representa a capacidade do treinador de interferir diretamente na batalha.
+
+O jogador acumula pontos através de participação ativa.
+
+Exemplos:
+
+* incentivar o aliado após um ataque bem-sucedido;
+* incentivar o parceiro após uma defesa bem-sucedida;
+* acionar Support dentro da janela de tempo correta;
+* o aliado sofrer dano;
+* realizar combo;
+* cumprir condição específica.
+
+O recurso pode ser gasto em:
+
+* ordenar técnica específica;
+* defesa instantânea;
+* habilidade especial;
+* comando avançado;
+* ataque combinado.
+
+O recurso da criatura e o recurso do treinador NÃO devem ser a mesma coisa.
+
+O recurso de ordem pode ser compartilhado ou individual por parceiro, conforme o `Ruleset`. No sandbox atual, o CP é compartilhado; no perfil documentado de Next Order, o OP é individual e começa ligado ao Bond.
+
+---
+
+# 19. SUPPORT / INCENTIVO
+
+Adicionar uma ação de treinador chamada:
+
+`SUPPORT`
+
+Ela não causa dano diretamente.
+
+Quando utilizada, essa ação concede Command Points nos momentos adequados.
+
+Exemplo:
+
+Ataque do parceiro acerta.
+
+Abrir:
+
+`SUPPORT_WINDOW = 1 segundo`
+
+Se o jogador usa Support dentro da janela:
+
+`+CommandPoints`
+
+Se usar fora:
+
+ganho reduzido ou nenhum ganho.
+
+Também podem existir janelas após:
+
+* defesa bem-sucedida;
+* esquiva;
+* dano recebido;
+* derrota de inimigo;
+* acerto crítico.
+
+Objetivo:
+
+manter o jogador participando mesmo quando não está dando ordens.
+
+---
+
+# 20. DEFESA
+
+A defesa deve ser uma ação real.
+
+Estado:
+
+`DEFEND`.
+
+Durante esse estado:
+
+`damageReceived *= defenseMultiplier`
+
+Exemplo:
+
+`0.25`
+
+para receber 25% do dano original.
+
+Opcionalmente:
+
+* aumentar resistência à interrupção (`stagger`);
+* impedir knockback;
+* reduzir efeitos negativos.
+
+A defesa deve possuir duração limitada.
+
+Exemplo:
+
+`2 segundos`.
+
+Portanto o timing importa.
+
+---
+
+# 21. SISTEMA DE ALVOS
+
+Cada combatente possui:
+
+`currentTarget`.
+
+A IA pode escolher automaticamente utilizando:
+
+* distância;
+* ameaça;
+* HP;
+* quem atacou o aliado recentemente;
+* ordem do jogador;
+* prioridade do inimigo.
+
+O treinador pode executar:
+
+`FOCUS_TARGET(enemyID)`.
+
+Essa ordem aumenta fortemente ou fixa temporariamente a prioridade daquele inimigo.
+
+---
+
+# 22. THREAT / AGGRO
+
+Para batalhas com múltiplos combatentes, utilizar sistema de ameaça.
+
+Cada inimigo mantém:
+
+`ThreatTable`.
+
+Exemplo:
+
+Parceiro A causa 100 dano:
+
+`+100 threat`
+
+O parceiro B cura alguém:
+
+`+40 threat`
+
+Provocação:
+
+`+300 threat`
+
+O inimigo normalmente seleciona:
+
+`highestThreatTarget`.
+
+Isso possibilita criar criaturas:
+
+* tank;
+* damage dealer;
+* support.
+
+---
+
+# 23. POSICIONAMENTO
+
+A IA deve tentar encontrar uma distância ideal.
+
+Cada criatura ou estratégia pode possuir:
+
+`preferredDistance`.
+
+Exemplo:
+
+combatente corpo a corpo (`MELEE`):
+
+`1.5m`
+
+atirador:
+
+`8m`
+
+suporte:
+
+`10m`
+
+A IA calcula:
+
+`distanceToTarget`
+
+Se:
+
+`distance > preferredDistance`
+
+aproximar.
+
+Se:
+
+`distance < minimumSafeDistance`
+
+afastar.
+
+Se estiver dentro da zona ideal:
+
+atacar/manter posição.
+
+---
+
+# 24. MOVIMENTAÇÃO
+
+A movimentação durante combate deve ser controlada pela IA.
+
+O jogador NÃO deve possuir controle WASD/analógico direto sobre o parceiro.
+
+A criatura recebe destinos da IA:
+
+`moveTo(position)`
+
+`moveToward(target)`
+
+`moveAwayFrom(target)`
+
+`orbitTarget(target)`
+
+`maintainDistance(target, distance)`
+
+Utilizar pathfinding quando necessário.
+
+---
+
+# 25. INTERRUPÇÃO E STAGGER
+
+Ataques podem possuir:
+
+`staggerPower`.
+
+Combatentes possuem:
+
+`staggerResistance`.
+
+Quando:
+
+`staggerPower > resistanceThreshold`
+
+a ação atual pode ser interrompida.
+
+Resultado:
+
+`ATTACK`
+
+↓
+
+`INTERRUPTED`
+
+↓
+
+`STUNNED/RECOVERY`
+
+Ataques pesados podem possuir maior stagger.
+
+---
+
+# 26. STATUS EFFECTS
+
+Criar sistema genérico de efeitos.
+
+Estrutura:
+
+`StatusEffect`
+
+Campos:
+
+`type`
+
+`duration`
+
+`magnitude`
+
+`source`
+
+`stackable`
+
+Exemplos:
+
+`POISON`
+
+`BURN`
+
+`PARALYSIS`
+
+`SLOW`
+
+`STUN`
+
+`ATTACK_UP`
+
+`DEFENSE_UP`
+
+`SPEED_UP`
+
+`ATTACK_DOWN`
+
+`DEFENSE_DOWN`
+
+`REGENERATION`
+
+Não codificar esses efeitos diretamente em ataques específicos sempre que possível.
+
+---
+
+# 27. DANO
+
+Utilizar função centralizada.
+
+Exemplo conceitual:
+
+`calculateDamage(attacker, defender, skill)`
+
+Considerar:
+
+* poder da técnica;
+* ataque;
+* defesa;
+* elemento;
+* buffs;
+* debuffs;
+* crítico;
+* modificadores;
+* aleatoriedade pequena opcional.
+
+Modelo simplificado:
+
+`BaseDamage = SkillPower × AttackScaling`
+
+Depois:
+
+`DamageAfterDefense = BaseDamage × DefenseModifier`
+
+Depois:
+
+`FinalDamage = DamageAfterDefense × ElementModifier × BuffModifier`
+
+Evitar fórmulas espalhadas pelo código.
+
+---
+
+# 28. HABILIDADE ESPECIAL DO DESIGN
+
+Cada parceiro pode possuir:
+
+`specialTechniqueId`.
+
+Características:
+
+* poder elevado;
+* animação especial;
+* custo elevado de Command Points;
+* cooldown grande ou condição própria;
+* prioridade sobre ataques comuns.
+
+O jogador deve decidir entre:
+
+gastar Command Points frequentemente
+
+OU
+
+acumular para a técnica especial do design.
+
+Isso cria uma decisão estratégica.
+
+No histórico, esses termos não são intercambíveis: Decode usa Finisher/Finisher Power; Next Order distingue Special Move, Agitation, Digifusion e ExE, cada um com custos e disponibilidade próprios.
+
+---
+
+# 29. COMBATE COM MAIS DE UM PARCEIRO
+
+Projetar o sistema desde o início para suportar:
+
+`1v1`
+
+`1vN`
+
+`NvN`
+
+mesmo que inicialmente o jogo utilize apenas um parceiro.
+
+Cada combatente deve funcionar independentemente.
+
+Evitar código como:
+
+`playerDigimon`
+
+`enemyDigimon`
+
+Preferir:
+
+`Team`
+
+contendo:
+
+`List<Combatant>`.
+
+Exemplo:
+
+`PlayerTeam`
+
+`EnemyTeam`.
+
+Assim será possível posteriormente implementar:
+
+2v1
+
+2v2
+
+2v3
+
+sem reescrever o sistema.
+
+---
+
+# 30. ORDENS COORDENADAS
+
+Se existirem múltiplos parceiros, permitir comandos envolvendo mais de um.
+
+Exemplo:
+
+`CombinedAttack`.
+
+Condições:
+
+* ambos vivos;
+* ambos disponíveis;
+* recurso suficiente;
+* cooldown disponível.
+
+Fluxo:
+
+`REQUEST_COMBINED_ATTACK`
+
+↓
+
+suspender temporariamente a decisão autônoma dos dois parceiros
+
+↓
+
+sincronizar posições/animações
+
+↓
+
+executar habilidade
+
+↓
+
+aplicar efeito
+
+↓
+
+liberar ambos
+
+↓
+
+retomar a IA autônoma.
+
+Digifusion e ExE devem ser implementados como comandos distintos. Digifusion combina a ação dos dois parceiros; ExE cria uma fusão temporária e depende de regras adicionais de estágio, Bond, DigiFriend e disponibilidade.
+
+---
+
+# 31. COMPORTAMENTO DA IA DURANTE ORDENS
+
+Nunca desligar permanentemente a IA.
+
+Utilizar:
+
+`Autonomous AI`
+
+↓
+
+ordem recebida
+
+↓
+
+`Command Override`
+
+↓
+
+executar ordem
+
+↓
+
+`Return to Autonomous AI`.
+
+Isso deve ser uma das regras centrais da arquitetura.
+
+---
+
+# 32. COMPONENTES RECOMENDADOS
+
+Separar responsabilidades.
+
+### BattleManager
+
+Responsável por:
+
+* iniciar batalha;
+* registrar participantes;
+* determinar vitória;
+* determinar derrota;
+* finalizar combate.
+
+### Combatant
+
+Representa qualquer criatura combatente.
+
+Contém:
+
+* atributos;
+* HP;
+* recurso;
+* posição;
+* técnicas;
+* estados;
+* target.
+
+### CombatAI
+
+Responsável por:
+
+* tomada de decisões;
+* seleção de técnica;
+* posicionamento;
+* seleção de alvo.
+
+### BattleStateMachine
+
+Responsável pelo estado atual da criatura.
+
+### SkillSystem
+
+Executa técnicas.
+
+### TargetingSystem
+
+Seleciona e valida alvos.
+
+### DamageSystem
+
+Calcula e aplica dano.
+
+### StatusEffectSystem
+
+Gerencia buffs/debuffs.
+
+### OrderSystem
+
+Recebe comandos do treinador.
+
+### CommandResourceSystem
+
+Gerencia pontos de comando.
+
+### ThreatSystem
+
+Gerencia a ameaça (`aggro`).
+
+### BattleItemSystem
+
+Gerencia itens utilizados pelo treinador.
+
+### BattleUI
+
+Somente apresenta informações e envia comandos.
+
+Não deve conter regras fundamentais de combate.
+
+---
+
+# 33. EVENTOS
+
+Preferir arquitetura orientada a eventos.
+
+Eventos úteis:
+
+`OnBattleStarted`
+
+`OnBattleEnded`
+
+`OnTargetChanged`
+
+`OnAttackStarted`
+
+`OnAttackHit`
+
+`OnAttackMissed`
+
+`OnDamageReceived`
+
+`OnCriticalHit`
+
+`OnSkillFinished`
+
+`OnOrderReceived`
+
+`OnOrderCompleted`
+
+`OnOrderFailed`
+
+`OnSupportWindowOpened`
+
+`OnSupportSuccess`
+
+`OnStatusApplied`
+
+`OnCombatantDefeated`
+
+Isso permite conectar UI, sons, animações, IA, missões (`quests`), tutorial e progressão sem criar dependências excessivas.
+
+---
+
+# 34. DADOS VS CÓDIGO
+
+O sistema deve ser data-driven.
+
+Evitar:
+
+`if creature == Agumon`
+
+`if creature == Gabumon`
+
+etc.
+
+As diferenças entre criaturas devem vir principalmente de dados.
+
+Exemplo:
+
+`CreatureData`
+
+contendo:
+
+* atributos;
+* técnicas disponíveis;
+* resistências;
+* comportamento preferido;
+* velocidade;
+* alcance;
+* técnica especial.
+
+Adicionar uma nova criatura não deve exigir modificar BattleManager.
+
+---
+
+# 35. INTERFACE
+
+Durante batalha mostrar pelo menos:
+
+PARCEIRO:
+
+* HP;
+* recurso;
+* status;
+* Command Points;
+* alvo atual.
+
+INIMIGO:
+
+* HP;
+* status;
+* alvo quando relevante.
+
+COMANDOS:
+
+* técnicas;
+* defesa;
+* estratégia;
+* itens;
+* técnica especial.
+
+A interface deve comunicar claramente quando uma técnica:
+
+* está disponível;
+* está sem recurso;
+* está em cooldown;
+* não possui alvo válido;
+* o alvo está fora do alcance.
+
+---
+
+# 36. MENU DE COMANDOS
+
+Ao abrir o menu de ordens, existem duas opções de design válidas:
+
+### PAUSA TÁTICA
+
+O tempo congela ou desacelera fortemente.
+
+O jogador escolhe o comando.
+
+O tempo retorna.
+
+### TEMPO REAL
+
+A batalha continua enquanto o jogador seleciona.
+
+Implementar de forma configurável para permitir testar os dois modelos.
+
+No perfil histórico de Next Order, o Order Ring pausa a batalha; essa pausa não deve ser imposta ao sandbox original sem uma decisão explícita de produto.
+
+---
+
+# 37. FEEDBACK VISUAL
+
+Sempre comunicar decisões importantes da IA.
+
+Exemplos:
+
+ícone de alvo;
+
+linha/seta indicando target;
+
+texto pequeno:
+
+`Attacking`
+
+`Defending`
+
+`Repositioning`
+
+`Executing Order`
+
+Indicador de comando recebido.
+
+Indicador de cooldown.
+
+Indicador da janela de Support.
+
+O jogador precisa entender **por que seu parceiro está fazendo determinada ação específica**.
+
+---
+
+# 38. PERSONALIDADE E OBEDIÊNCIA — EXTENSÃO OPCIONAL
+
+Preparar arquitetura para futuramente adicionar:
+
+`obedience`
+
+`intelligence`
+
+`bond`
+
+`discipline`
+
+Esses atributos podem modificar o comportamento quando fizerem parte de um `Ruleset` específico. Personalidade e disciplina têm respaldo histórico em Decode/Next Order; `obedience` permanece uma extensão original do VBHelper até ser definida explicitamente.
+
+Exemplo:
+
+`Intelligence` alta:
+
+melhor escolha automática de técnicas.
+
+`Bond` alto:
+
+maior ganho de Command Points.
+
+`obedience` alta:
+
+menor atraso entre ordem e execução.
+
+`obedience` baixa:
+
+baixa probabilidade de ignorar ordens não críticas.
+
+Não implementar aleatoriedade frustrante sem feedback.
+
+Se uma ordem for ignorada, mostrar claramente o motivo.
+
+---
+
+# 39. LOOP TÁTICO DESEJADO
+
+A experiência ideal deve ser:
+
+Parceiro identifica inimigo.
+
+↓
+
+IA começa a combater.
+
+↓
+
+Jogador observa comportamento.
+
+↓
+
+Parceiro ataca.
+
+↓
+
+Jogador utiliza Support no timing correto.
+
+↓
+
+Ganha Command Points.
+
+↓
+
+Inimigo prepara ataque perigoso.
+
+↓
+
+O jogador ordena a defesa.
+
+↓
+
+Parceiro bloqueia.
+
+↓
+
+Jogador acumula recurso.
+
+↓
+
+Ordena técnica poderosa.
+
+↓
+
+IA executa.
+
+↓
+
+Jogador volta a observar.
+
+↓
+
+IA continua autonomamente.
+
+Portanto:
+
+**observar → interpretar → intervir → observar resultado → acumular recursos → intervir novamente.**
+
+---
+
+# 40. O JOGADOR NÃO DEVE SER O PILOTO DA CRIATURA
+
+Regra de design extremamente importante:
+
+Nunca transformar gradualmente o sistema em:
+
+"pressione botão X para atacar".
+
+O jogador deve pensar como treinador.
+
+A pergunta do jogador deve ser:
+
+**"O que eu quero que meu parceiro faça?"**
+
+e não:
+
+**"Qual golpe eu quero executar com meu personagem?"**
+
+Essa diferença deve orientar toda decisão de design.
+
+---
+
+# 41. ARQUITETURA DE ALTO NÍVEL
+
+Estrutura conceitual:
+
+`BattleManager`
+
+↓
+
+`Team`
+
+↓
+
+`Combatant`
+
+↓
+
+`CombatAI`
+
+↓
+
+`Decision System`
+
+↓
+
+`State Machine`
+
+↓
+
+`Movement / Skill Execution`
+
+Paralelamente:
+
+`Player`
+
+↓
+
+`OrderSystem`
+
+↓
+
+`OrderQueue`
+
+↓
+
+`CombatAI Override`
+
+↓
+
+`Combatant`
+
+E:
+
+`Player`
+
+↓
+
+`SupportSystem`
+
+↓
+
+`CommandPoints`
+
+↓
+
+`Advanced Orders`
+
+---
+
+# 42. MVP E MARCOS DE IMPLEMENTAÇÃO
+
+Não implementar tudo simultaneamente.
+
+FASE 1:
+
+Criar:
+
+* BattleManager;
+* Combatant;
+* HP;
+* um inimigo;
+* uma criatura parceira;
+* arena;
+* seleção de alvo;
+* movimentação automática;
+* ataque automático;
+* dano;
+* morte.
+
+Resultado esperado:
+
+**colocar duas criaturas na arena e assistir a uma batalha completa sem fornecer nenhuma entrada.**
+
+FASE 2:
+
+Adicionar:
+
+* múltiplas técnicas;
+* alcance;
+* cooldown;
+* recurso;
+* IA utilitária.
+
+FASE 3:
+
+Adicionar:
+
+* comandos do jogador;
+* fila de ordens;
+* defesa;
+* prioridade de alvo;
+* estratégia.
+
+FASE 4:
+
+Adicionar:
+
+* Support;
+* Command Points;
+* técnica especial.
+
+FASE 5:
+
+Adicionar:
+
+* efeitos de status;
+* stagger;
+* interrupções;
+* itens;
+* múltiplos inimigos.
+
+FASE 6:
+
+Adicionar:
+
+* múltiplos parceiros;
+* threat;
+* ataques combinados.
+
+FASE 7:
+
+Adicionar:
+
+* personalidade;
+* Bond;
+* Intelligence;
+* Obedience;
+* progressão do treinador.
+
+---
+
+# 43. CRITÉRIOS DE ACEITAÇÃO ACUMULATIVOS POR MARCO
+
+Os critérios desta seção são cumulativos. A Fase 1 deve satisfazer os critérios 1–10; as fases seguintes adicionam os critérios correspondentes aos recursos que introduzem. A lista completa representa o estado final, não uma condição exclusiva da Fase 1.
+
+Cada marco estará funcional quando:
+
+1. uma criatura detectar um inimigo;
+2. selecionar esse inimigo;
+3. aproximar-se automaticamente;
+4. verificar alcance;
+5. escolher uma técnica válida;
+6. executar a técnica;
+7. aplicar dano;
+8. respeitar cooldown;
+9. reposicionar-se quando necessário;
+10. continuar lutando sem input;
+11. aceitar uma ordem do treinador;
+12. priorizar temporariamente essa ordem;
+13. retornar à IA depois dela;
+14. permitir defesa;
+15. permitir uso de item;
+16. identificar morte;
+17. finalizar corretamente a batalha.
+
+---
+
+# 44. REQUISITOS DE QUALIDADE DE CÓDIGO
+
+O sistema deve:
+
+* possuir baixo acoplamento;
+* separar IA, combate e UI;
+* evitar classes gigantes;
+* utilizar composição quando possível;
+* manter dados das técnicas fora da lógica principal;
+* permitir adicionar criaturas sem alterar BattleManager;
+* permitir adicionar técnicas sem alterar CombatAI;
+* suportar múltiplos combatentes;
+* possuir estados explícitos;
+* possuir registros de depuração (`debug`) da IA;
+* ser testável independentemente da interface.
+
+Adicionar modo debug capaz de mostrar:
+
+`Current State`
+
+`Current Target`
+
+`Current AI Decision`
+
+`Current Order`
+
+`Distance`
+
+`Selected Skill`
+
+`Skill Score`
+
+`Command Points`
+
+`Cooldowns`
+
+Isso é extremamente importante para diagnosticar o comportamento da IA.
+
+---
+
+# 45. PRINCÍPIO FINAL
+
+O núcleo não deve copiar literalmente apresentação ou balanceamento de um jogo. Perfis históricos separados podem reproduzir apenas regras documentadas, versionadas e validadas.
+
+Utilizar a filosofia geral:
+
+**criaturas são agentes autônomos que sabem lutar por conta própria; o jogador é um treinador que observa o campo de batalha e influencia estrategicamente seus parceiros através de ordens, suporte e gerenciamento de recursos.**
+
+A habilidade do jogador vem de:
+
+* preparação;
+* configuração de atributos;
+* entendimento da IA;
+* leitura do combate;
+* posicionamento indireto;
+* timing;
+* gerenciamento de recursos;
+* escolha de ordens;
+* conhecimento das técnicas;
+* conhecimento dos inimigos.
+
+A qualidade da criatura deve ser percebida não apenas por apresentar números maiores, mas também por sua capacidade de tomar decisões melhores.
+
+O resultado final deve transmitir a sensação de:
+
+**"Eu treinei esta criatura e agora estou comandando-a em uma batalha"**
+
+em vez de:
+
+**"Eu sou esta criatura e estou controlando seus ataques."**
+
+---
+
+# APÊNDICE DE PESQUISA — REFERÊNCIAS HISTÓRICAS E COMPARAÇÃO COM O ESTADO ATUAL
+
+## NOTA METODOLÓGICA
+
+Este apêndice reúne a pesquisa realizada sobre os sistemas de batalha de:
+
+* **Digimon World Re:Digitize Decode**, Nintendo 3DS, lançado em 2013;
+* **Digimon World: Next Order**, PlayStation Vita, PlayStation 4, Nintendo Switch e PC;
+* o sistema de batalha offline atualmente implementado no VBHelper.
+
+O objetivo deste apêndice é tornar explícito o que é:
+
+* fato documentado por fonte oficial;
+* informação de guia ou comunidade;
+* inferência técnica;
+* decisão de projeto do VBHelper;
+* hipótese que ainda exige validação.
+
+A pesquisa não substitui o documento de design. A seção 45 mantém a distinção entre uma filosofia original e perfis históricos separados: o sistema não deve copiar literalmente apresentação ou balanceamento sem versionamento e validação. O apêndice apenas documenta quais elementos possuem referência histórica e quais são escolhas originais do projeto.
+
+### Hierarquia de evidências
+
+1. **Fontes oficiais:** Bandai Namco, páginas oficiais do Decode 3DS, site oficial japonês do Next Order e manual oficial PS4.
+2. **Fontes secundárias:** GAME-CMR, Atwiki, GameFAQs, Neoseeker, Grindosaur, PlayStation Blog e fóruns técnicos.
+3. **Fontes de dados ou modding:** DWNOTools, DecodeRandomizer e repositórios de extração de dados.
+4. **Auditoria local:** código Kotlin, testes e documentação do próprio VBHelper.
+
+### Limitações de acesso
+
+* O PDF do manual oficial PS4 é maior que o limite do leitor web utilizado; vários trechos foram obtidos por indexação de busca.
+* GameFAQs retornou `403` no acesso direto; alguns fatos foram confirmados por trechos indexados.
+* A página GAME-CMR usa codificação antiga e pode aparecer parcialmente corrompida em leitores UTF-8.
+* O índice de FAQs do GameFAQs pode misturar material do PSP e do Decode 3DS.
+* A página de itens da Atwiki declara que parte dos dados foi provisoriamente reaproveitada do jogo anterior.
+* Vita, PS4 International, Switch e PC não devem ser tratados automaticamente como o mesmo balanceamento.
+
+### Regra de interpretação
+
+Quando uma fonte oficial confirma apenas a existência de uma mecânica, isso não prova os seus valores numéricos. Quando uma tabela comunitária contradiz um manual, a divergência deve permanecer registrada até ser resolvida por teste, captura ou análise de dados.
+
+---
+
+## 1. DIGIMON WORLD RE:DIGITIZE DECODE — 3DS
+
+### 1.1 Fonte oficial de batalha
+
+A página oficial do Decode 3DS confirma que:
+
+* a batalha ocorre em tempo real;
+* o parceiro Digimon pensa e age por conta própria;
+* o jogador funciona como treinador;
+* o jogador pode enviar comandos;
+* o jogador pode usar itens;
+* o Digimon utiliza as técnicas equipadas;
+* o nível de Brains e a forma de enviar comandos influenciam as ações disponíveis;
+* cada Digimon possui uma técnica de finalização;
+* o Finisher Power aumenta ao atacar e ao receber dano;
+* o Attack Gauge e o Defense Gauge alteram o resultado dos ataques e defesas.
+
+Fonte primária:
+
+* [Decode 3DS — página oficial do sistema de batalha](https://digimon-gameportal.bn-ent.net/product/world_re_digitize/3ds/system03.html)
+
+A URL contém `/3ds/` e a página possui metadados e direitos autorais de 2013. Não confundir com a página do PSP:
+
+* [Re:Digitize PSP — página oficial do sistema de batalha](https://digimon-gameportal.bn-ent.net/product/world_re_digitize/system03.html)
+
+Essa distinção é importante porque várias fontes reutilizam tabelas, terminologias e descrições do PSP.
+
+### 1.2 Loop de batalha
+
+O fluxo observado nas fontes é:
+
+* jogador explora o campo;
+* encontro com Digimon selvagem ou desafio;
+* batalha começa;
+* parceiro entra em modo autônomo;
+* jogador observa;
+* jogador envia comandos ocasionais;
+* Digimon executa a ordem ou retoma sua própria decisão;
+* golpes, defesa, status e técnicas de finalização ocorrem em tempo real;
+* a batalha termina quando o HP de todos os combatentes de um dos lados chega a zero;
+* o jogo aplica, conforme o caso, consequências de vitória, derrota, evolução ou progressão.
+
+A documentação disponível é compatível com decisões fora de uma rodada global, mas não demonstra um ciclo de decisão independente para cada Digimon; essa paralelização deve ser tratada como inferência até haver teste ou análise adicional.
+
+Essa característica é compatível com a seção 3 do documento de design deste projeto.
+
+### 1.3 Comandos e Brains
+
+A tabela da GAME-CMR indica os seguintes comandos:
+
+* **Leave it to partner / deixar com o parceiro:** o Digimon decide usando as técnicas equipadas; não depende de Brains.
+* **Strongest skill / usar a técnica mais forte:** requer Brains 200 ou mais.
+* **Lowest MP skill / usar a técnica de menor custo de MP:** requer Brains 300 ou mais.
+* **Change target / alterar alvo:** requer Brains 300 ou mais.
+* **Move away / afastar-se:** requer Brains 100 ou mais.
+* **Defend / esperar e defender:** requer Brains 200 ou mais.
+* **Move to position / mover para posição:** requer Brains 400 ou mais.
+* **Use equipped skill / usar técnica equipada:** requer Brains 500 ou mais.
+* O jogador pode selecionar até três técnicas equipadas.
+
+Fonte:
+
+* [GAME-CMR — tipos de comando](http://re-digitize.game-cmr.com/data/battle/command.html)
+
+A página oficial confirma que Brains altera os comandos disponíveis, mas não fornece esses limiares em texto. Portanto, os números acima têm confiança média.
+
+#### Relação com o documento de design
+
+A seção 8 do documento propõe `BattleOrder`, fila e prioridade. A pesquisa confirma que o uso de ordens progressivas é uma característica real do Decode, mas não prova que a implementação atual deva usar exatamente os mesmos nomes, limites ou custos.
+
+O sistema pode implementar:
+
+* ordens imediatas;
+* ordens enfileiradas;
+* ordens canceláveis;
+* ordens expiradas;
+* substituição temporária da IA.
+
+Os valores devem ficar em um `Ruleset` separado.
+
+### 1.4 Finisher Power, Attack Gauge e Defense Gauge
+
+O Decode possui uma camada de timing que não aparece no sistema offline atual.
+
+O comportamento descrito pelas fontes é:
+
+1. O parceiro acumula Finisher Power.
+2. O jogador pode executar a técnica especial quando o medidor está disponível.
+3. O Attack Gauge define a qualidade do acerto.
+4. O Defense Gauge permite tentar bloquear ou reduzir um Finisher.
+5. O timing altera o dano.
+6. O medidor de Finisher Power pode ser afetado por ataques e pelo dano recebido.
+
+A Atwiki descreve uma interação possível:
+
+* o jogador toca em defender no início do movimento de ataque próprio;
+* o jogador toca em atacar quando o oponente executa a defesa;
+* o timing reduz o dano recebido e cria uma sequência de interação.
+
+A mesma fonte afirma que a defesa não impede necessariamente todos os efeitos secundários. Isso significa que um sistema de defesa não deve ser reduzido automaticamente a uma simples multiplicação do dano; é preciso separar:
+
+* dano direto;
+* efeito secundário;
+* interrupção;
+* knockback;
+* alteração de status.
+
+Fontes:
+
+* [Decode 3DS — sistema oficial](https://digimon-gameportal.bn-ent.net/product/world_re_digitize/3ds/system03.html)
+* [Atwiki — 対戦考察](https://w.atwiki.jp/redigitize_3ds/pages/48.html)
+* [GAME-CMR — basics](http://re-digitize.game-cmr.com/data/battle/kihon.html)
+
+A pesquisa não encontrou confirmação de que o Finisher Power persista entre batalhas. A página oficial confirma apenas seu acúmulo durante a batalha; DigiMemory, que pode ser usada como técnica finalizável, é um mecanismo distinto.
+
+### 1.5 Attribute e Nature não são o mesmo conceito
+
+O Decode apresenta dois eixos que precisam ser separados no modelo.
+
+#### Attribute
+
+A GAME-CMR descreve:
+
+* Data é forte contra Vaccine;
+* Vaccine é forte contra Virus;
+* Virus é forte contra Data;
+* o Attribute pode influenciar o resultado da batalha;
+* um Digimon em desvantagem pode perder a vontade de lutar e fugir.
+
+Fonte:
+
+* [GAME-CMR — atributos](http://re-digitize.game-cmr.com/data/dejimonzokusei/index.html)
+
+#### Nature / Elemento das técnicas
+
+A Atwiki apresenta:
+
+* Fire → Nature;
+* Nature → Air;
+* Air → Ice/Water;
+* Ice/Water → Fire;
+* Fighting ↔ Machine;
+* Light ↔ Dark;
+* Digimons do mesmo grupo não se interferem;
+* Filth é forte contra Machine;
+* Filth é ligeiramente forte contra Light e Dark;
+* Filth é fraco contra os demais grupos.
+
+Fonte:
+
+* [Atwiki — confronto](https://w.atwiki.jp/redigitize_3ds/pages/48.html)
+
+#### Contradição documental
+
+A Atwiki afirma em um trecho que o Attribute não possui efeito sobre a batalha, enquanto a GAME-CMR descreve uma relação de vantagem. Essa contradição não deve ser resolvida por suposição.
+
+Conclusão parcial:
+
+* a direção do ciclo Data/Virus/Vaccine é plausível para Decode;
+* a relação entre Attribute e Nature é diferente da relação das técnicas;
+* os multiplicadores numéricos do código atual não foram confirmados;
+* o sistema deve manter `Attribute` e `Nature` como campos separados;
+* qualquer coeficiente deve ter origem e confiança registradas.
+
+### 1.6 Personality, disciplina e peso
+
+A Atwiki descreve personalidades com tendência a curto alcance, longo alcance ou alcance equilibrado. A tabela comunitária da Atwiki atribui a elas possíveis modificadores de:
+
+* poder de técnicas de curto alcance;
+* poder de técnicas de longo alcance;
+* poder de auto-buffs;
+* consumo de MP;
+* Finisher Power;
+* defesa;
+* velocidade.
+
+Exemplos de personalidade:
+
+* personalidade agressiva;
+* personalidade equilibrada;
+* personalidade defensiva;
+* personalidade de longo alcance;
+* personalidade de curto alcance.
+
+Também são descritos:
+
+* disciplina baixa aumenta a chance de ignorar comandos;
+* peso excessivo reduz velocidade de movimentação e resposta;
+* peso muito baixo aumenta a chance de interrupção;
+* personalidade pode mudar ao longo das batalhas conforme os comandos usados.
+
+Fonte:
+
+* [Atwiki — 育成考察](https://w.atwiki.jp/redigitize_3ds/pages/41.html)
+
+A página usa linguagem especulativa em vários pontos. A existência do sistema é relevante para a arquitetura, mas os multiplicadores de `1,1×` não devem ser tratados como uma tabela canônica.
+
+### 1.7 Técnicas e aquisição
+
+O Decode possui técnicas associadas a Nature, com:
+
+* rank;
+* power;
+* MP;
+* range;
+* status;
+* método de aprendizagem.
+
+A Atwiki descreve quatro formas de aprendizagem:
+
+1. Observar uma técnica usada por um inimigo ou parceiro.
+2. Aprender após concluir um treinamento.
+3. Aprender automaticamente após a evolução.
+4. Aprender instantaneamente ao usar Digimon especiais de cartões QR ou de armazenamento.
+
+A mesma fonte descreve uma fórmula comunitária baseada em:
+
+* rank da técnica;
+* Brains;
+* quantidade de vezes que a técnica foi observada.
+
+Fontes:
+
+* [Atwiki — skills](https://w.atwiki.jp/redigitize_3ds/pages/28.html)
+* [GameFAQs — skill acquisition methods](https://gamefaqs.gamespot.com/3ds/705638-digimon-world-redigitize-decode/faqs/78979/skill-acquisition-methods)
+* [DecodeRandomizer](https://github.com/SydMontague/DecodeRandomizer)
+
+A lista comunitária cobre:
+
+* Fire;
+* Ice/Water;
+* Air;
+* Nature;
+* Fighting;
+* Light/Dark;
+* Machine;
+* Filth.
+
+Os valores devem ser tratados como catálogo de referência, não como autorização para copiar a tabela inteira.
+
+### 1.8 Efeitos de status no Decode
+
+As fontes comunitárias listam status como:
+
+* Poison;
+* Paralysis;
+* Slow;
+* Confusion;
+* Sprite-like effect;
+* interrupção;
+* redução de movimento;
+* efeitos de knockback.
+
+Não foi localizada uma tabela oficial única que estabeleça, para todas as técnicas do Decode 3DS:
+
+* duração;
+* chance;
+* stacking;
+* resistência;
+* cleanse;
+* interação com defesa;
+* interação com atributo.
+
+Portanto, a seção 26 do documento de design deve continuar sendo uma abstração de design, não uma transcrição do jogo.
+
+### 1.9 Itens
+
+Fontes comunitárias e o GameFAQs descrevem:
+
+* Recovery Disc;
+* Remedy Disc;
+* Omnipotent Disc;
+* Protection Disc;
+* Finisher Disc;
+* Recovery Floppy;
+* Remedy Floppy;
+* Omnipotent Floppy;
+* Protection Floppy;
+* Attack Plugin;
+* Defense Plugin;
+* Speed Plugin;
+* Rigid Body Plugin;
+* Overdrive Plugin;
+* Memory items;
+* Double Recovery;
+* Super Recovery.
+
+A página da Atwiki declara que parte da lista foi temporariamente reaproveitada do jogo anterior. Portanto:
+
+* os nomes podem ser úteis como referência;
+* os valores não devem ser copiados sem validação;
+* efeitos de status e resistência precisam de uma tabela independente.
+
+Fontes:
+
+* [Atwiki — battle items](https://w.atwiki.jp/redigitize_3ds/pages/44.html)
+* [GameFAQs — master list](https://gamefaqs.gamespot.com/3ds/705638-digimon-world-redigitize-decode/faqs/79159/introduction-master-list)
+
+### 1.10 Progressão, morte e DigiMemory
+
+O Decode 3DS liga a batalha à criação e sobrevivência do Digimon:
+
+* treinamento;
+* número de batalhas;
+* peso;
+* erros de cuidado;
+* felicidade;
+* disciplina;
+* técnicas;
+* evolução;
+* ciclo de vida;
+* Decode Level.
+
+A página oficial de Decode Level explica que:
+
+* o Decode Level é uma capacidade do treinador;
+* o nível cresce com criação adequada;
+* o nível aplica boosts nos status do parceiro;
+* Digitter e outras funções apoiam a gestão do parceiro.
+
+Fontes:
+
+* [Decode 3DS — training](https://digimon-gameportal.bn-ent.net/product/world_re_digitize/3ds/system02.html)
+* [Decode 3DS — Decode Level](https://digimon-gameportal.bn-ent.net/product/world_re_digitize/3ds/system04.html)
+* [Atwiki — evolução](https://w.atwiki.jp/redigitize_3ds/pages/23.html)
+* [Atwiki — DigiTama](https://w.atwiki.jp/redigitize_3ds/pages/18.html)
+* [GameFAQs — evolution](https://gamefaqs.gamespot.com/3ds/705638-digimon-world-redigitize-decode/faqs/71975)
+
+A morte do parceiro pode resultar em:
+
+* DigiMemory;
+* reencarnação;
+* seleção de novo DigiTama;
+* herança parcial de atributos;
+* aumento dos boosts de Decode Level.
+
+O sistema atual do VBHelper não reproduz essas consequências.
+
+---
+
+## 2. DIGIMON WORLD: NEXT ORDER
+
+### 2.1 Escopo por versão
+
+A pesquisa separou as seguintes versões:
+
+* Vita original, lançada no Japão em 17/03/2016;
+* PS4 International, lançada em 27/01/2017 na Europa e em janeiro de 2017 nas Américas;
+* Nintendo Switch e PC, lançados em fevereiro de 2023.
+
+Fontes:
+
+* [Bandai Namco America — official page](https://www.bandainamcoent.com/games/digimon-world-next-order)
+* [Bandai Namco Europe — official page](https://en.bandainamcoent.eu/digimon/digimon-world-next-order)
+* [Next Order Japanese official system](https://digimonworld-neo.bn-ent.net/system/)
+* [PlayStation Blog — original Vita battle article](https://blog.ja.playstation.com/2016/03/07/20160307-digimonworld/)
+* [Nintendo Store — Switch edition](https://www.nintendo.com/us/store/products/digimon-world-next-order-switch/)
+* [Steam — PC edition](https://store.steampowered.com/app/1530160/Digimon_World_Next_Order/)
+
+A página oficial atual informa:
+
+* mais de 200 Digimon;
+* dois parceiros;
+* Train, feed, discipline e Digivolve;
+* Bond entre jogador e Digimon;
+* relação entre os dois Digimon;
+* evolved AI Battle System;
+* comandos e cheer;
+* Floatia;
+* recrutamento;
+* construção da cidade.
+
+### 2.2 Dois parceiros e IA colaborativa
+
+A diferença mais importante em relação ao Decode é o número de aliados:
+
+* o Next Order permite dois parceiros;
+* ambos lutam com IA;
+* ambos podem agir de maneira independente;
+* os dois podem apoiar um ao outro;
+* o jogador alterna o foco da câmera;
+* o jogador pode ordenar ações para o parceiro esquerdo ou direito;
+* a vitória pode ser afetada pelo comportamento cooperativo.
+
+O site oficial resume a batalha como:
+
+> “Train your pair of Digimon to fight cooperatively in AI battles. Issue commands and cheer them to victory.”
+
+Fonte:
+
+* [Bandai Namco — Next Order](https://www.bandainamcoent.com/games/digimon-world-next-order)
+
+O PlayStation Blog descreve dois parceiros que pensam e agem por conta própria, exigindo apoio do treinador.
+
+### 2.3 Order Ring
+
+O manual oficial PS4 descreve o Order Ring:
+
+* o jogador abre o ring para o parceiro esquerdo ou direito;
+* a batalha fica pausada enquanto o menu está aberto;
+* o jogador navega pelo cursor;
+* o jogador confirma a ordem;
+* técnicas podem ser selecionadas;
+* Special, Agitation e comandos de ambos os parceiros podem aparecer;
+* o menu fecha automaticamente após aproximadamente cinco segundos.
+
+Fonte:
+
+* [Manual oficial PS4](https://d1vtv52f4vjbmu.cloudfront.net/manuals/dwno/PS4-DWNO_manual_GBQS_WEB.pdf)
+
+O Neoseeker descreve o mesmo comportamento e afirma que a batalha fica pausada durante a seleção:
+
+* [Neoseeker — walkthrough](https://www.neoseeker.com/digimon-world-next-order/faqs/3088147-walkthrough.html)
+
+A seção 36 do documento de design, que prevê pausa tática configurável, é compatível com esse padrão, mas deve ser tratada como decisão de implementação e não como prova de que todas as versões adaptadas pausam da mesma forma.
+
+### 2.4 Order Power e Bond
+
+O manual e o FAQ descrevem:
+
+* o OP inicial de cada parceiro é igual ao Bond com esse parceiro;
+* o OP é redefinido depois da batalha;
+* OP pode ser aumentado com Support;
+* Support é mais eficiente quando enviado durante um ataque ou dano;
+* existe cooldown de Support;
+* OP é diferente de MP;
+* técnicas ordenadas pelo jogador não consomem MP;
+* técnicas ordenadas podem ser um pouco mais fortes que técnicas usadas automaticamente.
+
+Fontes:
+
+* [Manual oficial PS4](https://d1vtv52f4vjbmu.cloudfront.net/manuals/dwno/PS4-DWNO_manual_GBQS_WEB.pdf)
+* [GameFAQs — battle](https://gamefaqs.gamespot.com/ps4/196176-digimon-world-next-order/faqs/79149/battle)
+* [Neoseeker — walkthrough](https://www.neoseeker.com/digimon-world-next-order/faqs/3088147-walkthrough.html)
+
+Isso confirma a distinção entre:
+
+* recurso da criatura;
+* recurso de ordem do treinador.
+
+A seção 18 do documento de design, que separa `CommandPoints`, `OrderPoints` e recurso da criatura, está alinhada com essa mecânica.
+
+### 2.5 Suporte e timing
+
+O Support é uma participação do jogador que não causa dano:
+
+* aumenta OP;
+* depende do momento do envio;
+* é mais eficiente quando o parceiro executa uma boa ação;
+* possui cooldown;
+* não substitui a IA;
+* cria uma interação de timing.
+
+O manual e o FAQ não devem ser interpretados como uma fórmula numérica estável para todas as versões. Fóruns reportam que a qualidade do timing altera o ganho de OP e que o timing pode ser afetado por ações de guarda, queda, interrupção e abertura do Order Ring.
+
+Fonte complementar:
+
+* [GameFAQs — timing de OP](https://gamefaqs.gamespot.com/boards/383941-digimon-world-next-order/80378529)
+
+Os valores de pontos são observações de fontes comunitárias e não foram usados como constantes canônicas.
+
+### 2.6 Special, Agitation, Digifusion e ExE
+
+Os custos documentados são:
+
+* Agitation: 50 OP;
+* Special: 150 OP;
+* Digifusion: 150 OP;
+* ExE: 150 OP.
+
+#### Agitation
+
+Agitation coloca o Digimon em modo de combate intensivo:
+
+* pode recuperar HP;
+* pode recuperar MP;
+* pode aumentar ataque;
+* pode aumentar outros atributos;
+* pode ter efeito exclusivo conforme o Digimon.
+
+Fonte:
+
+* [Grindosaur — High-Tension Ability List](https://www.grindosaur.com/en/games/digimon-world-next-order/guides/high-tension-ability-list)
+
+#### Special Move
+
+Special usa a técnica finalizável individual do Digimon e consome 150 OP.
+
+#### Digifusion
+
+Digifusion faz os dois parceiros executarem uma técnica combinada.
+
+#### ExE
+
+ExE é uma evolução temporária durante a batalha:
+
+* os dois parceiros se fundem;
+* o Digimon resultante é temporário;
+* a batalha continua com a fusão;
+* os parceiros se separam depois da batalha;
+* a ExE pode permitir que parceiros caídos evoluam e sejam revividos, alterando o desfecho da batalha;
+* são exigidos OP e Bonds fortes.
+
+O manual indexado descreve restrições:
+
+* um parceiro em Mega, exceto Golden;
+* o outro entre Champion e Mega, exceto Golden;
+* Bond e DigiFriend máximos;
+* uma vez por dia.
+
+Segundo o manual oficial, as restrições de estágio, de estágio Golden, de Bond, de DigiFriend e de frequência de uso estão documentadas. Sua aplicabilidade a cada versão deve ser verificada antes de usá-las como constantes universais.
+
+Fontes:
+
+* [Manual oficial PS4](https://d1vtv52f4vjbmu.cloudfront.net/manuals/dwno/PS4-DWNO_manual_GBQS_WEB.pdf)
+* [GameFAQs — ExE discussion](https://gamefaqs.gamespot.com/boards/196176-digimon-world-next-order/75975906)
+* [Tamer Union — ExE overview](https://tamerunion.blogspot.com/2015/12/next-0rder-title-site-update-explains.html)
+
+### 2.7 Stats
+
+O manual oficial descreve:
+
+* HP;
+* MP;
+* Strength;
+* Stamina;
+* Wisdom;
+* Speed.
+
+Efeitos resumidos:
+
+* Strength aumenta o dano;
+* Stamina reduz o dano recebido;
+* Wisdom aumenta a chance de guarda, reduz custo de MP e aumenta o crítico;
+* Speed aumenta a velocidade de batalha e a chance de desvio por passo;
+* Discipline altera o comportamento;
+* Mood altera o estado emocional e a disposição;
+* Bond afeta a relação;
+* DigiFriend afeta a cooperação dos dois parceiros.
+
+Fontes:
+
+* [Manual oficial PS4](https://d1vtv52f4vjbmu.cloudfront.net/manuals/dwno/PS4-DWNO_manual_GBQS_WEB.pdf)
+* [GameFAQs — partner](https://gamefaqs.gamespot.com/ps4/196176-digimon-world-next-order/faqs/79149/partner)
+* [Grindosaur — Tamer Skills](https://www.grindosaur.com/en/games/digimon-world-next-order/tamer-skills)
+
+O sistema atual não possui STR, STA, WIS, SPD, Bond ou DigiFriend como atributos independentes.
+
+### 2.8 Nature, Attribute e técnicas
+
+A estrutura de dados extraída do Next Order separa:
+
+* `attribute`;
+* `nature`;
+* personalidade;
+* `hp`;
+* `mp`;
+* `offense`;
+* `defense`;
+* `brains`;
+* `speed`.
+
+O esquema de `AttackData` contém campos como:
+
+* `nature`;
+* `power`;
+* `break`;
+* `mpCost`;
+* `opCost`;
+* `offenseUp`;
+* `defenseUp`;
+* `brainsUp`;
+* `speedUp`;
+* `statusType`;
+* `statusChance`;
+* `statusTime`;
+* `range`;
+* `kind`;
+* `homing`;
+* `motionNo`;
+* `motionSpeed`;
+* `knockbackPower`;
+* `launchPower`.
+
+A presença desses campos não prova como o jogo os executa.
+
+Fonte:
+
+* [DWNOTools — AttackData.json](https://raw.githubusercontent.com/Operation-Decoded/DWNOTools/master/structures/AttackData.json)
+* [DWNOTools — DigimonData.json](https://raw.githubusercontent.com/Operation-Decoded/DWNOTools/master/structures/DigimonData.json)
+
+#### Tabelas de Nature
+
+Uma tabela de Nature recorrente nas fontes comunitárias é:
+
+* Fire → Nature;
+* Nature → Air;
+* Air → Ice;
+* Ice → Fire;
+* Holy ↔ Dark;
+* Hand-to-Hand ↔ Weapon/Apparatus;
+* Filth recebe dano adicional de vários elementos;
+* Filth é forte contra Holy, Dark e Weapon.
+
+A vantagem é frequentemente citada como `×1,5`, mas algumas fontes comunitárias divergem do gráfico do manual. A divergência não foi resolvida e deve ser validada por versão.
+
+Fontes:
+
+* [Grindosaur — moves](https://www.grindosaur.com/en/games/digimon-world-next-order/moves)
+* [Grindosaur — Digimon](https://www.grindosaur.com/en/games/digimon-world-next-order/digimon)
+* [GameFAQs — Nature discussion](https://gamefaqs.gamespot.com/boards/196176-digimon-world-next-order/78195057)
+* [GameFAQs — Colosseum and Nature](https://gamefaqs.gamespot.com/boards/196176-digimon-world-next-order/75552287)
+
+Conclusão:
+
+* Nature é uma dimensão relevante do combate;
+* Attribute deve ser separado;
+* o ciclo Data/Virus/Vaccine do código atual não deve ser assumido como a única relação de dano do Next Order;
+* multiplicadores exatos precisam de validação por versão.
+
+### 2.9 Anormalias de status do Next Order
+
+O manual e o GameFAQs listam sete status:
+
+* Poison;
+* Slow;
+* Paralysis;
+* Confusion;
+* Rage;
+* Unjustified;
+* Sprite.
+
+Efeitos documentados:
+
+* Poison: dano gradual;
+* Slow: redução de velocidade;
+* Paralysis: impede ação ou movimento;
+* Confusion: age estranhamente e pode receber metade do próprio dano;
+* Rage: ataca o agressor e dobra a chance de crítico recebido;
+* Unjustified: ataca outros combatentes e causa metade do dano;
+* Sprite: limita o Digimon a técnicas fracas fixas.
+
+Os status são curados:
+
+* no final da batalha;
+* com Remedy Disc;
+* potencialmente por um parceiro com DigiFriend alto.
+
+Não foram confirmadas com alta confiança:
+
+* duração de cada status;
+* chance por técnica;
+* stacking;
+* resistência individual;
+* regras de cleanse em todas as versões.
+
+Fonte:
+
+* [GameFAQs — battle](https://gamefaqs.gamespot.com/ps4/196176-digimon-world-next-order/faqs/79149/battle)
+* [Grindosaur — moves](https://www.grindosaur.com/en/games/digimon-world-next-order/moves)
+* [Grindosaur — Digimon](https://www.grindosaur.com/en/games/digimon-world-next-order/digimon)
+
+### 2.10 Progressão, Floatia e recrutamento
+
+O Next Order conecta a batalha a:
+
+* Tamer EXP;
+* Tamer Level;
+* Tamer Points;
+* Tamer Skills;
+* Bond;
+* DigiFriend;
+* disciplina;
+* humor;
+* treinamento;
+* ciclo de vida;
+* Digivolution;
+* Digifusion;
+* ExE;
+* Floatia;
+* Digimon recrutados;
+* serviços da cidade;
+* recompensas de EXP, Bits e crescimento.
+
+O site oficial afirma que o jogador recruta Digimons para reconstruir o mundo e desenvolver Floatia.
+
+Fontes:
+
+* [Bandai Namco — official](https://www.bandainamcoent.com/games/digimon-world-next-order)
+* [Bandai Namco Europe — official](https://en.bandainamcoent.eu/digimon/digimon-world-next-order)
+* [Grindosaur — recruitment](https://www.grindosaur.com/en/games/digimon-world-next-order/guides/recruitment-guide)
+* [Grindosaur — extra scenarios](https://www.grindosaur.com/en/games/digimon-world-next-order/guides/extra-scenario-guide)
+
+A Grindosaur lista 232 Digimon no Field Guide. Esse número não deve ser confundido com o número de Digimon recrutáveis nem com o número de Digimon presentes no catálogo de uma build específica.
+
+### 2.11 Diferenças de versão
+
+O PS4 International recebeu documentação em inglês e foi objeto de ajustes de balanceamento. O Vita original e as versões para Switch e PC têm cronogramas e etapas de desenvolvimento próprios.
+
+Não foi encontrada evidência suficiente para afirmar que todos os seguintes valores são idênticos em todas as versões:
+
+* OP inicial;
+* ganho de Support;
+* custo de Digifusion;
+* custos de status;
+* eficácia da Nature;
+* IA dos parceiros;
+* comportamento de ExE;
+* Guard e Step Dodge.
+
+A regra recomendada é identificar a versão no `Ruleset`.
+
+---
+
+## 3. FONTES TÉCNICAS E DATAMING
+
+### 3.1 DWNOTools
+
+O repositório DWNOTools declara que, atualmente, converte apenas arquivos CSVB sem dados variáveis do Digimon World: Next Order e permite extrair as estruturas associadas a eles:
+
+* `DigimonDataR.cpk`;
+* `AttackData`;
+* `DigimonData`;
+* `ItemDataBattle`;
+* `TrainingData`;
+* `ItemDataTraining`;
+* `ItemDataRecovery`;
+* `ItemDataFood`;
+* `ItemDataEvolution`;
+* `ItemDataMaterial`;
+* `ItemDataOther`.
+
+Fonte:
+
+* [DWNOTools — GitHub](https://github.com/Operation-Decoded/DWNOTools)
+* [DWNOTools — README](https://raw.githubusercontent.com/Operation-Decoded/DWNOTools/master/README.md)
+
+O esquema confirma a existência de campos de dados, mas não fornece:
+
+* fórmula de dano;
+* ordem de operações;
+* regra de arredondamento;
+* precedência de status;
+* curva de AI;
+* balanceamentos por versão.
+
+A presença de um campo não deve ser tratada como prova de comportamento.
+
+### 3.2 DecodeRandomizer
+
+O DecodeRandomizer é um software de randomização de dados que requer extração do ROM do Decode 3DS. O README descreve campos relacionados a:
+
+* Attribute;
+* velocidade de combate;
+* tipo de treinamento;
+* poder da técnica;
+* MP da técnica;
+* status da técnica;
+* chance de status;
+* cooldown;
+* taxa de aprendizagem;
+* alinhamento de tipo;
+* atributos dos inimigos;
+* técnicas;
+* drops;
+* propriedades dos Digimons;
+* rotina de sono;
+* comida favorita;
+* peso-base.
+
+Fonte:
+
+* [SydMontague/DecodeRandomizer](https://github.com/SydMontague/DecodeRandomizer)
+* [DecodeRandomizer README](https://raw.githubusercontent.com/SydMontague/DecodeRandomizer/master/README.MD)
+
+O projeto é útil para confirmar a existência de campos associados a uma mecânica, orientar filtros de assets, construir testes de rastreabilidade e comparar campos entre Digimons. A presença de um campo não demonstra, por si só, que a mecânica seja usada na jogabilidade. Ele não é uma fonte oficial das fórmulas de jogabilidade.
+
+### 3.3 Fórmula do gist do SydMontague
+
+O gist descreve uma fórmula de dano do Digimon World original. A página exibe um aviso de Unicode bidirecional ou oculto; o conteúdo deve ser verificado antes de extrair coeficientes. Ele não deve ser aplicado automaticamente ao Decode ou ao Next Order.
+
+O gist apresenta:
+
+* fator de tipo;
+* ataque/defesa;
+* diferença limitada;
+* fórmula da técnica finalizável;
+* contra-ataque;
+* acúmulo de carga;
+* randomização;
+* limites de dano.
+
+Fonte:
+
+* [SydMontague — damage formula research](https://gist.github.com/SydMontague/e527a24e9a1d1f7a2ea054d72e762ced)
+
+A principal cautela é de escopo:
+
+* o texto se refere ao Digimon World original;
+* a fórmula não foi documentada como a fórmula do Decode 3DS;
+* a fórmula não foi documentada como a fórmula do Next Order;
+* os coeficientes não devem ser promovidos a verdade canônica.
+
+---
+
+## 4. AUDITORIA DO SISTEMA OFFLINE ATUAL
+
+### 4.1 Fluxo atual
+
+O fluxo implementado é:
+
+1. `BattlesScreen` lê personagens do banco local.
+2. `OfflineBattleEntryPanel` escolhe o parceiro ativo.
+3. `TrainingBattlePreparation` define a equipe.
+4. `OfflineBattleSessionViewModel` solicita a apresentação dos participantes por `TrainingBattlePresentationFactory`; `TrainingBattleFactory` cria o simulador.
+5. `BattleSessionController` executa o relógio da sessão.
+6. `BattleSimulator` possui as regras.
+7. `OfflineBattleSessionViewModel` publica snapshots.
+8. `TrainingBattlePresentation` converte o estado em Filament/GLB.
+9. `OfflineTrainingBattleScreen` apresenta HUD e comandos.
+
+Referências:
+
+* `app/src/main/java/com/github/nacabaro/vbhelper/screens/BattlesScreen.kt:1988-2117`
+* `app/src/main/java/com/github/nacabaro/vbhelper/screens/BattlesScreen.kt:2144-2347`
+* `app/src/main/java/com/github/nacabaro/vbhelper/screens/offlineBattle/OfflineBattleSessionViewModel.kt:25-154`
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/session/BattleSessionController.kt:22-104`
+
+### 4.2 Formatos
+
+A fábrica aceita:
+
+* 1×1;
+* 1×2;
+* 2×2.
+
+Ela limita cada lado a dois combatentes e exige que o número de aliados não seja maior que o número de oponentes.
+
+Referência:
+
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/data/TrainingBattleFactory.kt:104-116`
+
+Esse formato é uma escolha original do VBHelper. Ele não deve ser apresentado automaticamente como o formato do Next Order, cuja identidade central é um par de parceiros.
+
+### 4.3 Atributos e multiplicadores atuais
+
+O modelo atual possui:
+
+* `NONE`;
+* `VIRUS`;
+* `DATA`;
+* `VACCINE`;
+* `FREE`.
+
+O ciclo é:
+
+* Data vence Vaccine;
+* Vaccine vence Virus;
+* Virus vence Data.
+
+Multiplicadores atuais:
+
+* vantagem: `1.10f`;
+* desvantagem: `0.90f`;
+* igual: `1.0f`;
+* Free/None: `1.0f`.
+
+Referência:
+
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/core/BattleModel.kt:12-31`
+
+A direção do ciclo é uma decisão interna testada. A origem dos multiplicadores `1.10` e `0.90` não foi encontrada em fonte primária.
+
+### 4.4 Elemento e Nature
+
+`TechniqueDefinition` possui um campo `element`, mas o catálogo de produção não o preenche e o simulador não o utiliza para calcular dano.
+
+Referências:
+
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/core/BattleModel.kt:99-126`
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/data/TrainingBattleFactory.kt:33-101`
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/core/BattleSimulator.kt:554-621`
+
+Isso significa que o sistema atual não reproduz:
+
+* Nature do Digimon;
+* Nature da técnica;
+* chart Fire/Nature/Air/Ice;
+* Light/Dark;
+* Hand-to-Hand/Weapon;
+* Filth.
+
+### 4.5 Atributos atuais
+
+`TrainingBattleStats` usa uma escala compacta artificial baseada em estágio.
+
+Valores-base por estágio:
+
+* HP: `900 + level × 180`;
+* ataque: `110 + level × 14`;
+* defesa: `40 + level × 6`;
+* energia: `300 + level × 40`.
+
+A conversão BEM soma:
+
+* base HP + training HP;
+* base BP + training BP;
+* base AP + training AP.
+
+A conversão DIM projeta os valores para uma faixa BEM usando:
+
+* mínimo;
+* máximo;
+* média;
+* desvio padrão;
+* fase equivalente.
+
+Depois são aplicados:
+
+* clamp relativo de `0.65` a `1.75`;
+* bônus de vital points;
+* bônus de mood;
+* arredondamento.
+
+Referências:
+
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/data/TrainingBattleStats.kt:87-120`
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/data/TrainingBattleStats.kt:123-171`
+
+O código mapeia BP para Defesa. Essa conversão é útil para o sandbox, mas não representa automaticamente:
+
+* BP do VitalWear;
+* Defense do Decode;
+* Stamina do Next Order.
+
+Além disso, `TrainingParticipantInput.maxHealth` e `.attack` não são usados diretamente pela fábrica; os valores finais vêm da normalização.
+
+Referência:
+
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/data/TrainingBattleFactory.kt:137-160`
+
+### 4.6 Catálogo atual
+
+O catálogo de produção possui:
+
+* `practice_quick_burst`;
+* `practice_heavy_burst`;
+* `practice_guard_break`;
+* `practice_special`.
+
+Características:
+
+* três técnicas comuns;
+* uma técnica especial;
+* custo de energia;
+* custo de Command Points na técnica especial;
+* range;
+* startup;
+* active;
+* recovery;
+* cooldown;
+* stagger;
+* knockback;
+* visual pequeno/grande.
+
+Não há técnicas históricas de:
+
+* Fire;
+* Ice;
+* Air;
+* Nature;
+* Fighting;
+* Light;
+* Dark;
+* Machine;
+* Filth.
+
+Também não há efeitos de status reais no catálogo de produção.
+
+### 4.7 Fórmula de dano atual
+
+O cálculo em `BattleSimulator.kt:554-621` é:
+
+```text
+raw =
+  technique.power
+  × attacker.attack
+  × attackerAttackStatusMultiplier
+  × attributeMultiplier
+  / 100
+  × random[0.92, 1.08)
+```
+
+Crítico:
+
+```text
+critical =
+  random[0, 1) < technique.criticalChance
+```
+
+Valor crítico:
+
+```text
+criticalRaw =
+  raw × technique.criticalMultiplier
+```
+
+Conversão para dano:
+
+```text
+amount =
+  floor(
+    criticalRaw
+    × 100
+    / (100 + victim.defense × defenseMultiplier)
+    × defenseFactor
+  )
+```
+
+Regras atuais:
+
+* defesa ativa usa `0.3`;
+* crítico padrão usa `5%`;
+* multiplicador de crítico padrão usa `1.5`;
+* não há teste comum de acerto: uma técnica não projétil válida e dentro do alcance gera dano; um projétil ainda pode expirar ou perder o alvo;
+* dano é truncado e tem mínimo de `1`;
+* dano é limitado ao HP restante;
+* `attributeMultiplier` usa o RPS atual.
+
+Essa é uma fórmula original do sandbox. Ela não deve ser apresentada como fórmula comprovada de Decode ou Next Order.
+
+### 4.8 IA atual
+
+A IA:
+
+* agenda uma leitura autônoma inicial;
+* decide periodicamente;
+* escolhe alvo por ameaça, distância e ID;
+* usa histerese;
+* verifica o alcance;
+* filtra técnica por cooldown, energia e posse;
+* não usa técnica especial automaticamente;
+* usa IA utilitária simplificada;
+* considera estratégia, distância, custo, startup, recovery e aleatoriedade.
+
+Referências:
+
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/core/BattleSimulator.kt:355-484`
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/core/BattleSimulator.kt:789-824`
+
+A IA atual não possui:
+
+* personalidade;
+* disciplina;
+* obediência;
+* Bond;
+* DigiFriend;
+* Nature;
+* perfil de IA por versão;
+* IA de cooperação entre aliados;
+* IA de ExE;
+* comportamento de script de inimigo.
+
+### 4.9 Ordens atuais
+
+O modelo possui:
+
+* `FocusTarget`;
+* `UseTechnique`;
+* `UseItem`;
+* `Defend`;
+* `ChangeStrategy`;
+* `MoveCloser`;
+* `KeepDistance`;
+* `Support`.
+
+Referências:
+
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/core/BattleModel.kt:192-210`
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/core/BattleSimulator.kt:97-174`
+
+Características:
+
+* fila física máxima de quatro ordens;
+* validade padrão de oito segundos;
+* foco e estratégia imediatos;
+* Support só funciona em janela;
+* técnica reserva energia e CP;
+* item reserva uma unidade virtual;
+* recurso é debitado uma vez;
+* ação cancelada após iniciar não devolve automaticamente o custo;
+* termos de falha são publicados.
+
+### 4.10 Support e Command Points atuais
+
+O sistema atual:
+
+* começa com `0` Command Points;
+* possui máximo de `100`;
+* abre uma janela de Support para o aliado após ele causar dano;
+* concede até `8` CP;
+* remove a janela depois do uso;
+* a técnica especial consome `25` CP;
+* CP é compartilhado por todos os aliados.
+
+Referências:
+
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/core/BattleModel.kt:177-190`
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/core/BattleSimulator.kt:114-127`
+
+Isso é diferente do Next Order, em que:
+
+* OP é individual;
+* OP inicial deriva de Bond;
+* OP é redefinido por batalha;
+* Support tem timing e cooldown;
+* técnica ordenada não usa MP.
+
+### 4.11 Status atuais
+
+A infraestrutura genérica aceita:
+
+* ID;
+* duração;
+* magnitude;
+* dano por segundo;
+* impedimento de ações;
+* lentidão;
+* multiplicador de ataque;
+* multiplicador de defesa;
+* origem.
+
+Referências:
+
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/core/BattleModel.kt:63-73`
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/core/BattleSimulator.kt:826-865`
+
+O simulador sabe:
+
+* aplicar DoT;
+* impedir ações;
+* reduzir movimento;
+* multiplicar ataque;
+* multiplicar defesa;
+* remover status por item;
+* atualizar o status de mesmo ID.
+
+Mas a fábrica de produção deixa as listas de status das técnicas vazias. O catálogo atual produz principalmente:
+
+* dano;
+* critical;
+* knockback;
+* stun automático por stagger;
+* defesa temporária.
+
+### 4.12 Itens atuais
+
+Os itens são session-only:
+
+* `training_recovery`;
+* `training_energy`;
+* `training_cleanse`.
+
+Referências:
+
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/core/BattleModel.kt:128-144`
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/data/TrainingBattleFactory.kt:97-102`
+
+O fluxo não chama:
+
+* `ItemDao.useItem`;
+* `ItemDao.purchaseItem`;
+* atualização de inventário;
+* compra;
+* persistência de consumo.
+
+### 4.13 Movimento, colisão e projéteis
+
+O simulador possui:
+
+* arena circular;
+* limitação da posição à arena;
+* colisão entre combatentes;
+* três iterações de separação;
+* movimento em direção ao alvo;
+* movimento para afastar;
+* slow;
+* projétil linear;
+* colisão de segmento varrido com círculo;
+* hit no primeiro inimigo interceptado;
+* ausência de homing;
+* duração de projétil.
+
+Referências:
+
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/core/BattleSimulator.kt:646-700`
+* `app/src/main/java/com/github/nacabaro/vbhelper/battle/offline/core/BattleSimulator.kt:745-787`
+
+O campo `blockedRegions` existe no JSON da arena, mas o simulador atual não usa obstáculos ou pathfinding.
+
+### 4.14 Persistência e resultados
+
+O sistema não grava:
+
+* HP;
+* energia;
+* MP;
+* posições;
+* status;
+* cooldowns;
+* CP;
+* itens;
+* resultado;
+* EXP;
+* Bits;
+* evolução;
+* inventário;
+* Bond;
+* DigiFriend;
+* histórico.
+
+O resultado contém:
+
+* resultado;
+* tempo decorrido;
+* contagem de eventos;
+* estatísticas.
+
+O ViewModel preserva a sessão durante recreação da tela, mas não serializa o snapshot para sobreviver à morte do processo.
+
+A seção 18 do documento original prevê `resourceCost`, e a seção 32 prevê componentes separados. A implementação atual preserva essa separação conceitual, mas usa `energyCost`, `commandPointCost` e Command Points compartilhado, com semântica própria de treino.
+
+---
+
+## 5. COMPARAÇÃO COM O DOCUMENTO DE DESIGN ORIGINAL
+
+### 5.1 Conceitos confirmados ou parcialmente confirmados
+
+* **Autonomia da criatura:** confirmado como princípio de ambos os jogos.
+* **Treinador como suporte:** confirmado.
+* **Arena espacial:** compatível com a execução técnica atual; as fontes não foram usadas para escolher o raio de oito unidades do projeto.
+* **Sem controle direto contínuo:** confirmado.
+* **IA periódica:** compatível com arquitetura, mas a frequência exata de cada jogo não foi provada.
+* **Ordens e substituição temporária:** compatível com o design.
+* **Fila de ordens:** é apenas um método de implementação adotado neste projeto e não uma mecânica literal obrigatória dos jogos.
+* **IA utilitária:** recomendada para o projeto, mas não comprovada como algoritmo original.
+* **Fases STARTUP/ACTIVE/RECOVERY:** adequado para o motor atual, mas não é uma tabela oficial dos jogos.
+* **Alcance e posicionamento:** confirmados como necessidade funcional.
+* **Tempo de recarga (`cooldown`):** o DecodeRandomizer expõe um campo de cooldown para o Decode, mas a presença do campo não prova seu uso na jogabilidade nem autoriza aplicá-lo ao Next Order ou ao sandbox; qualquer valor exige validação própria.
+* **MP:** confirmado no Decode e em técnicas automáticas do Next Order.
+* **OP:** confirmado no Next Order.
+* **Tempo de Support:** confirmado no Next Order e conceitualmente compatível com a seção 19.
+* **Defesa:** o conceito e as reações temporárias são compatíveis com as fontes, mas o exemplo original de `0.25` diverge do valor atual do sandbox (`0.3`); ambos devem ser identificados como regras distintas até que o `Ruleset` seja padronizado.
+* **Ameaça/aggro:** não foi comprovado como sistema idêntico nos jogos; é uma solução arquitetural válida para múltiplos inimigos.
+* **Stagger:** aparece em técnicas do Decode e no catálogo comunitário, mas a fórmula atual de interrupção é original.
+* **Status genérico:** recomendado para o projeto; a implementação atual é uma abstração, não uma cópia dos sete status do Next Order.
+* **Special (Next Order) e Finisher (Decode):** confirmados nos respectivos jogos, com mecanismos de recurso diferentes.
+* **Múltiplos parceiros:** confirmado especialmente no Next Order.
+* **Digifusion e ExE:** confirmados no Next Order.
+* **Personalidade, Bond, Discipline:** confirmados em escopos diferentes, mas não são equivalentes.
+* **Persistência e progressão:** confirmados nos jogos, ausentes no treino atual.
+* **Rewards:** confirmados no Next Order e no ciclo de progressão do Decode, ausentes no treino atual.
+
+### 5.2 Pontos em que o documento deve ser explicitamente identificado como original
+
+Os seguintes itens são escolhas do VBHelper ou recomendações de design, não fatos históricos:
+
+* arena circular com raio fixo;
+* passo fixo de `34 ms`;
+* decisão a cada `200 ms`;
+* CP compartilhado;
+* CP inicial zero;
+* Support de até oito pontos;
+* multiplicadores de atributo `1.10` e `0.90`;
+* defesa `0.3`;
+* crítico padrão de cinco por cento;
+* multiplicador de crítico `1.5`;
+* catálogo genérico com quatro técnicas, sendo três comuns e uma especial;
+* itens virtuais de treino;
+* lista exata de estratégias;
+* três iterações de separação;
+* projétil linear sem homing;
+* término por tempo máximo;
+* normalização DIM/BEM;
+* conversão de BP para Defesa;
+* regra de 1×1, 1×2 e 2×2 como produto final;
+* regras de prevenção de dano;
+* formatos de UI e câmera.
+
+Esses pontos podem permanecer no projeto, desde que a interface e a documentação os identifiquem como regras do VBHelper.
+
+---
+
+## 6. RECOMENDAÇÕES DE IMPLEMENTAÇÃO
+
+### 6.1 Criar uma identidade de Ruleset
+
+Adicionar um identificador conceitual como:
+
+```text
+BattleRuleset
+  id
+  game
+  platform
+  build
+  difficulty
+  catalogVersion
+  sourceUri
+  sourceId
+  sourceHash
+  evidenceType
+  derivation
+  confidence
+```
+
+Identificadores iniciais:
+
+```text
+SANDBOX_VBHELPER
+DECODE_3DS
+NEXT_ORDER_VITA
+NEXT_ORDER_PS4
+NEXT_ORDER_SWITCH
+NEXT_ORDER_PC
+```
+
+O campo `sourceHash` deve guardar o hash do conteúdo da tabela; a origem deve ser registrada em `sourceUri` e `sourceId`, e a confiança em `confidence`.
+
+A classificação deve separar:
+
+* `evidenceType`: `official`, `indexed`, `community`, `datamining` ou `local`;
+* `derivation`: `extracted`, `inferred` ou `authored`;
+* `confidence`: `high`, `medium`, `low` ou `unverified`.
+
+`SANDBOX_VBHELPER` descreve a origem das regras, não um grau de confiança.
+
+### 6.2 Separar os domínios de tipo
+
+Criar campos separados:
+
+```text
+DigimonAttribute
+DigimonNature
+TechniqueNature
+TechniqueKind
+AiProfile
+```
+
+Não usar o mesmo campo para:
+
+* atributo do Digimon;
+* natureza da técnica;
+* atributo do dispositivo;
+* tipo de alcance;
+* tipo de IA.
+
+### 6.3 Separar recursos
+
+A arquitetura deve distinguir:
+
+```text
+CreatureResource
+TrainerCommandResource
+BondProgress
+DigiFriendProgress
+OrderCostDefinition
+OrderAvailabilityRule
+```
+
+Para o sandbox, `Energy` e `CommandPoints` podem continuar existindo. Para perfis históricos:
+
+* Decode deve poder usar MP;
+* Next Order deve poder usar OP individual;
+* Support deve poder gerar OP;
+* Digifusion e ExE devem consumir o recurso de ordens definido pelo `Ruleset` e ter regras próprias de disponibilidade;
+* no perfil Next Order documentado, Digifusion e ExE custam 150 OP por parceiro.
+
+### 6.4 Separar atributos de dispositivo e atributos de jogo
+
+O VBHelper pode manter:
+
+* DIM;
+* BEM;
+* Vital Points;
+* Mood do dispositivo.
+
+Mas os perfis de batalha devem mapear explicitamente para:
+
+* HP;
+* MP;
+* Attack;
+* Defense;
+* Speed;
+* Brains;
+* Strength;
+* Stamina;
+* Wisdom;
+* Bond;
+* DigiFriend.
+
+Não converter silenciosamente BP em Defense em um perfil Decode ou Next Order.
+
+### 6.5 Catalogar técnicas com rastreabilidade
+
+Cada técnica deve ter:
+
+```text
+techniqueId
+ruleset
+sourceUri
+sourceId
+nature
+power
+mpCost
+opCost
+rangeMin
+rangeMax
+startup
+active
+recovery
+cooldown
+status
+statusChance
+statusDuration
+knockback
+break
+animation
+vfx
+sfx
+confidence
+```
+
+Os dados extraídos de `DecodeRandomizer` e `DWNOTools` podem orientar o esquema, mas não substituem a validação da jogabilidade.
+
+### 6.6 Não misturar o relatório com a implementação
+
+O texto original deve continuar sendo uma especificação de design. O apêndice deve ser considerado:
+
+* documentação de pesquisa;
+* catálogo de referências;
+* lista de lacunas;
+* material para estimar prioridades de implementação.
+
+Uma regra deve entrar em um perfil histórico somente quando tiver fonte, escopo de versão, confiança, teste e tratamento definido para valores desconhecidos. Regras originais do sandbox não exigem fonte histórica, mas devem registrar decisão de projeto, versionamento e testes.
+
+---
+
+## 7. PRIORIDADES DE IMPLEMENTAÇÃO
+
+### P0 — Isolamento de regras
+
+* Criar `BattleRuleset`.
+* Separar `DigimonAttribute`, `DigimonNature` e `TechniqueNature`.
+* Separar `CreatureResource`, `MP`, `OP` e `TrainerCommandResource`.
+* Identificar o modo atual como `SANDBOX_VBHELPER`.
+* Não deixar o ciclo Data/Virus/Vaccine atual ser assumido por Decode ou Next Order.
+* Não converter BP em Defense em rulesets históricos.
+
+### P1 — Fidelidade de batalha
+
+* Criar perfil Decode com um parceiro.
+* Implementar Finisher Power do Decode, se o perfil histórico for escolhido.
+* Implementar Attack Gauge.
+* Implementar Defense Gauge.
+* Implementar limiares de Brains somente após validação.
+* Criar catálogo Decode por Nature.
+* Criar perfil Next Order com dois parceiros.
+* Implementar OP individual.
+* Implementar Bond inicial.
+* Implementar Order Ring.
+* Implementar Support timing/cooldown.
+* Implementar Agitation.
+* Implementar Digifusion.
+* Definir custos, estágios, Bond, DigiFriend, frequência de uso e regras de ExE antes de implementar o sistema.
+* Implementar status Next Order.
+
+### P1 — Dados e testes
+
+* Criar fixtures Decode.
+* Criar fixtures Next Order.
+* Criar testes de equivalência de catálogo.
+* Criar testes de semântica de recursos.
+* Criar testes de incompatibilidade de versão.
+* Criar testes que falham quando Attribute e Nature são confundidos.
+* Criar testes que impeçam o uso de MP em técnicas ordenadas apenas no perfil versionado do Next Order.
+* Criar testes para redefinição de OP por batalha.
+* Criar testes para Finisher Power e Defense Gauge do Decode, se o perfil histórico for escolhido.
+* Criar testes para Support timing e cooldown.
+
+### P2 — Progressão
+
+* Bond;
+* DigiFriend;
+* personalidade;
+* disciplina;
+* mood;
+* Tamer Skills;
+* training;
+* EXP;
+* Bits;
+* inventário transacional;
+* evolução;
+* ciclo de vida;
+* morte/reencarnação;
+* DigiMemory;
+* Floatia;
+* recrutamento;
+* integração de Digifusion e ExE com a progressão e as condições de desbloqueio.
+
+### P3 — Persistência e revisão
+
+* Snapshot serializado;
+* migração de Ruleset;
+* salvamento/carregamento de batalha;
+* compatibilidade entre versões;
+* histórico de resultado;
+* auditoria de rastreabilidade;
+* testes de regressão visuais;
+* testes prolongados de desempenho.
+
+---
+
+## 8. VERIFICAÇÃO LOCAL REALIZADA
+
+### Testes do domínio offline
+
+Comando:
+
+```powershell
+.\gradlew.bat :app:testIntegrityCheckUnitTest --tests "com.github.nacabaro.vbhelper.battle.offline.*" --offline --console=plain
+```
+
+Resultado:
+
+```text
+BUILD SUCCESSFUL
+```
+
+Esses testes validam o contrato atual do simulador, não a fidelidade histórica a Decode ou Next Order.
+
+### Cobertura relevante
+
+`BattleSimulatorTest` cobre:
+
+* atributos;
+* IA;
+* defesa;
+* ordens;
+* fila;
+* reserva de recursos;
+* Support;
+* stun;
+* DoT;
+* threat;
+* projétil;
+* colisão;
+* itens;
+* resultados;
+* determinismo;
+* empate simultâneo.
+
+`TrainingBattleBalanceTest` cobre:
+
+* escala por estágio;
+* conversão DIM/BEM;
+* treino;
+* vitals;
+* humor;
+* movimentação;
+* formatos;
+* sementes;
+* duração;
+* regressões de abertura.
+
+### Suíte completa
+
+A execução completa foi registrada em 24/09/2026, no commit `548fbd7897a77bbd50293f07ce25d18d2d4b532e`, com o comando:
+
+```powershell
+.\gradlew.bat :app:testIntegrityCheckUnitTest --offline --console=plain
+```
+
+O comando filtrado da seção anterior é uma execução separada e validou apenas o pacote `battle.offline`.
+
+* 179 testes concluídos;
+* 2 falhas;
+* 3 ignorados.
+
+As duas falhas estavam em `SpriteFacingTest`, fora do pacote de batalha:
+
+* `cameraAssistanceLimitsTheVisibleProfileToFortyDegrees`;
+* `rotatingPastAProfileViewFlipsTheSpriteAbruptly`.
+
+Essas falhas estão fora do pacote de batalha e não foram corrigidas nesta pesquisa. A atribuição de que não foram introduzidas por esta pesquisa exige comparação com o commit-base.
+
+### Lint e montagem
+
+As tarefas de lint e assemble Debug foram iniciadas, mas o processo excedeu o timeout antes de imprimir o resumo final completo. Portanto, esta pesquisa não declara uma nova aprovação de lint/assemble.
+
+O workspace já continha muitas alterações e artefatos de implementação anteriores; a pesquisa não alterou fontes Kotlin.
+
+---
+
+## 9. ÍNDICE DE FONTES
+
+### Fontes oficiais de Decode
+
+* [Decode 3DS — introdução](https://digimon-gameportal.bn-ent.net/product/world_re_digitize/3ds/introduction.html)
+* [Decode 3DS — aventura](https://digimon-gameportal.bn-ent.net/product/world_re_digitize/3ds/system00.html)
+* [Decode 3DS — criação](https://digimon-gameportal.bn-ent.net/product/world_re_digitize/3ds/system01.html)
+* [Decode 3DS — treinamento](https://digimon-gameportal.bn-ent.net/product/world_re_digitize/3ds/system02.html)
+* [Decode 3DS — batalha](https://digimon-gameportal.bn-ent.net/product/world_re_digitize/3ds/system03.html)
+* [Decode 3DS — Decode Level e Digitter](https://digimon-gameportal.bn-ent.net/product/world_re_digitize/3ds/system04.html)
+* [Decode 3DS — especificações](https://digimon-gameportal.bn-ent.net/product/world_re_digitize/3ds/sp/)
+* [Re:Digitize PSP — sistema](https://digimon-gameportal.bn-ent.net/product/world_re_digitize/system03.html)
+* [Decode — News e itens](https://digimon-gameportal.bn-ent.net/product/world_re_digitize/3ds/barcode.html)
+
+### Fontes secundárias de Decode
+
+* [GAME-CMR — battle basics](http://re-digitize.game-cmr.com/data/battle/kihon.html)
+* [GAME-CMR — command types](http://re-digitize.game-cmr.com/data/battle/command.html)
+* [GAME-CMR — Digimon attributes](http://re-digitize.game-cmr.com/data/dejimonzokusei/index.html)
+* [Atwiki — battle analysis](https://w.atwiki.jp/redigitize_3ds/pages/48.html)
+* [Atwiki — training and personality](https://w.atwiki.jp/redigitize_3ds/pages/41.html)
+* [Atwiki — skills](https://w.atwiki.jp/redigitize_3ds/pages/28.html)
+* [Atwiki — items](https://w.atwiki.jp/redigitize_3ds/pages/44.html)
+* [Atwiki — evolution](https://w.atwiki.jp/redigitize_3ds/pages/23.html)
+* [Atwiki — DigiTama](https://w.atwiki.jp/redigitize_3ds/pages/18.html)
+* [Atwiki — changes from PSP](https://w.atwiki.jp/redigitize_3ds/pages/4.html)
+* [GameFAQs — skill acquisition](https://gamefaqs.gamespot.com/3ds/705638-digimon-world-redigitize-decode/faqs/78979/skill-acquisition-methods)
+* [GameFAQs — evolution](https://gamefaqs.gamespot.com/3ds/705638-digimon-world-redigitize-decode/faqs/71975)
+* [GameFAQs — item master list](https://gamefaqs.gamespot.com/3ds/705638-digimon-world-redigitize-decode/faqs/79159/introduction-master-list)
+* [GameFAQs — Infinity Mountain](https://gamefaqs.gamespot.com/3ds/705638-digimon-world-redigitize-decode/faqs/77199)
+* [GameFAQs — evolution mechanics discussion](https://gamefaqs.gamespot.com/boards/705638-digimon-world-redigitize-decode/79507019)
+* [Wikimon — Re:Digitize Decode](https://wikimon.net/Digimon_World_Re:Digitize_Decode)
+* [Wikimon — Attribute](https://wikimon.net/Attribute)
+* [WikiWiki — skills](https://wikiwiki.jp/redigitizedc/スキル)
+* [Fandom — Re:Digitize Decode](https://digimon.fandom.com/wiki/Digimon_World_Re:Digitize:_Decode)
+* [Solaris Japan — official guide book](https://solarisjapan.com/products/digimon-world-re-digitize-decode-official-guide-book)
+
+### Fontes oficiais de Next Order
+
+* [Bandai Namco America — Next Order](https://www.bandainamcoent.com/games/digimon-world-next-order)
+* [Bandai Namco Europe — Next Order](https://en.bandainamcoent.eu/digimon/digimon-world-next-order)
+* [Official Japanese Next Order system](https://digimonworld-neo.bn-ent.net/system/)
+* [Official Japanese battle page](https://digimonworld-neo.bn-ent.net/system/03.html)
+* [Official PS4 manual](https://d1vtv52f4vjbmu.cloudfront.net/manuals/dwno/PS4-DWNO_manual_GBQS_WEB.pdf)
+* [PlayStation Blog — AI battle](https://blog.ja.playstation.com/2016/03/07/20160307-digimonworld/)
+* [PlayStation Blog — PS4 balance](https://blog.ja.playstation.com/2016/12/12/20161212-digimonworld/)
+* [Nintendo Store — Switch](https://www.nintendo.com/us/store/products/digimon-world-next-order-switch/)
+* [Steam — PC](https://store.steampowered.com/app/1530160/Digimon_World_Next_Order/)
+* [4Gamer — International Edition](https://www.4gamer.net/games/664/G066461/20221226038/)
+* [Bandai Namco — Switch/PC announcement](https://en.bandainamcoent.eu/digimon/news/digimon-world-next-order-launches-today-nintendo-switch-and-pc)
+
+### Fontes secundárias de Next Order
+
+* [GameFAQs — battle](https://gamefaqs.gamespot.com/ps4/196176-digimon-world-next-order/faqs/79149/battle)
+* [GameFAQs — partner](https://gamefaqs.gamespot.com/ps4/196176-digimon-world-next-order/faqs/79149/partner)
+* [GameFAQs — training tips](https://gamefaqs.gamespot.com/ps4/196176-digimon-world-next-order/faqs/75683/training-tips)
+* [GameFAQs — battle tips](https://gamefaqs.gamespot.com/ps4/196176-digimon-world-next-order/faqs/75683/battle-tips)
+* [GameFAQs — Digivolution guide](https://gamefaqs.gamespot.com/ps4/196176-digimon-world-next-order/faqs/74424)
+* [GameFAQs — Digivolution tips](https://gamefaqs.gamespot.com/ps4/196176-digimon-world-next-order/faqs/75683/digivolution-tips)
+* [Neoseeker — walkthrough](https://www.neoseeker.com/digimon-world-next-order/faqs/3088147-walkthrough.html)
+* [Neoseeker — evolution](https://www.neoseeker.com/digimon-world-next-order/faqs/2659556-digimon-world-no-evolution.html)
+* [Grindosaur — moves](https://www.grindosaur.com/en/games/digimon-world-next-order/moves)
+* [Grindosaur — Digimon](https://www.grindosaur.com/en/games/digimon-world-next-order/digimon)
+* [Grindosaur — High Tension](https://www.grindosaur.com/en/games/digimon-world-next-order/guides/high-tension-ability-list)
+* [Grindosaur — Tamer Skills](https://www.grindosaur.com/en/games/digimon-world-next-order/tamer-skills)
+* [Grindosaur — recruitment](https://www.grindosaur.com/en/games/digimon-world-next-order/guides/recruitment-guide)
+* [Grindosaur — extra scenarios](https://www.grindosaur.com/en/games/digimon-world-next-order/guides/extra-scenario-guide)
+* [Tamer Union — battle system](https://tamerunion.blogspot.com/2015/12/next-0rder-title-site-update-explains.html)
+* [Tamer Union — tech chart and mechanics](https://tamerunion.blogspot.com/2016/01/leaked-tech-chart-for-digimon-world.html)
+* [Siliconera — two-Digimon party](https://www.siliconera.com/digimon-world-next-order-details-its-two-digimon-party-battle-system/)
+* [GameFAQs — OP timing discussion](https://gamefaqs.gamespot.com/boards/383941-digimon-world-next-order/80378529)
+* [GameFAQs — Nature and Attribute](https://gamefaqs.gamespot.com/boards/196176-digimon-world-next-order/78195057)
+* [GameFAQs — ExE discussion](https://gamefaqs.gamespot.com/boards/196176-digimon-world-next-order/75975906)
+* [Steam — combat discussion](https://steamcommunity.com/app/1530160/discussions/0/3774616115127538314/)
+* [Steam — stats discussion](https://steamcommunity.com/app/1530160/discussions/0/3815164997812387516/)
+
+### Fontes técnicas
+
+* [DWNOTools](https://github.com/Operation-Decoded/DWNOTools)
+* [DWNOTools — AttackData](https://raw.githubusercontent.com/Operation-Decoded/DWNOTools/master/structures/AttackData.json)
+* [DWNOTools — DigimonData](https://raw.githubusercontent.com/Operation-Decoded/DWNOTools/master/structures/DigimonData.json)
+* [DWNOTools — ItemDataBattle](https://raw.githubusercontent.com/Operation-Decoded/DWNOTools/master/structures/ItemDataBattle.json)
+* [DWNOTools — structures](https://raw.githubusercontent.com/Operation-Decoded/DWNOTools/master/structures/structures.json)
+* [Next Order data repository](https://github.com/eacardenase/digimon-world-next-order-data)
+* [DecodeRandomizer](https://github.com/SydMontague/DecodeRandomizer)
+* [DecodeRandomizer README](https://raw.githubusercontent.com/SydMontague/DecodeRandomizer/master/README.MD)
+* [SydMontague — damage research](https://gist.github.com/SydMontague/e527a24e9a1d1f7a2ea054d72e762ced)
+* [DWNOHelper](https://github.com/AthosArantes/DWNOHelper)
+* [DWNOModdingGuides](https://github.com/Yasha-jin/DWNOModdingGuides)
+* [Next Order evolution data](https://muzk.github.io/digimon-next-order-evolutions/)
+
+---
+
+## 10. CONCLUSÃO DA PESQUISA
+
+A pesquisa apoia a filosofia central do documento original:
+
+* a criatura deve ser um agente autônomo;
+* o jogador deve atuar como treinador;
+* a interação deve ocorrer por Support, ordens, timing e leitura de campo;
+* a preparação e a progressão devem influenciar a aparência e o desempenho da criatura;
+* o jogador não deve controlar continuamente a criatura como um avatar convencional.
+
+A pesquisa acrescenta que essa filosofia possui implementações históricas distintas:
+
+* o **Decode** usa um parceiro principal, comandos derivados de Brains, Finisher Power e gauges de timing;
+* o **Next Order** usa dois parceiros, OP, Bond, Order Ring, Support, Agitation, Digifusion e ExE;
+* o **VBHelper atual** possui uma base técnica de simulação em tempo real, mas ainda utiliza uma gramática de regras própria.
+
+A recomendação final é preservar a identidade original do VBHelper, mas explicitar sua origem como sandbox e criar regras históricas separadas quando a fidelidade a Decode ou Next Order for desejada.
+

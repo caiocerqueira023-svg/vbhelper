@@ -1,24 +1,85 @@
-"""Digifarm textures: jade habitat with exposed violet digital sections.
+"""Digifarm textures: original atlas detail, jade grass and violet digital sections.
 
 Outputs (POT sizes for mipmaps):
-- island_top.png 512x512: jade tiles with broken black/violet wire grid
-  sections near the perimeter, leaving the resident area legible.
-- island_side.png 256x256: muted mauve rim at image top (= cliff top, v=0),
-  strata fading to fully transparent before the lower edge (= cliff foot).
+- island_top.png 512x512: tinted original grass tiles under the existing
+  broken black/violet wire grid sections.
+- island_side.png 256x256: original side-atlas detail tinted by the existing
+  mauve gradient, strata and transparent cliff-foot fade.
 - voxel_block_dark/lit.png 128x128: two dark violet grid panels for the
   detached cubes around the island.
 Usage: py tools/digifarm/build_reference_textures.py --dst DIR
 """
 import argparse
+import colorsys
+from io import BytesIO
 import random
+import statistics
+import zipfile
 from pathlib import Path
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageOps
 
 SEED = 7
 TOP_SIZE = 512
 TOP_PITCH = 12
 SIDE = 256
 BLOCK_SIZE = 128
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+DEFAULT_SOURCE_ARCHIVE = (
+    PROJECT_ROOT / "DigifarmAssets" / "Mobile - Digimon Links - Maps - Digi-Farm.zip"
+)
+SOURCE_ATLAS_ENTRY = "Digi-Farm/farm_base_tex01.png"
+# These original atlas areas are the green surface and side-material UV regions
+# used by the supplied Farm FBX. Only the source detail is sampled; the runtime
+# wireframe patches and mauve side treatment remain authored below.
+GRASS_ATLAS_REGION = (0, 0, 96, 96)
+# A continuous earth band from the original island edge. The broader UV area
+# also contains grass, sand and water blocks; stretching that whole area over
+# the cliff creates hard rectangular seams around the island.
+SIDE_ATLAS_REGION = (384, 400, 512, 448)
+CURRENT_GRASS = (112, 169, 137)
+
+
+def load_original_atlas(source_archive: Path) -> Image.Image:
+    """Load the supplied Farm atlas without extracting or modifying the ZIP."""
+    with zipfile.ZipFile(source_archive) as archive:
+        with Image.open(BytesIO(archive.read(SOURCE_ATLAS_ENTRY))) as image:
+            return image.convert("RGB")
+
+
+def colorize_grass(source: Image.Image) -> Image.Image:
+    """Retain original tile shading while matching the current jade tone."""
+    target_h, target_l, target_s = colorsys.rgb_to_hls(
+        *(channel / 255 for channel in CURRENT_GRASS)
+    )
+    source_lightness = [
+        colorsys.rgb_to_hls(*(channel / 255 for channel in pixel))[1]
+        for pixel in source.getdata()
+    ]
+    median_lightness = statistics.median(source_lightness)
+    tinted = []
+    for pixel in source.getdata():
+        lightness = colorsys.rgb_to_hls(*(channel / 255 for channel in pixel))[1]
+        lightness = max(.25, min(.78, target_l + (lightness - median_lightness) * .72))
+        tinted.append(tuple(round(channel * 255) for channel in colorsys.hls_to_rgb(
+            target_h, lightness, target_s
+        )))
+    output = Image.new("RGB", source.size)
+    output.putdata(tinted)
+    return output
+
+
+def tile_mirrored(source: Image.Image, size: tuple[int, int]) -> Image.Image:
+    """Repeat a source tile without a hard seam at each repeated edge."""
+    output = Image.new("RGB", size)
+    for row, y in enumerate(range(0, size[1], source.height)):
+        for column, x in enumerate(range(0, size[0], source.width)):
+            tile = source
+            if column % 2:
+                tile = ImageOps.mirror(tile)
+            if row % 2:
+                tile = ImageOps.flip(tile)
+            output.paste(tile, (x, y))
+    return output.crop((0, 0, *size))
 
 
 def wireframe_tiles() -> set[tuple[int, int]]:
@@ -44,18 +105,19 @@ def wireframe_tiles() -> set[tuple[int, int]]:
     return exposed
 
 
-def island_top() -> Image.Image:
+def island_top(atlas: Image.Image) -> Image.Image:
     rng = random.Random(SEED)
-    img = Image.new("RGB", (TOP_SIZE, TOP_SIZE), (112, 169, 137))
+    grass = colorize_grass(atlas.crop(GRASS_ATLAS_REGION))
+    img = tile_mirrored(grass, (TOP_SIZE, TOP_SIZE))
     px = img.load()
-    # Per-tile brightness jitter (reference has lively but uniform tiles).
+    # Retain the existing per-tile tone variation over the original texture.
     for ty in range(0, TOP_SIZE, TOP_PITCH):
         for tx in range(0, TOP_SIZE, TOP_PITCH):
             j = rng.randint(-6, 6)
             for y in range(ty, min(ty + TOP_PITCH, TOP_SIZE)):
                 for x in range(tx, min(tx + TOP_PITCH, TOP_SIZE)):
                     r, g, b = px[x, y]
-                    px[x, y] = (r + j, g + j, b + j)
+                    px[x, y] = tuple(max(0, min(255, c + j)) for c in (r, g, b))
     d = ImageDraw.Draw(img, "RGBA")
     # Quiet tonal variation keeps the turf alive without competing with sprites.
     for _ in range(12):
@@ -110,11 +172,15 @@ def voxel_block(lit: bool) -> Image.Image:
     return img
 
 
-def island_side() -> Image.Image:
+def island_side(atlas: Image.Image) -> Image.Image:
     # The geometry ends on a fully transparent band, including texture-filter
     # samples along its last row. This prevents a one-pixel foot outline.
     img = Image.new("RGBA", (SIDE, SIDE))
     px = img.load()
+    side_detail = tile_mirrored(atlas.crop(SIDE_ATLAS_REGION), (SIDE, SIDE))
+    side_pixels = list(side_detail.getdata())
+    side_luma = [.2126 * r + .7152 * g + .0722 * b for r, g, b in side_pixels]
+    side_mean = statistics.mean(side_luma)
     stops = [
         (0.00, (187, 170, 194)),
         (0.10, (157, 139, 174)),
@@ -136,7 +202,12 @@ def island_side() -> Image.Image:
         smooth_fade = fade_t * fade_t * (3.0 - 2.0 * fade_t)
         alpha = int(round(255 * (1.0 - smooth_fade)))
         for x in range(SIDE):
-            px[x, y] = (*col, alpha)
+            index = y * SIDE + x
+            # The atlas contributes original stone detail while the existing
+            # mauve palette and vertical fade remain the dominant colors.
+            shade = max(.78, min(1.22, 1.0 + (side_luma[index] - side_mean) * .75 / 255))
+            textured = tuple(max(0, min(255, round(channel * shade))) for channel in col)
+            px[x, y] = (*textured, alpha)
     d = ImageDraw.Draw(img, "RGBA")
     # Strata live in the cliff band only.
     for frac in (0.15, 0.25, 0.35):
@@ -156,14 +227,16 @@ def island_side() -> Image.Image:
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--dst", required=True)
+    p.add_argument("--source-archive", default=str(DEFAULT_SOURCE_ARCHIVE))
     a = p.parse_args()
     dst = Path(a.dst)
     dst.mkdir(parents=True, exist_ok=True)
-    island_top().save(dst / "island_top.png")
-    island_side().save(dst / "island_side.png")
+    atlas = load_original_atlas(Path(a.source_archive))
+    island_top(atlas).save(dst / "island_top.png")
+    island_side(atlas).save(dst / "island_side.png")
     voxel_block(False).save(dst / "voxel_block_dark.png")
     voxel_block(True).save(dst / "voxel_block_lit.png")
-    print("wrote jade island, mauve cliff, and violet block textures")
+    print("wrote original-atlas jade grass, mauve cliff, and unchanged violet blocks")
 
 
 if __name__ == "__main__":

@@ -282,6 +282,9 @@ def main():
     parser.add_argument('--preview')
     args = parser.parse_args(sys.argv[sys.argv.index('--') + 1:])
     source = next(Path(args.source_root).rglob('farm_01.fbx'))
+    source_texture = source.parent / 'farm_base_tex01.png'
+    if not source_texture.is_file():
+        raise RuntimeError(f'Original Farm texture atlas not found: {source_texture}')
     output = Path(args.output_dir)
     output.mkdir(parents=True, exist_ok=True)
     bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -310,13 +313,15 @@ def main():
         schema=1, mapId='digi_farm_3d', mapVersion=1,
         asset='digifarm/3d/digi_farm_3d.glb', source=source.name,
         sourceSha256=hashlib.sha256(source.read_bytes()).hexdigest(),
+        sourceTexture=source_texture.name,
+        sourceTextureSha256=hashlib.sha256(source_texture.read_bytes()).hexdigest(),
         coordinateSystem='canonical-y-up-ground-zero', groundHeight=0,
         playableBounds=dict(min=[-.68, -.43], max=[.68, .43]),
         safeSpawns=[[x, z] for z in [-.28, 0, .28]
                     for x in [-.48, -.16, .16, .48]],
         staticNodes=sorted(o.name for o in bpy.context.scene.objects),
         facilityNodes=[],
-        notes='Single jade island with violet wire grid on top only, muted mauve cliff fading into a deep purple backdrop, and floating original voxel blocks; no stadium islets or sea.'
+        notes='Single jade island using the original Farm texture atlas tinted to the current jade/mauve palette; existing violet wire patches and floating voxel blocks are preserved; no stadium islets or sea.'
     )
     (output / 'manifest.json').write_text(json.dumps(manifest, indent=2), encoding='utf-8')
     if args.preview:

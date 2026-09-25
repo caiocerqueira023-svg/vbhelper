@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -38,6 +39,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -63,6 +66,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -85,6 +89,8 @@ import com.github.nacabaro.vbhelper.battle.offline.core.TechniqueKind
 import com.github.nacabaro.vbhelper.battle.offline.core.TrainerAction
 import com.github.nacabaro.vbhelper.battle.offline.core.OrderStatus
 import com.github.nacabaro.vbhelper.battle.offline.data.TrainingBattleFactory
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CenterFocusStrong
 import com.github.nacabaro.vbhelper.ui.theme.DeepPurpleBgAlt
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceElevatedPurple
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
@@ -220,7 +226,7 @@ fun OfflineTrainingBattleScreen(
     }
 
     Column(
-        modifier = modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = 12.dp, vertical = 4.dp),
+        modifier = modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = 16.dp, vertical = 4.dp),
         verticalArrangement = Arrangement.spacedBy(5.dp)
     ) {
         Row(
@@ -246,14 +252,26 @@ fun OfflineTrainingBattleScreen(
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                IconButton(
+                    onClick = { sceneView?.resetCamera() },
+                    enabled = sceneReady,
+                    modifier = Modifier.size(46.dp)
+                        .border(1.dp, SurfaceStroke, CutCornerShape(6.dp))
+                        .clip(CutCornerShape(6.dp))
+                        .testTag("offline-battle-recenter-camera")
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.CenterFocusStrong,
+                        contentDescription = "Recentralizar câmera",
+                        tint = TextPrimaryOnDark
+                    )
+                }
                 if (debugToolsEnabled && snapshot != null) {
                     OutlinedButton(onClick = { showBattleDebug = true }, shape = CutCornerShape(6.dp),
                         border = BorderStroke(1.dp, VitalCyan), modifier = Modifier.size(width = 52.dp, height = 42.dp),
                         contentPadding = PaddingValues(0.dp)) {
                         Text("IA", color = VitalCyan)
                     }
-                } else {
-                    Spacer(Modifier.width(52.dp))
                 }
                 OutlinedButton(onClick = ::requestExit, shape = CutCornerShape(6.dp),
                     border = BorderStroke(1.dp, SurfaceStroke), modifier = Modifier.size(width = 66.dp, height = 42.dp),
@@ -269,7 +287,8 @@ fun OfflineTrainingBattleScreen(
                 .clip(MaterialTheme.shapes.medium)
                 .background(DeepPurpleBgAlt)
                 .padding(2.dp)
-                .clip(MaterialTheme.shapes.medium)) {
+                .clip(MaterialTheme.shapes.medium)
+                .testTag("offline-battle-arena-viewport")) {
             key(sceneGeneration) {
                 OfflineBattleScene(
                     snapshot = snapshot,
@@ -320,7 +339,7 @@ fun OfflineTrainingBattleScreen(
                 val labels = mutableListOf<Pair<Float, Float>>()
                 val labelWidth = with(density) { 84.dp.toPx() }
                 val labelHeight = with(density) { 30.dp.toPx() }
-                val toolbarBottom = with(density) { 64.dp.toPx() }
+                val pauseStatusBottom = with(density) { 44.dp.toPx() }
                 val labelGap = with(density) { 4.dp.toPx() }
                 val bodyBounds = (current.alliedMembers + current.opposingMembers).mapNotNull { member ->
                     val foot = sceneView?.projectBattlePosition(member.position.x, 0f, member.position.z)
@@ -335,7 +354,7 @@ fun OfflineTrainingBattleScreen(
                     if (point != null) {
                         val centeredX = point.first - labelWidth / 2
                         val aboveY = point.second - labelHeight
-                        // Keep labels close to their fighter and out of the camera toolbar.
+                        // Keep labels close to their fighter and clear of the pause indicator.
                         // Crowded fighters still have named, selectable cards in the HUD.
                         val placement = listOf(
                             centeredX to aboveY,
@@ -344,7 +363,7 @@ fun OfflineTrainingBattleScreen(
                             centeredX to (aboveY - labelHeight - labelGap)
                         ).firstOrNull { (x, y) ->
                             val rectangle = RectF(x, y, x + labelWidth, y + labelHeight)
-                            x >= 0 && y >= toolbarBottom &&
+                            x >= 0 && y >= pauseStatusBottom &&
                                 rectangle.right <= (sceneView?.width ?: 0) &&
                                 rectangle.bottom <= (sceneView?.height ?: 0) &&
                                 bodyBounds.none { RectF.intersects(rectangle, it) } &&
@@ -395,14 +414,6 @@ fun OfflineTrainingBattleScreen(
                         Text("${state.countdown}", color = VitalCyan, style = MaterialTheme.typography.displayMedium)
                     }
                 }
-            }
-            if (sceneReady) {
-                OutlinedButton(
-                    onClick = { sceneView?.resetCamera() },
-                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).heightIn(min = 48.dp),
-                    shape = CutCornerShape(5.dp),
-                    border = BorderStroke(1.dp, SurfaceStroke)
-                ) { Text("Recentralizar", color = TextPrimaryOnDark, style = MaterialTheme.typography.labelSmall) }
             }
             if (state.loading || (snapshot != null && !sceneReady && rendererError == null && state.error == null)) {
                 Surface(Modifier.align(Alignment.Center), color = SurfaceElevatedPurple,
@@ -513,8 +524,11 @@ fun OfflineTrainingBattleScreen(
             if (wideBattleLayout) {
                 val panelWidth = (maxWidth * 0.44f).coerceIn(268.dp, 390.dp)
                 val arenaWidth = (maxWidth - panelWidth - 8.dp).coerceAtLeast(150.dp)
-                Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    arenaContent(Modifier.width(arenaWidth).fillMaxHeight())
+                val arenaSize = minOf(arenaWidth, maxHeight)
+                Row(Modifier.fillMaxSize(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    arenaContent(Modifier.size(arenaSize))
                     Column(
                         Modifier.width(panelWidth).fillMaxHeight(),
                         verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -522,9 +536,13 @@ fun OfflineTrainingBattleScreen(
                     )
                 }
             } else {
-                val arenaHeight = (maxHeight - 326.dp).coerceIn(148.dp, 370.dp)
-                Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    arenaContent(Modifier.fillMaxWidth().height(arenaHeight))
+                Column(
+                    Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Box(Modifier.fillMaxWidth().aspectRatio(1f), contentAlignment = Alignment.Center) {
+                        arenaContent(Modifier.fillMaxSize())
+                    }
                     Column(
                         Modifier.fillMaxWidth(),
                         verticalArrangement = Arrangement.spacedBy(4.dp),

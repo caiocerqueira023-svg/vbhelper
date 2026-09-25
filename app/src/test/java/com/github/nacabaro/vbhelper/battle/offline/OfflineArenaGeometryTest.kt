@@ -28,6 +28,7 @@ class OfflineArenaGeometryTest {
         val camera = manifest.getJSONObject("camera")
         assertTrue("Camera must remain INSIDE the textured dome at every zoom", camera.getDouble("maxDistance") + abs(camera.getDouble("targetY")) < radius)
         assertTrue(camera.getDouble("distance") in camera.getDouble("minDistance")..camera.getDouble("maxDistance"))
+        assertEquals("Allow a slightly closer maximum zoom", 8.5, camera.getDouble("minDistance"), 0.01)
         assertEquals("Simulation, projection and fighter motion share world units", 1.0, manifest.getDouble("positionScale"), 0.0)
         // Measured central disc: first raised trim starts at radius 11.8936 in the source DAE.
         assertTrue(manifest.getDouble("playableRadius") * manifest.getDouble("positionScale") < 11.8936 * scale)

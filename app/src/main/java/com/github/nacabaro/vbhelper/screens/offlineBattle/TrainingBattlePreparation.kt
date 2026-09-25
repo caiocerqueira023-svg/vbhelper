@@ -14,9 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -24,10 +21,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,12 +40,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.github.nacabaro.vbhelper.battle.BattleAssetPaths
 import com.github.nacabaro.vbhelper.battle.decodeBattleAsset
 import com.github.nacabaro.vbhelper.components.CharacterEntry
 import com.github.nacabaro.vbhelper.screens.OfflineBattleParticipant
+import com.github.nacabaro.vbhelper.screens.storageScreen.StorageCharacterPickerDialog
+import com.github.nacabaro.vbhelper.screens.storageScreen.StorageCharacterPickerOption
 import com.github.nacabaro.vbhelper.ui.theme.DeepPurpleBgAlt
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceElevatedPurple
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
@@ -267,14 +262,45 @@ fun TrainingBattlePreparation(
             BattleTeamSlot.OPPONENT_ONE -> listOfNotNull(opponentTwoId)
             BattleTeamSlot.OPPONENT_TWO -> listOfNotNull(opponentOneId)
         }.toSet()
-        BattleParticipantPickerDialog(
-            slot = pickerSlot,
-            participants = choices.filter { it.stableId !in occupiedByOtherSlots || it.stableId == currentId },
-            selectedId = currentId,
-            onDismiss = { pickerSlotKey = null },
-            onSelect = { participant ->
-                setSelected(pickerSlot, participant.stableId)
-                pickerSlotKey = null
+        val availableChoices = choices.filter { it.stableId !in occupiedByOtherSlots || it.stableId == currentId }
+        val dismissPicker = { pickerSlotKey = null }
+        val selectParticipant: (OfflineBattleParticipant) -> Unit = { participant ->
+            setSelected(pickerSlot, participant.stableId)
+            pickerSlotKey = null
+        }
+        val supplementalOptions = availableChoices
+            .filter { it.character == null }
+            .map { participant ->
+                StorageCharacterPickerOption(
+                    id = participant.stableId,
+                    displayName = participant.displayName,
+                    searchableTerms = listOfNotNull(
+                        participant.assetCharacterId,
+                        participant.externalCharacterId,
+                        "estágio ${participant.stage}"
+                    ),
+                    content = { onClick ->
+                        ParticipantPickerTile(
+                            participant = participant,
+                            selected = participant.stableId == currentId,
+                            onClick = onClick
+                        )
+                    }
+                )
+            }
+        StorageCharacterPickerDialog(
+            characters = availableChoices.mapNotNull { it.character },
+            title = "Escolher ${pickerSlot.title}",
+            emptyMessage = "Nenhum Digimon disponível para este time.",
+            supplementalOptions = supplementalOptions,
+            onDismiss = dismissPicker,
+            onCharacterSelected = { characterId ->
+                availableChoices.firstOrNull { it.character?.id == characterId }
+                    ?.let(selectParticipant)
+            },
+            onSupplementalSelected = { stableId ->
+                availableChoices.firstOrNull { it.stableId == stableId }
+                    ?.let(selectParticipant)
             }
         )
     }
@@ -312,74 +338,6 @@ private fun TeamSlotButton(
             }
             Text(if (participant == null) "SELECIONAR" else "TROCAR",
                 style = MaterialTheme.typography.labelSmall, color = VitalCyan, fontWeight = FontWeight.Bold)
-        }
-    }
-}
-
-@Composable
-private fun BattleParticipantPickerDialog(
-    slot: BattleTeamSlot,
-    participants: List<OfflineBattleParticipant>,
-    selectedId: String?,
-    onDismiss: () -> Unit,
-    onSelect: (OfflineBattleParticipant) -> Unit
-) {
-    var query by rememberSaveable(slot.key) { mutableStateOf("") }
-    val filtered = participants.filter { it.displayName.contains(query.trim(), ignoreCase = true) }
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            dismissOnBackPress = true,
-            dismissOnClickOutside = false,
-            usePlatformDefaultWidth = false
-        )
-    ) {
-        Surface(Modifier.fillMaxSize(), color = DeepPurpleBgAlt) {
-            Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween) {
-                    Column(Modifier.weight(1f)) {
-                        Text("Escolher Digimon", style = MaterialTheme.typography.headlineSmall,
-                            color = TextPrimaryOnDark, fontWeight = FontWeight.Bold)
-                        Text("${slot.title} · ${participants.size} disponíveis",
-                            style = MaterialTheme.typography.bodySmall, color = TextSecondaryOnDark)
-                    }
-                    TextButton(onClick = onDismiss) { Text("Cancelar", color = VitalCyan) }
-                }
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    label = { Text("Buscar no Storage") },
-                    placeholder = { Text("Nome do Digimon") }
-                )
-                if (filtered.isEmpty()) {
-                    Box(Modifier.fillMaxSize().weight(1f), contentAlignment = Alignment.Center) {
-                        Text(
-                            if (participants.isEmpty()) "Nenhum Digimon disponível para este time."
-                            else "Nenhum resultado para essa busca.",
-                            color = TextSecondaryOnDark
-                        )
-                    }
-                } else {
-                    androidx.compose.foundation.lazy.grid.LazyVerticalGrid(
-                        columns = GridCells.Adaptive(minSize = 112.dp),
-                        modifier = Modifier.fillMaxSize().weight(1f),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(filtered, key = { it.stableId }) { participant ->
-                            ParticipantPickerTile(
-                                participant = participant,
-                                selected = participant.stableId == selectedId,
-                                onClick = { onSelect(participant) }
-                            )
-                        }
-                    }
-                }
-            }
         }
     }
 }

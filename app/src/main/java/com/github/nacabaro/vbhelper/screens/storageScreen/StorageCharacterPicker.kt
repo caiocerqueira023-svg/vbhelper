@@ -53,6 +53,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -88,6 +89,21 @@ internal enum class StorageSort(@StringRes val label: Int) {
     STAGE(R.string.storage_sort_stage)
 }
 
+object StorageCharacterPickerTags {
+    const val Screen = "storage-character-picker-screen"
+}
+
+/** A non-Storage participant rendered inside the same Storage selection grid. */
+data class StorageCharacterPickerOption(
+    val id: String,
+    val displayName: String,
+    val searchableTerms: List<String> = emptyList(),
+    val isFavorite: Boolean = false,
+    val isActive: Boolean = false,
+    val deviceType: DeviceType? = null,
+    val content: @Composable (onClick: () -> Unit) -> Unit
+)
+
 internal fun CharacterDtos.CharacterWithSprites.displayName(fallback: String): String =
     nickname?.takeIf { it.isNotBlank() }
         ?: speciesName?.takeIf { it.isNotBlank() }
@@ -104,8 +120,10 @@ fun StorageCharacterPickerScreen(
     title: String,
     emptyMessage: String,
     isLoading: Boolean = false,
+    supplementalOptions: List<StorageCharacterPickerOption> = emptyList(),
     onBack: () -> Unit,
-    onCharacterSelected: (Long) -> Unit
+    onCharacterSelected: (Long) -> Unit,
+    onSupplementalSelected: (String) -> Unit = {}
 ) {
     val fallbackName = stringResource(R.string.widget_digimon_label)
     var query by rememberSaveable { mutableStateOf("") }
@@ -178,6 +196,30 @@ fun StorageCharacterPickerScreen(
             }
             .toList()
     }
+    val visibleSupplementalOptions = remember(supplementalOptions, query, filter, sort) {
+        val normalizedQuery = query.trim().lowercase()
+        supplementalOptions.asSequence()
+            .filter { option ->
+                when (filter) {
+                    StorageFilter.ALL -> true
+                    StorageFilter.FAVORITES -> option.isFavorite
+                    StorageFilter.ACTIVE -> option.isActive
+                    StorageFilter.VB -> option.deviceType == DeviceType.VBDevice
+                    StorageFilter.BE -> option.deviceType == DeviceType.BEDevice
+                }
+            }
+            .filter { option ->
+                normalizedQuery.isBlank() ||
+                    (listOf(option.displayName) + option.searchableTerms)
+                        .any { it.lowercase().contains(normalizedQuery) }
+            }
+            .let { filtered ->
+                if (sort == StorageSort.NAME) filtered.sortedBy { it.displayName.lowercase() }
+                else filtered
+            }
+            .toList()
+    }
+    val visibleOptionCount = visibleCharacters.size + visibleSupplementalOptions.size
 
     Scaffold(
         topBar = { TopBanner(text = title, onBackClick = onBack) }
@@ -186,6 +228,7 @@ fun StorageCharacterPickerScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = contentPadding.calculateTopPadding())
+                .testTag(StorageCharacterPickerTags.Screen)
         ) {
             AnimatedVisibility(
                 visible = toolbarVisible,
@@ -243,7 +286,7 @@ fun StorageCharacterPickerScreen(
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Text(
-                            text = stringResource(R.string.storage_result_count, visibleCharacters.size),
+                            text = stringResource(R.string.storage_result_count, visibleOptionCount),
                             style = MaterialTheme.typography.labelLarge,
                             color = VitalCyan
                         )
@@ -286,10 +329,10 @@ fun StorageCharacterPickerScreen(
                         CircularProgressIndicator(color = VitalCyan)
                     }
                 }
-                characters.isEmpty() -> {
+                characters.isEmpty() && supplementalOptions.isEmpty() -> {
                     CyberEmptyState(message = emptyMessage)
                 }
-                visibleCharacters.isEmpty() -> {
+                visibleOptionCount == 0 -> {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
@@ -378,6 +421,13 @@ fun StorageCharacterPickerScreen(
                                 )
                             }
                         }
+                        items(
+                            items = visibleSupplementalOptions,
+                            key = { "supplemental-${it.id}" },
+                            contentType = { "storage-picker-supplemental" }
+                        ) { option ->
+                            option.content { onSupplementalSelected(option.id) }
+                        }
                     }
                 }
             }
@@ -391,8 +441,10 @@ fun StorageCharacterPickerDialog(
     title: String,
     emptyMessage: String,
     isLoading: Boolean = false,
+    supplementalOptions: List<StorageCharacterPickerOption> = emptyList(),
     onDismiss: () -> Unit,
-    onCharacterSelected: (Long) -> Unit
+    onCharacterSelected: (Long) -> Unit,
+    onSupplementalSelected: (String) -> Unit = {}
 ) {
     Dialog(
         onDismissRequest = onDismiss,
@@ -411,8 +463,10 @@ fun StorageCharacterPickerDialog(
                 title = title,
                 emptyMessage = emptyMessage,
                 isLoading = isLoading,
+                supplementalOptions = supplementalOptions,
                 onBack = onDismiss,
-                onCharacterSelected = onCharacterSelected
+                onCharacterSelected = onCharacterSelected,
+                onSupplementalSelected = onSupplementalSelected
             )
         }
     }

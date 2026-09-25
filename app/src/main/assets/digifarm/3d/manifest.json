@@ -5,6 +5,8 @@
   "asset": "digifarm/3d/digi_farm_3d.glb",
   "source": "farm_01.fbx",
   "sourceSha256": "7bb7d3439ffae066577d71719b5dd07b7ce9ff492499b64aeb6fe4c10c1bd425",
+  "sourceTexture": "farm_base_tex01.png",
+  "sourceTextureSha256": "8fee25ba7156cf97465fd421c7818b6e35781832f7c06ebd50384bd81d0d686a",
   "coordinateSystem": "canonical-y-up-ground-zero",
   "groundHeight": 0,
   "playableBounds": {
@@ -92,5 +94,5 @@
     "VoxelFragmentsNear06"
   ],
   "facilityNodes": [],
-  "notes": "Single jade island with violet wire grid on top only, muted mauve cliff fading into a deep purple backdrop, and floating original voxel blocks; no stadium islets or sea."
+  "notes": "Single jade island using the original Farm texture atlas tinted to the current jade/mauve palette; existing violet wire patches and floating voxel blocks are preserved; no stadium islets or sea."
 }

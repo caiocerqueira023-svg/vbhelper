@@ -16,7 +16,7 @@
     "distance": 19.0,
     "pitchRadians": 0.62,
     "targetY": 0.7,
-    "minDistance": 10.0,
+    "minDistance": 8.5,
     "maxDistance": 22.0,
     "minPitchRadians": 0.2,
     "maxPitchRadians": 1.15
