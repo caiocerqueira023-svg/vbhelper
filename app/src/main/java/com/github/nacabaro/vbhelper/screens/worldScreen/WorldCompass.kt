@@ -35,14 +35,21 @@ internal data class CompassReading(
 )
 
 @Composable
-internal fun rememberWorldCompass(location: Location?): CompassReading {
+internal fun rememberWorldCompass(
+    location: Location?,
+    enabled: Boolean = true
+): CompassReading {
     val context = LocalContext.current
     val view = LocalView.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val currentLocation by rememberUpdatedState(location)
     var reading by remember { mutableStateOf(CompassReading()) }
 
-    DisposableEffect(context, view, lifecycle) {
+    DisposableEffect(context, view, lifecycle, enabled) {
+        if (!enabled) {
+            reading = CompassReading()
+            return@DisposableEffect onDispose { }
+        }
         val manager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val handler = Handler(Looper.getMainLooper())
         val debug = context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0

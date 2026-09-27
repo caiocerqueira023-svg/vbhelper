@@ -230,6 +230,11 @@
     <string name="home_vbdim_level">Nível</string>
     <string name="home_vbdim_attribute">Atributo</string>
     <string name="home_vbdim_days">Dias</string>
+    <string name="home_be_rank">Rank</string>
+    <string name="home_be_training_limit">Limite de treino</string>
+    <string name="home_be_training_hp">Treino HP</string>
+    <string name="home_be_training_bp">Treino BP</string>
+    <string name="home_be_training_ap">Treino AP</string>
 
     <string name="special_mission_none">Nenhuma missão selecionada</string>
     <string name="special_mission_steps">Ande %1$d passos</string>
@@ -419,6 +424,10 @@
     <string name="ui_world_zoom_instruction">Use dois dedos em movimento de pinça sobre o mapa para controlar o zoom.</string>
     <string name="ui_world_compass_instruction">As setas N, L, S e O giram ao redor do jogador como uma bússola.</string>
     <string name="ui_world_zoom_label">Zoom %1$d%%</string>
+    <string name="ui_world_debug_spawn_button">DEBUG: Gerar Digimon aleatório (20 m)</string>
+    <string name="ui_world_debug_spawn_loading">Gerando Digimon…</string>
+    <string name="ui_world_debug_spawn_success">Digimon de debug gerado a até 20 m de você.</string>
+    <string name="ui_world_debug_spawn_unavailable">Não há Digimon elegível ou espaço livre no Radar.</string>
     <string name="ui_world_enable_location">Ativar localização</string>
     <string name="ui_world_too_far">Chegue mais perto para interagir com este Digimon.</string>
     <string name="ui_world_wild_digimon">Digimon selvagem</string>
@@ -556,4 +565,14 @@
     <string name="ui_digifarm_stop_follow">Parar de seguir</string>
     <string name="ui_digifarm_transfer">Mover para outra Digifarm</string>
     <string name="ui_digifarm_no_other_farm">Crie outra Digifarm para mover moradores entre fazendas.</string>
+    <string name="ui_world_battle_banner">BATALHA</string>
+    <string name="ui_world_encounter_wild">Digimon selvagem</string>
+    <string name="ui_world_encounter_prompt">Como você quer interagir com este Digimon?</string>
+    <string name="ui_world_encounter_chat">Conversar</string>
+    <string name="ui_world_encounter_fight">Lutar</string>
+    <string name="ui_world_encounter_preparing">Preparando…</string>
+    <string name="ui_world_battle_choose_active">Escolha um Digimon ativo antes de lutar.</string>
+    <string name="ui_world_battle_stats_unavailable">Os stats de batalha do Digimon ativo não estão disponíveis.</string>
+    <string name="ui_world_battle_start_failed">Não foi possível iniciar a batalha.</string>
+    <string name="ui_world_battle_record_failed">Não foi possível registrar o resultado.</string>
 </resources>

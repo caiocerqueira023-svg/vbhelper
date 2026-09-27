@@ -47,13 +47,15 @@ class OfflineBattleSessionViewModel : ViewModel() {
     private var allies: List<OfflineBattleParticipant> = emptyList()
     private var opponents: List<OfflineBattleParticipant> = emptyList()
     private var seed = 1L
+    private var arenaManifestPath = OfflineArenaManifest.DEFAULT_MANIFEST_PATH
 
     fun start(
         context: Context,
         sessionId: String,
         allies: List<OfflineBattleParticipant>,
         opponents: List<OfflineBattleParticipant>,
-        randomSeed: Long = System.nanoTime()
+        randomSeed: Long = System.nanoTime(),
+        arenaManifestPath: String = OfflineArenaManifest.DEFAULT_MANIFEST_PATH
     ) {
         if (_state.value.sessionId == sessionId && (controller != null || _state.value.loading)) return
         releaseCurrentSession()
@@ -63,11 +65,12 @@ class OfflineBattleSessionViewModel : ViewModel() {
         this.allies = allies.toList()
         this.opponents = opponents.toList()
         seed = randomSeed
+        this.arenaManifestPath = arenaManifestPath
         _state.value = OfflineBattleSessionState(sessionId = sessionId, loading = true)
         loadingJob = scope.launch {
             runCatching {
                 TrainingBattlePresentationFactory.create(context.applicationContext, this@OfflineBattleSessionViewModel.allies,
-                    this@OfflineBattleSessionViewModel.opponents, seed)
+                    this@OfflineBattleSessionViewModel.opponents, seed, this@OfflineBattleSessionViewModel.arenaManifestPath)
             }.onSuccess { presentation ->
                 if (_state.value.sessionId != sessionId) return@onSuccess
                 val next = BattleSessionController(presentation.simulator, scope)
@@ -133,7 +136,9 @@ class OfflineBattleSessionViewModel : ViewModel() {
 
     fun retry(context: Context) {
         val sessionId = _state.value.sessionId ?: return
-        start(context, "$sessionId:retry:${System.nanoTime()}", allies, opponents, seed)
+        val candidateSeed = System.nanoTime()
+        val nextSeed = if (candidateSeed != seed) candidateSeed else seed + 1L
+        start(context, "$sessionId:retry:$candidateSeed", allies, opponents, nextSeed, arenaManifestPath)
     }
 
     private fun releaseCurrentSession() {

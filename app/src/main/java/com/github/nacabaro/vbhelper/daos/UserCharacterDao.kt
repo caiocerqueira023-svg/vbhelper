@@ -14,6 +14,7 @@ import com.github.nacabaro.vbhelper.domain.device_data.SpecialMissions
 import com.github.nacabaro.vbhelper.domain.device_data.TransformationHistory
 import com.github.nacabaro.vbhelper.domain.device_data.VBCharacterData
 import com.github.nacabaro.vbhelper.domain.device_data.VitalsHistory
+import com.github.nacabaro.vbhelper.battle.offline.data.BattleParticipantProfile
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import kotlinx.coroutines.flow.Flow
 
@@ -113,6 +114,48 @@ interface UserCharacterDao {
         """
     )
     fun getAllCharacters(): Flow<List<CharacterDtos.CharacterWithSprites>>
+
+    @Query(
+        """
+        SELECT
+            uc.id AS sourceCharacterId,
+            uc.individualId AS individualId,
+            'dim' || printf('%03d', ca.id) || '_mon' || printf('%02d', c.charaIndex + 1) AS externalCharacterId,
+            COALESCE(NULLIF(di.nickname, ''), NULLIF(sp.speciesName, ''), NULLIF(sp.matchedName, ''), 'Stored Digimon #' || uc.id) AS displayName,
+            c.stage AS stage,
+            c.attribute AS attribute,
+            p.personalityType AS personalityType,
+            c.baseHp AS baseHp,
+            c.baseBp AS baseBp,
+            c.baseAp AS baseAp,
+            COALESCE(be.trainingHp, 0) AS trainingHp,
+            COALESCE(be.trainingBp, 0) AS trainingBp,
+            COALESCE(be.trainingAp, 0) AS trainingAp,
+            uc.vitalPoints AS vitalPoints,
+            uc.mood AS mood,
+            ca.isBEm AS isBemCard
+        FROM UserCharacter uc
+        JOIN CardCharacter c ON c.id = uc.charId
+        JOIN Card ca ON ca.id = c.cardId
+        LEFT JOIN DigimonIndividual di ON di.individualId = uc.individualId
+        LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = c.id
+        LEFT JOIN DigimonPersonalityTraits p ON p.individualId = uc.individualId
+        LEFT JOIN BECharacterData be ON be.id = uc.id
+        """
+    )
+    suspend fun getAllBattleParticipantProfiles(): List<BattleParticipantProfile>
+
+    @Query(
+        """
+        UPDATE UserCharacter
+        SET currentPhaseBattlesWon = currentPhaseBattlesWon + CASE WHEN :won = 1 THEN 1 ELSE 0 END,
+            currentPhaseBattlesLost = currentPhaseBattlesLost + CASE WHEN :won = 0 THEN 1 ELSE 0 END,
+            totalBattlesWon = totalBattlesWon + CASE WHEN :won = 1 THEN 1 ELSE 0 END,
+            totalBattlesLost = totalBattlesLost + CASE WHEN :won = 0 THEN 1 ELSE 0 END
+        WHERE id = :characterId
+        """
+    )
+    suspend fun recordBattleResult(characterId: Long, won: Boolean): Int
 
     @Query(
         """

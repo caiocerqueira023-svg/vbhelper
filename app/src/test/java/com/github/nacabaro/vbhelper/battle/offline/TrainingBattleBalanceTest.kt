@@ -86,7 +86,7 @@ class TrainingBattleBalanceTest {
         assertEquals(dimDefinition.defense, bemDefinition.defense)
     }
 
-    @Test fun eachBemTrainingStatOnlyImprovesItsMatchingCombatStat() {
+    @Test fun eachBemTrainingStatOnlyImprovesItsMatchingPrimaryCombatStat() {
         val base = TrainingBattleStats.forParticipant(
             stage = 3,
             vitalStats = bem(hp = 3_496, bp = 5_171, ap = 1_222)
@@ -113,6 +113,164 @@ class TrainingBattleBalanceTest {
         assertTrue(apTrained.attack > base.attack)
         assertEquals(base.health, apTrained.health)
         assertEquals(base.defense, apTrained.defense)
+    }
+
+    @Test fun braceletStatsAlsoShapeEnergyRegenerationMovementAndCooldowns() {
+        val baseline = TrainingBattleStats.forParticipant(
+            stage = 3,
+            vitalStats = bem(hp = 3_496, bp = 5_171, ap = 1_222)
+        )
+        val tank = TrainingBattleStats.forParticipant(
+            stage = 3,
+            vitalStats = bem(hp = 4_495, bp = 5_171, ap = 1_222)
+        )
+        val disciplined = TrainingBattleStats.forParticipant(
+            stage = 3,
+            vitalStats = bem(hp = 3_496, bp = 6_170, ap = 1_222)
+        )
+        val striker = TrainingBattleStats.forParticipant(
+            stage = 3,
+            vitalStats = bem(hp = 3_496, bp = 5_171, ap = 2_221)
+        )
+
+        assertTrue("HP should add resource capacity", tank.energy > baseline.energy)
+        assertTrue("HP-heavy tanks should move more slowly", tank.movementSpeed < baseline.movementSpeed)
+        assertTrue("HP-heavy tanks should cycle techniques more slowly", tank.cooldownMultiplier > baseline.cooldownMultiplier)
+        assertTrue("HP-heavy tanks should regenerate more slowly", tank.energyRegenerationPerSecond < baseline.energyRegenerationPerSecond)
+
+        assertTrue("BP should add resource capacity", disciplined.energy > baseline.energy)
+        assertTrue("BP should improve sustained regeneration", disciplined.energyRegenerationPerSecond > baseline.energyRegenerationPerSecond)
+        assertTrue("BP should make action timing more stable", disciplined.cooldownMultiplier < baseline.cooldownMultiplier)
+
+        assertTrue("AP should add resource capacity", striker.energy > baseline.energy)
+        assertTrue("AP should improve movement tempo", striker.movementSpeed > baseline.movementSpeed)
+        assertTrue("AP should shorten technique cooldowns", striker.cooldownMultiplier < baseline.cooldownMultiplier)
+    }
+
+    @Test fun higherStagesKeepStrictSpeedAndCooldownBands() {
+        val fastestLowerStage = TrainingBattleStats.forParticipant(
+            stage = 3,
+            vitalStats = bem(hp = 1, bp = 65_534, ap = 65_534)
+        )
+        val slowestHigherStage = TrainingBattleStats.forParticipant(
+            stage = 4,
+            vitalStats = bem(hp = 65_534, bp = 1, ap = 1)
+        )
+
+        assertTrue(
+            "A higher-stage Digimon must remain faster even with a tank profile",
+            slowestHigherStage.movementSpeed > fastestLowerStage.movementSpeed
+        )
+        assertTrue(
+            "A higher-stage Digimon must retain a faster cooldown floor",
+            slowestHigherStage.cooldownMultiplier < fastestLowerStage.cooldownMultiplier
+        )
+    }
+
+    @Test fun factoryCopiesEveryDerivedCombatStatIntoTheDefinition() {
+        val profile = bem(hp = 4_495, bp = 6_170, ap = 2_221)
+        val expected = TrainingBattleStats.forParticipant(stage = 3, vitalStats = profile)
+        val definition = TrainingBattleFactory.definition(
+            input("derived", stage = 3, vitalStats = profile),
+            BattleSide.ALLIED
+        )
+
+        assertEquals(expected.health, definition.maxHealth)
+        assertEquals(expected.attack, definition.attack)
+        assertEquals(expected.defense, definition.defense)
+        assertEquals(expected.energy, definition.maxEnergy)
+        assertEquals(expected.energyRegenerationPerSecond, definition.energyRegenerationPerSecond, 0.0001f)
+        assertEquals(expected.movementSpeed, definition.movementSpeed, 0.0001f)
+        assertEquals(expected.cooldownMultiplier, definition.techniqueCooldownMultiplier, 0.0001f)
+        assertEquals(expected.decisionDelayMinMillis, definition.decisionDelayMinMillis)
+        assertEquals(expected.decisionDelayMaxMillis, definition.decisionDelayMaxMillis)
+    }
+
+    @Test fun fivePercentAcrossAllBraceletStatsStaysBelowTheV3DominanceGate() {
+        val average = input(
+            id = "average",
+            stage = 3,
+            vitalStats = bem(hp = 3_496, bp = 5_172, ap = 1_223)
+        )
+        val stronger = input(
+            id = "stronger",
+            stage = 3,
+            vitalStats = bem(hp = 3_671, bp = 5_431, ap = 1_284)
+        )
+        var strongerWins = 0
+        var decided = 0
+
+        for (seed in 1L..100L) {
+            for (sideSwapped in listOf(false, true)) {
+                val simulator = TrainingBattleFactory.create(
+                    allies = listOf(if (sideSwapped) stronger else average),
+                    opponents = listOf(if (sideSwapped) average else stronger),
+                    configuration = BattleConfiguration(randomSeed = seed)
+                )
+                repeat(3_600) {
+                    if (simulator.snapshot().result == null) simulator.advance(34L)
+                }
+                when (simulator.snapshot().result?.outcome) {
+                    BattleOutcome.ALLIED_VICTORY -> {
+                        decided++
+                        if (sideSwapped) strongerWins++
+                    }
+                    BattleOutcome.OPPOSING_VICTORY -> {
+                        decided++
+                        if (!sideSwapped) strongerWins++
+                    }
+                    else -> Unit
+                }
+            }
+        }
+
+        val winRate = strongerWins.toFloat() / decided.coerceAtLeast(1)
+        println("DERIVED_STAT_BALANCE: stronger=$strongerWins decided=$decided rate=$winRate")
+        assertTrue("The stronger profile should retain a measurable advantage: $winRate", winRate > 0.50f)
+        assertTrue("A +5% profile exceeded the V3 70% dominance gate: $winRate", winRate <= 0.70f)
+    }
+
+    @Test fun tankAndStrikerProfilesRemainInTheSameStageBalanceBand() {
+        val tank = input(
+            id = "tank",
+            stage = 3,
+            vitalStats = bem(hp = 4_195, bp = 5_689, ap = 978)
+        )
+        val striker = input(
+            id = "striker",
+            stage = 3,
+            vitalStats = bem(hp = 3_146, bp = 4_913, ap = 1_468)
+        )
+        var tankWins = 0
+        var decided = 0
+
+        for (seed in 101L..200L) {
+            for (sideSwapped in listOf(false, true)) {
+                val simulator = TrainingBattleFactory.create(
+                    allies = listOf(if (sideSwapped) striker else tank),
+                    opponents = listOf(if (sideSwapped) tank else striker),
+                    configuration = BattleConfiguration(randomSeed = seed)
+                )
+                repeat(3_600) {
+                    if (simulator.snapshot().result == null) simulator.advance(34L)
+                }
+                when (simulator.snapshot().result?.outcome) {
+                    BattleOutcome.ALLIED_VICTORY -> {
+                        decided++
+                        if (!sideSwapped) tankWins++
+                    }
+                    BattleOutcome.OPPOSING_VICTORY -> {
+                        decided++
+                        if (sideSwapped) tankWins++
+                    }
+                    else -> Unit
+                }
+            }
+        }
+
+        val tankWinRate = tankWins.toFloat() / decided.coerceAtLeast(1)
+        println("DERIVED_ROLE_BALANCE: tank=$tankWins decided=$decided rate=$tankWinRate")
+        assertTrue("Tank profile fell outside the same-stage balance band: $tankWinRate", tankWinRate in 0.35f..0.65f)
     }
 
     @Test fun vitalPointsAndMoodApplyBraceletBattleBonuses() {

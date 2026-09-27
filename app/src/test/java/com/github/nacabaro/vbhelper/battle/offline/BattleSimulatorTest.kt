@@ -233,6 +233,34 @@ class BattleSimulatorTest {
         assertEquals(60, sim.snapshot().alliedMembers.single().energy)
     }
 
+    @Test fun combatantCooldownMultiplierChangesTheActualTechniqueCooldown() {
+        val hit = skill("paced", power = 10).copy(cooldownMillis = 2_000L)
+        fun remainingCooldown(multiplier: Float): Long {
+            val attacker = fighter("a", BattleSide.ALLIED, listOf(hit.techniqueId)).copy(
+                techniqueCooldownMultiplier = multiplier,
+                decisionDelayMinMillis = 10_000L,
+                decisionDelayMaxMillis = 10_000L
+            )
+            val simulator = battle(
+                allies = listOf(attacker),
+                enemies = listOf(fighter("b", BattleSide.OPPOSING).copy(movementSpeed = 0f)),
+                skills = listOf(hit),
+                config = BattleConfiguration(defaultPaused = true, randomSeed = 71L)
+            )
+            simulator.issueOrder("a", TrainerAction.UseTechnique(hit.techniqueId, "b"))
+            simulator.setPaused(false)
+            until(simulator) { it.alliedMembers.single().cooldownsMillis.containsKey(hit.techniqueId) }
+            return simulator.snapshot().alliedMembers.single().cooldownsMillis.getValue(hit.techniqueId)
+        }
+
+        val fast = remainingCooldown(0.8f)
+        val slow = remainingCooldown(1.2f)
+
+        assertTrue("Expected a shorter cooldown for the faster profile: $fast vs $slow", fast < slow)
+        assertTrue(kotlin.math.abs(fast - 1_600L) <= 34L)
+        assertTrue(kotlin.math.abs(slow - 2_400L) <= 34L)
+    }
+
     @Test fun physicalOrdersAreSerializedAndHaveOneTerminalStatusEach() {
         val hit = skill().copy(recoveryMillis = 680)
         val sim = battle(listOf(fighter("a", BattleSide.ALLIED, listOf("hit"))), skills = listOf(hit))

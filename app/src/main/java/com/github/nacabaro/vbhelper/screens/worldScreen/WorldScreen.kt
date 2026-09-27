@@ -7,6 +7,10 @@ import android.location.Location
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -28,15 +32,19 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
@@ -45,6 +53,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -52,66 +61,67 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.zIndex
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.ui.graphics.drawscope.withTransform
+import androidx.compose.ui.zIndex
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.components.cyberFrame
 import com.github.nacabaro.vbhelper.di.VBHelper
+import com.github.nacabaro.vbhelper.domain.card.Card
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.dtos.WorldDtos
-import com.github.nacabaro.vbhelper.domain.card.Card
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
+import com.github.nacabaro.vbhelper.screens.offlineBattleParticipant
 import com.github.nacabaro.vbhelper.screens.cardScreen.dialogs.DexCharaDetailsDialog
+import com.github.nacabaro.vbhelper.screens.offlineBattle.OfflineArenaManifest
+import com.github.nacabaro.vbhelper.screens.offlineBattle.WorldRadarBattleContent
+import com.github.nacabaro.vbhelper.screens.offlineBattle.offlineBattleViewModel
 import com.github.nacabaro.vbhelper.source.DexRepository
-import com.github.nacabaro.vbhelper.world.WorldBiome
-import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
-import com.github.nacabaro.vbhelper.ui.theme.SurfaceDeepPurple
-import com.github.nacabaro.vbhelper.ui.theme.SurfaceElevatedPurple
-import com.github.nacabaro.vbhelper.ui.theme.SpaceBlack
 import com.github.nacabaro.vbhelper.ui.theme.RadarCompass
 import com.github.nacabaro.vbhelper.ui.theme.RadarFollower
+import com.github.nacabaro.vbhelper.ui.theme.SpaceBlack
+import com.github.nacabaro.vbhelper.ui.theme.SurfaceDeepPurple
+import com.github.nacabaro.vbhelper.ui.theme.SurfaceElevatedPurple
+import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.getBitmap
+import com.github.nacabaro.vbhelper.world.WorldBiome
+import com.github.nacabaro.vbhelper.world.worldRadarBattleParticipant
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.Priority
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.flow.first
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -131,11 +141,27 @@ fun RadarScreen(
     val context = LocalContext.current
     val resources = LocalResources.current
     val app = context.applicationContext as VBHelper
+    val viewModelOwner = checkNotNull(LocalViewModelStoreOwner.current)
+    val battleViewModel = remember(viewModelOwner) { offlineBattleViewModel(viewModelOwner) }
+    val battleSessionState by battleViewModel.state.collectAsState()
     var location by remember { mutableStateOf<Location?>(null) }
     var origin by remember { mutableStateOf<Location?>(null) }
-    val compass = rememberWorldCompass(location)
+    var selectedEncounter by remember { mutableStateOf<WorldDtos.SpawnWithDetails?>(null) }
+    var preparingSpawnId by remember { mutableStateOf<Long?>(null) }
+    var debugSpawnInProgress by remember { mutableStateOf(false) }
+    var battleSpawnId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var battleCharacterId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var battleSessionId by rememberSaveable { mutableStateOf<String?>(null) }
+    var committedBattleSessionId by rememberSaveable { mutableStateOf<String?>(null) }
+    val battleActive = battleSessionId != null
+    val compass = rememberWorldCompass(location, enabled = !battleActive)
     val heading = compass.heading ?: 0f // Uncalibrated map is explicitly north-up.
-    val compassDebug = (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    var frozenRadarHeading by remember { mutableFloatStateOf(0f) }
+    SideEffect {
+        if (!battleActive) frozenRadarHeading = heading
+    }
+    val radarHeading = if (battleActive) frozenRadarHeading else heading
+    val isDebuggableBuild = (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
     var showCompassDiagnostics by remember { mutableStateOf(false) }
     var status by remember {
         mutableStateOf(resources.getString(R.string.ui_world_grant_location))
@@ -157,15 +183,15 @@ fun RadarScreen(
     var selectedWorldDimSpecies by remember { mutableStateOf(emptyList<WorldDimSpecies>()) }
     val radarPulse = remember { Animatable(0f) }
 
-    LaunchedEffect(Unit) {
-        while (true) {
+    LaunchedEffect(battleActive) {
+        while (!battleActive) {
             kotlinx.coroutines.delay(700L)
             idleFrame = 1 - idleFrame
         }
     }
 
-    LaunchedEffect(Unit) {
-        while (true) {
+    LaunchedEffect(battleActive) {
+        while (!battleActive) {
             radarPulse.snapTo(0f)
             radarPulse.animateTo(1f, animationSpec = tween(durationMillis = 2_600))
             kotlinx.coroutines.delay(1_400L)
@@ -225,8 +251,8 @@ fun RadarScreen(
     }
 
     // Mantém uma assinatura contínua do GPS em vez de consultar apenas a localização em cache.
-    DisposableEffect(hasLocationPermission) {
-        if (!hasLocationPermission) {
+    DisposableEffect(hasLocationPermission, battleActive) {
+        if (!hasLocationPermission || battleActive) {
             onDispose { }
         } else {
             val client = LocationServices.getFusedLocationProviderClient(context)
@@ -305,18 +331,80 @@ fun RadarScreen(
         }
     }
 
+    fun leaveRadarBattle() {
+        battleViewModel.finishSession()
+        battleSpawnId = null
+        battleCharacterId = null
+        battleSessionId = null
+        committedBattleSessionId = null
+    }
+
+    fun startRadarBattle(spawn: WorldDtos.SpawnWithDetails) {
+        if (preparingSpawnId != null || battleActive) return
+        preparingSpawnId = spawn.id
+        scope.launch {
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    val characterDao = app.container.db.userCharacterDao()
+                    val activeCharacter = characterDao.getActiveCharacter().first()
+                        ?: error(resources.getString(R.string.ui_world_battle_choose_active))
+                    val profile = characterDao.getAllBattleParticipantProfiles()
+                        .firstOrNull { it.sourceCharacterId == activeCharacter.id }
+                        ?: error(resources.getString(R.string.ui_world_battle_stats_unavailable))
+                    app.container.worldRepository.markInteracted(spawn.id)
+                    PreparedRadarBattle(
+                        activeCharacterId = activeCharacter.id,
+                        ally = offlineBattleParticipant(activeCharacter, profile),
+                        opponent = worldRadarBattleParticipant(spawn)
+                    )
+                }
+            }.onSuccess { prepared ->
+                val sessionId = "world-radar:${spawn.id}:${System.nanoTime()}"
+                selectedEncounter = null
+                battleSpawnId = spawn.id
+                battleCharacterId = prepared.activeCharacterId
+                battleSessionId = sessionId
+                committedBattleSessionId = null
+                battleViewModel.start(
+                    context = context,
+                    sessionId = sessionId,
+                    allies = listOf(prepared.ally),
+                    opponents = listOf(prepared.opponent),
+                    arenaManifestPath = OfflineArenaManifest.RADAR_MANIFEST_PATH
+                )
+            }.onFailure { failure ->
+                Toast.makeText(
+                    context,
+                    failure.message ?: resources.getString(R.string.ui_world_battle_start_failed),
+                    Toast.LENGTH_LONG
+                ).show()
+            }
+            preparingSpawnId = null
+        }
+    }
+
+    LaunchedEffect(battleSessionId, battleSessionState.sessionId) {
+        // A process recreation cannot restore the running simulator. Return to
+        // the live Radar instead of leaving a dead 3D viewport on screen.
+        if (battleSessionId != null && battleSessionState.sessionId == null) {
+            leaveRadarBattle()
+        }
+    }
+
 
     Scaffold(
         topBar = {
             Column {
-                TopBanner(text = if (compass.heading != null) {
-                    "${stringResource(R.string.nav_world)} • ${cardinalDirection(heading)}"
-                } else stringResource(R.string.nav_world), onGearClick = {
-                    showWorldSpawnSettings = true
+                TopBanner(text = when {
+                    battleActive -> "${stringResource(R.string.nav_world)} • ${stringResource(R.string.ui_world_battle_banner)}"
+                    compass.heading != null -> "${stringResource(R.string.nav_world)} • ${cardinalDirection(heading)}"
+                    else -> stringResource(R.string.nav_world)
+                }, onGearClick = {
+                    if (!battleActive) showWorldSpawnSettings = true
                 })
                 WorldSectionTabs(
                     selectedTab = selectedWorldTab,
-                    onTabSelected = onWorldTabSelected
+                    onTabSelected = { tab -> if (!battleActive) onWorldTabSelected(tab) }
                 )
             }
         },
@@ -329,16 +417,44 @@ fun RadarScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp)
         ) {
+            WorldRadarBattleContent(
+                viewModel = battleViewModel,
+                battleActive = battleActive,
+                onOutcome = { outcome ->
+                    val activeSessionId = battleSessionId
+                    val spawnId = battleSpawnId
+                    val characterId = battleCharacterId
+                    if (activeSessionId != null && committedBattleSessionId != activeSessionId &&
+                        spawnId != null && characterId != null
+                    ) {
+                        committedBattleSessionId = activeSessionId
+                        scope.launch {
+                            runCatching {
+                                withContext(Dispatchers.IO) {
+                                    app.container.worldRepository.recordRadarBattleResult(
+                                        activeCharacterId = characterId,
+                                        spawnId = spawnId,
+                                        outcome = outcome
+                                    )
+                                }
+                            }.onFailure { failure ->
+                                Toast.makeText(
+                                    context,
+                                    failure.message ?: resources.getString(R.string.ui_world_battle_record_failed),
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            }
+                        }
+                    }
+                },
+                onExit = ::leaveRadarBattle,
+                radarViewport = {
             BoxWithConstraints(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f)
-                    .border(2.dp, SurfaceStroke, MaterialTheme.shapes.medium)
-                    .clip(MaterialTheme.shapes.medium)
-                    .background(SpaceBlack)
-                    .pointerInput(Unit) {
+                    .fillMaxSize()
+                    .pointerInput(battleActive) {
                         detectTransformGestures { _, _, gestureZoom, _ ->
-                            zoom = (zoom * gestureZoom).coerceIn(0.5f, 4f)
+                            if (!battleActive) zoom = (zoom * gestureZoom).coerceIn(0.5f, 4f)
                         }
                     }
             ) {
@@ -373,7 +489,7 @@ fun RadarScreen(
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     // A grade representa o mundo, se desloca com o jogador e gira com a bússola.
                     withTransform({
-                        rotate(degrees = -heading, pivot = center)
+                        rotate(degrees = -radarHeading, pivot = center)
                     }) {
                         val gridSpacingPx = (GRID_SIZE_METERS * scale).toFloat().coerceAtLeast(20f)
                         val originX = center.x - playerDisplacement.x
@@ -460,7 +576,7 @@ fun RadarScreen(
                     270f to cardinalNames[6]
                 ).forEach { (cardinalAzimuth, label) ->
                     val compassRadiusPx = boxWidthPx / 2f - with(density) { 48.dp.toPx() }
-                    val angleRadians = (cardinalAzimuth - heading - 90f) * (PI / 180.0)
+                    val angleRadians = (cardinalAzimuth - radarHeading - 90f) * (PI / 180.0)
                     val labelX = center.x + cos(angleRadians).toFloat() * compassRadiusPx
                     val labelY = center.y + sin(angleRadians).toFloat() * compassRadiusPx
                     Text(
@@ -523,7 +639,7 @@ fun RadarScreen(
                             // O mesmo vetor é rotacionado junto com a grade.
                             val worldX = (eastMeters * scale).toFloat() - playerDisplacement.x
                             val worldY = (-northMeters * scale).toFloat() - playerDisplacement.y
-                            val angle = Math.toRadians((-heading).toDouble())
+                            val angle = Math.toRadians((-radarHeading).toDouble())
                             val cosAngle = cos(angle).toFloat()
                             val sinAngle = sin(angle).toFloat()
 
@@ -557,33 +673,27 @@ fun RadarScreen(
                                     .size(markerSizeDp)
                                     .combinedClickable(
                                         onClick = {
-                                            if (withinRange) {
-                                                // Mark immediately so a concurrent location refresh
-                                                // cannot evict the encounter during navigation.
-                                                scope.launch(Dispatchers.IO) {
-                                                    app.container.worldRepository.markInteracted(spawn.id)
+                                            if (!battleActive) {
+                                                if (withinRange) {
+                                                    selectedEncounter = spawn
+                                                } else {
+                                                    Toast.makeText(
+                                                        context,
+                                                        resources.getString(R.string.ui_world_too_far),
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
                                                 }
-                                                navController.navigate(
-                                                    NavigationItems.WorldChat.route.replace(
-                                                        "{spawnId}",
-                                                        spawn.id.toString()
-                                                    )
-                                                )
-                                            } else {
-                                                Toast.makeText(
-                                                    context,
-                                                    resources.getString(R.string.ui_world_too_far),
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
                                             }
                                         },
                                         onLongClick = {
-                                            scope.launch {
-                                                selectedSpecies = withContext(Dispatchers.IO) {
-                                                    DexRepository(app.container.db)
-                                                        .getCharactersByCardId(spawn.cardId)
-                                                        .first()
-                                                        .firstOrNull { it.id == spawn.cardCharacterId }
+                                            if (!battleActive) {
+                                                scope.launch {
+                                                    selectedSpecies = withContext(Dispatchers.IO) {
+                                                        DexRepository(app.container.db)
+                                                            .getCharactersByCardId(spawn.cardId)
+                                                            .first()
+                                                            .firstOrNull { it.id == spawn.cardCharacterId }
+                                                    }
                                                 }
                                             }
                                         }
@@ -608,7 +718,7 @@ fun RadarScreen(
                         180f to RadarCompass,
                         270f to RadarCompass
                     ).forEach { (cardinalAzimuth, arrowColor) ->
-                        val screenAngle = (cardinalAzimuth - heading - 90f) * (PI / 180.0)
+                        val screenAngle = (cardinalAzimuth - radarHeading - 90f) * (PI / 180.0)
                         val direction = Offset(
                             cos(screenAngle).toFloat(),
                             sin(screenAngle).toFloat()
@@ -633,6 +743,8 @@ fun RadarScreen(
                 }
             }
 
+                },
+                radarControls = {
             Spacer(Modifier.height(8.dp))
             Text(
                 stringResource(R.string.ui_world_nearby_count, spawns.size),
@@ -654,6 +766,53 @@ fun RadarScreen(
                     modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
                 )
                 VitalButton(onClick = { zoom = (zoom * 1.5f).coerceAtMost(4f) }) { Text("+") }
+            }
+            if (isDebuggableBuild) {
+                VitalButton(
+                    onClick = {
+                        val playerLocation = location ?: return@VitalButton
+                        if (debugSpawnInProgress) return@VitalButton
+                        debugSpawnInProgress = true
+                        scope.launch {
+                            try {
+                                val spawnId = withContext(Dispatchers.IO) {
+                                    app.container.worldRepository.spawnDebugDigimon(
+                                        latitude = playerLocation.latitude,
+                                        longitude = playerLocation.longitude
+                                    )
+                                }
+                                Toast.makeText(
+                                    context,
+                                    resources.getString(
+                                        if (spawnId != null) R.string.ui_world_debug_spawn_success
+                                        else R.string.ui_world_debug_spawn_unavailable
+                                    ),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            } catch (failure: Exception) {
+                                Toast.makeText(
+                                    context,
+                                    failure.message ?: resources.getString(R.string.ui_world_debug_spawn_unavailable),
+                                    Toast.LENGTH_LONG
+                                ).show()
+                            } finally {
+                                debugSpawnInProgress = false
+                            }
+                        }
+                    },
+                    enabled = location != null && !debugSpawnInProgress,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentWidth()
+                        .padding(top = 8.dp)
+                ) {
+                    Text(
+                        stringResource(
+                            if (debugSpawnInProgress) R.string.ui_world_debug_spawn_loading
+                            else R.string.ui_world_debug_spawn_button
+                        )
+                    )
+                }
             }
             if (pendingRecruits.isNotEmpty()) {
                 VitalButton(
@@ -683,6 +842,31 @@ fun RadarScreen(
                         .padding(top = 8.dp)
                 ) { Text(stringResource(R.string.ui_world_enable_location)) }
             }
+                },
+                modifier = Modifier.fillMaxWidth()
+            )
+    }
+
+    if (!battleActive) {
+        selectedEncounter?.let { spawn ->
+            WorldEncounterActionSheet(
+                spawn = spawn,
+                preparingBattle = preparingSpawnId == spawn.id,
+                onDismiss = { if (preparingSpawnId == null) selectedEncounter = null },
+                onChat = {
+                    selectedEncounter = null
+                    scope.launch {
+                        withContext(Dispatchers.IO) {
+                            // Protect the encounter from cap eviction before navigation.
+                            app.container.worldRepository.markInteracted(spawn.id)
+                        }
+                        navController.navigate(
+                            NavigationItems.WorldChat.route.replace("{spawnId}", spawn.id.toString())
+                        )
+                    }
+                },
+                onBattle = { startRadarBattle(spawn) }
+            )
         }
     }
 
@@ -735,12 +919,96 @@ fun RadarScreen(
         )
     }
 }
+}
 
 private data class WorldDimSpecies(
     val character: CharacterDtos.CardCharaProgress,
     val name: String?,
     val fallbackNumber: Int
 )
+
+private data class PreparedRadarBattle(
+    val activeCharacterId: Long,
+    val ally: com.github.nacabaro.vbhelper.screens.OfflineBattleParticipant,
+    val opponent: com.github.nacabaro.vbhelper.screens.OfflineBattleParticipant
+)
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WorldEncounterActionSheet(
+    spawn: WorldDtos.SpawnWithDetails,
+    preparingBattle: Boolean,
+    onDismiss: () -> Unit,
+    onChat: () -> Unit,
+    onBattle: () -> Unit
+) {
+    val wildLabel = stringResource(R.string.ui_world_encounter_wild)
+    val sprite = remember(spawn.id, spawn.spriteIdle.contentHashCode()) {
+        runCatching {
+            BitmapData(
+                spawn.frameFor(PlayerMotion.IDLE, 0),
+                spawn.spriteWidth.coerceAtLeast(1),
+                spawn.spriteHeight.coerceAtLeast(1)
+            ).getBitmap().asImageBitmap()
+        }.getOrNull()
+    }
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        containerColor = SurfaceDeepPurple,
+        contentColor = TextPrimaryOnDark
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 28.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            sprite?.let {
+                Image(
+                    bitmap = it,
+                    contentDescription = spawn.speciesName ?: wildLabel,
+                    filterQuality = FilterQuality.None,
+                    modifier = Modifier.size(76.dp)
+                )
+            }
+            Text(
+                spawn.speciesName ?: wildLabel,
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Text(
+                stringResource(R.string.ui_world_encounter_prompt),
+                color = TextSecondaryOnDark,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                OutlinedButton(
+                    onClick = onChat,
+                    enabled = !preparingBattle,
+                    modifier = Modifier.weight(1f).heightIn(min = 52.dp)
+                ) {
+                    Text(stringResource(R.string.ui_world_encounter_chat))
+                }
+                Button(
+                    onClick = onBattle,
+                    enabled = !preparingBattle,
+                    modifier = Modifier.weight(1f).heightIn(min = 52.dp)
+                ) {
+                    Text(
+                        stringResource(
+                            if (preparingBattle) {
+                                R.string.ui_world_encounter_preparing
+                            } else {
+                                R.string.ui_world_encounter_fight
+                            }
+                        )
+                    )
+                }
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

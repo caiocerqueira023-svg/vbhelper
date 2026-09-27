@@ -57,6 +57,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import com.github.nacabaro.vbhelper.battle.APIBattleCharacter
 import com.github.nacabaro.vbhelper.battle.AssetAudioPlayer
 import com.github.nacabaro.vbhelper.battle.BattleAssetPaths
+import com.github.nacabaro.vbhelper.battle.BattleCharacterCatalog
 import com.github.nacabaro.vbhelper.battle.BattleCharacterImage
 import com.github.nacabaro.vbhelper.battle.decodeBattleAsset
 import android.util.Log
@@ -90,6 +91,7 @@ import com.github.nacabaro.vbhelper.screens.offlineBattle.OfflineTrainingBattleS
 import com.github.nacabaro.vbhelper.screens.offlineBattle.TrainingBattlePreparation
 import com.github.nacabaro.vbhelper.screens.offlineBattle.OfflineBattleSessionViewModel
 import com.github.nacabaro.vbhelper.screens.offlineBattle.offlineBattleViewModel
+import com.github.nacabaro.vbhelper.source.StorageRepository
 import java.util.UUID
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
@@ -1967,6 +1969,11 @@ fun BattlesScreen(musicController: AppMusicController) {
             kotlinx.coroutines.withContext(Dispatchers.IO) {
                 // First, let's check all characters to see what's in the database
                 val allCharacters = database.userCharacterDao().getAllCharacters().first()
+                val characterById = allCharacters.associateBy { it.id }
+                val storageRepository = StorageRepository(database)
+                storageRepository.ensureAllPersonalities()
+                val battleProfiles = database.userCharacterDao().getAllBattleParticipantProfiles()
+                val arenaCharacters = BattleCharacterCatalog.all(application)
                 /*
                 println("BATTLESCREEN: Found ${allCharacters.size} total characters in database")
                 allCharacters.forEach { char ->
@@ -1995,44 +2002,20 @@ fun BattlesScreen(musicController: AppMusicController) {
                     // Format as "dim" + cardId + "_mon" + (charaIndex + 1)
                     val formattedCardId = String.format("dim%03d_mon%02d", cardId, charaIndex + 1)
 
-                    val cardsById = database.characterDao().getAllCharacters().associateBy { it.id }
-                    val offlineParticipants = allCharacters.map { storedCharacter ->
-                        val storedCard = cardsById[storedCharacter.charId]
-                        val storedInfo = database.characterDao().getCharacterInfo(storedCharacter.charId)
-                        val beTraining = if (storedCharacter.isBemCard) {
-                            database.userCharacterDao().getBeDataOrNull(storedCharacter.id)
-                        } else null
-                        val defaultHp = when {
-                            storedCharacter.stage <= 1 -> 1800
-                            storedCharacter.stage == 2 -> 2600
-                            storedCharacter.stage == 3 -> 3600
-                            else -> 4400
+                    val offlineParticipants = battleProfiles.mapNotNull { profile ->
+                        characterById[profile.sourceCharacterId]?.let { character ->
+                            offlineBattleParticipant(character, profile)
                         }
-                        val defaultAttack = when {
-                            storedCharacter.stage <= 1 -> 700
-                            storedCharacter.stage == 2 -> 1050
-                            storedCharacter.stage == 3 -> 1450
-                            else -> 1850
-                        }
-                        offlineBattleParticipant(
-                            character = storedCharacter,
-                            maxHp = storedCard?.baseHp?.takeIf { it > 0 } ?: defaultHp,
-                            attackPower = storedCard?.baseAp?.takeIf { it > 0 } ?: defaultAttack,
-                            baseBp = storedCard?.baseBp ?: 0,
-                            trainingHp = beTraining?.trainingHp ?: 0,
-                            trainingBp = beTraining?.trainingBp ?: 0,
-                            trainingAp = beTraining?.trainingAp ?: 0,
-                            externalCharacterId = "dim${storedInfo.cardId.toString().padStart(3, '0')}_mon${(storedInfo.charId + 1).toString().padStart(2, '0')}"
-                        )
                     }
                     val packagedOfflineOpponents = listOf(
                         assetOfflineBattleParticipant("dim000_mon03", "Pulsemon", 1800, 700, stage = 1,
-                            attribute = BattleAttribute.VACCINE),
+                            attribute = BattleAttribute.VACCINE, extractedData = arenaCharacters["dim000_mon03"]),
                         assetOfflineBattleParticipant("dim012_mon03", "Agumon", 2200, 820, stage = 2,
-                            attribute = BattleAttribute.VACCINE),
-                        assetOfflineBattleParticipant("dim014_mon05", "Arena challenger", 3000, 1100, stage = 3),
+                            attribute = BattleAttribute.VACCINE, extractedData = arenaCharacters["dim012_mon03"]),
+                        assetOfflineBattleParticipant("dim014_mon05", "Arena challenger", 3000, 1100, stage = 3,
+                            extractedData = arenaCharacters["dim014_mon05"]),
                         assetOfflineBattleParticipant("dim137_mon03", "Dorumon", 3600, 1350, stage = 4,
-                            attribute = BattleAttribute.DATA)
+                            attribute = BattleAttribute.DATA, extractedData = arenaCharacters["dim137_mon03"])
                     )
                     val activeOfflineParticipant = offlineParticipants.firstOrNull { it.character?.id == activeChar.id }
                     

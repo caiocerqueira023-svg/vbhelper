@@ -1,6 +1,7 @@
 package com.github.nacabaro.vbhelper.battle.offline.core
 
 import kotlin.math.hypot
+import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityType
 
 /** Coordinates on the arena's horizontal (X/Z) plane, in game-space units. */
 data class BattlePosition(val x: Float, val z: Float) {
@@ -86,12 +87,16 @@ data class CombatantDefinition(
     val defense: Int,
     val movementSpeed: Float,
     val energyRegenerationPerSecond: Float = 2f,
+    /** Multiplies technique cooldowns; lower values produce a faster attack rhythm. */
+    val techniqueCooldownMultiplier: Float = 1f,
     val collisionRadius: Float = 0.45f,
     val preferredDistance: Float = 1.5f,
     /** Autonomous fighters observe and reposition for this long between actions. */
     val decisionDelayMinMillis: Long = 900L,
     val decisionDelayMaxMillis: Long = 1_800L,
     val strategy: BattleStrategy = BattleStrategy.BALANCED,
+    val stableRngKey: String = combatantId,
+    val personalityType: DigimonPersonalityType = DigimonPersonalityType.FRIENDLY,
     val techniqueIds: List<String>,
     val specialTechniqueId: String? = null
 )
@@ -245,6 +250,9 @@ data class CombatantDebugSnapshot(
     val decision: String = "Aguardando decisão.",
     val targetDistance: Float? = null,
     val techniqueScores: Map<String, Float> = emptyMap(),
+    val techniqueScoreComponents: Map<String, Map<String, Float>> = emptyMap(),
+    val personalityType: DigimonPersonalityType? = null,
+    val personalityCore: PersonalityCore? = null,
     val threatByCombatant: Map<String, Long> = emptyMap(),
     val lastOrderFailure: String? = null
 )

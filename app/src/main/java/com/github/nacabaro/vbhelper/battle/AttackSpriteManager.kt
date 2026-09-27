@@ -3,43 +3,17 @@ package com.github.nacabaro.vbhelper.battle
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import com.google.gson.Gson
-
-data class CharacterData(
-    val name: String,
-    val charaId: String,
-    val smalefilename: String,
-    val laugeFileName: String
-)
-
-data class CharacterDataResponse(
-    val DataList: List<String>? = null,
-    val all_attributes: CharacterDataAttributes? = null
-)
-
-data class CharacterDataAttributes(
-    val DataList: List<String>
-)
 
 class AttackSpriteManager(private val context: Context) {
-    private val gson = Gson()
-    private val characterDataCache = mutableMapOf<String, CharacterData>()
-    
     fun getAttackSprite(characterId: String, isLarge: Boolean = false): Bitmap? {
         println("AttackSpriteManager: Getting attack sprite for characterId=$characterId, isLarge=$isLarge")
         try {
-            // Get character data
-            val characterData = getCharacterData(characterId) ?: CharacterData(
-                name = characterId,
-                charaId = characterId,
-                smalefilename = "atk_s_02",
-                laugeFileName = "atk_l_04"
-            )
-            // Determine which attack file to use
-            val attackFileName = if (isLarge) {
-                characterData.laugeFileName
-            } else {
-                characterData.smalefilename
+            val characterData = BattleCharacterCatalog.find(context, characterId)
+            val attackFileName = when {
+                characterData == null && isLarge -> "atk_l_04"
+                characterData == null -> "atk_s_02"
+                isLarge -> characterData.largeAttackFile
+                else -> characterData.smallAttackFile
             }
             
             // Skip if no attack file
@@ -62,86 +36,4 @@ class AttackSpriteManager(private val context: Context) {
             BitmapFactory.decodeStream(input)
         }
     }.getOrNull()
-    
-    private fun getCharacterData(characterId: String): CharacterData? {
-        // Check cache first
-        if (characterDataCache.containsKey(characterId)) {
-            return characterDataCache[characterId]
-        }
-        
-        try {
-            val jsonContent = runCatching {
-                context.assets.open(BattleAssetPaths.CHARACTER_DATA).use { input ->
-                    input.bufferedReader().readText()
-                }
-            }.getOrNull()
-
-            if (jsonContent == null) {
-                println("AttackSpriteManager: Character data file does not exist, using default data")
-                // For now, return a default character data
-                val characterData = CharacterData(
-                    name = characterId,
-                    charaId = characterId,
-                    smalefilename = "atk_s_02", // Default small attack
-                    laugeFileName = "atk_l_04"   // Default large attack
-                )
-                
-                characterDataCache[characterId] = characterData
-                return characterData
-            }
-            
-            // Parse the JSON response
-            val response = gson.fromJson(jsonContent, CharacterDataResponse::class.java)
-            
-            // The current extractor writes DataList at the root. Older extractor
-            // output wrapped it in all_attributes, so accept both layouts.
-            val characterRecords = response.DataList
-                ?: response.all_attributes?.DataList
-                ?: emptyList()
-
-            // Search through the DataList for the matching characterId
-            for (characterString in characterRecords) {
-                // Extract charaId from the string format: "<UnknownObject<Character> id=0, charaId='dim000_mon03', ...>"
-                val charaIdMatch = Regex("charaId='([^']+)'").find(characterString)
-                if (charaIdMatch != null) {
-                    val foundCharaId = charaIdMatch.groupValues[1]
-                    if (foundCharaId == characterId) {
-                        // Extract smalefilename and laugeFileName
-                        val smallFileMatch = Regex("smalefilename='([^']+)'").find(characterString)
-                        val largeFileMatch = Regex("laugeFileName='([^']+)'").find(characterString)
-                        
-                        val smallFileName = smallFileMatch?.groupValues?.get(1) ?: "0"
-                        val largeFileName = largeFileMatch?.groupValues?.get(1) ?: "0"
-                        
-                        val characterData = CharacterData(
-                            name = characterId,
-                            charaId = characterId,
-                            smalefilename = smallFileName,
-                            laugeFileName = largeFileName
-                        )
-                        
-                        characterDataCache[characterId] = characterData
-                        return characterData
-                    }
-                }
-            }
-            
-            // If character not found, return default data
-            println("AttackSpriteManager: Character not found in JSON, using default data")
-            val characterData = CharacterData(
-                name = characterId,
-                charaId = characterId,
-                smalefilename = "atk_s_02", // Default small attack
-                laugeFileName = "atk_l_04"   // Default large attack
-            )
-            
-            characterDataCache[characterId] = characterData
-            return characterData
-            
-        } catch (e: Exception) {
-            println("AttackSpriteManager: Exception in getCharacterData: ${e.message}")
-            e.printStackTrace()
-            return null
-        }
-    }
 }

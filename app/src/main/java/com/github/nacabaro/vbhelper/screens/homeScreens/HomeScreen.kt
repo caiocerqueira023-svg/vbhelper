@@ -231,6 +231,9 @@ fun HomeScreen(
                         beData = beData!!,
                         transformationHistory = transformationHistory,
                         nickname = activeMon!!.nickname,
+                        speciesName = speciesProfile?.speciesName
+                            ?.takeIf { it.isNotBlank() }
+                            ?: speciesProfile?.matchedName?.takeIf { it.isNotBlank() },
                         contentPadding = PaddingValues(0.dp),
                         cardIcon = cardIcon,
                         speechBubbleText = latestReaction?.content,
@@ -248,7 +251,8 @@ fun HomeScreen(
                             if (it.stageId != activeMon!!.charId && it.stage <= activeMon!!.stage) {
                                 selectedTransformation = it
                             }
-                        }
+                        },
+                        vitalsHistory = vitalsHistory
                     )
                 } else if (!activeMon!!.isBemCard && activeMon!!.characterType == DeviceType.BEDevice && beData != null) {
                     BEDiMHomeScreen(
@@ -256,6 +260,9 @@ fun HomeScreen(
                         beData = beData!!,
                         transformationHistory = transformationHistory,
                         nickname = activeMon!!.nickname,
+                        speciesName = speciesProfile?.speciesName
+                            ?.takeIf { it.isNotBlank() }
+                            ?: speciesProfile?.matchedName?.takeIf { it.isNotBlank() },
                         contentPadding = PaddingValues(0.dp),
                         cardIcon = cardIcon,
                         speechBubbleText = latestReaction?.content,
@@ -273,7 +280,8 @@ fun HomeScreen(
                             if (it.stageId != activeMon!!.charId && it.stage <= activeMon!!.stage) {
                                 selectedTransformation = it
                             }
-                        }
+                        },
+                        vitalsHistory = vitalsHistory
                     )
                 } else if (vbData != null) {
                     VBDiMHomeScreen(

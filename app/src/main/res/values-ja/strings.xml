@@ -57,6 +57,11 @@
     <string name="home_vbdim_level">レベル</string>
     <string name="home_vbdim_attribute">属性</string>
     <string name="home_vbdim_days">日数</string>
+    <string name="home_be_rank">ランク</string>
+    <string name="home_be_training_limit">トレーニング上限</string>
+    <string name="home_be_training_hp">トレーニングHP</string>
+    <string name="home_be_training_bp">トレーニングBP</string>
+    <string name="home_be_training_ap">トレーニングAP</string>
     <string name="storage_delete_character">削除</string>
     <string name="storage_delete_character_confirmation">このデジモンを削除してもよろしいですか？この操作は取り消せません。</string>
     <string name="storage_close">閉じる</string>
@@ -368,6 +373,10 @@
     <string name="ui_world_zoom_instruction">地図上で2本指のピンチ操作でズームできます。</string>
     <string name="ui_world_compass_instruction">N・E・S・Wの矢印はコンパスのようにプレイヤーの周りを回ります。</string>
     <string name="ui_world_zoom_label">ズーム %1$d%%</string>
+    <string name="ui_world_debug_spawn_button">DEBUG: ランダムなデジモンを出現 (20 m)</string>
+    <string name="ui_world_debug_spawn_loading">デジモンを出現させています…</string>
+    <string name="ui_world_debug_spawn_success">デバッグ用デジモンが20 m以内に出現しました。</string>
+    <string name="ui_world_debug_spawn_unavailable">出現可能なデジモンがいないか、レーダーの空きがありません。</string>
     <string name="ui_world_enable_location">位置情報を有効にする</string>
     <string name="ui_world_too_far">このデジモンと関わるにはもっと近づいてください。</string>
     <string name="ui_world_wild_digimon">野生のデジモン</string>
@@ -489,4 +498,14 @@
     <string name="ui_digifarm_stop_follow">追跡を停止</string>
     <string name="ui_digifarm_transfer">別のデジファームへ移動</string>
     <string name="ui_digifarm_no_other_farm">別のデジファームを作成して住人を移動できます。</string>
+    <string name="ui_world_battle_banner">バトル</string>
+    <string name="ui_world_encounter_wild">野生のデジモン</string>
+    <string name="ui_world_encounter_prompt">このデジモンとどう交流しますか？</string>
+    <string name="ui_world_encounter_chat">話す</string>
+    <string name="ui_world_encounter_fight">戦う</string>
+    <string name="ui_world_encounter_preparing">準備中…</string>
+    <string name="ui_world_battle_choose_active">戦う前にアクティブなデジモンを選んでください。</string>
+    <string name="ui_world_battle_stats_unavailable">アクティブなデジモンのバトル能力値を取得できません。</string>
+    <string name="ui_world_battle_start_failed">バトルを開始できませんでした。</string>
+    <string name="ui_world_battle_record_failed">バトル結果を保存できませんでした。</string>
 </resources>

@@ -1,5 +1,6 @@
 package com.github.nacabaro.vbhelper.dtos
 
+import com.github.cfogrady.vbnfc.data.NfcCharacter
 import com.github.nacabaro.vbhelper.domain.world.RecruitmentState
 
 object WorldDtos {
@@ -15,6 +16,11 @@ object WorldDtos {
         val charaIndex: Int,
         val stage: Int,
         val cardId: Long,
+        val attribute: NfcCharacter.Attribute,
+        val baseHp: Int,
+        val baseBp: Int,
+        val baseAp: Int,
+        val isBemCard: Boolean,
         val spriteIdle: ByteArray,
         val spriteIdle2: ByteArray,
         val spriteWalk: ByteArray,

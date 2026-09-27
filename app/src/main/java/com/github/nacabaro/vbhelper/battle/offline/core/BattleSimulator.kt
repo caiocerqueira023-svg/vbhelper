@@ -2,9 +2,11 @@ package com.github.nacabaro.vbhelper.battle.offline.core
 
 import java.util.ArrayDeque
 import kotlin.math.abs
+import kotlin.math.exp
 import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.roundToLong
 import kotlin.random.Random
 
 /** Single-writer, fixed-step simulation. UI/rendering consume snapshots and submit orders. */
@@ -15,7 +17,6 @@ class BattleSimulator(
     techniqueCatalog: Collection<TechniqueDefinition>,
     trainingItems: Collection<BattleItemDefinition> = emptyList()
 ) {
-    private val random = Random(configuration.randomSeed)
     private val techniques = techniqueCatalog.associate { it.techniqueId to it.copy(statusEffects = it.statusEffects.toList()) }.toMutableMap()
     private val combatants = linkedMapOf<String, Fighter>()
     private val itemDefinitions = trainingItems.associateBy { it.itemId }
@@ -65,6 +66,8 @@ class BattleSimulator(
                 require(source.combatantId !in combatants) { "Duplicate combatant IDs" }
                 require(source.maxHealth > 0 && source.maxEnergy >= 0 && source.attack > 0 && source.defense >= 0)
                 require(source.movementSpeed.isFinite() && source.movementSpeed >= 0f)
+                require(source.energyRegenerationPerSecond.isFinite() && source.energyRegenerationPerSecond >= 0f)
+                require(source.techniqueCooldownMultiplier.isFinite() && source.techniqueCooldownMultiplier > 0f)
                 require(source.collisionRadius.isFinite() && source.collisionRadius > 0f && source.collisionRadius < configuration.arenaRadius)
                 require(source.preferredDistance.isFinite() && source.preferredDistance >= 0f)
                 require(source.decisionDelayMinMillis in 0..configuration.maxDurationMillis)
@@ -72,7 +75,17 @@ class BattleSimulator(
                 require(source.techniqueIds.all { it in techniques }) { "Unknown technique" }
                 require(source.specialTechniqueId == null || source.specialTechniqueId in techniques)
                 val definition = source.copy(techniqueIds = source.techniqueIds.toList())
-                combatants[definition.combatantId] = Fighter(definition, clamp(positions[index], definition.collisionRadius))
+                val randomKey = definition.stableRngKey.ifBlank { definition.combatantId }
+                combatants[definition.combatantId] = Fighter(
+                    definition = definition,
+                    position = clamp(positions[index], definition.collisionRadius),
+                    personality = PersonalityBattleProfile.from(definition.personalityType),
+                    scheduleRandom = randomFor(randomKey, "decision-timing"),
+                    movementRandom = randomFor(randomKey, "positioning"),
+                    reactionRandom = randomFor(randomKey, "guard-reaction"),
+                    choiceRandom = randomFor(randomKey, "action-choice"),
+                    combatRandom = randomFor(randomKey, "damage-and-critical")
+                )
             }
         }
         combatants.values.forEach { scheduleAutonomousRead(it, opening = true) }
@@ -188,6 +201,9 @@ class BattleSimulator(
                     decision = actor.lastDecision,
                     targetDistance = debugTarget?.let { actor.position.distanceTo(it.position) },
                     techniqueScores = actor.techniqueScores.toMap(),
+                    techniqueScoreComponents = actor.techniqueScoreComponents.mapValues { it.value.toMap() },
+                    personalityType = def.personalityType,
+                    personalityCore = actor.personality.core,
                     threatByCombatant = actor.threat.toMap(),
                     lastOrderFailure = actor.lastOrderFailure
                 ))
@@ -354,9 +370,10 @@ class BattleSimulator(
 
     private fun scheduleAutonomousRead(actor: Fighter, opening: Boolean = false) {
         if (actor.health <= 0 || outcome != null) return
-        val minimum = actor.definition.decisionDelayMinMillis
-        val maximum = actor.definition.decisionDelayMaxMillis
-        val delay = if (minimum == maximum) minimum else random.nextLong(minimum, maximum + 1L)
+        val openingFactor = if (opening) (1f + actor.personality.openingBias).coerceIn(0.85f, 1.15f) else 1f
+        val minimum = (actor.definition.decisionDelayMinMillis * openingFactor).roundToLong().coerceAtLeast(0L)
+        val maximum = (actor.definition.decisionDelayMaxMillis * openingFactor).roundToLong().coerceAtLeast(minimum)
+        val delay = if (minimum == maximum) minimum else actor.scheduleRandom.nextLong(minimum, maximum + 1L)
         actor.nextDecisionAt = elapsedMillis + delay
         val enemy = chooseEnemy(actor)
         actor.roamDestination = enemy?.let { tacticalRoamDestination(actor, it) }
@@ -374,14 +391,16 @@ class BattleSimulator(
         val length = hypot(dx, dz).coerceAtLeast(0.001f)
         val radialX = dx / length
         val radialZ = dz / length
-        val desiredDistance = when (actor.strategy) {
+        val strategyDistance = when (actor.strategy) {
             BattleStrategy.AGGRESSIVE -> 1.45f
             BattleStrategy.RANGED, BattleStrategy.DEFENSIVE -> 4.25f
             BattleStrategy.CONSERVATIVE, BattleStrategy.SUPPORT -> 3.45f
-            BattleStrategy.BALANCED -> 2.1f + random.nextFloat() * 1.7f
-        }.coerceAtLeast(actor.definition.collisionRadius + enemy.definition.collisionRadius + 0.1f)
-        val direction = if (random.nextBoolean()) 1f else -1f
-        val lateral = direction * (0.7f + random.nextFloat() * 1.15f)
+            BattleStrategy.BALANCED -> 2.1f + actor.movementRandom.nextFloat() * 1.7f
+        }
+        val desiredDistance = (strategyDistance + actor.personality.preferredRangeBias)
+            .coerceAtLeast(actor.definition.collisionRadius + enemy.definition.collisionRadius + 0.1f)
+        val direction = if (actor.movementRandom.nextBoolean()) 1f else -1f
+        val lateral = direction * (0.7f + actor.movementRandom.nextFloat() * 1.15f)
         return clamp(
             BattlePosition(
                 x = enemy.position.x + radialX * desiredDistance - radialZ * lateral,
@@ -418,19 +437,36 @@ class BattleSimulator(
         val enemy = chooseEnemy(actor) ?: run {
             actor.plannedTechniqueId = null
             actor.techniqueScores = emptyMap()
+            actor.techniqueScoreComponents = emptyMap()
             actor.lastDecision = "Sem alvo válido para continuar."
             setTarget(actor, null)
             transition(actor, CombatantState.IDLE)
             return
         }
         val ally = chooseAlly(actor)
-        if (actor.strategy == BattleStrategy.DEFENSIVE && elapsedMillis >= actor.nextAutoGuardAt &&
-            enemy.active?.phase == Phase.STARTUP && enemy.active?.targetId == actor.definition.combatantId &&
-            enemy.active?.technique?.let { inRange(enemy, actor, it) } == true) {
+        val incoming = enemy.active?.takeIf {
+            it.phase == Phase.STARTUP && it.targetId == actor.definition.combatantId &&
+                inRange(enemy, actor, it.technique)
+        }
+        val personalityGuardChance = incoming?.let {
+            (actor.personality.guardReadBias + lowHpPressure(actor) * 0.16f)
+                .coerceIn(0f, 0.62f) * (it.technique.power / 175f).coerceIn(0.45f, 1.25f)
+        } ?: 0f
+        val shouldAutoGuard = incoming != null && elapsedMillis >= actor.nextAutoGuardAt && when {
+            actor.strategy == BattleStrategy.DEFENSIVE -> true
+            else -> actor.reactionRandom.nextDouble() < personalityGuardChance
+        }
+        if (shouldAutoGuard) {
             actor.nextAutoGuardAt = elapsedMillis + 3_500L
             actor.defendUntil = elapsedMillis + 1_000L
             actor.plannedTechniqueId = null
-            actor.lastDecision = "Antecipou o ataque e assumiu defesa."
+            actor.techniqueScores = emptyMap()
+            actor.techniqueScoreComponents = emptyMap()
+            actor.lastDecision = if (actor.strategy == BattleStrategy.DEFENSIVE) {
+                "Antecipou o ataque por estratégia e assumiu defesa."
+            } else {
+                "${actor.definition.personalityType.name} leu o startup e protegeu-se."
+            }
             setTarget(actor, enemy.definition.combatantId)
             transition(actor, CombatantState.DEFENDING)
             return
@@ -444,33 +480,88 @@ class BattleSimulator(
         val candidates = equippedCandidates.ifEmpty {
             listOf(BASIC).filter { ready(actor, it) && availableEnergy(actor) >= it.energyCost }
         }
+        val energyRatio = if (actor.definition.maxEnergy > 0) {
+            (availableEnergy(actor).toFloat() / actor.definition.maxEnergy).coerceIn(0f, 1f)
+        } else 1f
+        val reservePressure = if (actor.personality.energyReserve > 0f && energyRatio < actor.personality.energyReserve) {
+            ((actor.personality.energyReserve - energyRatio) / actor.personality.energyReserve).coerceIn(0f, 1f)
+        } else 0f
+        val selfLowHpPressure = lowHpPressure(actor)
+        val scoreComponents = linkedMapOf<String, Map<String, Float>>()
         val scores = candidates.associate { technique ->
             val recipient = if (isSupport(technique)) ally else enemy
             val distance = actor.position.distanceTo(recipient.position)
-            var score = technique.power * 0.72f - technique.energyCost * 0.32f
-            score -= (technique.startupMillis + technique.recoveryMillis) * 0.015f
-            if (distance in technique.minRange..technique.maxRange) score += 28f
-            else score -= abs(distance - idealRange(actor, recipient, technique)) * 6f
-            if (technique.techniqueId == actor.lastTechniqueId) score -= 62f
-            // Personalities in Decode create tendencies rather than a fixed
-            // rotation. Seeded variation keeps the same session reproducible.
-            score += random.nextDouble(0.0, 72.0).toFloat()
+            val preferredRange = idealRange(actor, recipient, technique)
+            val baseTechniqueScore = technique.power * 0.72f - technique.energyCost * 0.32f -
+                (technique.startupMillis + technique.recoveryMillis) * 0.015f
+            val positionScore = if (distance in technique.minRange..technique.maxRange) {
+                28f - abs(distance - preferredRange) * 3f
+            } else {
+                -abs(distance - preferredRange) * 6f
+            }
+            val repetitionScore = if (technique.techniqueId == actor.lastTechniqueId) -62f else 0f
+            var supportScore = 0f
             if (isSupport(technique)) {
                 val missingFraction = 1f - recipient.health.toFloat() / recipient.definition.maxHealth
-                score += min(technique.healPower, recipient.definition.maxHealth - recipient.health) * missingFraction
-                if (actor.strategy == BattleStrategy.SUPPORT) score += 80f
+                supportScore = min(technique.healPower, recipient.definition.maxHealth - recipient.health) * missingFraction
             }
-            when (actor.strategy) {
-                BattleStrategy.AGGRESSIVE -> score += technique.power * 0.35f
-                BattleStrategy.CONSERVATIVE -> score -= technique.energyCost * if (actor.energy.toLong() * 4 < actor.definition.maxEnergy) 1.4f else 0.35f
-                BattleStrategy.DEFENSIVE -> score += technique.maxRange * 3f - technique.startupMillis * 0.03f
-                BattleStrategy.RANGED -> score += if (technique.maxRange >= 4f) 30f else -15f
-                else -> Unit
+            val trainerStrategyScore = when (actor.strategy) {
+                BattleStrategy.AGGRESSIVE -> technique.power * 0.35f
+                BattleStrategy.CONSERVATIVE -> -technique.energyCost * if (energyRatio < 0.25f) 2.0f else 0.8f
+                BattleStrategy.DEFENSIVE -> 18f + technique.maxRange * 3f - technique.startupMillis * 0.03f
+                BattleStrategy.RANGED -> if (technique.maxRange >= 4f) 30f else -15f
+                BattleStrategy.SUPPORT -> if (isSupport(technique)) 80f else 0f
+                BattleStrategy.BALANCED -> 0f
             }
-            technique.techniqueId to score
+            val personalityTechnique = technique.power * 0.72f * (actor.personality.offenseWeight - 1f) -
+                technique.energyCost * 0.32f * (actor.personality.efficiencyWeight - 1f)
+            val energyReserveScore = -technique.energyCost * 0.65f * reservePressure
+            val lowHpScore = -selfLowHpPressure * technique.startupMillis * 0.012f * actor.personality.safetyWeight
+            val teamPersonalityScore = if (isSupport(technique)) {
+                supportScore * (actor.personality.teamWeight - 1f)
+            } else {
+                val controlValue = technique.statusEffects.sumOf { effect ->
+                    when {
+                        effect.preventsActions -> 14.0
+                        effect.damagePerSecond > 0f -> 8.0
+                        else -> 3.0
+                    }
+                }.toFloat()
+                controlValue * (actor.personality.teamWeight - 1f)
+            }
+            val personalityScore = (personalityTechnique + energyReserveScore + lowHpScore + teamPersonalityScore)
+                .coerceIn(-12f, 12f)
+            val vulnerableFraction = if (isSupport(technique)) 0f else
+                (1f - enemy.health.toFloat() / enemy.definition.maxHealth).coerceIn(0f, 1f)
+            val opportunityScore = technique.power * 0.12f * vulnerableFraction *
+                (actor.personality.opportunityWeight - 0.5f).coerceIn(-0.5f, 0.5f)
+                .coerceIn(-6f, 6f)
+            val incomingTechnique = incoming?.technique
+            val riskScore = if (incomingTechnique != null) {
+                val remainingStartup = (incomingTechnique.startupMillis - enemy.active!!.phaseElapsed).coerceAtLeast(0L)
+                val commitmentAfterImpact = (technique.startupMillis - remainingStartup).coerceAtLeast(0L)
+                val incomingPressure = incomingTechnique.power * enemy.definition.attack.toFloat() /
+                    (100f + actor.definition.defense).coerceAtLeast(1f)
+                -min(24f, incomingPressure * 0.07f * actor.personality.safetyWeight *
+                    (1f + selfLowHpPressure) * (commitmentAfterImpact.toFloat() / 500f).coerceAtMost(1.5f))
+            } else 0f
+            val components = linkedMapOf(
+                "technique" to baseTechniqueScore,
+                "position" to positionScore,
+                "repeat" to repetitionScore,
+                "support" to supportScore,
+                "personality" to personalityScore,
+                "opportunity" to opportunityScore,
+                "strategy" to trainerStrategyScore,
+                "risk" to riskScore
+            )
+            scoreComponents[technique.techniqueId] = components
+            technique.techniqueId to components.values.sum()
         }
         actor.techniqueScores = scores
-        val chosenId = scores.maxByOrNull { it.value }?.key
+        actor.techniqueScoreComponents = scoreComponents
+        val temperature = actor.personality.actionTemperature.coerceIn(18f, 46f)
+        val chosenId = chooseSoftmax(actor, candidates, scores, temperature)?.techniqueId
         val chosen = candidates.firstOrNull { it.techniqueId == chosenId }
         actor.plannedTechniqueId = chosen?.techniqueId
         setTarget(actor, if (chosen != null && isSupport(chosen)) ally.definition.combatantId else enemy.definition.combatantId)
@@ -479,8 +570,52 @@ class BattleSimulator(
             transition(actor, CombatantState.WAITING)
             scheduleAutonomousRead(actor)
         } else {
-            actor.lastDecision = "Escolheu ${chosen.displayName} (${scores[chosen.techniqueId]?.toInt() ?: 0} pontos)."
+            val components = scoreComponents[chosen.techniqueId].orEmpty()
+            actor.lastDecision = "${actor.definition.personalityType.name}/${actor.personality.core.name}: " +
+                "${chosen.displayName} (${scores[chosen.techniqueId]?.toInt() ?: 0}; " +
+                "técnica ${components["technique"]?.toInt() ?: 0}, posição ${components["position"]?.toInt() ?: 0}, " +
+                "personalidade ${components["personality"]?.toInt() ?: 0}, oportunidade ${components["opportunity"]?.toInt() ?: 0}, " +
+                "estratégia ${components["strategy"]?.toInt() ?: 0}, " +
+                "risco ${components["risk"]?.toInt() ?: 0}; T=${temperature.toInt()})."
         }
+    }
+
+    private fun chooseSoftmax(
+        actor: Fighter,
+        candidates: List<TechniqueDefinition>,
+        scores: Map<String, Float>,
+        temperature: Float
+    ): TechniqueDefinition? {
+        val maximum = scores.values.maxOrNull() ?: return null
+        val weights = candidates.mapNotNull { technique ->
+            val score = scores[technique.techniqueId] ?: return@mapNotNull null
+            technique to exp(((score - maximum) / temperature).toDouble())
+        }
+        val total = weights.sumOf { it.second }
+        if (!total.isFinite() || total <= 0.0) {
+            return candidates.maxByOrNull { scores[it.techniqueId] ?: Float.NEGATIVE_INFINITY }
+        }
+        var draw = actor.choiceRandom.nextDouble() * total
+        weights.forEach { (technique, weight) ->
+            draw -= weight
+            if (draw <= 0.0) return technique
+        }
+        return weights.lastOrNull()?.first
+    }
+
+    private fun lowHpPressure(actor: Fighter): Float {
+        val threshold = actor.personality.lowHpRiskThreshold.coerceIn(0.05f, 0.9f)
+        val healthRatio = actor.health.toFloat() / actor.definition.maxHealth
+        return if (healthRatio < threshold) ((threshold - healthRatio) / threshold).coerceIn(0f, 1f) else 0f
+    }
+
+    private fun randomFor(stableKey: String, streamTag: String): Random {
+        // Stable FNV-1a instead of String.hashCode: same seed/identity/tag is replayable across runs.
+        var hash = -3750763034362895579L
+        "${configuration.randomSeed}:$stableKey:$streamTag".forEach { character ->
+            hash = (hash xor character.code.toLong()) * 1099511628211L
+        }
+        return Random(hash)
     }
 
     private fun approachAndExecute(actor: Fighter, technique: TechniqueDefinition) {
@@ -533,7 +668,8 @@ class BattleSimulator(
             when (active.phase) {
                 Phase.STARTUP -> {
                     active.phase = Phase.ACTIVE
-                    actor.cooldowns[active.technique.techniqueId] = elapsedMillis - active.phaseElapsed + active.technique.cooldownMillis
+                    actor.cooldowns[active.technique.techniqueId] =
+                        elapsedMillis - active.phaseElapsed + cooldownDuration(actor, active.technique)
                     transition(actor, CombatantState.ATTACK_ACTIVE)
                     impacts += actor to active
                 }
@@ -579,8 +715,8 @@ class BattleSimulator(
             val defenseMultiplier = victim.statuses.fold(1f) { value, status -> value * status.effect.defenseMultiplier }
             val attributeMultiplier = actor.definition.attribute.damageMultiplierAgainst(victim.definition.attribute)
             val raw = technique.power.toDouble() * actor.definition.attack * attackMultiplier * attributeMultiplier /
-                100.0 * random.nextDouble(0.92, 1.08)
-            val critical = random.nextDouble() < technique.criticalChance.coerceIn(0f, 1f)
+                100.0 * actor.combatRandom.nextDouble(0.92, 1.08)
+            val critical = actor.combatRandom.nextDouble() < technique.criticalChance.coerceIn(0f, 1f)
             val criticalRaw = if (critical) raw * technique.criticalMultiplier else raw
             val amount = if (technique.power == 0) 0 else
                 (criticalRaw * 100.0 / (100.0 + victim.definition.defense * defenseMultiplier) * defense).toInt().coerceAtLeast(1)
@@ -789,12 +925,39 @@ class BattleSimulator(
     private fun chooseEnemy(actor: Fighter): Fighter? {
         val enemies = combatants.values.filter { it.health > 0 && it.definition.side != actor.definition.side }
         if (actor.focusUntil > elapsedMillis) enemies.firstOrNull { it.definition.combatantId == actor.focusId }?.let { return it }
-        val best = enemies.minWithOrNull(compareByDescending<Fighter> { actor.threat[it.definition.combatantId] ?: 0L }
-            .thenBy { actor.position.distanceTo(it.position) }.thenBy { it.definition.combatantId }) ?: return null
-        val current = target(actor, actor.targetId, false) ?: return best
-        val currentThreat = actor.threat[current.definition.combatantId] ?: 0L
+        val hasRecordedThreat = enemies.any { (actor.threat[it.definition.combatantId] ?: 0L) > 0L }
+        val best = if (hasRecordedThreat) {
+            enemies.minWithOrNull(
+                compareByDescending<Fighter> { actor.threat[it.definition.combatantId] ?: 0L }
+                    .thenBy { actor.position.distanceTo(it.position) }
+                    .thenBy { it.definition.combatantId }
+            )
+        } else {
+            // Distance changes continuously during the opening lineup. Keep the
+            // first target stable so later threat changes are legible and replayable.
+            enemies.minByOrNull { it.definition.combatantId }
+        } ?: return null
         val bestThreat = actor.threat[best.definition.combatantId] ?: 0L
-        return if (bestThreat > currentThreat * 1.2 + 5) best else current
+        val coordinatedTargetId = if (actor.personality.teamWeight >= 1.06f) {
+            combatants.values.asSequence()
+                .filter { it.health > 0 && it.definition.side == actor.definition.side &&
+                    it.definition.combatantId != actor.definition.combatantId }
+                .mapNotNull { teammate -> target(actor, teammate.targetId, false)?.definition?.combatantId }
+                .groupingBy { it }
+                .eachCount()
+                .maxWithOrNull(compareBy<Map.Entry<String, Int>> { it.value }.thenBy { it.key })
+                ?.key
+        } else null
+        val coordinatedTarget = coordinatedTargetId?.let(combatants::get)
+        val coordinatedThreat = coordinatedTarget?.let { actor.threat[it.definition.combatantId] ?: 0L } ?: 0L
+        val followsTeamFocus = coordinatedTarget != null && bestThreat <= coordinatedThreat * 1.5 + 5
+        val preferred = if (followsTeamFocus) requireNotNull(coordinatedTarget) else best
+        val current = target(actor, actor.targetId, false) ?: return preferred
+        val currentThreat = actor.threat[current.definition.combatantId] ?: 0L
+        val switchThreshold = 1.05 + actor.personality.targetStickiness.coerceIn(0f, 1f).toDouble() * 0.3
+        val preferredThreat = actor.threat[preferred.definition.combatantId] ?: 0L
+        return if (preferred.definition.combatantId != current.definition.combatantId &&
+            (followsTeamFocus || preferredThreat > currentThreat * switchThreshold + 5)) preferred else current
     }
 
     private fun chooseAlly(actor: Fighter): Fighter = combatants.values
@@ -815,7 +978,9 @@ class BattleSimulator(
 
     private fun idealRange(actor: Fighter, target: Fighter, technique: TechniqueDefinition): Float {
         val separation = if (actor === target) 0f else actor.definition.collisionRadius + target.definition.collisionRadius
-        return max(separation, (technique.minRange + technique.maxRange) / 2f).coerceAtMost(technique.maxRange)
+        val base = max(separation, (technique.minRange + technique.maxRange) / 2f).coerceAtMost(technique.maxRange)
+        val personalityOffset = if (actor.currentOrder == null) actor.personality.preferredRangeBias else 0f
+        return (base + personalityOffset).coerceIn(technique.minRange, technique.maxRange)
     }
 
     private fun ready(actor: Fighter, technique: TechniqueDefinition) = (actor.cooldowns[technique.techniqueId] ?: 0L) <= elapsedMillis
@@ -873,7 +1038,9 @@ class BattleSimulator(
     } ?: true
 
     private fun cancelAction(actor: Fighter, reason: String) {
-        actor.active?.let { actor.cooldowns[it.technique.techniqueId] = elapsedMillis + it.technique.cooldownMillis }
+        actor.active?.let {
+            actor.cooldowns[it.technique.techniqueId] = elapsedMillis + cooldownDuration(actor, it.technique)
+        }
         actor.active = null
         actor.defendUntil = 0L
         actor.plannedTechniqueId = null
@@ -971,7 +1138,21 @@ class BattleSimulator(
         }
     }
 
-    private class Fighter(val definition: CombatantDefinition, var position: BattlePosition) {
+    private fun cooldownDuration(actor: Fighter, technique: TechniqueDefinition): Long =
+        (technique.cooldownMillis * actor.definition.techniqueCooldownMultiplier)
+            .roundToLong()
+            .coerceIn(0L, configuration.maxDurationMillis)
+
+    private class Fighter(
+        val definition: CombatantDefinition,
+        var position: BattlePosition,
+        val personality: PersonalityBattleProfile,
+        val scheduleRandom: Random,
+        val movementRandom: Random,
+        val reactionRandom: Random,
+        val choiceRandom: Random,
+        val combatRandom: Random
+    ) {
         var health = definition.maxHealth
         var energy = definition.maxEnergy
         var energyRemainder = 0.0
@@ -979,6 +1160,7 @@ class BattleSimulator(
         var strategy = definition.strategy
         var lastDecision = "Aguardando decisão autônoma."
         var techniqueScores: Map<String, Float> = emptyMap()
+        var techniqueScoreComponents: Map<String, Map<String, Float>> = emptyMap()
         var lastOrderFailure: String? = null
         var targetId: String? = null
         var focusId: String? = null

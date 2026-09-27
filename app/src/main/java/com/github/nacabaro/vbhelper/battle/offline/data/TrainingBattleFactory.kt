@@ -11,6 +11,7 @@ import com.github.nacabaro.vbhelper.battle.offline.core.BattleTeam
 import com.github.nacabaro.vbhelper.battle.offline.core.CombatantDefinition
 import com.github.nacabaro.vbhelper.battle.offline.core.TechniqueDefinition
 import com.github.nacabaro.vbhelper.battle.offline.core.TechniqueKind
+import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityType
 
 /** Immutable copy of the participant values needed to enter a disposable training session. */
 data class TrainingParticipantInput(
@@ -23,7 +24,9 @@ data class TrainingParticipantInput(
     val attack: Int,
     val strategy: BattleStrategy = BattleStrategy.BALANCED,
     val vitalStats: VitalBattleProfile? = null,
-    val attribute: BattleAttribute = BattleAttribute.NONE
+    val attribute: BattleAttribute = BattleAttribute.NONE,
+    val stableRngKey: String = instanceId,
+    val personalityType: DigimonPersonalityType = DigimonPersonalityType.FRIENDLY
 )
 
 /** Builds the first training loadout without reading or modifying Room during a battle tick. */
@@ -148,13 +151,16 @@ object TrainingBattleFactory {
             maxEnergy = stats.energy,
             attack = stats.attack,
             defense = stats.defense,
-            energyRegenerationPerSecond = 3f,
-            movementSpeed = 2.8f + stage * 0.08f,
+            energyRegenerationPerSecond = stats.energyRegenerationPerSecond,
+            movementSpeed = stats.movementSpeed,
+            techniqueCooldownMultiplier = stats.cooldownMultiplier,
             collisionRadius = 0.42f + stage * 0.015f,
             preferredDistance = 2f,
-            decisionDelayMinMillis = 1_200L - stage * 80L,
-            decisionDelayMaxMillis = 2_400L - stage * 120L,
+            decisionDelayMinMillis = stats.decisionDelayMinMillis,
+            decisionDelayMaxMillis = stats.decisionDelayMaxMillis,
             strategy = strategy,
+            stableRngKey = stableRngKey,
+            personalityType = personalityType,
             techniqueIds = listOf("practice_quick_burst", "practice_heavy_burst", "practice_guard_break"),
             specialTechniqueId = PRACTICE_SPECIAL_ID
         )

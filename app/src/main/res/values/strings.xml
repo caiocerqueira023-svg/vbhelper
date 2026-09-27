@@ -270,6 +270,11 @@
     <string name="home_vbdim_level">Level</string>
     <string name="home_vbdim_attribute">Attribute</string>
     <string name="home_vbdim_days">Days</string>
+    <string name="home_be_rank">Rank</string>
+    <string name="home_be_training_limit">Training limit</string>
+    <string name="home_be_training_hp">Training HP</string>
+    <string name="home_be_training_bp">Training BP</string>
+    <string name="home_be_training_ap">Training AP</string>
 
     <string name="special_mission_none">No mission selected</string>
     <string name="special_mission_steps">Walk %1$d steps</string>
@@ -460,6 +465,10 @@
     <string name="ui_world_zoom_instruction">Use a two-finger pinch on the map to zoom.</string>
     <string name="ui_world_compass_instruction">The N, E, S and W arrows rotate around the player like a compass.</string>
     <string name="ui_world_zoom_label">Zoom %1$d%%</string>
+    <string name="ui_world_debug_spawn_button">DEBUG: Spawn random Digimon (20 m)</string>
+    <string name="ui_world_debug_spawn_loading">Spawning Digimon…</string>
+    <string name="ui_world_debug_spawn_success">Debug Digimon spawned within 20 m.</string>
+    <string name="ui_world_debug_spawn_unavailable">No eligible Digimon or spawn slot is available.</string>
     <string name="ui_world_enable_location">Enable location</string>
     <string name="ui_world_too_far">Get closer to interact with this Digimon.</string>
     <string name="ui_world_wild_digimon">Wild Digimon</string>
@@ -570,4 +579,14 @@
     <string name="ui_digifarm_stop_follow">Stop following</string>
     <string name="ui_digifarm_transfer">Move to another Digifarm</string>
     <string name="ui_digifarm_no_other_farm">Create another Digifarm first to move residents between farms.</string>
+    <string name="ui_world_battle_banner">BATTLE</string>
+    <string name="ui_world_encounter_wild">Wild Digimon</string>
+    <string name="ui_world_encounter_prompt">How do you want to interact with this Digimon?</string>
+    <string name="ui_world_encounter_chat">Talk</string>
+    <string name="ui_world_encounter_fight">Battle</string>
+    <string name="ui_world_encounter_preparing">Preparing…</string>
+    <string name="ui_world_battle_choose_active">Choose an active Digimon before battling.</string>
+    <string name="ui_world_battle_stats_unavailable">The active Digimon’s battle stats are unavailable.</string>
+    <string name="ui_world_battle_start_failed">Could not start the battle.</string>
+    <string name="ui_world_battle_record_failed">Could not save the battle result.</string>
 </resources>

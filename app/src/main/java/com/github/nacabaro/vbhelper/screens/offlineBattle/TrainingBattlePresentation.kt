@@ -16,6 +16,7 @@ import com.github.nacabaro.vbhelper.battle.offline.data.TrainingBattleFactory
 import com.github.nacabaro.vbhelper.battle.offline.data.TrainingParticipantInput
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.screens.OfflineBattleParticipant
+import com.github.nacabaro.vbhelper.screens.OfflineBattleSpriteSet
 import com.github.nacabaro.vbhelper.rendering.sprite3d.ResidentFrameImage
 import com.github.nacabaro.vbhelper.rendering.sprite3d.SpriteExtrusionGlb
 import com.github.nacabaro.vbhelper.utils.BitmapData
@@ -48,11 +49,12 @@ object TrainingBattlePresentationFactory {
         context: Context,
         allies: List<OfflineBattleParticipant>,
         opponents: List<OfflineBattleParticipant>,
-        randomSeed: Long
+        randomSeed: Long,
+        arenaManifestPath: String = OfflineArenaManifest.DEFAULT_MANIFEST_PATH
     ): TrainingBattlePresentation = withContext(Dispatchers.IO) {
         require(allies.size in 1..2 && opponents.size in 1..2 && allies.size <= opponents.size)
         val appContext = context.applicationContext
-        val arenaManifest = OfflineArenaManifest.read(appContext)
+        val arenaManifest = OfflineArenaManifest.read(appContext, arenaManifestPath)
         val inputsBySide = mapOf(
             BattleSide.ALLIED to allies.map { it.toInput() },
             BattleSide.OPPOSING to opponents.map { it.toInput() }
@@ -80,7 +82,8 @@ object TrainingBattlePresentationFactory {
                     val profile = participant.toInput()
                     val combatantId = "${if (side == BattleSide.ALLIED) "ally" else "opponent"}:${profile.instanceId}"
                     val artId = profile.externalCharacterId ?: "storage:${profile.instanceId}"
-                    val poses = participant.character?.let { character ->
+                    val poses = participant.spriteSet?.let(::spriteSetPoses)
+                        ?: participant.character?.let { character ->
                         val source = (appContext as VBHelper).container.db.spriteDao().getForCharacter(character.charId)
                         if (source == null) databasePoses(character) else {
                             mapOf("idle" to source.spriteIdle1, "idle2" to source.spriteIdle2,
@@ -135,7 +138,9 @@ object TrainingBattlePresentationFactory {
             attack = attackPower,
             strategy = BattleStrategy.BALANCED,
             vitalStats = vitalStats,
-            attribute = attribute
+            attribute = attribute,
+            stableRngKey = stableRngKey,
+            personalityType = personalityType
         )
     }
 
@@ -152,6 +157,24 @@ object TrainingBattlePresentationFactory {
             runCatching {
                 val pixels = BitmapData(bytes, character.spriteWidth, character.spriteHeight).createARGBIntArray()
                 ResidentFrameImage(pixels, character.spriteWidth, character.spriteHeight)
+            }.getOrNull()?.let { pose to it }
+        }.toMap()
+    }
+
+    private fun spriteSetPoses(spriteSet: OfflineBattleSpriteSet): Map<String, ResidentFrameImage> {
+        val sprites = mapOf(
+            "idle" to spriteSet.idle,
+            "idle2" to spriteSet.idle2,
+            "walk" to spriteSet.walk,
+            "walk2" to spriteSet.walk2,
+            "attack" to spriteSet.attack,
+            "defeated" to spriteSet.defeated
+        )
+        return sprites.mapNotNull { (pose, bytes) ->
+            if (bytes.isEmpty() || spriteSet.width <= 0 || spriteSet.height <= 0) return@mapNotNull null
+            runCatching {
+                val pixels = BitmapData(bytes, spriteSet.width, spriteSet.height).createARGBIntArray()
+                ResidentFrameImage(pixels, spriteSet.width, spriteSet.height)
             }.getOrNull()?.let { pose to it }
         }.toMap()
     }

@@ -1,6 +1,7 @@
 package com.github.nacabaro.vbhelper.world
 
 import androidx.room.withTransaction
+import com.github.nacabaro.vbhelper.battle.offline.core.BattleOutcome
 import com.github.cfogrady.vbnfc.data.NfcCharacter
 import com.github.nacabaro.vbhelper.daos.WorldSpawnDao
 import com.github.nacabaro.vbhelper.database.AppDatabase
@@ -44,6 +45,7 @@ class WorldRepository(private val db: AppDatabase) {
         private const val MAX_SPAWN_PER_CALL = 3
         private const val MAX_OUTER_SPAWN_PER_CALL = TARGET_OUTER_VISIBLE_COUNT
         private const val GLOBAL_ACTIVE_CAP = 60
+        private const val DEBUG_SPAWN_RADIUS_METERS = 20.0
 
         /** Placeholder: recrutamento exige o Digimon ativo com 5000+ vitais. */
         const val RECRUIT_VITALS_REQUIREMENT = 5000
@@ -63,6 +65,76 @@ class WorldRepository(private val db: AppDatabase) {
             ensureSpawnsLocked(latitude, longitude)
         }
     }
+
+    /** Creates one short-lived wild encounter near the current player location for debug builds. */
+    suspend fun spawnDebugDigimon(latitude: Double, longitude: Double): Long? =
+        spawnMutex.withLock {
+            val now = System.currentTimeMillis()
+            spawnDao.deleteExpired(now)
+
+            val characters = db.characterDao().getCharactersForWorldSpawns()
+            if (characters.isEmpty()) return@withLock null
+
+            val speciesNames = db.speciesProfileDao().getAll().associate { profile ->
+                profile.cardCharacterId to (profile.matchedName ?: profile.speciesName)
+            }
+            val character = WorldSpawnSelector.selectCharacter(
+                characters = characters,
+                speciesNames = speciesNames
+            ) ?: return@withLock null
+
+            val activeSpawns = spawnDao.getActiveSpawnsSync(now)
+            val evictionsNeeded = (activeSpawns.size + 1 - GLOBAL_ACTIVE_CAP).coerceAtLeast(0)
+            if (evictionsNeeded > 0) {
+                val evictions = activeSpawns
+                    .asSequence()
+                    .filter { it.recruitmentState == RecruitmentState.WILD && !it.interacted }
+                    .sortedByDescending {
+                        distanceMeters(latitude, longitude, it.latitude, it.longitude)
+                    }
+                    .take(evictionsNeeded)
+                    .toList()
+                if (evictions.size < evictionsNeeded) return@withLock null
+                evictions.forEach { spawnDao.deleteById(it.id) }
+            }
+
+            val individualId = IndividualIdentity.generate()
+            val distance = randomDistanceInArea(0.0, DEBUG_SPAWN_RADIUS_METERS)
+            val bearing = Random.nextDouble(0.0, Math.PI * 2)
+            val latOffset = distance * cos(bearing) / 111_320.0
+            val lonOffset = distance * sin(bearing) /
+                (111_320.0 * cos(Math.toRadians(latitude)).coerceAtLeast(0.1))
+
+            db.withTransaction {
+                db.digimonIndividualDao().insert(DigimonIndividual(individualId, now))
+                db.digimonIndividualDao().upsertPersonality(
+                    DigimonPersonalityGenerator.generate(individualId, character.attribute, character.stage, now)
+                )
+                val spawnId = spawnDao.insert(
+                    WorldSpawn(
+                        cardCharacterId = character.id,
+                        individualId = individualId,
+                        latitude = latitude + latOffset,
+                        longitude = longitude + lonOffset,
+                        spawnedAt = now,
+                        expiresAt = now + 30 * 60 * 1000,
+                        mood = 50,
+                        recruitmentState = RecruitmentState.WILD
+                    )
+                )
+                db.wildRelationshipDao().insert(
+                    WildRelationship(
+                        individualId = individualId,
+                        cardCharacterId = character.id,
+                        speciesNameSnapshot = speciesNames[character.id],
+                        trust = 50,
+                        createdAt = now,
+                        updatedAt = now
+                    )
+                )
+                spawnId
+            }
+        }
 
     private suspend fun ensureSpawnsLocked(latitude: Double, longitude: Double) {
         val now = System.currentTimeMillis()
@@ -210,6 +282,29 @@ class WorldRepository(private val db: AppDatabase) {
 
     suspend fun removeSpawn(spawnId: Long) {
         spawnDao.deleteById(spawnId)
+    }
+
+    /** Applies one completed Radar battle as a single database operation. */
+    suspend fun recordRadarBattleResult(
+        activeCharacterId: Long,
+        spawnId: Long,
+        outcome: BattleOutcome
+    ): Boolean {
+        val effect = outcome.toRadarBattleEffect()
+        if (!effect.recordsBattle) return false
+        val won = effect.won ?: return false
+        return db.withTransaction {
+            // A victory may already have consumed this encounter. That also makes
+            // repeated UI callbacks harmless instead of duplicating the win rate.
+            if (spawnDao.getSpawnById(spawnId) == null) return@withTransaction false
+            if (db.userCharacterDao().recordBattleResult(activeCharacterId, won) != 1) {
+                return@withTransaction false
+            }
+            if (effect.removesSpawn && spawnDao.deleteById(spawnId) != 1) {
+                error("O encontro já não está disponível.")
+            }
+            true
+        }
     }
 
     /** Converte o spawn selvagem em um UserCharacter real, no Storage. */

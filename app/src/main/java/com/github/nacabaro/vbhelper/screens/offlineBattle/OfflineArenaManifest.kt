@@ -38,10 +38,14 @@ data class OfflineArenaManifest(
     }
 
     companion object {
-        private const val MANIFEST_PATH = "Arena/Colosseum/arena.json"
+        const val DEFAULT_MANIFEST_PATH = "Arena/Colosseum/arena.json"
+        const val RADAR_MANIFEST_PATH = "Arena/Radar/arena.json"
 
-        fun read(context: Context): OfflineArenaManifest {
-            val json = context.assets.open(MANIFEST_PATH).bufferedReader().use { it.readText() }
+        fun read(
+            context: Context,
+            manifestPath: String = DEFAULT_MANIFEST_PATH
+        ): OfflineArenaManifest {
+            val json = context.assets.open(manifestPath).bufferedReader().use { it.readText() }
             val root = JSONObject(json)
             require(root.optInt("schemaVersion") == 1) { "Versão não suportada do manifesto da arena." }
             require(root.optString("upAxis") == "Y" && root.optString("playPlane") == "XZ") {

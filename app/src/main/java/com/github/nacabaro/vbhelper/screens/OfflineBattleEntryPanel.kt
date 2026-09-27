@@ -23,12 +23,27 @@ import androidx.compose.ui.unit.sp
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleAttribute
 import com.github.nacabaro.vbhelper.battle.offline.data.TrainingBattleStats
+import com.github.nacabaro.vbhelper.battle.offline.data.BattleParticipantProfile
+import com.github.nacabaro.vbhelper.battle.offline.data.BattleStatSourceScale
 import com.github.nacabaro.vbhelper.battle.offline.data.VitalBattleProfile
 import com.github.nacabaro.vbhelper.battle.offline.data.VitalStatScale
+import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityType
+import com.github.nacabaro.vbhelper.battle.ExtractedBattleCharacter
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
+
+data class OfflineBattleSpriteSet(
+    val idle: ByteArray,
+    val idle2: ByteArray,
+    val walk: ByteArray,
+    val walk2: ByteArray,
+    val attack: ByteArray,
+    val defeated: ByteArray,
+    val width: Int,
+    val height: Int
+)
 
 data class OfflineBattleParticipant(
     val character: CharacterDtos.CharacterWithSprites?,
@@ -39,10 +54,21 @@ data class OfflineBattleParticipant(
     val stage: Int = 1,
     val externalCharacterId: String? = null,
     val vitalStats: VitalBattleProfile? = null,
-    val attribute: BattleAttribute = BattleAttribute.NONE
+    val attribute: BattleAttribute = BattleAttribute.NONE,
+    val individualId: String? = null,
+    val stableRngKey: String = individualId ?: assetCharacterId ?: character?.id?.toString() ?: displayName,
+    val personalityType: DigimonPersonalityType = DigimonPersonalityType.FRIENDLY,
+    val spriteSet: OfflineBattleSpriteSet? = null,
+    val statSourceScale: BattleStatSourceScale = when (vitalStats?.scale) {
+        VitalStatScale.DIM -> BattleStatSourceScale.CARD_DIM
+        VitalStatScale.BEM -> BattleStatSourceScale.CARD_BEM
+        VitalStatScale.ARENA_EXTRACTED -> BattleStatSourceScale.ARENA_EXTRACTED
+        VitalStatScale.STAGE_FALLBACK -> BattleStatSourceScale.STAGE_FALLBACK
+        null -> BattleStatSourceScale.STAGE_FALLBACK
+    }
 ) {
     val stableId: String
-        get() = character?.id?.toString() ?: assetCharacterId ?: displayName
+        get() = individualId ?: character?.id?.toString() ?: assetCharacterId ?: displayName
 
     fun trainingStats(): TrainingBattleStats = TrainingBattleStats.forParticipant(stage, vitalStats)
 }
@@ -55,7 +81,11 @@ fun offlineBattleParticipant(
     trainingHp: Int = 0,
     trainingBp: Int = 0,
     trainingAp: Int = 0,
-    externalCharacterId: String? = null
+    externalCharacterId: String? = null,
+    personalityType: DigimonPersonalityType = DigimonPersonalityType.FRIENDLY,
+    individualId: String? = null,
+    stableRngKey: String? = null,
+    sourceScale: BattleStatSourceScale? = null
 ): OfflineBattleParticipant {
     val profile = VitalBattleProfile(
         scale = if (character.isBemCard) VitalStatScale.BEM else VitalStatScale.DIM,
@@ -67,7 +97,7 @@ fun offlineBattleParticipant(
         trainingAp = trainingAp,
         vitalPoints = character.vitalPoints,
         mood = character.mood
-    ).takeIf { it.hasUsableBaseStats }
+    ).takeIf { it.hasAnyUsableBaseStats }
     return OfflineBattleParticipant(
         character = character,
         assetCharacterId = null,
@@ -79,6 +109,16 @@ fun offlineBattleParticipant(
         stage = character.stage,
         externalCharacterId = externalCharacterId,
         vitalStats = profile,
+        individualId = individualId,
+        stableRngKey = stableRngKey ?: individualId ?: character.id.toString(),
+        personalityType = personalityType,
+        statSourceScale = sourceScale ?: when (profile?.scale) {
+            VitalStatScale.DIM -> BattleStatSourceScale.CARD_DIM
+            VitalStatScale.BEM -> BattleStatSourceScale.CARD_BEM
+            VitalStatScale.ARENA_EXTRACTED -> BattleStatSourceScale.ARENA_EXTRACTED
+            VitalStatScale.STAGE_FALLBACK -> BattleStatSourceScale.STAGE_FALLBACK
+            null -> BattleStatSourceScale.STAGE_FALLBACK
+        },
         attribute = when (character.attribute) {
             com.github.cfogrady.vbnfc.data.NfcCharacter.Attribute.Virus -> BattleAttribute.VIRUS
             com.github.cfogrady.vbnfc.data.NfcCharacter.Attribute.Data -> BattleAttribute.DATA
@@ -89,23 +129,78 @@ fun offlineBattleParticipant(
     )
 }
 
+fun offlineBattleParticipant(
+    character: CharacterDtos.CharacterWithSprites,
+    profile: BattleParticipantProfile
+): OfflineBattleParticipant {
+    val defaultHp = when {
+        profile.stage <= 1 -> 1800
+        profile.stage == 2 -> 2600
+        profile.stage == 3 -> 3600
+        else -> 4400
+    }
+    val defaultAttack = when {
+        profile.stage <= 1 -> 700
+        profile.stage == 2 -> 1050
+        profile.stage == 3 -> 1450
+        else -> 1850
+    }
+    return offlineBattleParticipant(
+        character = character,
+        maxHp = profile.baseHp.takeIf { VitalBattleProfile.isKnownBaseStat(it) } ?: defaultHp,
+        attackPower = profile.baseAp.takeIf { VitalBattleProfile.isKnownBaseStat(it) } ?: defaultAttack,
+        baseBp = profile.baseBp,
+        trainingHp = profile.trainingHp,
+        trainingBp = profile.trainingBp,
+        trainingAp = profile.trainingAp,
+        externalCharacterId = profile.externalCharacterId,
+        personalityType = profile.personalityType ?: DigimonPersonalityType.FRIENDLY,
+        individualId = profile.individualId,
+        stableRngKey = profile.stableRngKey,
+        sourceScale = profile.statSourceScale
+    ).copy(displayName = profile.displayName)
+}
+
 fun assetOfflineBattleParticipant(
     characterId: String,
     displayName: String,
     maxHp: Int,
     attackPower: Int,
     stage: Int = 1,
-    attribute: BattleAttribute = BattleAttribute.NONE
-): OfflineBattleParticipant = OfflineBattleParticipant(
-    character = null,
-    assetCharacterId = characterId,
-    displayName = displayName,
-    maxHp = maxHp.coerceAtLeast(1),
-    attackPower = attackPower.coerceAtLeast(1),
-    stage = stage,
-    externalCharacterId = characterId,
-    attribute = attribute
-)
+    attribute: BattleAttribute = BattleAttribute.NONE,
+    extractedData: ExtractedBattleCharacter? = null
+): OfflineBattleParticipant {
+    val extracted = extractedData?.takeIf {
+        it.characterId.equals(characterId, ignoreCase = true) && it.phase in 3..6 && it.hasAnyUsableStats
+    }
+    val vitalProfile = extracted?.let {
+        VitalBattleProfile(
+            scale = VitalStatScale.ARENA_EXTRACTED,
+            baseHp = it.hp,
+            baseBp = it.bp,
+            baseAp = it.ap,
+            sourcePhase = it.phase
+        )
+    }
+    return OfflineBattleParticipant(
+        character = null,
+        assetCharacterId = characterId,
+        displayName = displayName,
+        maxHp = extracted?.hp?.takeIf { VitalBattleProfile.isKnownBaseStat(it) } ?: maxHp.coerceAtLeast(1),
+        attackPower = extracted?.ap?.takeIf { VitalBattleProfile.isKnownBaseStat(it) } ?: attackPower.coerceAtLeast(1),
+        stage = stage,
+        externalCharacterId = characterId,
+        vitalStats = vitalProfile,
+        attribute = attribute,
+        stableRngKey = "asset:$characterId:profile-v1",
+        personalityType = DigimonPersonalityType.FRIENDLY,
+        statSourceScale = if (vitalProfile != null) {
+            BattleStatSourceScale.ARENA_EXTRACTED
+        } else {
+            BattleStatSourceScale.STAGE_FALLBACK
+        }
+    )
+}
 
 @Composable
 fun OfflineBattleEntryPanel(

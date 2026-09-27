@@ -4,6 +4,13 @@ import android.graphics.Bitmap
 import android.graphics.RectF
 import android.content.pm.ApplicationInfo
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -92,6 +99,7 @@ import com.github.nacabaro.vbhelper.battle.offline.data.TrainingBattleFactory
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CenterFocusStrong
 import com.github.nacabaro.vbhelper.ui.theme.DeepPurpleBgAlt
+import com.github.nacabaro.vbhelper.ui.theme.SpaceBlack
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceElevatedPurple
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
@@ -317,25 +325,7 @@ fun OfflineTrainingBattleScreen(
                 )
             }
             snapshot?.takeIf { sceneReady }?.let { current ->
-                current.projectiles.forEach { projectile ->
-                    val point = sceneView?.projectBattlePosition(
-                        projectile.position.x, PROJECTILE_HEIGHT, projectile.position.z
-                    )
-                    val image = state.fighters[projectile.ownerId]?.attackVisuals?.get(projectile.visual ?: "small")
-                    if (point != null && image != null) {
-                        val size = if (projectile.visual == "large") 36.dp else 24.dp
-                        val next = sceneView?.projectBattlePosition(projectile.position.x + projectile.velocityX * 0.05f,
-                            PROJECTILE_HEIGHT, projectile.position.z + projectile.velocityZ * 0.05f)
-                        ProjectileImage(
-                            bitmap = image,
-                            x = with(density) { point.first.toDp() } - size / 2,
-                            y = with(density) { point.second.toDp() } - size / 2,
-                            size = size,
-                            rotation = next?.let { Math.toDegrees(kotlin.math.atan2((it.second - point.second).toDouble(),
-                                (it.first - point.first).toDouble())).toFloat() } ?: 0f
-                        )
-                    }
-                }
+                BattleVfxOverlay(current, state.fighters, sceneView)
                 val labels = mutableListOf<Pair<Float, Float>>()
                 val labelWidth = with(density) { 84.dp.toPx() }
                 val labelHeight = with(density) { 30.dp.toPx() }
@@ -378,21 +368,6 @@ fun OfflineTrainingBattleScreen(
                             fighter = fighter,
                             x = with(density) { labelX.toDp() },
                             y = with(density) { labelY.toDp() }
-                        )
-                    }
-                }
-                val combatantsById = (current.alliedMembers + current.opposingMembers).associateBy { it.combatantId }
-                current.impacts.forEach { impact ->
-                    val target = combatantsById[impact.targetId] ?: return@forEach
-                    val point = sceneView?.projectBattlePosition(target.position.x, 1.0f, target.position.z)
-                    if (point != null) {
-                        DamageImpactOverlay(
-                            bitmap = state.fighters[impact.targetId]?.impactVisual,
-                            damage = impact.damage,
-                            critical = impact.critical,
-                            remainingMillis = impact.remainingMillis,
-                            x = with(density) { point.first.toDp() } - 31.dp,
-                            y = with(density) { point.second.toDp() } - 32.dp
                         )
                     }
                 }
@@ -575,11 +550,18 @@ fun OfflineTrainingBattleScreen(
                                     color = TextSecondaryOnDark, style = MaterialTheme.typography.bodySmall)
                                 Text("Decisão: ${member.debug.decision}", color = TextSecondaryOnDark,
                                     style = MaterialTheme.typography.bodySmall)
+                                Text("Personalidade: ${member.debug.personalityType?.name ?: "FRIENDLY"} · núcleo ${member.debug.personalityCore?.name ?: "—"}",
+                                    color = TextSecondaryOnDark, style = MaterialTheme.typography.bodySmall)
                                 Text("Técnica: ${member.activeTechniqueId?.let { techniqueNames[it] ?: it } ?: "nenhuma"} · energia ${member.energy}/${member.maxEnergy} · reservada ${member.reservedEnergy}",
                                     color = TextSecondaryOnDark, style = MaterialTheme.typography.bodySmall)
                                 if (member.debug.techniqueScores.isNotEmpty()) {
                                     Text("Pontuações: ${member.debug.techniqueScores.entries.joinToString { (id, score) -> "${techniqueNames[id] ?: id}=${score.toInt()}" }}",
                                         color = TextSecondaryOnDark, style = MaterialTheme.typography.bodySmall)
+                                }
+                                if (member.debug.techniqueScoreComponents.isNotEmpty()) {
+                                    Text("Componentes: ${member.debug.techniqueScoreComponents.entries.joinToString(" · ") { (id, parts) ->
+                                        "${techniqueNames[id] ?: id} {${parts.entries.joinToString { (name, value) -> "$name=${value.toInt()}" }}}"
+                                    }}", color = TextSecondaryOnDark, style = MaterialTheme.typography.bodySmall)
                                 }
                                 Text("Ordem atual: ${member.currentOrderId ?: "—"} · fila: ${member.queuedOrderIds.joinToString().ifBlank { "—" }}",
                                     color = TextSecondaryOnDark, style = MaterialTheme.typography.bodySmall)
@@ -663,6 +645,435 @@ fun OfflineTrainingBattleScreen(
             },
             dismissButton = { OutlinedButton(onClick = ::cancelExit) { Text("Continuar") } }
         )
+    }
+}
+
+/**
+ * World variant of the battle HUD. The square Radar viewport is kept in place;
+ * only its contents and the controls immediately below it are replaced.
+ */
+@Composable
+fun WorldRadarBattleContent(
+    viewModel: OfflineBattleSessionViewModel,
+    battleActive: Boolean,
+    onOutcome: (BattleOutcome) -> Unit,
+    onExit: () -> Unit,
+    radarViewport: @Composable () -> Unit,
+    radarControls: @Composable () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
+    val state by viewModel.state.collectAsState()
+    val snapshot = state.snapshot
+    val allies = snapshot?.alliedMembers.orEmpty()
+    val opponents = snapshot?.opposingMembers.orEmpty()
+    var selectedAllyId by rememberSaveable(state.sessionId) { mutableStateOf("") }
+    var selectedOpponentId by rememberSaveable(state.sessionId) { mutableStateOf("") }
+    var menu by rememberSaveable(state.sessionId) { mutableStateOf<TrainingTacticalMenu?>(null) }
+    var tacticalMenuPause by rememberSaveable(state.sessionId) { mutableStateOf(true) }
+    var showStrategyMenu by rememberSaveable(state.sessionId) { mutableStateOf(false) }
+    var showExitDialog by rememberSaveable(state.sessionId) { mutableStateOf(false) }
+    var manualPause by rememberSaveable(state.sessionId) { mutableStateOf(false) }
+    var sceneReady by remember(state.sessionId) { mutableStateOf(false) }
+    var sceneView by remember(state.sessionId) { mutableStateOf<OfflineBattleSceneView?>(null) }
+    var rendererError by remember(state.sessionId) { mutableStateOf<String?>(null) }
+    var commandFeedback by remember(state.sessionId) { mutableStateOf<String?>(null) }
+    var projectionRevision by remember(state.sessionId) { mutableIntStateOf(0) }
+    @Suppress("UNUSED_VARIABLE")
+    val cameraFrameVersion = projectionRevision
+
+    val selectedAlly = allies.firstOrNull { it.combatantId == selectedAllyId && it.health > 0 }
+        ?: allies.firstOrNull { it.health > 0 } ?: allies.firstOrNull()
+    val selectedOpponent = opponents.firstOrNull { it.combatantId == selectedOpponentId && it.health > 0 }
+        ?: opponents.firstOrNull { it.health > 0 } ?: opponents.firstOrNull()
+
+    LaunchedEffect(allies.map { it.combatantId }) {
+        if (allies.none { it.combatantId == selectedAllyId }) {
+            selectedAllyId = allies.firstOrNull()?.combatantId.orEmpty()
+        }
+    }
+    LaunchedEffect(opponents.map { it.combatantId }) {
+        if (opponents.none { it.combatantId == selectedOpponentId }) {
+            selectedOpponentId = opponents.firstOrNull()?.combatantId.orEmpty()
+        }
+    }
+    LaunchedEffect(state.sessionId, snapshot?.result?.outcome) {
+        snapshot?.result?.outcome?.let(onOutcome)
+    }
+    LaunchedEffect(battleActive, menu, tacticalMenuPause, showStrategyMenu, showExitDialog, manualPause) {
+        viewModel.setPaused("tech-menu", battleActive && menu == TrainingTacticalMenu.TECHNIQUES && tacticalMenuPause)
+        viewModel.setPaused("item-menu", battleActive && menu == TrainingTacticalMenu.ITEMS && tacticalMenuPause)
+        viewModel.setPaused("strategy-menu", battleActive && showStrategyMenu && tacticalMenuPause)
+        viewModel.setPaused("exit-dialog", battleActive && showExitDialog)
+        viewModel.setPaused("manual", battleActive && manualPause)
+    }
+    LaunchedEffect(state.sessionId, battleActive, sceneReady) {
+        if (!battleActive || !sceneReady) viewModel.setPaused("scene", true)
+    }
+    DisposableEffect(lifecycleOwner, viewModel) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> viewModel.setPaused("background", true)
+                Lifecycle.Event.ON_RESUME -> viewModel.setPaused("background", false)
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    DisposableEffect(state.sessionId) {
+        viewModel.setPaused("scene", true)
+        onDispose { viewModel.setPaused("scene", true) }
+    }
+
+    fun issue(actor: String, action: TrainerAction, interrupt: Boolean = false) {
+        val update = viewModel.issueOrder(actor, action, interrupt) ?: return
+        commandFeedback = if (update.status == OrderStatus.FAILED) {
+            update.reason
+        } else if (update.status == OrderStatus.QUEUED) {
+            "Ordem recebida · será executada assim que possível."
+        } else {
+            "Comando aplicado."
+        }
+    }
+
+    fun closeMenu() {
+        menu = null
+        viewModel.setPaused("tech-menu", false)
+        viewModel.setPaused("item-menu", false)
+    }
+
+    BackHandler(enabled = battleActive) {
+        when {
+            menu != null -> closeMenu()
+            showStrategyMenu -> showStrategyMenu = false
+            showExitDialog -> showExitDialog = false
+            snapshot?.result != null -> {
+                viewModel.finishSession()
+                onExit()
+            }
+            else -> showExitDialog = true
+        }
+    }
+
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(5.dp)
+    ) {
+        AnimatedContent(
+            targetState = battleActive,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .border(2.dp, SurfaceStroke, MaterialTheme.shapes.medium)
+                .clip(MaterialTheme.shapes.medium)
+                .testTag("world-radar-battle-viewport"),
+            transitionSpec = {
+                (fadeIn(tween(380)) + scaleIn(tween(380), initialScale = 0.98f)) togetherWith
+                    (fadeOut(tween(260)) + scaleOut(tween(260), targetScale = 1.02f))
+            },
+            label = "world-radar-viewport-transform"
+        ) { showBattle ->
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(if (showBattle) DeepPurpleBgAlt else SpaceBlack)
+                    .padding(2.dp)
+            ) {
+                if (showBattle) {
+                    OfflineBattleScene(
+                        snapshot = snapshot,
+                        fighters = state.fighters,
+                        manifest = state.arenaManifest,
+                        sessionId = state.sessionId,
+                        renderingEnabled = lifecycleState.isAtLeast(Lifecycle.State.RESUMED),
+                        onReady = { sceneView = it },
+                        onSceneReady = {
+                            sceneReady = true
+                            rendererError = null
+                            viewModel.setPaused("scene", false)
+                            viewModel.setPaused("renderer-error", false)
+                        },
+                        onProjectionChanged = { projectionRevision++ },
+                        onFighterTapped = { fighterId ->
+                            if (allies.any { it.combatantId == fighterId }) selectedAllyId = fighterId
+                            if (opponents.any { it.combatantId == fighterId }) selectedOpponentId = fighterId
+                        },
+                        onAssetError = {
+                            sceneReady = false
+                            rendererError = it
+                            viewModel.setPaused("renderer-error", true)
+                        },
+                        modifier = Modifier.fillMaxSize()
+                    )
+                    snapshot?.takeIf { sceneReady }?.let { current ->
+                        BattleVfxOverlay(
+                            snapshot = current,
+                            fighters = state.fighters,
+                            sceneView = sceneView
+                        )
+                    }
+
+                    if (state.loading || (snapshot != null && !sceneReady && rendererError == null)) {
+                        Surface(
+                            modifier = Modifier.align(Alignment.Center),
+                            color = SurfaceElevatedPurple,
+                            shape = CutCornerShape(8.dp),
+                            border = BorderStroke(1.dp, SurfaceStroke)
+                        ) {
+                            Column(
+                                Modifier.padding(18.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text("Transformando o Radar em arena…", color = TextPrimaryOnDark)
+                                LinearProgressIndicator(color = VitalCyan, trackColor = DeepPurpleBgAlt)
+                            }
+                        }
+                    }
+                    if (sceneReady && state.countdown > 0 && snapshot?.result == null) {
+                        Surface(
+                            Modifier.align(Alignment.Center),
+                            color = Color(0xD0100D1A),
+                            shape = CutCornerShape(8.dp)
+                        ) {
+                            Column(
+                                Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text("Prepare-se", color = TextPrimaryOnDark)
+                                Text("${state.countdown}", color = VitalCyan, style = MaterialTheme.typography.displayMedium)
+                            }
+                        }
+                    }
+                    (rendererError ?: state.error)?.let { error ->
+                        Surface(
+                            Modifier.align(Alignment.BottomCenter).padding(8.dp),
+                            color = Color(0xF02A1426),
+                            shape = CutCornerShape(6.dp),
+                            border = BorderStroke(1.dp, Color(0xFFFF7C96))
+                        ) {
+                            Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(error, color = TextPrimaryOnDark, style = MaterialTheme.typography.bodySmall)
+                                OutlinedButton(onClick = {
+                                    if (state.error != null) viewModel.retry(context) else sceneView?.retryScene()
+                                }) { Text("Tentar novamente") }
+                            }
+                        }
+                    }
+                    snapshot?.result?.let { result ->
+                        BattleResultPanel(
+                            outcome = result.outcome,
+                            statistics = result.statistics,
+                            elapsedMillis = result.elapsedMillis,
+                            outcomeText = ::radarOutcomeLabel,
+                            onRematch = null,
+                            onReturn = {
+                                viewModel.finishSession()
+                                onExit()
+                            },
+                            modifier = Modifier.align(Alignment.Center).padding(14.dp)
+                        )
+                    }
+                } else {
+                    radarViewport()
+                }
+            }
+        }
+
+        if (battleActive) {
+            BattleTeamRow(
+                title = "SEU DIGIMON",
+                members = allies,
+                selectedId = selectedAlly?.combatantId,
+                color = VitalCyan,
+                onSelect = { selectedAllyId = it }
+            )
+            BattleTeamRow(
+                title = "DIGIMON SELVAGEM",
+                members = opponents,
+                selectedId = selectedOpponent?.combatantId,
+                color = Color(0xFFFF7899),
+                onSelect = { selectedOpponentId = it }
+            )
+            BattleCommandBar(
+                selectedAlly = selectedAlly,
+                selectedOpponent = selectedOpponent,
+                availableCommandPoints = ((snapshot?.commandPoints ?: 0) -
+                    (snapshot?.reservedCommandPoints ?: 0)).coerceAtLeast(0),
+                supportReady = snapshot != null && !snapshot.isPaused &&
+                    selectedAlly?.combatantId?.let(snapshot.pendingSupportCombatantIds::contains) == true,
+                commandsEnabled = snapshot != null && snapshot.result == null && sceneReady &&
+                    rendererError == null && state.countdown == 0,
+                manuallyPaused = manualPause,
+                onToggleManualPause = { manualPause = !manualPause },
+                tacticalMenuPause = tacticalMenuPause,
+                onToggleTacticalPause = { tacticalMenuPause = !tacticalMenuPause },
+                onFocus = { ally, target -> issue(ally, TrainerAction.FocusTarget(target)) },
+                onDefend = { ally -> issue(ally, TrainerAction.Defend(), true) },
+                onSupport = { ally -> issue(ally, TrainerAction.Support) },
+                onMove = { ally, away ->
+                    issue(ally, if (away) TrainerAction.KeepDistance else TrainerAction.MoveCloser, true)
+                },
+                onSpecial = { ally, target ->
+                    val technique = TrainingBattleFactory.techniques.first { it.kind == TechniqueKind.SPECIAL }
+                    issue(ally, TrainerAction.UseTechnique(technique.techniqueId, target))
+                },
+                onOpenTechniques = {
+                    menu = TrainingTacticalMenu.TECHNIQUES
+                    if (tacticalMenuPause) viewModel.setPaused("tech-menu", true)
+                },
+                onOpenItems = {
+                    menu = TrainingTacticalMenu.ITEMS
+                    if (tacticalMenuPause) viewModel.setPaused("item-menu", true)
+                },
+                onOpenStrategies = { showStrategyMenu = true }
+            )
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = commandFeedback ?: snapshot?.let { eventSummary(it, state.fighters) }
+                        ?: "Preparando combate…",
+                    color = TextSecondaryOnDark,
+                    style = MaterialTheme.typography.labelSmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedButton(onClick = { showExitDialog = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text("Sair")
+                }
+            }
+        } else {
+            radarControls()
+        }
+    }
+
+    if (battleActive && showStrategyMenu && selectedAlly != null) {
+        AlertDialog(
+            onDismissRequest = { showStrategyMenu = false },
+            title = { Text("Estratégia de ${selectedAlly.displayName}") },
+            text = {
+                Column {
+                    BattleStrategy.entries.forEach { strategy ->
+                        DropdownMenuItem(
+                            text = { Text(strategyLabel(strategy)) },
+                            onClick = {
+                                issue(selectedAlly.combatantId, TrainerAction.ChangeStrategy(strategy))
+                                showStrategyMenu = false
+                            }
+                        )
+                    }
+                }
+            },
+            confirmButton = { OutlinedButton(onClick = { showStrategyMenu = false }) { Text("Fechar") } }
+        )
+    }
+
+    when (if (battleActive) menu else null) {
+        TrainingTacticalMenu.TECHNIQUES -> TechniquesDialog(
+            snapshot = snapshot,
+            selectedAlly = selectedAlly,
+            selectedOpponent = selectedOpponent,
+            tacticalPauseEnabled = tacticalMenuPause,
+            onTechnique = { technique, actor, target ->
+                issue(actor, TrainerAction.UseTechnique(technique.techniqueId, target))
+                closeMenu()
+            },
+            onDismiss = ::closeMenu
+        )
+        TrainingTacticalMenu.ITEMS -> ItemsDialog(
+            snapshot = snapshot,
+            selectedAlly = selectedAlly,
+            tacticalPauseEnabled = tacticalMenuPause,
+            onUseItem = { item, target ->
+                issue(selectedAlly?.combatantId ?: return@ItemsDialog, TrainerAction.UseItem(item.itemId, target))
+                closeMenu()
+            },
+            onDismiss = ::closeMenu
+        )
+        null -> Unit
+    }
+
+    if (battleActive && showExitDialog) {
+        AlertDialog(
+            onDismissRequest = { showExitDialog = false },
+            title = { Text("Sair da batalha?") },
+            text = { Text("A luta será encerrada sem alterar o win rate.") },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        viewModel.abandon()
+                        viewModel.finishSession()
+                        onExit()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFB34363))
+                ) { Text("Sair da batalha") }
+            },
+            dismissButton = { OutlinedButton(onClick = { showExitDialog = false }) { Text("Continuar") } }
+        )
+    }
+}
+
+@Composable
+private fun BattleVfxOverlay(
+    snapshot: BattleSnapshot,
+    fighters: Map<String, BattleFighterPresentation>,
+    sceneView: OfflineBattleSceneView?
+) {
+    val density = LocalDensity.current
+    Box(Modifier.fillMaxSize()) {
+        snapshot.projectiles.forEach { projectile ->
+            val point = sceneView?.projectBattlePosition(
+                projectile.position.x, PROJECTILE_HEIGHT, projectile.position.z
+            )
+            val image = fighters[projectile.ownerId]?.attackVisuals?.get(projectile.visual ?: "small")
+            if (point != null && image != null) {
+                val size = if (projectile.visual == "large") 36.dp else 24.dp
+                val next = sceneView?.projectBattlePosition(
+                    projectile.position.x + projectile.velocityX * 0.05f,
+                    PROJECTILE_HEIGHT,
+                    projectile.position.z + projectile.velocityZ * 0.05f
+                )
+                ProjectileImage(
+                    bitmap = image,
+                    x = with(density) { point.first.toDp() } - size / 2,
+                    y = with(density) { point.second.toDp() } - size / 2,
+                    size = size,
+                    rotation = next?.let {
+                        Math.toDegrees(
+                            kotlin.math.atan2(
+                                (it.second - point.second).toDouble(),
+                                (it.first - point.first).toDouble()
+                            )
+                        ).toFloat()
+                    } ?: 0f
+                )
+            }
+        }
+
+        val combatantsById = (snapshot.alliedMembers + snapshot.opposingMembers)
+            .associateBy { it.combatantId }
+        snapshot.impacts.forEach { impact ->
+            val target = combatantsById[impact.targetId] ?: return@forEach
+            val point = sceneView?.projectBattlePosition(target.position.x, 1.0f, target.position.z)
+            if (point != null) {
+                DamageImpactOverlay(
+                    bitmap = fighters[impact.targetId]?.impactVisual,
+                    damage = impact.damage,
+                    critical = impact.critical,
+                    remainingMillis = impact.remainingMillis,
+                    x = with(density) { point.first.toDp() } - 31.dp,
+                    y = with(density) { point.second.toDp() } - 32.dp
+                )
+            }
+        }
     }
 }
 
@@ -982,24 +1393,27 @@ private fun BattleResultPanel(
     outcome: BattleOutcome,
     statistics: com.github.nacabaro.vbhelper.battle.offline.core.BattleStatistics,
     elapsedMillis: Long,
-    onRematch: () -> Unit,
+    outcomeText: (BattleOutcome) -> String = ::outcomeLabel,
+    onRematch: (() -> Unit)?,
     onReturn: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Surface(modifier.fillMaxWidth(), color = Color(0xF0161024), shape = CutCornerShape(9.dp),
         border = BorderStroke(1.dp, VitalCyan)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(outcomeLabel(outcome), color = TextPrimaryOnDark, style = MaterialTheme.typography.headlineSmall,
+            Text(outcomeText(outcome), color = TextPrimaryOnDark, style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold)
             Text("Duração ${formatDuration(elapsedMillis)}", color = VitalCyan, style = MaterialTheme.typography.labelLarge)
             Text("Dano ${statistics.damageDealt} · recebido ${statistics.damageReceived} · prevenido ${statistics.damagePrevented}",
                 color = TextSecondaryOnDark, style = MaterialTheme.typography.bodySmall)
             Text("Curas ${statistics.healingDone} · ordens ${statistics.ordersCompleted} · incentivos ${statistics.supportCommands} · itens ${statistics.itemsUsed} · projéteis ${statistics.projectilesHit}/${statistics.projectilesHit + statistics.projectilesMissed}",
                 color = TextSecondaryOnDark, style = MaterialTheme.typography.bodySmall)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onRematch, modifier = Modifier.weight(1f),
-                    colors = ButtonDefaults.buttonColors(containerColor = VitalPurpleBright, contentColor = Color(0xFF0A0812))) {
-                    Text("Revanche", fontWeight = FontWeight.Bold)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (onRematch != null) {
+                    Button(onClick = onRematch, modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(containerColor = VitalPurpleBright, contentColor = Color(0xFF0A0812))) {
+                        Text("Revanche", fontWeight = FontWeight.Bold)
+                    }
                 }
                 OutlinedButton(onClick = onReturn, modifier = Modifier.weight(1f)) { Text("Voltar") }
             }
@@ -1073,6 +1487,13 @@ private fun outcomeLabel(outcome: BattleOutcome): String = when (outcome) {
     BattleOutcome.OPPOSING_VICTORY -> "Derrota no treino"
     BattleOutcome.DRAW -> "Empate no treino"
     BattleOutcome.ABANDONED -> "Treino encerrado"
+}
+
+private fun radarOutcomeLabel(outcome: BattleOutcome): String = when (outcome) {
+    BattleOutcome.ALLIED_VICTORY -> "Vitória no Radar"
+    BattleOutcome.OPPOSING_VICTORY -> "Derrota no Radar"
+    BattleOutcome.DRAW -> "Empate no Radar"
+    BattleOutcome.ABANDONED -> "Batalha encerrada"
 }
 
 private fun formatDuration(milliseconds: Long): String {

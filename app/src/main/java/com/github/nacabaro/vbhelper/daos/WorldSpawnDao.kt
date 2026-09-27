@@ -61,6 +61,11 @@ interface WorldSpawnDao {
             cc.charaIndex AS charaIndex,
             cc.stage AS stage,
             cc.cardId AS cardId,
+            cc.attribute AS attribute,
+            cc.baseHp AS baseHp,
+            cc.baseBp AS baseBp,
+            cc.baseAp AS baseAp,
+            ca.isBEm AS isBemCard,
             s.spriteIdle1 AS spriteIdle,
             s.spriteIdle2 AS spriteIdle2,
             s.spriteWalk1 AS spriteWalk,
@@ -72,6 +77,7 @@ interface WorldSpawnDao {
             sp.speciesName AS speciesName
         FROM WorldSpawn ws
         JOIN CardCharacter cc ON cc.id = ws.cardCharacterId
+        JOIN Card ca ON ca.id = cc.cardId
         JOIN Sprite s ON s.id = cc.spriteId
         LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = cc.id
         WHERE ws.expiresAt > :now AND ws.recruitmentState = 'WILD'
@@ -97,6 +103,11 @@ interface WorldSpawnDao {
             cc.charaIndex AS charaIndex,
             cc.stage AS stage,
             cc.cardId AS cardId,
+            cc.attribute AS attribute,
+            cc.baseHp AS baseHp,
+            cc.baseBp AS baseBp,
+            cc.baseAp AS baseAp,
+            ca.isBEm AS isBemCard,
             s.spriteIdle1 AS spriteIdle,
             s.spriteIdle2 AS spriteIdle2,
             s.spriteWalk1 AS spriteWalk,
@@ -108,6 +119,7 @@ interface WorldSpawnDao {
             sp.speciesName AS speciesName
         FROM WorldSpawn ws
         JOIN CardCharacter cc ON cc.id = ws.cardCharacterId
+        JOIN Card ca ON ca.id = cc.cardId
         JOIN Sprite s ON s.id = cc.spriteId
         LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = cc.id
         WHERE ws.recruitmentState = 'PENDING_RECRUITMENT'
@@ -133,6 +145,11 @@ interface WorldSpawnDao {
             cc.charaIndex AS charaIndex,
             cc.stage AS stage,
             cc.cardId AS cardId,
+            cc.attribute AS attribute,
+            cc.baseHp AS baseHp,
+            cc.baseBp AS baseBp,
+            cc.baseAp AS baseAp,
+            ca.isBEm AS isBemCard,
             s.spriteIdle1 AS spriteIdle,
             s.spriteIdle2 AS spriteIdle2,
             s.spriteWalk1 AS spriteWalk,
@@ -144,6 +161,7 @@ interface WorldSpawnDao {
             sp.speciesName AS speciesName
         FROM WorldSpawn ws
         JOIN CardCharacter cc ON cc.id = ws.cardCharacterId
+        JOIN Card ca ON ca.id = cc.cardId
         JOIN Sprite s ON s.id = cc.spriteId
         LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = cc.id
         WHERE ws.id = :spawnId
