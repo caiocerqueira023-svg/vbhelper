@@ -209,6 +209,14 @@ class FromNfcConverter (
             dimData = cardData
         )
 
+        // The current slot may be absent from the watch's transformation log.
+        // Record it after history so an existing historical discovery date wins.
+        database.dexDao().insertCharacter(
+            charIndex = cardCharData.charaIndex,
+            cardId = cardData.id,
+            discoveredOn = System.currentTimeMillis()
+        )
+
         addVitalsHistoryToDatabase(
             characterId = characterId,
             nfcCharacter = nfcCharacter

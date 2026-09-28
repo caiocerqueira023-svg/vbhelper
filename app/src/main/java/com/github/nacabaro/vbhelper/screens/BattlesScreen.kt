@@ -7,6 +7,15 @@ package com.github.nacabaro.vbhelper.screens
  */
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -16,6 +25,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,6 +72,10 @@ import com.github.nacabaro.vbhelper.battle.BattleCharacterImage
 import com.github.nacabaro.vbhelper.battle.decodeBattleAsset
 import android.util.Log
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.motionEnabled
+import com.github.nacabaro.vbhelper.components.CyberPanel
+import com.github.nacabaro.vbhelper.components.VitalButton
+import com.github.nacabaro.vbhelper.components.cyberFrame
 import com.github.nacabaro.vbhelper.battle.RetrofitHelper
 import com.github.nacabaro.vbhelper.battle.AttackSpriteImage
 import com.github.nacabaro.vbhelper.battle.ArenaBattleSystem
@@ -102,6 +116,8 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.draw.clip
 import com.github.nacabaro.vbhelper.ui.theme.StatusRed
 import com.github.nacabaro.vbhelper.ui.theme.StatusRedDim
+import com.github.nacabaro.vbhelper.ui.theme.StatusGreen
+import com.github.nacabaro.vbhelper.ui.theme.SurfaceElevatedPurple
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
@@ -211,7 +227,7 @@ fun AnimatedDamageNumber(
         text = "-$damage",
         fontSize = 32.sp,
         fontWeight = FontWeight.Bold,
-        color = Color.Red,
+        color = StatusRed,
         textAlign = TextAlign.Center,
         style = TextStyle(
             shadow = Shadow(
@@ -784,7 +800,7 @@ fun MiddleBattleView(
             LinearProgressIndicator(
                         progress = { battleSystem.opponentHP / (opponentCharacter?.baseHp?.toFloat() ?: 100f) },
                         modifier = getLandscapeModifier(),
-                        color = Color.Red,
+                        color = StatusRed,
                 trackColor = Color.Gray
             )
 
@@ -1139,12 +1155,12 @@ fun MiddleBattleView(
                      .fillMaxWidth(0.5f)
                      .height(35.dp),
                  colors = ButtonDefaults.buttonColors(
-                     containerColor = Color.Blue,
+                     containerColor = VitalCyan,
                      disabledContainerColor = Color.Gray
                  ),
-                 shape = RoundedCornerShape(8.dp)
+                 shape = CutCornerShape(8.dp)
              ) {
-                 Text(stringResource(R.string.ui_attack), color = Color.White, fontSize = 12.sp)
+                 Text(stringResource(R.string.ui_attack), color = Color.Black, fontSize = 12.sp)
              }
         }
     }
@@ -1383,7 +1399,7 @@ fun EnemyBattleView(
         LinearProgressIndicator(
             progress = { battleSystem.opponentHP / (activeCharacter?.baseHp?.toFloat() ?: 100f) },
                         modifier = getLandscapeModifier(),
-            color = Color.Red,
+            color = StatusRed,
             trackColor = Color.Gray
         )
 
@@ -1517,14 +1533,22 @@ fun EnemyBattleView(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BattlesScreen(musicController: AppMusicController) {
+fun BattlesScreen(
+    musicController: AppMusicController,
+    onFullScreenBattleChanged: (Boolean) -> Unit = {}
+) {
     val TAG = "BattleScreen"
     val context = LocalContext.current
     val resources = LocalResources.current
+    val allowMotion = motionEnabled()
     var currentView by rememberSaveable { mutableStateOf("main") }
     val offlineBattleViewModel = offlineBattleViewModel(
         LocalViewModelStoreOwner.current ?: error("BattlesScreen precisa de um ViewModelStoreOwner.")
     )
+
+    LaunchedEffect(currentView) {
+        onFullScreenBattleChanged(currentView == "offline-battle")
+    }
 
     LaunchedEffect(currentView) {
         val track = if (currentView == "battle-main" || currentView == "offline-battle") {
@@ -1555,6 +1579,7 @@ fun BattlesScreen(musicController: AppMusicController) {
 
     var offlinePlayer by remember { mutableStateOf<OfflineBattleParticipant?>(null) }
     var offlineOpponents by remember { mutableStateOf<List<OfflineBattleParticipant>>(emptyList()) }
+    var isLoadingOfflineBattleData by remember { mutableStateOf(true) }
 
     var expanded by remember { mutableStateOf(false) }
     var selectedStage by remember { mutableStateOf("") }
@@ -2042,6 +2067,7 @@ fun BattlesScreen(musicController: AppMusicController) {
                             offlineParticipants.filter { it.character?.id != activeChar.id } +
                                 packagedOfflineOpponents.filter { it.assetCharacterId != formattedCardId }
                             ).distinctBy { it.stableId }
+                        isLoadingOfflineBattleData = false
                     }
 
                     /*
@@ -2062,12 +2088,16 @@ fun BattlesScreen(musicController: AppMusicController) {
                         activeCardId = null
                         offlinePlayer = null
                         offlineOpponents = emptyList()
+                        isLoadingOfflineBattleData = false
                     }
                 }
             }
         } catch (e: Exception) {
             println("BATTLESCREEN: Error loading active character: ${e.message}")
             e.printStackTrace()
+            withContext(Dispatchers.Main) {
+                isLoadingOfflineBattleData = false
+            }
         }
     }
 
@@ -2081,12 +2111,25 @@ fun BattlesScreen(musicController: AppMusicController) {
 
     Scaffold (
         topBar = {
-            // Only show TopBanner when not in battle mode
-            if (currentView != "battle-main" && currentView != "battle-results" &&
-                currentView != "offline-battle" && currentView != "offline-setup") {
-            TopBanner(
-                text = "Battles"
-            )
+            AnimatedVisibility(
+                visible = currentView != "battle-main" && currentView != "battle-results" &&
+                    currentView != "offline-battle",
+                enter = slideInVertically(
+                    animationSpec = tween(if (allowMotion) 240 else 0, easing = FastOutSlowInEasing),
+                    initialOffsetY = { -it }
+                ) + expandVertically(
+                    animationSpec = tween(if (allowMotion) 240 else 0, easing = FastOutSlowInEasing),
+                    expandFrom = Alignment.Top
+                ) + fadeIn(tween(if (allowMotion) 160 else 0)),
+                exit = slideOutVertically(
+                    animationSpec = tween(if (allowMotion) 240 else 0, easing = FastOutSlowInEasing),
+                    targetOffsetY = { -it }
+                ) + shrinkVertically(
+                    animationSpec = tween(if (allowMotion) 240 else 0, easing = FastOutSlowInEasing),
+                    shrinkTowards = Alignment.Top
+                ) + fadeOut(tween(if (allowMotion) 160 else 0))
+            ) {
+                TopBanner(text = stringResource(R.string.nav_battle))
             }
         }
     ) { contentPadding ->
@@ -2107,18 +2150,17 @@ fun BattlesScreen(musicController: AppMusicController) {
                             .padding(bottom = 24.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                    offlinePlayer?.let { player ->
-                        OfflineBattleEntryPanel(
-                            player = player,
-                            opponents = offlineOpponents,
-                            onStartBattle = {
-                                currentView = "offline-setup"
-                            },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp)
-                        )
-                    }
+                    OfflineBattleEntryPanel(
+                        player = offlinePlayer,
+                        opponents = offlineOpponents,
+                        isLoading = isLoadingOfflineBattleData,
+                        onStartBattle = {
+                            currentView = "offline-setup"
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
 
                     // Show loading/authentication message if not authenticated
                     if (isCheckingAuth || !isAuthenticated) {
@@ -2147,10 +2189,31 @@ fun BattlesScreen(musicController: AppMusicController) {
                         ) {
                             // Show active character info
                             activeUserCharacter?.let { character ->
-                                Text(stringResource(R.string.ui_active_character))
-                                Text(stringResource(R.string.ui_stage, character.stage))
-                                activeCardId?.let { cardId ->
-                                    Text(stringResource(R.string.ui_character_id, cardId), fontSize = 14.sp, color = Color.Blue, fontWeight = FontWeight.Bold)
+                                CyberPanel(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp),
+                                    active = canBattle
+                                ) {
+                                    Text(
+                                        stringResource(R.string.ui_active_character),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = TextPrimaryOnDark,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        stringResource(R.string.ui_stage, character.stage),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = TextSecondaryOnDark
+                                    )
+                                    activeCardId?.let { cardId ->
+                                        Text(
+                                            stringResource(R.string.ui_character_id, cardId),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = VitalCyan,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
                                 }
                                 
                                 Spacer(modifier = Modifier.height(16.dp))
@@ -2169,7 +2232,7 @@ fun BattlesScreen(musicController: AppMusicController) {
                                             verticalArrangement = Arrangement.spacedBy(4.dp)
                                         ) {
                                             opponentsList.forEach { opponent ->
-                                Button(
+                                VitalButton(
                                     onClick = {
                                                         activeCardId?.let { cardId ->
                                             selectedOpponent = opponent
@@ -2237,7 +2300,7 @@ fun BattlesScreen(musicController: AppMusicController) {
                                                             println("BATTLESCREEN: No active card ID found in database")
                                                         }
                                                     },
-                                                    modifier = Modifier.fillMaxWidth()
+                                                    modifier = Modifier.fillMaxWidth().height(52.dp)
                                 ) {
                                     Text(stringResource(R.string.ui_battle_opponent, opponent.displayName?.takeIf { it.isNotBlank() } ?: opponent.name))
                                 }
@@ -2249,14 +2312,14 @@ fun BattlesScreen(musicController: AppMusicController) {
                                              color = Color.White,
                                              textAlign = TextAlign.Center)
                                     }
-                                } else {
-                                    Text(stringResource(R.string.ui_stage_requirement),
-                                         fontSize = 16.sp, 
-                                         color = Color.Red,
-                                         textAlign = TextAlign.Center)
-                                }
-                            } ?: run {
-                                Text(stringResource(R.string.ui_no_active_character), fontSize = 16.sp, color = Color.Red)
+                                     } else {
+                                        Text(stringResource(R.string.ui_stage_requirement),
+                                             fontSize = 16.sp,
+                                             color = StatusRed,
+                                             textAlign = TextAlign.Center)
+                                    }
+                                } ?: run {
+                                    Text(stringResource(R.string.ui_no_active_character), fontSize = 16.sp, color = StatusRed)
                             }
                         }
                     }
@@ -2529,22 +2592,21 @@ fun BattlesScreen(musicController: AppMusicController) {
                             }
                         }
 
-                        // Result card, echoing the reference "YOU WIN!" panel:
-                        // a light rounded card with a big bold title, the
-                        // winner line and a single confirm button.
+                        // Compact battle result panel within the shared cyber visual system.
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
                             Card(
-                                shape = MaterialTheme.shapes.medium,
+                                shape = CutCornerShape(12.dp),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                                    containerColor = SurfaceElevatedPurple
                                 ),
                                 border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceStroke),
                                 modifier = Modifier
                                     .padding(32.dp)
                                     .fillMaxWidth()
+                                    .cyberFrame(active = true)
                             ) {
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -2581,13 +2643,10 @@ fun BattlesScreen(musicController: AppMusicController) {
 
                                     Spacer(modifier = Modifier.height(28.dp))
 
-                                    Button(
+                                    VitalButton(
                                         onClick = { currentView = "main" },
-                                        shape = RoundedCornerShape(14.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = VitalCyan,
-                                            contentColor = Color.Black
-                                        ),
+                                        borderColor = VitalCyan,
+                                        contentColor = VitalCyan,
                                         modifier = Modifier
                                             .fillMaxWidth()
                                             .height(48.dp)
@@ -2804,7 +2863,7 @@ fun ResumeMatchDialog(
         confirmButton = {
             Button(
                 onClick = onResume,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Green)
+                colors = ButtonDefaults.buttonColors(containerColor = StatusGreen)
             ) {
                 Text(stringResource(R.string.ui_resume_match))
             }
@@ -2812,7 +2871,7 @@ fun ResumeMatchDialog(
         dismissButton = {
             Button(
                 onClick = onQuit,
-                colors = ButtonDefaults.buttonColors(containerColor = Color.Red)
+                colors = ButtonDefaults.buttonColors(containerColor = StatusRed)
             ) {
                 Text(stringResource(R.string.ui_quit_new_match))
             }

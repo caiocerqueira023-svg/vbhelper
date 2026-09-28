@@ -11,5 +11,6 @@ fun shortStageName(stage: Int): String = when (stage) {
     3 -> "Adult"
     4 -> "Perfect"
     5 -> "Ultimate"
+    6 -> "Ultimate"
     else -> "Stage $stage"
 }

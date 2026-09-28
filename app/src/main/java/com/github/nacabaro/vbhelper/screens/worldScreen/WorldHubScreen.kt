@@ -21,13 +21,17 @@ import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 
 @Composable
-fun WorldScreen(navController: NavController) {
+fun WorldScreen(
+    navController: NavController,
+    onFullScreenBattleChanged: (Boolean) -> Unit = {}
+) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     when (selectedTab) {
         0 -> RadarScreen(
             navController = navController,
             selectedWorldTab = selectedTab,
-            onWorldTabSelected = { selectedTab = it }
+            onWorldTabSelected = { selectedTab = it },
+            onFullScreenBattleChanged = onFullScreenBattleChanged
         )
         else -> DigifarmScreen(
             navController = navController,

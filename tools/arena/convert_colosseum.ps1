@@ -166,12 +166,21 @@ foreach ($record in $meshRecords) {
     $textureIndex = $textures.Count
     $textures.Add(@{ sampler = 0; source = $imageIndex })
     $materialIndex = $materials.Count
-    $materials.Add(@{
+    $materialEntry = @{
         name = $record.Name
         doubleSided = $true
         extensions = @{ KHR_materials_unlit = @{} }
         pbrMetallicRoughness = @{ baseColorTexture = @{ index = $textureIndex }; metallicFactor = 0; roughnessFactor = 1 }
-    })
+    }
+    if ($record.Name -eq 'Sphere001') {
+        # The dome is visible through the real openings in the arena floor. Its
+        # texture is also the emissive map, so those openings read as energy
+        # sources without painting extra effects over the fighters.
+        $materialEntry.emissiveTexture = @{ index = $textureIndex }
+        $materialEntry.emissiveFactor = @(0.5, 0.16, 1.0)
+        $materialEntry.Remove('extensions')
+    }
+    $materials.Add($materialEntry)
     $attributes = @{ POSITION = $positionAccessor; TEXCOORD_0 = $uvAccessor }
     if ($null -ne $normalAccessor) { $attributes.NORMAL = $normalAccessor }
     $meshes.Add(@{
@@ -241,13 +250,17 @@ $manifest = [ordered]@{
     lineupDepthRatio = 0.38
     minimumLineupDepth = 1.2
     camera = [ordered]@{
-        distance = 19.0; pitchRadians = 0.62; targetY = 0.7
-        minDistance = 10.0; maxDistance = 22.0; minPitchRadians = 0.2; maxPitchRadians = 1.15
+        distance = 19.0; pitchRadians = 0.48; targetY = 0.7
+        minDistance = 8.5; maxDistance = 22.0; minPitchRadians = 0.2; maxPitchRadians = 1.15
     }
     meshes = [ordered]@{ floor = 'Ground'; dome = 'Sphere001' }
     blockedRegions = @()
 }
 [System.IO.Directory]::CreateDirectory([System.IO.Path]::GetDirectoryName($manifestPathResolved)) | Out-Null
-[System.IO.File]::WriteAllText($manifestPathResolved, ($manifest | ConvertTo-Json -Depth 8), [System.Text.UTF8Encoding]::new($false))
+[System.IO.File]::WriteAllText(
+    $manifestPathResolved,
+    ($manifest | ConvertTo-Json -Depth 8) + [Environment]::NewLine,
+    [System.Text.UTF8Encoding]::new($false)
+)
 Write-Output "Wrote $outputPathResolved ($($output.Length) bytes; $($meshRecords.Count) meshes)."
 Write-Output "Wrote arena runtime manifest $manifestPathResolved."

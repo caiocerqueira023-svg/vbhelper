@@ -383,6 +383,8 @@
     <string name="ui_chat_saved">Configurações de chat salvas!</string>
     <string name="ui_tamer_saved">Nome do Tamer salvo!</string>
     <string name="ui_import_success">Importação realizada com sucesso!</string>
+    <string name="ui_dim_importing">Importando DiM…</string>
+    <string name="ui_dim_import_failed">Falha ao importar DiM: %1$s</string>
     <string name="ui_empty_file">O arquivo selecionado está vazio!</string>
     <string name="ui_secrets_import_failed">Falha ao importar segredos. Selecione apenas o APK oficial.</string>
     <string name="ui_secrets_imported">Segredos importados com sucesso. Agora é possível conectar aos dispositivos.</string>
@@ -575,4 +577,36 @@
     <string name="ui_world_battle_stats_unavailable">Os stats de batalha do Digimon ativo não estão disponíveis.</string>
     <string name="ui_world_battle_start_failed">Não foi possível iniciar a batalha.</string>
     <string name="ui_world_battle_record_failed">Não foi possível registrar o resultado.</string>
+
+    <!-- Shared polish copy -->
+    <string name="adventure_status_complete">Aventura concluída</string>
+    <string name="adventure_status_in_progress">Aventura em andamento</string>
+    <string name="adventure_collect_reward">Toque para coletar a recompensa</string>
+    <string name="adventure_time_left">Tempo restante · %1$s</string>
+    <string name="adventure_stage_vitals">Estágio %1$d · %2$d vitais</string>
+    <string name="adventure_cancel_title">Cancelar aventura?</string>
+    <string name="adventure_cancel_body">O progresso atual e a recompensa serão perdidos.</string>
+    <string name="adventure_keep">Manter aventura</string>
+    <string name="adventure_cancel_action">Cancelar aventura</string>
+    <string name="scan_supported_devices">Vital Bracelet · Vital Hero · BE</string>
+    <string name="scan_direction_prompt">Escolha a direção desta transferência NFC.</string>
+    <string name="scan_keep_still">Mantenha a pulseira parada até a transferência terminar.</string>
+    <string name="scan_nfc_link_ready">CONEXÃO NFC PRONTA</string>
+    <string name="scan_card_link_ready">CONEXÃO DO CARD PRONTA</string>
+    <string name="items_available_balance">Saldo disponível</string>
+    <string name="cards_empty_state">Nenhum card foi importado ainda.</string>
+    <string name="card_status_official">Card oficial</string>
+    <string name="card_status_custom">Card customizado</string>
+    <string name="card_status_unknown">Origem não definida</string>
+    <string name="card_delete_title">Excluir %1$s?</string>
+    <string name="card_delete_body">Isso também remove todos os personagens criados com este card. Esta ação não pode ser desfeita.</string>
+    <string name="card_rename_title">Renomear card</string>
+    <string name="choose_card_title">Escolher card</string>
+    <string name="choose_card_empty">Nenhum card disponível.</string>
+    <string name="choose_card_action">Selecionar para transferência</string>
+    <string name="card_view_empty_state">Nenhum personagem deste card foi descoberto ainda.</string>
+    <string name="card_adventure_locked_title">Missão não descoberta</string>
+    <string name="card_adventure_locked_body">Avance mais neste card para revelá-la.</string>
+    <string name="card_adventure_steps">%1$d passos</string>
+    <string name="sprite_viewer_empty">Nenhum sprite encontrado.</string>
 </resources>

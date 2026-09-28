@@ -4,6 +4,9 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Scaffold
@@ -19,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.CyberEmptyState
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.dtos.CardDtos
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
@@ -57,16 +61,23 @@ fun CardsScreen(
             )
         }
     ) { contentPadding ->
-        LazyColumn (
-            modifier = Modifier
-                .padding(top = contentPadding.calculateTopPadding())
-        ) {
-            items(
-                items = cardList,
-                key = { it.cardId },
-                contentType = { "card-progress" }
+        if (cardList.isEmpty()) {
+            CyberEmptyState(
+                message = stringResource(R.string.cards_empty_state),
+                modifier = Modifier.fillMaxSize().padding(contentPadding)
+            )
+        } else {
+            LazyColumn (
+                modifier = Modifier.padding(contentPadding),
+                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                CardEntry(
+                items(
+                    items = cardList,
+                    key = { it.cardId },
+                    contentType = { "card-progress" }
+                ) {
+                    CardEntry(
                     name = it.cardName,
                     logo = BitmapData(
                         bitmap = it.cardLogo,
@@ -84,9 +95,7 @@ fun CardsScreen(
                     obtainedCharacters = it.obtainedCharacters,
                     totalCharacters = it.totalCharacters,
                     officialStatus = it.officialStatus,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     displayModify = modifyCards,
                     onClickModify = {
                         selectedCard.value = it
@@ -111,7 +120,8 @@ fun CardsScreen(
                             Toast.makeText(context, message, Toast.LENGTH_LONG).show()
                         }
                     }
-                )
+                    )
+                }
             }
         }
     }

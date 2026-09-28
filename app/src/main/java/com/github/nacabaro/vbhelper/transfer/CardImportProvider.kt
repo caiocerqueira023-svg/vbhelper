@@ -8,6 +8,7 @@ import android.os.Bundle
 import com.github.cfogrady.vb.dim.card.DimReader
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.screens.settingsScreen.controllers.CardImportController
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -47,7 +48,8 @@ class CardImportProvider : ContentProvider() {
 
     override fun call(method: String, arg: String?, extras: Bundle?): Bundle {
         val ctx = context ?: return Bundle().apply { putBoolean(RESULT_OK, false) }
-        val db  = (ctx.applicationContext as VBHelper).container.db
+        val application = ctx.applicationContext as VBHelper
+        val db = application.container.db
 
         return when (method) {
 
@@ -75,11 +77,21 @@ class CardImportProvider : ContentProvider() {
                             db.cardDao().getCardByCardId(dimId).isNotEmpty()
 
                         if (!alreadyExists) {
-                            CardImportController(db).importCard(cardBytes.inputStream())
+                            val importedCardId = CardImportController(db).importCard(cardBytes.inputStream())
                             // Rename to the user's custom label if it differs from the DIM's text
                             if (!customName.isNullOrBlank() && customName != builtInName) {
                                 db.cardDao().getCardByName(builtInName)?.let { card ->
                                     db.cardDao().renameCard(card.id.toInt(), customName)
+                                }
+                            }
+                            val askForOrigin =
+                                application.container.speciesSettingsRepository.promptOriginAtImportTime.first()
+                            if (askForOrigin) {
+                                db.cardDao().getCardById(importedCardId)?.let { card ->
+                                    application.container.speciesSettingsRepository.setPendingCardOriginPrompt(
+                                        card.id,
+                                        card.name
+                                    )
                                 }
                             }
                         }
@@ -103,4 +115,3 @@ class CardImportProvider : ContentProvider() {
     override fun update(uri: Uri, values: ContentValues?, selection: String?,
                         selectionArgs: Array<out String>?): Int = 0
 }
-

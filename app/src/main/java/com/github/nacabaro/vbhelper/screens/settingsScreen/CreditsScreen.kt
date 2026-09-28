@@ -32,14 +32,14 @@ fun CreditsScreen(
                 .padding(top = contentPadding.calculateTopPadding())
         ) {
             SettingsSection(stringResource(R.string.credits_section_reverse_engineering))
-            SettingsEntry(title = "cyanic", description = stringResource(R.string.credits_cyanic_description)) { }
+            SettingsEntry(title = "cyanic", description = stringResource(R.string.credits_cyanic_description))
             SettingsSection(stringResource(R.string.credits_section_app_development))
-            SettingsEntry(title = "cfogrady", description = stringResource(R.string.credits_cfogrady_description)) { }
-            SettingsEntry(title = "nacabaro", description = stringResource(R.string.credits_nacabaro_description)) { }
-            SettingsEntry(title = "lightheel", description = stringResource(R.string.credits_lightheel_description)) { }
-            SettingsEntry(title = "shvstrz", description = stringResource(R.string.credits_shvstrz_description)) { }
+            SettingsEntry(title = "cfogrady", description = stringResource(R.string.credits_cfogrady_description))
+            SettingsEntry(title = "nacabaro", description = stringResource(R.string.credits_nacabaro_description))
+            SettingsEntry(title = "lightheel", description = stringResource(R.string.credits_lightheel_description))
+            SettingsEntry(title = "shvstrz", description = stringResource(R.string.credits_shvstrz_description))
 
-            SettingsEntry(title = "redeyez", description = stringResource(R.string.credits_RedEyez_description)) { }
+            SettingsEntry(title = "redeyez", description = stringResource(R.string.credits_RedEyez_description))
         }
     }
 }

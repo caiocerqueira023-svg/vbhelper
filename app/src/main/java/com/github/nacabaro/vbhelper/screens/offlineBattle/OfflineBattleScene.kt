@@ -13,12 +13,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleSnapshot
 import com.github.nacabaro.vbhelper.battle.offline.core.CombatantState
+import com.github.nacabaro.vbhelper.rendering.HybridSceneKind
+import com.github.nacabaro.vbhelper.rendering.applyHybridSceneProfile
 import com.github.nacabaro.vbhelper.rendering.sprite3d.cameraAssistedSpriteYaw
 import com.github.nacabaro.vbhelper.ui.theme.DeepPurpleBgAlt
 import com.google.android.filament.Colors
 import com.google.android.filament.Engine
 import com.google.android.filament.EntityManager
 import com.google.android.filament.Filament
+import com.google.android.filament.MaterialInstance
 import com.google.android.filament.Skybox
 import com.google.android.filament.android.UiHelper
 import com.google.android.filament.gltfio.AssetLoader
@@ -89,6 +92,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
     private val engine: Engine
     private val viewer: ModelViewer
     private val backgroundSkybox: Skybox
+    private val radarSkybox: Skybox
     private var released = false
     private var arenaLoadGeneration = 0
     private var arenaLoaded = false
@@ -100,16 +104,21 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
     private var dragPointerId = -1
     private var pinchPointerId = -1
     private var cameraYaw = 0.0
-    private var cameraPitch = 0.62
+    private var cameraPitch = 0.27
     private var cameraDistance = 13.5
     private var cameraTargetX = 0.0
     private var cameraTargetZ = 0.0
     private var cameraFocusFighterId: String? = null
+    private var initialCameraFocusFighterId: String? = null
+    private var initialCameraCompositionApplied = false
     private var touchStartX = 0f
     private var touchStartY = 0f
     private var tapCandidate = false
     private var manifest: OfflineArenaManifest? = null
     private var cameraDirty = true
+    private var lastCameraFrameNanos = 0L
+    private var lastOrbitFrameNanos = 0L
+    private var manualOrbitResumeAtNanos = 0L
     private var renderingEnabled = true
     private var projectionNotificationPending = true
 
@@ -127,6 +136,27 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
     private var sceneReadyNotified = false
     private var lastProjectionNotifyNanos = 0L
     private val failedFighterIds = linkedSetOf<String>()
+    private var arenaEnergyMaterial: MaterialInstance? = null
+    private var arenaDomeMotion: ArenaDomeMotion? = null
+    private var arenaDomeStartNanos = 0L
+    private var arenaVoxelGroups: List<ArenaVoxelMotion> = emptyList()
+    private var arenaVoxelCubes: List<ArenaVoxelMotion> = emptyList()
+    private var arenaVoxelStartNanos = 0L
+
+    private data class ArenaVoxelMotion(
+        val transformInstance: Int,
+        val base: FloatArray,
+        val animated: FloatArray,
+        val amplitude: Float,
+        val angularSpeed: Double,
+        val phase: Double,
+    )
+
+    private data class ArenaDomeMotion(
+        val transformInstance: Int,
+        val base: FloatArray,
+        val animated: FloatArray,
+    )
 
     private data class RenderedFighter(
         val asset: FilamentAsset,
@@ -139,7 +169,11 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
     private val frameCallback = object : Choreographer.FrameCallback {
         override fun doFrame(frameTimeNanos: Long) {
             if (released || !renderingEnabled) return
-            updateFocusedCameraTarget()
+            updateAutomaticOrbit(frameTimeNanos)
+            updateFocusedCameraTarget(frameTimeNanos)
+            updateArenaDomeMotion(frameTimeNanos)
+            updateArenaEmission(frameTimeNanos)
+            updateArenaVoxelMotion(frameTimeNanos)
             projectionNotificationPending = projectionNotificationPending || cameraDirty
             applyCameraIfNeeded()
             syncFighters()
@@ -163,13 +197,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
         ensureFilament()
         engine = Engine.create()
         viewer = ModelViewer(this, engine, UiHelper(UiHelper.ContextErrorPolicy.DONT_CHECK), null)
-        viewer.view.setPostProcessingEnabled(true)
-        viewer.view.bloomOptions = viewer.view.bloomOptions.apply {
-            enabled = true
-            strength = 0.08f
-            resolution = 256
-            threshold = true
-        }
+        viewer.view.applyHybridSceneProfile(HybridSceneKind.BATTLE)
         val backdrop = Colors.toLinear(
             Colors.RgbType.SRGB,
             DeepPurpleBgAlt.red, DeepPurpleBgAlt.green, DeepPurpleBgAlt.blue
@@ -178,6 +206,9 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
             .color(backdrop[0], backdrop[1], backdrop[2], 1f)
             .build(engine)
             .also { viewer.scene.skybox = it }
+        radarSkybox = Skybox.Builder()
+            .color(0f, 0f, 0f, 1f)
+            .build(engine)
         contentDescription = "Arena tridimensional. Toque em um Digimon para centralizar a câmera, arraste para orbitar e use dois dedos para ajustar o zoom."
         isFocusable = true
         isOpaque = false
@@ -224,6 +255,8 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
                     val transform = engine.transformManager.getInstance(arena.root)
                     check(transform != 0) { "A cena do Coliseu não possui transform raiz." }
                     engine.transformManager.setTransform(transform, arenaTransform)
+                    configureArenaEmission(arena)
+                    configureArenaVoxelMotion(arena)
                     arenaLoaded = true
                     cameraDirty = true
                     Log.i(TAG, "Loaded $assetPath (${bytes.size} bytes)")
@@ -246,8 +279,13 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
         if (released) return
         if (latestSessionId != sessionId) {
             cameraFocusFighterId = null
+            initialCameraFocusFighterId = null
+            initialCameraCompositionApplied = false
             cameraTargetX = 0.0
             cameraTargetZ = 0.0
+            lastCameraFrameNanos = 0L
+            lastOrbitFrameNanos = 0L
+            manualOrbitResumeAtNanos = 0L
             cameraDirty = true
         }
         if (latestSessionId != sessionId || desiredFighters.keys != fighters.keys ||
@@ -260,6 +298,36 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
         onSceneReady = onReady
         this.onProjectionChanged = onProjectionChanged
         this.onFighterTapped = onFighterTapped
+        if (!initialCameraCompositionApplied && snapshot != null) {
+            val livingAllies = snapshot.alliedMembers.filter {
+                it.health > 0 && it.state != CombatantState.DEFEATED
+            }
+            val livingOpponents = snapshot.opposingMembers.filter {
+                it.health > 0 && it.state != CombatantState.DEFEATED
+            }
+            val livingCombatants = livingAllies + livingOpponents
+            if (livingCombatants.isNotEmpty()) {
+                val cues = livingCombatants.map {
+                    BattleCameraCue(it.combatantId, it.position, it.state)
+                }
+                // Team battles open on an allied Digimon. A 1v1 opens centered
+                // between both fighters, preserving the established framing.
+                initialCameraFocusFighterId = if (cues.size > 2) {
+                    (livingAllies.firstOrNull() ?: livingOpponents.first()).combatantId
+                } else null
+                val target = chooseBattleCameraTarget(
+                    manualFighterId = null,
+                    cues = cues,
+                    impacts = emptyList(),
+                    initialFocusFighterId = initialCameraFocusFighterId,
+                )
+                val scale = manifest?.positionScale?.toDouble() ?: 1.0
+                cameraTargetX = target.x * scale
+                cameraTargetZ = target.z * scale
+                cameraDirty = true
+                initialCameraCompositionApplied = true
+            }
+        }
     }
 
     fun setRenderingEnabled(enabled: Boolean) {
@@ -268,6 +336,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
         Choreographer.getInstance().removeFrameCallback(frameCallback)
         if (enabled) {
             cameraDirty = true
+            lastOrbitFrameNanos = 0L
             Choreographer.getInstance().postFrameCallback(frameCallback)
         }
     }
@@ -285,11 +354,13 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
 
     fun resetCamera() {
         cameraYaw = 0.0
-        cameraPitch = manifest?.cameraPitchRadians ?: 0.62
+        cameraPitch = manifest?.cameraPitchRadians ?: 0.27
         cameraDistance = manifest?.cameraDistance ?: 19.0
         cameraFocusFighterId = null
         cameraTargetX = 0.0
         cameraTargetZ = 0.0
+        lastOrbitFrameNanos = 0L
+        manualOrbitResumeAtNanos = 0L
         cameraDirty = true
     }
 
@@ -331,6 +402,10 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
     private fun applyCameraIfNeeded() {
         if (!cameraDirty || viewportWidth <= 0 || viewportHeight <= 0) return
         cameraDirty = false
+        val impact = latestSnapshot?.impacts?.maxByOrNull { it.impactId }
+        val shake = impact?.let {
+            battleImpactShake(it.impactId, it.remainingMillis, it.critical)
+        } ?: BattleCameraShake(0.0, 0.0)
         val horizontal = cameraDistance * kotlin.math.cos(cameraPitch)
         val desiredEyeX = cameraTargetX + kotlin.math.sin(cameraYaw) * horizontal
         val desiredEyeZ = cameraTargetZ + kotlin.math.cos(cameraYaw) * horizontal
@@ -339,24 +414,52 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
         } ?: ArenaCameraPoint(desiredEyeX, desiredEyeZ)
         val targetY = manifest?.cameraTargetY ?: 0.7
         val eyeY = targetY + cameraDistance * kotlin.math.sin(cameraPitch)
-        viewer.camera.lookAt(cameraEye.x, eyeY, cameraEye.z, cameraTargetX, targetY, cameraTargetZ, 0.0, 1.0, 0.0)
+        viewer.camera.lookAt(
+            cameraEye.x + shake.x, eyeY, cameraEye.z + shake.z,
+            cameraTargetX + shake.x, targetY, cameraTargetZ + shake.z,
+            0.0, 1.0, 0.0,
+        )
+        if (impact != null && impact.remainingMillis > 0L) {
+            cameraDirty = true
+            projectionNotificationPending = true
+        }
     }
 
-    private fun updateFocusedCameraTarget() {
-        val focusedId = cameraFocusFighterId ?: return
+    private fun updateFocusedCameraTarget(frameTimeNanos: Long) {
         val currentManifest = manifest ?: return
-        val fighter = latestSnapshot?.let { snapshot ->
-            (snapshot.alliedMembers + snapshot.opposingMembers).firstOrNull { it.combatantId == focusedId }
+        val snapshot = latestSnapshot ?: return
+        val livingAllies = snapshot.alliedMembers.filter {
+            it.health > 0 && it.state != CombatantState.DEFEATED
         }
-        if (fighter == null) {
+        val livingOpponents = snapshot.opposingMembers.filter {
+            it.health > 0 && it.state != CombatantState.DEFEATED
+        }
+        val cues = (livingAllies + livingOpponents).map {
+            BattleCameraCue(it.combatantId, it.position, it.state)
+        }
+        if (cameraFocusFighterId != null && cues.none { it.fighterId == cameraFocusFighterId }) {
             cameraFocusFighterId = null
-            cameraTargetX = 0.0
-            cameraTargetZ = 0.0
-            cameraDirty = true
-            return
         }
-        val nextX = (fighter.position.x * currentManifest.positionScale).toDouble()
-        val nextZ = (fighter.position.z * currentManifest.positionScale).toDouble()
+        if (initialCameraFocusFighterId != null && cues.none {
+                it.fighterId == initialCameraFocusFighterId
+            }) {
+            initialCameraFocusFighterId = (livingAllies.firstOrNull() ?: livingOpponents.firstOrNull())
+                ?.combatantId
+        }
+        val target = chooseBattleCameraTarget(
+            manualFighterId = cameraFocusFighterId,
+            cues = cues,
+            impacts = snapshot.impacts,
+            initialFocusFighterId = initialCameraFocusFighterId,
+        )
+        val positionScale = currentManifest.positionScale.toDouble()
+        val desiredX = target.x.toDouble() * positionScale
+        val desiredZ = target.z.toDouble() * positionScale
+        val deltaSeconds = if (lastCameraFrameNanos == 0L) 1.0 / 60.0 else
+            (frameTimeNanos - lastCameraFrameNanos).coerceAtLeast(0L) / 1_000_000_000.0
+        lastCameraFrameNanos = frameTimeNanos
+        val nextX = approachCameraAxis(cameraTargetX, desiredX, deltaSeconds)
+        val nextZ = approachCameraAxis(cameraTargetZ, desiredZ, deltaSeconds)
         if (abs(nextX - cameraTargetX) > CAMERA_FOCUS_EPSILON ||
             abs(nextZ - cameraTargetZ) > CAMERA_FOCUS_EPSILON) {
             cameraTargetX = nextX
@@ -365,14 +468,156 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
         }
     }
 
+    private fun updateAutomaticOrbit(frameTimeNanos: Long) {
+        val previous = lastOrbitFrameNanos
+        lastOrbitFrameNanos = frameTimeNanos
+        if (previous == 0L) return
+        val deltaSeconds = (frameTimeNanos - previous).coerceAtLeast(0L) / 1_000_000_000.0
+        val orbitBlend = when {
+            dragPointerId >= 0 || pinchPointerId >= 0 -> 0.0
+            frameTimeNanos < manualOrbitResumeAtNanos -> 0.0
+            else -> (frameTimeNanos - manualOrbitResumeAtNanos)
+                .toDouble() / ORBIT_ACCELERATION_NANOS
+        }
+        val nextYaw = advanceBattleCameraYaw(cameraYaw, deltaSeconds, orbitBlend)
+        if (nextYaw != cameraYaw) {
+            cameraYaw = nextYaw
+            cameraDirty = true
+        }
+    }
+
+    private fun pauseAutomaticOrbit() {
+        manualOrbitResumeAtNanos = System.nanoTime() + MANUAL_ORBIT_PAUSE_NANOS
+    }
+
+    private fun configureArenaEmission(arena: FilamentAsset) {
+        val dome = arena.getFirstEntityByName("Sphere001")
+        val renderables = engine.renderableManager
+        val isRadarArena = arena.getFirstEntityByName("RadarVoxelFragments") != 0
+        viewer.scene.skybox = if (isRadarArena) radarSkybox else backgroundSkybox
+        val transforms = engine.transformManager
+        arenaDomeMotion = if (isRadarArena && dome != 0) {
+            val transformInstance = transforms.getInstance(dome)
+            if (transformInstance != 0) {
+                val base = transforms.getTransform(transformInstance, FloatArray(16))
+                ArenaDomeMotion(transformInstance, base, base.copyOf())
+            } else null
+        } else null
+        arenaDomeStartNanos = 0L
+        arenaEnergyMaterial = if (dome != 0 && renderables.hasComponent(dome)) {
+            val instance = renderables.getInstance(dome)
+            if (instance != 0 && renderables.getPrimitiveCount(instance) > 0) {
+                renderables.getMaterialInstanceAt(instance, 0)
+                    .takeIf { it.material.hasParameter("emissiveFactor") }
+            } else null
+        } else null
+    }
+
+    private fun updateArenaDomeMotion(frameTimeNanos: Long) {
+        val dome = arenaDomeMotion ?: return
+        if (arenaDomeStartNanos == 0L) arenaDomeStartNanos = frameTimeNanos
+        val elapsed = (frameTimeNanos - arenaDomeStartNanos) / 1_000_000_000.0
+        val yaw = (elapsed * RADAR_DOME_DRIFT_DEGREES_PER_SECOND).toFloat()
+        Matrix.setIdentityM(arenaDomeDelta, 0)
+        Matrix.rotateM(arenaDomeDelta, 0, yaw, 0f, 1f, 0f)
+        Matrix.multiplyMM(dome.animated, 0, dome.base, 0, arenaDomeDelta, 0)
+        engine.transformManager.setTransform(dome.transformInstance, dome.animated)
+    }
+
+    private fun configureArenaVoxelMotion(arena: FilamentAsset) {
+        val transforms = engine.transformManager
+        val groups = ArrayList<ArenaVoxelMotion>()
+        val cubes = ArrayList<ArenaVoxelMotion>()
+        val cubeCounts = intArrayOf(4, 3, 4, 3, 4, 3, 4, 3, 3)
+        for (groupIndex in 1..cubeCounts.size) {
+            val suffix = groupIndex.toString().padStart(2, '0')
+            val groupEntity = arena.getFirstEntityByName("RadarVoxelFragmentsFar$suffix")
+            if (groupEntity == 0) continue
+            val groupTransform = transforms.getInstance(groupEntity)
+            if (groupTransform != 0) {
+                val base = transforms.getTransform(groupTransform, FloatArray(16))
+                groups += ArenaVoxelMotion(
+                    groupTransform, base, base.copyOf(),
+                    amplitude = 0.14f + (groupIndex % 4) * 0.018f,
+                    angularSpeed = 0.72 + (groupIndex % 5) * 0.09,
+                    phase = groupIndex * 1.17,
+                )
+            }
+            for (blockIndex in 1..cubeCounts[groupIndex - 1]) {
+                val blockName = "RadarVoxelBlockFar${suffix}_${blockIndex.toString().padStart(2, '0')}"
+                val blockEntity = arena.getFirstEntityByName(blockName)
+                if (blockEntity == 0) continue
+                val blockTransform = transforms.getInstance(blockEntity)
+                if (blockTransform == 0) continue
+                val base = transforms.getTransform(blockTransform, FloatArray(16))
+                val ordinal = cubes.size
+                cubes += ArenaVoxelMotion(
+                    blockTransform, base, base.copyOf(),
+                    amplitude = 0.045f + (ordinal % 5) * 0.008f,
+                    angularSpeed = 1.05 + (ordinal % 7) * 0.10,
+                    phase = ordinal * 1.39,
+                )
+            }
+        }
+        arenaVoxelGroups = groups
+        arenaVoxelCubes = cubes
+        arenaVoxelStartNanos = 0L
+    }
+
+    private fun updateArenaVoxelMotion(frameTimeNanos: Long) {
+        if (arenaVoxelGroups.isEmpty() && arenaVoxelCubes.isEmpty()) return
+        if (arenaVoxelStartNanos == 0L) arenaVoxelStartNanos = frameTimeNanos
+        val elapsed = (frameTimeNanos - arenaVoxelStartNanos) / 1_000_000_000.0
+        val transforms = engine.transformManager
+        for (group in arenaVoxelGroups) {
+            group.animated[12] = group.base[12] +
+                (kotlin.math.sin(elapsed * group.angularSpeed * 0.58 + group.phase) * 0.012).toFloat()
+            group.animated[13] = group.base[13] +
+                (kotlin.math.sin(elapsed * group.angularSpeed + group.phase) * group.amplitude).toFloat()
+            group.animated[14] = group.base[14] +
+                (kotlin.math.cos(elapsed * group.angularSpeed * 0.47 + group.phase) * 0.012).toFloat()
+            transforms.setTransform(group.transformInstance, group.animated)
+        }
+        for (cube in arenaVoxelCubes) {
+            cube.animated[13] = cube.base[13] +
+                (kotlin.math.sin(elapsed * cube.angularSpeed + cube.phase) * cube.amplitude).toFloat()
+            transforms.setTransform(cube.transformInstance, cube.animated)
+        }
+    }
+
+    private fun updateArenaEmission(frameTimeNanos: Long) {
+        val elapsed = frameTimeNanos / 1_000_000_000.0
+        val pulse = (0.5 + 0.5 * kotlin.math.sin(elapsed * ARENA_ENERGY_PULSE_SPEED)).toFloat()
+        val domeMotion = arenaDomeMotion
+        if (domeMotion != null) {
+            val slowPulse = (0.5 + 0.5 * kotlin.math.sin(
+                elapsed * RADAR_DOME_SECONDARY_PULSE_SPEED + 1.15
+            )).toFloat()
+            val strength = RADAR_DOME_ENERGY_BASE +
+                RADAR_DOME_ENERGY_AMPLITUDE * pulse +
+                RADAR_DOME_SECONDARY_AMPLITUDE * slowPulse
+            arenaEnergyMaterial?.setParameter(
+                "emissiveFactor",
+                0.68f * strength,
+                0.68f * strength,
+                0.68f * strength,
+            )
+        } else {
+            val strength = ARENA_ENERGY_BASE + ARENA_ENERGY_AMPLITUDE * pulse
+            arenaEnergyMaterial?.setParameter(
+                "emissiveFactor",
+                0.50f * strength,
+                0.16f * strength,
+                1.0f * strength,
+            )
+        }
+    }
+
     private fun centerCameraOnFighter(fighterId: String): Boolean {
-        val currentManifest = manifest ?: return false
         val fighter = latestSnapshot?.let { snapshot ->
             (snapshot.alliedMembers + snapshot.opposingMembers).firstOrNull { it.combatantId == fighterId }
         } ?: return false
         cameraFocusFighterId = fighterId
-        cameraTargetX = (fighter.position.x * currentManifest.positionScale).toDouble()
-        cameraTargetZ = (fighter.position.z * currentManifest.positionScale).toDouble()
         cameraDirty = true
         return true
     }
@@ -407,6 +652,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
     private fun handleCameraTouch(event: MotionEvent): Boolean {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
+                pauseAutomaticOrbit()
                 dragPointerId = event.getPointerId(0)
                 lastPointerX = event.x
                 lastPointerY = event.y
@@ -417,6 +663,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
                 return true
             }
             MotionEvent.ACTION_POINTER_DOWN -> {
+                pauseAutomaticOrbit()
                 tapCandidate = false
                 if (event.pointerCount >= 2) {
                     val firstIndex = 0
@@ -428,6 +675,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
                 }
             }
             MotionEvent.ACTION_MOVE -> {
+                pauseAutomaticOrbit()
                 val dragIndex = event.findPointerIndex(dragPointerId)
                 if (pinchPointerId >= 0 && event.pointerCount >= 2) {
                     val firstIndex = event.findPointerIndex(dragPointerId)
@@ -623,8 +871,13 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
         arenaLoadGeneration++
         Choreographer.getInstance().removeFrameCallback(frameCallback)
         releaseFighters()
+        arenaEnergyMaterial = null
+        arenaDomeMotion = null
+        arenaVoxelGroups = emptyList()
+        arenaVoxelCubes = emptyList()
         viewer.scene.skybox = null
         engine.destroySkybox(backgroundSkybox)
+        engine.destroySkybox(radarSkybox)
     }
 
     override fun onDetachedFromWindow() {
@@ -632,8 +885,13 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
             released = true
             Choreographer.getInstance().removeFrameCallback(frameCallback)
             releaseFighters()
+            arenaEnergyMaterial = null
+            arenaDomeMotion = null
+            arenaVoxelGroups = emptyList()
+            arenaVoxelCubes = emptyList()
             viewer.scene.skybox = null
             engine.destroySkybox(backgroundSkybox)
+            engine.destroySkybox(radarSkybox)
         }
         super.onDetachedFromWindow()
     }
@@ -650,6 +908,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
     }
 
     private val arenaTransform = FloatArray(16)
+    private val arenaDomeDelta = FloatArray(16)
     private val fighterTransform = FloatArray(16)
     private val viewProjection = FloatArray(16)
     private val clipPosition = FloatArray(4)
@@ -659,6 +918,16 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
         const val POSE_FRAME_NANOS = 460_000_000L
         const val PROJECTION_NOTIFY_NANOS = 75_000_000L
         const val CAMERA_FOCUS_EPSILON = 0.001
+        const val MANUAL_ORBIT_PAUSE_NANOS = 900_000_000L
+        const val ORBIT_ACCELERATION_NANOS = 1_800_000_000.0
+        const val ARENA_ENERGY_PULSE_SPEED = 0.82
+        const val ARENA_ENERGY_BASE = 1.10f
+        const val ARENA_ENERGY_AMPLITUDE = 0.24f
+        const val RADAR_DOME_DRIFT_DEGREES_PER_SECOND = 3.2
+        const val RADAR_DOME_SECONDARY_PULSE_SPEED = 0.34
+        const val RADAR_DOME_ENERGY_BASE = 0.48f
+        const val RADAR_DOME_ENERGY_AMPLITUDE = 0.62f
+        const val RADAR_DOME_SECONDARY_AMPLITUDE = 0.14f
         val nativeInitialized = AtomicBoolean(false)
 
         fun ensureFilament() {

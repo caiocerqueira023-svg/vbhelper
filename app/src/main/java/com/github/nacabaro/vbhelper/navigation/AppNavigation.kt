@@ -2,10 +2,17 @@ package com.github.nacabaro.vbhelper.navigation
 
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
@@ -40,6 +47,7 @@ import com.github.nacabaro.vbhelper.components.motionEnabled
 import com.github.nacabaro.vbhelper.screens.BattlesScreen
 import com.github.nacabaro.vbhelper.screens.cardScreen.CardsScreen
 import com.github.nacabaro.vbhelper.screens.cardScreen.CardViewScreen
+import com.github.nacabaro.vbhelper.screens.cardScreen.dialogs.CardOriginDialog
 import com.github.nacabaro.vbhelper.screens.chatScreen.ChatScreen
 import com.github.nacabaro.vbhelper.screens.chatScreen.ChatScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.homeScreens.HomeScreen
@@ -92,14 +100,22 @@ fun AppNavigation(
     initialRoute: String? = null
 ) {
     val navController = rememberNavController()
+    val settingsScreenController = applicationNavigationHandlers.settingsScreenController
+    val pendingCardOriginPrompts by settingsScreenController.pendingCardOriginPrompts.collectAsState()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    var battleFullScreen by remember { mutableStateOf(false) }
     val tabSwipeThresholdPx = with(LocalDensity.current) { 96.dp.toPx() }
     val allowMotion = motionEnabled()
+    val battleChromeMotionDuration = if (allowMotion) 240 else 0
+    val battleChromeFadeDuration = if (allowMotion) 160 else 0
     val context = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
     val musicController = remember { AppMusicController(context) }
 
     LaunchedEffect(currentRoute) {
+        if (currentRoute != NavigationItems.Battles.route && currentRoute != NavigationItems.World.route) {
+            battleFullScreen = false
+        }
         if (currentRoute != NavigationItems.Battles.route) {
             musicController.play(BattleAssetPaths.HOME_MUSIC)
         }
@@ -127,7 +143,27 @@ fun AppNavigation(
         val expandedNavigation = maxWidth >= 840.dp
         Scaffold(
             bottomBar = {
-                if (!expandedNavigation) BottomNavigationBar(navController = navController)
+                if (!expandedNavigation) {
+                    AnimatedVisibility(
+                        visible = !battleFullScreen,
+                        enter = slideInVertically(
+                            animationSpec = tween(battleChromeMotionDuration, easing = FastOutSlowInEasing),
+                            initialOffsetY = { it }
+                        ) + expandVertically(
+                            animationSpec = tween(battleChromeMotionDuration, easing = FastOutSlowInEasing),
+                            expandFrom = Alignment.Bottom
+                        ) + fadeIn(tween(battleChromeFadeDuration)),
+                        exit = slideOutVertically(
+                            animationSpec = tween(battleChromeMotionDuration, easing = FastOutSlowInEasing),
+                            targetOffsetY = { it }
+                        ) + shrinkVertically(
+                            animationSpec = tween(battleChromeMotionDuration, easing = FastOutSlowInEasing),
+                            shrinkTowards = Alignment.Bottom
+                        ) + fadeOut(tween(battleChromeFadeDuration))
+                    ) {
+                        BottomNavigationBar(navController = navController)
+                    }
+                }
             }
         ) { contentPadding ->
             Row(
@@ -135,7 +171,27 @@ fun AppNavigation(
                     .fillMaxSize()
                     .padding(contentPadding)
             ) {
-                if (expandedNavigation) VitalNavigationRail(navController = navController)
+                if (expandedNavigation) {
+                    AnimatedVisibility(
+                        visible = !battleFullScreen,
+                        enter = slideInHorizontally(
+                            animationSpec = tween(battleChromeMotionDuration, easing = FastOutSlowInEasing),
+                            initialOffsetX = { -it }
+                        ) + expandHorizontally(
+                            animationSpec = tween(battleChromeMotionDuration, easing = FastOutSlowInEasing),
+                            expandFrom = Alignment.Start
+                        ) + fadeIn(tween(battleChromeFadeDuration)),
+                        exit = slideOutHorizontally(
+                            animationSpec = tween(battleChromeMotionDuration, easing = FastOutSlowInEasing),
+                            targetOffsetX = { -it }
+                        ) + shrinkHorizontally(
+                            animationSpec = tween(battleChromeMotionDuration, easing = FastOutSlowInEasing),
+                            shrinkTowards = Alignment.Start
+                        ) + fadeOut(tween(battleChromeFadeDuration))
+                    ) {
+                        VitalNavigationRail(navController = navController)
+                    }
+                }
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -187,7 +243,10 @@ fun AppNavigation(
 
         ) {
             composable(NavigationItems.Battles.route) {
-                BattlesScreen(musicController = musicController)
+                BattlesScreen(
+                    musicController = musicController,
+                    onFullScreenBattleChanged = { battleFullScreen = it }
+                )
             }
             composable(NavigationItems.Home.route) {
                 HomeScreen(
@@ -196,7 +255,12 @@ fun AppNavigation(
                     storageScreenController = applicationNavigationHandlers.storageScreenController
                 )
             }
-            composable(NavigationItems.World.route) { WorldScreen(navController = navController) }
+            composable(NavigationItems.World.route) {
+                WorldScreen(
+                    navController = navController,
+                    onFullScreenBattleChanged = { battleFullScreen = it }
+                )
+            }
             composable(NavigationItems.Digiline.route) { DigilineScreen(navController) }
             composable(NavigationItems.FarmGroup.route) { entry ->
                 entry.arguments?.getString("farmId")?.let { FarmGroupScreen(navController, it) }
@@ -367,6 +431,15 @@ fun AppNavigation(
                 }
             }
         }
+    }
+
+    pendingCardOriginPrompts.firstOrNull { it.selectedStatus == null }?.let { prompt ->
+        CardOriginDialog(
+            cardName = prompt.cardName,
+            isImporting = prompt.isImporting,
+            onDismiss = { settingsScreenController.dismissPendingCardOriginPrompt(prompt.cardId) },
+            onSelect = settingsScreenController::setPendingCardOrigin
+        )
     }
 }
 

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.Switch
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -23,6 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -47,6 +51,11 @@ import com.github.nacabaro.vbhelper.ui.theme.appFontFamily
 import com.github.nacabaro.vbhelper.chat.ChatApiProvider
 import com.github.nacabaro.vbhelper.source.DEFAULT_ROLEPLAY_TEMPERATURE
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
+import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
+import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
+import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 
 
 @Composable
@@ -97,6 +106,7 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .imePadding()
                 .verticalScroll(rememberScrollState())
+                .padding(bottom = 24.dp)
         ) {
             SettingsSection(title = stringResource(R.string.settings_section_nfc))
             SettingsEntry(
@@ -333,24 +343,46 @@ fun SettingsScreen(
 fun SettingsEntry(
     title: String,
     description: String,
-    onClick: () -> Unit
+    onClick: (() -> Unit)? = null
 ) {
-    Column(
+    val interactionModifier = if (onClick == null) {
+        Modifier
+    } else {
+        Modifier.clickable(onClick = onClick)
+    }
+    Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }
-            .padding(horizontal = 16.dp, vertical = 14.dp)
+            .then(interactionModifier)
+            .heightIn(min = 64.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-            Text(text = title)
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = TextPrimaryOnDark
+            )
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = TextSecondaryOnDark,
+                modifier = Modifier.padding(top = 3.dp)
+            )
         }
-        Text(
-            text = description,
-            fontSize = 12.sp,
-            color = VitalCyan,
-            modifier = Modifier.padding(top = 2.dp)
-        )
+        if (onClick != null) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint = VitalCyan
+            )
+        }
     }
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        color = SurfaceStroke.copy(alpha = 0.45f)
+    )
 }
 
 @Composable
@@ -359,11 +391,11 @@ fun SettingsSection(
 ) {
     Box(
         modifier = Modifier
-            .padding(start = 16.dp, top = 16.dp, bottom = 4.dp)
+            .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 5.dp)
     ) {
         Text(
             text = title,
-            fontSize = 12.sp,
+            style = MaterialTheme.typography.labelLarge,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )

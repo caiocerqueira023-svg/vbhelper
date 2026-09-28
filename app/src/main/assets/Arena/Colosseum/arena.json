@@ -14,7 +14,7 @@
   "minimumLineupDepth": 1.2,
   "camera": {
     "distance": 19.0,
-    "pitchRadians": 0.62,
+    "pitchRadians": 0.27,
     "targetY": 0.7,
     "minDistance": 8.5,
     "maxDistance": 22.0,

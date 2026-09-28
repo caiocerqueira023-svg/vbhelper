@@ -4,11 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,6 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -27,6 +26,10 @@ import com.github.nacabaro.vbhelper.domain.items.ItemType
 import com.github.nacabaro.vbhelper.dtos.ItemDtos
 import com.github.nacabaro.vbhelper.ui.theme.VBHelperTheme
 import com.github.nacabaro.vbhelper.components.VitalButton
+import com.github.nacabaro.vbhelper.components.CyberPanel
+import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
+import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
+import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 
 
 
@@ -44,107 +47,87 @@ fun ItemDialog(
             dismissOnClickOutside = true
         )
     ) {
-        Card (
+        CyberPanel(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            Column (
-                modifier = Modifier
-                    .padding(16.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Row {
-                    Box(modifier = Modifier) {
-                        // Background image (full size)
-                        Icon(
-                            painter = painterResource(id = getIconResource(item.itemIcon)),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(96.dp)
-                                .align(Alignment.Center)
-                        )
-                        Icon(
-                            painter = painterResource(id = getLengthResource(item.itemLength)),
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.outline,
-                            modifier = Modifier
-                                .size(64.dp) // Set the size of the overlay image
-                                .align(Alignment.BottomEnd) // Align to the top end (top-right corner)
-                        )
-                    }
-                    Column (
-                        modifier = Modifier
-                            .padding(16.dp)
-                    ) {
-                        Text(
-                            fontSize = MaterialTheme.typography.titleLarge.fontSize,
-                            text = item.name,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                        )
-                    }
-                }
-                Text(
-                    textAlign = TextAlign.Center,
-                    fontSize = MaterialTheme.typography.bodyMedium.fontSize,
-                    fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
-                    text = item.description,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(4.dp)
-                )
-                if (onClickPurchase != null) {
-                    Text(
-                        textAlign = TextAlign.Center,
-                        fontSize = MaterialTheme.typography.bodySmall.fontSize,
-                        fontFamily = MaterialTheme.typography.bodySmall.fontFamily,
-                        text = stringResource(
-                            R.string.item_dialog_costs_credits,
-                            item.price
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
+                Box(modifier = Modifier.size(96.dp)) {
+                    Icon(
+                        painter = painterResource(id = getIconResource(item.itemIcon)),
+                        contentDescription = null,
+                        tint = VitalCyan,
+                        modifier = Modifier.size(88.dp).align(Alignment.Center)
+                    )
+                    Icon(
+                        painter = painterResource(id = getLengthResource(item.itemLength)),
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.outline,
+                        modifier = Modifier.size(44.dp).align(Alignment.BottomEnd)
                     )
                 }
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = item.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        color = TextPrimaryOnDark,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = stringResource(R.string.item_dialog_you_have_quantity, item.quantity),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = VitalCyan,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
+            }
+            Text(
+                text = item.description,
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondaryOnDark,
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+            )
+            if (onClickPurchase != null) {
                 Text(
-                    textAlign = TextAlign.Center,
-                    fontSize = MaterialTheme.typography.bodySmall.fontSize,
-                    fontFamily = MaterialTheme.typography.bodySmall.fontFamily,
-                    text = stringResource(
-                        R.string.item_dialog_you_have_quantity,
-                        item.quantity
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
+                    text = stringResource(R.string.item_dialog_costs_credits, item.price),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = VitalCyan,
+                    modifier = Modifier.fillMaxWidth()
                 )
+            }
 
-                Row (
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                ) {
-                    if (onClickUse != null) {
-                        VitalButton(
-                            onClick = onClickUse
-                        ) {
-                            Text(stringResource(R.string.item_dialog_use))
-                        }
-                    }
-
-                    if (onClickPurchase != null) {
-                        VitalButton(
-                            onClick = onClickPurchase
-                        ) {
-                            Text(stringResource(R.string.item_dialog_purchase))
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.size(8.dp))
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+            ) {
+                if (onClickUse != null) {
                     VitalButton(
-                        onClick = onClickCancel
+                        onClick = onClickUse,
+                        modifier = Modifier.weight(1f)
                     ) {
-                        Text(stringResource(R.string.item_dialog_cancel))
+                        Text(stringResource(R.string.item_dialog_use))
                     }
+                }
+
+                if (onClickPurchase != null) {
+                    VitalButton(
+                        onClick = onClickPurchase,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(stringResource(R.string.item_dialog_purchase))
+                    }
+                }
+
+                VitalButton(
+                    onClick = onClickCancel,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(stringResource(R.string.item_dialog_cancel))
                 }
             }
         }

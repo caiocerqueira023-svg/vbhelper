@@ -86,6 +86,14 @@ interface CharacterDao {
             :changeTimerHours,
             :requiredAdventureLevelCompleted,
             (SELECT id FROM CardCharacter WHERE charaIndex = :toChraraIndex AND cardId = :cardId)
+        WHERE EXISTS (
+            SELECT 1 FROM CardCharacter
+            WHERE charaIndex = :fromChraraIndex AND cardId = :cardId
+        )
+        AND EXISTS (
+            SELECT 1 FROM CardCharacter
+            WHERE charaIndex = :toChraraIndex AND cardId = :cardId
+        )
     """
     )
     suspend fun insertPossibleTransformation(

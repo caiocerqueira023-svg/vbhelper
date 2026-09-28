@@ -1,20 +1,17 @@
 package com.github.nacabaro.vbhelper.screens.itemsScreen
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -42,7 +39,10 @@ fun MyItems(
     } else {
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 104.dp),
-            modifier = Modifier
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             items(
                 items = myItems,
@@ -51,8 +51,7 @@ fun MyItems(
             ) { index ->
                 ItemElement(
                     item = index,
-                    modifier = Modifier
-                        .padding(8.dp),
+                    modifier = Modifier,
                     onClick = {
                         selectedElementIndex = myItems.indexOf(index)
                     }

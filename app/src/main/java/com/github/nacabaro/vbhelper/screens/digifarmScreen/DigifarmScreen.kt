@@ -97,6 +97,9 @@ import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.createARGBIntArray
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
@@ -334,28 +337,44 @@ private fun FarmWorld(
             }
             LaunchedEffect(rosterKey, sceneView) {
                 val view = sceneView ?: return@LaunchedEffect
-                val sets = withContext(Dispatchers.Default) {
-                    residents.map { resident ->
-                        val poses = mapOf(
-                            "idle" to residentFrameImage(resident.spriteIdle, resident),
-                            "idle2" to residentFrameImage(resident.spriteIdle2, resident),
-                            "sleep" to residentFrameImage(resident.spriteSleep, resident),
-                            "train" to residentFrameImage(resident.spriteTrain, resident),
-                            "train2" to residentFrameImage(resident.spriteTrain2, resident),
-                            "happy" to residentFrameImage(resident.spriteHappy, resident),
-                            "happy2" to residentFrameImage(resident.spriteIdle2, resident),
-                            "walk" to residentFrameImage(resident.spriteWalk, resident),
-                            "walk2" to residentFrameImage(resident.spriteWalk2, resident)
-                        )
-                        ResidentFrames(
-                            id = resident.individualId,
-                            poses = poses,
-                            modelGlb = SpriteExtrusionGlb.build(poses),
-                            setKey = rosterKey[resident.individualId] ?: resident.individualId
-                        )
-                    }
+                val priorityId = selectedResident?.individualId ?: followId
+                val buildOrder = if (priorityId == null) residents else {
+                    residents.filter { it.individualId == priorityId } +
+                        residents.filterNot { it.individualId == priorityId }
                 }
-                view.setResidentFrames(sets)
+                val sets = mutableListOf<ResidentFrames>()
+                // Publish each small batch immediately. The first residents can
+                // render while the rest of the roster is still being generated.
+                for (batch in buildOrder.chunked(2)) {
+                    val batchSets = withContext(Dispatchers.Default) {
+                        coroutineScope {
+                            batch.map { resident ->
+                                async {
+                                    val poses = mapOf(
+                                        "idle" to residentFrameImage(resident.spriteIdle, resident),
+                                        "idle2" to residentFrameImage(resident.spriteIdle2, resident),
+                                        "sleep" to residentFrameImage(resident.spriteSleep, resident),
+                                        "train" to residentFrameImage(resident.spriteTrain, resident),
+                                        "train2" to residentFrameImage(resident.spriteTrain2, resident),
+                                        "happy" to residentFrameImage(resident.spriteHappy, resident),
+                                        "happy2" to residentFrameImage(resident.spriteIdle2, resident),
+                                        "walk" to residentFrameImage(resident.spriteWalk, resident),
+                                        "walk2" to residentFrameImage(resident.spriteWalk2, resident)
+                                    )
+                                    ResidentFrames(
+                                        id = resident.individualId,
+                                        poses = poses,
+                                        modelGlb = SpriteExtrusionGlb.build(poses),
+                                        setKey = rosterKey[resident.individualId] ?: resident.individualId
+                                    )
+                                }
+                            }.awaitAll()
+                        }
+                    }
+                    sets += batchSets
+                    view.setResidentFrames(batchSets, completeRoster = false)
+                }
+                view.setResidentFrames(sets, completeRoster = true)
             }
             // DB updates provide collision-checked steps; Filament interpolates
             // those steps and turns each model toward its actual travel.

@@ -1,6 +1,7 @@
 package com.github.nacabaro.vbhelper.screens.lorebookScreen
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,8 +12,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -27,12 +28,21 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.CyberEmptyState
+import com.github.nacabaro.vbhelper.components.CyberPanel
 import com.github.nacabaro.vbhelper.domain.lorebook.LorebookEntry
+import com.github.nacabaro.vbhelper.ui.theme.SpaceBlack
+import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
+import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
+import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
+import com.github.nacabaro.vbhelper.ui.theme.VitalPurpleBright
 
 @Composable
 fun LorebookScreen(
@@ -51,7 +61,13 @@ fun LorebookScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { showAddDialog = true }) {
+            FloatingActionButton(
+                onClick = { showAddDialog = true },
+                shape = CutCornerShape(10.dp),
+                containerColor = VitalPurpleBright,
+                contentColor = SpaceBlack,
+                elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 2.dp)
+            ) {
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = stringResource(R.string.ui_add)
@@ -63,38 +79,43 @@ fun LorebookScreen(
             Modifier
                 .padding(contentPadding)
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             Text(
                 text = stringResource(R.string.ui_lorebook_description),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.outline
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondaryOnDark,
+                modifier = Modifier.padding(bottom = 12.dp)
             )
             if (entries.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.ui_lorebook_empty),
-                    modifier = Modifier.padding(top = 16.dp)
+                CyberEmptyState(
+                    message = stringResource(R.string.ui_lorebook_empty),
+                    modifier = Modifier.weight(1f)
                 )
             } else {
-                LazyColumn {
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     items(entries, key = { it.id }) { entry ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 4.dp)
+                        CyberPanel(
+                            modifier = Modifier.fillMaxWidth(),
+                            active = entry.enabled
                         ) {
                             Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
+                                Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(Modifier.weight(1f)) {
-                                    Text(entry.title, style = MaterialTheme.typography.titleSmall)
+                                    Text(
+                                        entry.title,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        color = TextPrimaryOnDark
+                                    )
                                     Text(
                                         entry.triggerKeys.joinToString(", "),
                                         style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.outline
+                                        color = if (entry.enabled) VitalCyan else TextSecondaryOnDark
                                     )
                                 }
                                 Switch(

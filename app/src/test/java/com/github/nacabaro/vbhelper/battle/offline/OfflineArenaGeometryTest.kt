@@ -36,5 +36,16 @@ class OfflineArenaGeometryTest {
         assertTrue(manifest.getDouble("cameraCollisionRadius") < 23.06 * scale)
         assertTrue(manifest.getDouble("cameraCollisionRadius") > manifest.getDouble("playableRadius"))
         assertTrue(manifest.getDouble("lineupRowSpacing") > manifest.getDouble("fighterScale"))
+
+        val materials = json.getJSONArray("materials")
+        val domeMaterial = (0 until materials.length()).map(materials::getJSONObject)
+            .first { it.getString("name") == "Sphere001" }
+        assertTrue("The purple dome visible through floor openings must emit light", domeMaterial.has("emissiveFactor"))
+        assertTrue(domeMaterial.has("emissiveTexture"))
+        assertFalse(
+            "An unlit dome cannot act as the arena's energy source",
+            domeMaterial.optJSONObject("extensions")?.has("KHR_materials_unlit") == true,
+        )
+        assertTrue(domeMaterial.getJSONArray("emissiveFactor").getDouble(2) > 0.0)
     }
 }

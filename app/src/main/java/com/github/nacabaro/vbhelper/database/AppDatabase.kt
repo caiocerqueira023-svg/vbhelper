@@ -68,7 +68,7 @@ import com.github.nacabaro.vbhelper.domain.digifarm.FarmResident
 import com.github.nacabaro.vbhelper.domain.digifarm.WildRelationship
 
 @Database(
-    version = 22,
+    version = 23,
     exportSchema = true,
     entities = [
         Card::class,
@@ -294,6 +294,35 @@ abstract class AppDatabase : RoomDatabase() {
                 // Existing farms keep their residents/history but use the new
                 // scene. Their old 2D camera values remain available for rollback.
                 db.execSQL("UPDATE `Farm` SET `mapId` = 'digi_farm_3d', `mapVersion` = 1")
+            }
+        }
+
+        val MIGRATION_22_23 = object : Migration(22, 23) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    INSERT OR IGNORE INTO `Dex` (`id`, `discoveredOn`)
+                    SELECT th.stageId, MIN(th.transformationDate)
+                    FROM `TransformationHistory` th
+                    JOIN `CardCharacter` cc ON cc.id = th.stageId
+                    GROUP BY th.stageId
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    """
+                    INSERT OR IGNORE INTO `Dex` (`id`, `discoveredOn`)
+                    SELECT
+                        uc.charId,
+                        COALESCE(
+                            (SELECT MIN(th.transformationDate)
+                             FROM `TransformationHistory` th
+                             WHERE th.stageId = uc.charId),
+                            CAST(strftime('%s', 'now') AS INTEGER) * 1000
+                        )
+                    FROM `UserCharacter` uc
+                    JOIN `CardCharacter` cc ON cc.id = uc.charId
+                    """.trimIndent()
+                )
             }
         }
 

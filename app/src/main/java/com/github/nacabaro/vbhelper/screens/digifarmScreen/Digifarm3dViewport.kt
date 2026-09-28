@@ -24,11 +24,15 @@ import com.google.android.filament.gltfio.ResourceLoader
 import com.google.android.filament.gltfio.UbershaderProvider
 import com.google.android.filament.utils.ModelViewer
 import com.github.nacabaro.vbhelper.digifarm.map.Digifarm3dAssetCatalog
+import com.github.nacabaro.vbhelper.rendering.HybridSceneKind
+import com.github.nacabaro.vbhelper.rendering.applyHybridSceneProfile
+import com.github.nacabaro.vbhelper.rendering.approachSceneAxis
 import com.github.nacabaro.vbhelper.rendering.sprite3d.ResidentFrameImage
 import com.github.nacabaro.vbhelper.rendering.sprite3d.cameraAssistedSpriteYaw
 import com.github.nacabaro.vbhelper.ui.theme.DeepPurpleBgAlt
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import java.util.ArrayDeque
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -57,6 +61,15 @@ data class ResidentPose(
     val facingLeft: Boolean,
     val selected: Boolean,
 )
+
+internal fun prioritizeResidentLoads(
+    frames: List<ResidentFrames>,
+    poses: List<ResidentPose>,
+): List<ResidentFrames> {
+    val selectedIds = poses.asSequence().filter { it.selected }.map { it.id }.toSet()
+    if (selectedIds.isEmpty()) return frames
+    return frames.filter { it.id in selectedIds } + frames.filterNot { it.id in selectedIds }
+}
 
 /**
  * Compose host for the 2.5D Digifarm scene.
@@ -142,6 +155,7 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
     var followId: String? = null
     private var curTargetX = TARGET_X
     private var curTargetZ = TARGET_Z
+    private var lastFollowFrameNanos = 0L
 
     // Orbit camera with a bounded elevation and zoom. The island now has a
     // complete cliff around its perimeter, so horizontal orbit is unrestricted.
@@ -199,6 +213,8 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
     private var residentLoader: AssetLoader? = null
     private var residentResources: ResourceLoader? = null
     private var pendingFrames: List<ResidentFrames> = emptyList()
+    private val residentLoadQueue = ArrayDeque<ResidentFrames>()
+    private var wantedResidentSetKeys: Map<String, String> = emptyMap()
     private var latestResidentPoses: List<ResidentPose> = emptyList()
     private val residents = LinkedHashMap<String, ResidentEntry>()
     private var lastMotionFrameNanos = 0L
@@ -206,8 +222,9 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
     private val frameCallback = object : Choreographer.FrameCallback {
         override fun doFrame(frameTimeNanos: Long) {
             if (released) return
+            loadNextResident()
             updateResidentMotion(frameTimeNanos)
-            updateFollowTarget()
+            updateFollowTarget(frameTimeNanos)
             applyCamera()
             updateFloatingBlocks(frameTimeNanos)
             updateResidentTransforms()
@@ -223,13 +240,7 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
         engine = Engine.create()
         val helper = UiHelper(UiHelper.ContextErrorPolicy.DONT_CHECK)
         viewer = ModelViewer(this, engine, helper, null)
-        viewer.view.setPostProcessingEnabled(true)
-        viewer.view.bloomOptions = viewer.view.bloomOptions.apply {
-            enabled = true
-            strength = 0.35f
-            resolution = 256
-            threshold = true
-        }
+        viewer.view.applyHybridSceneProfile(HybridSceneKind.DIGIFARM)
         val backdrop = Colors.toLinear(
             Colors.RgbType.SRGB,
             DeepPurpleBgAlt.red, DeepPurpleBgAlt.green, DeepPurpleBgAlt.blue,
@@ -484,9 +495,9 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
             }
         }
 
-        // The island top contains the violet wireframe texture; keep its pulse
-        // restrained because the grass shares this baked material.
-        add("Island", primitiveIndex = 0, phase = 0.0, amplitude = 0.48f)
+        // The island top contains the violet wireframe texture; the grass shares
+        // this baked material, so boost it visibly without adding another pass.
+        add("Island", primitiveIndex = 0, phase = 0.0, amplitude = 0.78f)
 
         var blockOrdinal = 0
         for (groupIndex in BLOCKS_PER_GROUP.indices) {
@@ -498,7 +509,7 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
                     name,
                     primitiveIndex = 0,
                     phase = blockOrdinal * 0.37,
-                    amplitude = 0.68f,
+                    amplitude = 1.05f,
                 )
                 blockOrdinal += 1
             }
@@ -508,10 +519,12 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
     }
 
     /** Loads resident solids once per art change; pose ticks only change visible layers. */
-    fun setResidentFrames(frames: List<ResidentFrames>) {
+    fun setResidentFrames(frames: List<ResidentFrames>, completeRoster: Boolean = true) {
         if (released || residentsReleased) return
         if (viewer.asset == null) {
-            pendingFrames = frames
+            pendingFrames = if (completeRoster) frames else {
+                (pendingFrames + frames).associateBy { it.id }.values.toList()
+            }
             return
         }
         if (residentProvider == null) {
@@ -520,20 +533,33 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
             residentLoader = AssetLoader(engine, provider, EntityManager.get())
             residentResources = ResourceLoader(engine)
         }
-        val wanted = frames.associateBy { it.id }
-        for (id in residents.keys - wanted.keys) {
-            destroyResident(id)
+        val incomingKeys = frames.associate { it.id to it.setKey }
+        wantedResidentSetKeys = if (completeRoster) incomingKeys else wantedResidentSetKeys + incomingKeys
+        if (completeRoster) {
+            for (id in residents.keys - wantedResidentSetKeys.keys) {
+                destroyResident(id)
+            }
         }
-        for (set in frames) {
+        if (completeRoster) residentLoadQueue.clear()
+        prioritizeResidentLoads(frames, latestResidentPoses)
+            .filterTo(residentLoadQueue) { residents[it.id]?.setKey != it.setKey }
+    }
+
+    /** Creates at most one GL asset per display frame to avoid a long UI-thread stall. */
+    private fun loadNextResident() {
+        while (residentLoadQueue.isNotEmpty()) {
+            val set = residentLoadQueue.removeFirst()
+            if (wantedResidentSetKeys[set.id] != set.setKey) continue
             val existing = residents[set.id]
-            if (existing != null && existing.setKey == set.setKey) continue
+            if (existing?.setKey == set.setKey) continue
             if (existing != null) destroyResident(set.id)
             runCatching { createResident(set) }
                 .onFailure { failure ->
                     Log.w(logTag, "Could not create extruded resident for ${set.id}", failure)
                 }
+            updateResidentPoses(latestResidentPoses)
+            return
         }
-        updateResidentPoses(latestResidentPoses)
     }
 
     /** Per-tick update: interpolate only the collision-checked positions from Room. */
@@ -780,12 +806,19 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
     }
 
     /** Eases the orbit target toward the followed resident (or back home). */
-    private fun updateFollowTarget() {
+    private fun updateFollowTarget(frameTimeNanos: Long) {
         val followed = followId?.let { residents[it] }
         val tx = followed?.visualX ?: TARGET_X
         val tz = followed?.visualZ ?: TARGET_Z
-        curTargetX += (tx - curTargetX) * FOLLOW_LERP
-        curTargetZ += (tz - curTargetZ) * FOLLOW_LERP
+        val deltaSeconds = if (lastFollowFrameNanos == 0L) 1.0 / 60.0 else
+            (frameTimeNanos - lastFollowFrameNanos).coerceAtLeast(0L) / 1_000_000_000.0
+        lastFollowFrameNanos = frameTimeNanos
+        curTargetX = approachSceneAxis(
+            curTargetX.toDouble(), tx.toDouble(), deltaSeconds, FOLLOW_RESPONSE
+        ).toFloat()
+        curTargetZ = approachSceneAxis(
+            curTargetZ.toDouble(), tz.toDouble(), deltaSeconds, FOLLOW_RESPONSE
+        ).toFloat()
         if (kotlin.math.abs(tx - curTargetX) < 0.001f) curTargetX = tx
         if (kotlin.math.abs(tz - curTargetZ) < 0.001f) curTargetZ = tz
     }
@@ -856,7 +889,11 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
             }
             return
         }
-        val entry = ResidentEntry(asset = asset, setKey = set.setKey, poseEntities = poseEntities)
+        val entry = ResidentEntry(
+            asset = asset,
+            setKey = set.setKey,
+            poseEntities = poseEntities,
+        )
         residents[set.id] = entry
         bindPose(entry, "idle")
         Log.i(logTag, "Extruded resident created: ${set.id} (${poseEntities.size} poses)")
@@ -995,6 +1032,8 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
         if (residentsReleased) return
         residentsReleased = true
         pendingFrames = emptyList()
+        residentLoadQueue.clear()
+        wantedResidentSetKeys = emptyMap()
         latestResidentPoses = emptyList()
         runCatching {
             for (id in residents.keys.toList()) {
@@ -1036,7 +1075,7 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
         private const val ISLAND_FLOAT_AMPLITUDE = 0.012f
         private const val ISLAND_FLOAT_SPEED = 0.52
         private const val GLOW_PULSE_SPEED = 1.15
-        private const val GLOW_BASE_INTENSITY = 0.9f
+        private const val GLOW_BASE_INTENSITY = 1.08f
         private val BLOCKS_PER_GROUP = intArrayOf(3, 3, 2, 2, 2, 2)
 
         // Orbit around the single island. Elevation stays above the horizon.
@@ -1044,13 +1083,13 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
         private const val TARGET_Y = -0.05f
         private const val TARGET_Z = 0f
         private const val HOME_YAW = 0f
-        private const val HOME_PITCH = 0.64f
+        private const val HOME_PITCH = 0.30f
         private const val HOME_DIST = 3.86f
         private const val PITCH_MIN = 0.18f
         private const val PITCH_MAX = 1.22f
         private const val DIST_MIN = 1.2f
         private const val DIST_MAX = 4.8f
-        private const val FOLLOW_LERP = 0.08f
+        private const val FOLLOW_RESPONSE = 5.0
         private const val YAW_GAIN = 0.0016f
         private const val PITCH_GAIN = 0.0013f
         private const val TOUCH_NONE = 0

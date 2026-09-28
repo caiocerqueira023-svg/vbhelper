@@ -534,6 +534,7 @@ object DigimonPersonaBuilder {
         3 -> "Adult (Champion)"
         4 -> "Perfect (Ultimate)"
         5 -> "Ultimate (Mega)"
+        6 -> "Ultimate"
         else -> "unknown stage ($stage)"
     }
 }

@@ -5,11 +5,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.material3.Card
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -32,6 +33,10 @@ import com.github.nacabaro.vbhelper.source.ItemsRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.components.CyberEmptyState
+import com.github.nacabaro.vbhelper.components.CyberPanel
+import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
+import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 
 @Composable
 fun ItemsStore(
@@ -49,33 +54,38 @@ fun ItemsStore(
     val scope = rememberCoroutineScope()
 
     if (myItems.isEmpty()) {
-        Column(
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxSize()
-        ) {
-            Text(stringResource(R.string.items_no_items))
-        }
+        CyberEmptyState(stringResource(R.string.items_no_items))
     } else {
-        Column() {
-            Card(
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            CyberPanel(
                 modifier = Modifier
-                    .padding(8.dp)
                     .fillMaxWidth()
+                    .padding(top = 12.dp),
+                active = true
             ) {
                 Text(
-                    text = stringResource(
-                        R.string.items_store_credits,
-                        currentCurrency.value
-                    ),
-                    modifier = Modifier
-                        .padding(8.dp)
+                    text = stringResource(R.string.items_available_balance).uppercase(),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TextSecondaryOnDark
+                )
+                Text(
+                    text = stringResource(R.string.items_store_credits, currentCurrency.value),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = VitalCyan
                 )
             }
 
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 104.dp),
-                modifier = Modifier
+                modifier = Modifier.weight(1f),
+                contentPadding = PaddingValues(bottom = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(
                     items = myItems,
@@ -84,8 +94,7 @@ fun ItemsStore(
                 ) { index ->
                     ItemElement(
                         item = index,
-                        modifier = Modifier
-                            .padding(8.dp),
+                        modifier = Modifier,
                         onClick = {
                             selectedElementIndex = myItems.indexOf(index)
                         }

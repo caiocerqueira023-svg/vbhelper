@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
@@ -31,6 +32,7 @@ import com.github.nacabaro.vbhelper.utils.BitmapData
 import kotlinx.coroutines.delay
 import java.time.Instant
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.components.CyberEmptyState
 
 @Composable
 fun AdventureScreen(
@@ -75,19 +77,19 @@ fun AdventureScreen(
         }
     ) { contentPadding ->
         if (characterList.isEmpty()) {
-            Column(
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .padding(top = contentPadding.calculateTopPadding())
-                    .fillMaxSize()
-            ) {
-                Text(text = stringResource(R.string.adventure_empty_state))
-            }
+            CyberEmptyState(
+                message = stringResource(R.string.adventure_empty_state),
+                modifier = Modifier.padding(contentPadding)
+            )
         } else {
             LazyColumn(
                 modifier = Modifier
-                    .padding(top = contentPadding.calculateTopPadding())
+                    .padding(contentPadding),
+                contentPadding = androidx.compose.foundation.layout.PaddingValues(
+                    horizontal = 16.dp,
+                    vertical = 12.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(
                     items = characterList,
@@ -100,6 +102,8 @@ fun AdventureScreen(
                             width = it.spriteWidth,
                             height = it.spriteHeight
                         ),
+                        stage = it.stage,
+                        vitalPoints = it.vitalPoints,
                         timeLeft = it.finishesAdventure - currentTime,
                         onClick = {
                             if (it.finishesAdventure < currentTime) {

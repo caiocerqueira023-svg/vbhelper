@@ -332,6 +332,8 @@
     <string name="ui_chat_saved">チャット設定を保存しました。</string>
     <string name="ui_tamer_saved">テイマー名を保存しました。</string>
     <string name="ui_import_success">インポートに成功しました。</string>
+    <string name="ui_dim_importing">DiMをインポート中…</string>
+    <string name="ui_dim_import_failed">DiMのインポートに失敗しました: %1$s</string>
     <string name="ui_empty_file">選択したファイルは空です。</string>
     <string name="ui_secrets_import_failed">シークレットのインポートに失敗しました。公式アプリのAPKを選択してください。</string>
     <string name="ui_secrets_imported">シークレットを正常にインポートしました。デバイスに接続できます。</string>
@@ -508,4 +510,36 @@
     <string name="ui_world_battle_stats_unavailable">アクティブなデジモンのバトル能力値を取得できません。</string>
     <string name="ui_world_battle_start_failed">バトルを開始できませんでした。</string>
     <string name="ui_world_battle_record_failed">バトル結果を保存できませんでした。</string>
+
+    <!-- Shared polish copy -->
+    <string name="adventure_status_complete">アドベンチャー完了</string>
+    <string name="adventure_status_in_progress">アドベンチャー進行中</string>
+    <string name="adventure_collect_reward">タップして報酬を受け取る</string>
+    <string name="adventure_time_left">残り時間 · %1$s</string>
+    <string name="adventure_stage_vitals">ステージ %1$d · バイタル %2$d</string>
+    <string name="adventure_cancel_title">アドベンチャーを中止しますか？</string>
+    <string name="adventure_cancel_body">現在の進行状況と報酬は失われます。</string>
+    <string name="adventure_keep">続ける</string>
+    <string name="adventure_cancel_action">中止する</string>
+    <string name="scan_supported_devices">Vital Bracelet · Vital Hero · BE</string>
+    <string name="scan_direction_prompt">NFC転送の方向を選択してください。</string>
+    <string name="scan_keep_still">転送が完了するまでデバイスを動かさないでください。</string>
+    <string name="scan_nfc_link_ready">NFC接続準備完了</string>
+    <string name="scan_card_link_ready">カード接続準備完了</string>
+    <string name="items_available_balance">利用可能残高</string>
+    <string name="cards_empty_state">まだカードが読み込まれていません。</string>
+    <string name="card_status_official">公式カード</string>
+    <string name="card_status_custom">カスタムカード</string>
+    <string name="card_status_unknown">出典未設定</string>
+    <string name="card_delete_title">%1$sを削除しますか？</string>
+    <string name="card_delete_body">このカードで育成したすべてのキャラクターも削除されます。この操作は取り消せません。</string>
+    <string name="card_rename_title">カード名を変更</string>
+    <string name="choose_card_title">カードを選択</string>
+    <string name="choose_card_empty">利用できるカードがありません。</string>
+    <string name="choose_card_action">転送に使用</string>
+    <string name="card_view_empty_state">このカードのキャラクターはまだ発見されていません。</string>
+    <string name="card_adventure_locked_title">未発見のミッション</string>
+    <string name="card_adventure_locked_body">カードを進めると解放されます。</string>
+    <string name="card_adventure_steps">%1$d 歩</string>
+    <string name="sprite_viewer_empty">スプライトが見つかりません。</string>
 </resources>

@@ -9,8 +9,14 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -87,6 +93,7 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.motionEnabled
 import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.components.cyberFrame
 import com.github.nacabaro.vbhelper.di.VBHelper
@@ -136,7 +143,8 @@ private const val RADAR_RING_INTERVAL_METERS = 200
 fun RadarScreen(
     navController: NavController,
     selectedWorldTab: Int = 0,
-    onWorldTabSelected: (Int) -> Unit = {}
+    onWorldTabSelected: (Int) -> Unit = {},
+    onFullScreenBattleChanged: (Boolean) -> Unit = {}
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
@@ -154,6 +162,10 @@ fun RadarScreen(
     var battleSessionId by rememberSaveable { mutableStateOf<String?>(null) }
     var committedBattleSessionId by rememberSaveable { mutableStateOf<String?>(null) }
     val battleActive = battleSessionId != null
+    val allowMotion = motionEnabled()
+    LaunchedEffect(battleActive) {
+        onFullScreenBattleChanged(battleActive)
+    }
     val compass = rememberWorldCompass(location, enabled = !battleActive)
     val heading = compass.heading ?: 0f // Uncalibrated map is explicitly north-up.
     var frozenRadarHeading by remember { mutableFloatStateOf(0f) }
@@ -394,18 +406,33 @@ fun RadarScreen(
 
     Scaffold(
         topBar = {
-            Column {
-                TopBanner(text = when {
-                    battleActive -> "${stringResource(R.string.nav_world)} • ${stringResource(R.string.ui_world_battle_banner)}"
-                    compass.heading != null -> "${stringResource(R.string.nav_world)} • ${cardinalDirection(heading)}"
-                    else -> stringResource(R.string.nav_world)
-                }, onGearClick = {
-                    if (!battleActive) showWorldSpawnSettings = true
-                })
-                WorldSectionTabs(
-                    selectedTab = selectedWorldTab,
-                    onTabSelected = { tab -> if (!battleActive) onWorldTabSelected(tab) }
-                )
+            AnimatedVisibility(
+                visible = !battleActive,
+                enter = slideInVertically(
+                    animationSpec = tween(if (allowMotion) 240 else 0, easing = FastOutSlowInEasing),
+                    initialOffsetY = { -it }
+                ) + expandVertically(
+                    animationSpec = tween(if (allowMotion) 240 else 0, easing = FastOutSlowInEasing),
+                    expandFrom = Alignment.Top
+                ) + fadeIn(tween(if (allowMotion) 160 else 0)),
+                exit = slideOutVertically(
+                    animationSpec = tween(if (allowMotion) 240 else 0, easing = FastOutSlowInEasing),
+                    targetOffsetY = { -it }
+                ) + shrinkVertically(
+                    animationSpec = tween(if (allowMotion) 240 else 0, easing = FastOutSlowInEasing),
+                    shrinkTowards = Alignment.Top
+                ) + fadeOut(tween(if (allowMotion) 160 else 0))
+            ) {
+                Column {
+                    TopBanner(text = when {
+                        compass.heading != null -> "${stringResource(R.string.nav_world)} • ${cardinalDirection(heading)}"
+                        else -> stringResource(R.string.nav_world)
+                    }, onGearClick = { showWorldSpawnSettings = true })
+                    WorldSectionTabs(
+                        selectedTab = selectedWorldTab,
+                        onTabSelected = onWorldTabSelected
+                    )
+                }
             }
         },
         contentWindowInsets = WindowInsets.statusBars
@@ -414,7 +441,7 @@ fun RadarScreen(
             Modifier
                 .padding(contentPadding)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .then(if (battleActive) Modifier else Modifier.verticalScroll(rememberScrollState()))
                 .padding(16.dp)
         ) {
             WorldRadarBattleContent(
@@ -843,7 +870,7 @@ fun RadarScreen(
                 ) { Text(stringResource(R.string.ui_world_enable_location)) }
             }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().then(if (battleActive) Modifier.weight(1f) else Modifier)
             )
     }
 

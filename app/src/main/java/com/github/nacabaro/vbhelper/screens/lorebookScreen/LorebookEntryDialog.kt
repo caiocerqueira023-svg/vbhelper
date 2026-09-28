@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -24,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.github.nacabaro.vbhelper.components.VitalButton
+import com.github.nacabaro.vbhelper.components.CyberPanel
 import androidx.compose.ui.window.DialogProperties
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.domain.lorebook.LorebookEntry
@@ -43,10 +43,9 @@ fun LorebookEntryDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(dismissOnClickOutside = false)
     ) {
-        Card {
+        CyberPanel(modifier = Modifier.fillMaxWidth(), active = true) {
             Column(
                 Modifier
-                    .padding(16.dp)
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(

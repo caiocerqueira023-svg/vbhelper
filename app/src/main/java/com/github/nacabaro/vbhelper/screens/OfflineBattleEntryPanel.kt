@@ -204,8 +204,9 @@ fun assetOfflineBattleParticipant(
 
 @Composable
 fun OfflineBattleEntryPanel(
-    player: OfflineBattleParticipant,
+    player: OfflineBattleParticipant?,
     opponents: List<OfflineBattleParticipant>,
+    isLoading: Boolean = false,
     onStartBattle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -234,28 +235,42 @@ fun OfflineBattleEntryPanel(
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(
-                    text = "PARCEIRO  ${player.displayName}",
+                    text = when {
+                        player != null -> "PARCEIRO  ${player.displayName}"
+                        isLoading -> "PARCEIRO  preparando..."
+                        else -> "PARCEIRO  indisponível"
+                    },
                     modifier = Modifier.weight(1f),
                     color = VitalCyan,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1
                 )
-                Text("${opponents.size} oponentes", color = TextSecondaryOnDark, fontSize = 11.sp)
+                Text(
+                    text = if (isLoading) "carregando" else "${opponents.size} oponentes",
+                    color = TextSecondaryOnDark,
+                    fontSize = 11.sp
+                )
             }
             Button(
                 onClick = onStartBattle,
-                enabled = opponents.isNotEmpty(),
+                enabled = !isLoading && player != null && opponents.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
                 shape = CutCornerShape(7.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
-            ) { Text("Configurar equipes", fontWeight = FontWeight.Bold) }
+            ) {
+                Text("Configurar equipes", fontWeight = FontWeight.Bold)
+            }
             Text(
-                text = if (opponents.isEmpty()) "Nenhum oponente local está disponível."
-                    else "Escolha o formato e os combatentes na próxima etapa.",
+                text = when {
+                    isLoading -> "Preparando Digimon e oponentes..."
+                    player == null -> "Nenhum Digimon ativo encontrado no Storage."
+                    opponents.isEmpty() -> "Nenhum oponente local está disponível."
+                    else -> "Escolha o formato e os combatentes na próxima etapa."
+                },
                 modifier = Modifier.height(16.dp),
                 color = TextSecondaryOnDark,
                 fontSize = 11.sp,

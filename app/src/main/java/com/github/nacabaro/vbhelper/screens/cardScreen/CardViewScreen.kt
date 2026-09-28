@@ -3,6 +3,10 @@ package com.github.nacabaro.vbhelper.screens.cardScreen
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -16,6 +20,7 @@ import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.components.CharacterEntry
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.CyberEmptyState
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
@@ -57,16 +62,25 @@ fun CardViewScreen(
             )
         }
     ) { contentPadding ->
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 104.dp),
-            contentPadding = contentPadding
-        ) {
-            items(
-                items = characterList,
-                key = { it.id },
-                contentType = { "dex-character" }
-            ) { character ->
-                CharacterEntry(
+        if (characterList.isEmpty()) {
+            CyberEmptyState(
+                message = stringResource(R.string.card_view_empty_state),
+                modifier = androidx.compose.ui.Modifier.fillMaxSize().padding(contentPadding)
+            )
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(minSize = 112.dp),
+                modifier = androidx.compose.ui.Modifier.padding(contentPadding),
+                contentPadding = PaddingValues(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(
+                    items = characterList,
+                    key = { it.id },
+                    contentType = { "dex-character" }
+                ) { character ->
+                    CharacterEntry(
                     onClick = {
                         selectedCharacter.value = character
                     },
@@ -84,7 +98,8 @@ fun CardViewScreen(
                     },
                     animationKey = character.id,
                     grayscale = character.discoveredOn == null,
-                )
+                    )
+                }
             }
         }
 

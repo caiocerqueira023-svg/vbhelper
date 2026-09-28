@@ -11,10 +11,11 @@ import java.util.LinkedHashMap
 import java.util.zip.CRC32
 import java.util.zip.DeflaterOutputStream
 import kotlin.math.max
+import kotlin.math.pow
 
 /** Turns the alpha outline of each pixel-art pose into a shallow 3D solid. */
 internal object SpriteExtrusionGlb {
-    private const val GENERATOR_VERSION = "sprite-extrusion-v2"
+    private const val GENERATOR_VERSION = "sprite-extrusion-v5"
     private const val MAX_CACHED_MODEL_BYTES = 8 * 1024 * 1024
     private const val HALF_DEPTH = 0.045f
     private const val ALPHA_CUTOFF = 128
@@ -26,10 +27,11 @@ internal object SpriteExtrusionGlb {
 
     internal fun normalizeJson(raw: String): String = raw.replace("\\/", "/")
 
-    @Synchronized
     fun build(poses: Map<String, ResidentFrameImage>): ByteArray {
         val cacheKey = contentKey(poses)
-        modelCache[cacheKey]?.let { return it }
+        synchronized(modelCache) {
+            modelCache[cacheKey]?.let { return it }
+        }
         val firstUsable = poses.values.firstOrNull(::hasVisiblePixels)
             ?: ResidentFrameImage(intArrayOf(0xFFA78BFA.toInt()), 1, 1)
         val frames = poses.ifEmpty { mapOf("walk" to firstUsable) }
@@ -50,8 +52,16 @@ internal object SpriteExtrusionGlb {
             return textures.length() - 1
         }
 
-        fun addMaterial(name: String, texture: Int, shade: Float, blend: Boolean = false): Int {
-            val factor = JSONArray().put(shade).put(shade).put(shade).put(1)
+        fun addMaterial(
+            name: String,
+            texture: Int,
+            shade: Float,
+            blend: Boolean = false,
+            tint: FloatArray? = null,
+        ): Int {
+            val factor = tint?.let {
+                JSONArray().put(it[0]).put(it[1]).put(it[2]).put(it[3])
+            } ?: JSONArray().put(shade).put(shade).put(shade).put(1)
             val pbr = JSONObject()
                 .put("baseColorTexture", JSONObject().put("index", texture))
                 .put("baseColorFactor", factor)
@@ -67,36 +77,62 @@ internal object SpriteExtrusionGlb {
             return materials.length() - 1
         }
 
+        val meshesByFrame = LinkedHashMap<String, Int>()
         for ((pose, frame) in frames) {
-            val texture = addTexture(png(frame))
-            val faceMaterial = addMaterial("${pose}_face", texture, 1f)
-            val edgeMaterial = addMaterial("${pose}_edge", texture, 0.62f)
-            val face = Geometry()
-            val edge = Geometry()
-            buildPoseGeometry(frame, face, edge)
-            val primitives = JSONArray().put(glb.primitive(face, faceMaterial))
-            if (edge.indices.isNotEmpty()) primitives.put(glb.primitive(edge, edgeMaterial))
-            val meshIndex = meshes.length()
-            meshes.put(JSONObject().put("name", "${pose}_solid").put("primitives", primitives))
+            val meshIndex = meshesByFrame.getOrPut(frameContentKey(frame)) {
+                val texture = addTexture(png(frame))
+                val faceMaterial = addMaterial("${pose}_face", texture, 1f)
+                val edgeMaterial = addMaterial("${pose}_edge", texture, 0.62f)
+                val face = Geometry()
+                val edge = Geometry()
+                buildPoseGeometry(frame, face, edge)
+                val primitives = JSONArray().put(glb.primitive(face, faceMaterial))
+                if (edge.indices.isNotEmpty()) primitives.put(glb.primitive(edge, edgeMaterial))
+                meshes.length().also { index ->
+                    meshes.put(JSONObject().put("name", "${pose}_solid").put("primitives", primitives))
+                }
+            }
             children.put(nodes.length())
             nodes.put(JSONObject().put("name", "pose_$pose").put("mesh", meshIndex))
         }
 
-        val shadowTexture = addTexture(shadowPng())
-        val shadowMaterial = addMaterial("contact_shadow", shadowTexture, 1f, blend = true)
-        val shadow = Geometry().apply {
-            quad(
-                floatArrayOf(-0.56f, 0.012f, 0.30f), floatArrayOf(0.56f, 0.012f, 0.30f),
-                floatArrayOf(0.56f, 0.012f, -0.30f), floatArrayOf(-0.56f, 0.012f, -0.30f),
-                floatArrayOf(0f, 1f), floatArrayOf(1f, 1f),
-                floatArrayOf(1f, 0f), floatArrayOf(0f, 0f),
-            )
+        // Keep only a tight physical contact shadow. Broad colored ground halos
+        // compete with the arena openings and make the sprites appear detached.
+        val groundTexture = addTexture(shadowPng(maxAlpha = 220, edgePower = 1.15f))
+
+        fun addShadow(
+            name: String,
+            halfWidth: Float,
+            halfDepth: Float,
+            height: Float,
+            tint: FloatArray,
+        ) {
+            val material = addMaterial(name, groundTexture, 1f, blend = true, tint = tint)
+            val shadow = Geometry().apply {
+                quad(
+                    floatArrayOf(-halfWidth, height, halfDepth),
+                    floatArrayOf(halfWidth, height, halfDepth),
+                    floatArrayOf(halfWidth, height, -halfDepth),
+                    floatArrayOf(-halfWidth, height, -halfDepth),
+                    floatArrayOf(0f, 1f), floatArrayOf(1f, 1f),
+                    floatArrayOf(1f, 0f), floatArrayOf(0f, 0f),
+                )
+            }
+            val mesh = meshes.length()
+            meshes.put(JSONObject().put("name", name).put(
+                "primitives", JSONArray().put(glb.primitive(shadow, material))
+            ))
+            children.put(nodes.length())
+            nodes.put(JSONObject().put("name", name).put("mesh", mesh))
         }
-        val shadowMesh = meshes.length()
-        meshes.put(JSONObject().put("name", "shadow").put("primitives",
-            JSONArray().put(glb.primitive(shadow, shadowMaterial))))
-        children.put(nodes.length())
-        nodes.put(JSONObject().put("name", "shadow").put("mesh", shadowMesh))
+
+        addShadow(
+            name = "contact_shadow",
+            halfWidth = 0.34f,
+            halfDepth = 0.13f,
+            height = 0.014f,
+            tint = floatArrayOf(0f, 0f, 0f, 0.72f),
+        )
 
         val document = JSONObject()
             .put("asset", JSONObject().put("version", "2.0"))
@@ -116,11 +152,13 @@ internal object SpriteExtrusionGlb {
             .put("buffers", JSONArray().put(JSONObject().put("byteLength", glb.binarySize())))
         val result = glb.finish(document)
         if (result.size <= MAX_CACHED_MODEL_BYTES) {
-            modelCache[cacheKey] = result
-            cachedModelBytes += result.size
-            while (cachedModelBytes > MAX_CACHED_MODEL_BYTES && modelCache.isNotEmpty()) {
-                val eldestKey = modelCache.entries.first().key
-                cachedModelBytes -= modelCache.remove(eldestKey)?.size ?: 0
+            synchronized(modelCache) {
+                val previous = modelCache.put(cacheKey, result)
+                cachedModelBytes += result.size - (previous?.size ?: 0)
+                while (cachedModelBytes > MAX_CACHED_MODEL_BYTES && modelCache.isNotEmpty()) {
+                    val eldestKey = modelCache.entries.first().key
+                    cachedModelBytes -= modelCache.remove(eldestKey)?.size ?: 0
+                }
             }
         }
         return result
@@ -148,6 +186,16 @@ internal object SpriteExtrusionGlb {
         digest.update((value ushr 16).toByte())
         digest.update((value ushr 8).toByte())
         digest.update(value.toByte())
+    }
+
+    private fun frameContentKey(frame: ResidentFrameImage): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        updateInt(digest, frame.width)
+        updateInt(digest, frame.height)
+        frame.argb.forEach { updateInt(digest, it) }
+        return digest.digest().joinToString(separator = "") {
+            it.toUByte().toString(16).padStart(2, '0')
+        }
     }
 
     private fun hasVisiblePixels(frame: ResidentFrameImage): Boolean =
@@ -343,17 +391,18 @@ internal object SpriteExtrusionGlb {
         return pngBytes(frame.width, frame.height, pixels.toByteArray())
     }
 
-    private fun shadowPng(): ByteArray {
+    private fun shadowPng(maxAlpha: Int, edgePower: Float): ByteArray {
         val pixels = ByteArrayOutputStream(32 * 32 * 4 + 32)
         for (y in 0 until 32) {
             pixels.write(0)
             for (x in 0 until 32) {
                 val dx = (x - 15.5f) / 15.5f
                 val dy = (y - 15.5f) / 15.5f
-                val alpha = (85f * max(0f, 1f - dx * dx - dy * dy)).toInt()
-                pixels.write(0)
-                pixels.write(0)
-                pixels.write(0)
+                val falloff = max(0f, 1f - dx * dx - dy * dy)
+                val alpha = (maxAlpha * falloff.pow(edgePower)).toInt()
+                pixels.write(255)
+                pixels.write(255)
+                pixels.write(255)
                 pixels.write(alpha)
             }
         }

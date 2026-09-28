@@ -5,26 +5,31 @@ import android.graphics.RectF
 import android.content.pm.ApplicationInfo
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,6 +40,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -69,28 +75,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.github.nacabaro.vbhelper.components.motionEnabled
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleEvent
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleItemDefinition
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleItemKind
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleOutcome
-import com.github.nacabaro.vbhelper.battle.offline.core.BattleSide
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleSnapshot
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleStrategy
 import com.github.nacabaro.vbhelper.battle.offline.core.CombatantSnapshot
-import com.github.nacabaro.vbhelper.battle.offline.core.CombatantState
 import com.github.nacabaro.vbhelper.battle.offline.core.TechniqueDefinition
 import com.github.nacabaro.vbhelper.battle.offline.core.TechniqueKind
 import com.github.nacabaro.vbhelper.battle.offline.core.TrainerAction
@@ -111,6 +120,42 @@ import kotlinx.coroutines.delay
 
 private enum class TrainingTacticalMenu { TECHNIQUES, ITEMS }
 
+internal data class BattlePortraitPanels(
+    val arenaHeightDp: Float,
+    val deckHeightDp: Float,
+    val gapHeightDp: Float
+)
+
+internal fun calculateBattlePortraitPanels(
+    availableHeightDp: Float,
+    minimumArenaHeightDp: Float = 180f,
+    minimumDeckHeightDp: Float = 248f,
+    preferredGapHeightDp: Float = 10f
+): BattlePortraitPanels {
+    val available = availableHeightDp.coerceAtLeast(0f)
+    if (available == 0f) return BattlePortraitPanels(0f, 0f, 0f)
+
+    val gap = minOf(available, preferredGapHeightDp.coerceAtLeast(0f))
+    val contentHeight = (available - gap).coerceAtLeast(0f)
+
+    val minimumTotal = minimumArenaHeightDp + minimumDeckHeightDp
+    if (contentHeight < minimumTotal) {
+        val deck = minOf(contentHeight, minimumDeckHeightDp)
+        return BattlePortraitPanels(
+            arenaHeightDp = contentHeight - deck,
+            deckHeightDp = deck,
+            gapHeightDp = gap
+        )
+    }
+
+    val deck = maxOf(contentHeight / 2f, minimumDeckHeightDp)
+    return BattlePortraitPanels(
+        arenaHeightDp = contentHeight - deck,
+        deckHeightDp = deck,
+        gapHeightDp = gap
+    )
+}
+
 @Composable
 fun OfflineTrainingBattleScreen(
     viewModel: OfflineBattleSessionViewModel,
@@ -123,6 +168,7 @@ fun OfflineTrainingBattleScreen(
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
     val state by viewModel.state.collectAsState()
     val snapshot = state.snapshot
+    val allowMotion = motionEnabled()
     val allies = snapshot?.alliedMembers.orEmpty()
     val opponents = snapshot?.opposingMembers.orEmpty()
     var selectedAllyId by rememberSaveable(state.sessionId) { mutableStateOf("") }
@@ -140,7 +186,6 @@ fun OfflineTrainingBattleScreen(
     var sceneReady by remember(state.sessionId) { mutableStateOf(false) }
     var projectionRevision by remember { mutableIntStateOf(0) }
     var sceneGeneration by rememberSaveable(state.sessionId) { mutableIntStateOf(0) }
-    val density = LocalDensity.current
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.screenWidthDp > configuration.screenHeightDp
     val wideBattleLayout = isLandscape && configuration.screenWidthDp >= 480
@@ -233,58 +278,77 @@ fun OfflineTrainingBattleScreen(
         }
     }
 
+    val fullScreenArena = snapshot != null && snapshot.result == null && sceneReady && state.countdown == 0
     Column(
         modifier = modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = 16.dp, vertical = 4.dp),
-        verticalArrangement = Arrangement.spacedBy(5.dp)
+        verticalArrangement = Arrangement.spacedBy(if (fullScreenArena) 0.dp else 5.dp)
     ) {
-        Row(
-            Modifier.fillMaxWidth().height(48.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+        AnimatedVisibility(
+            visible = !fullScreenArena,
+            enter = slideInVertically(
+                animationSpec = tween(if (allowMotion) 240 else 0, easing = FastOutSlowInEasing),
+                initialOffsetY = { -it }
+            ) + expandVertically(
+                animationSpec = tween(if (allowMotion) 240 else 0, easing = FastOutSlowInEasing),
+                expandFrom = Alignment.Top
+            ) + fadeIn(tween(if (allowMotion) 160 else 0)),
+            exit = slideOutVertically(
+                animationSpec = tween(if (allowMotion) 240 else 0, easing = FastOutSlowInEasing),
+                targetOffsetY = { -it }
+            ) + shrinkVertically(
+                animationSpec = tween(if (allowMotion) 240 else 0, easing = FastOutSlowInEasing),
+                shrinkTowards = Alignment.Top
+            ) + fadeOut(tween(if (allowMotion) 160 else 0))
         ) {
-            Column(Modifier.weight(1f)) {
-                Text("Arena de treino", color = TextPrimaryOnDark, fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
-                    text = when {
-                        wideBattleLayout && commandFeedback != null -> commandFeedback.orEmpty()
-                        snapshot?.isPaused == true -> "Pausado · ${pauseReasonLabel(snapshot.pauseReason)}"
-                        snapshot?.result != null -> "Combate encerrado"
-                        state.loading -> "Preparando o Coliseu…"
-                        else -> "${formatDuration(snapshot?.elapsedMillis ?: 0)} · Combate autônomo"
-                    },
-                    color = if (snapshot?.isPaused == true) VitalCyan else TextSecondaryOnDark,
-                    style = MaterialTheme.typography.labelMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                IconButton(
-                    onClick = { sceneView?.resetCamera() },
-                    enabled = sceneReady,
-                    modifier = Modifier.size(46.dp)
-                        .border(1.dp, SurfaceStroke, CutCornerShape(6.dp))
-                        .clip(CutCornerShape(6.dp))
-                        .testTag("offline-battle-recenter-camera")
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.CenterFocusStrong,
-                        contentDescription = "Recentralizar câmera",
-                        tint = TextPrimaryOnDark
+            Row(
+                Modifier.fillMaxWidth().height(48.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text("Arena de treino", color = TextPrimaryOnDark, fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.titleLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        text = when {
+                            wideBattleLayout && commandFeedback != null -> commandFeedback.orEmpty()
+                            snapshot?.isPaused == true -> "Pausado · ${pauseReasonLabel(snapshot.pauseReason)}"
+                            snapshot?.result != null -> "Combate encerrado"
+                            state.loading -> "Preparando o Coliseu…"
+                            else -> "${formatDuration(snapshot?.elapsedMillis ?: 0)} · Combate autônomo"
+                        },
+                        color = if (snapshot?.isPaused == true) VitalCyan else TextSecondaryOnDark,
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
-                if (debugToolsEnabled && snapshot != null) {
-                    OutlinedButton(onClick = { showBattleDebug = true }, shape = CutCornerShape(6.dp),
-                        border = BorderStroke(1.dp, VitalCyan), modifier = Modifier.size(width = 52.dp, height = 42.dp),
-                        contentPadding = PaddingValues(0.dp)) {
-                        Text("IA", color = VitalCyan)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    IconButton(
+                        onClick = { sceneView?.resetCamera() },
+                        enabled = sceneReady,
+                        modifier = Modifier.size(46.dp)
+                            .border(1.dp, SurfaceStroke, CutCornerShape(6.dp))
+                            .clip(CutCornerShape(6.dp))
+                            .testTag("offline-battle-recenter-camera")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.CenterFocusStrong,
+                            contentDescription = "Recentralizar câmera",
+                            tint = TextPrimaryOnDark
+                        )
                     }
-                }
-                OutlinedButton(onClick = ::requestExit, shape = CutCornerShape(6.dp),
-                    border = BorderStroke(1.dp, SurfaceStroke), modifier = Modifier.size(width = 66.dp, height = 42.dp),
-                    contentPadding = PaddingValues(0.dp)) {
-                    Text("Sair", color = TextPrimaryOnDark)
+                    if (debugToolsEnabled && snapshot != null) {
+                        OutlinedButton(onClick = { showBattleDebug = true }, shape = CutCornerShape(6.dp),
+                            border = BorderStroke(1.dp, VitalCyan), modifier = Modifier.size(width = 52.dp, height = 42.dp),
+                            contentPadding = PaddingValues(0.dp)) {
+                            Text("IA", color = VitalCyan)
+                        }
+                    }
+                    OutlinedButton(onClick = ::requestExit, shape = CutCornerShape(6.dp),
+                        border = BorderStroke(1.dp, SurfaceStroke), modifier = Modifier.size(width = 66.dp, height = 42.dp),
+                        contentPadding = PaddingValues(0.dp)) {
+                        Text("Sair", color = TextPrimaryOnDark)
+                    }
                 }
             }
         }
@@ -324,53 +388,52 @@ fun OfflineTrainingBattleScreen(
                     modifier = Modifier.fillMaxSize()
                 )
             }
-            snapshot?.takeIf { sceneReady }?.let { current ->
-                BattleVfxOverlay(current, state.fighters, sceneView)
-                val labels = mutableListOf<Pair<Float, Float>>()
-                val labelWidth = with(density) { 84.dp.toPx() }
-                val labelHeight = with(density) { 30.dp.toPx() }
-                val pauseStatusBottom = with(density) { 44.dp.toPx() }
-                val labelGap = with(density) { 4.dp.toPx() }
-                val bodyBounds = (current.alliedMembers + current.opposingMembers).mapNotNull { member ->
-                    val foot = sceneView?.projectBattlePosition(member.position.x, 0f, member.position.z)
-                    val head = sceneView?.projectBattlePosition(member.position.x, state.arenaManifest?.fighterScale ?: 1.65f, member.position.z)
-                    if (foot == null || head == null) null else {
-                        val halfWidth = kotlin.math.abs(foot.second - head.second) * 0.6f
-                        RectF(head.first - halfWidth, head.second, head.first + halfWidth, foot.second)
-                    }
-                }
-                (current.alliedMembers + current.opposingMembers).forEach { fighter ->
-                    val point = sceneView?.projectBattlePosition(fighter.position.x, LABEL_HEIGHT, fighter.position.z)
-                    if (point != null) {
-                        val centeredX = point.first - labelWidth / 2
-                        val aboveY = point.second - labelHeight
-                        // Keep labels close to their fighter and clear of the pause indicator.
-                        // Crowded fighters still have named, selectable cards in the HUD.
-                        val placement = listOf(
-                            centeredX to aboveY,
-                            (point.first + labelGap) to aboveY,
-                            (point.first - labelWidth - labelGap) to aboveY,
-                            centeredX to (aboveY - labelHeight - labelGap)
-                        ).firstOrNull { (x, y) ->
-                            val rectangle = RectF(x, y, x + labelWidth, y + labelHeight)
-                            x >= 0 && y >= pauseStatusBottom &&
-                                rectangle.right <= (sceneView?.width ?: 0) &&
-                                rectangle.bottom <= (sceneView?.height ?: 0) &&
-                                bodyBounds.none { RectF.intersects(rectangle, it) } &&
-                                labels.none { (otherX, otherY) ->
-                                    kotlin.math.abs(otherX - x) < labelWidth + labelGap &&
-                                        kotlin.math.abs(otherY - y) < labelHeight + labelGap
-                                }
-                        } ?: return@forEach
-                        val (labelX, labelY) = placement
-                        labels += labelX to labelY
-                        FighterSceneLabel(
-                            fighter = fighter,
-                            x = with(density) { labelX.toDp() },
-                            y = with(density) { labelY.toDp() }
+            if (fullScreenArena) {
+                Row(
+                    Modifier.align(Alignment.TopEnd).padding(5.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(
+                        onClick = { sceneView?.resetCamera() },
+                        modifier = Modifier.size(48.dp)
+                            .border(1.dp, SurfaceStroke, CutCornerShape(5.dp))
+                            .clip(CutCornerShape(5.dp))
+                            .testTag("offline-battle-recenter-camera")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.CenterFocusStrong,
+                            contentDescription = "Recentralizar câmera",
+                            tint = TextPrimaryOnDark
                         )
                     }
+                    if (debugToolsEnabled) {
+                        OutlinedButton(
+                            onClick = { showBattleDebug = true },
+                            shape = CutCornerShape(5.dp),
+                            border = BorderStroke(1.dp, VitalCyan),
+                            modifier = Modifier.size(48.dp),
+                            contentPadding = PaddingValues(0.dp)
+                        ) { Text("IA", color = VitalCyan) }
+                    }
+                    OutlinedButton(
+                        onClick = ::requestExit,
+                        shape = CutCornerShape(5.dp),
+                        border = BorderStroke(1.dp, SurfaceStroke),
+                        modifier = Modifier.size(width = 58.dp, height = 48.dp),
+                        contentPadding = PaddingValues(horizontal = 3.dp)
+                    ) { Text("Sair", color = TextPrimaryOnDark) }
                 }
+            }
+            snapshot?.takeIf { sceneReady }?.let { current ->
+                BattleVfxOverlay(current, state.fighters, sceneView)
+                BattleArenaStatusOverlay(
+                    snapshot = current,
+                    sceneView = sceneView,
+                    fighterScale = state.arenaManifest?.fighterScale ?: 1.65f,
+                    selectedAlly = selectedAlly,
+                    selectedOpponent = selectedOpponent
+                )
                 if (current.isPaused && current.result == null && state.countdown == 0) {
                     Surface(
                         modifier = Modifier.align(Alignment.TopCenter).padding(top = 10.dp),
@@ -445,64 +508,74 @@ fun OfflineTrainingBattleScreen(
             rendererError == null && state.countdown == 0
         val current = snapshot
         val teamContent: @Composable ColumnScope.() -> Unit = {
-            BattleTeamRow(
-                title = "SEUS PARCEIROS",
-                members = current?.alliedMembers.orEmpty(),
-                selectedId = selectedAlly?.combatantId,
-                color = VitalCyan,
-                onSelect = { selectedAllyId = it }
-            )
-            BattleTeamRow(
-                title = "OPONENTES · toque para escolher o foco",
-                members = current?.opposingMembers.orEmpty(),
-                selectedId = selectedOpponent?.combatantId,
-                color = Color(0xFFFF7899),
-                onSelect = { selectedOpponentId = it }
-            )
-            BattleCommandBar(
-                selectedAlly = selectedAlly,
-                selectedOpponent = selectedOpponent,
-                availableCommandPoints = ((current?.commandPoints ?: 0) -
-                    (current?.reservedCommandPoints ?: 0)).coerceAtLeast(0),
-                supportReady = current != null && !current.isPaused &&
-                    selectedAlly?.combatantId?.let(current.pendingSupportCombatantIds::contains) == true,
-                commandsEnabled = commandsEnabled,
-                manuallyPaused = manualPause,
-                onToggleManualPause = { manualPause = !manualPause },
-                tacticalMenuPause = tacticalMenuPause,
-                onToggleTacticalPause = { tacticalMenuPause = !tacticalMenuPause },
-                onFocus = { ally, target -> issue(ally, TrainerAction.FocusTarget(target)) },
-                onDefend = { ally -> issue(ally, TrainerAction.Defend(), true) },
-                onSupport = { ally -> issue(ally, TrainerAction.Support) },
-                onMove = { ally, away -> issue(ally, if (away) TrainerAction.KeepDistance else TrainerAction.MoveCloser, true) },
-                onSpecial = { ally, target ->
-                    val technique = TrainingBattleFactory.techniques.first { it.kind == TechniqueKind.SPECIAL }
-                    issue(ally, TrainerAction.UseTechnique(technique.techniqueId, target))
-                },
-                onOpenTechniques = { openTacticalMenu(TrainingTacticalMenu.TECHNIQUES) },
-                onOpenItems = { openTacticalMenu(TrainingTacticalMenu.ITEMS) },
-                onOpenStrategies = { showStrategyMenu = true }
-            )
-            if (!wideBattleLayout) {
-                Text(
-                    text = commandFeedback ?: current?.let { eventSummary(it, state.fighters) }
-                        ?: if (state.loading) "Preparando a arena…" else "Comandos da luta",
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 18.dp, max = 18.dp)
-                        .padding(horizontal = 3.dp),
-                    color = TextSecondaryOnDark, style = MaterialTheme.typography.labelSmall,
-                    maxLines = 1, overflow = TextOverflow.Ellipsis
-                )
+            BoxWithConstraints(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag("offline-battle-touch-deck")
+            ) {
+                val fixedHeight = if (wideBattleLayout) 68.dp else 92.dp
+                val commandHeight = ((maxHeight - fixedHeight) / 3).coerceIn(48.dp, 84.dp)
+                Column(
+                    Modifier.fillMaxSize().padding(horizontal = 4.dp, vertical = 2.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    BattleCommandDeckHeader(
+                        availableCommandPoints = ((current?.commandPoints ?: 0) -
+                            (current?.reservedCommandPoints ?: 0)).coerceAtLeast(0),
+                        maxCommandPoints = current?.maxCommandPoints ?: 0,
+                        commandsEnabled = commandsEnabled,
+                        manuallyPaused = manualPause,
+                        tacticalMenuPause = tacticalMenuPause,
+                        onToggleManualPause = { manualPause = !manualPause },
+                        onToggleTacticalPause = { tacticalMenuPause = !tacticalMenuPause }
+                    )
+                    BattleCommandBar(
+                        selectedAlly = selectedAlly,
+                        selectedOpponent = selectedOpponent,
+                        commandHeight = commandHeight,
+                        availableCommandPoints = ((current?.commandPoints ?: 0) -
+                            (current?.reservedCommandPoints ?: 0)).coerceAtLeast(0),
+                        supportReady = current != null && !current.isPaused &&
+                            selectedAlly?.combatantId?.let(current.pendingSupportCombatantIds::contains) == true,
+                        commandsEnabled = commandsEnabled,
+                        onFocus = { ally, target -> issue(ally, TrainerAction.FocusTarget(target)) },
+                        onDefend = { ally -> issue(ally, TrainerAction.Defend(), true) },
+                        onSupport = { ally -> issue(ally, TrainerAction.Support) },
+                        onMove = { ally, away ->
+                            issue(ally, if (away) TrainerAction.KeepDistance else TrainerAction.MoveCloser, true)
+                        },
+                        onSpecial = { ally, target ->
+                            val technique = TrainingBattleFactory.techniques.first { it.kind == TechniqueKind.SPECIAL }
+                            issue(ally, TrainerAction.UseTechnique(technique.techniqueId, target))
+                        },
+                        onOpenTechniques = { openTacticalMenu(TrainingTacticalMenu.TECHNIQUES) },
+                        onOpenItems = { openTacticalMenu(TrainingTacticalMenu.ITEMS) },
+                        onOpenStrategies = { showStrategyMenu = true }
+                    )
+                    if (!wideBattleLayout) {
+                        Text(
+                            text = commandFeedback ?: current?.let { eventSummary(it, state.fighters) }
+                                ?: if (state.loading) "Preparando a arena…" else "Comandos da luta",
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 18.dp, max = 18.dp)
+                                .padding(horizontal = 3.dp),
+                            color = TextSecondaryOnDark,
+                            style = MaterialTheme.typography.labelSmall,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                }
             }
         }
 
         BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
             if (wideBattleLayout) {
                 val panelWidth = (maxWidth * 0.44f).coerceIn(268.dp, 390.dp)
-                val arenaWidth = (maxWidth - panelWidth - 8.dp).coerceAtLeast(150.dp)
+                val arenaWidth = (maxWidth - panelWidth - 12.dp).coerceAtLeast(150.dp)
                 val arenaSize = minOf(arenaWidth, maxHeight)
                 Row(Modifier.fillMaxSize(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     arenaContent(Modifier.size(arenaSize))
                     Column(
                         Modifier.width(panelWidth).fillMaxHeight(),
@@ -511,16 +584,17 @@ fun OfflineTrainingBattleScreen(
                     )
                 }
             } else {
-                Column(
-                    Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Box(Modifier.fillMaxWidth().aspectRatio(1f), contentAlignment = Alignment.Center) {
+                val panels = calculateBattlePortraitPanels(maxHeight.value)
+                Column(Modifier.fillMaxSize().testTag("offline-battle-two-screen-layout")) {
+                    Box(
+                        Modifier.fillMaxWidth().height(panels.arenaHeightDp.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
                         arenaContent(Modifier.fillMaxSize())
                     }
+                    Box(Modifier.fillMaxWidth().height(panels.gapHeightDp.dp))
                     Column(
-                        Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                        Modifier.fillMaxWidth().height(panels.deckHeightDp.dp),
                         content = teamContent
                     )
                 }
@@ -760,13 +834,13 @@ fun WorldRadarBattleContent(
 
     Column(
         modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(5.dp)
+        verticalArrangement = Arrangement.spacedBy(if (battleActive) 0.dp else 5.dp)
     ) {
         AnimatedContent(
             targetState = battleActive,
             modifier = Modifier
                 .fillMaxWidth()
-                .aspectRatio(1f)
+                .then(if (battleActive) Modifier.weight(1f) else Modifier.aspectRatio(1f))
                 .border(2.dp, SurfaceStroke, MaterialTheme.shapes.medium)
                 .clip(MaterialTheme.shapes.medium)
                 .testTag("world-radar-battle-viewport"),
@@ -814,6 +888,13 @@ fun WorldRadarBattleContent(
                             snapshot = current,
                             fighters = state.fighters,
                             sceneView = sceneView
+                        )
+                        BattleArenaStatusOverlay(
+                            snapshot = current,
+                            sceneView = sceneView,
+                            fighterScale = state.arenaManifest?.fighterScale ?: 1.65f,
+                            selectedAlly = selectedAlly,
+                            selectedOpponent = selectedOpponent
                         )
                     }
 
@@ -885,69 +966,68 @@ fun WorldRadarBattleContent(
         }
 
         if (battleActive) {
-            BattleTeamRow(
-                title = "SEU DIGIMON",
-                members = allies,
-                selectedId = selectedAlly?.combatantId,
-                color = VitalCyan,
-                onSelect = { selectedAllyId = it }
-            )
-            BattleTeamRow(
-                title = "DIGIMON SELVAGEM",
-                members = opponents,
-                selectedId = selectedOpponent?.combatantId,
-                color = Color(0xFFFF7899),
-                onSelect = { selectedOpponentId = it }
-            )
-            BattleCommandBar(
-                selectedAlly = selectedAlly,
-                selectedOpponent = selectedOpponent,
-                availableCommandPoints = ((snapshot?.commandPoints ?: 0) -
-                    (snapshot?.reservedCommandPoints ?: 0)).coerceAtLeast(0),
-                supportReady = snapshot != null && !snapshot.isPaused &&
-                    selectedAlly?.combatantId?.let(snapshot.pendingSupportCombatantIds::contains) == true,
-                commandsEnabled = snapshot != null && snapshot.result == null && sceneReady &&
-                    rendererError == null && state.countdown == 0,
-                manuallyPaused = manualPause,
-                onToggleManualPause = { manualPause = !manualPause },
-                tacticalMenuPause = tacticalMenuPause,
-                onToggleTacticalPause = { tacticalMenuPause = !tacticalMenuPause },
-                onFocus = { ally, target -> issue(ally, TrainerAction.FocusTarget(target)) },
-                onDefend = { ally -> issue(ally, TrainerAction.Defend(), true) },
-                onSupport = { ally -> issue(ally, TrainerAction.Support) },
-                onMove = { ally, away ->
-                    issue(ally, if (away) TrainerAction.KeepDistance else TrainerAction.MoveCloser, true)
-                },
-                onSpecial = { ally, target ->
-                    val technique = TrainingBattleFactory.techniques.first { it.kind == TechniqueKind.SPECIAL }
-                    issue(ally, TrainerAction.UseTechnique(technique.techniqueId, target))
-                },
-                onOpenTechniques = {
-                    menu = TrainingTacticalMenu.TECHNIQUES
-                    if (tacticalMenuPause) viewModel.setPaused("tech-menu", true)
-                },
-                onOpenItems = {
-                    menu = TrainingTacticalMenu.ITEMS
-                    if (tacticalMenuPause) viewModel.setPaused("item-menu", true)
-                },
-                onOpenStrategies = { showStrategyMenu = true }
-            )
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
+            val worldCommandsEnabled = snapshot != null && snapshot.result == null && sceneReady &&
+                rendererError == null && state.countdown == 0
+            Box(Modifier.fillMaxWidth().height(12.dp))
+            Column(
+                Modifier.fillMaxWidth().testTag("world-radar-command-deck"),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Text(
-                    text = commandFeedback ?: snapshot?.let { eventSummary(it, state.fighters) }
-                        ?: "Preparando combate…",
-                    color = TextSecondaryOnDark,
-                    style = MaterialTheme.typography.labelSmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
+                BattleCommandDeckHeader(
+                    availableCommandPoints = ((snapshot?.commandPoints ?: 0) -
+                        (snapshot?.reservedCommandPoints ?: 0)).coerceAtLeast(0),
+                    maxCommandPoints = snapshot?.maxCommandPoints ?: 0,
+                    commandsEnabled = worldCommandsEnabled,
+                    manuallyPaused = manualPause,
+                    tacticalMenuPause = tacticalMenuPause,
+                    onToggleManualPause = { manualPause = !manualPause },
+                    onToggleTacticalPause = { tacticalMenuPause = !tacticalMenuPause }
                 )
-                OutlinedButton(onClick = { showExitDialog = true }, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text("Sair")
+                BattleCommandBar(
+                    selectedAlly = selectedAlly,
+                    selectedOpponent = selectedOpponent,
+                    availableCommandPoints = ((snapshot?.commandPoints ?: 0) -
+                        (snapshot?.reservedCommandPoints ?: 0)).coerceAtLeast(0),
+                    supportReady = snapshot != null && !snapshot.isPaused &&
+                        selectedAlly?.combatantId?.let(snapshot.pendingSupportCombatantIds::contains) == true,
+                    commandsEnabled = worldCommandsEnabled,
+                    onFocus = { ally, target -> issue(ally, TrainerAction.FocusTarget(target)) },
+                    onDefend = { ally -> issue(ally, TrainerAction.Defend(), true) },
+                    onSupport = { ally -> issue(ally, TrainerAction.Support) },
+                    onMove = { ally, away ->
+                        issue(ally, if (away) TrainerAction.KeepDistance else TrainerAction.MoveCloser, true)
+                    },
+                    onSpecial = { ally, target ->
+                        val technique = TrainingBattleFactory.techniques.first { it.kind == TechniqueKind.SPECIAL }
+                        issue(ally, TrainerAction.UseTechnique(technique.techniqueId, target))
+                    },
+                    onOpenTechniques = {
+                        menu = TrainingTacticalMenu.TECHNIQUES
+                        if (tacticalMenuPause) viewModel.setPaused("tech-menu", true)
+                    },
+                    onOpenItems = {
+                        menu = TrainingTacticalMenu.ITEMS
+                        if (tacticalMenuPause) viewModel.setPaused("item-menu", true)
+                    },
+                    onOpenStrategies = { showStrategyMenu = true }
+                )
+                Row(
+                    Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = commandFeedback ?: snapshot?.let { eventSummary(it, state.fighters) }
+                            ?: "Preparando combate…",
+                        color = TextSecondaryOnDark,
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedButton(onClick = { showExitDialog = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text("Sair")
+                    }
                 }
             }
         } else {
@@ -1117,76 +1197,211 @@ private fun DamageImpactOverlay(
 }
 
 @Composable
-private fun FighterSceneLabel(fighter: CombatantSnapshot, x: androidx.compose.ui.unit.Dp, y: androidx.compose.ui.unit.Dp) {
+private fun BoxScope.BattleArenaStatusOverlay(
+    snapshot: BattleSnapshot,
+    sceneView: OfflineBattleSceneView?,
+    fighterScale: Float,
+    selectedAlly: CombatantSnapshot?,
+    selectedOpponent: CombatantSnapshot?
+) {
+    val density = LocalDensity.current
+    val labels = mutableListOf<Pair<Float, Float>>()
+    val labelWidth = with(density) { 66.dp.toPx() }
+    val labelHeight = with(density) { 9.dp.toPx() }
+    val pauseStatusBottom = with(density) { 44.dp.toPx() }
+    val labelGap = with(density) { 4.dp.toPx() }
+    val bodyBounds = (snapshot.alliedMembers + snapshot.opposingMembers).mapNotNull { member ->
+        val foot = sceneView?.projectBattlePosition(member.position.x, 0f, member.position.z)
+        val head = sceneView?.projectBattlePosition(member.position.x, fighterScale, member.position.z)
+        if (foot == null || head == null) null else {
+            val halfWidth = kotlin.math.abs(foot.second - head.second) * 0.6f
+            RectF(head.first - halfWidth, head.second, head.first + halfWidth, foot.second)
+        }
+    }
+    snapshot.opposingMembers.forEach { fighter ->
+        val point = sceneView?.projectBattlePosition(fighter.position.x, LABEL_HEIGHT, fighter.position.z)
+        if (point != null) {
+            val centeredX = point.first - labelWidth / 2
+            val aboveY = point.second - labelHeight
+            val placement = listOf(
+                centeredX to aboveY,
+                (point.first + labelGap) to aboveY,
+                (point.first - labelWidth - labelGap) to aboveY,
+                centeredX to (aboveY - labelHeight - labelGap)
+            ).firstOrNull { (x, y) ->
+                val rectangle = RectF(x, y, x + labelWidth, y + labelHeight)
+                x >= 0 && y >= pauseStatusBottom &&
+                    rectangle.right <= (sceneView?.width ?: 0) &&
+                    rectangle.bottom <= (sceneView?.height ?: 0) &&
+                    bodyBounds.none { RectF.intersects(rectangle, it) } &&
+                    labels.none { (otherX, otherY) ->
+                        kotlin.math.abs(otherX - x) < labelWidth + labelGap &&
+                            kotlin.math.abs(otherY - y) < labelHeight + labelGap
+                    }
+            } ?: return@forEach
+            val (labelX, labelY) = placement
+            labels += labelX to labelY
+            EnemySceneHealthBar(
+                fighter = fighter,
+                selected = fighter.combatantId == selectedOpponent?.combatantId,
+                x = with(density) { labelX.toDp() },
+                y = with(density) { labelY.toDp() }
+            )
+        }
+    }
+    selectedAlly?.let { partner ->
+        PartnerArenaHud(
+            fighter = partner,
+            modifier = Modifier.align(Alignment.BottomStart).padding(8.dp)
+        )
+    }
+}
+
+@Composable
+private fun EnemySceneHealthBar(
+    fighter: CombatantSnapshot,
+    selected: Boolean,
+    x: androidx.compose.ui.unit.Dp,
+    y: androidx.compose.ui.unit.Dp
+) {
     Surface(
-        modifier = Modifier.offset(x, y).width(84.dp),
-        color = Color(0xCF100D1A),
-        shape = CutCornerShape(4.dp),
-        border = BorderStroke(1.dp, if (fighter.side == BattleSide.ALLIED) VitalCyan else Color(0xFFFF7899))
+        modifier = Modifier.offset(x, y).size(width = 66.dp, height = 9.dp)
+            .testTag("offline-battle-enemy-health-bar"),
+        color = Color(0xE8100D1A),
+        shape = CutCornerShape(2.dp),
+        border = BorderStroke(1.dp, if (selected) VitalCyan else Color(0xFFFF7899))
     ) {
-        Column(Modifier.padding(horizontal = 5.dp, vertical = 3.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(fighter.displayName, color = TextPrimaryOnDark, style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            LinearProgressIndicator(
-                progress = { fighter.health.toFloat() / fighter.maxHealth.coerceAtLeast(1) },
-                modifier = Modifier.fillMaxWidth().height(3.dp),
-                color = if (fighter.side == BattleSide.ALLIED) VitalCyan else Color(0xFFFF7899),
-                trackColor = Color(0xFF45394C)
+        Box(Modifier.fillMaxSize().padding(1.dp).background(Color(0xFF45394C))) {
+            Box(
+                Modifier.fillMaxHeight()
+                    .fillMaxWidth(
+                        (fighter.health.toFloat() / fighter.maxHealth.coerceAtLeast(1)).coerceIn(0f, 1f)
+                    )
+                    .background(Color(0xFFFF7899))
             )
         }
     }
 }
 
 @Composable
-private fun BattleTeamRow(
-    title: String,
-    members: List<CombatantSnapshot>,
-    selectedId: String?,
-    color: Color,
-    onSelect: (String) -> Unit
+private fun PartnerArenaHud(fighter: CombatantSnapshot, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .width(184.dp)
+            .padding(horizontal = 7.dp, vertical = 5.dp)
+            .testTag("offline-battle-player-hud"),
+        verticalArrangement = Arrangement.spacedBy(3.dp)
+    ) {
+        ArenaHudBar("HP", fighter.health, fighter.maxHealth, VitalCyan)
+        ArenaHudBar("MP", fighter.energy, fighter.maxEnergy, VitalPurpleBright)
+    }
+}
+
+@Composable
+private fun ArenaHudBar(label: String, value: Int, maximum: Int, color: Color) {
+    Row(
+        Modifier.fillMaxWidth().height(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Text(
+            label,
+            color = color,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Black,
+            style = TextStyle(shadow = Shadow(Color.Black, Offset(1f, 1f), 3f))
+        )
+        Box(Modifier.weight(1f).height(5.dp).background(Color(0xD045394C), CutCornerShape(1.dp))) {
+            Box(
+                Modifier.fillMaxHeight()
+                    .fillMaxWidth((value.toFloat() / maximum.coerceAtLeast(1)).coerceIn(0f, 1f))
+                    .background(color, CutCornerShape(1.dp))
+            )
+        }
+        Text(
+            "$value/$maximum",
+            modifier = Modifier.widthIn(min = 56.dp),
+            color = TextPrimaryOnDark,
+            fontSize = 10.sp,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            softWrap = false,
+            overflow = TextOverflow.Clip,
+            textAlign = TextAlign.End,
+            style = TextStyle(shadow = Shadow(Color.Black, Offset(1f, 1f), 3f))
+        )
+    }
+}
+
+@Composable
+private fun BattleCommandDeckHeader(
+    availableCommandPoints: Int,
+    maxCommandPoints: Int,
+    commandsEnabled: Boolean,
+    manuallyPaused: Boolean,
+    tacticalMenuPause: Boolean,
+    onToggleManualPause: () -> Unit,
+    onToggleTacticalPause: () -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        Text(title, color = color, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold,
-            maxLines = 1, overflow = TextOverflow.Ellipsis)
-        if (members.isEmpty()) {
-            Surface(
-                modifier = Modifier.fillMaxWidth().height(44.dp),
-                color = DeepPurpleBgAlt,
-                shape = CutCornerShape(5.dp),
-                border = BorderStroke(1.dp, SurfaceStroke)
-            ) {
-                Box(contentAlignment = Alignment.CenterStart, modifier = Modifier.padding(horizontal = 9.dp)) {
-                    Text("Preparando equipe…", color = TextSecondaryOnDark,
-                        style = MaterialTheme.typography.labelSmall)
-                }
+    Row(
+        Modifier.fillMaxWidth().height(48.dp).testTag("offline-battle-command-header"),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text(
+                    "COMANDOS",
+                    color = TextPrimaryOnDark,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold
+                )
+                Text(
+                    "CP $availableCommandPoints/${maxCommandPoints.coerceAtLeast(0)}",
+                    color = VitalCyan,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.Bold
+                )
             }
-        } else {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                members.forEach { member ->
-                    val selected = member.combatantId == selectedId
-                    Surface(
-                        modifier = Modifier.weight(1f).height(44.dp).clickable { onSelect(member.combatantId) },
-                        color = if (selected) color.copy(alpha = 0.13f) else DeepPurpleBgAlt,
-                        shape = CutCornerShape(5.dp),
-                        border = BorderStroke(1.dp, if (selected) color else SurfaceStroke)
-                    ) {
-                        Column(Modifier.fillMaxSize().padding(horizontal = 7.dp, vertical = 4.dp),
-                            verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text(member.displayName, color = TextPrimaryOnDark,
-                                fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.labelMedium)
-                            LinearProgressIndicator(
-                                progress = { member.health.toFloat() / member.maxHealth.coerceAtLeast(1) },
-                                modifier = Modifier.fillMaxWidth().height(3.dp),
-                                color = color, trackColor = Color(0xFF45394C)
-                            )
-                            Text("HP ${member.health}/${member.maxHealth} · EN ${member.energy}/${member.maxEnergy} · ${stateLabel(member.state)}",
-                                color = TextSecondaryOnDark, style = MaterialTheme.typography.labelSmall,
-                                maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        }
-                    }
-                }
-            }
+            LinearProgressIndicator(
+                progress = {
+                    if (maxCommandPoints <= 0) 0f
+                    else availableCommandPoints.toFloat() / maxCommandPoints.toFloat()
+                },
+                modifier = Modifier.fillMaxWidth().height(3.dp),
+                color = VitalCyan,
+                trackColor = DeepPurpleBgAlt
+            )
+        }
+        OutlinedButton(
+            onClick = onToggleManualPause,
+            enabled = commandsEnabled,
+            modifier = Modifier.size(width = 72.dp, height = 48.dp),
+            shape = CutCornerShape(6.dp),
+            border = BorderStroke(1.dp, if (manuallyPaused) VitalCyan else SurfaceStroke),
+            contentPadding = PaddingValues(horizontal = 4.dp)
+        ) {
+            Text(
+                if (manuallyPaused) "Continuar" else "Pausar",
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.labelSmall
+            )
+        }
+        OutlinedButton(
+            onClick = onToggleTacticalPause,
+            enabled = commandsEnabled,
+            modifier = Modifier.size(width = 86.dp, height = 48.dp),
+            shape = CutCornerShape(6.dp),
+            border = BorderStroke(1.dp, if (tacticalMenuPause) VitalCyan else SurfaceStroke),
+            contentPadding = PaddingValues(horizontal = 4.dp)
+        ) {
+            Text(
+                "Tática ${if (tacticalMenuPause) "ON" else "OFF"}",
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.labelSmall
+            )
         }
     }
 }
@@ -1195,13 +1410,10 @@ private fun BattleTeamRow(
 private fun BattleCommandBar(
     selectedAlly: CombatantSnapshot?,
     selectedOpponent: CombatantSnapshot?,
+    commandHeight: androidx.compose.ui.unit.Dp = 48.dp,
     availableCommandPoints: Int,
     supportReady: Boolean,
     commandsEnabled: Boolean,
-    manuallyPaused: Boolean,
-    onToggleManualPause: () -> Unit,
-    tacticalMenuPause: Boolean,
-    onToggleTacticalPause: () -> Unit,
     onFocus: (String, String) -> Unit,
     onDefend: (String) -> Unit,
     onSupport: (String) -> Unit,
@@ -1217,34 +1429,53 @@ private fun BattleCommandBar(
     val specialReady = alive && targetAlive && availableCommandPoints >= special.commandPointCost &&
         selectedAlly.energy - selectedAlly.reservedEnergy >= special.energyCost &&
         (selectedAlly.cooldownsMillis[special.techniqueId] ?: 0) == 0L
-    Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-        CommandRow {
-            CommandButton("Técnicas", enabled = alive, primary = true, onClick = onOpenTechniques)
-            CommandButton("Itens", enabled = alive, onClick = onOpenItems)
-            CommandButton("Defender", enabled = alive) { selectedAlly?.let { onDefend(it.combatantId) } }
-        }
-        CommandRow {
-            CommandButton("Apoiar · $availableCommandPoints", enabled = supportReady && commandsEnabled) {
-                selectedAlly?.let { onSupport(it.combatantId) }
+    val deck = battleCommandDeck(
+        BattleCommandAvailability(
+            partnerReady = alive,
+            targetReady = targetAlive,
+            supportReady = supportReady && commandsEnabled,
+            specialReady = specialReady
+        )
+    )
+    val allyId = selectedAlly?.combatantId
+    val targetId = selectedOpponent?.combatantId
+    Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
+        deck.chunked(3).forEach { rowItems ->
+            CommandRow {
+                rowItems.forEach { item ->
+                    val label = when (item.slot) {
+                        BattleCommandSlot.TECHNIQUES -> "Técnicas"
+                        BattleCommandSlot.ITEMS -> "Itens"
+                        BattleCommandSlot.DEFEND -> "Defender"
+                        BattleCommandSlot.SUPPORT -> "Apoiar · $availableCommandPoints"
+                        BattleCommandSlot.SPECIAL -> "Especial · ${special.commandPointCost} CP"
+                        BattleCommandSlot.FOCUS -> "Focar"
+                        BattleCommandSlot.STRATEGY -> "Estratégia"
+                        BattleCommandSlot.MOVE_CLOSER -> "Aproximar"
+                        BattleCommandSlot.KEEP_DISTANCE -> "Afastar"
+                    }
+                    CommandButton(
+                        label = label,
+                        enabled = item.enabled,
+                        primary = item.slot == BattleCommandSlot.TECHNIQUES,
+                        height = commandHeight
+                    ) {
+                        when (item.slot) {
+                            BattleCommandSlot.TECHNIQUES -> onOpenTechniques()
+                            BattleCommandSlot.ITEMS -> onOpenItems()
+                            BattleCommandSlot.DEFEND -> allyId?.let(onDefend)
+                            BattleCommandSlot.SUPPORT -> allyId?.let(onSupport)
+                            BattleCommandSlot.SPECIAL -> allyId?.let { onSpecial(it, targetId) }
+                            BattleCommandSlot.FOCUS -> if (allyId != null && targetId != null) {
+                                onFocus(allyId, targetId)
+                            }
+                            BattleCommandSlot.STRATEGY -> onOpenStrategies()
+                            BattleCommandSlot.MOVE_CLOSER -> allyId?.let { onMove(it, false) }
+                            BattleCommandSlot.KEEP_DISTANCE -> allyId?.let { onMove(it, true) }
+                        }
+                    }
+                }
             }
-            CommandButton("Especial · ${special.commandPointCost} CP", enabled = specialReady) {
-                selectedAlly?.let { onSpecial(it.combatantId, selectedOpponent?.combatantId) }
-            }
-            CommandButton("Focar", enabled = alive && targetAlive) {
-                if (selectedAlly != null && selectedOpponent != null) onFocus(selectedAlly.combatantId, selectedOpponent.combatantId)
-            }
-        }
-        CommandRow {
-            CommandButton("Estratégia", enabled = alive, onClick = onOpenStrategies)
-            CommandButton("Aproximar", enabled = alive) { selectedAlly?.let { onMove(it.combatantId, false) } }
-            CommandButton("Afastar", enabled = alive) { selectedAlly?.let { onMove(it.combatantId, true) } }
-        }
-        CommandRow {
-            CommandButton(if (manuallyPaused) "Continuar" else "Pausar", enabled = commandsEnabled,
-                onClick = onToggleManualPause)
-            CommandButton("Tática · ${if (tacticalMenuPause) "ON" else "OFF"}", enabled = commandsEnabled,
-                onClick = onToggleTacticalPause)
-            Spacer(Modifier.weight(1f).height(40.dp))
         }
     }
 }
@@ -1256,9 +1487,16 @@ private fun CommandRow(content: @Composable RowScope.() -> Unit) {
 }
 
 @Composable
-private fun RowScope.CommandButton(label: String, enabled: Boolean = true, primary: Boolean = false, onClick: () -> Unit) {
+private fun RowScope.CommandButton(
+    label: String,
+    enabled: Boolean = true,
+    primary: Boolean = false,
+    height: androidx.compose.ui.unit.Dp = 48.dp,
+    onClick: () -> Unit
+) {
     if (primary) {
-        Button(onClick = onClick, enabled = enabled, modifier = Modifier.weight(1f).height(40.dp),
+        Button(onClick = onClick, enabled = enabled,
+            modifier = Modifier.weight(1f).height(height).testTag("offline-battle-command-slot"),
             contentPadding = PaddingValues(horizontal = 3.dp, vertical = 2.dp),
             shape = CutCornerShape(6.dp), colors = ButtonDefaults.buttonColors(
                 containerColor = VitalPurpleBright, contentColor = Color(0xFF0A0812)
@@ -1267,7 +1505,8 @@ private fun RowScope.CommandButton(label: String, enabled: Boolean = true, prima
                 style = MaterialTheme.typography.labelSmall)
         }
     } else {
-        OutlinedButton(onClick = onClick, enabled = enabled, modifier = Modifier.weight(1f).height(40.dp),
+        OutlinedButton(onClick = onClick, enabled = enabled,
+            modifier = Modifier.weight(1f).height(height).testTag("offline-battle-command-slot"),
             contentPadding = PaddingValues(horizontal = 3.dp, vertical = 2.dp),
             shape = CutCornerShape(6.dp), border = BorderStroke(1.dp, SurfaceStroke)) {
             Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelSmall)
@@ -1439,19 +1678,6 @@ private fun eventSummary(snapshot: BattleSnapshot, fighters: Map<String, BattleF
         is BattleEvent.StateChanged, is BattleEvent.TargetChanged -> "Os parceiros estão reposicionando no Coliseu."
         is BattleEvent.BattleEnded -> outcomeLabel(event.result.outcome)
     }
-}
-
-private fun stateLabel(state: CombatantState): String = when (state) {
-    CombatantState.IDLE, CombatantState.SELECT_TARGET, CombatantState.WAITING -> "Pronto"
-    CombatantState.MOVE_TO_TARGET, CombatantState.MOVE_AWAY, CombatantState.POSITIONING -> "Movendo"
-    CombatantState.ATTACK_STARTUP, CombatantState.ATTACK_ACTIVE -> "Atacando"
-    CombatantState.RECOVERING -> "Recupera"
-    CombatantState.DEFENDING -> "Defende"
-    CombatantState.STUNNED -> "Atordoado"
-    CombatantState.KNOCKBACK -> "Recuo"
-    CombatantState.USING_SPECIAL -> "Especial"
-    CombatantState.USING_ITEM_EFFECT -> "Item"
-    CombatantState.DEFEATED -> "Derrotado"
 }
 
 private fun strategyLabel(strategy: BattleStrategy): String = when (strategy) {

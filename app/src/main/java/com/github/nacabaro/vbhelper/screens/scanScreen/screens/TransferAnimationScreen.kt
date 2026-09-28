@@ -12,9 +12,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -33,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.CyberPanel
 import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.components.motionEnabled
 import com.github.nacabaro.vbhelper.R
@@ -41,6 +46,7 @@ import com.github.nacabaro.vbhelper.ui.theme.StatusRed
 import com.github.nacabaro.vbhelper.ui.theme.TextMutedOnDark
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalPurple
+import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import com.github.nacabaro.vbhelper.utils.ImageBitmapData
 import kotlinx.coroutines.delay
 
@@ -103,10 +109,12 @@ fun TransferAnimationScreen(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
+                .padding(horizontal = 24.dp)
         ) {
             characterPreview?.let { preview ->
-                Card(
-                    modifier = Modifier.padding(bottom = 24.dp)
+                CyberPanel(
+                    modifier = Modifier.padding(bottom = 24.dp),
+                    active = true
                 ) {
                     Image(
                         bitmap = preview.imageBitmap,
@@ -119,14 +127,14 @@ fun TransferAnimationScreen(
                 }
             }
 
-            // Animated pulsing circle indicator
+            // Animated NFC link indicator.
             Box(
                 modifier = Modifier
                     .size(120.dp)
                     .scale(scale)
                     .background(
-                        color = VitalPurple.copy(alpha = 0.2f),
-                        shape = CircleShape
+                        color = VitalCyan.copy(alpha = 0.12f),
+                        shape = CutCornerShape(20.dp)
                     ),
                 contentAlignment = Alignment.Center
             ) {
@@ -135,14 +143,17 @@ fun TransferAnimationScreen(
                         .size(80.dp)
                         .background(
                             color = VitalPurple,
-                            shape = CircleShape
+                            shape = CutCornerShape(14.dp)
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "🔄",
-                        fontSize = 40.sp,
-                        modifier = Modifier.scale(if (scale > 1f) 1.1f else 1f)
+                    Icon(
+                        imageVector = Icons.Default.Sync,
+                        contentDescription = null,
+                        tint = TextPrimaryOnDark,
+                        modifier = Modifier
+                            .size(44.dp)
+                            .scale(if (scale > 1f) 1.1f else 1f)
                     )
                 }
             }
@@ -179,7 +190,8 @@ fun TransferAnimationScreen(
                     modifier = Modifier
                         .size(100.dp)
                         .padding(top = 24.dp),
-                    strokeWidth = 4.dp
+                    strokeWidth = 4.dp,
+                    color = VitalCyan
                 )
 
                 Text(
@@ -235,6 +247,7 @@ fun TransferCompleteScreen(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
+                .padding(horizontal = 24.dp)
         ) {
             Box(
                 modifier = Modifier
@@ -242,15 +255,15 @@ fun TransferCompleteScreen(
                     .scale(scale)
                     .background(
                         color = if (isSuccess) StatusGreen else StatusRed,
-                        shape = CircleShape
+                        shape = CutCornerShape(20.dp)
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = if (isSuccess) "✓" else "✕",
-                    fontSize = 60.sp,
-                    color = TextPrimaryOnDark,
-                    fontWeight = FontWeight.Bold
+                Icon(
+                    imageVector = if (isSuccess) Icons.Default.CheckCircle else Icons.Default.Error,
+                    contentDescription = null,
+                    tint = TextPrimaryOnDark,
+                    modifier = Modifier.size(64.dp)
                 )
             }
 

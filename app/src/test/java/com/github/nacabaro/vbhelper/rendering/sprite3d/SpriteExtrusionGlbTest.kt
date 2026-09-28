@@ -58,6 +58,47 @@ class SpriteExtrusionGlbTest {
     }
 
     @Test
+    fun generatedModelUsesOnlyTheTightContactShadow() {
+        val bytes = SpriteExtrusionGlb.build(
+            mapOf("idle" to ResidentFrameImage(intArrayOf(0xFFFFFFFF.toInt()), 1, 1))
+        )
+        val header = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+        header.position(12)
+        val jsonLength = header.int
+        header.int
+        val document = JSONObject(String(bytes, 20, jsonLength, Charsets.UTF_8).trim())
+        val nodes = document.getJSONArray("nodes")
+        val namedNodes = (0 until nodes.length()).associateBy(
+            keySelector = { nodes.getJSONObject(it).getString("name") },
+            valueTransform = { nodes.getJSONObject(it) },
+        )
+
+        assertTrue(!namedNodes.containsKey("soft_shadow"))
+        assertTrue(namedNodes.containsKey("contact_shadow"))
+        assertEquals(2, document.getJSONArray("images").length())
+        assertEquals(2, document.getJSONArray("textures").length())
+    }
+
+    @Test
+    fun identicalPoseImagesReuseOneMeshAndTexture() {
+        val frame = ResidentFrameImage(
+            intArrayOf(0x00000000, 0xFFFFFFFF.toInt(), 0xFF21D4E8.toInt(), 0x00000000),
+            2,
+            2,
+        )
+        val bytes = SpriteExtrusionGlb.build(mapOf("idle" to frame, "happy" to frame.copy()))
+        val header = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+        header.position(12)
+        val jsonLength = header.int
+        header.int
+        val document = JSONObject(String(bytes, 20, jsonLength, Charsets.UTF_8).trim())
+        val nodes = document.getJSONArray("nodes")
+
+        assertEquals(nodes.getJSONObject(1).getInt("mesh"), nodes.getJSONObject(2).getInt("mesh"))
+        assertEquals(2, document.getJSONArray("images").length())
+    }
+
+    @Test
     fun identicalSpriteContentReusesTheExtrudedModelButPixelChangesDoNot() {
         val pixels = intArrayOf(0x00000000, 0xFF21D4E8.toInt(), 0x00000000, 0xFF814BFF.toInt())
         val first = SpriteExtrusionGlb.build(mapOf("cache-check" to ResidentFrameImage(pixels, 2, 2)))

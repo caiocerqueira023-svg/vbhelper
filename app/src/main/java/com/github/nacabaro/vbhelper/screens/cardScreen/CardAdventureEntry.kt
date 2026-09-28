@@ -3,26 +3,34 @@ package com.github.nacabaro.vbhelper.screens.cardScreen
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardColors
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.github.nacabaro.vbhelper.components.CyberPanel
 import com.github.nacabaro.vbhelper.dtos.CardDtos
+import com.github.nacabaro.vbhelper.ui.theme.DeepPurpleBgAlt
+import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
+import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
+import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.getImageBitmap
+import com.github.nacabaro.vbhelper.R
 
 @Composable
 fun CardAdventureEntry(
@@ -49,72 +57,73 @@ fun CardAdventureEntry(
         obscure = obscure
     )
 
-    Card (
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp)
+    CyberPanel(
+        modifier = Modifier.fillMaxWidth(),
+        active = !obscure
     ) {
-        Row (
-            modifier = Modifier
-                .padding(8.dp)
-        ){
-            Card (
-                colors = CardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    contentColor = MaterialTheme.colorScheme.contentColorFor(
-                        backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                    ),
-                    disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    disabledContentColor = MaterialTheme.colorScheme.contentColorFor(
-                        backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                    )
-                )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp)
+        ) {
+            Surface(
+                modifier = Modifier.size(88.dp),
+                color = DeepPurpleBgAlt,
+                shape = RectangleShape
             ) {
                 Image(
                     bitmap = charaImageBitmapData.imageBitmap,
-                    contentDescription = "Icon",
+                    contentDescription = null,
                     modifier = Modifier
-                        .size(charaImageBitmapData.dpWidth)
+                        .fillMaxSize()
                         .padding(8.dp),
-                    colorFilter = when (obscure) {
-                        true -> ColorFilter.tint(color = MaterialTheme.colorScheme.secondary)
-                        false -> null
-                    },
+                    colorFilter = if (obscure) ColorFilter.tint(TextSecondaryOnDark) else null,
                     filterQuality = FilterQuality.None
                 )
             }
-
-            Spacer(modifier = Modifier.padding(8.dp))
-
-            Column {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(5.dp)
+            ) {
                 if (!obscure) {
                     Image(
                         bitmap = nameImageBitmapData.imageBitmap,
-                        contentDescription = "Icon",
+                        contentDescription = null,
                         modifier = Modifier
-                            .width(nameImageBitmapData.dpWidth)
-                            .height(nameImageBitmapData.dpHeight),
+                            .width(nameImageBitmapData.dpWidth.coerceAtMost(188.dp)),
                         filterQuality = FilterQuality.None
                     )
-
-                    Spacer(modifier = Modifier.padding(4.dp))
-
                     Text(
-                        text = "HP: ${cardAdventureEntry.characterHp}, DP: ${cardAdventureEntry.characterDp}, AP: ${cardAdventureEntry.characterAp}"
+                        text = "HP ${cardAdventureEntry.characterHp}  ·  AP ${cardAdventureEntry.characterAp}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = TextPrimaryOnDark,
+                        fontWeight = FontWeight.Bold
                     )
-                    if (cardAdventureEntry.characterBp != null) {
-                        Text(text = "BP: ${cardAdventureEntry.characterBp}")
-                    }
-                    Text(text = "Steps: ${cardAdventureEntry.steps}")
+                    Text(
+                        text = buildString {
+                            append("DP ${cardAdventureEntry.characterDp}")
+                            cardAdventureEntry.characterBp?.let { append("  ·  BP $it") }
+                        },
+                        style = MaterialTheme.typography.labelMedium,
+                        color = VitalCyan
+                    )
+                    Text(
+                        text = stringResource(R.string.card_adventure_steps, cardAdventureEntry.steps),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = TextSecondaryOnDark
+                    )
                 } else {
-                    Text(text = "????????????????")
                     Text(
-                        text = "HP: -, BP: -, AP: -"
+                        text = stringResource(R.string.card_adventure_locked_title),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = TextPrimaryOnDark,
+                        fontWeight = FontWeight.Bold
                     )
-                    if (cardAdventureEntry.characterBp != null) {
-                        Text(text = "DP: -")
-                    }
-                    Text(text = "Steps: -")
+                    Text(
+                        text = stringResource(R.string.card_adventure_locked_body),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondaryOnDark
+                    )
                 }
             }
         }

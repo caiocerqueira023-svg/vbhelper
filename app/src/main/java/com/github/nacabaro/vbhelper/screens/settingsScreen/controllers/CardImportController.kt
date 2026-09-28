@@ -19,7 +19,8 @@ class CardImportController(
     suspend fun importCard(
         fileReader: InputStream?,
         sourceFileName: String? = null,
-    ) {
+        onCardCreated: suspend (cardId: Long, cardName: String) -> Unit = { _, _ -> },
+    ): Long {
         val dimReader = DimReader()
         val card = dimReader.readCard(fileReader, false)
 
@@ -38,6 +39,7 @@ class CardImportController(
             .insertNewCard(cardModel)
 
         updateCardProgress(cardId = cardId)
+        onCardCreated(cardId, cardModel.name)
 
         importCharacterData(cardId, card)
 
@@ -57,6 +59,8 @@ class CardImportController(
                 Log.w("CardImportController", "Failed to auto-match official species for cardId=$cardId", it)
             }
         }
+
+        return cardId
     }
 
     private fun nameFromSourceFile(sourceFileName: String?, fallbackName: String): String {

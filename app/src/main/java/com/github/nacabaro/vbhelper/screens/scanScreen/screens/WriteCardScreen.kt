@@ -10,12 +10,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardColors
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -23,10 +22,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.CyberPanel
 import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.domain.card.Card
@@ -34,6 +35,10 @@ import com.github.nacabaro.vbhelper.source.ScanRepository
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.getImageBitmap
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.ui.theme.DeepPurpleBgAlt
+import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
+import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
+import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 
 @Composable
 fun WriteCardScreen(
@@ -69,15 +74,19 @@ fun WriteCardScreen(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
+                .padding(horizontal = 24.dp)
         ) {
-            Card (
+            CyberPanel(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(8.dp)
+                    .widthIn(max = 520.dp),
+                active = true
             ) {
-                Row (
-                    modifier = Modifier.padding(16.dp),
-                ){
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
                     if (cardDetails.logoHeight > 0 && cardDetails.logoWidth > 0) {
                         val charaBitmapData = BitmapData(
                             bitmap = cardDetails.logo,
@@ -90,17 +99,10 @@ fun WriteCardScreen(
                             obscure = false
                         )
 
-                        Card (
-                            colors = CardColors(
-                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                contentColor = MaterialTheme.colorScheme.contentColorFor(
-                                    backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                                ),
-                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                disabledContentColor = MaterialTheme.colorScheme.contentColorFor(
-                                    backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                                )
-                            )
+                        Surface(
+                            color = DeepPurpleBgAlt,
+                            shape = RectangleShape,
+                            modifier = Modifier.size(96.dp)
                         ) {
                             Image(
                                 bitmap = charaImageBitmapData.imageBitmap,
@@ -108,33 +110,42 @@ fun WriteCardScreen(
                                     R.string.write_card_icon_description
                                 ),
                                 modifier = Modifier
-                                    .size(charaImageBitmapData.dpWidth)
+                                    .fillMaxSize()
                                     .padding(8.dp),
                                 filterQuality = FilterQuality.None
                             )
                         }
                     }
 
-                    Spacer(
-                        modifier = Modifier.width(8.dp)
-                    )
-
-                    Column {
-                        Text(stringResource(R.string.write_card_device_ready))
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(5.dp)
+                    ) {
+                        Text(
+                            stringResource(R.string.write_card_device_ready),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = TextPrimaryOnDark
+                        )
                         Text(
                             stringResource(
                                 R.string.write_card_required_card,
                                 cardDetails.name
-                            )
+                            ),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = TextSecondaryOnDark
                         )
-
+                        Text(
+                            stringResource(R.string.scan_card_link_ready),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = VitalCyan
+                        )
                     }
                 }
-
             }
 
             VitalButton(
                 onClick = onClickConfirm,
+                modifier = Modifier.fillMaxWidth().widthIn(max = 520.dp).padding(top = 8.dp)
             ) {
                 Text(stringResource(R.string.write_card_confirm))
             }
