@@ -15,6 +15,7 @@ import com.github.nacabaro.vbhelper.daos.CharacterDao
 import com.github.nacabaro.vbhelper.daos.ChatDao
 import com.github.nacabaro.vbhelper.daos.DexDao
 import com.github.nacabaro.vbhelper.daos.DigimonIndividualDao
+import com.github.nacabaro.vbhelper.daos.DigimonTechniqueLoadoutDao
 import com.github.nacabaro.vbhelper.daos.DigimonStateSnapshotDao
 import com.github.nacabaro.vbhelper.daos.CardDao
 import com.github.nacabaro.vbhelper.daos.CardFusionsDao
@@ -52,6 +53,7 @@ import com.github.nacabaro.vbhelper.domain.device_data.VitalsHistory
 import com.github.nacabaro.vbhelper.domain.device_data.VitalWearCharacterSettings
 import com.github.nacabaro.vbhelper.domain.device_data.CharacterTransferPolicy
 import com.github.nacabaro.vbhelper.domain.device_data.DigimonIndividual
+import com.github.nacabaro.vbhelper.domain.device_data.DigimonTechniqueLoadout
 import com.github.nacabaro.vbhelper.domain.reactions.DigimonStateSnapshot
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
 import com.github.nacabaro.vbhelper.domain.items.Items
@@ -68,7 +70,7 @@ import com.github.nacabaro.vbhelper.domain.digifarm.FarmResident
 import com.github.nacabaro.vbhelper.domain.digifarm.WildRelationship
 
 @Database(
-    version = 23,
+    version = 24,
     exportSchema = true,
     entities = [
         Card::class,
@@ -79,6 +81,7 @@ import com.github.nacabaro.vbhelper.domain.digifarm.WildRelationship
         Sprite::class,
         UserCharacter::class,
         DigimonIndividual::class,
+        DigimonTechniqueLoadout::class,
         WatchTransfer::class,
         WatchImportReceipt::class,
         BECharacterData::class,
@@ -118,6 +121,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun userCharacterDao(): UserCharacterDao
     abstract fun evolutionHistoryDao(): EvolutionHistoryDao
     abstract fun digimonIndividualDao(): DigimonIndividualDao
+    abstract fun digimonTechniqueLoadoutDao(): DigimonTechniqueLoadoutDao
     abstract fun watchTransferDao(): WatchTransferDao
     abstract fun dexDao(): DexDao
     abstract fun itemDao(): ItemDao
@@ -322,6 +326,27 @@ abstract class AppDatabase : RoomDatabase() {
                     FROM `UserCharacter` uc
                     JOIN `CardCharacter` cc ON cc.id = uc.charId
                     """.trimIndent()
+                )
+            }
+        }
+
+        val MIGRATION_23_24 = object : Migration(23, 24) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `DigimonTechniqueLoadout` (
+                        `individualId` TEXT NOT NULL,
+                        `slot` INTEGER NOT NULL,
+                        `techniqueId` TEXT NOT NULL,
+                        PRIMARY KEY(`individualId`, `slot`),
+                        FOREIGN KEY(`individualId`) REFERENCES `DigimonIndividual`(`individualId`)
+                            ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                    """.trimIndent()
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_DigimonTechniqueLoadout_individualId` " +
+                        "ON `DigimonTechniqueLoadout` (`individualId`)"
                 )
             }
         }

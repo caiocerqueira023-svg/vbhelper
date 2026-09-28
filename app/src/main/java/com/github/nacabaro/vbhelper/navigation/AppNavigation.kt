@@ -58,6 +58,7 @@ import com.github.nacabaro.vbhelper.screens.settingsScreen.SettingsScreen
 import com.github.nacabaro.vbhelper.screens.spriteViewer.SpriteViewer
 import com.github.nacabaro.vbhelper.screens.homeScreens.HomeScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.storageScreen.StorageScreen
+import com.github.nacabaro.vbhelper.screens.offlineBattle.TechniqueLoadoutScreen
 import com.github.nacabaro.vbhelper.screens.itemsScreen.ChooseCharacterScreen
 import com.github.nacabaro.vbhelper.screens.itemsScreen.ItemsScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.settingsScreen.SettingsScreenControllerImpl
@@ -293,6 +294,14 @@ fun AppNavigation(
                     adventureScreenController = applicationNavigationHandlers.adventureScreenController,
                     storageScreenController = applicationNavigationHandlers.storageScreenController
                 )
+            }
+            composable(NavigationItems.TechniqueLoadout.route) { entry ->
+                entry.arguments?.getString("characterId")?.toLongOrNull()?.let { characterId ->
+                    TechniqueLoadoutScreen(
+                        characterId = characterId,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
             }
             composable(NavigationItems.Scan.route) {
                 val characterIdString = it.arguments?.getString("characterId")

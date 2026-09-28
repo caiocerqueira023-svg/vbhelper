@@ -441,6 +441,12 @@ fun StorageScreen(
                     navController.navigate(
                         NavigationItems.Chat.route.replace("{characterId}", characterId.toString())
                     )
+                },
+                onClickTechniques = {
+                    selectedCharacter = null
+                    navController.navigate(
+                        NavigationItems.TechniqueLoadout.route.replace("{characterId}", characterId.toString())
+                    )
                 }
             )
         }

@@ -10,7 +10,6 @@ import com.github.nacabaro.vbhelper.battle.offline.core.BattleStrategy
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleTeam
 import com.github.nacabaro.vbhelper.battle.offline.core.CombatantDefinition
 import com.github.nacabaro.vbhelper.battle.offline.core.TechniqueDefinition
-import com.github.nacabaro.vbhelper.battle.offline.core.TechniqueKind
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityType
 
 /** Immutable copy of the participant values needed to enter a disposable training session. */
@@ -26,76 +25,13 @@ data class TrainingParticipantInput(
     val vitalStats: VitalBattleProfile? = null,
     val attribute: BattleAttribute = BattleAttribute.NONE,
     val stableRngKey: String = instanceId,
-    val personalityType: DigimonPersonalityType = DigimonPersonalityType.FRIENDLY
+    val personalityType: DigimonPersonalityType = DigimonPersonalityType.FRIENDLY,
+    val techniqueIds: List<String> = GenericTechniqueCatalog.defaultTechniqueIds
 )
 
 /** Builds the first training loadout without reading or modifying Room during a battle tick. */
 object TrainingBattleFactory {
-    private const val PRACTICE_SPECIAL_ID = "practice_special"
-
-    val techniques: List<TechniqueDefinition> = listOf(
-        TechniqueDefinition(
-            techniqueId = "practice_quick_burst",
-            displayName = "Disparo rápido",
-            kind = TechniqueKind.PROJECTILE,
-            power = 95,
-            energyCost = 15,
-            minRange = 2f,
-            maxRange = 8f,
-            startupMillis = 350L,
-            activeMillis = 100L,
-            recoveryMillis = 650L,
-            cooldownMillis = 1_200L,
-            attackVisual = "small"
-        ),
-        TechniqueDefinition(
-            techniqueId = "practice_heavy_burst",
-            displayName = "Disparo pesado",
-            kind = TechniqueKind.PROJECTILE,
-            power = 175,
-            energyCost = 42,
-            minRange = 3f,
-            maxRange = 11f,
-            startupMillis = 700L,
-            activeMillis = 120L,
-            recoveryMillis = 1_150L,
-            cooldownMillis = 3_500L,
-            staggerPower = 40f,
-            attackVisual = "large",
-            knockbackDistance = 1.1f
-        ),
-        TechniqueDefinition(
-            techniqueId = "practice_guard_break",
-            displayName = "Impacto próximo",
-            kind = TechniqueKind.MELEE,
-            power = 130,
-            energyCost = 23,
-            minRange = 0.8f,
-            maxRange = 2.2f,
-            startupMillis = 430L,
-            activeMillis = 110L,
-            recoveryMillis = 800L,
-            cooldownMillis = 1_800L,
-            staggerPower = 22f,
-            attackVisual = "small"
-        ),
-        TechniqueDefinition(
-            techniqueId = PRACTICE_SPECIAL_ID,
-            displayName = "Golpe especial",
-            kind = TechniqueKind.SPECIAL,
-            power = 260,
-            energyCost = 110,
-            commandPointCost = 25,
-            minRange = 2f,
-            maxRange = 12f,
-            startupMillis = 1_100L,
-            activeMillis = 150L,
-            recoveryMillis = 1_700L,
-            cooldownMillis = 12_000L,
-            staggerPower = 70f,
-            attackVisual = "large"
-        )
-    )
+    val techniques: List<TechniqueDefinition> = GenericTechniqueCatalog.battleDefinitions
 
     /** Reset on every new practice session and on every rematch. */
     val trainingItems: List<BattleItemDefinition> = listOf(
@@ -161,8 +97,8 @@ object TrainingBattleFactory {
             strategy = strategy,
             stableRngKey = stableRngKey,
             personalityType = personalityType,
-            techniqueIds = listOf("practice_quick_burst", "practice_heavy_burst", "practice_guard_break"),
-            specialTechniqueId = PRACTICE_SPECIAL_ID
+            techniqueIds = GenericTechniqueLoadout.resolve(techniqueIds),
+            specialTechniqueId = GenericTechniqueCatalog.trainingSpecialTechniqueId
         )
     }
 }

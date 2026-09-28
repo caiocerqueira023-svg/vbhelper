@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleAttribute
 import com.github.nacabaro.vbhelper.battle.offline.data.TrainingBattleStats
+import com.github.nacabaro.vbhelper.battle.offline.data.GenericTechniqueCatalog
 import com.github.nacabaro.vbhelper.battle.offline.data.BattleParticipantProfile
 import com.github.nacabaro.vbhelper.battle.offline.data.BattleStatSourceScale
 import com.github.nacabaro.vbhelper.battle.offline.data.VitalBattleProfile
@@ -58,6 +59,7 @@ data class OfflineBattleParticipant(
     val individualId: String? = null,
     val stableRngKey: String = individualId ?: assetCharacterId ?: character?.id?.toString() ?: displayName,
     val personalityType: DigimonPersonalityType = DigimonPersonalityType.FRIENDLY,
+    val techniqueIds: List<String> = GenericTechniqueCatalog.defaultTechniqueIds,
     val spriteSet: OfflineBattleSpriteSet? = null,
     val statSourceScale: BattleStatSourceScale = when (vitalStats?.scale) {
         VitalStatScale.DIM -> BattleStatSourceScale.CARD_DIM

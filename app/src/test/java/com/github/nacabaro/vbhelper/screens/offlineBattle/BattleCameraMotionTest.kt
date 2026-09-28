@@ -62,7 +62,7 @@ class BattleCameraMotionTest {
     }
 
     @Test
-    fun oneOnOneKeepsMidpointWhileTheUserRotatesOrSelectsAFighter() {
+    fun oneOnOneCentersTheFighterExplicitlySelectedByTheUser() {
         val cues = listOf(
             BattleCameraCue("ally", BattlePosition(-4f, 2f), CombatantState.IDLE),
             BattleCameraCue("opponent", BattlePosition(6f, -2f), CombatantState.IDLE),
@@ -70,8 +70,8 @@ class BattleCameraMotionTest {
 
         val target = chooseBattleCameraTarget("ally", cues, emptyList())
 
-        assertEquals(1f, target.x, 0.0001f)
-        assertEquals(0f, target.z, 0.0001f)
+        assertEquals(-4f, target.x, 0.0001f)
+        assertEquals(2f, target.z, 0.0001f)
     }
 
     @Test

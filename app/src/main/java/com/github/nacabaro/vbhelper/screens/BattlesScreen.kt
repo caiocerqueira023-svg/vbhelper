@@ -1998,6 +1998,9 @@ fun BattlesScreen(
                 val storageRepository = StorageRepository(database)
                 storageRepository.ensureAllPersonalities()
                 val battleProfiles = database.userCharacterDao().getAllBattleParticipantProfiles()
+                val techniqueLoadouts = database.digimonTechniqueLoadoutDao().getAll()
+                    .groupBy { it.individualId }
+                    .mapValues { (_, entries) -> entries.sortedBy { it.slot }.map { it.techniqueId } }
                 val arenaCharacters = BattleCharacterCatalog.all(application)
                 /*
                 println("BATTLESCREEN: Found ${allCharacters.size} total characters in database")
@@ -2029,7 +2032,10 @@ fun BattlesScreen(
 
                     val offlineParticipants = battleProfiles.mapNotNull { profile ->
                         characterById[profile.sourceCharacterId]?.let { character ->
-                            offlineBattleParticipant(character, profile)
+                            offlineBattleParticipant(character, profile).copy(
+                                techniqueIds = com.github.nacabaro.vbhelper.battle.offline.data.GenericTechniqueLoadout
+                                    .resolve(techniqueLoadouts[profile.individualId].orEmpty())
+                            )
                         }
                     }
                     val packagedOfflineOpponents = listOf(

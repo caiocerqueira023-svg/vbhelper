@@ -112,6 +112,12 @@ sealed class NavigationItems(
         R.string.nav_chat
     )
 
+    object TechniqueLoadout : NavigationItems(
+        "TechniqueLoadout/{characterId}",
+        R.drawable.baseline_swords_24,
+        R.string.nav_battle
+    )
+
     object WorldChat : NavigationItems(
         "WorldChat/{spawnId}",
         R.drawable.baseline_mood_24,

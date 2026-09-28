@@ -3,6 +3,7 @@ package com.github.nacabaro.vbhelper.battle.offline
 import com.github.nacabaro.vbhelper.battle.offline.core.*
 import com.github.nacabaro.vbhelper.battle.offline.data.TrainingBattleFactory
 import com.github.nacabaro.vbhelper.battle.offline.data.TrainingParticipantInput
+import com.github.nacabaro.vbhelper.battle.offline.data.GenericTechniqueCatalog
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -219,18 +220,250 @@ class BattleSimulatorTest {
     }
 
     @Test fun rangedOrderRetreatsBeforeStartingAndPaysExactlyOnce() {
-        val ranged = skill("ranged", range = 8f).copy(minRange = 3f, energyCost = 40)
+        val ranged = skill("ranged", range = 10.5f).copy(
+            minRange = 3f,
+            energyCost = 40,
+            rangeProfile = TechniqueRangeProfile.MEDIUM_LONG
+        )
         val sim = battle(listOf(fighter("a", BattleSide.ALLIED, listOf("ranged")).copy(energyRegenerationPerSecond = 0f)),
             listOf(fighter("b", BattleSide.OPPOSING).copy(movementSpeed = 0f)), listOf(ranged))
         val close = sim.issueOrder("a", TrainerAction.MoveCloser)
         until(sim) { updates(sim, close.orderId).any { it.status == OrderStatus.COMPLETED } }
         val order = sim.issueOrder("a", TrainerAction.UseTechnique("ranged", "b"))
-        until(sim) { it.alliedMembers.single().state == CombatantState.ATTACK_STARTUP }
+        var retreated = false
+        until(sim) {
+            retreated = retreated || it.alliedMembers.single().state == CombatantState.MOVE_AWAY
+            it.alliedMembers.single().state == CombatantState.ATTACK_STARTUP
+        }
         val start = sim.snapshot()
-        assertTrue(start.alliedMembers.single().position.distanceTo(start.opposingMembers.single().position) >= 3f)
+        val distance = start.alliedMembers.single().position.distanceTo(start.opposingMembers.single().position)
+        assertTrue("Medium-long user did not create distance", retreated)
+        assertTrue("Medium-long attack started too close: $distance", distance >= 6.25f)
+        assertTrue("Medium-long attack started beyond its useful lane: $distance", distance <= 9.5f)
         assertEquals(60, start.alliedMembers.single().energy)
         until(sim) { updates(sim, order.orderId).any { it.status == OrderStatus.COMPLETED } }
         assertEquals(60, sim.snapshot().alliedMembers.single().energy)
+    }
+
+    @Test fun rangedOnlyLoadoutUsesOpeningReadToClaimRangedSpace() {
+        val ranged = skill("ranged", range = 10.5f).copy(
+            minRange = 3f,
+            rangeProfile = TechniqueRangeProfile.MEDIUM_LONG
+        )
+        val sim = battle(
+            allies = listOf(fighter("a", BattleSide.ALLIED, listOf(ranged.techniqueId)).copy(
+                decisionDelayMinMillis = 3_000L,
+                decisionDelayMaxMillis = 3_000L
+            )),
+            enemies = listOf(fighter("b", BattleSide.OPPOSING).copy(
+                movementSpeed = 0f,
+                decisionDelayMinMillis = 10_000L,
+                decisionDelayMaxMillis = 10_000L
+            )),
+            skills = listOf(ranged)
+        )
+        val opening = sim.snapshot().alliedMembers.single().position
+            .distanceTo(sim.snapshot().opposingMembers.single().position)
+
+        runFor(sim, 1_200L)
+
+        val positioned = sim.snapshot().alliedMembers.single().position
+            .distanceTo(sim.snapshot().opposingMembers.single().position)
+        assertTrue("Ranged-only opening moved inward: $opening -> $positioned", positioned > opening + 0.5f)
+    }
+
+    @Test fun incompatibleMixedLoadoutDoesNotMoveOppositeTheTechniqueItChooses() {
+        val close = skill("close", range = 2.2f).copy(
+            minRange = 0.8f,
+            rangeProfile = TechniqueRangeProfile.CLOSE
+        )
+        val ranged = skill("ranged", range = 10.5f).copy(
+            minRange = 3f,
+            rangeProfile = TechniqueRangeProfile.MEDIUM_LONG
+        )
+        val sim = battle(
+            allies = listOf(fighter("a", BattleSide.ALLIED, listOf(close.techniqueId, ranged.techniqueId)).copy(
+                strategy = BattleStrategy.RANGED,
+                decisionDelayMinMillis = 1_800L,
+                decisionDelayMaxMillis = 1_800L
+            )),
+            enemies = listOf(fighter("b", BattleSide.OPPOSING).copy(
+                movementSpeed = 0f,
+                decisionDelayMinMillis = 30_000L,
+                decisionDelayMaxMillis = 30_000L
+            )),
+            skills = listOf(close, ranged)
+        )
+        val opening = sim.snapshot().alliedMembers.single().position
+            .distanceTo(sim.snapshot().opposingMembers.single().position)
+        var closestDistance = opening
+
+        until(sim, millis = 15_000L) { snapshot ->
+            closestDistance = minOf(
+                closestDistance,
+                snapshot.alliedMembers.single().position.distanceTo(snapshot.opposingMembers.single().position)
+            )
+            snapshot.recentEvents.filterIsInstance<BattleEvent.TechniqueStarted>()
+                .any { it.combatantId == "a" }
+        }
+
+        val start = sim.snapshot().recentEvents.filterIsInstance<BattleEvent.TechniqueStarted>()
+            .first { it.combatantId == "a" }
+        assertEquals(ranged.techniqueId, start.techniqueId)
+        assertTrue(
+            "Mixed loadout moved toward the close lane before choosing ranged: $opening -> $closestDistance",
+            closestDistance >= opening - 0.1f
+        )
+    }
+
+    @Test fun aroundUserAttackMovesInsideItsOwnImpactRadiusBeforeStarting() {
+        val pulse = skill("pulse", range = 4.4f).copy(
+            kind = TechniqueKind.AREA,
+            minRange = 0.8f,
+            rangeProfile = TechniqueRangeProfile.CLOSE_MEDIUM,
+            impactShape = TechniqueImpactShape.AROUND_USER,
+            areaRadius = 2f
+        )
+        val sim = battle(
+            allies = listOf(fighter("a", BattleSide.ALLIED, listOf(pulse.techniqueId))),
+            enemies = listOf(fighter("b", BattleSide.OPPOSING).copy(movementSpeed = 0f)),
+            skills = listOf(pulse)
+        )
+
+        sim.issueOrder("a", TrainerAction.UseTechnique(pulse.techniqueId, "b"))
+        until(sim) { it.alliedMembers.single().state == CombatantState.ATTACK_STARTUP }
+
+        val snapshot = sim.snapshot()
+        val distance = snapshot.alliedMembers.single().position.distanceTo(snapshot.opposingMembers.single().position)
+        assertTrue("Around-user attack started outside its radius: $distance", distance <= pulse.areaRadius)
+    }
+
+    @Test fun closeMediumTechniqueClaimsAMidfieldLaneBeforeStarting() {
+        val midfield = skill("midfield", range = 4.4f).copy(
+            minRange = 0.8f,
+            rangeProfile = TechniqueRangeProfile.CLOSE_MEDIUM
+        )
+        val sim = battle(
+            allies = listOf(fighter("a", BattleSide.ALLIED, listOf(midfield.techniqueId))),
+            enemies = listOf(fighter("b", BattleSide.OPPOSING).copy(movementSpeed = 0f)),
+            skills = listOf(midfield)
+        )
+
+        sim.issueOrder("a", TrainerAction.UseTechnique(midfield.techniqueId, "b"))
+        until(sim) { it.alliedMembers.single().state == CombatantState.ATTACK_STARTUP }
+
+        val snapshot = sim.snapshot()
+        val distance = snapshot.alliedMembers.single().position.distanceTo(snapshot.opposingMembers.single().position)
+        assertTrue("Close-medium attack did not enter midfield: $distance", distance in 2.4f..3.9f)
+    }
+
+    @Test fun closeTechniqueClosesTheGapBeforeStarting() {
+        val close = skill("close", range = 2.2f).copy(
+            minRange = 0.8f,
+            rangeProfile = TechniqueRangeProfile.CLOSE
+        )
+        val sim = battle(
+            allies = listOf(fighter("a", BattleSide.ALLIED, listOf(close.techniqueId))),
+            enemies = listOf(fighter("b", BattleSide.OPPOSING).copy(movementSpeed = 0f)),
+            skills = listOf(close)
+        )
+
+        sim.issueOrder("a", TrainerAction.UseTechnique(close.techniqueId, "b"))
+        until(sim) { it.alliedMembers.single().state == CombatantState.ATTACK_STARTUP }
+
+        val snapshot = sim.snapshot()
+        val distance = snapshot.alliedMembers.single().position.distanceTo(snapshot.opposingMembers.single().position)
+        assertTrue("Close attack started outside close range: $distance", distance in 0.8f..2.2f)
+    }
+
+    @Test fun allFieldTechniqueStartsWithoutChangingPositionForRange() {
+        val field = skill("field", range = 16f).copy(
+            kind = TechniqueKind.AREA,
+            rangeProfile = TechniqueRangeProfile.ALL_FIELD,
+            impactShape = TechniqueImpactShape.ALL_OPPONENTS
+        )
+        val sim = battle(
+            allies = listOf(fighter("a", BattleSide.ALLIED, listOf(field.techniqueId))),
+            enemies = listOf(fighter("b", BattleSide.OPPOSING).copy(movementSpeed = 0f)),
+            skills = listOf(field)
+        )
+        val opening = sim.snapshot().alliedMembers.single().position
+
+        sim.issueOrder("a", TrainerAction.UseTechnique(field.techniqueId, "b"))
+        until(sim) { it.alliedMembers.single().state == CombatantState.ATTACK_STARTUP }
+
+        assertEquals(opening, sim.snapshot().alliedMembers.single().position)
+    }
+
+    @Test fun autonomousSelfAndAllFieldChoicesNeverRoamForRange() {
+        val self = skill("self", power = 0, range = 0f).copy(
+            kind = TechniqueKind.SUPPORT,
+            minRange = 0f,
+            rangeProfile = TechniqueRangeProfile.SELF,
+            statusEffects = listOf(BattleStatusEffect("self_boost", 2_000L, attackMultiplier = 1.1f))
+        )
+        val field = skill("field", range = 16f).copy(
+            kind = TechniqueKind.AREA,
+            rangeProfile = TechniqueRangeProfile.ALL_FIELD,
+            impactShape = TechniqueImpactShape.ALL_OPPONENTS
+        )
+
+        listOf(self, field).forEach { technique ->
+            val sim = battle(
+                allies = listOf(fighter("a", BattleSide.ALLIED, listOf(technique.techniqueId)).copy(
+                    decisionDelayMinMillis = 1_800L,
+                    decisionDelayMaxMillis = 1_800L
+                )),
+                enemies = listOf(fighter("b", BattleSide.OPPOSING).copy(
+                    movementSpeed = 0f,
+                    decisionDelayMinMillis = 30_000L,
+                    decisionDelayMaxMillis = 30_000L
+                )),
+                skills = listOf(technique)
+            )
+            val opening = sim.snapshot().alliedMembers.single().position
+
+            until(sim, millis = 10_000L) { snapshot ->
+                snapshot.recentEvents.filterIsInstance<BattleEvent.TechniqueStarted>()
+                    .any { it.combatantId == "a" }
+            }
+
+            assertEquals("${technique.rangeProfile} moved despite not needing range", opening,
+                sim.snapshot().alliedMembers.single().position)
+        }
+    }
+
+    @Test fun everyGenericTechniqueCanReachAndResolveItsDeclaredGeometry() {
+        GenericTechniqueCatalog.battleDefinitions.filter { it.kind != TechniqueKind.SPECIAL }.forEach { technique ->
+            val attacker = fighter("a", BattleSide.ALLIED, listOf(technique.techniqueId)).copy(
+                maxEnergy = 1_000,
+                decisionDelayMinMillis = 30_000L,
+                decisionDelayMaxMillis = 30_000L
+            )
+            val sim = battle(
+                allies = listOf(attacker),
+                enemies = listOf(fighter("b", BattleSide.OPPOSING).copy(
+                    movementSpeed = 0f,
+                    decisionDelayMinMillis = 30_000L,
+                    decisionDelayMaxMillis = 30_000L
+                )),
+                skills = GenericTechniqueCatalog.battleDefinitions,
+                config = BattleConfiguration(commandPoints = 100, defaultPaused = true)
+            )
+            val targetId = if (technique.rangeProfile == TechniqueRangeProfile.SELF) null else "b"
+
+            sim.issueOrder("a", TrainerAction.UseTechnique(technique.techniqueId, targetId))
+            sim.setPaused(false)
+            until(sim, millis = 15_000L) { snapshot ->
+                snapshot.recentEvents.filterIsInstance<BattleEvent.TechniqueHit>()
+                    .any { it.techniqueId == technique.techniqueId }
+            }
+
+            val hit = sim.snapshot().recentEvents.filterIsInstance<BattleEvent.TechniqueHit>()
+                .first { it.techniqueId == technique.techniqueId }
+            if (technique.rangeProfile == TechniqueRangeProfile.SELF) assertEquals("a", hit.targetId)
+            else assertEquals("b", hit.targetId)
+        }
     }
 
     @Test fun combatantCooldownMultiplierChangesTheActualTechniqueCooldown() {
@@ -276,17 +509,138 @@ class BattleSimulatorTest {
     }
 
     @Test fun reservationPreventsTwoAlliesSpendingTheSameCommandPoints() {
-        val special = skill("special").copy(kind = TechniqueKind.SPECIAL, commandPointCost = 20, energyCost = 40)
-        val sim = battle(listOf(fighter("a", BattleSide.ALLIED, listOf("special")), fighter("a2", BattleSide.ALLIED, listOf("special"))),
-            skills = listOf(special), config = BattleConfiguration(commandPoints = 25, defaultPaused = true))
-        assertEquals(OrderStatus.QUEUED, sim.issueOrder("a", TrainerAction.UseTechnique("special", "b")).status)
-        assertEquals(OrderStatus.FAILED, sim.issueOrder("a2", TrainerAction.UseTechnique("special", "b")).status)
+        val costly = skill("costly").copy(commandPointCost = 20, energyCost = 40)
+        val sim = battle(listOf(fighter("a", BattleSide.ALLIED, listOf("costly")), fighter("a2", BattleSide.ALLIED, listOf("costly"))),
+            skills = listOf(costly), config = BattleConfiguration(commandPoints = 25, defaultPaused = true))
+        assertEquals(OrderStatus.QUEUED, sim.issueOrder("a", TrainerAction.UseTechnique("costly", "b")).status)
+        assertEquals(OrderStatus.FAILED, sim.issueOrder("a2", TrainerAction.UseTechnique("costly", "b")).status)
         assertEquals(20, sim.snapshot().reservedCommandPoints)
         sim.setPaused(false)
         runFor(sim, 34)
         assertEquals(5, sim.snapshot().commandPoints)
         assertEquals(0, sim.snapshot().reservedCommandPoints)
         assertEquals(60, sim.snapshot().alliedMembers.first().energy)
+    }
+
+    @Test fun innateSpecialRequiresItsOwnFullGaugeInsteadOfCommandPointsOrEnergy() {
+        val special = skill("innate", power = 120).copy(
+            kind = TechniqueKind.SPECIAL,
+            energyCost = 0,
+            commandPointCost = 0
+        )
+        val attacker = fighter("a", BattleSide.ALLIED)
+            .copy(maxEnergy = 0, specialTechniqueId = special.techniqueId)
+        val sim = battle(
+            allies = listOf(attacker),
+            skills = listOf(special),
+            config = BattleConfiguration(commandPoints = 0, defaultPaused = true)
+        )
+
+        val update = sim.issueOrder("a", TrainerAction.UseTechnique(special.techniqueId, "b"))
+
+        assertEquals(OrderStatus.FAILED, update.status)
+        assertEquals(0, sim.snapshot().alliedMembers.single().specialCharge)
+        assertTrue(update.reason.orEmpty().contains("especial", ignoreCase = true))
+    }
+
+    @Test fun landingATechniqueChargesTheAttackerFasterThanTheFighterThatWasHit() {
+        val strike = skill("charge_hit", power = 10).copy(criticalChance = 0f)
+        val special = skill("innate_charge_target", power = 120).copy(kind = TechniqueKind.SPECIAL)
+        val attacker = fighter("a", BattleSide.ALLIED, listOf(strike.techniqueId)).copy(
+            specialTechniqueId = special.techniqueId,
+            decisionDelayMinMillis = 10_000L,
+            decisionDelayMaxMillis = 10_000L
+        )
+        val defender = fighter("b", BattleSide.OPPOSING).copy(
+            specialTechniqueId = special.techniqueId,
+            movementSpeed = 0f,
+            decisionDelayMinMillis = 10_000L,
+            decisionDelayMaxMillis = 10_000L
+        )
+        val sim = battle(
+            allies = listOf(attacker),
+            enemies = listOf(defender),
+            skills = listOf(strike, special),
+            config = BattleConfiguration(defaultPaused = true)
+        )
+        sim.issueOrder("a", TrainerAction.UseTechnique(strike.techniqueId, "b"))
+        sim.setPaused(false)
+
+        until(sim) { it.recentEvents.filterIsInstance<BattleEvent.TechniqueHit>().any { hit -> hit.techniqueId == strike.techniqueId } }
+
+        val snapshot = sim.snapshot()
+        val attackerCharge = snapshot.alliedMembers.single().specialCharge
+        val defenderCharge = snapshot.opposingMembers.single().specialCharge
+        assertTrue("Attacking should charge the special gauge", attackerCharge > 0)
+        assertTrue("Attacking should charge faster than taking a hit: $attackerCharge <= $defenderCharge",
+            attackerCharge > defenderCharge)
+    }
+
+    @Test fun fullSpecialClaimsItsRangeBeforeConsumingChargeAndSignalsItsResolution() {
+        val charger = skill("charger", power = 1, range = 20f).copy(
+            rangeProfile = TechniqueRangeProfile.ALL_FIELD,
+            cooldownMillis = 0L,
+            criticalChance = 0f
+        )
+        val special = skill("innate", power = 120, range = 1.45f).copy(
+            kind = TechniqueKind.SPECIAL,
+            minRange = 0.8f,
+            maxRange = 1.45f,
+            rangeProfile = TechniqueRangeProfile.CLOSE,
+            energyCost = 0,
+            commandPointCost = 0,
+            startupMillis = 340L,
+            criticalChance = 0f
+        )
+        val attacker = fighter("a", BattleSide.ALLIED, listOf(charger.techniqueId)).copy(
+            specialTechniqueId = special.techniqueId,
+            movementSpeed = 1f,
+            decisionDelayMinMillis = 10_000L,
+            decisionDelayMaxMillis = 10_000L
+        )
+        val defender = fighter("b", BattleSide.OPPOSING).copy(
+            maxHealth = 100_000,
+            movementSpeed = 0f,
+            decisionDelayMinMillis = 10_000L,
+            decisionDelayMaxMillis = 10_000L
+        )
+        val sim = battle(
+            allies = listOf(attacker),
+            enemies = listOf(defender),
+            skills = listOf(charger, special),
+            config = BattleConfiguration(defaultPaused = true, maxDurationMillis = 60_000L)
+        )
+        repeat(8) {
+            val order = sim.issueOrder("a", TrainerAction.UseTechnique(charger.techniqueId, "b"))
+            assertEquals(OrderStatus.QUEUED, order.status)
+            sim.setPaused(false)
+            until(sim) { updates(sim, order.orderId).any { update -> update.status == OrderStatus.COMPLETED } }
+            sim.setPaused(true)
+            if (sim.snapshot().alliedMembers.single().specialCharge == 100) return@repeat
+        }
+        val charged = sim.snapshot().alliedMembers.single()
+        assertEquals(charged.maxSpecialCharge, charged.specialCharge)
+
+        val order = sim.issueOrder("a", TrainerAction.UseTechnique(special.techniqueId, "b"))
+        assertEquals(OrderStatus.QUEUED, order.status)
+        assertEquals(charged.maxSpecialCharge, sim.snapshot().alliedMembers.single().reservedSpecialCharge)
+        sim.setPaused(false)
+        sim.advance(34L)
+
+        val positioning = sim.snapshot().alliedMembers.single()
+        assertTrue(positioning.state == CombatantState.MOVE_TO_TARGET || positioning.state == CombatantState.POSITIONING)
+        assertEquals(positioning.maxSpecialCharge, positioning.specialCharge)
+
+        until(sim, 10_000L) { it.alliedMembers.single().state == CombatantState.USING_SPECIAL }
+        assertEquals(0, sim.snapshot().alliedMembers.single().specialCharge)
+        assertTrue(sim.snapshot().recentEvents.filterIsInstance<BattleEvent.SpecialStarted>()
+            .any { it.combatantId == "a" && it.techniqueId == special.techniqueId })
+
+        until(sim) { it.recentEvents.filterIsInstance<BattleEvent.SpecialResolved>().any { result -> result.success } }
+        val resolved = sim.snapshot()
+        assertTrue(resolved.recentEvents.filterIsInstance<BattleEvent.SpecialResolved>()
+            .any { it.combatantId == "a" && it.techniqueId == special.techniqueId && it.success })
+        assertTrue(resolved.impacts.any { it.isSpecial && it.techniqueId == special.techniqueId })
     }
 
     @Test fun expiryReleasesResourcesEvenWhilePartnerIsDefending() {
@@ -426,6 +780,25 @@ class BattleSimulatorTest {
         assertEquals(hit.amount, sim.snapshot().impacts.single().damage)
     }
 
+    @Test fun confirmedHitEffectRemainsVisibleLongEnoughToReadInTheArena() {
+        val strike = skill("strike", power = 20)
+        val sim = battle(
+            allies = listOf(fighter("a", BattleSide.ALLIED, listOf(strike.techniqueId))),
+            enemies = listOf(fighter("b", BattleSide.OPPOSING).copy(movementSpeed = 0f)),
+            skills = listOf(strike),
+            config = BattleConfiguration(defaultPaused = true)
+        )
+        sim.issueOrder("a", TrainerAction.UseTechnique(strike.techniqueId, "b"))
+        sim.setPaused(false)
+        until(sim) { it.impacts.isNotEmpty() }
+
+        runFor(sim, 408L)
+        assertTrue("Confirmed-hit VFX disappeared too quickly", sim.snapshot().impacts.isNotEmpty())
+
+        runFor(sim, 340L)
+        assertTrue("Confirmed-hit VFX did not expire", sim.snapshot().impacts.isEmpty())
+    }
+
     @Test fun trainingItemReservationDoesNotSpendAnItemWhenItHasNoEffect() {
         val input = TrainingParticipantInput("a", displayName = "A", stage = 2, maxHealth = 1_000, attack = 1)
         val sim = TrainingBattleFactory.create(listOf(input), listOf(input.copy(instanceId = "b")))
@@ -452,5 +825,67 @@ class BattleSimulatorTest {
         val clone = input.copy(instanceId = "two")
         assertThrows(IllegalArgumentException::class.java) { TrainingBattleFactory.create(listOf(input, clone), listOf(input, clone)) }
         assertThrows(IllegalArgumentException::class.java) { TrainingBattleFactory.create(listOf(input, clone.copy(sourceCharacterId = 43)), listOf(input)) }
+    }
+
+    @Test fun allOpponentShapeHitsEveryLivingEnemyFromAnyValidFieldPosition() {
+        val field = skill("field", power = 25, range = 16f).copy(
+            kind = TechniqueKind.AREA,
+            rangeProfile = TechniqueRangeProfile.ALL_FIELD,
+            impactShape = TechniqueImpactShape.ALL_OPPONENTS
+        )
+        val sim = battle(
+            allies = listOf(fighter("a", BattleSide.ALLIED, listOf(field.techniqueId))),
+            enemies = listOf(fighter("b1", BattleSide.OPPOSING), fighter("b2", BattleSide.OPPOSING)),
+            skills = listOf(field)
+        )
+
+        sim.issueOrder("a", TrainerAction.UseTechnique(field.techniqueId, "b1"))
+        until(sim) {
+            it.recentEvents.filterIsInstance<BattleEvent.TechniqueHit>()
+                .count { hit -> hit.techniqueId == field.techniqueId } == 2
+        }
+
+        assertTrue(sim.snapshot().opposingMembers.all { it.health < it.maxHealth })
+    }
+
+    @Test fun multiHitTechniqueResolvesEveryConfiguredHit() {
+        val combo = skill("combo", power = 5).copy(hitCount = 3)
+        val sim = battle(
+            allies = listOf(fighter("a", BattleSide.ALLIED, listOf(combo.techniqueId))),
+            skills = listOf(combo)
+        )
+
+        sim.issueOrder("a", TrainerAction.UseTechnique(combo.techniqueId, "b"))
+        until(sim) {
+            it.recentEvents.filterIsInstance<BattleEvent.TechniqueHit>()
+                .count { hit -> hit.techniqueId == combo.techniqueId } == 3
+        }
+
+        val hits = sim.snapshot().recentEvents.filterIsInstance<BattleEvent.TechniqueHit>()
+            .filter { it.techniqueId == combo.techniqueId }
+        assertEquals(3, hits.size)
+        assertEquals(1_000 - hits.sumOf { it.amount }, sim.snapshot().opposingMembers.single().health)
+    }
+
+    @Test fun selfRangeTechniqueDoesNotNeedOrAffectAnOpponentTarget() {
+        val boost = skill("boost", power = 0).copy(
+            kind = TechniqueKind.SUPPORT,
+            minRange = 0f,
+            maxRange = 0f,
+            rangeProfile = TechniqueRangeProfile.SELF,
+            statusEffects = listOf(BattleStatusEffect("boosted", 2_000L, attackMultiplier = 1.2f))
+        )
+        val sim = battle(
+            allies = listOf(fighter("a", BattleSide.ALLIED, listOf(boost.techniqueId))),
+            skills = listOf(boost)
+        )
+
+        sim.issueOrder("a", TrainerAction.UseTechnique(boost.techniqueId))
+        until(sim) { snapshot -> snapshot.alliedMembers.single().statuses.any { it.id == "boosted" } }
+
+        val hit = sim.snapshot().recentEvents.filterIsInstance<BattleEvent.TechniqueHit>()
+            .single { it.techniqueId == boost.techniqueId }
+        assertEquals("a", hit.targetId)
+        assertEquals(1_000, sim.snapshot().opposingMembers.single().health)
     }
 }

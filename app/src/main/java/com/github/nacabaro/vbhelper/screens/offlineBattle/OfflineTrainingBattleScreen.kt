@@ -6,6 +6,7 @@ import android.content.pm.ApplicationInfo
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -18,6 +19,7 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.togetherWith
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -77,6 +79,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -111,11 +114,16 @@ import com.github.nacabaro.vbhelper.ui.theme.DeepPurpleBgAlt
 import com.github.nacabaro.vbhelper.ui.theme.SpaceBlack
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceElevatedPurple
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
+import com.github.nacabaro.vbhelper.ui.theme.StatusRed
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import com.github.nacabaro.vbhelper.ui.theme.VitalPurpleBright
+import com.github.nacabaro.vbhelper.ui.theme.VitalYellow
+import kotlin.math.PI
+import kotlin.math.cos
 import kotlin.math.roundToInt
+import kotlin.math.sin
 import kotlinx.coroutines.delay
 
 private enum class TrainingTacticalMenu { TECHNIQUES, ITEMS }
@@ -545,8 +553,9 @@ fun OfflineTrainingBattleScreen(
                             issue(ally, if (away) TrainerAction.KeepDistance else TrainerAction.MoveCloser, true)
                         },
                         onSpecial = { ally, target ->
-                            val technique = TrainingBattleFactory.techniques.first { it.kind == TechniqueKind.SPECIAL }
-                            issue(ally, TrainerAction.UseTechnique(technique.techniqueId, target))
+                            selectedAlly?.specialTechniqueId?.let { techniqueId ->
+                                issue(ally, TrainerAction.UseTechnique(techniqueId, target))
+                            }
                         },
                         onOpenTechniques = { openTacticalMenu(TrainingTacticalMenu.TECHNIQUES) },
                         onOpenItems = { openTacticalMenu(TrainingTacticalMenu.ITEMS) },
@@ -998,8 +1007,9 @@ fun WorldRadarBattleContent(
                         issue(ally, if (away) TrainerAction.KeepDistance else TrainerAction.MoveCloser, true)
                     },
                     onSpecial = { ally, target ->
-                        val technique = TrainingBattleFactory.techniques.first { it.kind == TechniqueKind.SPECIAL }
-                        issue(ally, TrainerAction.UseTechnique(technique.techniqueId, target))
+                        selectedAlly?.specialTechniqueId?.let { techniqueId ->
+                            issue(ally, TrainerAction.UseTechnique(techniqueId, target))
+                        }
                     },
                     onOpenTechniques = {
                         menu = TrainingTacticalMenu.TECHNIQUES
@@ -1108,7 +1118,52 @@ private fun BattleVfxOverlay(
     sceneView: OfflineBattleSceneView?
 ) {
     val density = LocalDensity.current
+    val allowMotion = motionEnabled()
+    val chargePhase = if (allowMotion) (snapshot.elapsedMillis % STARTUP_EFFECT_CYCLE_MILLIS) /
+        STARTUP_EFFECT_CYCLE_MILLIS.toFloat() else 0.45f
+    val newestMiss = latestBattleMissCue(snapshot)
+    var visibleMiss by remember { mutableStateOf<BattleMissCue?>(null) }
+    val missProgress = remember { Animatable(1f) }
+    LaunchedEffect(newestMiss?.eventId) {
+        val cue = newestMiss ?: run {
+            visibleMiss = null
+            return@LaunchedEffect
+        }
+        visibleMiss = cue
+        if (allowMotion) {
+            missProgress.snapTo(0f)
+            missProgress.animateTo(1f, tween(MISS_EFFECT_DURATION_MILLIS, easing = FastOutSlowInEasing))
+        } else {
+            missProgress.snapTo(0.55f)
+            delay(MISS_EFFECT_REDUCED_MOTION_MILLIS)
+        }
+        if (visibleMiss?.eventId == cue.eventId) visibleMiss = null
+    }
     Box(Modifier.fillMaxSize()) {
+        val combatantsById = (snapshot.alliedMembers + snapshot.opposingMembers)
+            .associateBy { it.combatantId }
+
+        combatantsById.values.filter {
+            it.activeTechniqueId != null &&
+                (it.state == com.github.nacabaro.vbhelper.battle.offline.core.CombatantState.ATTACK_STARTUP ||
+                    it.state == com.github.nacabaro.vbhelper.battle.offline.core.CombatantState.USING_SPECIAL)
+        }.forEach { fighter ->
+            val point = sceneView?.projectBattlePosition(
+                fighter.position.x,
+                STARTUP_EFFECT_HEIGHT,
+                fighter.position.z
+            )
+            if (point != null) {
+                AttackStartupEffect(
+                    x = with(density) { point.first.toDp() } - 44.dp,
+                    y = with(density) { point.second.toDp() } - 44.dp,
+                    phase = chargePhase,
+                    special = fighter.state == com.github.nacabaro.vbhelper.battle.offline.core.CombatantState.USING_SPECIAL,
+                    fighterId = fighter.combatantId
+                )
+            }
+        }
+
         snapshot.projectiles.forEach { projectile ->
             val point = sceneView?.projectBattlePosition(
                 projectile.position.x, PROJECTILE_HEIGHT, projectile.position.z
@@ -1116,7 +1171,7 @@ private fun BattleVfxOverlay(
             val image = fighters[projectile.ownerId]?.attackVisuals?.get(projectile.visual ?: "small")
             if (point != null && image != null) {
                 val size = if (projectile.visual == "large") 36.dp else 24.dp
-                val next = sceneView?.projectBattlePosition(
+                val next = sceneView.projectBattlePosition(
                     projectile.position.x + projectile.velocityX * 0.05f,
                     PROJECTILE_HEIGHT,
                     projectile.position.z + projectile.velocityZ * 0.05f
@@ -1138,8 +1193,6 @@ private fun BattleVfxOverlay(
             }
         }
 
-        val combatantsById = (snapshot.alliedMembers + snapshot.opposingMembers)
-            .associateBy { it.combatantId }
         snapshot.impacts.forEach { impact ->
             val target = combatantsById[impact.targetId] ?: return@forEach
             val point = sceneView?.projectBattlePosition(target.position.x, 1.0f, target.position.z)
@@ -1149,10 +1202,77 @@ private fun BattleVfxOverlay(
                     damage = impact.damage,
                     critical = impact.critical,
                     remainingMillis = impact.remainingMillis,
-                    x = with(density) { point.first.toDp() } - 31.dp,
-                    y = with(density) { point.second.toDp() } - 32.dp
+                    x = with(density) { point.first.toDp() } - 48.dp,
+                    y = with(density) { point.second.toDp() } - 50.dp,
+                    targetId = impact.targetId,
+                    special = impact.isSpecial
                 )
             }
+        }
+
+        visibleMiss?.let { cue ->
+            val anchor = combatantsById[cue.anchorCombatantId]
+            val point = anchor?.let {
+                sceneView?.projectBattlePosition(it.position.x, MISS_EFFECT_HEIGHT, it.position.z)
+            }
+            if (point != null) {
+                AttackMissEffect(
+                    x = with(density) { point.first.toDp() } - 46.dp,
+                    y = with(density) { point.second.toDp() } - 46.dp,
+                    progress = missProgress.value,
+                    eventId = cue.eventId,
+                    special = cue.isSpecial
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AttackStartupEffect(
+    x: androidx.compose.ui.unit.Dp,
+    y: androidx.compose.ui.unit.Dp,
+    phase: Float,
+    special: Boolean,
+    fighterId: String
+) {
+    val signal = if (special) VitalYellow else VitalCyan
+    Canvas(
+        Modifier.offset(x, y).size(88.dp)
+            .testTag("battle-startup-effect-$fighterId")
+    ) {
+        val center = Offset(size.width / 2f, size.height / 2f)
+        val pulse = 0.5f - 0.5f * cos(phase * 2f * PI.toFloat())
+        val innerRadius = size.minDimension * (0.18f + pulse * 0.05f)
+        val outerRadius = size.minDimension * (0.30f + pulse * 0.12f)
+        drawCircle(
+            color = signal.copy(alpha = 0.22f * (1f - pulse * 0.35f)),
+            radius = outerRadius,
+            center = center
+        )
+        drawCircle(
+            color = signal.copy(alpha = 0.92f),
+            radius = innerRadius,
+            center = center,
+            style = Stroke(width = 2.2.dp.toPx())
+        )
+        drawArc(
+            color = Color.White.copy(alpha = 0.78f),
+            startAngle = phase * 360f,
+            sweepAngle = if (special) 132f else 92f,
+            useCenter = false,
+            topLeft = Offset(center.x - outerRadius, center.y - outerRadius),
+            size = androidx.compose.ui.geometry.Size(outerRadius * 2f, outerRadius * 2f),
+            style = Stroke(width = if (special) 3.dp.toPx() else 2.dp.toPx())
+        )
+        repeat(if (special) 8 else 5) { index ->
+            val angle = phase * 2f * PI.toFloat() + index * (2f * PI.toFloat() / if (special) 8 else 5)
+            val distance = outerRadius + size.minDimension * 0.07f
+            drawCircle(
+                color = signal.copy(alpha = 0.55f + pulse * 0.35f),
+                radius = if (special) 2.3.dp.toPx() else 1.7.dp.toPx(),
+                center = Offset(center.x + cos(angle) * distance, center.y + sin(angle) * distance)
+            )
         }
     }
 }
@@ -1176,23 +1296,138 @@ private fun DamageImpactOverlay(
     critical: Boolean,
     remainingMillis: Long,
     x: androidx.compose.ui.unit.Dp,
-    y: androidx.compose.ui.unit.Dp
+    y: androidx.compose.ui.unit.Dp,
+    targetId: String,
+    special: Boolean
 ) {
+    val progress = (1f - remainingMillis / HIT_EFFECT_DURATION_MILLIS.toFloat()).coerceIn(0f, 1f)
+    val fade = if (progress < 0.68f) 1f else ((1f - progress) / 0.32f).coerceIn(0f, 1f)
+    val signal = if (special || critical) VitalYellow else VitalCyan
     Box(
-        modifier = Modifier.offset(x, y).size(width = 64.dp, height = 68.dp)
-            .graphicsLayer { alpha = (remainingMillis / 320f).coerceIn(0f, 1f) },
+        modifier = Modifier.offset(x, y).size(96.dp)
+            .graphicsLayer { alpha = fade }
+            .testTag("battle-hit-effect-$targetId"),
         contentAlignment = Alignment.Center
     ) {
+        Canvas(Modifier.fillMaxSize()) {
+            val center = Offset(size.width / 2f, size.height / 2f)
+            val radius = size.minDimension * (0.12f + progress * 0.36f)
+            drawCircle(
+                color = Color.White.copy(alpha = (1f - progress) * 0.78f),
+                radius = size.minDimension * (0.1f + progress * 0.18f),
+                center = center
+            )
+            drawCircle(
+                color = signal.copy(alpha = (1f - progress) * 0.95f),
+                radius = radius,
+                center = center,
+                style = Stroke(width = (if (critical) 4.dp else 2.5.dp).toPx())
+            )
+            repeat(if (special || critical) 12 else 8) { index ->
+                val angle = index * (2f * PI.toFloat() / if (special || critical) 12 else 8)
+                val startRadius = size.minDimension * (0.12f + progress * 0.12f)
+                val endRadius = startRadius + size.minDimension * (0.18f + progress * 0.16f)
+                drawLine(
+                    color = signal.copy(alpha = (1f - progress) * 0.9f),
+                    start = Offset(center.x + cos(angle) * startRadius, center.y + sin(angle) * startRadius),
+                    end = Offset(center.x + cos(angle) * endRadius, center.y + sin(angle) * endRadius),
+                    strokeWidth = (if (special || critical) 3.dp else 2.dp).toPx()
+                )
+            }
+        }
         bitmap?.let {
-            Image(bitmap = it.asImageBitmap(), contentDescription = "Impacto", modifier = Modifier.size(56.dp))
+            Image(
+                bitmap = it.asImageBitmap(),
+                contentDescription = "Impacto confirmado",
+                modifier = Modifier.size(72.dp).graphicsLayer {
+                    alpha = (1f - progress * 0.72f).coerceIn(0f, 1f)
+                    scaleX = 0.8f + progress * 0.55f
+                    scaleY = scaleX
+                    rotationZ = progress * 24f
+                }
+            )
         }
         Text(
-            text = if (critical) "CRÍTICO · $damage" else "$damage",
-            color = if (critical) VitalCyan else Color.White,
+            text = "$damage",
+            color = if (special || critical) VitalYellow else Color.White,
             fontWeight = FontWeight.Black,
-            fontSize = if (critical) 13.sp else 14.sp,
-            style = MaterialTheme.typography.labelMedium
+            fontSize = if (critical) 19.sp else 17.sp,
+            style = MaterialTheme.typography.titleMedium.copy(
+                shadow = Shadow(Color.Black, Offset(0f, 3f), 5f)
+            ),
+            modifier = Modifier.offset(y = (-18f * progress).dp)
         )
+    }
+}
+
+@Composable
+private fun AttackMissEffect(
+    x: androidx.compose.ui.unit.Dp,
+    y: androidx.compose.ui.unit.Dp,
+    progress: Float,
+    eventId: Long,
+    special: Boolean
+) {
+    Canvas(
+        Modifier.offset(x, y).size(92.dp)
+            .graphicsLayer {
+                alpha = if (progress < 0.7f) 1f else ((1f - progress) / 0.3f).coerceIn(0f, 1f)
+                rotationZ = progress * 18f
+            }
+            .testTag("battle-miss-effect-$eventId")
+    ) {
+        val center = Offset(size.width / 2f, size.height / 2f)
+        val radius = size.minDimension * (0.2f + progress * 0.25f)
+        repeat(3) { segment ->
+            drawArc(
+                color = StatusRed.copy(alpha = 0.9f),
+                startAngle = 18f + segment * 120f + progress * 28f,
+                sweepAngle = 66f,
+                useCenter = false,
+                topLeft = Offset(center.x - radius, center.y - radius),
+                size = androidx.compose.ui.geometry.Size(radius * 2f, radius * 2f),
+                style = Stroke(width = 3.dp.toPx())
+            )
+        }
+        val slash = size.minDimension * (0.12f + progress * 0.13f)
+        drawLine(
+            StatusRed.copy(alpha = 0.85f),
+            Offset(center.x - slash, center.y - slash),
+            Offset(center.x + slash, center.y + slash),
+            3.dp.toPx()
+        )
+        drawLine(
+            StatusRed.copy(alpha = 0.85f),
+            Offset(center.x + slash, center.y - slash),
+            Offset(center.x - slash, center.y + slash),
+            3.dp.toPx()
+        )
+        repeat(6) { index ->
+            val angle = index * (2f * PI.toFloat() / 6f) + 0.35f
+            val particleDistance = radius + size.minDimension * progress * 0.16f
+            drawCircle(
+                color = StatusRed.copy(alpha = (1f - progress) * 0.75f),
+                radius = 2.dp.toPx(),
+                center = Offset(
+                    center.x + cos(angle) * particleDistance,
+                    center.y + sin(angle) * particleDistance
+                )
+            )
+        }
+        if (special) {
+            val dischargeRadius = radius + size.minDimension * 0.12f
+            repeat(8) { index ->
+                val angle = index * (2f * PI.toFloat() / 8f) - progress * 0.5f
+                drawCircle(
+                    color = VitalYellow.copy(alpha = (1f - progress) * 0.9f),
+                    radius = 2.2.dp.toPx(),
+                    center = Offset(
+                        center.x + cos(angle) * dischargeRadius,
+                        center.y + sin(angle) * dischargeRadius
+                    )
+                )
+            }
+        }
     }
 }
 
@@ -1231,8 +1466,8 @@ private fun BoxScope.BattleArenaStatusOverlay(
             ).firstOrNull { (x, y) ->
                 val rectangle = RectF(x, y, x + labelWidth, y + labelHeight)
                 x >= 0 && y >= pauseStatusBottom &&
-                    rectangle.right <= (sceneView?.width ?: 0) &&
-                    rectangle.bottom <= (sceneView?.height ?: 0) &&
+                    rectangle.right <= sceneView.width &&
+                    rectangle.bottom <= sceneView.height &&
                     bodyBounds.none { RectF.intersects(rectangle, it) } &&
                     labels.none { (otherX, otherY) ->
                         kotlin.math.abs(otherX - x) < labelWidth + labelGap &&
@@ -1294,6 +1529,9 @@ private fun PartnerArenaHud(fighter: CombatantSnapshot, modifier: Modifier = Mod
     ) {
         ArenaHudBar("HP", fighter.health, fighter.maxHealth, VitalCyan)
         ArenaHudBar("MP", fighter.energy, fighter.maxEnergy, VitalPurpleBright)
+        if (fighter.specialTechniqueId != null) {
+            ArenaHudBar("ESP", fighter.specialCharge, fighter.maxSpecialCharge, VitalYellow)
+        }
     }
 }
 
@@ -1425,8 +1663,14 @@ private fun BattleCommandBar(
 ) {
     val alive = commandsEnabled && selectedAlly != null && selectedAlly.health > 0
     val targetAlive = commandsEnabled && selectedOpponent != null && selectedOpponent.health > 0
-    val special = TrainingBattleFactory.techniques.first { it.kind == TechniqueKind.SPECIAL }
-    val specialReady = alive && targetAlive && availableCommandPoints >= special.commandPointCost &&
+    val special = selectedAlly?.specialTechniqueId?.let { specialId ->
+        TrainingBattleFactory.techniques.firstOrNull { it.techniqueId == specialId }
+    }
+    val availableSpecialCharge = selectedAlly?.let {
+        (it.specialCharge - it.reservedSpecialCharge).coerceAtLeast(0)
+    } ?: 0
+    val specialReady = alive && targetAlive && special != null &&
+        availableSpecialCharge >= selectedAlly.maxSpecialCharge &&
         selectedAlly.energy - selectedAlly.reservedEnergy >= special.energyCost &&
         (selectedAlly.cooldownsMillis[special.techniqueId] ?: 0) == 0L
     val deck = battleCommandDeck(
@@ -1448,7 +1692,11 @@ private fun BattleCommandBar(
                         BattleCommandSlot.ITEMS -> "Itens"
                         BattleCommandSlot.DEFEND -> "Defender"
                         BattleCommandSlot.SUPPORT -> "Apoiar · $availableCommandPoints"
-                        BattleCommandSlot.SPECIAL -> "Especial · ${special.commandPointCost} CP"
+                        BattleCommandSlot.SPECIAL -> if (specialReady) "Especial · PRONTO" else {
+                            val maximum = selectedAlly?.maxSpecialCharge?.coerceAtLeast(1) ?: 100
+                            val visibleCharge = selectedAlly?.specialCharge ?: 0
+                            "Especial · ${visibleCharge * 100 / maximum}%"
+                        }
                         BattleCommandSlot.FOCUS -> "Focar"
                         BattleCommandSlot.STRATEGY -> "Estratégia"
                         BattleCommandSlot.MOVE_CLOSER -> "Aproximar"
@@ -1527,10 +1775,11 @@ private fun TechniquesDialog(
     TacticalDialogFrame(title = "Técnicas · ${selectedAlly.displayName}", onDismiss = onDismiss) {
         Text(if (tacticalPauseEnabled) "Pausa tática ativa enquanto você escolhe." else "O combate continua enquanto você escolhe.", color = VitalCyan,
             style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(bottom = 5.dp))
-        TrainingBattleFactory.techniques.forEach { technique ->
-            val special = technique.kind == TechniqueKind.SPECIAL
+        val equippedIds = selectedAlly.techniqueIds
+        TrainingBattleFactory.techniques.filter { it.techniqueId in equippedIds }.forEach { technique ->
             val isHeal = technique.kind == TechniqueKind.HEAL
-            val targetId = if (isHeal) selectedAlly.combatantId else selectedOpponent?.combatantId
+            val targetsSelf = isHeal || technique.rangeProfile == com.github.nacabaro.vbhelper.battle.offline.core.TechniqueRangeProfile.SELF
+            val targetId = if (targetsSelf) selectedAlly.combatantId else selectedOpponent?.combatantId
             val ready = (selectedAlly.cooldownsMillis[technique.techniqueId] ?: 0L) <= 0L
             val hasResources = selectedAlly.energy - selectedAlly.reservedEnergy >= technique.energyCost &&
                 ((snapshot?.commandPoints ?: 0) - (snapshot?.reservedCommandPoints ?: 0)) >= technique.commandPointCost
@@ -1538,12 +1787,12 @@ private fun TechniquesDialog(
                 onClick = { targetId?.let { onTechnique(technique, selectedAlly.combatantId, it) } },
                 enabled = selectedAlly.health > 0 && targetId != null && ready && hasResources,
                 modifier = Modifier.fillMaxWidth().heightIn(min = 58.dp),
-                shape = CutCornerShape(5.dp), border = BorderStroke(1.dp, if (special) VitalPurpleBright else SurfaceStroke)
+                shape = CutCornerShape(5.dp), border = BorderStroke(1.dp, SurfaceStroke)
             ) {
                 Column(Modifier.fillMaxWidth()) {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(technique.displayName, color = TextPrimaryOnDark, fontWeight = FontWeight.SemiBold)
-                        Text(if (special) "${technique.energyCost} EN · ${technique.commandPointCost} CP" else "${technique.energyCost} EN",
+                        Text("${technique.energyCost} EN",
                             color = VitalCyan, style = MaterialTheme.typography.labelSmall)
                     }
                     Text(
@@ -1555,6 +1804,11 @@ private fun TechniquesDialog(
                         },
                         color = TextSecondaryOnDark, style = MaterialTheme.typography.labelSmall,
                         maxLines = 1, overflow = TextOverflow.Ellipsis
+                    )
+                    TechniqueStatusBadges(
+                        technique = technique,
+                        modifier = Modifier.padding(top = 5.dp),
+                        enabled = selectedAlly.health > 0 && targetId != null && ready && hasResources
                     )
                 }
             }
@@ -1664,16 +1918,15 @@ private fun eventSummary(snapshot: BattleSnapshot, fighters: Map<String, BattleF
     val event = snapshot.recentEvents.lastOrNull() ?: return "Os parceiros lutam de forma autônoma."
     fun name(id: String) = fighters[id]?.displayName ?: id.substringAfter(':')
     return when (event) {
-        is BattleEvent.TechniqueHit -> "${name(event.combatantId)} acertou ${name(event.targetId)} · ${event.amount} dano${if (event.critical) " crítico" else ""}"
-        is BattleEvent.TechniqueMissed -> "${name(event.combatantId)} não conseguiu usar a técnica: ${event.reason}"
-        is BattleEvent.ProjectileMissed -> "Um projétil errou o alvo."
+        is BattleEvent.TechniqueHit, is BattleEvent.TechniqueMissed,
+        is BattleEvent.ProjectileMissed, is BattleEvent.ProjectileLaunched,
+        is BattleEvent.TechniqueStarted, is BattleEvent.SpecialReady,
+        is BattleEvent.SpecialStarted, is BattleEvent.SpecialResolved -> "Combate em andamento."
         is BattleEvent.ItemUsed -> "${name(event.combatantId)} usou item em ${name(event.targetId)} · ${event.amount}"
         is BattleEvent.SupportSucceeded -> "${name(event.combatantId)} recebeu incentivo · +${event.commandPointsGained} CP"
         is BattleEvent.SupportWindowOpened -> "${name(event.combatantId)} pode receber incentivo por ${((event.expiresAtMillis - snapshot.elapsedMillis).coerceAtLeast(0L) / 1_000f).roundToInt()} s"
         is BattleEvent.CombatantDefeated -> "${name(event.combatantId)} foi derrotado."
         is BattleEvent.OrderChanged -> "Ordem ${event.update.status.name.lowercase()}: ${event.update.reason ?: "parceiro"}"
-        is BattleEvent.ProjectileLaunched -> "${name(event.ownerId)} lançou um projétil."
-        is BattleEvent.TechniqueStarted -> "${name(event.combatantId)} iniciou uma técnica."
         is BattleEvent.StatusApplied -> "Status ${event.statusId} aplicado."
         is BattleEvent.StateChanged, is BattleEvent.TargetChanged -> "Os parceiros estão reposicionando no Coliseu."
         is BattleEvent.BattleEnded -> outcomeLabel(event.result.outcome)
@@ -1729,3 +1982,9 @@ private fun formatDuration(milliseconds: Long): String {
 
 private const val PROJECTILE_HEIGHT = 0.85f
 private const val LABEL_HEIGHT = 1.9f
+private const val STARTUP_EFFECT_HEIGHT = 0.72f
+private const val MISS_EFFECT_HEIGHT = 0.95f
+private const val STARTUP_EFFECT_CYCLE_MILLIS = 720L
+private const val HIT_EFFECT_DURATION_MILLIS = 700L
+private const val MISS_EFFECT_DURATION_MILLIS = 680
+private const val MISS_EFFECT_REDUCED_MOTION_MILLIS = 450L

@@ -67,7 +67,8 @@ fun StorageDialog(
     onClickSetActive: () -> Unit,
     onClickSendToAdventure: (time: Long) -> Unit,
     onToggleFavorite: (Boolean) -> Unit,
-    onClickChat: () -> Unit
+    onClickChat: () -> Unit,
+    onClickTechniques: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
     val application = LocalContext.current.applicationContext as VBHelper
@@ -223,6 +224,12 @@ fun StorageDialog(
                         .fillMaxWidth()
                 ) {
                     Text(text = stringResource(R.string.storage_chat_with_digimon))
+                }
+                VitalButton(
+                    onClick = onClickTechniques,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "Escolher técnicas")
                 }
                 VitalButton(
                     onClick = {

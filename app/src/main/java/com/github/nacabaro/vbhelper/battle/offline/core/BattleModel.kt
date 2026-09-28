@@ -61,6 +61,24 @@ enum class CombatantState {
 
 enum class TechniqueKind { BASIC, MELEE, PROJECTILE, AREA, HEAL, SUPPORT, SPECIAL }
 
+/** Tactical distance accepted before a technique starts; geometry is modelled separately. */
+enum class TechniqueRangeProfile {
+    CUSTOM,
+    SELF,
+    CLOSE,
+    CLOSE_MEDIUM,
+    MEDIUM_LONG,
+    ALL_FIELD
+}
+
+/** Where a completed technique applies its hit, independently from its activation distance. */
+enum class TechniqueImpactShape {
+    SINGLE_TARGET,
+    AROUND_USER,
+    AROUND_TARGET,
+    ALL_OPPONENTS
+}
+
 data class BattleStatusEffect(
     val id: String,
     val durationMillis: Long,
@@ -70,6 +88,8 @@ data class BattleStatusEffect(
     val slowsMovement: Boolean = false,
     val attackMultiplier: Float = 1f,
     val defenseMultiplier: Float = 1f,
+    val movementMultiplier: Float = 1f,
+    val cooldownMultiplier: Float = 1f,
     val sourceCombatantId: String? = null
 )
 
@@ -110,6 +130,8 @@ data class TechniqueDefinition(
     val commandPointCost: Int = 0,
     val minRange: Float = 0f,
     val maxRange: Float = 1.5f,
+    val rangeProfile: TechniqueRangeProfile = TechniqueRangeProfile.CUSTOM,
+    val impactShape: TechniqueImpactShape = TechniqueImpactShape.SINGLE_TARGET,
     val areaRadius: Float = 0f,
     val startupMillis: Long = 300L,
     val activeMillis: Long = 100L,
@@ -124,6 +146,7 @@ data class TechniqueDefinition(
     val projectileSpeed: Float = 16f,
     val projectileRadius: Float = 0.2f,
     val projectileLifetimeMillis: Long = 1_800L,
+    val hitCount: Int = 1,
     val knockbackDistance: Float = 0f,
     val criticalChance: Float = 0.05f,
     val criticalMultiplier: Float = 1.5f,
@@ -164,7 +187,9 @@ data class BattleImpactSnapshot(
     val targetId: String,
     val damage: Int,
     val critical: Boolean,
-    val remainingMillis: Long
+    val remainingMillis: Long,
+    val techniqueId: String? = null,
+    val isSpecial: Boolean = false
 )
 
 data class BattleStatistics(
@@ -176,7 +201,10 @@ data class BattleStatistics(
     val supportCommands: Int = 0,
     val itemsUsed: Int = 0,
     val projectilesHit: Int = 0,
-    val projectilesMissed: Int = 0
+    val projectilesMissed: Int = 0,
+    val specialsUsed: Int = 0,
+    val specialsHit: Int = 0,
+    val specialsMissed: Int = 0
 )
 
 data class BattleConfiguration(
@@ -242,7 +270,12 @@ data class CombatantSnapshot(
     val currentOrderId: Long? = null,
     val queuedOrderIds: List<Long> = emptyList(),
     val reservedEnergy: Int = 0,
-    val debug: CombatantDebugSnapshot = CombatantDebugSnapshot()
+    val debug: CombatantDebugSnapshot = CombatantDebugSnapshot(),
+    val techniqueIds: List<String> = emptyList(),
+    val specialTechniqueId: String? = null,
+    val specialCharge: Int = 0,
+    val maxSpecialCharge: Int = 100,
+    val reservedSpecialCharge: Int = 0
 )
 
 /** Bounded diagnostics for developer tooling; never persisted with the training session. */
@@ -290,6 +323,14 @@ sealed interface BattleEvent {
     data class StateChanged(val combatantId: String, val state: CombatantState) : BattleEvent
     data class TargetChanged(val combatantId: String, val targetId: String?) : BattleEvent
     data class TechniqueStarted(val combatantId: String, val techniqueId: String, val targetId: String?) : BattleEvent
+    data class SpecialReady(val combatantId: String) : BattleEvent
+    data class SpecialStarted(val combatantId: String, val techniqueId: String, val targetId: String?) : BattleEvent
+    data class SpecialResolved(
+        val combatantId: String,
+        val techniqueId: String,
+        val targetId: String?,
+        val success: Boolean
+    ) : BattleEvent
     data class TechniqueHit(
         val combatantId: String,
         val targetId: String,

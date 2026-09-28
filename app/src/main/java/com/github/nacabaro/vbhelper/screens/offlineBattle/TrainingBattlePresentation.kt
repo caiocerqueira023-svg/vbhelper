@@ -140,7 +140,8 @@ object TrainingBattlePresentationFactory {
             vitalStats = vitalStats,
             attribute = attribute,
             stableRngKey = stableRngKey,
-            personalityType = personalityType
+            personalityType = personalityType,
+            techniqueIds = techniqueIds
         )
     }
 
