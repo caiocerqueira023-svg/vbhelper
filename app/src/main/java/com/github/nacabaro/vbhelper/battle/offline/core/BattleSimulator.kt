@@ -65,6 +65,8 @@ class BattleSimulator(
                 require(source.side == team.side && source.combatantId.isNotBlank())
                 require(source.combatantId !in combatants) { "Duplicate combatant IDs" }
                 require(source.maxHealth > 0 && source.maxEnergy >= 0 && source.attack > 0 && source.defense >= 0)
+                require(source.initialHealth == null || source.initialHealth in 1..source.maxHealth)
+                require(source.initialEnergy == null || source.initialEnergy in 0..source.maxEnergy)
                 require(source.movementSpeed.isFinite() && source.movementSpeed >= 0f)
                 require(source.energyRegenerationPerSecond.isFinite() && source.energyRegenerationPerSecond >= 0f)
                 require(source.techniqueCooldownMultiplier.isFinite() && source.techniqueCooldownMultiplier > 0f)
@@ -218,13 +220,14 @@ class BattleSimulator(
                     threatByCombatant = actor.threat.toMap(),
                     lastOrderFailure = actor.lastOrderFailure
                 ), def.techniqueIds, def.specialTechniqueId, actor.specialCharge, SPECIAL_CHARGE_MAX,
-                actor.specialCharge - availableSpecialCharge(actor))
+                actor.specialCharge - availableSpecialCharge(actor), actor.active?.technique?.kind)
         }
         return BattleSnapshot(elapsedMillis, paused, pauseReason, commandPoints, configuration.maxCommandPoints,
             members.filter { it.side == BattleSide.ALLIED }, members.filter { it.side == BattleSide.OPPOSING },
             pendingSupport.keys.toSet(), outcome, recentEvents.toList(), eventCount, commandPoints - availableCommandPoints(),
             projectiles.values.map { projectile -> ProjectileSnapshot(projectile.id, projectile.ownerId,
-                projectile.targetId, projectile.technique.techniqueId, projectile.technique.attackVisual,
+                projectile.targetId, projectile.technique.techniqueId,
+                attackSpriteVariantFor(projectile.technique.kind) ?: projectile.technique.attackVisual,
                 projectile.position, projectile.velocityX, projectile.velocityZ) },
             itemDefinitions.values.map { item -> BattleItemSnapshot(item.itemId, item.displayName,
                 itemCounts[item.itemId] ?: 0, itemReservations.values.count { it == item.itemId }) }, statistics,
@@ -1331,8 +1334,8 @@ class BattleSimulator(
         val choiceRandom: Random,
         val combatRandom: Random
     ) {
-        var health = definition.maxHealth
-        var energy = definition.maxEnergy
+        var health = definition.initialHealth ?: definition.maxHealth
+        var energy = definition.initialEnergy ?: definition.maxEnergy
         var energyRemainder = 0.0
         var specialCharge = 0
         var state = CombatantState.IDLE
@@ -1406,7 +1409,7 @@ class BattleSimulator(
     private companion object {
         const val STEP = 34L
         const val POSITION_EPSILON = 0.05f
-        const val IMPACT_DURATION_MILLIS = 700L
+        const val IMPACT_DURATION_MILLIS = BATTLE_IMPACT_LIFETIME_MILLIS
         const val MAX_ACTIVE_IMPACTS = 8
         const val SPECIAL_CHARGE_MAX = 100
         const val SPECIAL_CHARGE_ON_ATTACK = 18

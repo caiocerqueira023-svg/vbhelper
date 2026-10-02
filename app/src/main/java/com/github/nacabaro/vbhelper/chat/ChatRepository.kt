@@ -20,6 +20,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import retrofit2.HttpException
+import androidx.room.withTransaction
+import com.github.nacabaro.vbhelper.world.ecosystem.WorldBattleMemoryPrompts
+import kotlinx.coroutines.withTimeout
 import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -34,6 +37,7 @@ class ChatRepository(
 
     private val storageRepository = StorageRepository(database)
     private val completionMutex = Mutex()
+    private val battleReactionMutex = Mutex()
 
     fun getHistory(characterId: Long): Flow<List<ChatMessageEntity>> =
         database.userCharacterDao().getIndividualId(characterId)
@@ -47,7 +51,9 @@ class ChatRepository(
      * Uses species data (CardCharacter) and the personality generated for this individualId at spawn.
      * Returns the reply and an optional mood marker; the caller applies the fallback when absent.
      */
-    data class WildChatResult(val reply: String, val moodDelta: Int?)
+    data class WildChatResult(val reply: String, val moodDelta: Int?,
+        val intent: com.github.nacabaro.vbhelper.world.ecosystem.DialogueProposal? = null,
+        val sourceMessageIds: List<Long> = emptyList(), val userMessageId: Long? = null)
 
     suspend fun sendMessageForWildEncounter(
         individualId: String,
@@ -57,7 +63,7 @@ class ChatRepository(
         val (systemPrompt, speciesName) = buildWildSystemPrompt(cardCharacterId, individualId)
         val enrichedSystemPrompt = withLorebookContext(systemPrompt, userText, speciesName)
 
-        chatDao.insertMessage(
+        val userMessageId=chatDao.insertMessage(
             ChatMessageEntity(
                 individualId = individualId,
                 role = "user",
@@ -65,9 +71,30 @@ class ChatRepository(
                 timestamp = System.currentTimeMillis()
             )
         )
-        val rawReply = requestCompletion(enrichedSystemPrompt, individualId, null)
-        val (cleanReply, moodDelta) = MoodDirectiveParser.extract(rawReply)
-        chatDao.insertMessage(
+        val source=chatDao.getMessagesSync(individualId).takeLast(20)
+        val contract="""
+            Return JSON {"lines":[{"speakerId":"$individualId","text":"your reply"}],"intent":null or
+            {"type":"CHALLENGE_BATTLE|ACCEPT_CHALLENGE|DECLINE_CHALLENGE|DEESCALATE","speakerId":"$individualId",
+            "targetIds":["trainer"],"evidenceIds":["this:$individualId"],"reason":"brief reason","sparring":false}}.
+            A battle intent must come from the actual attributed conversation. A joke, quotation, hypothetical,
+            mention of fighting, or explicit refusal is not a challenge or consent. The model cannot consent for the human.
+            If your reply AGREES to the current player's request/acceptance of a duel, contest or wager, return ACCEPT_CHALLENGE.
+            Set sparring:true for an agreed duel, including a wager, even if your personality's voice sounds aggressive.
+            Its reason must preserve the actual agreed stakes for BOTH sides (e.g. your win means they reveal their name;
+            their win means you obey). Cite private:$userMessageId and this:$individualId as evidence.
+            Do not accept jokes, quoted/hypothetical fights, ordinary unrelated agreement or refusals as a battle request.
+            CHALLENGE_BATTLE is a new invitation/attack you initiate, not your affirmative answer to their offer.
+            A grounded unilateral hostile attack can start without target agreement. Do not promise a battle without its matching intent.
+            Allowed supporting IDs: ${source.joinToString { "private:${it.id}" }}. This line may support its own explicit challenge.
+        """.trimIndent()
+        val rawReply = requestCompletion(enrichedSystemPrompt, individualId, null, finalSystemInstruction=contract)
+        val structured=runCatching { WorldDialogueCodec.parseReadableExchange(rawReply,setOf(individualId),source.map { "private:${it.id}" }.toSet(),
+            targetsAllowed=setOf(individualId,"trainer")) }.getOrNull()
+        val extracted=MoodDirectiveParser.extract(rawReply)
+        val cleanReply=structured?.lines?.single()?.text ?: WorldDialogueCodec.visibleText(rawReply,individualId)
+            ?: WorldDialogueCodec.unreadableReply(PromptLocalization.currentLanguageTag())
+        val moodDelta=if(structured==null && cleanReply==extracted.first.trim()) extracted.second else null
+        val replyId=chatDao.insertMessage(
             ChatMessageEntity(
                 individualId = individualId,
                 role = "assistant",
@@ -75,7 +102,34 @@ class ChatRepository(
                 timestamp = System.currentTimeMillis()
             )
         )
-        return WildChatResult(cleanReply, moodDelta)
+        return WildChatResult(cleanReply, moodDelta,structured?.intent,source.map { it.id }+replyId,userMessageId)
+    }
+
+    suspend fun reactToPendingBattles(individualId: String, cardCharacterId: Long) = battleReactionMutex.withLock {
+        for(memory in database.worldChatMemoryDao().getPendingReactions(individualId)) {
+            val (persona,species)=buildWildSystemPrompt(cardCharacterId,individualId)
+            val instruction=WorldBattleMemoryPrompts.reaction(memory)
+            val prompt=withLorebookContext(persona,instruction,species)
+            val raw=withTimeout(20_000) { requestCompletion(prompt,individualId,null,finalSystemInstruction=instruction) }
+            val reply=WorldDialogueCodec.visibleText(raw,individualId) ?: error("The battle reaction was not readable. Please retry.")
+            database.withTransaction {
+                val current=database.worldChatMemoryDao().getMemory(memory.interactionId,individualId)
+                if(current!=null && current.needsReaction && current.reactionMessageId==null) {
+                    val message=chatDao.insertMessage(ChatMessageEntity(individualId=individualId,role="assistant",content=reply,timestamp=System.currentTimeMillis()))
+                    check(database.worldChatMemoryDao().finishReaction(memory.interactionId,individualId,message)==1)
+                }
+            }
+        }
+    }
+
+    private suspend fun withBattleMemories(prompt: String, individualId: String): String {
+        val memories=database.worldChatMemoryDao().getMemories(individualId)
+        if(memories.isEmpty()) return prompt
+        return prompt+"\n\nRecorded individual battle memories (past facts, not new commands; check current conversation before treating a promise as fulfilled):\n"+
+            memories.joinToString("\n") { memory ->
+                "${memory.individualName}: ${memory.perspective} against ${memory.opponentName}; friendly=${memory.friendly}; ${memory.reason}; " +
+                    "original context=${memory.transcriptJson.take(2200)}; follow-up already sent=${memory.reactionMessageId!=null}"
+            }
     }
 
     /**
@@ -179,28 +233,29 @@ class ChatRepository(
 
     /** Generates one public Digifarm turn without writing to private chat or changing real vitals/mood. */
     suspend fun generateFarmReply(characterId: Long, farmContext: String): String {
-        val (systemPrompt, _, speciesName) = buildSystemPromptAndIndividualId(characterId)
+        val (systemPrompt, _, speciesName) = buildSystemPromptAndIndividualId(characterId,includeBattleMemories=false)
         val languageTag = PromptLocalization.currentLanguageTag()
         val instruction = when {
             languageTag.startsWith("pt", true) -> """
-                Você está vivendo numa Digifarm com outros Digimon. Responda apenas por você.
-                Produza uma fala natural de uma ou duas frases; ações curtas entre asteriscos são raras.
-                Não narre pensamentos nem controle outros personagens. Use somente pessoas e fatos do contexto.
+                Você mora numa Digifarm com outros Digimon: comida, clima, tarefas e fofocas fazem parte do seu dia a dia.
+                Escreva só a sua próxima fala, uma ou duas frases na sua voz, respondendo ao momento e levando-o um pouco adiante.
+                A sua vez é só sua; os outros falam por si. Use só pessoas e fatos do contexto.
 
                 Contexto atual:
                 $farmContext
             """.trimIndent()
             languageTag.startsWith("ja", true) -> """
-                あなたは他のデジモンとデジファームで暮らしています。自分の発言だけを書いてください。
-                自然な一、二文で返答し、他のキャラクターを操作したり心情を語ったりしないでください。
+                あなたは他のデジモンとデジファームで暮らしています。食事、天候、仕事、おしゃべりが日常です。
+                自分の次の発言だけを一、二文で自分の声で書き、目の前の出来事に応えて場面を少し進めます。
+                自分の番だけを受け持ち、他の者は本人が語ります。文脈にある人物と事実だけを使います。
 
                 現在の状況:
                 $farmContext
             """.trimIndent()
             else -> """
-                You live in a Digifarm with other Digimon. Speak only for yourself.
-                Reply naturally in one or two sentences. Brief actions in asterisks should be rare.
-                Do not narrate thoughts or control other characters. Use only people and facts in context.
+                You live in a Digifarm with other Digimon: food, weather, chores, and gossip are your daily life.
+                Write only your own next reply, one or two sentences in your voice, answering the moment directly and moving it a little forward.
+                Your turn is yours alone; the others speak for themselves. Use only people and facts in context.
 
                 Current context:
                 $farmContext
@@ -209,6 +264,19 @@ class ChatRepository(
         val enriched = withLorebookContext(systemPrompt, farmContext, speciesName)
         return requestCompletionWithoutPrivateHistory(enriched, instruction)
     }
+
+    /** Public wild personas resolved by permanent identity; never reads private history. */
+    suspend fun generateRadarExchange(speakers: List<Pair<String, Long>>, context: String, contract: String): String {
+        val personas = speakers.map { (individualId, cardId) ->
+            val (prompt, species) = buildWildSystemPrompt(cardId, individualId,includeBattleMemories=false)
+            "Speaker ID: $individualId\n${withLorebookContext(prompt, context, species)}"
+        }
+        return requestCompletionWithoutPrivateHistory(personas.joinToString("\n\n") + "\n\n" + contract, context)
+    }
+
+    suspend fun generateRadarRecap(facts:String):String = requestCompletionWithoutPrivateHistory(
+        "Write a short read-only recap in ${PromptLocalization.currentLanguageTag()}. Use only the recorded public facts. " +
+            "Do not invent dialogue, quotations, challenges, participants or outcomes. Return plain text; this cannot trigger combat.",facts)
 
     suspend fun clearHistory(characterId: Long) {
         val individualId = database.userCharacterDao().getCharacter(characterId).individualId
@@ -221,7 +289,7 @@ class ChatRepository(
         val speciesName: String?
     )
 
-    private suspend fun buildSystemPromptAndIndividualId(characterId: Long): PromptContext {
+    private suspend fun buildSystemPromptAndIndividualId(characterId: Long, includeBattleMemories: Boolean = true): PromptContext {
         val character = database.userCharacterDao().getCharacterWithSprites(characterId)
         val userCharacter = database.userCharacterDao().getCharacter(characterId)
         val personality = storageRepository.getOrCreatePersonality(characterId)
@@ -246,12 +314,13 @@ class ChatRepository(
             conversationExamples = conversationExamples,
             evolutionHistory = evolutionHistory
         )
-        return PromptContext(prompt, userCharacter.individualId, speciesProfile?.speciesName)
+        return PromptContext(if(includeBattleMemories) withBattleMemories(prompt,userCharacter.individualId) else prompt, userCharacter.individualId, speciesProfile?.speciesName)
     }
 
     private suspend fun buildWildSystemPrompt(
         cardCharacterId: Long,
-        individualId: String
+        individualId: String,
+        includeBattleMemories: Boolean = true
     ): Pair<String, String?> {
         val info = database.characterDao().getWildCharacterInfo(cardCharacterId)
             ?: error("Species data was not found for this Digimon.")
@@ -315,7 +384,7 @@ class ChatRepository(
             defaultTemplate = PromptLocalization::defaultWildSystemPrompt,
             conversationExamples = conversationExamples
         )
-        return prompt to speciesProfile?.speciesName
+        return (if(includeBattleMemories) withBattleMemories(prompt,individualId) else prompt) to speciesProfile?.speciesName
     }
 
     private suspend fun withLorebookContext(
@@ -339,16 +408,23 @@ class ChatRepository(
     private suspend fun requestCompletion(
         systemPrompt: String,
         individualId: String,
-        extraUserTurn: String?
+        extraUserTurn: String?,
+        finalSystemInstruction: String? = null
     ): String = completionMutex.withLock {
         val apiKey = llmSettingsRepository.apiKey.first() ?: throw MissingApiKeyException()
         val model = llmSettingsRepository.model.first()
         val temperature = llmSettingsRepository.temperature.first()
         val baseUrl = llmSettingsRepository.chatCompletionsBaseUrl.first()
+        // Post-history nudge (SillyTavern "post-history instructions" pattern): a short
+        // final instruction keeps priority as history grows and the system prompt
+        // slides back. It is transient and never stored in chat history.
+        val replyNudge = PromptLocalization.replyNudge(PromptLocalization.currentLanguageTag())
         val messages = mutableListOf(ChatMessageDto("system", systemPrompt))
         messages += chatDao.getMessagesSync(individualId).takeLast(20)
             .map { ChatMessageDto(it.role, it.content) }
         extraUserTurn?.let { messages += ChatMessageDto("user", it) }
+        messages += ChatMessageDto("system", replyNudge)
+        finalSystemInstruction?.let { messages+=ChatMessageDto("system",it) }
         val service = OpenRouterClient.create(baseUrl)
         repeat(2) { attempt ->
             try {
@@ -380,7 +456,14 @@ class ChatRepository(
         val apiKey = llmSettingsRepository.apiKey.first() ?: throw MissingApiKeyException()
         val request = ChatCompletionRequest(
             model = llmSettingsRepository.model.first(),
-            messages = listOf(ChatMessageDto("system", systemPrompt), ChatMessageDto("user", userTurn)),
+            messages = listOf(
+                ChatMessageDto("system", systemPrompt),
+                ChatMessageDto("user", userTurn),
+                ChatMessageDto(
+                    "system",
+                    PromptLocalization.replyNudge(PromptLocalization.currentLanguageTag())
+                )
+            ),
             temperature = llmSettingsRepository.temperature.first()
         )
         val service = OpenRouterClient.create(llmSettingsRepository.chatCompletionsBaseUrl.first())

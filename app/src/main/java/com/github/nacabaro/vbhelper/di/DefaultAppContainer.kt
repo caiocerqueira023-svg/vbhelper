@@ -22,6 +22,8 @@ import com.github.nacabaro.vbhelper.species.SpeciesRepository
 import com.github.nacabaro.vbhelper.world.WorldRepository
 import com.github.nacabaro.vbhelper.digifarm.DigifarmRepository
 import com.github.nacabaro.vbhelper.digifarm.FarmSessionCoordinator
+import com.github.nacabaro.vbhelper.world.ecosystem.WorldEcosystemCoordinator
+import com.github.nacabaro.vbhelper.world.ecosystem.RoomWorldEcosystemStore
 
 private const val SECRETS_DATA_STORE_NAME = "secrets.pb"
 private const val USER_PREFERENCES_NAME = "user_preferences"
@@ -75,7 +77,13 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
                 AppDatabase.MIGRATION_20_21,
                 AppDatabase.MIGRATION_21_22,
                 AppDatabase.MIGRATION_22_23,
-                AppDatabase.MIGRATION_23_24
+                AppDatabase.MIGRATION_23_24,
+                AppDatabase.MIGRATION_24_25,
+                AppDatabase.MIGRATION_25_26,
+                AppDatabase.MIGRATION_26_27,
+                AppDatabase.MIGRATION_27_28,
+                AppDatabase.MIGRATION_28_29,
+                AppDatabase.MIGRATION_29_30
             )
             // Missing migrations must preserve the database, never erase individuals/chats.
             .addCallback(com.github.nacabaro.vbhelper.database.IndividualIntegrity.callback)
@@ -127,6 +135,12 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
     override val worldRepository by lazy { WorldRepository(db) }
     override val digifarmRepository by lazy { DigifarmRepository(db) }
     override val farmSessionCoordinator by lazy { FarmSessionCoordinator(digifarmRepository) }
+    override val worldInteractionOrchestrator by lazy { com.github.nacabaro.vbhelper.world.ecosystem.WorldInteractionOrchestrator(db,chatRepository) }
+    override val worldEcosystemCoordinator by lazy {
+        WorldEcosystemCoordinator(RoomWorldEcosystemStore(db,interactions=worldInteractionOrchestrator)).also { coordinator ->
+            worldInteractionOrchestrator.commitInput={ action -> coordinator.commitExternalInput(action) }
+        }
+    }
     override val reactionRepository by lazy { ReactionRepository(db, chatRepository) }
     override val diaryService by lazy { DigimonDiaryService(db, chatRepository) }
 }

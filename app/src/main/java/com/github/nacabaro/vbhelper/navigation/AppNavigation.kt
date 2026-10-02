@@ -76,6 +76,7 @@ import com.github.nacabaro.vbhelper.screens.lorebookScreen.LorebookScreen
 import com.github.nacabaro.vbhelper.screens.lorebookScreen.LorebookScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.worldScreen.WorldScreen
 import com.github.nacabaro.vbhelper.screens.worldScreen.WorldChatScreen
+import com.github.nacabaro.vbhelper.screens.worldScreen.WorldConversationScreen
 import com.github.nacabaro.vbhelper.screens.worldScreen.WorldChatScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.digilineScreen.DigilineScreen
 import com.github.nacabaro.vbhelper.screens.digilineScreen.FarmGroupScreen
@@ -256,15 +257,19 @@ fun AppNavigation(
                     storageScreenController = applicationNavigationHandlers.storageScreenController
                 )
             }
-            composable(NavigationItems.World.route) {
+            composable(NavigationItems.World.route) { entry ->
                 WorldScreen(
                     navController = navController,
+                    worldEntry = entry,
                     onFullScreenBattleChanged = { battleFullScreen = it }
                 )
             }
             composable(NavigationItems.Digiline.route) { DigilineScreen(navController) }
             composable(NavigationItems.FarmGroup.route) { entry ->
                 entry.arguments?.getString("farmId")?.let { FarmGroupScreen(navController, it) }
+            }
+            composable(NavigationItems.WorldConversation.route) { entry ->
+                entry.arguments?.getString("interactionId")?.let { WorldConversationScreen(navController,it) }
             }
             composable(NavigationItems.WildContact.route) { entry ->
                 val individualId = entry.arguments?.getString("individualId")

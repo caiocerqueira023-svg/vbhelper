@@ -67,11 +67,11 @@ class LorebookRepository(
         if (matches.isEmpty()) return null
         val header = when {
             languageTag.startsWith("pt", ignoreCase = true) ->
-                "Conhecimento relevante para esta conversa (use como contexto de fundo; não cite como se estivesse lendo uma ficha):"
+                "Conhecimento vivo para esta conversa (deixe-o colorir a resposta quando for relevante; ele fica nos bastidores como experiência vivida):"
             languageTag.startsWith("ja", ignoreCase = true) ->
-                "この会話に関連する知識（背景情報として使い、読み上げるように引用しないこと）:"
+                "この会話のための生きた知識（関わる場合だけ返答に滲ませ、舞台裏の生きた背景として保つこと）:"
             else ->
-                "Relevant knowledge for this conversation (use as background; do not quote it as if reading a profile):"
+                "Living knowledge for this conversation (let it color the reply when relevant; keep it offstage as lived background):"
         }
         return "$header\n${matches.joinToString("\n") { "- ${it.title}: ${it.content}" }}"
     }

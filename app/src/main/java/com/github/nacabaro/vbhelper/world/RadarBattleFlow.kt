@@ -50,13 +50,13 @@ fun worldRadarBattleParticipant(spawn: WorldDtos.SpawnWithDetails): OfflineBattl
         now = spawn.spawnedAt,
         random = Random(spawn.individualId.hashCode())
     ).personalityType
-    val externalCharacterId = "dim${spawn.cardId.toString().padStart(3, '0')}_mon" +
-        (spawn.charaIndex + 1).toString().padStart(2, '0')
+    val externalCharacterId = spawn.externalCharacterId
 
     return OfflineBattleParticipant(
         character = null,
         assetCharacterId = externalCharacterId,
         externalCharacterId = externalCharacterId,
+        cardCharacterId = spawn.cardCharacterId,
         displayName = spawn.speciesName?.takeIf(String::isNotBlank) ?: "Wild Digimon #${spawn.id}",
         maxHp = spawn.baseHp.coerceAtLeast(1),
         attackPower = spawn.baseAp.coerceAtLeast(1),

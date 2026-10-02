@@ -59,6 +59,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -219,6 +220,7 @@ private fun FarmWorld(
     onWorldTabSelected: (Int) -> Unit
 ) {
     val context = LocalContext.current
+    val resources = LocalResources.current
     val app = context.applicationContext as VBHelper
     val repository = app.container.digifarmRepository
     val storageRepository = remember { StorageRepository(app.container.db) }
@@ -397,7 +399,7 @@ private fun FarmWorld(
             // it: speech bubbles and invisible tap targets projected onto
             // the interpolated 3D residents.
             val mapDescription = stringResource(R.string.ui_digifarm_map_description)
-            BoxWithConstraints(
+            Box(
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
@@ -713,13 +715,13 @@ private fun FarmWorld(
                     val result = runCatching { repository.setActivity(resident.individualId, farm.id, activity) }
                     withContext(Dispatchers.Main) {
                         val message = if (result.isSuccess) {
-                            context.getString(
+                            resources.getString(
                                 R.string.ui_digifarm_activity,
-                                context.getString(farmActivityLabelRes(activity))
+                                resources.getString(farmActivityLabelRes(activity))
                             )
                         } else {
                             result.exceptionOrNull()?.localizedMessage?.takeIf(String::isNotBlank)
-                                ?: context.getString(R.string.ui_digifarm_activity_failed)
+                                ?: resources.getString(R.string.ui_digifarm_activity_failed)
                         }
                         snackbarHostState.showSnackbar(message)
                     }

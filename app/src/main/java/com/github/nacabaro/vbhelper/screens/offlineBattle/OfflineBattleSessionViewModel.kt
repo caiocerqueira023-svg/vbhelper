@@ -134,8 +134,12 @@ class OfflineBattleSessionViewModel : ViewModel() {
         _state.value = OfflineBattleSessionState()
     }
 
-    fun retry(context: Context) {
+    fun retry(context: Context, preserveEncounter: Boolean = false) {
         val sessionId = _state.value.sessionId ?: return
+        if (preserveEncounter) {
+            start(context, sessionId, allies, opponents, seed, arenaManifestPath)
+            return
+        }
         val candidateSeed = System.nanoTime()
         val nextSeed = if (candidateSeed != seed) candidateSeed else seed + 1L
         start(context, "$sessionId:retry:$candidateSeed", allies, opponents, nextSeed, arenaManifestPath)

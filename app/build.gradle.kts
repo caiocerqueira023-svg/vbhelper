@@ -36,6 +36,7 @@ android {
         }
     }
     testBuildType = "integrityCheck"
+    sourceSets.getByName("androidTest").assets.directories.add("$projectDir/schemas")
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11

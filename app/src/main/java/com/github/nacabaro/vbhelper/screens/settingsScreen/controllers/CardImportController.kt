@@ -1,11 +1,13 @@
 package com.github.nacabaro.vbhelper.screens.settingsScreen.controllers
 
 import android.util.Log
+import androidx.room.withTransaction
 import com.github.cfogrady.vb.dim.card.BemCard
 import com.github.cfogrady.vb.dim.card.DimCard
 import com.github.cfogrady.vb.dim.card.DimReader
 import com.github.cfogrady.vbnfc.data.NfcCharacter
 import com.github.nacabaro.vbhelper.database.AppDatabase
+import com.github.nacabaro.vbhelper.battle.ImportedAttackArtReader
 import com.github.nacabaro.vbhelper.domain.card.Card
 import com.github.nacabaro.vbhelper.domain.card.CardCharacter
 import com.github.nacabaro.vbhelper.domain.card.CardProgress
@@ -23,7 +25,14 @@ class CardImportController(
     ): Long {
         val dimReader = DimReader()
         val card = dimReader.readCard(fileReader, false)
+        return importParsedCard(card, sourceFileName, onCardCreated)
+    }
 
+    internal suspend fun importParsedCard(
+        card: com.github.cfogrady.vb.dim.card.Card<*, *, *, *, *, *>,
+        sourceFileName: String? = null,
+        onCardCreated: suspend (cardId: Long, cardName: String) -> Unit = { _, _ -> }
+    ): Long {
         val cardModel = Card(
             cardId = card.header.dimId,
             logo = card.spriteData.sprites[0].pixelData,
@@ -34,6 +43,32 @@ class CardImportController(
             isBEm = card is BemCard
         )
 
+        val characters = readCharacterData(card)
+        // Older imports discarded attack assignments. Re-reading the same card
+        // restores them in place, so existing individuals keep their species keys.
+        val bodyMatches = database.cardDao().getCardByCardId(cardModel.cardId).filter { existing ->
+            existing.isBEm == cardModel.isBEm && existing.logoWidth == cardModel.logoWidth &&
+                existing.logoHeight == cardModel.logoHeight && existing.logo.contentEquals(cardModel.logo)
+        }.filter { existing -> matchesCharacterData(existing.id, characters) }
+        val matchingCards = bodyMatches.filter { existing ->
+            val oldArt = database.cardAttackArtDao().getForCard(existing.id)
+            // Two custom variants can share every body sprite while assigning
+            // different attacks. A different named variant remains its own card.
+            existing.name.equals(cardModel.name, ignoreCase = true) ||
+                (bodyMatches.size == 1 && oldArt.isEmpty()) ||
+                (oldArt.size == characters.size && oldArt.all { art ->
+                    val species = database.characterDao().getById(art.cardCharacterId) ?: return@all false
+                    art == ImportedAttackArtReader.read(species.id, card.characterStats.characterEntries[species.charaIndex],
+                        card.spriteData, card is BemCard)
+                })
+        }
+        if (matchingCards.isNotEmpty()) {
+            database.withTransaction {
+                for (existing in matchingCards) importAttackArt(existing.id, card)
+            }
+            return matchingCards.first().id
+        }
+
         val cardId = database
             .cardDao()
             .insertNewCard(cardModel)
@@ -41,7 +76,8 @@ class CardImportController(
         updateCardProgress(cardId = cardId)
         onCardCreated(cardId, cardModel.name)
 
-        importCharacterData(cardId, card)
+        importCharacterData(cardId, characters)
+        importAttackArt(cardId, card)
 
         importEvoData(cardId, card)
 
@@ -87,23 +123,24 @@ class CardImportController(
             )
     }
 
-    private suspend fun importCharacterData(
-        cardId: Long,
+    private data class ImportedCharacter(val character: CardCharacter, val sprite: Sprite)
+
+    private fun readCharacterData(
         card: com.github.cfogrady.vb.dim.card.Card<*, *, *, *, *, *>
-    ) {
+    ): List<ImportedCharacter> {
         var spriteCounter = when (card is BemCard) {
             true -> 54
             false -> 10
         }
 
-        val domainCharacters = mutableListOf<CardCharacter>()
+        val domainCharacters = mutableListOf<ImportedCharacter>()
 
         val characters = card
             .characterStats
             .characterEntries
 
         for (index in 0 until characters.size) {
-            var domainSprite: Sprite?
+            val domainSprite: Sprite
             if (index < 2 && card is DimCard) {
                 domainSprite = Sprite(
                     width = card.spriteData.sprites[spriteCounter + 1].spriteDimensions.width,
@@ -140,15 +177,10 @@ class CardImportController(
                 )
             }
 
-            val spriteId = database
-                .spriteDao()
-                .insertSprite(domainSprite)
-
-
             domainCharacters.add(
-                CardCharacter(
-                    cardId = cardId,
-                    spriteId = spriteId,
+                ImportedCharacter(CardCharacter(
+                    cardId = 0,
+                    spriteId = 0,
                     charaIndex = index,
                     nameSprite = card.spriteData.sprites[spriteCounter].pixelData,
                     stage = characters[index].stage,
@@ -158,7 +190,7 @@ class CardImportController(
                     baseAp = characters[index].ap,
                     nameWidth = card.spriteData.sprites[spriteCounter].spriteDimensions.width,
                     nameHeight = card.spriteData.sprites[spriteCounter].spriteDimensions.height
-                )
+                ), domainSprite)
             )
 
             spriteCounter += if (card is BemCard) {
@@ -172,9 +204,33 @@ class CardImportController(
             }
         }
 
-        database
-            .characterDao()
-            .insertCharacter(*domainCharacters.toTypedArray())
+        return domainCharacters
+    }
+
+    private suspend fun matchesCharacterData(cardId: Long, incoming: List<ImportedCharacter>): Boolean {
+        val existing = database.characterDao().getCharactersForCard(cardId).sortedBy { it.charaIndex }
+        if (existing.size != incoming.size) return false
+        for ((stored, source) in existing.zip(incoming)) {
+            if (stored.copy(id = 0, cardId = 0, spriteId = 0) != source.character) return false
+            val sprite = database.spriteDao().getForCharacter(stored.id) ?: return false
+            if (sprite.copy(id = 0) != source.sprite) return false
+        }
+        return true
+    }
+
+    private suspend fun importCharacterData(cardId: Long, characters: List<ImportedCharacter>) {
+        val models = characters.map { source ->
+            source.character.copy(cardId = cardId, spriteId = database.spriteDao().insertSprite(source.sprite))
+        }
+        database.characterDao().insertCharacter(*models.toTypedArray())
+    }
+
+    private suspend fun importAttackArt(cardId: Long, card: com.github.cfogrady.vb.dim.card.Card<*, *, *, *, *, *>) {
+        val art = database.characterDao().getCharactersForCard(cardId).map { character ->
+            ImportedAttackArtReader.read(character.id, card.characterStats.characterEntries[character.charaIndex],
+                card.spriteData, card is BemCard)
+        }
+        database.cardAttackArtDao().put(art)
     }
 
     private suspend fun importAdventureMissions(

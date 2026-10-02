@@ -1,5 +1,6 @@
 package com.github.nacabaro.vbhelper.domain.world
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -48,5 +49,16 @@ data class WorldSpawn(
     @Deprecated("Inert after Digiline migration; always null.")
     val followLastLat: Double? = null,
     @Deprecated("Inert after Digiline migration; always null.")
-    val followLastLon: Double? = null
+    val followLastLon: Double? = null,
+    @ColumnInfo(defaultValue = "0.0") val homeLatitude: Double = latitude,
+    @ColumnInfo(defaultValue = "0.0") val homeLongitude: Double = longitude,
+    val wanderTargetLatitude: Double? = null,
+    val wanderTargetLongitude: Double? = null,
+    @ColumnInfo(defaultValue = "'HOME'") val movementState: WorldMovementState = WorldMovementState.HOME,
+    @ColumnInfo(defaultValue = "25.0") val anchorRadiusMeters: Double = 25.0,
+    val denId: String? = null,
+    /** NPC emotion is separate from mood/player trust; autonomous events never update that trust. */
+    @ColumnInfo(defaultValue = "0") val ecosystemEmotion: Int = 0,
+    @ColumnInfo(defaultValue = "0") val movementTick: Long = 0,
+    @ColumnInfo(defaultValue = "0") val nextDecisionTick: Long = 0
 )

@@ -7,6 +7,7 @@ import androidx.room.RewriteQueriesToDropUnusedColumns
 import com.github.nacabaro.vbhelper.domain.world.WorldSpawn
 import com.github.nacabaro.vbhelper.dtos.WorldDtos
 import kotlinx.coroutines.flow.Flow
+import com.github.nacabaro.vbhelper.domain.world.WorldMovementState
 
 @Dao
 @RewriteQueriesToDropUnusedColumns
@@ -14,10 +15,10 @@ interface WorldSpawnDao {
     @Insert
     suspend fun insert(spawn: WorldSpawn): Long
 
-    @Query("SELECT COUNT(*) FROM WorldSpawn WHERE expiresAt > :now")
+    @Query("SELECT COUNT(*) FROM WorldSpawn WHERE expiresAt > :now OR EXISTS(SELECT 1 FROM WorldParticipationClaim WHERE spawnId = WorldSpawn.id)")
     suspend fun countActive(now: Long): Int
 
-    @Query("SELECT * FROM WorldSpawn WHERE expiresAt > :now ORDER BY spawnedAt DESC")
+    @Query("SELECT * FROM WorldSpawn WHERE expiresAt > :now OR EXISTS(SELECT 1 FROM WorldParticipationClaim WHERE spawnId = WorldSpawn.id) ORDER BY spawnedAt DESC")
     suspend fun getActiveSpawnsSync(now: Long): List<WorldSpawn>
 
     @Query("SELECT * FROM WorldSpawn WHERE individualId = :individualId LIMIT 1")
@@ -32,16 +33,30 @@ interface WorldSpawnDao {
     @Query("UPDATE WorldSpawn SET mood = :mood WHERE individualId = :individualId")
     suspend fun updateMood(individualId: String, mood: Int)
 
+    @Query("""
+        UPDATE WorldSpawn SET latitude=:latitude, longitude=:longitude,
+            wanderTargetLatitude=:targetLatitude, wanderTargetLongitude=:targetLongitude,
+            movementState=:state, movementTick=:tick, nextDecisionTick=:nextDecisionTick
+        WHERE individualId=:id AND recruitmentState='WILD' AND movementTick <= :tick
+    """)
+    suspend fun checkpointMovement(id: String, latitude: Double, longitude: Double, targetLatitude: Double?, targetLongitude: Double?,
+        state: WorldMovementState, tick: Long, nextDecisionTick: Long)
+
+    @Query("UPDATE WorldSpawn SET ecosystemEmotion=MAX(-100,MIN(100,ecosystemEmotion+:delta)) WHERE individualId=:id")
+    suspend fun adjustEcosystemEmotion(id: String, delta: Int)
+
+    @Query("UPDATE WorldSpawn SET denId=:denId WHERE individualId=:id") suspend fun assignDen(id: String, denId: String)
+
     @Query("SELECT mood FROM WorldSpawn WHERE individualId = :individualId LIMIT 1")
     fun observeMoodByIndividualId(individualId: String): Flow<Int?>
 
     @Query("UPDATE WorldSpawn SET recruitmentState = :state, expiresAt = :expiresAt WHERE id = :id")
     suspend fun updateRecruitmentState(id: Long, state: String, expiresAt: Long)
 
-    @Query("DELETE FROM WorldSpawn WHERE id = :id")
+    @Query("DELETE FROM WorldSpawn WHERE id = :id AND NOT EXISTS(SELECT 1 FROM WorldParticipationClaim WHERE spawnId = WorldSpawn.id)")
     fun deleteById(id: Long): Int
 
-    @Query("DELETE FROM WorldSpawn WHERE expiresAt <= :now")
+    @Query("DELETE FROM WorldSpawn WHERE expiresAt <= :now AND NOT EXISTS(SELECT 1 FROM WorldParticipationClaim WHERE spawnId = WorldSpawn.id)")
     suspend fun deleteExpired(now: Long)
 
     @Query(
@@ -61,6 +76,7 @@ interface WorldSpawnDao {
             cc.charaIndex AS charaIndex,
             cc.stage AS stage,
             cc.cardId AS cardId,
+            'dim' || printf('%03d', ca.cardId) || '_mon' || printf('%02d', cc.charaIndex + 1) AS externalCharacterId,
             cc.attribute AS attribute,
             cc.baseHp AS baseHp,
             cc.baseBp AS baseBp,
@@ -80,7 +96,8 @@ interface WorldSpawnDao {
         JOIN Card ca ON ca.id = cc.cardId
         JOIN Sprite s ON s.id = cc.spriteId
         LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = cc.id
-        WHERE ws.expiresAt > :now AND ws.recruitmentState = 'WILD'
+        WHERE (ws.expiresAt > :now OR EXISTS(SELECT 1 FROM WorldParticipationClaim WHERE spawnId = ws.id))
+            AND ws.recruitmentState = 'WILD'
         ORDER BY ws.spawnedAt DESC
         """
     )
@@ -103,6 +120,7 @@ interface WorldSpawnDao {
             cc.charaIndex AS charaIndex,
             cc.stage AS stage,
             cc.cardId AS cardId,
+            'dim' || printf('%03d', ca.cardId) || '_mon' || printf('%02d', cc.charaIndex + 1) AS externalCharacterId,
             cc.attribute AS attribute,
             cc.baseHp AS baseHp,
             cc.baseBp AS baseBp,
@@ -145,6 +163,7 @@ interface WorldSpawnDao {
             cc.charaIndex AS charaIndex,
             cc.stage AS stage,
             cc.cardId AS cardId,
+            'dim' || printf('%03d', ca.cardId) || '_mon' || printf('%02d', cc.charaIndex + 1) AS externalCharacterId,
             cc.attribute AS attribute,
             cc.baseHp AS baseHp,
             cc.baseBp AS baseBp,

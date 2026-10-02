@@ -61,6 +61,10 @@ data class OfflineBattleParticipant(
     val personalityType: DigimonPersonalityType = DigimonPersonalityType.FRIENDLY,
     val techniqueIds: List<String> = GenericTechniqueCatalog.defaultTechniqueIds,
     val spriteSet: OfflineBattleSpriteSet? = null,
+    val initialHealth: Int? = null,
+    val initialEnergy: Int? = null,
+    /** Local species key for wild participants; stored partners use character.charId. */
+    val cardCharacterId: Long? = null,
     val statSourceScale: BattleStatSourceScale = when (vitalStats?.scale) {
         VitalStatScale.DIM -> BattleStatSourceScale.CARD_DIM
         VitalStatScale.BEM -> BattleStatSourceScale.CARD_BEM

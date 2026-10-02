@@ -2,7 +2,7 @@ package com.github.nacabaro.vbhelper.rendering
 
 import com.google.android.filament.View
 
-internal enum class HybridSceneKind { BATTLE, DIGIFARM }
+internal enum class HybridSceneKind { BATTLE, DIGIFARM, RADAR_FP }
 
 internal data class HybridSceneProfile(
     val bloomStrength: Float,
@@ -28,6 +28,7 @@ internal fun hybridSceneProfile(kind: HybridSceneKind): HybridSceneProfile = whe
         ambientOcclusionPower = 1.08f,
         ambientOcclusionIntensity = 0.58f,
     )
+    HybridSceneKind.RADAR_FP -> HybridSceneProfile(0.22f, false, 0.18f, 1f, 0.5f)
 }
 
 /**

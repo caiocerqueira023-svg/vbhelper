@@ -32,8 +32,20 @@ data class BattleFighterPresentation(
     val poseNames: Set<String>,
     val setKey: String,
     val attackVisuals: Map<String, Bitmap>,
-    val impactVisual: Bitmap?
+    val impactModels: Map<String, ByteArray>,
+    /** Stage-aware size applied after the sprite geometry is normalized to unit height. */
+    val visualScaleMultiplier: Float = 1f,
 )
+
+/**
+ * Sprite frames are normalized to the same model height, so the two newborn
+ * stages need an explicit physical scale to remain proportional in the arena.
+ */
+internal fun battleFighterScaleMultiplier(stage: Int): Float = when (stage) {
+    0 -> 0.58f // Baby I
+    1 -> 0.72f // Baby II
+    else -> 1f
+}
 
 data class TrainingBattlePresentation(
     val simulator: BattleSimulator,
@@ -52,7 +64,8 @@ object TrainingBattlePresentationFactory {
         randomSeed: Long,
         arenaManifestPath: String = OfflineArenaManifest.DEFAULT_MANIFEST_PATH
     ): TrainingBattlePresentation = withContext(Dispatchers.IO) {
-        require(allies.size in 1..2 && opponents.size in 1..2 && allies.size <= opponents.size)
+        val radar = arenaManifestPath == OfflineArenaManifest.RADAR_MANIFEST_PATH
+        require(allies.size in 1..2 && opponents.size in 1..2 && (radar || allies.size <= opponents.size))
         val appContext = context.applicationContext
         val arenaManifest = OfflineArenaManifest.read(appContext, arenaManifestPath)
         val inputsBySide = mapOf(
@@ -69,11 +82,16 @@ object TrainingBattlePresentationFactory {
                 lineupRowSpacing = arenaManifest.lineupRowSpacing,
                 lineupDepthRatio = arenaManifest.lineupDepthRatio,
                 minimumLineupDepth = arenaManifest.minimumLineupDepth
-            )
+            ),
+            allowAlliedAdvantage = radar
         )
         val spriteManager = IndividualSpriteManager(appContext)
         val attackSpriteManager = AttackSpriteManager(appContext)
-        val impactVisual = HitEffectSpriteManager(appContext).loadHitSprite("hit_01")
+        val hitEffectSpriteManager = HitEffectSpriteManager(appContext)
+        val impactModels = buildMap {
+            hitEffectSpriteManager.loadHitSprite("hit_01")?.toResidentFrame()?.let { put("normal", SpriteExtrusionGlb.buildBillboard(it)) }
+            hitEffectSpriteManager.loadHitSprite("hit_02")?.toResidentFrame()?.let { put("special", SpriteExtrusionGlb.buildBillboard(it)) }
+        }
         try {
             val fighters = LinkedHashMap<String, BattleFighterPresentation>()
             for (side in BattleSide.entries) {
@@ -82,6 +100,10 @@ object TrainingBattlePresentationFactory {
                     val profile = participant.toInput()
                     val combatantId = "${if (side == BattleSide.ALLIED) "ally" else "opponent"}:${profile.instanceId}"
                     val artId = profile.externalCharacterId ?: "storage:${profile.instanceId}"
+                    val cardCharacterId = participant.character?.charId ?: participant.cardCharacterId
+                    val importedAttackArt = cardCharacterId?.let {
+                        (appContext as VBHelper).container.db.cardAttackArtDao().getForCharacter(it)
+                    }
                     val poses = participant.spriteSet?.let(::spriteSetPoses)
                         ?: participant.character?.let { character ->
                         val source = (appContext as VBHelper).container.db.spriteDao().getForCharacter(character.charId)
@@ -104,12 +126,13 @@ object TrainingBattlePresentationFactory {
                         displayName = profile.displayName,
                         modelGlb = model,
                         poseNames = poses.keys,
-                        setKey = "${combatantId}:${model.contentHashCode()}",
+                        setKey = "${combatantId}:${model.contentHashCode()}:${profile.stage}",
                         attackVisuals = buildMap {
-                            attackSpriteManager.getAttackSprite(artId, isLarge = false)?.let { put("small", it) }
-                            attackSpriteManager.getAttackSprite(artId, isLarge = true)?.let { put("large", it) }
+                            attackSpriteManager.getAttackSprite(artId, isLarge = false, importedArt = importedAttackArt)?.let { put("small", it) }
+                            attackSpriteManager.getAttackSprite(artId, isLarge = true, importedArt = importedAttackArt)?.let { put("large", it) }
                         },
-                        impactVisual = impactVisual
+                        impactModels = impactModels,
+                        visualScaleMultiplier = battleFighterScaleMultiplier(profile.stage),
                     )
                 }
             }
@@ -123,6 +146,7 @@ object TrainingBattlePresentationFactory {
             throw failure
         } finally {
             spriteManager.clearCache()
+            hitEffectSpriteManager.clearCache()
         }
     }
 
@@ -141,7 +165,9 @@ object TrainingBattlePresentationFactory {
             attribute = attribute,
             stableRngKey = stableRngKey,
             personalityType = personalityType,
-            techniqueIds = techniqueIds
+            techniqueIds = techniqueIds,
+            initialHealth = initialHealth,
+            initialEnergy = initialEnergy
         )
     }
 

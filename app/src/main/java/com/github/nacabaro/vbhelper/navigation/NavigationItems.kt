@@ -124,6 +124,12 @@ sealed class NavigationItems(
         R.string.nav_chat
     )
 
+    object WorldConversation : NavigationItems(
+        "WorldConversation/{interactionId}",
+        R.drawable.baseline_mood_24,
+        R.string.nav_chat
+    )
+
     object Digiline : NavigationItems(
         "Digiline",
         R.drawable.baseline_mood_24,

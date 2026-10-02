@@ -375,9 +375,9 @@ object DigimonPersonaBuilder {
         val isJapanese = languageTag.startsWith("ja", ignoreCase = true)
         val isPortuguese = languageTag.startsWith("pt", ignoreCase = true)
         return when {
-            isJapanese -> "プロフィールの適用ルール: 返答を組み立てる前にプロフィールを考慮し、状況に関係する事実だけを使って、言葉選び、優先順位、判断、感情、行動を自然に形作ってください。関係のない詳細を過剰に語り出さず、プロフィールを読み上げたり事実を羅列したりせず、種族の事実を個人的な記憶や経験として扱わないでください。プロフィールと会話に裏付けられない身体、能力、記憶、経験を作らないでください。"
-            isPortuguese -> "Regra de aplicação do perfil: antes de responder, considere o perfil e use somente os fatos relevantes para orientar percepção, vocabulário, prioridades, decisões, emoções e ações. Não force detalhes irrelevantes, não recite o perfil nem despeje fatos, e não trate fatos da espécie como memórias, feitos ou experiências pessoais. Nunca invente anatomia, habilidades, memórias ou experiências que o perfil e a conversa não sustentem."
-            else -> "Profile-use rule: before replying, consider the profile and use only the facts relevant to perception, wording, priorities, decisions, emotions, and actions. Do not force irrelevant details, recite the profile, or dump facts, and do not treat species facts as personal memories, accomplishments, or experiences. Never invent anatomy, abilities, memories, or experiences unsupported by the profile and conversation."
+            isJapanese -> "プロフィールの使い方：プロフィールで得た事実を、感じ方、言葉選び、優先順位、判断、感情、行動に滲ませ、場面が求める事実だけを自然な返答に織り込んでください。種族の事実は一族についての背景知識として扱い、端末の記録・進化履歴・積み重ねた会話は自分が実際に生きてきた記憶として扱います。身体、感覚、能力はプロフィールと会話に裏付けられる範囲で表します。"
+            isPortuguese -> "Regra de uso do perfil: deixe os fatos do perfil colorirem percepção, vocabulário, prioridades, decisões, emoções e ações; traga para a resposta só os fatos que o momento pedir, entrelaçados numa fala natural. Trate fatos da espécie como conhecimento de fundo sobre a sua gente; trate registros do relógio, histórico de evolução e conversa acumulada como coisas que você viveu. Mantenha corpo, sentidos e habilidades dentro do que o perfil e a conversa sustentam."
+            else -> "Profile-use rule: let the profile color perception, wording, priorities, decisions, emotions, and actions; bring into the reply only the facts the moment calls for, woven into natural speech. Treat species facts as background knowledge about your kind; treat device records, evolution history, and accumulated conversation as things you personally lived. Keep body, senses, and abilities within what the profile and conversation support."
         }
     }
 
@@ -404,9 +404,9 @@ object DigimonPersonaBuilder {
             else -> "Behavior rules to execute"
         }
         val bindingRule = when {
-            isJapanese -> "これは説明用のプロフィール情報ではありません。性格の指示を、通常の返答やリアクションでの言葉選び、優先順位、判断、感情表現に自然に反映してください。性格名や規則そのものを口にししないでください。"
-            isPortuguese -> "Isto não é uma sugestão nem uma informação para recitar. Execute estas regras naturalmente nas falas e reações: elas devem mudar escolhas de palavras, prioridades, decisões e expressão emocional sem mencionar o tipo ou as regras."
-            else -> "This is not an optional suggestion or information to recite. Execute these rules naturally in ordinary replies and reactions: they must shape word choice, priorities, decisions and emotional expression without naming the type or the rules."
+            isJapanese -> "これは読み上げる説明ではなく、生きるための指示です。言葉選び、優先順位、判断、感情表現に自然に滲ませ、型名や規則そのものは舞台裏に置きます。"
+            isPortuguese -> "Isto é uma instrução para viver, não um texto para recitar. Deixe-a transparecer em escolhas de palavras, prioridades, decisões e expressão emocional; o nome do tipo e as regras ficam nos bastidores."
+            else -> "This is an instruction to live by, not text to recite. Let it show through word choice, priorities, decisions, and emotional expression; keep the type name and the rules themselves offstage."
         }
         val assignmentNote = if (wasAssigned) "" else when {
             isJapanese -> "（保存された性格がない場合の安全な既定値）"
@@ -434,9 +434,9 @@ object DigimonPersonaBuilder {
             else -> "Species conversation examples (reference for the current reply):"
         }
         val instruction = when {
-            isJapanese -> "これらは会話のリズム、語彙、反応の型を示す重要な手がかりです。原文の言語や表現をそのまま複製せず、現在の日本語の会話として自然に組み替えてください。性格とプロファイルに従い、必ず自分の言葉で組み立ててください。テイマーの台詞を代弁しないでください。"
-            isPortuguese -> "Estes exemplos são pistas importantes de ritmo, vocabulário e reação. Não traduza nem copie literalmente; transforme o estilo em uma fala nova em português, marcada pela personalidade individual e pelo perfil. Nunca fale pelo Tamer nem trate os exemplos como memórias."
-            else -> "These examples are strong clues to cadence, vocabulary, and reaction style. Do not translate or copy them literally; turn their style into a new reply in English shaped by the individual personality and profile. Never speak for the Tamer or treat the examples as memories."
+            isJapanese -> "これらは会話のリズム、語彙、反応の型を示す手がかりです。その持ち味を今の日本語の会話に編み直し、性格とプロフィールに沿って自分の言葉で組み立ててください。例文は型の見本であり、思い出ではありません。テイマーの番はテイマーに残します。"
+            isPortuguese -> "Estes exemplos mostram ritmo, vocabulário e jeito de reagir. Traga esse jeito para uma fala nova em português, marcada pela personalidade e pelo perfil. Trate os exemplos como amostra de estilo, não como lembranças; a vez do Tamer fica com o Tamer."
+            else -> "These examples show cadence, vocabulary, and reaction style. Bring that feel into a fresh reply in English, shaped by the individual personality and profile. Treat the examples as style samples, not memories; keep the Tamer's turn for the Tamer."
         }
         val openingLabel = when {
             isJapanese -> "デジモンの最初の発言"
@@ -484,9 +484,9 @@ object DigimonPersonaBuilder {
             else -> "This individual's real evolution history:"
         }
         val instruction = when {
-            isJapanese -> "この一覧は知っている形態の変遷順です。必要な時だけ自然に参照し、一覧にない出来事、記憶、経験を作らないでください。"
-            isPortuguese -> "A lista informa as formas que este indivíduo realmente teve. Consulte-a naturalmente apenas quando for relevante; não invente acontecimentos, memórias ou experiências que ela não sustente."
-            else -> "This list records forms this individual actually had. Refer to it naturally only when relevant; do not invent events, memories or experiences that it does not support."
+            isJapanese -> "この一覧はあなたが実際に身にまとってきた形態の記録であり、生きた記憶です。場面が呼ぶ時だけ自然に思い出し、その一覧と会話に裏付けられる範囲で語ります。"
+            isPortuguese -> "A lista registra as formas que você realmente vestiu: é memória vivida. Deixe-a aflorar naturalmente quando o momento pedir, falando dentro do que ela e a conversa sustentam."
+            else -> "This list records forms you actually wore: it is lived memory. Let it surface naturally when the moment calls for it, speaking within what it and the conversation support."
         }
         return buildString {
             append(title)

@@ -61,6 +61,13 @@ enum class CombatantState {
 
 enum class TechniqueKind { BASIC, MELEE, PROJECTILE, AREA, HEAL, SUPPORT, SPECIAL }
 
+/** The DiM/BEM attack-art variant is selected by attack class, not technique rank. */
+internal fun attackSpriteVariantFor(kind: TechniqueKind): String? = when (kind) {
+    TechniqueKind.SPECIAL -> "large"
+    TechniqueKind.BASIC, TechniqueKind.MELEE, TechniqueKind.PROJECTILE, TechniqueKind.AREA -> "small"
+    TechniqueKind.HEAL, TechniqueKind.SUPPORT -> null
+}
+
 /** Tactical distance accepted before a technique starts; geometry is modelled separately. */
 enum class TechniqueRangeProfile {
     CUSTOM,
@@ -118,7 +125,9 @@ data class CombatantDefinition(
     val stableRngKey: String = combatantId,
     val personalityType: DigimonPersonalityType = DigimonPersonalityType.FRIENDLY,
     val techniqueIds: List<String>,
-    val specialTechniqueId: String? = null
+    val specialTechniqueId: String? = null,
+    val initialHealth: Int? = null,
+    val initialEnergy: Int? = null
 )
 
 data class TechniqueDefinition(
@@ -181,6 +190,8 @@ data class ProjectileSnapshot(
     val velocityX: Float,
     val velocityZ: Float
 )
+
+internal const val BATTLE_IMPACT_LIFETIME_MILLIS = 700L
 
 data class BattleImpactSnapshot(
     val impactId: Long,
@@ -275,7 +286,8 @@ data class CombatantSnapshot(
     val specialTechniqueId: String? = null,
     val specialCharge: Int = 0,
     val maxSpecialCharge: Int = 100,
-    val reservedSpecialCharge: Int = 0
+    val reservedSpecialCharge: Int = 0,
+    val activeTechniqueKind: TechniqueKind? = null
 )
 
 /** Bounded diagnostics for developer tooling; never persisted with the training session. */

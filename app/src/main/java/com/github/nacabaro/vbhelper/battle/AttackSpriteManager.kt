@@ -3,9 +3,20 @@ package com.github.nacabaro.vbhelper.battle
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import com.github.nacabaro.vbhelper.domain.card.CardAttackArt
+import com.github.nacabaro.vbhelper.utils.createARGBIntArray
 
 class AttackSpriteManager(private val context: Context) {
-    fun getAttackSprite(characterId: String, isLarge: Boolean = false): Bitmap? {
+    fun getAttackSprite(characterId: String, isLarge: Boolean = false, importedArt: CardAttackArt? = null): Bitmap? {
+        if (importedArt != null) {
+            return when (val source = importedAttackSpriteSource(importedArt, isLarge)) {
+                is ImportedAttackSpriteSource.Asset -> loadAttackAsset(source.fileName)
+                is ImportedAttackSpriteSource.Pixels -> Bitmap.createBitmap(
+                    source.bitmap.createARGBIntArray(), source.bitmap.width, source.bitmap.height, Bitmap.Config.ARGB_8888
+                )
+                null -> null
+            }
+        }
         println("AttackSpriteManager: Getting attack sprite for characterId=$characterId, isLarge=$isLarge")
         try {
             val characterData = BattleCharacterCatalog.find(context, characterId)

@@ -12,6 +12,29 @@ import java.nio.ByteOrder
 import javax.imageio.ImageIO
 
 class SpriteExtrusionGlbTest {
+    @Test fun impactBillboardKeepsOriginalPixelsAndTransparencyWithoutAContactShadow() {
+        val bytes = SpriteExtrusionGlb.buildBillboard(ResidentFrameImage(intArrayOf(0, 0x80FF3048.toInt()), 2, 1))
+        val header = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+        header.position(12)
+        val jsonLength = header.int
+        val document = JSONObject(String(bytes, 20, jsonLength, Charsets.UTF_8).trim())
+        assertEquals(1, document.getJSONArray("meshes").length())
+        assertEquals(1, document.getJSONArray("materials").length())
+        assertEquals("BLEND", document.getJSONArray("materials").getJSONObject(0).getString("alphaMode"))
+        val positionIndex = document.getJSONArray("meshes").getJSONObject(0).getJSONArray("primitives")
+            .getJSONObject(0).getJSONObject("attributes").getInt("POSITION")
+        val position = document.getJSONArray("accessors").getJSONObject(positionIndex)
+        assertEquals(0.0, position.getJSONArray("min").getDouble(2), 0.0)
+        assertEquals(0.0, position.getJSONArray("max").getDouble(2), 0.0)
+        val imageView = document.getJSONArray("images").getJSONObject(0).getInt("bufferView")
+        val view = document.getJSONArray("bufferViews").getJSONObject(imageView)
+        val image = ImageIO.read(ByteArrayInputStream(bytes, 20 + jsonLength + 8 + view.getInt("byteOffset"), view.getInt("byteLength")))
+        assertEquals(2, image.width)
+        assertEquals(1, image.height)
+        assertEquals(0x80FF3048.toInt(), image.getRGB(1, 0))
+        assertEquals(0, image.getRGB(0, 0))
+    }
+
     @Test
     fun androidEscapedMimeTypeIsNormalizedForGltfio() {
         assertEquals("image/png", SpriteExtrusionGlb.normalizeJson("image\\/png"))

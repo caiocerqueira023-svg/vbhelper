@@ -633,6 +633,7 @@ class BattleSimulatorTest {
 
         until(sim, 10_000L) { it.alliedMembers.single().state == CombatantState.USING_SPECIAL }
         assertEquals(0, sim.snapshot().alliedMembers.single().specialCharge)
+        assertEquals(TechniqueKind.SPECIAL, sim.snapshot().alliedMembers.single().activeTechniqueKind)
         assertTrue(sim.snapshot().recentEvents.filterIsInstance<BattleEvent.SpecialStarted>()
             .any { it.combatantId == "a" && it.techniqueId == special.techniqueId })
 
@@ -749,7 +750,7 @@ class BattleSimulatorTest {
         assertEquals(first.snapshot(), second.snapshot())
     }
 
-    @Test fun fastProjectileUsesSweptCollisionAndEmitsTheConfiguredVisual() {
+    @Test fun fastProjectileUsesSweptCollisionAndResolvesItsHit() {
         val bolt = skill("bolt", power = 200).copy(
             kind = TechniqueKind.PROJECTILE,
             minRange = 0f,
@@ -778,6 +779,29 @@ class BattleSimulatorTest {
         assertEquals("b", sim.snapshot().impacts.single().targetId)
         val hit = sim.snapshot().recentEvents.filterIsInstance<BattleEvent.TechniqueHit>().last { it.techniqueId == "bolt" }
         assertEquals(hit.amount, sim.snapshot().impacts.single().damage)
+    }
+
+    @Test fun regularProjectileUsesNormalSpriteEvenWhenTechniqueMetadataMarksItLarge() {
+        val bolt = skill("regular_bolt").copy(
+            kind = TechniqueKind.PROJECTILE,
+            startupMillis = 34,
+            activeMillis = 340,
+            projectileSpeed = 1f,
+            projectileLifetimeMillis = 1_000,
+            attackVisual = "large"
+        )
+        val sim = battle(
+            allies = listOf(fighter("a", BattleSide.ALLIED, listOf(bolt.techniqueId))),
+            enemies = listOf(fighter("b", BattleSide.OPPOSING).copy(movementSpeed = 0f)),
+            skills = listOf(bolt),
+            config = BattleConfiguration(defaultPaused = true)
+        )
+
+        sim.issueOrder("a", TrainerAction.UseTechnique(bolt.techniqueId, "b"))
+        sim.setPaused(false)
+        until(sim) { it.projectiles.isNotEmpty() }
+
+        assertEquals("small", sim.snapshot().projectiles.single().visual)
     }
 
     @Test fun confirmedHitEffectRemainsVisibleLongEnoughToReadInTheArena() {

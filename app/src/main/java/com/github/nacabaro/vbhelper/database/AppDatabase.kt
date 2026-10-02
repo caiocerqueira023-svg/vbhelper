@@ -29,12 +29,31 @@ import com.github.nacabaro.vbhelper.daos.VitalWearSettingsDao
 import com.github.nacabaro.vbhelper.daos.CharacterTransferPolicyDao
 import com.github.nacabaro.vbhelper.daos.LorebookEntryDao
 import com.github.nacabaro.vbhelper.daos.WorldSpawnDao
+import com.github.nacabaro.vbhelper.daos.WorldEcosystemDao
+import com.github.nacabaro.vbhelper.world.ecosystem.WorldEcosystemSession
+import com.github.nacabaro.vbhelper.daos.WorldInteractionDao
+import com.github.nacabaro.vbhelper.world.ecosystem.WorldInteraction
+import com.github.nacabaro.vbhelper.world.ecosystem.WorldInteractionParticipant
+import com.github.nacabaro.vbhelper.world.ecosystem.WorldParticipationClaim
+import com.github.nacabaro.vbhelper.world.ecosystem.WorldInteractionResult
+import com.github.nacabaro.vbhelper.world.ecosystem.WorldDen
+import com.github.nacabaro.vbhelper.world.ecosystem.WildPairBond
+import com.github.nacabaro.vbhelper.world.ecosystem.WorldEcosystemInput
+import com.github.nacabaro.vbhelper.world.ecosystem.WorldInteractionMessage
+import com.github.nacabaro.vbhelper.world.ecosystem.WorldDialogueIntent
+import com.github.nacabaro.vbhelper.world.ecosystem.WorldNpcBattle
+import com.github.nacabaro.vbhelper.world.ecosystem.WorldBattleContext
+import com.github.nacabaro.vbhelper.world.ecosystem.WorldBattleMemory
+import com.github.nacabaro.vbhelper.world.ecosystem.WorldPrivateChatLink
+import com.github.nacabaro.vbhelper.daos.WorldChatMemoryDao
 import com.github.nacabaro.vbhelper.daos.DigifarmDao
 import com.github.nacabaro.vbhelper.daos.WildRelationshipDao
 import com.github.nacabaro.vbhelper.companion.validation.ValidatedCardDao
 import com.github.nacabaro.vbhelper.companion.validation.ValidatedCardEntity
 import com.github.nacabaro.vbhelper.domain.card.Background
 import com.github.nacabaro.vbhelper.domain.card.CardCharacter
+import com.github.nacabaro.vbhelper.domain.card.CardAttackArt
+import com.github.nacabaro.vbhelper.daos.CardAttackArtDao
 import com.github.nacabaro.vbhelper.domain.card.Card
 import com.github.nacabaro.vbhelper.domain.card.CardAdventure
 import com.github.nacabaro.vbhelper.domain.card.CardFusions
@@ -70,12 +89,13 @@ import com.github.nacabaro.vbhelper.domain.digifarm.FarmResident
 import com.github.nacabaro.vbhelper.domain.digifarm.WildRelationship
 
 @Database(
-    version = 24,
+    version = 30,
     exportSchema = true,
     entities = [
         Card::class,
         CardProgress::class,
         CardCharacter::class,
+        CardAttackArt::class,
         CardAdventure::class,
         CardFusions::class,
         Sprite::class,
@@ -110,7 +130,21 @@ import com.github.nacabaro.vbhelper.domain.digifarm.WildRelationship
         FarmReadState::class,
         FarmRelationship::class,
         FarmMemory::class,
-        WildRelationship::class
+        WildRelationship::class,
+        WorldEcosystemSession::class,
+        WorldInteraction::class,
+        WorldInteractionParticipant::class,
+        WorldParticipationClaim::class,
+        WorldInteractionResult::class,
+        WorldDen::class,
+        WildPairBond::class,
+        WorldEcosystemInput::class,
+        WorldInteractionMessage::class,
+        WorldDialogueIntent::class,
+        WorldNpcBattle::class,
+        WorldBattleContext::class,
+        WorldBattleMemory::class,
+        WorldPrivateChatLink::class
     ]
 )
 @TypeConverters(SpeciesProfileConverters::class, PersonalityConverters::class)
@@ -118,6 +152,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun cardDao(): CardDao
     abstract fun cardProgressDao(): CardProgressDao
     abstract fun characterDao(): CharacterDao
+    abstract fun cardAttackArtDao(): CardAttackArtDao
     abstract fun userCharacterDao(): UserCharacterDao
     abstract fun evolutionHistoryDao(): EvolutionHistoryDao
     abstract fun digimonIndividualDao(): DigimonIndividualDao
@@ -140,8 +175,100 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun worldSpawnDao(): WorldSpawnDao
     abstract fun digifarmDao(): DigifarmDao
     abstract fun wildRelationshipDao(): WildRelationshipDao
+    abstract fun worldEcosystemDao(): WorldEcosystemDao
+    abstract fun worldInteractionDao(): WorldInteractionDao
+    abstract fun worldChatMemoryDao(): WorldChatMemoryDao
 
     companion object {
+        val MIGRATION_29_30 = object : Migration(29,30) {
+            override fun migrate(db: SupportSQLiteDatabase) { WorldChatMemorySchema.create(db) }
+        }
+
+        val MIGRATION_28_29 = object : Migration(28, 29) {
+            override fun migrate(db: SupportSQLiteDatabase) { CardAttackArtSchema.create(db) }
+        }
+
+        val MIGRATION_27_28 = object : Migration(27, 28) {
+            override fun migrate(db: SupportSQLiteDatabase) { WorldDialogueSchema.create(db) }
+        }
+
+        val MIGRATION_26_27 = object : Migration(26, 27) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                if (!hasColumn(db, "WorldSpawn", "movementTick")) db.execSQL("ALTER TABLE WorldSpawn ADD COLUMN movementTick INTEGER NOT NULL DEFAULT 0")
+                if (!hasColumn(db, "WorldSpawn", "nextDecisionTick")) db.execSQL("ALTER TABLE WorldSpawn ADD COLUMN nextDecisionTick INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("CREATE TABLE IF NOT EXISTS WorldDen (id TEXT NOT NULL PRIMARY KEY, latitude REAL NOT NULL, longitude REAL NOT NULL, createdAt INTEGER NOT NULL)")
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS WildPairBond (
+                        individualA TEXT NOT NULL, individualB TEXT NOT NULL, affinity INTEGER NOT NULL,
+                        chatCount INTEGER NOT NULL, aWins INTEGER NOT NULL, bWins INTEGER NOT NULL, draws INTEGER NOT NULL,
+                        lastInteractionTick INTEGER NOT NULL, lastInteractionAt INTEGER NOT NULL, cooldownUntilTick INTEGER NOT NULL,
+                        PRIMARY KEY(individualA,individualB),
+                        FOREIGN KEY(individualA) REFERENCES DigimonIndividual(individualId) ON UPDATE NO ACTION ON DELETE CASCADE,
+                        FOREIGN KEY(individualB) REFERENCES DigimonIndividual(individualId) ON UPDATE NO ACTION ON DELETE CASCADE
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_WildPairBond_individualA ON WildPairBond(individualA)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_WildPairBond_individualB ON WildPairBond(individualB)")
+                db.execSQL("CREATE TABLE IF NOT EXISTS WorldEcosystemInput (id TEXT NOT NULL PRIMARY KEY,tick INTEGER NOT NULL,kind TEXT NOT NULL,latitude REAL,longitude REAL,payload TEXT,createdAt INTEGER NOT NULL)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_WorldEcosystemInput_tick ON WorldEcosystemInput(tick)")
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_WorldEcosystemInput_createdAt ON WorldEcosystemInput(createdAt)")
+            }
+        }
+
+        val MIGRATION_25_26 = object : Migration(25, 26) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                WorldInteractionSchema.create(db)
+                WorldInteractionIntegrity.install(db)
+            }
+        }
+
+        val MIGRATION_24_25 = object : Migration(24, 25) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                // Guards also support the existing artificial version-restamp tests.
+                if (!hasColumn(db, "WorldSpawn", "homeLatitude")) {
+                    db.execSQL("ALTER TABLE `WorldSpawn` ADD COLUMN `homeLatitude` REAL NOT NULL DEFAULT 0.0")
+                    db.execSQL("UPDATE `WorldSpawn` SET `homeLatitude` = `latitude`")
+                }
+                if (!hasColumn(db, "WorldSpawn", "homeLongitude")) {
+                    db.execSQL("ALTER TABLE `WorldSpawn` ADD COLUMN `homeLongitude` REAL NOT NULL DEFAULT 0.0")
+                    db.execSQL("UPDATE `WorldSpawn` SET `homeLongitude` = `longitude`")
+                }
+                if (!hasColumn(db, "WorldSpawn", "wanderTargetLatitude")) {
+                    db.execSQL("ALTER TABLE `WorldSpawn` ADD COLUMN `wanderTargetLatitude` REAL")
+                }
+                if (!hasColumn(db, "WorldSpawn", "wanderTargetLongitude")) {
+                    db.execSQL("ALTER TABLE `WorldSpawn` ADD COLUMN `wanderTargetLongitude` REAL")
+                }
+                if (!hasColumn(db, "WorldSpawn", "movementState")) {
+                    db.execSQL("ALTER TABLE `WorldSpawn` ADD COLUMN `movementState` TEXT NOT NULL DEFAULT 'HOME'")
+                }
+                if (!hasColumn(db, "WorldSpawn", "anchorRadiusMeters")) {
+                    db.execSQL("ALTER TABLE `WorldSpawn` ADD COLUMN `anchorRadiusMeters` REAL NOT NULL DEFAULT 25.0")
+                }
+                if (!hasColumn(db, "WorldSpawn", "denId")) {
+                    db.execSQL("ALTER TABLE `WorldSpawn` ADD COLUMN `denId` TEXT")
+                }
+                if (!hasColumn(db, "WorldSpawn", "ecosystemEmotion")) {
+                    db.execSQL("ALTER TABLE `WorldSpawn` ADD COLUMN `ecosystemEmotion` INTEGER NOT NULL DEFAULT 0")
+                }
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS `WorldEcosystemSession` (
+                        `id` TEXT NOT NULL,
+                        `seed` INTEGER NOT NULL,
+                        `rulesVersion` INTEGER NOT NULL,
+                        `tickIndex` INTEGER NOT NULL,
+                        `tickRemainderMillis` INTEGER NOT NULL,
+                        `lastCheckpointAt` INTEGER NOT NULL,
+                        `revision` INTEGER NOT NULL,
+                        `regionLatitude` REAL,
+                        `regionLongitude` REAL,
+                        `pauseReason` TEXT,
+                        PRIMARY KEY(`id`)
+                    )
+                """.trimIndent())
+            }
+        }
+
         val MIGRATION_20_21 = object : Migration(20, 21) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL("""

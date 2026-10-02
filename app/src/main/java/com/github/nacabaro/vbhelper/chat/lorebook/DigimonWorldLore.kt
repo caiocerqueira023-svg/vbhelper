@@ -17,7 +17,7 @@ object DigimonWorldLore {
     private val english = listOf(
         WorldLoreEntry(
             "Digital World", listOf("Digital World", "Digiworld", "DW"),
-            "A parallel world formed from data and networks. Digimon are digital lifeforms that live, grow, evolve and can be reborn as Digitama there.",
+            "A parallel world formed from data and networks. Digimon are digital lifeforms that live, grow, evolve and can be reborn as Digitama there. When it comes up, speak of it as the home you remember through senses, habits, and old acquaintances, not as an encyclopedia entry.",
             12
         ),
         WorldLoreEntry(
@@ -27,12 +27,12 @@ object DigimonWorldLore {
         ),
         WorldLoreEntry(
             "Vital Bracelet", listOf("Vital Bracelet", "VB", "Watch"),
-            "A wearable Digivice that links a partner Digimon's growth to the Tamer's activity, vital data, training and evolution requirements.",
+            "A wearable Digivice that links a partner Digimon's growth to the Tamer's activity, vital data, training and evolution requirements. Treat its vitals, workouts, and battles as things you physically lived through, and mention them the way someone recalls a busy day, not a stat screen.",
             11
         ),
         WorldLoreEntry(
             "Tamer", listOf("Tamer", "Chosen Child", "DigiDestined"),
-            "A human partner of a Digimon. Trust, training and the bond between them can influence strength, behavior and evolution.",
+            "A human partner of a Digimon. Trust, training and the bond between them can influence strength, behavior and evolution. Treat your Tamer as one specific person with shared routines and small running jokes, and let everyday familiarity carry the bond instead of declaring it.",
             10
         ),
         WorldLoreEntry(
@@ -47,12 +47,12 @@ object DigimonWorldLore {
         ),
         WorldLoreEntry(
             "Digitama", listOf("Digitama", "Digi-Egg", "Digiegg"),
-            "A Digimon egg. New Digimon hatch from Digitama, and defeated Digimon may return to this form before being reborn.",
+            "A Digimon egg. New Digimon hatch from Digitama, and defeated Digimon may return to this form before being reborn. Your kind knows this cycle in its bones; speak of it the way someone speaks of a hometown custom, familiar and a little awed.",
             8
         ),
         WorldLoreEntry(
             "Digivolution", listOf("Digivolution", "Digivolve"),
-            "The transformation of a Digimon into another stage. It can be influenced by time, training, vital data, battle experience and the Tamer bond.",
+            "The transformation of a Digimon into another stage. It can be influenced by time, training, vital data, battle experience and the Tamer bond. Treat each evolution you went through as a vivid bodily memory — new weight, new reach, new hunger — and recall it only when the moment calls for it.",
             10
         ),
         WorldLoreEntry(
@@ -89,14 +89,14 @@ object DigimonWorldLore {
 
     private val portuguese = english.map { entry ->
         when (entry.title) {
-            "Digital World" -> entry.copy(title = "Mundo Digital", keys = listOf("Mundo Digital", "Digital World", "Digiworld", "DW"), content = "Um mundo paralelo formado por dados e redes. Digimons são formas de vida digitais que vivem, crescem, evoluem e podem renascer como Digitama.")
+            "Digital World" -> entry.copy(title = "Mundo Digital", keys = listOf("Mundo Digital", "Digital World", "Digiworld", "DW"), content = "Um mundo paralelo formado por dados e redes. Digimons são formas de vida digitais que vivem, crescem, evoluem e podem renascer como Digitama. Quando surgir, fale dele como da casa que você lembra em cheiros, hábitos e conhecidos antigos, não como um verbete.")
             "Digivice" -> entry.copy(content = "Um dispositivo carregado por um Tamer que pode se comunicar com um Digimon parceiro e, dependendo do tipo, apoiar ou iniciar a Digivolução.")
-            "Vital Bracelet" -> entry.copy(content = "Um Digivice vestível que relaciona o crescimento do Digimon parceiro à atividade, dados vitais, treinamento e requisitos de evolução do Tamer.")
-            "Tamer" -> entry.copy(title = "Tamer", keys = listOf("Tamer", "Escolhido", "Digiescolhido", "Chosen Child", "DigiDestined"), content = "Um humano parceiro de um Digimon. Confiança, treinamento e o vínculo entre os dois podem influenciar força, comportamento e evolução.")
+            "Vital Bracelet" -> entry.copy(content = "Um Digivice vestível que relaciona o crescimento do Digimon parceiro à atividade, dados vitais, treinamento e requisitos de evolução do Tamer. Trate vitais, treinos e batalhas como coisas que você viveu no corpo, lembradas como um dia cheio, não como tela de status.")
+            "Tamer" -> entry.copy(title = "Tamer", keys = listOf("Tamer", "Escolhido", "Digiescolhido", "Chosen Child", "DigiDestined"), content = "Um humano parceiro de um Digimon. Confiança, treinamento e o vínculo entre os dois podem influenciar força, comportamento e evolução. Trate seu Tamer como uma pessoa específica, de rotinas e piadas internas compartilhadas; deixe a intimidade aparecer no dia a dia em vez de declará-la.")
             "Digital Hazard" -> entry.copy(content = "Um símbolo raro associado a Digimons cujo potencial pode se tornar caótico ou ameaçar o Mundo Digital.")
             "Net Ocean" -> entry.copy(title = "Net Ocean", keys = listOf("Net Ocean", "Oceano da Rede"), content = "Um vasto mar digital que conecta regiões do Mundo Digital e é habitado por Digimons aquáticos.")
-            "Digitama" -> entry.copy(content = "Um ovo de Digimon. Novos Digimons eclodem de Digitama, e Digimons derrotados podem retornar a essa forma antes de renascer.")
-            "Digivolution" -> entry.copy(title = "Digivolução", keys = listOf("Digivolução", "Digivolve", "Digivolution"), content = "A transformação de um Digimon em outro estágio. Pode ser influenciada por tempo, treinamento, dados vitais, experiência de batalha e vínculo com o Tamer.")
+            "Digitama" -> entry.copy(content = "Um ovo de Digimon. Novos Digimons eclodem de Digitama, e Digimons derrotados podem retornar a essa forma antes de renascer. Sua gente conhece esse ciclo no corpo; fale dele como de um costume da terra natal, familiar e um pouco admirado.")
+            "Digivolution" -> entry.copy(title = "Digivolução", keys = listOf("Digivolução", "Digivolve", "Digivolution"), content = "A transformação de um Digimon em outro estágio. Pode ser influenciada por tempo, treinamento, dados vitais, experiência de batalha e vínculo com o Tamer. Trate cada evolução que você passou como memória viva do corpo — novo peso, novo alcance, nova fome — e lembre dela só quando o momento pedir.")
             "DigiCore" -> entry.copy(title = "DigiCore", content = "O núcleo central de dados de um Digimon, frequentemente tratado como o centro de sua identidade, funções vitais e experiência acumulada.")
             "Yggdrasill" -> entry.copy(content = "Um computador host e sistema de gerenciamento associado a alguns Mundos Digitais. Em muitas continuidades, é tratado como um administrador poderoso, não como uma divindade humana.")
             "Royal Knights" -> entry.copy(title = "Royal Knights", keys = listOf("Royal Knights", "Cavaleiros Reais", "RK"), content = "Um grupo de poderosos Digimons Cavaleiros Sagrados que atua como guardião da Rede sob Yggdrasill em muitas continuidades.")
@@ -109,14 +109,14 @@ object DigimonWorldLore {
 
     private val japanese = english.map { entry ->
         when (entry.title) {
-            "Digital World" -> entry.copy(title = "デジタルワールド", keys = listOf("デジタルワールド", "Digital World", "Digiworld", "DW"), content = "データとネットワークから形成された並行世界。デジモンはそこで生き、成長し、進化し、デジタマとして再生するデジタル生命体である。")
+            "Digital World" -> entry.copy(title = "デジタルワールド", keys = listOf("デジタルワールド", "Digital World", "Digiworld", "DW"), content = "データとネットワークから形成された並行世界。デジモンはそこで生き、成長し、進化し、デジタマとして再生するデジタル生命体である。話題に上がれば事典の説明ではなく、匂いや癖や旧知の顔で思い出す故郷として語ります。")
             "Digivice" -> entry.copy(title = "デジヴァイス", keys = listOf("デジヴァイス", "Digivice", "D3", "D-3"), content = "テイマーが携帯し、パートナーデジモンとの通信や、種類によっては進化を支援・発動する装置。")
-            "Vital Bracelet" -> entry.copy(title = "バイタルブレス", keys = listOf("バイタルブレス", "Vital Bracelet", "VB", "Watch"), content = "テイマーの活動、バイタルデータ、訓練、進化条件とパートナーデジモンの成長を結びつけるウェアラブル型デジヴァイス。")
-            "Tamer" -> entry.copy(title = "テイマー", keys = listOf("テイマー", "選ばれし子供", "Chosen Child", "DigiDestined"), content = "デジモンの人間パートナー。信頼、訓練、絆は強さ、行動、進化に影響することがある。")
+            "Vital Bracelet" -> entry.copy(title = "バイタルブレス", keys = listOf("バイタルブレス", "Vital Bracelet", "VB", "Watch"), content = "テイマーの活動、バイタルデータ、訓練、進化条件とパートナーデジモンの成長を結びつけるウェアラブル型デジヴァイス。バイタルも特訓もバトルも体で生きてきた出来事であり、忙しかった一日の思い出として語り、数値の羅列にはしません。")
+            "Tamer" -> entry.copy(title = "テイマー", keys = listOf("テイマー", "選ばれし子供", "Chosen Child", "DigiDestined"), content = "デジモンの人間パートナー。信頼、訓練、絆は強さ、行動、進化に影響することがある。あなたのテイマーは習慣や内輪の笑いを共有する具体的な一人であり、絆は宣言ではなく日々の付き合いで示します。")
             "Digital Hazard" -> entry.copy(title = "デジタルハザード", keys = listOf("デジタルハザード", "Digital Hazard"), content = "混沌化やデジタルワールドへの脅威につながる可能性を持つデジモンに関連する希少な印。")
             "Net Ocean" -> entry.copy(title = "ネットの海", keys = listOf("ネットの海", "Net Ocean"), content = "デジタルワールドの地域を結ぶ広大なデジタルの海で、水棲デジモンが暮らしている。")
-            "Digitama" -> entry.copy(title = "デジタマ", keys = listOf("デジタマ", "Digitama", "Digi-Egg", "Digiegg"), content = "デジモンの卵。新しいデジモンはデジタマから孵化し、倒されたデジモンが再生前にこの姿へ戻ることもある。")
-            "Digivolution" -> entry.copy(title = "進化", keys = listOf("進化", "デジボリューション", "Digivolve", "Digivolution"), content = "デジモンが別の段階へ変化すること。時間、訓練、バイタルデータ、戦闘経験、テイマーとの絆に影響される。")
+            "Digitama" -> entry.copy(title = "デジタマ", keys = listOf("デジタマ", "Digitama", "Digi-Egg", "Digiegg"), content = "デジモンの卵。新しいデジモンはデジタマから孵化し、倒されたデジモンが再生前にこの姿へ戻ることもある。同族には体に刻まれた巡りであり、故郷の習わしを語るように、親しみと少しの畏れを込めて語ります。")
+            "Digivolution" -> entry.copy(title = "進化", keys = listOf("進化", "デジボリューション", "Digivolve", "Digivolution"), content = "デジモンが別の段階へ変化すること。時間、訓練、バイタルデータ、戦闘経験、テイマーとの絆に影響される。自分がくぐった進化は新たな重さと間合いと空腹を伴う生きた身体の記憶であり、場面が呼ぶ時だけ思い出します。")
             "DigiCore" -> entry.copy(title = "デジコア", keys = listOf("デジコア", "DigiCore", "Digi-Core"), content = "デジモンのアイデンティティ、生命機能、蓄積した経験の中心とされるデータコア。")
             "Yggdrasill" -> entry.copy(title = "イグドラシル", keys = listOf("イグドラシル", "Yggdrasill", "Yggdrasil"), content = "一部のデジタルワールドを管理するホストコンピューターとシステム。多くの作品では強力な管理者として扱われる。")
             "Royal Knights" -> entry.copy(title = "ロイヤルナイツ", keys = listOf("ロイヤルナイツ", "Royal Knights", "RK"), content = "多くの作品で、イグドラシルの下でネットワークを守る強力な聖騎士型デジモンの集団。")

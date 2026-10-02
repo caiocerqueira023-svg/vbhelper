@@ -54,7 +54,8 @@ class RadarBattleFlowTest {
             interacted = false,
             charaIndex = 2,
             stage = 3,
-            cardId = 12L,
+            cardId = 91L,
+            externalCharacterId = "dim012_mon03",
             attribute = NfcCharacter.Attribute.Vaccine,
             baseHp = 3700,
             baseBp = 1450,
@@ -74,13 +75,16 @@ class RadarBattleFlowTest {
         )
 
         val first = worldRadarBattleParticipant(spawn)
-        val second = worldRadarBattleParticipant(spawn.copy(id = 99L))
+        val second = worldRadarBattleParticipant(spawn.copy(id = 99L, cardId = 92L))
 
         assertEquals(3700, first.vitalStats?.baseHp)
         assertEquals(1450, first.vitalStats?.baseBp)
         assertEquals(1180, first.vitalStats?.baseAp)
         assertEquals(VitalStatScale.BEM, first.vitalStats?.scale)
         assertEquals("dim012_mon03", first.externalCharacterId)
+        assertEquals("dim012_mon03", first.assetCharacterId)
+        assertEquals(19L, first.cardCharacterId)
+        assertEquals(first.externalCharacterId, second.externalCharacterId)
         assertEquals(first.personalityType, second.personalityType)
         assertEquals("wild-individual-19", first.stableRngKey)
         assertEquals("wild-individual-19", first.stableId)

@@ -21,6 +21,9 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 @RewriteQueriesToDropUnusedColumns
 interface UserCharacterDao {
+    @Query("SELECT vitalPoints FROM UserCharacter WHERE isActive = 1 LIMIT 1")
+    suspend fun getActiveVitalPoints(): Int?
+
     @Query("SELECT * FROM UserCharacter WHERE id = :id")
     fun getCharacterSync(id: Long): UserCharacter?
 
@@ -120,7 +123,7 @@ interface UserCharacterDao {
         SELECT
             uc.id AS sourceCharacterId,
             uc.individualId AS individualId,
-            'dim' || printf('%03d', ca.id) || '_mon' || printf('%02d', c.charaIndex + 1) AS externalCharacterId,
+            'dim' || printf('%03d', ca.cardId) || '_mon' || printf('%02d', c.charaIndex + 1) AS externalCharacterId,
             COALESCE(NULLIF(di.nickname, ''), NULLIF(sp.speciesName, ''), NULLIF(sp.matchedName, ''), 'Stored Digimon #' || uc.id) AS displayName,
             c.stage AS stage,
             c.attribute AS attribute,

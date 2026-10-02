@@ -27,6 +27,42 @@ internal object SpriteExtrusionGlb {
 
     internal fun normalizeJson(raw: String): String = raw.replace("\\/", "/")
 
+    /** A centered, depth-tested effect plane; preserves source alpha and adds no body outline/shadow. */
+    fun buildBillboard(frame: ResidentFrameImage): ByteArray {
+        require(frame.width > 0 && frame.height > 0 && frame.argb.size == frame.width * frame.height)
+        val glb = GlbData()
+        val aspect = frame.width.toFloat() / frame.height
+        val geometry = Geometry().apply {
+            quad(
+                floatArrayOf(-aspect / 2, -0.5f, 0f), floatArrayOf(aspect / 2, -0.5f, 0f),
+                floatArrayOf(aspect / 2, 0.5f, 0f), floatArrayOf(-aspect / 2, 0.5f, 0f),
+                floatArrayOf(0f, 1f), floatArrayOf(1f, 1f), floatArrayOf(1f, 0f), floatArrayOf(0f, 0f)
+            )
+        }
+        val imageView = glb.view(png(frame))
+        val primitive = glb.primitive(geometry, 0)
+        return glb.finish(JSONObject()
+            .put("asset", JSONObject().put("version", "2.0"))
+            .put("extensionsUsed", JSONArray().put("KHR_materials_unlit"))
+            .put("scene", 0)
+            .put("scenes", JSONArray().put(JSONObject().put("nodes", JSONArray().put(0))))
+            .put("nodes", JSONArray().put(JSONObject().put("name", "impact").put("mesh", 0)))
+            .put("meshes", JSONArray().put(JSONObject().put("primitives", JSONArray().put(primitive))))
+            .put("materials", JSONArray().put(JSONObject()
+                .put("extensions", JSONObject().put("KHR_materials_unlit", JSONObject()))
+                .put("doubleSided", true).put("alphaMode", "BLEND")
+                .put("pbrMetallicRoughness", JSONObject()
+                    .put("baseColorTexture", JSONObject().put("index", 0))
+                    .put("baseColorFactor", JSONArray().put(1).put(1).put(1).put(1))
+                    .put("metallicFactor", 0).put("roughnessFactor", 1))))
+            .put("images", JSONArray().put(JSONObject().put("bufferView", imageView).put("mimeType", "image/png")))
+            .put("textures", JSONArray().put(JSONObject().put("source", 0).put("sampler", 0)))
+            .put("samplers", JSONArray().put(JSONObject().put("magFilter", 9728).put("minFilter", 9728)
+                .put("wrapS", 33071).put("wrapT", 33071)))
+            .put("bufferViews", glb.views).put("accessors", glb.accessors)
+            .put("buffers", JSONArray().put(JSONObject().put("byteLength", glb.binarySize()))))
+    }
+
     fun build(poses: Map<String, ResidentFrameImage>): ByteArray {
         val cacheKey = contentKey(poses)
         synchronized(modelCache) {

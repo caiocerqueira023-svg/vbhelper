@@ -48,7 +48,9 @@ fun OfflineBattleScene(
     onFighterTapped: (String) -> Unit,
     onAssetError: (String) -> Unit,
     renderingEnabled: Boolean = true,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onReleased: () -> Unit = {},
+    onCreated: () -> Unit = {}
 ) {
     if (manifest == null) return
     AndroidView(
@@ -57,6 +59,7 @@ fun OfflineBattleScene(
             FrameLayout(context).also { host ->
                 runCatching { OfflineBattleSceneView(context) }
                     .onSuccess { scene ->
+                        onCreated()
                         host.addView(scene, FrameLayout.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.MATCH_PARENT
@@ -81,9 +84,13 @@ fun OfflineBattleScene(
             )
         },
         onRelease = { host ->
-            (host.getChildAt(0) as? OfflineBattleSceneView)?.releaseScene()
+            val scene = host.getChildAt(0) as? OfflineBattleSceneView
+            scene?.releaseScene()
+            val attached = scene?.isAttachedToWindow == true
             host.removeAllViews()
-            host.post { onReady(null) }
+            if (!attached) scene?.releaseUnattached()
+            // ModelViewer's 1.76.1 detach listener destroys the Engine before this posted ack.
+            android.os.Handler(android.os.Looper.getMainLooper()).post { onReady(null); onReleased() }
         }
     )
 }
@@ -94,6 +101,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
     private val backgroundSkybox: Skybox
     private val radarSkybox: Skybox
     private var released = false
+    private var attachedOnce = false
     private var arenaLoadGeneration = 0
     private var arenaLoaded = false
     private var viewportWidth = 0
@@ -126,6 +134,8 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
     private var assetLoader: AssetLoader? = null
     private var resourceLoader: ResourceLoader? = null
     private val renderedFighters = linkedMapOf<String, RenderedFighter>()
+    private val renderedImpacts = linkedMapOf<Pair<String, String>, RenderedImpact>()
+    private val failedImpactKeys = mutableSetOf<Pair<String, String>>()
     private var latestSnapshot: BattleSnapshot? = null
     private var desiredFighters: Map<String, BattleFighterPresentation> = emptyMap()
     private var latestSessionId: String? = null
@@ -135,7 +145,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
     private var onFighterTapped: ((String) -> Unit)? = null
     private var sceneReadyNotified = false
     private var lastProjectionNotifyNanos = 0L
-    private val failedFighterIds = linkedSetOf<String>()
+    private var failedFighterIds = linkedSetOf<String>()
     private var arenaEnergyMaterial: MaterialInstance? = null
     private var arenaDomeMotion: ArenaDomeMotion? = null
     private var arenaDomeStartNanos = 0L
@@ -166,6 +176,15 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
         var poseChangedAtNanos: Long = 0L
     )
 
+    private data class RenderedImpact(
+        val asset: FilamentAsset,
+        val model: ByteArray,
+        val renderables: List<Int>,
+        val materials: List<MaterialInstance>,
+        var impactId: Long? = null,
+        var firstShownAtNanos: Long = 0
+    )
+
     private val frameCallback = object : Choreographer.FrameCallback {
         override fun doFrame(frameTimeNanos: Long) {
             if (released || !renderingEnabled) return
@@ -178,6 +197,8 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
             applyCameraIfNeeded()
             syncFighters()
             updateFighterTransforms((latestSnapshot?.elapsedMillis ?: 0L) * 1_000_000L)
+            syncImpactAssets()
+            updateImpactTransforms(frameTimeNanos)
             val rendered = viewer.render(frameTimeNanos)
             if (projectionNotificationPending && frameTimeNanos - lastProjectionNotifyNanos >= PROJECTION_NOTIFY_NANOS) {
                 lastProjectionNotifyNanos = frameTimeNanos
@@ -278,6 +299,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
     ) {
         if (released) return
         if (latestSessionId != sessionId) {
+            releaseImpacts()
             cameraFocusFighterId = null
             initialCameraFocusFighterId = null
             initialCameraCompositionApplied = false
@@ -627,10 +649,11 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
         val combatants = latestSnapshot?.let { it.alliedMembers + it.opposingMembers } ?: return null
         val touchRadius = 24f * resources.displayMetrics.density
         return combatants.mapNotNull { fighter ->
+            val visualScale = desiredFighters[fighter.combatantId]?.visualScaleMultiplier ?: 1f
             val foot = projectBattlePosition(fighter.position.x, 0f, fighter.position.z) ?: return@mapNotNull null
             val head = projectBattlePosition(
                 fighter.position.x,
-                currentManifest.fighterScale,
+                currentManifest.fighterScale * visualScale,
                 fighter.position.z
             ) ?: return@mapNotNull null
             val bodyTop = minOf(head.second, foot.second)
@@ -818,7 +841,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
             }
             Matrix.setIdentityM(fighterTransform, 0)
             val currentManifest = manifest ?: return
-            val scale = currentManifest.fighterScale
+            val scale = currentManifest.fighterScale * fighter.presentation.visualScaleMultiplier
             Matrix.translateM(fighterTransform, 0,
                 combatant.position.x * currentManifest.positionScale, 0.025f,
                 combatant.position.z * currentManifest.positionScale)
@@ -855,6 +878,91 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
             "idle" in fighter.poses -> "idle"
             else -> fighter.poses.keys.first()
         }
+    }
+
+    /** Small per-victim pools are loaded before combat; no textures/GLBs are built on a hit. */
+    private fun syncImpactAssets() {
+        val loader = assetLoader ?: return
+        val wanted = desiredFighters.flatMap { (id, fighter) ->
+            fighter.impactModels.map { (variant, bytes) -> (id to variant) to bytes }
+        }.toMap()
+        for (key in renderedImpacts.keys.toList()) {
+            if (wanted[key] !== renderedImpacts[key]?.model) destroyImpact(key)
+        }
+        val renderables = engine.renderableManager
+        for ((key, bytes) in wanted) {
+            if (key in renderedImpacts || key in failedImpactKeys) continue
+            var pendingAsset: FilamentAsset? = null
+            runCatching {
+                val buffer = ByteBuffer.allocateDirect(bytes.size).order(ByteOrder.nativeOrder())
+                    .put(bytes).apply { flip() }
+                val asset = checkNotNull(loader.createAsset(buffer))
+                pendingAsset = asset
+                resourceLoader?.loadResources(asset)
+                asset.releaseSourceData()
+                val instances = asset.entities.filter(renderables::hasComponent).map { renderables.getInstance(it) }
+                val materials = instances.flatMap { instance ->
+                    renderables.setCastShadows(instance, false)
+                    renderables.setReceiveShadows(instance, false)
+                    renderables.setLayerMask(instance, 0xFF, 0)
+                    (0 until renderables.getPrimitiveCount(instance)).map { renderables.getMaterialInstanceAt(instance, it) }
+                }
+                // Effects participate in the same depth buffer as the actual fighter silhouettes.
+                materials.forEach { it.setDepthCulling(true); it.setDepthWrite(false) }
+                viewer.scene.addEntities(asset.entities)
+                renderedImpacts[key] = RenderedImpact(asset, bytes, instances, materials)
+                pendingAsset = null
+            }.onFailure { failure ->
+                pendingAsset?.let { loader.destroyAsset(it) }
+                failedImpactKeys += key
+                Log.w(TAG, "Could not load impact sprite $key", failure)
+            }
+        }
+    }
+
+    private fun updateImpactTransforms(frameTimeNanos: Long) {
+        val snapshot = latestSnapshot ?: return
+        val currentManifest = manifest ?: return
+        val combatants = (snapshot.alliedMembers + snapshot.opposingMembers).associateBy { it.combatantId }
+        val flashes = visibleBattleImpactSprites(snapshot.impacts).associateBy { it.targetId }
+        for ((key, effect) in renderedImpacts) {
+            val (targetId, variant) = key
+            val impact = flashes[targetId]
+            val desiredVariant = if (impact?.isSpecial == true && "special" in desiredFighters[targetId]?.impactModels.orEmpty()) "special" else "normal"
+            val target = combatants[targetId]
+            if (impact != null && effect.impactId != impact.impactId) {
+                effect.impactId = impact.impactId
+                effect.firstShownAtNanos = frameTimeNanos
+            }
+            val opacity = impact?.let {
+                battleImpactFlashOpacity(it.remainingMillis, (frameTimeNanos - effect.firstShownAtNanos) / 1_000_000L)
+            } ?: 0f
+            val visible = opacity > 0f && target != null && variant == desiredVariant
+            effect.renderables.forEach { engine.renderableManager.setLayerMask(it, 0xFF, if (visible) 0x01 else 0) }
+            if (!visible) continue
+            val fighterScale = currentManifest.fighterScale * (desiredFighters[targetId]?.visualScaleMultiplier ?: 1f)
+            val placement = battleImpactPlacement(target.position.x * currentManifest.positionScale,
+                target.position.z * currentManifest.positionScale, fighterScale, cameraYaw, cameraPitch)
+            Matrix.setIdentityM(impactTransform, 0)
+            Matrix.translateM(impactTransform, 0, placement.x, placement.y, placement.z)
+            Matrix.rotateM(impactTransform, 0, Math.toDegrees(cameraYaw).toFloat(), 0f, 1f, 0f)
+            Matrix.rotateM(impactTransform, 0, -Math.toDegrees(cameraPitch).toFloat(), 1f, 0f, 0f)
+            Matrix.scaleM(impactTransform, 0, placement.height, placement.height, placement.height)
+            val root = engine.transformManager.getInstance(effect.asset.root)
+            if (root != 0) engine.transformManager.setTransform(root, impactTransform)
+            effect.materials.forEach { it.setParameter("baseColorFactor", 1f, 1f, 1f, opacity) }
+        }
+    }
+
+    private fun destroyImpact(key: Pair<String, String>) {
+        val effect = renderedImpacts.remove(key) ?: return
+        viewer.scene.removeEntities(effect.asset.entities)
+        assetLoader?.destroyAsset(effect.asset)
+    }
+
+    private fun releaseImpacts() {
+        renderedImpacts.keys.toList().forEach(::destroyImpact)
+        failedImpactKeys.clear()
     }
 
     private fun destroyFighter(id: String) {
@@ -895,8 +1003,11 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
         }
         super.onDetachedFromWindow()
     }
+    override fun onAttachedToWindow() { super.onAttachedToWindow(); attachedOnce = true }
+    fun releaseUnattached() { if (!attachedOnce) viewer.destroy() }
 
     private fun releaseFighters() {
+        releaseImpacts()
         renderedFighters.keys.toList().forEach(::destroyFighter)
         runCatching { assetLoader?.destroy() }
         assetLoader = null
@@ -910,6 +1021,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
     private val arenaTransform = FloatArray(16)
     private val arenaDomeDelta = FloatArray(16)
     private val fighterTransform = FloatArray(16)
+    private val impactTransform = FloatArray(16)
     private val viewProjection = FloatArray(16)
     private val clipPosition = FloatArray(4)
 

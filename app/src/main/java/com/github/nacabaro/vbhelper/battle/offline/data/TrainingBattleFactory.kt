@@ -26,7 +26,9 @@ data class TrainingParticipantInput(
     val attribute: BattleAttribute = BattleAttribute.NONE,
     val stableRngKey: String = instanceId,
     val personalityType: DigimonPersonalityType = DigimonPersonalityType.FRIENDLY,
-    val techniqueIds: List<String> = GenericTechniqueCatalog.defaultTechniqueIds
+    val techniqueIds: List<String> = GenericTechniqueCatalog.defaultTechniqueIds,
+    val initialHealth: Int? = null,
+    val initialEnergy: Int? = null
 )
 
 /** Builds the first training loadout without reading or modifying Room during a battle tick. */
@@ -43,11 +45,12 @@ object TrainingBattleFactory {
     fun create(
         allies: List<TrainingParticipantInput>,
         opponents: List<TrainingParticipantInput>,
-        configuration: BattleConfiguration = BattleConfiguration()
+        configuration: BattleConfiguration = BattleConfiguration(),
+        allowAlliedAdvantage: Boolean = false
     ): BattleSimulator {
         require(allies.size in 1..2) { "O treino aceita um ou dois parceiros." }
         require(opponents.size in 1..2) { "O treino aceita um ou dois oponentes." }
-        require(allies.size <= opponents.size) { "Formatos disponíveis: 1×1, 1×2 e 2×2." }
+        require(allowAlliedAdvantage || allies.size <= opponents.size) { "Formatos disponíveis: 1×1, 1×2 e 2×2." }
         require((allies + opponents).all { it.instanceId.isNotBlank() }) { "Instância sem identidade." }
         val alliedSources = allies.mapNotNull { it.sourceCharacterId }
         require(alliedSources.distinct().size == alliedSources.size) { "Um parceiro não pode ocupar dois slots aliados." }
@@ -98,7 +101,9 @@ object TrainingBattleFactory {
             stableRngKey = stableRngKey,
             personalityType = personalityType,
             techniqueIds = GenericTechniqueLoadout.resolve(techniqueIds),
-            specialTechniqueId = GenericTechniqueCatalog.trainingSpecialTechniqueId
+            specialTechniqueId = GenericTechniqueCatalog.trainingSpecialTechniqueId,
+            initialHealth = initialHealth,
+            initialEnergy = initialEnergy
         )
     }
 }

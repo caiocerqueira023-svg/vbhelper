@@ -62,4 +62,5 @@ class BattleVfxCueTest {
 
         assertEquals(BattleMissCue(eventId = 4L, anchorCombatantId = "enemy", isSpecial = true), cue)
     }
+
 }

@@ -14,6 +14,7 @@ import com.github.nacabaro.vbhelper.chat.lorebook.LorebookRepository
 import com.github.nacabaro.vbhelper.world.WorldRepository
 import com.github.nacabaro.vbhelper.digifarm.DigifarmRepository
 import com.github.nacabaro.vbhelper.digifarm.FarmSessionCoordinator
+import com.github.nacabaro.vbhelper.world.ecosystem.WorldEcosystemCoordinator
 
 interface AppContainer {
     val db: AppDatabase
@@ -31,4 +32,6 @@ interface AppContainer {
     val worldRepository: WorldRepository
     val digifarmRepository: DigifarmRepository
     val farmSessionCoordinator: FarmSessionCoordinator
+    val worldEcosystemCoordinator: WorldEcosystemCoordinator
+    val worldInteractionOrchestrator: com.github.nacabaro.vbhelper.world.ecosystem.WorldInteractionOrchestrator
 }
