@@ -86,6 +86,9 @@ enum class TechniqueImpactShape {
     ALL_OPPONENTS
 }
 
+enum class StatusRefreshPolicy { EXTEND, REPLACE, IGNORE }
+enum class BattleStatusMechanic { MODIFIER, POISON, BURN, FREEZE, SHOCK }
+
 data class BattleStatusEffect(
     val id: String,
     val durationMillis: Long,
@@ -97,7 +100,15 @@ data class BattleStatusEffect(
     val defenseMultiplier: Float = 1f,
     val movementMultiplier: Float = 1f,
     val cooldownMultiplier: Float = 1f,
-    val sourceCombatantId: String? = null
+    val sourceCombatantId: String? = null,
+    val procChance: Float = 1f,
+    val tickIntervalMillis: Long = 0L,
+    val maxHealthPercentPerTickMin: Int = 0,
+    val maxHealthPercentPerTickMax: Int = maxHealthPercentPerTickMin,
+    val refreshPolicy: StatusRefreshPolicy = StatusRefreshPolicy.EXTEND,
+    val exclusivityGroup: String? = null,
+    val mechanic: BattleStatusMechanic = BattleStatusMechanic.MODIFIER,
+    val protectsFromStatuses: Boolean = false
 )
 
 /** Immutable combat profile. Its IDs refer to the combat instance, not its source storage row. */
@@ -127,7 +138,13 @@ data class CombatantDefinition(
     val techniqueIds: List<String>,
     val specialTechniqueId: String? = null,
     val initialHealth: Int? = null,
-    val initialEnergy: Int? = null
+    val initialEnergy: Int? = null,
+    val aiProfile: BattleAiProfile = BattleAiProfile(),
+    val readinessRegenerationPerSecond: Float = 45f,
+    val counterTechniqueId: String? = null,
+    val signatureTechniqueId: String? = null,
+    /** Bounded additive power, measured in this simulator's compact units. */
+    val signaturePowerBonus: Int = 0
 )
 
 data class TechniqueDefinition(
@@ -159,7 +176,10 @@ data class TechniqueDefinition(
     val knockbackDistance: Float = 0f,
     val criticalChance: Float = 0.05f,
     val criticalMultiplier: Float = 1.5f,
-    val element: String? = null
+    val element: String? = null,
+    val reactionOnly: Boolean = false,
+    val readinessCost: Float? = null,
+    val accuracyPercent: Int = 100
 )
 
 enum class BattleItemKind { HEAL_HEALTH, RESTORE_ENERGY, CLEANSE_STATUS }
@@ -230,7 +250,9 @@ data class BattleConfiguration(
     val decisionIntervalMillis: Long = 200L,
     val defaultPaused: Boolean = false,
     val randomSeed: Long = 1L,
-    val maxDurationMillis: Long = 300_000L
+    val maxDurationMillis: Long = 300_000L,
+    val rulesetVersion: Int = BattleRules.CURRENT_VERSION,
+    val damageFormula: BattleDamageFormula = BattleDamageFormula.ADAPTED
 )
 
 data class BattleOrder(
@@ -299,7 +321,22 @@ data class CombatantDebugSnapshot(
     val personalityType: DigimonPersonalityType? = null,
     val personalityCore: PersonalityCore? = null,
     val threatByCombatant: Map<String, Long> = emptyMap(),
-    val lastOrderFailure: String? = null
+    val lastOrderFailure: String? = null,
+    val readiness: Float = 100f,
+    val readinessRequired: Float = 0f,
+    val buffsRemaining: Int = 0,
+    val positioningReplans: Int = 0,
+    val targetReason: String = "",
+    val encounterProfileId: String = "balanced",
+    val counterReady: Boolean = false,
+    val techniqueUses: Map<String, Int> = emptyMap(),
+    val guardCount: Int = 0,
+    val counterCount: Int = 0,
+    val targetChanges: Int = 0,
+    val incapacitatedMillis: Long = 0L,
+    val readinessWaitingMillis: Long = 0L,
+    val meanTargetDistance: Float = 0f,
+    val meanReadiness: Float = 100f
 )
 
 enum class BattleOutcome { ALLIED_VICTORY, OPPOSING_VICTORY, DRAW, ABANDONED }
@@ -328,7 +365,8 @@ data class BattleSnapshot(
     val projectiles: List<ProjectileSnapshot> = emptyList(),
     val trainingItems: List<BattleItemSnapshot> = emptyList(),
     val statistics: BattleStatistics = BattleStatistics(),
-    val impacts: List<BattleImpactSnapshot> = emptyList()
+    val impacts: List<BattleImpactSnapshot> = emptyList(),
+    val rulesetVersion: Int = BattleRules.CURRENT_VERSION
 )
 
 sealed interface BattleEvent {
@@ -358,6 +396,8 @@ sealed interface BattleEvent {
     data class ItemUsed(val combatantId: String, val targetId: String, val itemId: String, val amount: Int) : BattleEvent
     data class ProjectileLaunched(val projectileId: Long, val ownerId: String, val techniqueId: String) : BattleEvent
     data class ProjectileMissed(val projectileId: Long, val techniqueId: String) : BattleEvent
+    data class CounterTriggered(val combatantId: String, val attackerId: String) : BattleEvent
+    data class PositioningReplanned(val combatantId: String, val techniqueId: String) : BattleEvent
     data class OrderChanged(val update: OrderUpdate) : BattleEvent
     data class BattleEnded(val result: BattleResult) : BattleEvent
 }

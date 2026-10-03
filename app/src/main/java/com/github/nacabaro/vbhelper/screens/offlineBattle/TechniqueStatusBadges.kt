@@ -46,7 +46,8 @@ internal fun TechniqueStatusBadges(
                 shape = CutCornerShape(topStart = 4.dp, bottomEnd = 4.dp)
             ) {
                 Text(
-                    text = "${if (status.tone == TechniqueStatusTone.AILMENT) "STATUS" else "BUFF"} · ${status.name}",
+                    text = "${if (status.tone == TechniqueStatusTone.AILMENT) "STATUS" else "BUFF"} · ${status.name}" +
+                        if (status.chancePercent < 100) " · ${status.chancePercent}%" else "",
                     modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
                     color = Color.Unspecified,
                     style = MaterialTheme.typography.labelSmall,

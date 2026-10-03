@@ -3,6 +3,7 @@ package com.github.nacabaro.vbhelper.battle.offline.diagnostics
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleConfiguration
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleOutcome
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleSide
+import com.github.nacabaro.vbhelper.battle.offline.core.BattleDamageFormula
 import com.github.nacabaro.vbhelper.battle.offline.data.OfflineBattleRuleset
 import com.github.nacabaro.vbhelper.battle.offline.data.TrainingBattleFactory
 import com.github.nacabaro.vbhelper.battle.offline.data.TrainingParticipantInput
@@ -53,7 +54,21 @@ data class BattleBalanceSample(
     val damageReceived: Int,
     val damagePrevented: Int,
     val projectilesHit: Int,
-    val projectilesMissed: Int
+    val projectilesMissed: Int,
+    val firstTechniqueUses: Map<String, Int>,
+    val secondTechniqueUses: Map<String, Int>,
+    val firstMeanReadiness: Float,
+    val secondMeanReadiness: Float,
+    val firstMeanDistance: Float,
+    val secondMeanDistance: Float,
+    val firstIncapacitatedMillis: Long,
+    val secondIncapacitatedMillis: Long,
+    val firstPositioningReplans: Int,
+    val secondPositioningReplans: Int,
+    val firstCounterCount: Int,
+    val secondCounterCount: Int,
+    val catalogVersion: Int,
+    val damageFormula: String
 )
 
 data class BattleBalanceSummary(
@@ -78,12 +93,16 @@ object BattleBalanceRunner {
         first: TrainingParticipantInput,
         second: TrainingParticipantInput,
         seeds: Iterable<Long>,
-        maxDurationMillis: Long = BattleConfiguration().maxDurationMillis
+        maxDurationMillis: Long = BattleConfiguration().maxDurationMillis,
+        rulesetVersion: Int = OfflineBattleRuleset.VERSION,
+        damageFormula: BattleDamageFormula = BattleDamageFormula.ADAPTED
     ): List<BattleBalanceSample> = buildList {
         require(maxDurationMillis >= 2_000L)
         seeds.forEach { seed ->
-            add(runBattle(first, second, seed, sideSwapped = false, maxDurationMillis = maxDurationMillis))
-            add(runBattle(first, second, seed, sideSwapped = true, maxDurationMillis = maxDurationMillis))
+            add(runBattle(first, second, seed, sideSwapped = false, maxDurationMillis = maxDurationMillis,
+                rulesetVersion = rulesetVersion, damageFormula = damageFormula))
+            add(runBattle(first, second, seed, sideSwapped = true, maxDurationMillis = maxDurationMillis,
+                rulesetVersion = rulesetVersion, damageFormula = damageFormula))
         }
     }
 
@@ -115,7 +134,9 @@ object BattleBalanceRunner {
         second: TrainingParticipantInput,
         seed: Long,
         sideSwapped: Boolean,
-        maxDurationMillis: Long
+        maxDurationMillis: Long,
+        rulesetVersion: Int,
+        damageFormula: BattleDamageFormula
     ): BattleBalanceSample {
         val firstSide = if (sideSwapped) BattleSide.OPPOSING else BattleSide.ALLIED
         val secondSide = if (sideSwapped) BattleSide.ALLIED else BattleSide.OPPOSING
@@ -127,7 +148,9 @@ object BattleBalanceRunner {
             configuration = BattleConfiguration(
                 randomSeed = seed,
                 defaultPaused = false,
-                maxDurationMillis = maxDurationMillis
+                maxDurationMillis = maxDurationMillis,
+                rulesetVersion = rulesetVersion,
+                damageFormula = damageFormula
             )
         )
 
@@ -151,13 +174,13 @@ object BattleBalanceRunner {
         val winner = when (result?.outcome) {
             BattleOutcome.ALLIED_VICTORY -> if (sideSwapped) "SECOND" else "FIRST"
             BattleOutcome.OPPOSING_VICTORY -> if (sideSwapped) "FIRST" else "SECOND"
-            BattleOutcome.DRAW -> "DRAW"
+            BattleOutcome.DRAW -> if (result.elapsedMillis >= maxDurationMillis) "TIMEOUT" else "DRAW"
             BattleOutcome.ABANDONED -> "ABANDONED"
             null -> "TIMEOUT"
         }
 
         return BattleBalanceSample(
-            rulesetVersion = OfflineBattleRuleset.VERSION,
+            rulesetVersion = snapshot.rulesetVersion,
             seed = seed,
             sideSwapped = sideSwapped,
             firstId = first.stableRngKey,
@@ -199,7 +222,21 @@ object BattleBalanceRunner {
             damageReceived = snapshot.statistics.damageReceived,
             damagePrevented = snapshot.statistics.damagePrevented,
             projectilesHit = snapshot.statistics.projectilesHit,
-            projectilesMissed = snapshot.statistics.projectilesMissed
+            projectilesMissed = snapshot.statistics.projectilesMissed,
+            firstTechniqueUses = firstSnapshot.debug.techniqueUses,
+            secondTechniqueUses = secondSnapshot.debug.techniqueUses,
+            firstMeanReadiness = firstSnapshot.debug.meanReadiness,
+            secondMeanReadiness = secondSnapshot.debug.meanReadiness,
+            firstMeanDistance = firstSnapshot.debug.meanTargetDistance,
+            secondMeanDistance = secondSnapshot.debug.meanTargetDistance,
+            firstIncapacitatedMillis = firstSnapshot.debug.incapacitatedMillis,
+            secondIncapacitatedMillis = secondSnapshot.debug.incapacitatedMillis,
+            firstPositioningReplans = firstSnapshot.debug.positioningReplans,
+            secondPositioningReplans = secondSnapshot.debug.positioningReplans,
+            firstCounterCount = firstSnapshot.debug.counterCount,
+            secondCounterCount = secondSnapshot.debug.counterCount,
+            catalogVersion = rulesetVersion,
+            damageFormula = damageFormula.name
         )
     }
 
@@ -232,7 +269,10 @@ object BattleBalanceRunner {
         secondBattleHp, secondBattleBp, secondBattleAp, secondBattleEnergy, secondEnergyRegeneration,
         secondMovementSpeed, secondCooldownMultiplier,
         outcome, winner, durationMillis, firstRemainingHealthRatio, secondRemainingHealthRatio,
-        damageDealt, damageReceived, damagePrevented, projectilesHit, projectilesMissed
+        damageDealt, damageReceived, damagePrevented, projectilesHit, projectilesMissed,
+        firstTechniqueUses.toSortedMap(), secondTechniqueUses.toSortedMap(), firstMeanReadiness, secondMeanReadiness,
+        firstMeanDistance, secondMeanDistance, firstIncapacitatedMillis, secondIncapacitatedMillis,
+        firstPositioningReplans, secondPositioningReplans, firstCounterCount, secondCounterCount, catalogVersion, damageFormula
     ).joinToString(",") { value -> csv(value?.toString().orEmpty()) }
 
     private fun csv(value: String): String = "\"${value.replace("\"", "\"\"")}\""
@@ -245,5 +285,8 @@ object BattleBalanceRunner {
         "secondBattleHp,secondBattleBp,secondBattleAp,secondBattleEnergy,secondEnergyRegeneration," +
         "secondMovementSpeed,secondCooldownMultiplier," +
         "outcome,winner,durationMillis,firstRemainingHealthRatio,secondRemainingHealthRatio," +
-        "damageDealt,damageReceived,damagePrevented,projectilesHit,projectilesMissed"
+        "damageDealt,damageReceived,damagePrevented,projectilesHit,projectilesMissed," +
+        "firstTechniqueUses,secondTechniqueUses,firstMeanReadiness,secondMeanReadiness,firstMeanDistance,secondMeanDistance," +
+        "firstIncapacitatedMillis,secondIncapacitatedMillis,firstPositioningReplans,secondPositioningReplans," +
+        "firstCounterCount,secondCounterCount,catalogVersion,damageFormula"
 }

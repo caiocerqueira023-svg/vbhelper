@@ -10,6 +10,7 @@ import com.github.nacabaro.vbhelper.battle.offline.core.BattleStrategy
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleTeam
 import com.github.nacabaro.vbhelper.battle.offline.core.CombatantDefinition
 import com.github.nacabaro.vbhelper.battle.offline.core.TechniqueDefinition
+import com.github.nacabaro.vbhelper.battle.offline.core.BattleAiProfile
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityType
 
 /** Immutable copy of the participant values needed to enter a disposable training session. */
@@ -28,7 +29,8 @@ data class TrainingParticipantInput(
     val personalityType: DigimonPersonalityType = DigimonPersonalityType.FRIENDLY,
     val techniqueIds: List<String> = GenericTechniqueCatalog.defaultTechniqueIds,
     val initialHealth: Int? = null,
-    val initialEnergy: Int? = null
+    val initialEnergy: Int? = null,
+    val aiProfile: BattleAiProfile = BattleAiProfile()
 )
 
 /** Builds the first training loadout without reading or modifying Room during a battle tick. */
@@ -69,7 +71,7 @@ object TrainingBattleFactory {
                 side = BattleSide.OPPOSING,
                 members = opponents.map { it.toDefinition(BattleSide.OPPOSING) }
             ),
-            techniqueCatalog = techniques,
+            techniqueCatalog = GenericTechniqueCatalog.definitionsForVersion(configuration.rulesetVersion),
             trainingItems = trainingItems
         )
     }
@@ -79,6 +81,8 @@ object TrainingBattleFactory {
     private fun TrainingParticipantInput.toDefinition(side: BattleSide): CombatantDefinition {
         val stage = stage.coerceIn(0, 5)
         val stats = TrainingBattleStats.forParticipant(stage, vitalStats)
+        val loadout = GenericTechniqueLoadout.resolve(techniqueIds)
+        val signature = loadout.firstOrNull { GenericTechniqueCatalog.definition(it).power > 0 }
         return CombatantDefinition(
             combatantId = "${if (side == BattleSide.ALLIED) "ally" else "opponent"}:$instanceId",
             sourceCharacterId = sourceCharacterId,
@@ -100,10 +104,17 @@ object TrainingBattleFactory {
             strategy = strategy,
             stableRngKey = stableRngKey,
             personalityType = personalityType,
-            techniqueIds = GenericTechniqueLoadout.resolve(techniqueIds),
+            techniqueIds = loadout,
             specialTechniqueId = GenericTechniqueCatalog.trainingSpecialTechniqueId,
             initialHealth = initialHealth,
-            initialEnergy = initialEnergy
+            initialEnergy = initialEnergy,
+            aiProfile = aiProfile.copy(techniqueWeights = aiProfile.techniqueWeights.filterKeys { it in loadout }),
+            readinessRegenerationPerSecond = 45f / stats.cooldownMultiplier,
+            counterTechniqueId = GenericTechniqueCatalog.counterTechniqueId,
+            signatureTechniqueId = signature,
+            signaturePowerBonus = signature?.let {
+                (GenericTechniqueCatalog.definition(it).power * 0.05f).toInt().coerceIn(1, 12)
+            } ?: 0
         )
     }
 }

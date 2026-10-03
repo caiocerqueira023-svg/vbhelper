@@ -17,6 +17,7 @@ class BattleSimulator(
     techniqueCatalog: Collection<TechniqueDefinition>,
     trainingItems: Collection<BattleItemDefinition> = emptyList()
 ) {
+    private val enhanced = configuration.rulesetVersion == BattleRules.CURRENT_VERSION
     private val techniques = techniqueCatalog.associate { it.techniqueId to it.copy(statusEffects = it.statusEffects.toList()) }.toMutableMap()
     private val combatants = linkedMapOf<String, Fighter>()
     private val itemDefinitions = trainingItems.associateBy { it.itemId }
@@ -41,6 +42,7 @@ class BattleSimulator(
     private var statistics = BattleStatistics()
 
     init {
+        require(configuration.rulesetVersion in BattleRules.LEGACY_VERSION..BattleRules.CURRENT_VERSION)
         require(configuration.arenaRadius.isFinite() && configuration.arenaRadius > 0f)
         require(configuration.lineupRowSpacing.isFinite() && configuration.lineupRowSpacing > 0f)
         require(configuration.lineupDepthRatio.isFinite() && configuration.lineupDepthRatio in 0f..1f)
@@ -83,17 +85,36 @@ class BattleSimulator(
                     "The innate special must use a SPECIAL technique"
                 }
                 require(source.specialTechniqueId !in source.techniqueIds) { "The innate special is separate from the regular loadout" }
-                val definition = source.copy(techniqueIds = source.techniqueIds.toList())
+                if (enhanced) {
+                    require(source.readinessRegenerationPerSecond.isFinite() && source.readinessRegenerationPerSecond > 0f)
+                    require(source.aiProfile.buffLimit in 0..10)
+                    require(source.aiProfile.preparationPriority.isFinite() && source.aiProfile.preparationPriority in 0f..50f)
+                    require(source.aiProfile.targetSwitchThreshold.isFinite() && source.aiProfile.targetSwitchThreshold in 0f..1f)
+                    require(source.aiProfile.counterChance.isFinite() && source.aiProfile.counterChance in 0f..1f)
+                    require(source.aiProfile.techniqueWeights.all { (id, weight) -> id in source.techniqueIds && weight.isFinite() && weight in 0f..4f })
+                    require(source.counterTechniqueId == null || techniques[source.counterTechniqueId]?.reactionOnly == true)
+                    require(source.signatureTechniqueId == null || source.signatureTechniqueId in source.techniqueIds)
+                    require(source.signaturePowerBonus in 0..12)
+                }
+                // Gson's old array checkpoints bypass Kotlin defaults for newly added fields.
+                val definition = source.copy(techniqueIds = source.techniqueIds.toList(),
+                    aiProfile = if (enhanced) source.aiProfile else BattleAiProfile(profileId = "legacy"))
                 val randomKey = definition.stableRngKey.ifBlank { definition.combatantId }
                 combatants[definition.combatantId] = Fighter(
                     definition = definition,
                     position = clamp(positions[index], definition.collisionRadius),
                     personality = PersonalityBattleProfile.from(definition.personalityType),
+                    profile = if (enhanced) definition.aiProfile.copy(techniqueWeights = definition.aiProfile.techniqueWeights.toMap()) else BattleAiProfile(profileId = "legacy"),
                     scheduleRandom = randomFor(randomKey, "decision-timing"),
                     movementRandom = randomFor(randomKey, "positioning"),
                     reactionRandom = randomFor(randomKey, "guard-reaction"),
                     choiceRandom = randomFor(randomKey, "action-choice"),
-                    combatRandom = randomFor(randomKey, "damage-and-critical")
+                    combatRandom = randomFor(randomKey, "damage-and-critical"),
+                    varianceRandom = randomFor(randomKey, "damage-variance-v3"),
+                    criticalRandom = randomFor(randomKey, "critical-v3"),
+                    statusRandom = randomFor(randomKey, "status-procs-v3"),
+                    counterRandom = randomFor(randomKey, "counter-v3"),
+                    accuracyRandom = randomFor(randomKey, "accuracy-v3")
                 )
             }
         }
@@ -172,6 +193,7 @@ class BattleSimulator(
         if (action is TrainerAction.Defend && action.durationMillis <= 0) return reject("Duração de defesa inválida.")
         if (action is TrainerAction.UseTechnique) {
             val technique = techniques[action.techniqueId] ?: return reject("Técnica inexistente.")
+            if (enhanced && technique.reactionOnly) return reject("Contra-ataques reagem a uma defesa; não são ataques diretos.")
             if (action.techniqueId !in actor.definition.techniqueIds && actor.definition.specialTechniqueId != action.techniqueId && technique != BASIC) {
                 return reject("Esta técnica não pertence ao parceiro.")
             }
@@ -218,7 +240,22 @@ class BattleSimulator(
                     personalityType = def.personalityType,
                     personalityCore = actor.personality.core,
                     threatByCombatant = actor.threat.toMap(),
-                    lastOrderFailure = actor.lastOrderFailure
+                    lastOrderFailure = actor.lastOrderFailure,
+                    readiness = actor.readiness,
+                    readinessRequired = actor.plannedTechniqueId?.let(techniques::get)?.let { readinessRequired(actor, it) } ?: 0f,
+                    buffsRemaining = actor.buffsRemaining,
+                    positioningReplans = actor.positioningReplans,
+                    targetReason = actor.targetReason,
+                    encounterProfileId = actor.profile.profileId,
+                    counterReady = actor.definition.counterTechniqueId?.let(techniques::get)?.let {
+                        enhanced && ready(actor, it) && availableEnergy(actor) >= it.energyCost
+                    } == true,
+                    techniqueUses = actor.techniqueUses.toMap(), guardCount = actor.guardCount,
+                    counterCount = actor.counterCount, targetChanges = actor.targetChanges,
+                    incapacitatedMillis = actor.incapacitatedMillis,
+                    readinessWaitingMillis = actor.readinessWaitingMillis,
+                    meanTargetDistance = if (actor.distanceSamples > 0) (actor.distanceSum / actor.distanceSamples).toFloat() else 0f,
+                    meanReadiness = if (actor.readinessSamples > 0) (actor.readinessSum / actor.readinessSamples).toFloat() else actor.readiness
                 ), def.techniqueIds, def.specialTechniqueId, actor.specialCharge, SPECIAL_CHARGE_MAX,
                 actor.specialCharge - availableSpecialCharge(actor), actor.active?.technique?.kind)
         }
@@ -233,7 +270,7 @@ class BattleSimulator(
                 itemCounts[item.itemId] ?: 0, itemReservations.values.count { it == item.itemId }) }, statistics,
             impacts.values.map { impact -> BattleImpactSnapshot(impact.id, impact.targetId, impact.damage,
                 impact.critical, (impact.expiresAtMillis - elapsedMillis).coerceAtLeast(0L),
-                impact.techniqueId, impact.isSpecial) })
+                    impact.techniqueId, impact.isSpecial) }, rulesetVersion = configuration.rulesetVersion)
     }
 
     fun abandon(): BattleResult {
@@ -258,59 +295,46 @@ class BattleSimulator(
             val regenerated = actor.energyRemainder.toInt()
             actor.energyRemainder -= regenerated
             actor.energy = min(actor.definition.maxEnergy, actor.energy + regenerated)
+            if (enhanced && actor.statuses.none { it.effect.preventsActions }) {
+                val shock = if (actor.statuses.any { it.effect.mechanic == BattleStatusMechanic.SHOCK }) 0.5f else 1f
+                val tempo = actor.statuses.fold(1f) { value, status -> value / status.effect.cooldownMultiplier }
+                    .coerceIn(0.5f, 1.3f)
+                actor.readiness = min(BattleRules.READINESS_MAX, actor.readiness +
+                    actor.definition.readinessRegenerationPerSecond * shock * tempo * STEP / 1000f)
+                if (actor.definition.specialTechniqueId != null) {
+                    actor.specialChargeRemainder += STEP / 800.0
+                    val charge = actor.specialChargeRemainder.toInt()
+                    actor.specialChargeRemainder -= charge
+                    addSpecialCharge(actor, charge)
+                }
+            }
+        }
+        if (enhanced && think) {
+            // Read every target/startup before any actor commits this tick's new action.
+            val eligible = actors.filter { it.health > 0 && it.active == null && it.currentOrder == null &&
+                it.orders.isEmpty() && it.defendUntil <= elapsedMillis && it.knockbackRemainingMillis <= 0 &&
+                it.statuses.none { status -> status.effect.preventsActions } }
+            val targets = eligible.associateWith { chooseEnemy(it) }
+            eligible.forEach { actor ->
+                if (actor.plannedTechniqueId == null && elapsedMillis >= actor.nextDecisionAt) {
+                    planAutonomousAction(actor, targets[actor])
+                } else targets[actor]?.let { tryAutonomousGuard(actor, it) }
+            }
         }
         val impacts = mutableListOf<Pair<Fighter, ActiveTechnique>>()
+        val movementIntents = mutableMapOf<Fighter, BattlePosition>()
         actors.filter { it.health > 0 }.forEach { actor ->
-            if (actor.statuses.any { it.effect.preventsActions }) {
-                transition(actor, CombatantState.STUNNED)
-                return@forEach
-            }
-            if (actor.knockbackRemainingMillis > 0) {
-                val activeMillis = min(STEP, actor.knockbackRemainingMillis)
-                actor.position = clamp(BattlePosition(
-                    actor.position.x + actor.knockbackVelocityX * activeMillis / 1000f,
-                    actor.position.z + actor.knockbackVelocityZ * activeMillis / 1000f
-                ), actor.definition.collisionRadius)
-                actor.knockbackRemainingMillis -= activeMillis
-                transition(actor, if (actor.knockbackRemainingMillis > 0) CombatantState.KNOCKBACK else CombatantState.SELECT_TARGET)
-                if (actor.knockbackRemainingMillis > 0) return@forEach
-            }
-            if (actor.defendUntil > 0 && actor.defendUntil <= elapsedMillis) {
-                actor.defendUntil = 0
-                finishOrder(actor, OrderStatus.COMPLETED)
-                transition(actor, CombatantState.SELECT_TARGET)
-            }
-            processOrders(actor)
-            if (actor.defendUntil > elapsedMillis) {
-                transition(actor, CombatantState.DEFENDING)
-                return@forEach
-            }
-            if (actor.active != null) {
-                progressTechnique(actor, impacts)
-                return@forEach
-            }
-            val movementOrder = actor.currentOrder?.action
-            if (movementOrder == TrainerAction.KeepDistance || movementOrder == TrainerAction.MoveCloser) {
-                val enemy = target(actor, actor.targetId, false)
-                if (enemy == null) finishOrder(actor, OrderStatus.FAILED, "O alvo não está disponível.")
-                else {
-                    val distance = if (movementOrder == TrainerAction.KeepDistance) max(4f, actor.definition.preferredDistance)
-                        else actor.definition.collisionRadius + enemy.definition.collisionRadius + 0.05f
-                    move(actor, enemy, distance, STEP)
-                    if (abs(actor.position.distanceTo(enemy.position) - distance) <= POSITION_EPSILON) {
-                        finishOrder(actor, OrderStatus.COMPLETED)
-                        transition(actor, CombatantState.POSITIONING)
-                    }
+            val observedPosition = actor.position
+            try {
+                advanceFighter(actor, think, impacts)
+            } finally {
+                if (enhanced) {
+                    movementIntents[actor] = actor.position
+                    actor.position = observedPosition
                 }
-                return@forEach
             }
-            if (actor.currentOrder == null && actor.plannedTechniqueId == null && elapsedMillis < actor.nextDecisionAt) {
-                continueAutonomousRead(actor)
-                return@forEach
-            }
-            if (actor.currentOrder == null && think) planAutonomousAction(actor)
-            actor.plannedTechniqueId?.let { techniques[it] }?.let { approachAndExecute(actor, it) }
         }
+        movementIntents.forEach { (actor, position) -> actor.position = position }
         // Commit simultaneous hits together: an opponent's already active hit
         // must not be suppressed simply because its ID sorts after the killer.
         impacts.forEach { (actor, active) ->
@@ -318,7 +342,19 @@ class BattleSimulator(
             else resolveTechnique(actor, active)
         }
         advanceProjectiles()
+        if (enhanced) actors.filter { it.health > 0 }.forEach(::startPendingCounter)
         separateCombatants()
+        if (enhanced) actors.forEach { actor ->
+            if (actor.health > 0) {
+                if (actor.statuses.any { it.effect.preventsActions } || actor.knockbackRemainingMillis > 0) actor.incapacitatedMillis += STEP
+                actor.readinessSum += actor.readiness
+                actor.readinessSamples++
+                target(actor, actor.targetId, false)?.let {
+                    actor.distanceSum += actor.position.distanceTo(it.position)
+                    actor.distanceSamples++
+                }
+            }
+        }
         val allies = actors.any { it.health > 0 && it.definition.side == BattleSide.ALLIED }
         val enemies = actors.any { it.health > 0 && it.definition.side == BattleSide.OPPOSING }
         when {
@@ -327,6 +363,58 @@ class BattleSimulator(
             !enemies -> finish(BattleOutcome.ALLIED_VICTORY)
             elapsedMillis >= configuration.maxDurationMillis -> finish(BattleOutcome.DRAW)
         }
+    }
+
+    private fun advanceFighter(actor: Fighter, think: Boolean, impacts: MutableList<Pair<Fighter, ActiveTechnique>>) {
+        if (actor.statuses.any { it.effect.preventsActions }) {
+            transition(actor, CombatantState.STUNNED)
+            return
+        }
+        if (actor.knockbackRemainingMillis > 0) {
+            val activeMillis = min(STEP, actor.knockbackRemainingMillis)
+            actor.position = clamp(BattlePosition(
+                actor.position.x + actor.knockbackVelocityX * activeMillis / 1000f,
+                actor.position.z + actor.knockbackVelocityZ * activeMillis / 1000f
+            ), actor.definition.collisionRadius)
+            actor.knockbackRemainingMillis -= activeMillis
+            transition(actor, if (actor.knockbackRemainingMillis > 0) CombatantState.KNOCKBACK else CombatantState.SELECT_TARGET)
+            if (actor.knockbackRemainingMillis > 0) return
+        }
+        if (actor.defendUntil > 0 && actor.defendUntil <= elapsedMillis) {
+            actor.defendUntil = 0
+            finishOrder(actor, OrderStatus.COMPLETED)
+            transition(actor, CombatantState.SELECT_TARGET)
+        }
+        processOrders(actor)
+        if (actor.defendUntil > elapsedMillis) {
+            transition(actor, CombatantState.DEFENDING)
+            return
+        }
+        if (actor.active != null) {
+            progressTechnique(actor, impacts)
+            return
+        }
+        val movementOrder = actor.currentOrder?.action
+        if (movementOrder == TrainerAction.KeepDistance || movementOrder == TrainerAction.MoveCloser) {
+            val enemy = target(actor, actor.targetId, false)
+            if (enemy == null) finishOrder(actor, OrderStatus.FAILED, "O alvo não está disponível.")
+            else {
+                val distance = if (movementOrder == TrainerAction.KeepDistance) max(4f, actor.definition.preferredDistance)
+                    else actor.definition.collisionRadius + enemy.definition.collisionRadius + 0.05f
+                move(actor, enemy, distance, STEP)
+                if (abs(actor.position.distanceTo(enemy.position) - distance) <= POSITION_EPSILON) {
+                    finishOrder(actor, OrderStatus.COMPLETED)
+                    transition(actor, CombatantState.POSITIONING)
+                }
+            }
+            return
+        }
+        if (actor.currentOrder == null && actor.plannedTechniqueId == null && elapsedMillis < actor.nextDecisionAt) {
+            continueAutonomousRead(actor)
+            return
+        }
+        if (!enhanced && actor.currentOrder == null && think) planAutonomousAction(actor)
+        actor.plannedTechniqueId?.let(techniques::get)?.let { approachAndExecute(actor, it) }
     }
 
     private fun expireOrders(actor: Fighter) {
@@ -363,6 +451,7 @@ class BattleSimulator(
         when (val action = next.action) {
             is TrainerAction.Defend -> {
                 actor.defendUntil = elapsedMillis + action.durationMillis.coerceAtMost(configuration.maxDurationMillis)
+                if (enhanced) actor.guardCount++
                 transition(actor, CombatantState.DEFENDING)
             }
             TrainerAction.KeepDistance, TrainerAction.MoveCloser -> {
@@ -459,7 +548,7 @@ class BattleSimulator(
             return
         }
         val slow = actor.statuses.filter { it.effect.slowsMovement }.maxOfOrNull { it.effect.magnitude } ?: 0f
-        val movementMultiplier = actor.statuses.fold(1f) { value, status -> value * status.effect.movementMultiplier }
+        val movementMultiplier = movementMultiplier(actor)
         val step = min(distance, actor.definition.movementSpeed * movementMultiplier *
             (1f - slow.coerceIn(0f, 1f)) * STEP / 1000f)
         actor.position = clamp(
@@ -469,9 +558,9 @@ class BattleSimulator(
         transition(actor, CombatantState.POSITIONING)
     }
 
-    private fun planAutonomousAction(actor: Fighter) {
+    private fun planAutonomousAction(actor: Fighter, observedEnemy: Fighter? = chooseEnemy(actor)) {
         actor.roamDestination = null
-        val enemy = chooseEnemy(actor) ?: run {
+        val enemy = observedEnemy ?: run {
             actor.plannedTechniqueId = null
             actor.techniqueScores = emptyMap()
             actor.techniqueScoreComponents = emptyMap()
@@ -480,34 +569,22 @@ class BattleSimulator(
             transition(actor, CombatantState.IDLE)
             return
         }
+        if (enhanced && actor.profile.autonomousSpecial && actor.definition.specialTechniqueId != null &&
+            availableSpecialCharge(actor) >= SPECIAL_CHARGE_MAX) {
+            val special = techniques.getValue(actor.definition.specialTechniqueId)
+            if (ready(actor, special) && availableEnergy(actor) >= special.energyCost && special.commandPointCost == 0) {
+                actor.plannedTechniqueId = special.techniqueId
+                setTarget(actor, enemy.definition.combatantId)
+                actor.lastDecision = "Golpe especial pronto; preparando alcance."
+                return
+            }
+        }
         val ally = chooseAlly(actor)
         val incoming = enemy.active?.takeIf {
             it.phase == Phase.STARTUP && it.targetId == actor.definition.combatantId &&
                 inRange(enemy, actor, it.technique)
         }
-        val personalityGuardChance = incoming?.let {
-            (actor.personality.guardReadBias + lowHpPressure(actor) * 0.16f)
-                .coerceIn(0f, 0.62f) * (it.technique.power / 175f).coerceIn(0.45f, 1.25f)
-        } ?: 0f
-        val shouldAutoGuard = incoming != null && elapsedMillis >= actor.nextAutoGuardAt && when {
-            actor.strategy == BattleStrategy.DEFENSIVE -> true
-            else -> actor.reactionRandom.nextDouble() < personalityGuardChance
-        }
-        if (shouldAutoGuard) {
-            actor.nextAutoGuardAt = elapsedMillis + 3_500L
-            actor.defendUntil = elapsedMillis + 1_000L
-            actor.plannedTechniqueId = null
-            actor.techniqueScores = emptyMap()
-            actor.techniqueScoreComponents = emptyMap()
-            actor.lastDecision = if (actor.strategy == BattleStrategy.DEFENSIVE) {
-                "Antecipou o ataque por estratégia e assumiu defesa."
-            } else {
-                "${actor.definition.personalityType.name} leu o startup e protegeu-se."
-            }
-            setTarget(actor, enemy.definition.combatantId)
-            transition(actor, CombatantState.DEFENDING)
-            return
-        }
+        if (tryAutonomousGuard(actor, enemy)) return
         val candidates = autonomousTechniqueCandidates(actor, ally)
         val energyRatio = if (actor.definition.maxEnergy > 0) {
             (availableEnergy(actor).toFloat() / actor.definition.maxEnergy).coerceIn(0f, 1f)
@@ -523,7 +600,8 @@ class BattleSimulator(
             val distance = actor.position.distanceTo(recipient.position)
             val rangeWindow = tacticalRangeWindow(actor, recipient, technique)
             val preferredRange = rangeWindow.preferred
-            val baseTechniqueScore = technique.power * 0.72f - technique.energyCost * 0.32f -
+            val accuracyFactor = if (enhanced) technique.accuracyPercent / 100f else 1f
+            val baseTechniqueScore = technique.power * 0.72f * accuracyFactor - technique.energyCost * 0.32f -
                 (technique.startupMillis + technique.recoveryMillis) * 0.015f
             val positionScore = when {
                 technique.rangeProfile == TechniqueRangeProfile.SELF ||
@@ -535,6 +613,18 @@ class BattleSimulator(
                 else -> -abs(distance - preferredRange) * 7f
             }
             val repetitionScore = if (technique.techniqueId == actor.lastTechniqueId) -62f else 0f
+            val encounterScore = if (enhanced) {
+                val weight = actor.profile.techniqueWeights[technique.techniqueId] ?: 1f
+                (weight - 1f) * 25f + if (technique.rangeProfile == TechniqueRangeProfile.SELF) {
+                    actor.profile.preparationPriority * (1f - elapsedMillis / 20_000f).coerceIn(0f, 1f)
+                } else 0f
+            } else 0f
+            val crowdScore = if (enhanced && technique.impactShape != TechniqueImpactShape.SINGLE_TARGET) {
+                combatants.values.count { it.health > 0 && it.definition.side != actor.definition.side &&
+                    (technique.impactShape == TechniqueImpactShape.ALL_OPPONENTS || it.position.distanceTo(
+                        if (technique.impactShape == TechniqueImpactShape.AROUND_USER) actor.position else enemy.position
+                    ) <= technique.areaRadius) }.let { (it - 1).coerceAtLeast(0) * 12f }
+            } else 0f
             var supportScore = 0f
             if (isSupport(technique)) {
                 val missingFraction = 1f - recipient.health.toFloat() / recipient.definition.maxHealth
@@ -590,13 +680,19 @@ class BattleSimulator(
                 "strategy" to trainerStrategyScore,
                 "risk" to riskScore
             )
+            if (enhanced) {
+                components["encounter"] = encounterScore
+                components["crowd"] = crowdScore
+            }
             scoreComponents[technique.techniqueId] = components
             technique.techniqueId to components.values.sum()
         }
         actor.techniqueScores = scores
         actor.techniqueScoreComponents = scoreComponents
         val temperature = actor.personality.actionTemperature.coerceIn(18f, 46f)
-        val chosenId = chooseSoftmax(actor, candidates, scores, temperature)?.techniqueId
+        val chosenId = if (enhanced && actor.profile.selectionMode == BattleSelectionMode.WEIGHTED) {
+            chooseEncounterWeighted(actor, candidates, scores)?.techniqueId
+        } else chooseSoftmax(actor, candidates, scores, temperature)?.techniqueId
         val chosen = candidates.firstOrNull { it.techniqueId == chosenId }
         actor.plannedTechniqueId = chosen?.techniqueId
         setTarget(actor, when {
@@ -617,6 +713,44 @@ class BattleSimulator(
                 "estratégia ${components["strategy"]?.toInt() ?: 0}, " +
                 "risco ${components["risk"]?.toInt() ?: 0}; T=${temperature.toInt()})."
         }
+    }
+
+    private fun tryAutonomousGuard(actor: Fighter, enemy: Fighter): Boolean {
+        val incoming = enemy.active?.takeIf { it.phase == Phase.STARTUP &&
+            it.targetId == actor.definition.combatantId && inRange(enemy, actor, it.technique) } ?: return false
+        if (elapsedMillis < actor.nextAutoGuardAt) return false
+        val chance = (actor.personality.guardReadBias + lowHpPressure(actor) * 0.16f)
+            .coerceIn(0f, 0.62f) * (incoming.technique.power / 175f).coerceIn(0.45f, 1.25f)
+        if (actor.strategy != BattleStrategy.DEFENSIVE && actor.reactionRandom.nextDouble() >= chance) return false
+        actor.nextAutoGuardAt = elapsedMillis + 3_500L
+        actor.defendUntil = elapsedMillis + 1_000L
+        if (enhanced) actor.guardCount++
+        actor.plannedTechniqueId = null
+        actor.positioningTechniqueId = null
+        actor.roamDestination = null
+        actor.techniqueScores = emptyMap()
+        actor.techniqueScoreComponents = emptyMap()
+        actor.lastDecision = if (actor.strategy == BattleStrategy.DEFENSIVE) {
+            "Antecipou o ataque por estratégia e assumiu defesa."
+        } else "${actor.definition.personalityType.name} leu o startup e protegeu-se."
+        setTarget(actor, enemy.definition.combatantId)
+        transition(actor, CombatantState.DEFENDING)
+        return true
+    }
+
+    private fun chooseEncounterWeighted(actor: Fighter, candidates: List<TechniqueDefinition>, scores: Map<String, Float>): TechniqueDefinition? {
+        val weights = candidates.map { technique ->
+            val configured = actor.profile.techniqueWeights[technique.techniqueId] ?: 1f
+            technique to configured * exp(((scores[technique.techniqueId] ?: 0f) / 70f).coerceIn(-6f, 6f).toDouble())
+        }
+        val total = weights.sumOf { it.second }
+        if (total <= 0.0) return null
+        var draw = actor.choiceRandom.nextDouble() * total
+        weights.forEach { (technique, weight) ->
+            draw -= weight
+            if (draw < 0.0) return technique
+        }
+        return weights.lastOrNull()?.first
     }
 
     private fun chooseSoftmax(
@@ -652,9 +786,14 @@ class BattleSimulator(
                 !isSupport(it) || (it.healPower > 0 && ally.health < ally.definition.maxHealth) ||
                     it.statusEffects.isNotEmpty()
             }
+            .filter { technique -> !enhanced || !technique.reactionOnly &&
+                (actor.unreachableUntil[technique.techniqueId] ?: 0L) <= elapsedMillis &&
+                (actor.profile.techniqueWeights[technique.techniqueId] ?: 1f) > 0f &&
+                (technique.rangeProfile != TechniqueRangeProfile.SELF || technique.statusEffects.none(::isBuff) || actor.buffsRemaining > 0 &&
+                    technique.statusEffects.any { effect -> actor.statuses.none { it.effect.id == effect.id } }) }
         // Re:Digitize techniques consume MP. The free fallback only prevents a
         // permanent stalemate when no equipped technique can currently run.
-        // Innate specials remain deliberate commands even when their personal gauge is full.
+        // Partner specials are trainer commands; encounter profiles can enable automatic enemy finishers.
         return equippedCandidates.ifEmpty {
             listOf(BASIC).filter { ready(actor, it) && availableEnergy(actor) >= it.energyCost }
         }
@@ -681,6 +820,7 @@ class BattleSimulator(
         if (recipient == null || !ready(actor, technique)) {
             finishOrder(actor, OrderStatus.FAILED, "Alvo ou técnica indisponível.")
             actor.plannedTechniqueId = null
+            if (enhanced) scheduleAutonomousRead(actor)
             return
         }
         val explicit = actor.currentOrder != null
@@ -693,8 +833,38 @@ class BattleSimulator(
         }
         val rangeWindow = tacticalRangeWindow(actor, recipient, technique)
         val distance = actor.position.distanceTo(recipient.position)
+        if (enhanced && actor.positioningTechniqueId != technique.techniqueId) {
+            actor.positioningTechniqueId = technique.techniqueId
+            actor.positioningStartedAt = elapsedMillis
+            actor.positioningProgressAt = elapsedMillis
+            actor.positioningBestError = abs(distance - rangeWindow.preferred)
+            actor.positioningSettled = false
+        }
+        if (enhanced) {
+            val error = abs(distance - rangeWindow.preferred)
+            if (error < actor.positioningBestError - POSITION_EPSILON) {
+                actor.positioningBestError = error
+                actor.positioningProgressAt = elapsedMillis
+            }
+            if (distance in rangeWindow.tacticalMin..rangeWindow.tacticalMax) actor.positioningSettled = true
+        }
+        val hysteresis = if (enhanced && actor.positioningSettled) 0.15f else 0f
         val shouldClaimTacticalRange = technique.rangeProfile.isPositionalProfile() &&
-            distance !in rangeWindow.tacticalMin..rangeWindow.tacticalMax
+            distance !in max(rangeWindow.activationMin, rangeWindow.tacticalMin - hysteresis)..
+                min(rangeWindow.activationMax, rangeWindow.tacticalMax + hysteresis)
+        if (enhanced && (shouldClaimTacticalRange || !inRange(actor, recipient, technique)) &&
+            (elapsedMillis - actor.positioningProgressAt >= BattleRules.POSITIONING_STALL_MILLIS ||
+                elapsedMillis - actor.positioningStartedAt >= BattleRules.POSITIONING_TIMEOUT_MILLIS)) {
+            actor.positioningReplans++
+            actor.unreachableUntil[technique.techniqueId] = elapsedMillis + 2_000L
+            actor.positioningTechniqueId = null
+            emit(BattleEvent.PositioningReplanned(actor.definition.combatantId, technique.techniqueId))
+            finishOrder(actor, OrderStatus.FAILED, "Não foi possível alcançar uma posição válida.")
+            actor.plannedTechniqueId = null
+            actor.lastDecision = "Posicionamento sem progresso; escolhendo outra ação."
+            scheduleAutonomousRead(actor)
+            return
+        }
         if (shouldClaimTacticalRange) {
             actor.lastDecision = "Reposicionando para ${technique.displayName} dentro do alcance."
             val moved = move(actor, recipient, rangeWindow.preferred, STEP)
@@ -704,7 +874,20 @@ class BattleSimulator(
             move(actor, recipient, rangeWindow.preferred, STEP)
             return
         }
+        if (enhanced && actor.readiness < readinessRequired(actor, technique)) {
+            actor.readinessWaitingMillis += STEP
+            actor.lastDecision = "Recuperando prontidão (${actor.readiness.toInt()}/${readinessRequired(actor, technique).toInt()})."
+            if (chargeMode(actor) == BattleChargeMode.FULL && technique.rangeProfile.isPositionalProfile()) {
+                move(actor, recipient, min(rangeWindow.activationMax, rangeWindow.preferred + 0.4f), STEP)
+            } else transition(actor, CombatantState.WAITING)
+            return
+        }
         actor.energy -= technique.energyCost
+        if (enhanced) {
+            actor.readiness = max(BattleRules.READINESS_MIN, actor.readiness - BattleRules.readinessCost(technique))
+            if (technique.rangeProfile == TechniqueRangeProfile.SELF && technique.statusEffects.any(::isBuff) && actor.buffsRemaining > 0) actor.buffsRemaining--
+            actor.positioningTechniqueId = null
+        }
         if (technique.kind == TechniqueKind.SPECIAL) {
             actor.specialCharge = 0
             statistics = statistics.copy(specialsUsed = statistics.specialsUsed + 1)
@@ -714,6 +897,7 @@ class BattleSimulator(
             reservations.remove(actor.currentOrder!!.orderId)
         }
         actor.active = ActiveTechnique(technique, recipient.definition.combatantId)
+        if (enhanced) actor.techniqueUses[technique.techniqueId] = (actor.techniqueUses[technique.techniqueId] ?: 0) + 1
         actor.plannedTechniqueId = null
         if (explicit) actor.lastDecision = "Executando ${technique.displayName} por ordem do treinador."
         transition(actor, if (technique.kind == TechniqueKind.SPECIAL) CombatantState.USING_SPECIAL else CombatantState.ATTACK_STARTUP)
@@ -804,25 +988,22 @@ class BattleSimulator(
         }
         var totalDamage = 0
         val damagedVictims = linkedSetOf<Fighter>()
+        val contactedVictims = if (enhanced) victims.filter { victim ->
+            val hit = technique.accuracyPercent == 100 || actor.accuracyRandom.nextInt(100) < technique.accuracyPercent
+            if (!hit) emit(BattleEvent.TechniqueMissed(actor.definition.combatantId, technique.techniqueId, "O ataque não acertou ${victim.definition.displayName}."))
+            hit
+        } else victims
         repeat(technique.hitCount) {
-            victims.filter { it.health > 0 }.forEach { victim ->
-                val defense = if (victim.defendUntil > elapsedMillis && victim.statuses.none { it.effect.preventsActions }) 0.3 else 1.0
-                val attackMultiplier = actor.statuses.fold(1f) { value, status -> value * status.effect.attackMultiplier }
-                val defenseMultiplier = victim.statuses.fold(1f) { value, status -> value * status.effect.defenseMultiplier }
-                val attributeMultiplier = actor.definition.attribute.damageMultiplierAgainst(victim.definition.attribute)
-                val raw = technique.power.toDouble() * actor.definition.attack * attackMultiplier * attributeMultiplier /
-                    100.0 * actor.combatRandom.nextDouble(0.92, 1.08)
-                val critical = actor.combatRandom.nextDouble() < technique.criticalChance.coerceIn(0f, 1f)
-                val criticalRaw = if (critical) raw * technique.criticalMultiplier else raw
-                val amount = if (technique.power == 0) 0 else
-                    (criticalRaw * 100.0 / (100.0 + victim.definition.defense * defenseMultiplier) * defense).toInt().coerceAtLeast(1)
+            contactedVictims.filter { it.health > 0 }.forEach { victim ->
+                val guarding = victim.defendUntil > elapsedMillis && victim.statuses.none { it.effect.preventsActions }
+                val hit = damageFor(actor, victim, technique, guarding)
+                val critical = hit.critical
+                val amount = hit.damage.damage
                 val damage = min(amount, victim.health)
                 victim.health -= damage
                 totalDamage += damage
                 if (damage > 0) damagedVictims += victim
-                val sourceBaseDamage = if (damage > 0 && defenseMultiplier > 0f) {
-                    (criticalRaw * 100.0 / (100.0 + victim.definition.defense * defenseMultiplier)).toInt()
-                } else amount
+                val sourceBaseDamage = hit.damage.unguardedDamage
                 statistics = statistics.copy(
                     damageDealt = statistics.damageDealt + if (actor.definition.side == BattleSide.ALLIED) damage else 0,
                     damageReceived = statistics.damageReceived + if (victim.definition.side == BattleSide.ALLIED) damage else 0,
@@ -846,19 +1027,97 @@ class BattleSimulator(
                 }
                 if (victim.health == 0) defeat(victim)
                 else {
-                    applyStatuses(victim, technique.statusEffects.map { it.copy(sourceCombatantId = actor.definition.combatantId) })
-                    if (technique.staggerPower > 0 && technique.staggerPower > victim.definition.defense * 0.25f) {
+                    if (!enhanced) applyStatuses(victim, technique.statusEffects.map { it.copy(sourceCombatantId = actor.definition.combatantId) })
+                    if (!enhanced && technique.staggerPower > 0 && technique.staggerPower > victim.definition.defense * 0.25f) {
                         applyStatuses(victim, listOf(BattleStatusEffect("stun", 500L, preventsActions = true)))
                     }
-                    if (technique.knockbackDistance > 0f) applyKnockback(victim, actor, technique.knockbackDistance)
+                    if (!enhanced && technique.knockbackDistance > 0f) applyKnockback(victim, actor, technique.knockbackDistance)
                 }
             }
+        }
+        if (enhanced) contactedVictims.filter { it.health > 0 }.forEach { victim ->
+            queueCounter(victim, actor, technique)
+            applyStatuses(victim, technique.statusEffects.map { it.copy(sourceCombatantId = actor.definition.combatantId) })
+            if (technique.staggerPower > 0 && technique.staggerPower > victim.definition.defense * 0.25f &&
+                victim.defendUntil <= elapsedMillis) {
+                applyStatuses(victim, listOf(BattleStatusEffect("stun", 500L, preventsActions = true,
+                    refreshPolicy = StatusRefreshPolicy.IGNORE)))
+            }
+            if (technique.knockbackDistance > 0f) applyKnockback(victim, actor, technique.knockbackDistance)
         }
         if (totalDamage > 0 && technique.kind != TechniqueKind.SPECIAL) {
             addSpecialCharge(actor, SPECIAL_CHARGE_ON_ATTACK)
             damagedVictims.forEach { addSpecialCharge(it, SPECIAL_CHARGE_ON_HIT_RECEIVED) }
         }
         resolveSpecialOutcome(actor, technique, primary.definition.combatantId, success = totalDamage > 0)
+    }
+
+    private data class ResolvedHit(val damage: BattleDamageResult, val critical: Boolean)
+
+    private fun damageFor(actor: Fighter, victim: Fighter, technique: TechniqueDefinition, guarding: Boolean): ResolvedHit {
+        val attackMultiplier = actor.statuses.fold(1f) { value, status -> value * status.effect.attackMultiplier }
+            .let { if (enhanced) it.coerceIn(0.5f, 1.3f) else it }
+        val defenseMultiplier = victim.statuses.fold(1f) { value, status -> value * status.effect.defenseMultiplier }
+            .let { if (enhanced) it.coerceIn(0.5f, 1.3f) else it }
+        if (!enhanced) {
+            // Preserve the exact v2 floating-point order and RNG consumption for old checkpoints.
+            val raw = technique.power.toDouble() * actor.definition.attack * attackMultiplier *
+                actor.definition.attribute.damageMultiplierAgainst(victim.definition.attribute) / 100.0 *
+                actor.combatRandom.nextDouble(0.92, 1.08)
+            val critical = actor.combatRandom.nextDouble() < technique.criticalChance.coerceIn(0f, 1f)
+            val criticalRaw = if (critical) raw * technique.criticalMultiplier else raw
+            val unguarded = criticalRaw * 100.0 / (100.0 + victim.definition.defense * defenseMultiplier)
+            val amount = if (technique.power == 0) 0 else (unguarded * if (guarding) 0.3 else 1.0).toInt().coerceAtLeast(1)
+            return ResolvedHit(BattleDamageResult(amount, unguarded.toInt()), critical)
+        }
+        val variance = actor.varianceRandom.nextInt(90, 111)
+        val critical = actor.criticalRandom.nextDouble() < technique.criticalChance
+        return ResolvedHit(BattleDamageResolver.resolve(BattleDamageInput(
+            power = technique.power, attack = actor.definition.attack, defense = victim.definition.defense,
+            variancePercent = variance, attackerAttribute = actor.definition.attribute,
+            defenderAttribute = victim.definition.attribute, attackMultiplier = attackMultiplier,
+            defenseMultiplier = defenseMultiplier, criticalMultiplier = if (critical) technique.criticalMultiplier else 1f,
+            guarding = guarding, burned = actor.statuses.any { it.effect.mechanic == BattleStatusMechanic.BURN },
+            frozen = victim.statuses.any { it.effect.mechanic == BattleStatusMechanic.FREEZE },
+            counter = technique.reactionOnly, signaturePowerBonus =
+                if (technique.techniqueId == actor.definition.signatureTechniqueId) actor.definition.signaturePowerBonus else 0,
+            finisher = technique.kind == TechniqueKind.SPECIAL, formula = configuration.damageFormula
+        )), critical)
+    }
+
+    private fun queueCounter(victim: Fighter, attacker: Fighter, incoming: TechniqueDefinition) {
+        if (incoming.reactionOnly || incoming.kind !in listOf(TechniqueKind.BASIC, TechniqueKind.MELEE) ||
+            victim.defendUntil <= elapsedMillis || victim.active != null || victim.pendingCounterTargetId != null ||
+            victim.statuses.any { it.effect.preventsActions }) return
+        val counter = victim.definition.counterTechniqueId?.let(techniques::get) ?: return
+        if (!ready(victim, counter) || availableEnergy(victim) < counter.energyCost ||
+            !inRange(victim, attacker, counter) || victim.readiness <= 0f) return
+        if (victim.counterRandom.nextDouble() < victim.profile.counterChance) {
+            victim.pendingCounterTargetId = attacker.definition.combatantId
+        }
+    }
+
+    private fun startPendingCounter(actor: Fighter) {
+        val targetId = actor.pendingCounterTargetId ?: return
+        actor.pendingCounterTargetId = null
+        val enemy = target(actor, targetId, false) ?: return
+        val counter = actor.definition.counterTechniqueId?.let(techniques::get) ?: return
+        if (actor.active != null || actor.knockbackRemainingMillis > 0 || actor.statuses.any { it.effect.preventsActions } ||
+            !ready(actor, counter) || availableEnergy(actor) < counter.energyCost || !inRange(actor, enemy, counter)) return
+        actor.defendUntil = 0
+        finishOrder(actor, OrderStatus.COMPLETED)
+        actor.plannedTechniqueId = null
+        actor.positioningTechniqueId = null
+        actor.energy -= counter.energyCost
+        actor.readiness = max(BattleRules.READINESS_MIN, actor.readiness - BattleRules.readinessCost(counter))
+        actor.active = ActiveTechnique(counter, targetId)
+        actor.counterCount++
+        actor.techniqueUses[counter.techniqueId] = (actor.techniqueUses[counter.techniqueId] ?: 0) + 1
+        setTarget(actor, targetId)
+        actor.lastDecision = "Defesa convertida em contra-ataque."
+        transition(actor, CombatantState.ATTACK_STARTUP)
+        emit(BattleEvent.CounterTriggered(actor.definition.combatantId, targetId))
+        emit(BattleEvent.TechniqueStarted(actor.definition.combatantId, counter.techniqueId, targetId))
     }
 
     private fun launchProjectile(actor: Fighter, active: ActiveTechnique) {
@@ -969,7 +1228,12 @@ class BattleSimulator(
             BattleItemKind.RESTORE_ENERGY -> min(item.amount, recipient.definition.maxEnergy - recipient.energy).also {
                 recipient.energy += it
             }
-            BattleItemKind.CLEANSE_STATUS -> recipient.statuses.size.also { recipient.statuses.clear() }
+            BattleItemKind.CLEANSE_STATUS -> if (enhanced) {
+                val removable = recipient.statuses.filter { !isBuff(it.effect) }
+                if (removable.any { it.effect.preventsActions }) recipient.controlImmuneUntil = elapsedMillis + BattleRules.CONTROL_IMMUNITY_MILLIS
+                recipient.statuses.removeAll(removable.toSet())
+                removable.size
+            } else recipient.statuses.size.also { recipient.statuses.clear() }
         }
         if (changed <= 0) {
             finishOrder(actor, OrderStatus.FAILED, "O alvo não precisa deste item agora.")
@@ -994,7 +1258,7 @@ class BattleSimulator(
             return false
         }
         val slow = actor.statuses.filter { it.effect.slowsMovement }.maxOfOrNull { it.effect.magnitude } ?: 0f
-        val movementMultiplier = actor.statuses.fold(1f) { value, status -> value * status.effect.movementMultiplier }
+        val movementMultiplier = movementMultiplier(actor)
         val step = min(abs(difference), actor.definition.movementSpeed * movementMultiplier *
             (1f - slow.coerceIn(0f, 1f)) * deltaMillis / 1000f)
         val sign = if (difference > 0) 1f else -1f
@@ -1033,6 +1297,7 @@ class BattleSimulator(
     }
 
     private fun chooseEnemy(actor: Fighter): Fighter? {
+        if (enhanced) return chooseEnemyByPolicy(actor)
         val enemies = combatants.values.filter { it.health > 0 && it.definition.side != actor.definition.side }
         if (actor.focusUntil > elapsedMillis) enemies.firstOrNull { it.definition.combatantId == actor.focusId }?.let { return it }
         val hasRecordedThreat = enemies.any { (actor.threat[it.definition.combatantId] ?: 0L) > 0L }
@@ -1070,6 +1335,52 @@ class BattleSimulator(
             (followsTeamFocus || preferredThreat > currentThreat * switchThreshold + 5)) preferred else current
     }
 
+    private fun chooseEnemyByPolicy(actor: Fighter): Fighter? {
+        val enemies = combatants.values.filter { it.health > 0 && it.definition.side != actor.definition.side }
+        if (actor.focusUntil > elapsedMillis) enemies.firstOrNull { it.definition.combatantId == actor.focusId }?.let {
+            actor.targetReason = "Foco do treinador."
+            return it
+        }
+        val maximumThreat = enemies.maxOfOrNull { actor.threat[it.definition.combatantId] ?: 0L }?.coerceAtLeast(1) ?: return null
+        fun score(enemy: Fighter): Double {
+            val distance = actor.position.distanceTo(enemy.position)
+            val proximity = 1.0 / (1.0 + distance)
+            val threat = (actor.threat[enemy.definition.combatantId] ?: 0L).toDouble() / maximumThreat
+            val vulnerability = 1.0 - enemy.health.toDouble() / enemy.definition.maxHealth
+            val status = if (enemy.statuses.any { !isBuff(it.effect) }) 1.0 else 0.0
+            val coordinated = if (actor.personality.teamWeight >= 1.06f && combatants.values.any {
+                it.health > 0 && it !== actor && it.definition.side == actor.definition.side &&
+                    it.targetId == enemy.definition.combatantId
+            }) 0.15 else 0.0
+            return proximity + coordinated + when (actor.profile.targetPolicy) {
+                BattleTargetPolicy.THREAT -> threat
+                BattleTargetPolicy.CLOSEST -> 0.0
+                BattleTargetPolicy.VULNERABLE -> vulnerability * 0.7 + threat * 0.3
+                BattleTargetPolicy.STATUS -> status * 0.6 + vulnerability * 0.2 + threat * 0.3
+            }
+        }
+        val best = enemies.maxWithOrNull(compareBy<Fighter> { score(it) }.thenByDescending { it.definition.stableRngKey }) ?: return null
+        val current = target(actor, actor.targetId, false)
+        val threshold = actor.profile.targetSwitchThreshold + actor.personality.targetStickiness * 0.15f
+        val selected = if (current != null && current !== best && score(best) < score(current) + threshold) current else best
+        actor.targetReason = "${actor.profile.targetPolicy.name}: alvo válido com limiar de troca (${(threshold * 100).toInt()}%)."
+        return selected
+    }
+
+    private fun readinessRequired(actor: Fighter, technique: TechniqueDefinition): Float {
+        return BattleRules.readinessRequired(chargeMode(actor), technique)
+    }
+
+    private fun chargeMode(actor: Fighter): BattleChargeMode = when (actor.strategy) {
+            BattleStrategy.AGGRESSIVE -> BattleChargeMode.PRESSURE
+            BattleStrategy.CONSERVATIVE -> BattleChargeMode.FULL
+            else -> actor.profile.chargeMode
+    }
+
+    private fun movementMultiplier(actor: Fighter): Float = actor.statuses
+        .fold(1f) { value, status -> value * status.effect.movementMultiplier }
+        .let { if (enhanced) it.coerceIn(0.5f, 1.3f) else it }
+
     private fun chooseAlly(actor: Fighter): Fighter = combatants.values
         .filter { it.health > 0 && it.definition.side == actor.definition.side }
         .minWith(compareBy<Fighter> { it.health.toDouble() / it.definition.maxHealth }.thenBy { it.definition.combatantId })
@@ -1080,6 +1391,10 @@ class BattleSimulator(
     private fun setTarget(actor: Fighter, id: String?) {
         if (actor.targetId == id) return
         actor.targetId = id
+        if (enhanced) {
+            actor.targetChanges++
+            actor.positioningTechniqueId = null
+        }
         emit(BattleEvent.TargetChanged(actor.definition.combatantId, id))
     }
 
@@ -1169,8 +1484,17 @@ class BattleSimulator(
             val activeMillis = min(STEP, status.remaining)
             status.remaining -= activeMillis
             status.damageRemainder += status.effect.damagePerSecond.toDouble() * activeMillis / 1000.0
-            val damage = status.damageRemainder.toInt()
+            var damage = status.damageRemainder.toInt()
             status.damageRemainder -= damage
+            if (enhanced && status.effect.tickIntervalMillis > 0) {
+                status.tickElapsedMillis += activeMillis
+                while (status.tickElapsedMillis >= status.effect.tickIntervalMillis) {
+                    status.tickElapsedMillis -= status.effect.tickIntervalMillis
+                    val percent = actor.statusRandom.nextInt(status.effect.maxHealthPercentPerTickMin,
+                        status.effect.maxHealthPercentPerTickMax + 1)
+                    damage += (actor.definition.maxHealth.toLong() * percent / 100).toInt()
+                }
+            }
             val appliedDamage = min(damage, actor.health).coerceAtLeast(0)
             actor.health = (actor.health - appliedDamage).coerceAtLeast(0)
             if (appliedDamage > 0) {
@@ -1181,7 +1505,10 @@ class BattleSimulator(
                 )
                 source?.let { addThreat(actor, it, appliedDamage) }
             }
-            if (status.remaining <= 0) iterator.remove()
+            if (status.remaining <= 0) {
+                if (enhanced && status.effect.preventsActions) actor.controlImmuneUntil = elapsedMillis + BattleRules.CONTROL_IMMUNITY_MILLIS
+                iterator.remove()
+            }
         }
         if (actor.health == 0) defeat(actor)
     }
@@ -1190,10 +1517,21 @@ class BattleSimulator(
         if (actor.health <= 0) return
         effects.filter { it.durationMillis > 0 }.forEach { effect ->
             val existing = actor.statuses.firstOrNull { it.effect.id == effect.id }
+            if (enhanced) {
+                if (!isBuff(effect) && actor.statuses.any { it.effect.protectsFromStatuses }) return@forEach
+                if (effect.preventsActions && elapsedMillis < actor.controlImmuneUntil) return@forEach
+                if (existing != null && effect.refreshPolicy == StatusRefreshPolicy.IGNORE) return@forEach
+                if (effect.exclusivityGroup != null && actor.statuses.any {
+                    it.effect.id != effect.id && it.effect.exclusivityGroup == effect.exclusivityGroup
+                }) return@forEach
+                if (effect.procChance <= 0f || effect.procChance < 1f && actor.statusRandom.nextDouble() >= effect.procChance) return@forEach
+            }
             if (existing == null) actor.statuses += ActiveStatus(effect, effect.durationMillis)
             else {
                 existing.effect = effect
-                existing.remaining = max(existing.remaining, effect.durationMillis)
+                existing.remaining = if (enhanced && effect.refreshPolicy == StatusRefreshPolicy.REPLACE) effect.durationMillis
+                    else max(existing.remaining, effect.durationMillis)
+                if (enhanced && effect.refreshPolicy == StatusRefreshPolicy.REPLACE) existing.tickElapsedMillis = 0
             }
             emit(BattleEvent.StatusApplied(actor.definition.combatantId, effect.id))
             if (effect.preventsActions) {
@@ -1202,6 +1540,10 @@ class BattleSimulator(
             }
         }
     }
+
+    private fun isBuff(effect: BattleStatusEffect): Boolean = effect.attackMultiplier > 1f ||
+        effect.defenseMultiplier > 1f || effect.movementMultiplier > 1f || effect.cooldownMultiplier < 1f ||
+        effect.protectsFromStatuses
 
     private fun addThreat(actor: Fighter, source: Fighter, amount: Int) {
         if (amount > 0) actor.threat[source.definition.combatantId] = (actor.threat[source.definition.combatantId] ?: 0L) + amount
@@ -1221,6 +1563,7 @@ class BattleSimulator(
         actor.active = null
         actor.defendUntil = 0L
         actor.plannedTechniqueId = null
+        actor.positioningTechniqueId = null
         finishOrder(actor, OrderStatus.CANCELLED, reason)
     }
 
@@ -1303,6 +1646,8 @@ class BattleSimulator(
         require(technique.projectileRadius.isFinite() && technique.projectileRadius >= 0f)
         require(technique.projectileLifetimeMillis in 1..configuration.maxDurationMillis)
         require(technique.hitCount in 1..16)
+        require(technique.accuracyPercent in 0..100)
+        require(technique.readinessCost == null || technique.readinessCost.isFinite() && technique.readinessCost in 0f..255f)
         require(technique.knockbackDistance.isFinite() && technique.knockbackDistance >= 0f)
         require(technique.criticalChance.isFinite() && technique.criticalChance in 0f..1f)
         require(technique.criticalMultiplier.isFinite() && technique.criticalMultiplier >= 1f)
@@ -1315,12 +1660,17 @@ class BattleSimulator(
             require(it.defenseMultiplier.isFinite() && it.defenseMultiplier > 0f)
             require(it.movementMultiplier.isFinite() && it.movementMultiplier > 0f)
             require(it.cooldownMultiplier.isFinite() && it.cooldownMultiplier > 0f)
+            require(it.procChance.isFinite() && it.procChance in 0f..1f)
+            require(it.tickIntervalMillis in 0..configuration.maxDurationMillis)
+            require(it.maxHealthPercentPerTickMin in 0..100 && it.maxHealthPercentPerTickMax in it.maxHealthPercentPerTickMin..100)
+            require(it.maxHealthPercentPerTickMax == 0 || it.tickIntervalMillis > 0)
         }
     }
 
     private fun cooldownDuration(actor: Fighter, technique: TechniqueDefinition): Long =
         (technique.cooldownMillis * actor.definition.techniqueCooldownMultiplier *
-            actor.statuses.fold(1f) { value, status -> value * status.effect.cooldownMultiplier })
+            actor.statuses.fold(1f) { value, status -> value * status.effect.cooldownMultiplier }
+                .let { if (enhanced) it.coerceIn(0.7f, 1.5f) else it })
             .roundToLong()
             .coerceIn(0L, configuration.maxDurationMillis)
 
@@ -1328,16 +1678,45 @@ class BattleSimulator(
         val definition: CombatantDefinition,
         var position: BattlePosition,
         val personality: PersonalityBattleProfile,
+        val profile: BattleAiProfile,
         val scheduleRandom: Random,
         val movementRandom: Random,
         val reactionRandom: Random,
         val choiceRandom: Random,
-        val combatRandom: Random
+        val combatRandom: Random,
+        val varianceRandom: Random,
+        val criticalRandom: Random,
+        val statusRandom: Random,
+        val counterRandom: Random,
+        val accuracyRandom: Random
     ) {
         var health = definition.initialHealth ?: definition.maxHealth
         var energy = definition.initialEnergy ?: definition.maxEnergy
         var energyRemainder = 0.0
         var specialCharge = 0
+        var specialChargeRemainder = 0.0
+        var readiness = BattleRules.READINESS_MAX
+        var buffsRemaining = profile.buffLimit
+        var targetReason = ""
+        var positioningTechniqueId: String? = null
+        var positioningStartedAt = 0L
+        var positioningProgressAt = 0L
+        var positioningBestError = Float.MAX_VALUE
+        var positioningSettled = false
+        var positioningReplans = 0
+        val unreachableUntil = mutableMapOf<String, Long>()
+        var controlImmuneUntil = 0L
+        var pendingCounterTargetId: String? = null
+        val techniqueUses = mutableMapOf<String, Int>()
+        var guardCount = 0
+        var counterCount = 0
+        var targetChanges = 0
+        var incapacitatedMillis = 0L
+        var readinessWaitingMillis = 0L
+        var distanceSum = 0.0
+        var distanceSamples = 0L
+        var readinessSum = 0.0
+        var readinessSamples = 0L
         var state = CombatantState.IDLE
         var strategy = definition.strategy
         var lastDecision = "Aguardando decisão autônoma."
@@ -1373,6 +1752,9 @@ class BattleSimulator(
         var resolved: Boolean = false
     )
     private class ActiveStatus(var effect: BattleStatusEffect, var remaining: Long, var damageRemainder: Double = 0.0)
+    {
+        var tickElapsedMillis = 0L
+    }
     private class ActiveProjectile(
         val id: Long,
         val ownerId: String,
@@ -1407,7 +1789,7 @@ class BattleSimulator(
     )
 
     private companion object {
-        const val STEP = 34L
+        const val STEP = BattleRules.STEP_MILLIS
         const val POSITION_EPSILON = 0.05f
         const val IMPACT_DURATION_MILLIS = BATTLE_IMPACT_LIFETIME_MILLIS
         const val MAX_ACTIVE_IMPACTS = 8

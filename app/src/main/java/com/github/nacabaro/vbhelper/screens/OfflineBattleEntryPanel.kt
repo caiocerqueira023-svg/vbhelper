@@ -22,8 +22,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleAttribute
+import com.github.nacabaro.vbhelper.battle.offline.core.BattleAiProfile
 import com.github.nacabaro.vbhelper.battle.offline.data.TrainingBattleStats
 import com.github.nacabaro.vbhelper.battle.offline.data.GenericTechniqueCatalog
+import com.github.nacabaro.vbhelper.battle.offline.data.EncounterBattleProfiles
 import com.github.nacabaro.vbhelper.battle.offline.data.BattleParticipantProfile
 import com.github.nacabaro.vbhelper.battle.offline.data.BattleStatSourceScale
 import com.github.nacabaro.vbhelper.battle.offline.data.VitalBattleProfile
@@ -65,6 +67,7 @@ data class OfflineBattleParticipant(
     val initialEnergy: Int? = null,
     /** Local species key for wild participants; stored partners use character.charId. */
     val cardCharacterId: Long? = null,
+    val aiProfile: BattleAiProfile = BattleAiProfile(),
     val statSourceScale: BattleStatSourceScale = when (vitalStats?.scale) {
         VitalStatScale.DIM -> BattleStatSourceScale.CARD_DIM
         VitalStatScale.BEM -> BattleStatSourceScale.CARD_BEM
@@ -176,6 +179,7 @@ fun assetOfflineBattleParticipant(
     attribute: BattleAttribute = BattleAttribute.NONE,
     extractedData: ExtractedBattleCharacter? = null
 ): OfflineBattleParticipant {
+    val encounter = EncounterBattleProfiles.wild(characterId)
     val extracted = extractedData?.takeIf {
         it.characterId.equals(characterId, ignoreCase = true) && it.phase in 3..6 && it.hasAnyUsableStats
     }
@@ -200,6 +204,8 @@ fun assetOfflineBattleParticipant(
         attribute = attribute,
         stableRngKey = "asset:$characterId:profile-v1",
         personalityType = DigimonPersonalityType.FRIENDLY,
+        techniqueIds = encounter.techniqueIds,
+        aiProfile = encounter.ai.copy(profileId = "arena:${encounter.ai.profileId}", autonomousSpecial = false),
         statSourceScale = if (vitalProfile != null) {
             BattleStatSourceScale.ARENA_EXTRACTED
         } else {

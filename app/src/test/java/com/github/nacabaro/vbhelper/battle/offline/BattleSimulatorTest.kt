@@ -434,7 +434,7 @@ class BattleSimulatorTest {
     }
 
     @Test fun everyGenericTechniqueCanReachAndResolveItsDeclaredGeometry() {
-        GenericTechniqueCatalog.battleDefinitions.filter { it.kind != TechniqueKind.SPECIAL }.forEach { technique ->
+        GenericTechniqueCatalog.battleDefinitions.filter { it.kind != TechniqueKind.SPECIAL && !it.reactionOnly }.forEach { technique ->
             val attacker = fighter("a", BattleSide.ALLIED, listOf(technique.techniqueId)).copy(
                 maxEnergy = 1_000,
                 decisionDelayMinMillis = 30_000L,

@@ -30,6 +30,32 @@ switching to Home, Storage, Dex, Battle, and Settings during animated transition
 The World destination's entry owns its saved state throughout the outgoing frame;
 the test requires Android execution to verify the former missing-back-stack crash.
 
+## Attribute-only DW1-inspired offline battle (ruleset 3)
+
+Mechanics and source provenance are documented in `OFFLINE_BATTLE_DW1_IMPLEMENTATION.md`.
+
+```powershell
+.\gradlew.bat :app:testIntegrityCheckUnitTest --offline --console=plain --max-workers=2 --tests "com.github.nacabaro.vbhelper.battle.offline.*" --tests "com.github.nacabaro.vbhelper.world.ecosystem.NpcBattle*Test" --tests "com.github.nacabaro.vbhelper.world.RadarBattleFlowTest"
+.\gradlew.bat test :app:lintDebug :app:assembleDebug :app:compileIntegrityCheckAndroidTestKotlin --offline --console=plain --max-workers=2
+```
+
+`Dw1BattleMechanicsTest` checks reference damage/rounding/caps, the attribute triangle,
+power-dependent readiness, weighted eligibility, stable arena profiles, defensive
+reaction during observation, percent-HP ticks, protection/exclusivity, bounded buffs,
+replanning without out-of-range damage/resource spending, reactive Counter, accuracy,
+purpose-specific RNG, and control recovery. `NpcBattleVersionTest` verifies exact
+fixed-step replay of new envelopes and legacy arrays with absent new fields, pinned
+configuration/catalog/ruleset, seed validation, and unsupported-version rejection.
+
+`Dw1BattleBalanceMatrixTest` runs 1,000 paired seeds per stage (12,000 battles total),
+checking mirror win rates, side swaps, timeouts, duration tails, and incapacitation.
+Latest full-app evidence: **429 cases, zero failures, three existing private-fixture
+skips**; root reader tests, lint, debug assembly, and Android-test compilation passed.
+The mirror matrix measured 47.53–51.58% decided win rates, zero paired side difference,
+zero timeouts, p50 38.28–40.70s, and p95 48.65–51.41s. Double KOs were 2.5–5.0% by
+stage and remain reported separately. Android runtime/renderer acceptance is not
+established by compilation.
+
 ## Card evolution chart (build checks only)
 
 Focused commands, from the repository root in PowerShell:

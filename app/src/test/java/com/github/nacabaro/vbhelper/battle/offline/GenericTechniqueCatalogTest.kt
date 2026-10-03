@@ -60,7 +60,8 @@ class GenericTechniqueCatalogTest {
         val regular = techniques.filter { it.kind != TechniqueKind.SPECIAL }
         val special = techniques.single { it.kind == TechniqueKind.SPECIAL }
 
-        assertEquals(56, techniques.size)
+        assertEquals(57, techniques.size)
+        assertEquals(1, techniques.count { it.reactionOnly })
         assertTrue(techniques.all { it.techniqueId.startsWith("generic_") && it.element == null })
         assertFalse(techniques.any { it.techniqueId.startsWith("practice_") })
         assertTrue(regular.any { it.rangeProfile == TechniqueRangeProfile.CLOSE })

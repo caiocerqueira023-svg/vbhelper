@@ -626,7 +626,8 @@ fun OfflineTrainingBattleScreen(
                 Column(Modifier.heightIn(max = 540.dp).verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("CP ${snapshot.commandPoints}/${snapshot.maxCommandPoints} · reservado ${snapshot.reservedCommandPoints} · projéteis ${snapshot.projectiles.size} · eventos ${snapshot.eventCount}",
-                        style = MaterialTheme.typography.bodySmall)
+                         style = MaterialTheme.typography.bodySmall)
+                    Text("Regras v${snapshot.rulesetVersion}", style = MaterialTheme.typography.bodySmall)
                     members.forEach { member ->
                         Surface(color = DeepPurpleBgAlt, shape = CutCornerShape(5.dp),
                             border = BorderStroke(1.dp, SurfaceStroke)) {
@@ -640,6 +641,10 @@ fun OfflineTrainingBattleScreen(
                                 Text("Personalidade: ${member.debug.personalityType?.name ?: "FRIENDLY"} · núcleo ${member.debug.personalityCore?.name ?: "—"}",
                                     color = TextSecondaryOnDark, style = MaterialTheme.typography.bodySmall)
                                 Text("Técnica: ${member.activeTechniqueId?.let { techniqueNames[it] ?: it } ?: "nenhuma"} · energia ${member.energy}/${member.maxEnergy} · reservada ${member.reservedEnergy}",
+                                     color = TextSecondaryOnDark, style = MaterialTheme.typography.bodySmall)
+                                Text("Prontidão ${member.debug.readiness.toInt()}/100 · necessária ${member.debug.readinessRequired.toInt()} · buffs ${member.debug.buffsRemaining} · contra-ataque ${if (member.debug.counterReady) "pronto" else "indisponível"}",
+                                    color = TextSecondaryOnDark, style = MaterialTheme.typography.bodySmall)
+                                Text("Perfil ${member.debug.encounterProfileId} · reposicionamentos ${member.debug.positioningReplans} · ${member.debug.targetReason}",
                                     color = TextSecondaryOnDark, style = MaterialTheme.typography.bodySmall)
                                 if (member.debug.techniqueScores.isNotEmpty()) {
                                     Text("Pontuações: ${member.debug.techniqueScores.entries.joinToString { (id, score) -> "${techniqueNames[id] ?: id}=${score.toInt()}" }}",
@@ -1990,6 +1995,8 @@ private fun eventSummary(snapshot: BattleSnapshot, fighters: Map<String, BattleF
         is BattleEvent.OrderChanged -> "Ordem ${event.update.status.name.lowercase()}: ${event.update.reason ?: "parceiro"}"
         is BattleEvent.StatusApplied -> "Status ${event.statusId} aplicado."
         is BattleEvent.StateChanged, is BattleEvent.TargetChanged -> "Os parceiros estão reposicionando no Coliseu."
+        is BattleEvent.CounterTriggered -> "${name(event.combatantId)} respondeu com um contra-ataque."
+        is BattleEvent.PositioningReplanned -> "${name(event.combatantId)} está buscando outra posição."
         is BattleEvent.BattleEnded -> outcomeLabel(event.result.outcome)
     }
 }

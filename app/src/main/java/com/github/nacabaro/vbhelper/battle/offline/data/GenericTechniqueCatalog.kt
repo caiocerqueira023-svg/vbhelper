@@ -5,6 +5,8 @@ import com.github.nacabaro.vbhelper.battle.offline.core.TechniqueDefinition
 import com.github.nacabaro.vbhelper.battle.offline.core.TechniqueImpactShape
 import com.github.nacabaro.vbhelper.battle.offline.core.TechniqueKind
 import com.github.nacabaro.vbhelper.battle.offline.core.TechniqueRangeProfile
+import com.github.nacabaro.vbhelper.battle.offline.core.BattleStatusMechanic
+import com.github.nacabaro.vbhelper.battle.offline.core.StatusRefreshPolicy
 import kotlin.math.roundToInt
 
 /** Neutral tactical families. They deliberately do not represent elemental natures. */
@@ -158,7 +160,8 @@ object GenericTechniqueCatalog {
 
     val specialTechniqueId: String = "generic_tactics_system_lock"
 
-    val battleDefinitions: List<TechniqueDefinition> = definitions.map { definition ->
+    /** Frozen v2 catalog used by array-format radar checkpoints. */
+    val legacyBattleDefinitions: List<TechniqueDefinition> = definitions.map { definition ->
         if (definition.techniqueId == specialTechniqueId) definition.copy(
             kind = TechniqueKind.SPECIAL,
             displayName = "Ruptura inata",
@@ -180,17 +183,63 @@ object GenericTechniqueCatalog {
         ) else definition
     }
 
+    const val counterTechniqueId = "generic_counter_reaction"
+
+    private val counter = TechniqueDefinition(
+        counterTechniqueId, "Contra-ataque", TechniqueKind.MELEE, power = 65,
+        energyCost = 25, maxRange = 2.5f, startupMillis = 170L, activeMillis = 100L,
+        recoveryMillis = 450L, cooldownMillis = 3_500L, criticalChance = 0f,
+        attackVisual = "small", reactionOnly = true, readinessCost = 50f
+    )
+
+    val battleDefinitions: List<TechniqueDefinition> = legacyBattleDefinitions.map { technique ->
+        val effects = technique.statusEffects.map { effect ->
+            when (effect.id) {
+                "decode_poison" -> effect.copy(damagePerSecond = 0f, procChance = 0.45f,
+                    tickIntervalMillis = 1_000L, maxHealthPercentPerTickMin = 1,
+                    maxHealthPercentPerTickMax = 3, refreshPolicy = StatusRefreshPolicy.IGNORE,
+                    exclusivityGroup = "persistent_ailment", mechanic = BattleStatusMechanic.POISON)
+                "decode_stun" -> effect.copy(procChance = 0.40f, refreshPolicy = StatusRefreshPolicy.IGNORE)
+                "decode_paralysis", "decode_liquid_crystalization" ->
+                    effect.copy(procChance = 0.30f, refreshPolicy = StatusRefreshPolicy.IGNORE)
+                "decode_confusion", "decode_noise", "decode_slow" ->
+                    effect.copy(procChance = 0.45f, refreshPolicy = StatusRefreshPolicy.IGNORE)
+                else -> effect.copy(refreshPolicy = StatusRefreshPolicy.IGNORE)
+            }
+        }
+        val additional = when (technique.techniqueId) {
+            "generic_pressure_short_burst" -> listOf(BattleStatusEffect("battle_burn", 4_500L,
+                procChance = 0.25f, tickIntervalMillis = 1_000L, maxHealthPercentPerTickMin = 1,
+                maxHealthPercentPerTickMax = 3, refreshPolicy = StatusRefreshPolicy.IGNORE,
+                exclusivityGroup = "persistent_ailment", mechanic = BattleStatusMechanic.BURN))
+            "generic_precision_calibrated_strike" -> listOf(BattleStatusEffect("battle_freeze", 4_000L,
+                procChance = 0.25f, refreshPolicy = StatusRefreshPolicy.IGNORE,
+                exclusivityGroup = "persistent_ailment", mechanic = BattleStatusMechanic.FREEZE))
+            "generic_chaos_shock_burst" -> listOf(BattleStatusEffect("battle_shock", 4_000L,
+                procChance = 0.30f, refreshPolicy = StatusRefreshPolicy.IGNORE,
+                exclusivityGroup = "persistent_ailment", mechanic = BattleStatusMechanic.SHOCK))
+            else -> emptyList()
+        }
+        technique.copy(statusEffects = effects + additional)
+    } + counter
+
+    fun definitionsForVersion(version: Int): List<TechniqueDefinition> = when (version) {
+        2 -> legacyBattleDefinitions
+        OfflineBattleRuleset.CATALOG_VERSION -> battleDefinitions
+        else -> throw IllegalArgumentException("Unsupported battle catalog version: $version")
+    }
+
     val selectableEntries: List<GenericTechniqueEntry> = entries
         .filterNot { it.definition.techniqueId == specialTechniqueId }
+        .map { it.copy(definition = definition(it.definition.techniqueId)) }
 
     val trainingTechniques: List<TechniqueDefinition> = defaultTechniqueIds.map(::definition) +
         battleDefinitions.single { it.techniqueId == specialTechniqueId }
     val trainingTechniqueIds: List<String> = defaultTechniqueIds
     val trainingSpecialTechniqueId: String = specialTechniqueId
 
-    fun definition(techniqueId: String): TechniqueDefinition = entries
-        .firstOrNull { it.definition.techniqueId == techniqueId }
-        ?.definition
+    fun definition(techniqueId: String): TechniqueDefinition = battleDefinitions
+        .firstOrNull { it.techniqueId == techniqueId }
         ?: error("Unknown generic technique: $techniqueId")
 
     private fun entry(

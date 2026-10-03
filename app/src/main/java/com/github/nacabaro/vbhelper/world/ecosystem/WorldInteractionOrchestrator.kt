@@ -129,14 +129,7 @@ class WorldInteractionOrchestrator(private val db: AppDatabase, private val chat
             if (event.type == InteractionType.BATTLE && event.state == InteractionState.ACTIVE && tick >= event.nextActionTick) {
                 val record = dao.getNpcBattle(event.id) ?: createBattle(event,tick)
                 val simulator = battles.getOrPut(event.id) {
-                    val definitions = gson.fromJson(record.definitionsJson, Array<CombatantDefinition>::class.java).toList()
-                    BattleSimulator(BattleConfiguration(randomSeed=event.seed,defaultPaused=false,arenaRadius=8f),
-                        BattleTeam("allies",BattleSide.ALLIED,definitions.filter { it.side==BattleSide.ALLIED }),
-                        BattleTeam("opponents",BattleSide.OPPOSING,definitions.filter { it.side==BattleSide.OPPOSING }),
-                        GenericTechniqueCatalog.battleDefinitions).also { sim ->
-                        var elapsed=0L
-                        while(elapsed<record.elapsedMillis && sim.snapshot().result==null) { sim.advance(50); elapsed+=50 }
-                    }
+                    NpcBattleAdapter.recover(event, record)
                 }
                 repeat(6) { simulator.advance(250) }
                 val state = simulator.snapshot()
@@ -199,10 +192,12 @@ class WorldInteractionOrchestrator(private val db: AppDatabase, private val chat
                 ?: com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityType.FRIENDLY)
             TrainingBattleFactory.definition(TrainingParticipantInput(instanceId=p.individualId,externalCharacterId=participant.externalCharacterId,
                 displayName=participant.displayName,stage=participant.stage,maxHealth=participant.maxHp,attack=participant.attackPower,
-                vitalStats=participant.vitalStats,attribute=participant.attribute,stableRngKey=p.individualId,personalityType=participant.personalityType),
+                vitalStats=participant.vitalStats,attribute=participant.attribute,stableRngKey=p.individualId,personalityType=participant.personalityType,
+                techniqueIds=participant.techniqueIds,aiProfile=participant.aiProfile),
                 if(p.side==InteractionSide.ALLIED)BattleSide.ALLIED else BattleSide.OPPOSING)
         }
-        val empty=WorldNpcBattle(event.id,gson.toJson(definitions),startTick=tick,nextRoundTick=tick)
+        val empty=WorldNpcBattle(event.id,NpcBattleAdapter.encode(definitions,
+            BattleConfiguration(randomSeed=event.seed,defaultPaused=false,arenaRadius=8f)),startTick=tick,nextRoundTick=tick)
         val record=empty.copy(snapshotJson=gson.toJson(NpcBattleSummary.from(NpcBattleAdapter.recover(event,empty).snapshot())))
         dao.saveNpcBattle(record)
         return record

@@ -167,7 +167,8 @@ object TrainingBattlePresentationFactory {
             personalityType = personalityType,
             techniqueIds = techniqueIds,
             initialHealth = initialHealth,
-            initialEnergy = initialEnergy
+            initialEnergy = initialEnergy,
+            aiProfile = aiProfile
         )
     }
 

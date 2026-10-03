@@ -6,6 +6,7 @@ import com.github.nacabaro.vbhelper.battle.offline.core.BattleOutcome
 import com.github.nacabaro.vbhelper.battle.offline.data.BattleStatSourceScale
 import com.github.nacabaro.vbhelper.battle.offline.data.VitalBattleProfile
 import com.github.nacabaro.vbhelper.battle.offline.data.VitalStatScale
+import com.github.nacabaro.vbhelper.battle.offline.data.EncounterBattleProfiles
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityGenerator
 import com.github.nacabaro.vbhelper.dtos.WorldDtos
 import com.github.nacabaro.vbhelper.screens.OfflineBattleParticipant
@@ -51,6 +52,7 @@ fun worldRadarBattleParticipant(spawn: WorldDtos.SpawnWithDetails): OfflineBattl
         random = Random(spawn.individualId.hashCode())
     ).personalityType
     val externalCharacterId = spawn.externalCharacterId
+    val encounter = EncounterBattleProfiles.wild(externalCharacterId)
 
     return OfflineBattleParticipant(
         character = null,
@@ -72,6 +74,8 @@ fun worldRadarBattleParticipant(spawn: WorldDtos.SpawnWithDetails): OfflineBattl
         individualId = spawn.individualId,
         stableRngKey = spawn.individualId,
         personalityType = personality,
+        techniqueIds = encounter.techniqueIds,
+        aiProfile = encounter.ai,
         spriteSet = OfflineBattleSpriteSet(
             idle = spawn.spriteIdle,
             idle2 = spawn.spriteIdle2,

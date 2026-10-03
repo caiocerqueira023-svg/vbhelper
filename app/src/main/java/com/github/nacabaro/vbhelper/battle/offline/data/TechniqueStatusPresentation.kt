@@ -10,17 +10,21 @@ enum class TechniqueStatusTone {
 
 data class TechniqueStatusLabel(
     val name: String,
-    val tone: TechniqueStatusTone
+    val tone: TechniqueStatusTone,
+    val chancePercent: Int = 100
 )
 
 /** User-facing Decode terminology for the neutral VBHelper technique catalogue. */
 object TechniqueStatusPresentation {
     fun forTechnique(technique: TechniqueDefinition): List<TechniqueStatusLabel> = technique.statusEffects
-        .mapNotNull(::forEffect)
+        .mapNotNull { effect -> forEffect(effect)?.copy(chancePercent = (effect.procChance * 100).toInt()) }
         .distinctBy { it.name }
 
     private fun forEffect(effect: BattleStatusEffect): TechniqueStatusLabel? = when (effect.id) {
         "decode_poison" -> TechniqueStatusLabel("Veneno", TechniqueStatusTone.AILMENT)
+        "battle_burn" -> TechniqueStatusLabel("Queimadura", TechniqueStatusTone.AILMENT)
+        "battle_freeze" -> TechniqueStatusLabel("Congelamento", TechniqueStatusTone.AILMENT)
+        "battle_shock" -> TechniqueStatusLabel("Choque", TechniqueStatusTone.AILMENT)
         "decode_paralysis" -> TechniqueStatusLabel("Paralisia", TechniqueStatusTone.AILMENT)
         "decode_stun" -> TechniqueStatusLabel("Stun", TechniqueStatusTone.AILMENT)
         "decode_slow" -> TechniqueStatusLabel("Slow", TechniqueStatusTone.AILMENT)

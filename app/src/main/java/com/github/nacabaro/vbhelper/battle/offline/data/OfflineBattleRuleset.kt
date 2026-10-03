@@ -2,7 +2,8 @@ package com.github.nacabaro.vbhelper.battle.offline.data
 
 /** Frozen source references; changing them requires a ruleset version bump and balance review. */
 object OfflineBattleRuleset {
-    const val VERSION = 2
+    const val VERSION = com.github.nacabaro.vbhelper.battle.offline.core.BattleRules.CURRENT_VERSION
+    const val CATALOG_VERSION = 3
 
     /**
      * Stage sets non-overlapping tempo bands. HP/BP/AP select a position inside
