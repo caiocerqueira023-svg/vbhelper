@@ -15,7 +15,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 // "Vital Arena" dark theme - the app's signature look.
-private val VitalArenaDarkColorScheme = darkColorScheme(
+internal val VitalArenaDarkColorScheme = darkColorScheme(
     primary = VitalPurpleBright,
     onPrimary = SpaceBlack,
     primaryContainer = VitalPurpleDim,
@@ -57,7 +57,7 @@ private val VitalArenaDarkColorScheme = darkColorScheme(
 
 // Kept mostly in sync with the dark scheme so the app never loses its
 // signature dark-purple identity even if a caller asks for "light".
-private val VitalArenaLightColorScheme = lightColorScheme(
+internal val VitalArenaLightColorScheme = lightColorScheme(
     primary = VitalPurple,
     onPrimary = TextPrimaryOnDark,
     primaryContainer = VitalPurpleDim,
@@ -78,6 +78,10 @@ private val VitalArenaLightColorScheme = lightColorScheme(
     onSurface = TextPrimaryOnDark,
     surfaceVariant = SurfaceElevatedPurple,
     onSurfaceVariant = TextSecondaryOnDark,
+    surfaceContainer = SurfaceDeepPurple,
+    surfaceContainerLow = DeepPurpleBgAlt,
+    surfaceContainerLowest = SpaceBlack,
+    surfaceContainerHigh = SurfaceElevatedPurple,
     surfaceContainerHighest = SurfaceHighlightPurple,
 
     outline = SurfaceStroke,

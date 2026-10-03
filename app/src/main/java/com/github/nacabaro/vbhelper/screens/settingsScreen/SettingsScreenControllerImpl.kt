@@ -3,15 +3,13 @@ package com.github.nacabaro.vbhelper.screens.settingsScreen
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import android.net.Uri
-import android.provider.OpenableColumns
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
-import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.domain.card.OfficialStatus
-import com.github.nacabaro.vbhelper.screens.settingsScreen.controllers.CardImportController
+import com.github.nacabaro.vbhelper.screens.settingsScreen.controllers.CardImportViewModel
 import com.github.nacabaro.vbhelper.screens.settingsScreen.controllers.DatabaseManagementController
 import com.github.nacabaro.vbhelper.source.ApkSecretsImporter
 import com.github.nacabaro.vbhelper.source.LlmSettingsRepository
@@ -27,11 +25,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.withContext
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.createSavedStateHandle
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.chat.ChatApiProvider
 import com.github.nacabaro.vbhelper.source.LlmProviderSettings
@@ -48,7 +47,10 @@ class SettingsScreenControllerImpl(
     private val application = context.applicationContext as VBHelper
     private val languagePreferences = context.getSharedPreferences("app_preferences", 0)
     private val secretsRepository: SecretsRepository = application.container.dataStoreSecretsRepository
-    private val database: AppDatabase = application.container.db
+    private val cardImports = ViewModelProvider(context, viewModelFactory {
+        initializer { CardImportViewModel(application, createSavedStateHandle()) }
+    })[CardImportViewModel::class.java]
+    val cardImportState get() = cardImports.state
     private val databaseManagementController = DatabaseManagementController(
         componentActivity = context,
         application = application
@@ -67,12 +69,7 @@ class SettingsScreenControllerImpl(
     val currentTamerName: Flow<String> = llmSettingsRepository.tamerName
     private val speciesSettingsRepository: SpeciesSettingsRepository = application.container.speciesSettingsRepository
     val promptOriginAtImportTime: Flow<Boolean> = speciesSettingsRepository.promptOriginAtImportTime
-    val pendingCardOriginPrompts: StateFlow<List<PendingCardOriginPrompt>> =
-        speciesSettingsRepository.pendingCardOriginPrompts.stateIn(
-            context.lifecycleScope,
-            SharingStarted.Eagerly,
-            emptyList()
-        )
+    val pendingCardOriginPrompts: StateFlow<List<PendingCardOriginPrompt>> = cardImports.pendingOrigins
 
     private val _showLlmDialog = MutableStateFlow(false)
     val showLlmDialog: StateFlow<Boolean> = _showLlmDialog
@@ -91,9 +88,6 @@ class SettingsScreenControllerImpl(
     val currentFont: StateFlow<AppFont> = _currentFont.asStateFlow()
 
     init {
-        context.lifecycleScope.launch(Dispatchers.IO) {
-            speciesSettingsRepository.recoverInterruptedCardOriginImports()
-        }
         filePickerLauncher = context.registerForActivityResult(
             ActivityResultContracts.CreateDocument("application/octet-stream")
         ) { uri ->
@@ -132,15 +126,9 @@ class SettingsScreenControllerImpl(
         }
 
         filePickerCard = context.registerForActivityResult(
-            ActivityResultContracts.OpenDocument()
-        ) { uri ->
-            if (uri != null) {
-                importCard(uri)
-            } else {
-                context.runOnUiThread {
-                    Toast.makeText(context, context.getString(R.string.ui_card_cancelled), Toast.LENGTH_SHORT).show()
-                }
-            }
+            ActivityResultContracts.OpenMultipleDocuments()
+        ) { uris ->
+            cardImports.start(uris)
         }
     }
 
@@ -157,8 +145,19 @@ class SettingsScreenControllerImpl(
     }
 
     override fun onClickImportCard() {
+        if (cardImportState.value.isRunning) return
+        cardImports.preparePicker(alwaysAskForNewCards = false)
         filePickerCard.launch(arrayOf("*/*"))
     }
+
+    fun onClickImportCardsFromDex() {
+        if (cardImportState.value.isRunning) return
+        cardImports.preparePicker(alwaysAskForNewCards = true)
+        filePickerCard.launch(arrayOf("*/*"))
+    }
+
+    fun stopCardImport() = cardImports.stop()
+    fun dismissCardImportResult() = cardImports.dismissResult()
 
     override fun onClickConfigureLlm() {
         _showLlmDialog.value = true
@@ -242,38 +241,7 @@ class SettingsScreenControllerImpl(
         }
     }
 
-    fun setPendingCardOrigin(status: OfficialStatus) {
-        val prompt = pendingCardOriginPrompts.value.firstOrNull { it.selectedStatus == null } ?: return
-        context.lifecycleScope.launch(Dispatchers.IO) {
-            val isImporting = speciesSettingsRepository.selectPendingCardOrigin(prompt.cardId, status)
-            if (isImporting == false) {
-                applyCardOrigin(prompt.cardId, status)
-            }
-        }
-    }
-
-    private suspend fun applyCardOrigin(cardId: Long, status: OfficialStatus) {
-        database.cardDao().updateOfficialStatus(cardId, status)
-        val matchedCount = if (status == OfficialStatus.OFFICIAL) {
-            application.container.speciesRepository.matchOfficialSpeciesForCard(cardId)
-        } else {
-            0
-        }
-        val message = when (status) {
-            OfficialStatus.OFFICIAL -> if (matchedCount > 0) {
-                "$matchedCount species recognized automatically!"
-            } else {
-                "No species were recognized in the official database."
-            }
-            OfficialStatus.CUSTOM -> "Card marked as custom."
-            OfficialStatus.UNKNOWN -> ""
-        }
-        if (message.isNotEmpty()) {
-            withContext(Dispatchers.Main) {
-                Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-            }
-        }
-    }
+    fun setPendingCardOrigin(cardId: Long, status: OfficialStatus) = cardImports.selectOrigin(cardId, status)
 
     fun setLanguage(languageTag: String) {
         languagePreferences.edit()
@@ -296,76 +264,6 @@ class SettingsScreenControllerImpl(
             .apply()
         _currentFont.value = appFont
         context.recreate()
-    }
-
-    private fun importCard(uri: Uri) {
-        context.lifecycleScope.launch(Dispatchers.IO) {
-            var pendingPromptCardId: Long? = null
-            try {
-                val askForOrigin = speciesSettingsRepository.promptOriginAtImportTime.first()
-                val contentResolver = context.contentResolver
-                val inputStream = contentResolver.openInputStream(uri)
-                val sourceFileName = contentResolver.query(
-                    uri,
-                    arrayOf(OpenableColumns.DISPLAY_NAME),
-                    null,
-                    null,
-                    null
-                )?.use { cursor ->
-                    val displayNameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-                    if (displayNameIndex >= 0 && cursor.moveToFirst()) {
-                        cursor.getString(displayNameIndex)
-                    } else {
-                        null
-                    }
-                }
-
-                val importedCardId = inputStream.use { fileReader ->
-                    // Queue the origin choice as soon as the card exists. Its actions stay
-                    // unavailable until all character, evolution, and mission data is imported.
-                    val cardImportController = CardImportController(
-                        database,
-                        speciesRepository = if (askForOrigin) null else application.container.speciesRepository
-                    )
-                    cardImportController.importCard(
-                        fileReader,
-                        sourceFileName
-                    ) { cardId, cardName ->
-                        if (askForOrigin) {
-                            pendingPromptCardId = cardId
-                            speciesSettingsRepository.setPendingCardOriginPrompt(
-                                cardId = cardId,
-                                cardName = cardName,
-                                isImporting = true
-                            )
-                        }
-                    }
-                }
-                if (askForOrigin) {
-                    val selectedStatus =
-                        speciesSettingsRepository.finishPendingCardOriginImport(importedCardId)
-                    if (selectedStatus != null) {
-                        applyCardOrigin(importedCardId, selectedStatus)
-                    }
-                }
-                context.runOnUiThread {
-                    Toast.makeText(context, context.getString(R.string.ui_import_success), Toast.LENGTH_SHORT).show()
-                }
-            } catch (exception: Exception) {
-                if (exception is CancellationException) throw exception
-                pendingPromptCardId?.let { speciesSettingsRepository.clearPendingCardOriginPrompt(it) }
-                context.runOnUiThread {
-                    Toast.makeText(
-                        context,
-                        context.getString(
-                            R.string.ui_dim_import_failed,
-                            exception.localizedMessage ?: context.getString(R.string.ui_unknown_error)
-                        ),
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
-        }
     }
 
     private fun importApk(uri: Uri) {

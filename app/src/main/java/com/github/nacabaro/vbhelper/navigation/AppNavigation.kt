@@ -330,9 +330,14 @@ fun AppNavigation(
                 )
             }
             composable(NavigationItems.Dex.route) {
+                val imports by settingsScreenController.cardImportState.collectAsState()
                 CardsScreen(
                     navController = navController,
-                    cardScreenController = applicationNavigationHandlers.cardScreenController
+                    cardScreenController = applicationNavigationHandlers.cardScreenController,
+                    onImportCards = settingsScreenController::onClickImportCardsFromDex,
+                    importState = imports,
+                    onStopImport = settingsScreenController::stopCardImport,
+                    onDismissImportResult = settingsScreenController::dismissCardImportResult,
                 )
             }
             composable(NavigationItems.Settings.route) {
@@ -452,7 +457,7 @@ fun AppNavigation(
             cardName = prompt.cardName,
             isImporting = prompt.isImporting,
             onDismiss = { settingsScreenController.dismissPendingCardOriginPrompt(prompt.cardId) },
-            onSelect = settingsScreenController::setPendingCardOrigin
+            onSelect = { status -> settingsScreenController.setPendingCardOrigin(prompt.cardId, status) }
         )
     }
 }

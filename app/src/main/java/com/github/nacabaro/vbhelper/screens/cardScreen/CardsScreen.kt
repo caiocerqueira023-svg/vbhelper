@@ -3,13 +3,11 @@ package com.github.nacabaro.vbhelper.screens.cardScreen
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,7 +19,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.utils.BitmapData
-import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.components.CyberEmptyState
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.dtos.CardDtos
@@ -33,11 +30,16 @@ import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.domain.card.OfficialStatus
 import com.github.nacabaro.vbhelper.screens.cardScreen.dialogs.CardOriginDialog
+import com.github.nacabaro.vbhelper.source.CardBatchImportState
 
 @Composable
 fun CardsScreen(
     navController: NavController,
-    cardScreenController: CardScreenControllerImpl
+    cardScreenController: CardScreenControllerImpl,
+    onImportCards: () -> Unit,
+    importState: CardBatchImportState,
+    onStopImport: () -> Unit,
+    onDismissImportResult: () -> Unit,
 ) {
     val application = LocalContext.current.applicationContext as VBHelper
     val context = LocalContext.current
@@ -51,24 +53,16 @@ fun CardsScreen(
 
     var modifyCards by remember { mutableStateOf(false) }
 
-    Scaffold (
-        topBar = {
-            TopBanner(
-                text = stringResource(R.string.cards_my_cards_title),
-                onModifyClick = {
-                    modifyCards = !modifyCards
-                }
-            )
-        }
-    ) { contentPadding ->
+    CardSelectionScaffold(onImport = onImportCards, onModify = { modifyCards = !modifyCards }, state = importState,
+        onStop = onStopImport, onDismissResult = onDismissImportResult) { bodyModifier ->
         if (cardList.isEmpty()) {
             CyberEmptyState(
                 message = stringResource(R.string.cards_empty_state),
-                modifier = Modifier.fillMaxSize().padding(contentPadding)
+                modifier = bodyModifier.fillMaxSize()
             )
         } else {
             LazyColumn (
-                modifier = Modifier.padding(contentPadding),
+                modifier = bodyModifier.fillMaxSize(),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {

@@ -83,7 +83,8 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
                 AppDatabase.MIGRATION_26_27,
                 AppDatabase.MIGRATION_27_28,
                 AppDatabase.MIGRATION_28_29,
-                AppDatabase.MIGRATION_29_30
+                AppDatabase.MIGRATION_29_30,
+                AppDatabase.MIGRATION_30_31
             )
             // Missing migrations must preserve the database, never erase individuals/chats.
             .addCallback(com.github.nacabaro.vbhelper.database.IndividualIntegrity.callback)

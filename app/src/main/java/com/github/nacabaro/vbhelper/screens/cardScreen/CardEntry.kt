@@ -57,7 +57,7 @@ fun CardEntry(
     val imageBitmap = remember(bitmap) { bitmap.asImageBitmap() }
     CyberPanel(
         modifier = modifier,
-        active = officialStatus == OfficialStatus.OFFICIAL,
+        active = officialStatus == OfficialStatus.OFFICIAL || officialStatus == OfficialStatus.CUSTOM,
         onClick = onClick.takeUnless { displayModify }
     ) {
         Row (

@@ -160,23 +160,56 @@
     <string name="battles_coming_soon">Em breve</string>
 
     <string name="cards_my_cards_title">Meus cards</string>
+    <string name="cards_import">Importar cards DiM/BEM</string>
+    <string name="cards_edit">Editar cards</string>
+    <string name="card_import_preparing">Preparando arquivos…</string>
+    <string name="card_import_progress">Importando %1$d/%2$d</string>
+    <string name="card_import_complete">Importação concluída</string>
+    <string name="card_import_stop">Parar</string>
+    <string name="card_import_stopping">Parando…</string>
+    <string name="card_import_stopped">Parou em %1$d/%2$d</string>
+    <string name="card_import_summary">Novos %1$d · Atualizados %2$d · Falhas %3$d</string>
+    <string name="card_import_dismiss">Dispensar resultado da importação</string>
+    <string name="card_import_show_issues">Ver problemas (%1$d)</string>
+    <string name="card_import_issues_title">Arquivos que precisam de atenção</string>
+    <string name="card_import_file_number">Arquivo %1$d</string>
+    <string name="card_import_file_issue">Não foi possível importar este arquivo. Verifique-o e tente novamente.</string>
+    <string name="card_import_origin_issue">O card foi salvo. Defina Oficial ou Custom no card da lista.</string>
+    <string name="card_origin_help">Cards oficiais permitem reconhecimento automático de espécies. Cards customizados permitem escolher as espécies manualmente.</string>
 
     <string name="card_view_discovered_characters">Personagens descobertos</string>
+    <string name="dex_chart_title">Dex de evolução</string>
+    <string name="dex_chart_progress">Obtidos: %1$d/%2$d</string>
+    <string name="dex_chart_fusions">Jogress</string>
+    <string name="dex_chart_character">Personagem %1$d, estágio %2$s</string>
+    <string name="dex_status_currently_available">Atualmente no app</string>
+    <string name="dex_chart_fit">Ajustar mapa de evolução</string>
+    <string name="dex_chart_zoom_in">Ampliar</string>
+    <string name="dex_chart_zoom_out">Reduzir</string>
+    <string name="dex_chart_previous_card">Dim anterior</string>
+    <string name="dex_chart_next_card">Próximo Dim</string>
+    <string name="dex_chart_loading">Carregando mapa de evolução</string>
+    <string name="dex_chart_empty">Este card não contém personagens.</string>
+    <string name="dex_chart_load_error">Não foi possível carregar o mapa de evolução.</string>
+    <string name="dex_chart_retry">Tentar novamente</string>
+    <string name="dex_detail_stage">Estágio %1$s</string>
+    <string name="dex_detail_evolutions">Requisitos de evolução</string>
+    <string name="dex_detail_time">Tempo: %1$d h</string>
+    <string name="dex_detail_vitals">Pontos vitais: %1$d</string>
+    <string name="dex_detail_trophies">Troféus: %1$d</string>
+    <string name="dex_detail_battles">Batalhas: %1$d</string>
+    <string name="dex_detail_win_rate">Taxa de vitórias: %1$d%%</string>
+    <string name="dex_detail_adventure">Etapa de aventura: %1$d</string>
+    <string name="dex_detail_open_evolution">Ver esta evolução</string>
+    <string name="dex_detail_jogress_partner">Parceiro: card %1$d, personagem %2$d</string>
 
     <string name="dex_chara_icon_description">Ícone do personagem</string>
     <string name="dex_chara_name_icon_description">Nome do personagem</string>
     <string name="dex_status_never_obtained">Nunca esteve no app</string>
     <string name="dex_status_previously_obtained">Já esteve no app</string>
-    <string name="dex_chara_stats">HP: %1$d, BP: %2$d, AP: %3$d</string>
-    <string name="dex_chara_stage_attribute">Stg: %1$s, Atr: %2$s</string>
     <string name="dex_chara_unknown_name">\?\?\?\?\?\?\?\?\?\?\?\?\?\?\?\?</string>
-    <string name="dex_chara_stage_attribute_unknown">Stg: -, Atr: -</string>
     <string name="dex_chara_stats_unknown">HP: -, BP: -, AP: -</string>
-    <string name="dex_chara_requirements">
-        Tr: %1$d; Bt: %2$d; Vr: %3$d; Wr: %4$d%%; Ct: %5$dh
-    </string>
-    <string name="dex_chara_adventure_level">AdvLvl %1$d</string>
-    <string name="dex_chara_fusions_button">Fusões</string>
+    <string name="dex_chara_fusions_button">Jogress</string>
     <string name="dex_chara_close_button">Fechar</string>
 
     <string name="card_adventure_missions_title">Missões de aventura</string>
@@ -379,12 +412,9 @@
     <string name="ui_no_destination">Nenhum destino selecionado</string>
     <string name="ui_no_source">Nenhuma origem selecionada</string>
     <string name="ui_apk_cancelled">Importação do APK cancelada</string>
-    <string name="ui_card_cancelled">Importação do card cancelada</string>
     <string name="ui_chat_saved">Configurações de chat salvas!</string>
     <string name="ui_tamer_saved">Nome do Tamer salvo!</string>
-    <string name="ui_import_success">Importação realizada com sucesso!</string>
     <string name="ui_dim_importing">Importando DiM…</string>
-    <string name="ui_dim_import_failed">Falha ao importar DiM: %1$s</string>
     <string name="ui_empty_file">O arquivo selecionado está vazio!</string>
     <string name="ui_secrets_import_failed">Falha ao importar segredos. Selecione apenas o APK oficial.</string>
     <string name="ui_secrets_imported">Segredos importados com sucesso. Agora é possível conectar aos dispositivos.</string>
@@ -478,11 +508,9 @@
     <string name="nav_world">Mundo</string>
     <string name="credits_RedEyez_description">Depurador dedicado.</string>
     <string name="dex_species_title">Informações da espécie</string>
-    <string name="dex_species_name">Espécie: %1$s</string>
     <string name="dex_species_level">Estágio: %1$s</string>
     <string name="dex_species_type">Tipo: %1$s</string>
     <string name="dex_species_attribute">Atributo: %1$s</string>
-    <string name="dex_species_profile">Perfil: %1$s</string>
     <string name="dex_species_special_moves">Golpes especiais: %1$s</string>
     <string name="card_entry_set_origin">Origem</string>
     <string name="storage_edit_digimon_info">Editar informações do Digimon</string>

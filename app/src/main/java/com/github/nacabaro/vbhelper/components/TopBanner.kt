@@ -40,7 +40,9 @@ fun TopBanner(
     onBackClick: (() -> Unit)? = null,
     onScanClick: (() -> Unit)? = null,
     onAdventureClick: (() -> Unit)? = null,
-    onModifyClick: (() -> Unit)? = null
+    onModifyClick: (() -> Unit)? = null,
+    onImportClick: (() -> Unit)? = null,
+    importEnabled: Boolean = true,
 ) {
     Box(
         modifier = modifier
@@ -86,13 +88,22 @@ fun TopBanner(
         } else if (onModifyClick != null) {
             TopBannerIconChip(
                 icon = R.drawable.baseline_edit_24,
-                contentDescription = stringResource(R.string.ui_adventure),
+                contentDescription = stringResource(R.string.cards_edit),
                 onClick = onModifyClick,
                 modifier = Modifier.align(Alignment.CenterEnd)
             )
         }
 
-        if (onScanClick != null) {
+        if (onImportClick != null) {
+            TopBannerIconChip(
+                icon = R.drawable.baseline_file_upload_24,
+                contentDescription = stringResource(R.string.cards_import),
+                onClick = onImportClick,
+                modifier = Modifier.align(Alignment.CenterStart),
+                accent = true,
+                enabled = importEnabled,
+            )
+        } else if (onScanClick != null) {
             TopBannerIconChip(
                 icon = R.drawable.baseline_nfc_24,
                 contentDescription = stringResource(R.string.ui_scan),
@@ -117,7 +128,8 @@ private fun TopBannerIconChip(
     contentDescription: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    accent: Boolean = false
+    accent: Boolean = false,
+    enabled: Boolean = true,
 ) {
     Box(
         modifier = modifier
@@ -127,11 +139,12 @@ private fun TopBannerIconChip(
             .padding(1.dp),
         contentAlignment = Alignment.Center
     ) {
-        IconButton(onClick = onClick, modifier = Modifier.fillMaxSize()) {
+        IconButton(onClick = onClick, enabled = enabled, modifier = Modifier.fillMaxSize()) {
             Icon(
                 painter = painterResource(icon),
                 contentDescription = contentDescription,
-                tint = if (accent) VitalCyan else MaterialTheme.colorScheme.onSurface
+                tint = when { !enabled -> MaterialTheme.colorScheme.onSurface.copy(alpha = .38f)
+                    accent -> VitalCyan; else -> MaterialTheme.colorScheme.onSurface }
             )
         }
     }

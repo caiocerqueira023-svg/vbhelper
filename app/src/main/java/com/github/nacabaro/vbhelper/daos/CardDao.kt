@@ -63,8 +63,11 @@ interface CardDao {
     )
     suspend fun getCardByCardCharacterId(cardCharacterId: Long): Card?
 
-    @Query("UPDATE Card SET name = :newName WHERE id = :id")
+    @Query("UPDATE Card SET name = :newName, nameIsUserEdited = 1 WHERE id = :id")
     suspend fun renameCard(id: Int, newName: String)
+
+    @Query("UPDATE Card SET name = :newName WHERE id = :id AND nameIsUserEdited = 0")
+    suspend fun refreshImportedName(id: Long, newName: String)
 
     @Query("UPDATE Card SET officialStatus = :status WHERE id = :id")
     suspend fun updateOfficialStatus(id: Long, status: OfficialStatus)

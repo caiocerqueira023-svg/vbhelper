@@ -1,435 +1,71 @@
 package com.github.nacabaro.vbhelper.screens.cardScreen.dialogs
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Card
-import androidx.compose.material3.CardColors
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.github.nacabaro.vbhelper.components.VitalButton
-import com.github.nacabaro.vbhelper.components.cyberFrame
+import androidx.compose.ui.window.DialogProperties
+import com.github.nacabaro.vbhelper.components.SpeciesPickerDialog
 import com.github.nacabaro.vbhelper.di.VBHelper
+import com.github.nacabaro.vbhelper.domain.card.OfficialStatus
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.source.DexRepository
-import com.github.nacabaro.vbhelper.utils.BitmapData
-import com.github.nacabaro.vbhelper.utils.getImageBitmap
-import androidx.compose.ui.res.stringResource
-import com.github.nacabaro.vbhelper.R
-import com.github.nacabaro.vbhelper.components.SpeciesPickerDialog
-import com.github.nacabaro.vbhelper.components.motionEnabled
 import com.github.nacabaro.vbhelper.species.SpeciesRepository
-import com.github.nacabaro.vbhelper.domain.card.OfficialStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.delay
-import com.github.nacabaro.vbhelper.ui.theme.SurfaceElevatedPurple
 
 @Composable
-fun DexCharaDetailsDialog(
-    currentChara: CharacterDtos.CardCharaProgress,
-    obscure: Boolean,
-    onClickClose: () -> Unit,
-    onClickCharacter: (Long) -> Unit
-) {
-    val nameMultiplier = 3
-    val charaMultiplier = 4
-
+fun DexCharaDetailsDialog(currentChara: CharacterDtos.CardCharaProgress, obscure: Boolean,
+                         onClickClose: () -> Unit, onClickCharacter: (Long) -> Unit) {
     val application = LocalContext.current.applicationContext as VBHelper
     val database = application.container.db
-    val dexRepository = remember { DexRepository(database) }
-    val speciesRepository = remember {
-        SpeciesRepository(database, application.container.speciesSettingsRepository)
-    }
-    val coroutineScope = rememberCoroutineScope()
-    val motionEnabled = motionEnabled()
-
-    var showFusions by remember { mutableStateOf(false) }
-    var showSpeciesPicker by remember { mutableStateOf(false) }
-    var allSpeciesNames by remember { mutableStateOf<List<String>>(emptyList()) }
-    var isCustomCard by remember { mutableStateOf(false) }
-    var idleFrame by remember { mutableIntStateOf(0) }
-    val speciesProfile by database.speciesProfileDao()
-        .getByCardCharacterIdFlow(currentChara.id)
-        .collectAsState(initial = null)
-
-    LaunchedEffect(Unit) {
+    val repository = remember { DexRepository(database) }
+    val speciesRepository = remember { SpeciesRepository(database, application.container.speciesSettingsRepository) }
+    val scope = rememberCoroutineScope()
+    var showJogress by remember(currentChara.id) { mutableStateOf(false) }
+    var showSpeciesPicker by remember(currentChara.id) { mutableStateOf(false) }
+    var speciesNames by remember { mutableStateOf<List<String>>(emptyList()) }
+    var isCustomCard by remember(currentChara.id) { mutableStateOf(false) }
+    val profileFlow = remember(currentChara.id) { database.speciesProfileDao().getByCardCharacterIdFlow(currentChara.id) }
+    val profile by profileFlow.collectAsState(null)
+    val evolutionFlow = remember(currentChara.id) { repository.getCharacterPossibleTransformations(currentChara.id) }
+    val evolutions by evolutionFlow.collectAsState(emptyList())
+    val attributeFlow = remember(currentChara.id) { repository.getCharacterPossibleFusions(currentChara.id) }
+    val attributeJogress by attributeFlow.collectAsState(emptyList())
+    val specificFlow = remember(currentChara.id) { repository.getCharacterSpecificJogress(currentChara.id) }
+    val specificJogress by specificFlow.collectAsState(emptyList())
+    LaunchedEffect(currentChara.id) {
         isCustomCard = withContext(Dispatchers.IO) {
-            database.cardDao().getCardByCardCharacterId(currentChara.id)?.officialStatus ==
-                OfficialStatus.CUSTOM
-        }
-        allSpeciesNames = withContext(Dispatchers.IO) {
-            speciesRepository.getAllSpeciesNames()
+            database.cardDao().getCardByCardCharacterId(currentChara.id)?.officialStatus == OfficialStatus.CUSTOM
         }
     }
-
-    LaunchedEffect(currentChara.id, motionEnabled) {
-        if (!motionEnabled) {
-            idleFrame = 0
-            return@LaunchedEffect
-        }
-        val animationOffset = (currentChara.id and 0x7fff_ffffL) % 750L
-        idleFrame = if (animationOffset > 375L) 1 else 0
-        delay(animationOffset)
-        while (true) {
-            delay(750L)
-            idleFrame = 1 - idleFrame
+    LaunchedEffect(Unit) { speciesNames = withContext(Dispatchers.IO) { speciesRepository.getAllSpeciesNames() } }
+    val maximumHeight = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() * .88f }
+    Dialog(onDismissRequest = onClickClose, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Card(modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth(.92f).heightIn(max = maximumHeight),
+            shape = MaterialTheme.shapes.medium,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+            DexCharacterDetailsContent(currentChara, obscure, profile, evolutions,
+                attributeJogress.isNotEmpty() || specificJogress.isNotEmpty(), isCustomCard, speciesNames.isNotEmpty(),
+                onClose = onClickClose, onJogress = { showJogress = true }, onSelectCharacter = onClickCharacter,
+                onPickSpecies = { showSpeciesPicker = true })
         }
     }
-
-    val currentCharaPossibleTransformations by dexRepository
-        .getCharacterPossibleTransformations(currentChara.id)
-        .collectAsState(emptyList())
-
-    val currentCharaPossibleFusions by dexRepository
-        .getCharacterPossibleFusions(currentChara.id)
-        .collectAsState(emptyList())
-
-    val romanNumeralsStage = when (currentChara.stage) {
-        1 -> "II"
-        2 -> "III"
-        3 -> "IV"
-        4 -> "V"
-        5 -> "VI"
-        6 -> "VII"
-        else -> "I"
-    }
-
-    val charaBitmapData = BitmapData(
-        bitmap = if (idleFrame == 1) currentChara.spriteIdle2 else currentChara.spriteIdle,
-        width = currentChara.spriteWidth,
-        height = currentChara.spriteHeight
-    )
-    val charaImageBitmapData = charaBitmapData.getImageBitmap(
-        context = LocalContext.current,
-        multiplier = charaMultiplier,
-        obscure = obscure
-    )
-
-    val nameBitmapData = BitmapData(
-        bitmap = currentChara.nameSprite,
-        width = currentChara.nameSpriteWidth,
-        height = currentChara.nameSpriteHeight
-    )
-    val nameImageBitmapData = nameBitmapData.getImageBitmap(
-        context = LocalContext.current,
-        multiplier = nameMultiplier,
-        obscure = obscure
-    )
-
-    Dialog(
-        onDismissRequest = onClickClose
-    ) {
-        Card (
-            modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(0.9f)
-                .cyberFrame(active = true),
-            shape = RectangleShape,
-            colors = CardDefaults.cardColors(containerColor = SurfaceElevatedPurple)
-        ) {
-            Column (
-                modifier = Modifier
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                Row (
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                ) {
-                    Card (
-                        colors = CardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = MaterialTheme.colorScheme.contentColorFor(
-                                backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                            ),
-                            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            disabledContentColor = MaterialTheme.colorScheme.contentColorFor(
-                                backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                            )
-                        )
-                    ) {
-                        Image(
-                            bitmap = charaImageBitmapData.imageBitmap,
-                            contentDescription = stringResource(R.string.dex_chara_icon_description),
-                            modifier = Modifier
-                                .size(charaImageBitmapData.dpWidth)
-                                .padding(8.dp),
-                            colorFilter = when (obscure) {
-                                true -> ColorFilter.tint(color = MaterialTheme.colorScheme.secondary)
-                                false -> null
-                            },
-                            filterQuality = FilterQuality.None
-                        )
-                    }
-                    Spacer(
-                        modifier = Modifier
-                            .padding(16.dp)
-                    )
-                    if (!obscure) {
-                        Column {
-                            Image(
-                                bitmap = nameImageBitmapData.imageBitmap,
-                                contentDescription = stringResource(R.string.dex_chara_name_icon_description),
-                                modifier = Modifier
-                                    .width(nameImageBitmapData.dpWidth)
-                                    .height(nameImageBitmapData.dpHeight),
-                                filterQuality = FilterQuality.None
-                            )
-                            Spacer(modifier = Modifier.padding(4.dp))
-                            if (currentChara.baseHp != 65535) {
-                                Text(
-                                    text = stringResource(
-                                        R.string.dex_chara_stats,
-                                        currentChara.baseHp,
-                                        currentChara.baseBp,
-                                        currentChara.baseAp
-                                    )
-                                )
-                                Text(
-                                    text = stringResource(
-                                        R.string.dex_chara_stage_attribute,
-                                        romanNumeralsStage,
-                                        currentChara.attribute.toString().substring(0, 2)
-                                    )
-                                )
-                            }
-                        }
-                    } else {
-                        Column {
-                            Text(stringResource(R.string.dex_chara_unknown_name))
-                            Spacer(modifier = Modifier.padding(4.dp))
-                            Text(stringResource(R.string.dex_chara_stage_attribute_unknown))
-                            Text(stringResource(R.string.dex_chara_stats_unknown))
-                        }
-                    }
-                }
-                if (!currentChara.isCurrentlyAvailable) {
-                    Text(
-                        text = if (currentChara.discoveredOn == null) {
-                            stringResource(R.string.dex_status_never_obtained)
-                        } else {
-                            stringResource(R.string.dex_status_previously_obtained)
-                        },
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.outline
-                    )
-                }
-                if (!obscure) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Column {
-                        Text(
-                            text = stringResource(R.string.dex_species_title),
-                            style = MaterialTheme.typography.titleSmall
-                        )
-                        speciesProfile?.speciesName
-                            ?.takeIf { it.isNotBlank() }
-                            ?.let {
-                                Text(stringResource(R.string.dex_species_name, it))
-                            }
-                        speciesProfile?.level
-                            ?.takeIf { it.isNotBlank() }
-                            ?.let {
-                                Text(stringResource(R.string.dex_species_level, it))
-                            }
-                        speciesProfile?.type
-                            ?.takeIf { it.isNotBlank() }
-                            ?.let {
-                                Text(stringResource(R.string.dex_species_type, it))
-                            }
-                        Text(
-                            stringResource(
-                                R.string.dex_species_attribute,
-                                currentChara.attribute.toString()
-                            )
-                        )
-                        speciesProfile?.profileDescription
-                            ?.takeIf { it.isNotBlank() }
-                            ?.let {
-                                Text(stringResource(R.string.dex_species_profile, it))
-                            }
-                        speciesProfile?.specialMoves
-                            ?.takeIf { it.isNotEmpty() }
-                            ?.joinToString()
-                            ?.let {
-                                Text(stringResource(R.string.dex_species_special_moves, it))
-                            }
-                        if (isCustomCard) {
-                            IconButton(
-                                onClick = { showSpeciesPicker = true },
-                                enabled = allSpeciesNames.isNotEmpty()
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Settings,
-                                    contentDescription = stringResource(
-                                        R.string.ui_choose_species_from_dim
-                                    )
-                                )
-                            }
-                        }
-                    }
-                }
-                Spacer(modifier = Modifier.padding(16.dp))
-                Column {
-                    currentCharaPossibleTransformations.map {
-                        val selectedCharaBitmap = BitmapData(
-                            bitmap = it.spriteIdle,
-                            width = it.spriteWidth,
-                            height = it.spriteHeight
-                        )
-                        val selectedCharaImageBitmap = selectedCharaBitmap.getImageBitmap(
-                            context = LocalContext.current,
-                            multiplier = 4,
-                            obscure = false
-                        )
-
-                        Card (
-                            onClick = { onClickCharacter(it.charaId) },
-                            modifier = Modifier
-                                .padding(vertical = 8.dp)
-                        ) {
-                            Row (
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                            ) {
-                                Card (
-                                    colors = CardColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                        contentColor = MaterialTheme.colorScheme.contentColorFor(
-                                            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                                        ),
-                                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                        disabledContentColor = MaterialTheme.colorScheme.contentColorFor(
-                                            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                                        )
-                                    )
-                                ) {
-                                    Image(
-                                        bitmap = selectedCharaImageBitmap.imageBitmap,
-                                        contentDescription = stringResource(R.string.dex_chara_icon_description),
-                                        modifier = Modifier
-                                            .size(selectedCharaImageBitmap.dpWidth)
-                                            .padding(8.dp),
-                                        colorFilter = null,
-                                        filterQuality = FilterQuality.None
-                                    )
-                                }
-                                Spacer(
-                                    modifier = Modifier
-                                        .padding(16.dp)
-                                )
-                                Column {
-                                    Text(
-                                        text = stringResource(
-                                            R.string.dex_chara_requirements,
-                                            it.requiredTrophies,
-                                            it.requiredBattles,
-                                            it.requiredVitals,
-                                            it.requiredWinRate,
-                                            it.changeTimerHours
-                                        )
-                                    )
-                                    Text(
-                                        text = stringResource(
-                                            R.string.dex_chara_adventure_level,
-                                            it.requiredAdventureLevelCompleted + 1
-                                        )
-                                    )
-                                }
-                            }
-
-                        }
-                    }
-                }
-
-                Row {
-                    if (currentCharaPossibleFusions.isNotEmpty()) {
-                        VitalButton(
-                            onClick = {
-                                showFusions = true
-                            }
-                        ) {
-                            Text(stringResource(R.string.dex_chara_fusions_button))
-                        }
-                    }
-
-                    Spacer(
-                        modifier = Modifier
-                            .padding(4.dp)
-                    )
-
-                    VitalButton(
-                        onClick = onClickClose
-                    ) {
-                        Text(stringResource(R.string.dex_chara_close_button))
-                    }
-                }
+    if (showJogress) DexCharaFusionsDialog(currentChara, attributeJogress, obscure,
+        onClickDismiss = { showJogress = false }, specificJogress = specificJogress)
+    if (showSpeciesPicker) SpeciesPickerDialog(speciesNames = speciesNames,
+        onDismiss = { showSpeciesPicker = false }, onSpeciesSelected = { selectedName ->
+            showSpeciesPicker = false
+            scope.launch(Dispatchers.IO) {
+                speciesRepository.saveManualProfile(currentChara.id, selectedName, null, null, null, emptyList())
             }
-        }
-    }
-
-    if (showFusions) {
-        DexCharaFusionsDialog(
-            currentChara = currentChara,
-            currentCharaPossibleFusions = currentCharaPossibleFusions,
-            onClickDismiss = {
-                showFusions = false
-            },
-            obscure = obscure
-        )
-    }
-
-    if (showSpeciesPicker) {
-        SpeciesPickerDialog(
-            speciesNames = allSpeciesNames,
-            onDismiss = { showSpeciesPicker = false },
-            onSpeciesSelected = { selectedName ->
-                showSpeciesPicker = false
-                coroutineScope.launch(Dispatchers.IO) {
-                    speciesRepository.saveManualProfile(
-                        cardCharacterId = currentChara.id,
-                        name = selectedName,
-                        level = null,
-                        type = null,
-                        profile = null,
-                        specialMoves = emptyList()
-                    )
-                }
-            }
-        )
-    }
+        })
 }

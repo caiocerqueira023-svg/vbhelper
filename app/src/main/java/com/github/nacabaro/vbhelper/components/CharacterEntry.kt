@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 import com.github.nacabaro.vbhelper.utils.BitmapData
@@ -102,6 +103,10 @@ fun CharacterEntry(
     onLongClick: (() -> Unit)? = null,
     longClickLabel: String? = null,
     onVerticalSwipe: ((Int) -> Unit)? = null,
+    entryPadding: Dp = 8.dp,
+    fitSpriteToBounds: Boolean = false,
+    selected: Boolean = false,
+    iconDescription: String? = "Icon",
     onClick: () -> Unit = {  }
 ) {
     val effectiveShape = if (vitalPoints != null) RectangleShape else shape
@@ -174,8 +179,8 @@ fun CharacterEntry(
         shape = effectiveShape,
         modifier = modifier
             .aspectRatio(1f)
-            .padding(8.dp)
-            .cyberFrame(active = vitalPoints != null)
+            .padding(entryPadding)
+            .cyberFrame(active = vitalPoints != null || selected)
             .then(swipeModifier)
             .combinedClickable(
                 enabled = !disabled,
@@ -189,7 +194,7 @@ fun CharacterEntry(
                 scaleY = 0.96f + entranceAlpha * 0.04f
             ),
         colors = cardColors,
-        border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceStroke)
+        border = androidx.compose.foundation.BorderStroke(1.dp, if (selected) VitalCyan else SurfaceStroke)
     ) {
         Box(
             contentAlignment = Alignment.Center,
@@ -264,16 +269,18 @@ fun CharacterEntry(
                 }
                 Image(
                     bitmap = imageBitmap,
-                    contentDescription = "Icon",
+                    contentDescription = iconDescription,
                     filterQuality = FilterQuality.None,
                     colorFilter = when {
                         obscure -> ColorFilter.tint(color = MaterialTheme.colorScheme.secondary)
                         grayscale -> ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
                         else -> null
                     },
-                    modifier = Modifier
-                        .size(dpSize)
-                        .align(Alignment.BottomCenter)
+                    modifier = if (fitSpriteToBounds) {
+                        Modifier.fillMaxSize(0.82f).align(Alignment.Center)
+                    } else {
+                        Modifier.size(dpSize).align(Alignment.BottomCenter)
+                    }
                 )
 
                 if (cardIcon != null) {

@@ -57,6 +57,7 @@ import com.github.nacabaro.vbhelper.daos.CardAttackArtDao
 import com.github.nacabaro.vbhelper.domain.card.Card
 import com.github.nacabaro.vbhelper.domain.card.CardAdventure
 import com.github.nacabaro.vbhelper.domain.card.CardFusions
+import com.github.nacabaro.vbhelper.domain.card.CardSpecificJogress
 import com.github.nacabaro.vbhelper.domain.card.CardProgress
 import com.github.nacabaro.vbhelper.domain.card.PossibleTransformations
 import com.github.nacabaro.vbhelper.domain.characters.Sprite
@@ -89,7 +90,7 @@ import com.github.nacabaro.vbhelper.domain.digifarm.FarmResident
 import com.github.nacabaro.vbhelper.domain.digifarm.WildRelationship
 
 @Database(
-    version = 30,
+    version = 31,
     exportSchema = true,
     entities = [
         Card::class,
@@ -98,6 +99,7 @@ import com.github.nacabaro.vbhelper.domain.digifarm.WildRelationship
         CardAttackArt::class,
         CardAdventure::class,
         CardFusions::class,
+        CardSpecificJogress::class,
         Sprite::class,
         UserCharacter::class,
         DigimonIndividual::class,
@@ -180,6 +182,10 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun worldChatMemoryDao(): WorldChatMemoryDao
 
     companion object {
+        val MIGRATION_30_31 = object : Migration(30, 31) {
+            override fun migrate(db: SupportSQLiteDatabase) { CardJogressSchema.create(db) }
+        }
+
         val MIGRATION_29_30 = object : Migration(29,30) {
             override fun migrate(db: SupportSQLiteDatabase) { WorldChatMemorySchema.create(db) }
         }

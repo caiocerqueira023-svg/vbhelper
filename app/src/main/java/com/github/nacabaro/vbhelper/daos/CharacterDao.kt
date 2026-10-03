@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CharacterDao {
+    @Query("DELETE FROM PossibleTransformations WHERE charaId IN (SELECT id FROM CardCharacter WHERE cardId = :cardId)")
+    suspend fun deleteTransformationsForCard(cardId: Long)
+
     @Query("SELECT * FROM CardCharacter WHERE cardId = :cardId")
     suspend fun getCharactersForCard(cardId: Long): List<CardCharacter>
 

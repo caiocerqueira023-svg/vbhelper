@@ -76,12 +76,33 @@ class SpeciesSettingsRepository(private val dataStore: DataStore<Preferences>) {
         return selectedStatus
     }
 
-    suspend fun recoverInterruptedCardOriginImports() {
+    suspend fun recoverInterruptedCardOriginImports(validCardIds: Set<Long>? = null) {
         updatePendingPrompts { prompts ->
-            prompts.map { prompt ->
-                if (prompt.isImporting) prompt.copy(isImporting = false, selectedStatus = null) else prompt
+            prompts.filter { validCardIds == null || it.cardId in validCardIds }.map { prompt ->
+                if (prompt.isImporting || prompt.selectedStatus != null)
+                    prompt.copy(isImporting = false, selectedStatus = null) else prompt
             }
         }
+    }
+
+    suspend fun reservePendingCardOrigin(cardId: Long, status: OfficialStatus): Boolean {
+        if (status == OfficialStatus.UNKNOWN) return false
+        var reserved = false
+        updatePendingPrompts { prompts ->
+            prompts.map { prompt ->
+                if (prompt.cardId == cardId && prompt.selectedStatus == null) {
+                    reserved = true
+                    prompt.copy(selectedStatus = status)
+                } else prompt
+            }
+        }
+        return reserved
+    }
+
+    suspend fun releasePendingCardOrigin(cardId: Long) {
+        updatePendingPrompts { prompts -> prompts.map {
+            if (it.cardId == cardId) it.copy(selectedStatus = null) else it
+        } }
     }
 
     suspend fun selectPendingCardOrigin(cardId: Long, status: OfficialStatus): Boolean? {
@@ -102,6 +123,12 @@ class SpeciesSettingsRepository(private val dataStore: DataStore<Preferences>) {
 
     suspend fun clearPendingCardOriginPrompt(cardId: Long) {
         updatePendingPrompts { prompts -> prompts.filterNot { it.cardId == cardId } }
+    }
+
+    suspend fun refreshPendingCardName(cardId: Long, cardName: String) {
+        updatePendingPrompts { prompts ->
+            prompts.map { if (it.cardId == cardId) it.copy(cardName = cardName) else it }
+        }
     }
 
     private suspend fun updatePendingPrompts(

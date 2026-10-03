@@ -36,8 +36,7 @@ fun CardOriginDialog(
                 Text(stringResource(R.string.ui_official_card, cardName), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "Official cards have their species recognized automatically. " +
-                        "For custom cards, you provide the species when opening chat.",
+                    stringResource(R.string.card_origin_help),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.outline
                 )

@@ -11,6 +11,12 @@ import com.github.nacabaro.vbhelper.battle.ImportedAttackArtReader
 import com.github.nacabaro.vbhelper.domain.card.Card
 import com.github.nacabaro.vbhelper.domain.card.CardCharacter
 import com.github.nacabaro.vbhelper.domain.card.CardProgress
+import com.github.nacabaro.vbhelper.domain.card.CardSpecificJogress
+import com.github.nacabaro.vbhelper.source.JogressImportReader
+import com.github.nacabaro.vbhelper.source.CardReimportCandidate
+import com.github.nacabaro.vbhelper.source.CardReimportPolicy
+import com.github.nacabaro.vbhelper.source.CardImportResult
+import kotlinx.coroutines.CancellationException
 import com.github.nacabaro.vbhelper.domain.characters.Sprite
 import java.io.InputStream
 
@@ -28,10 +34,48 @@ class CardImportController(
         return importParsedCard(card, sourceFileName, onCardCreated)
     }
 
+    suspend fun importCardWithResult(fileReader: InputStream, sourceFileName: String? = null): CardImportResult =
+        importParsedCardWithResult(parseCard(fileReader), sourceFileName)
+
+    fun parseCard(fileReader: InputStream): com.github.cfogrady.vb.dim.card.Card<*, *, *, *, *, *> =
+        DimReader().readCard(fileReader, false)
+
     internal suspend fun importParsedCard(
         card: com.github.cfogrady.vb.dim.card.Card<*, *, *, *, *, *>,
         sourceFileName: String? = null,
         onCardCreated: suspend (cardId: Long, cardName: String) -> Unit = { _, _ -> }
+    ): Long = importParsedCardWithResult(card, sourceFileName, onCardCreated).cardId
+
+    internal suspend fun importParsedCardWithResult(
+        card: com.github.cfogrady.vb.dim.card.Card<*, *, *, *, *, *>,
+        sourceFileName: String? = null,
+        onCardCreated: suspend (cardId: Long, cardName: String) -> Unit = { _, _ -> },
+    ): CardImportResult {
+        val result = database.withTransaction {
+            var created = false
+            val id = importParsedCardRows(card, sourceFileName) { cardId, cardName ->
+                created = true
+                onCardCreated(cardId, cardName)
+            }
+            val stored = checkNotNull(database.cardDao().getCardById(id))
+            CardImportResult(id, stored.name, created)
+        }
+        // Matching can do I/O: it belongs after commit, never in the card transaction.
+        if (result.isNew) speciesRepository?.let { repo ->
+            try {
+                val matched = repo.matchOfficialSpeciesForCard(result.cardId)
+                if (matched > 0) database.cardDao().updateOfficialStatus(result.cardId,
+                    com.github.nacabaro.vbhelper.domain.card.OfficialStatus.OFFICIAL)
+            } catch (e: CancellationException) { throw e }
+            catch (e: Exception) { Log.w("CardImportController", "Failed to match imported species", e) }
+        }
+        return result
+    }
+
+    private suspend fun importParsedCardRows(
+        card: com.github.cfogrady.vb.dim.card.Card<*, *, *, *, *, *>,
+        sourceFileName: String?,
+        onCardCreated: suspend (Long, String) -> Unit,
     ): Long {
         val cardModel = Card(
             cardId = card.header.dimId,
@@ -50,23 +94,23 @@ class CardImportController(
             existing.isBEm == cardModel.isBEm && existing.logoWidth == cardModel.logoWidth &&
                 existing.logoHeight == cardModel.logoHeight && existing.logo.contentEquals(cardModel.logo)
         }.filter { existing -> matchesCharacterData(existing.id, characters) }
-        val matchingCards = bodyMatches.filter { existing ->
+        val candidates = bodyMatches.map { existing ->
             val oldArt = database.cardAttackArtDao().getForCard(existing.id)
-            // Two custom variants can share every body sprite while assigning
-            // different attacks. A different named variant remains its own card.
-            existing.name.equals(cardModel.name, ignoreCase = true) ||
-                (bodyMatches.size == 1 && oldArt.isEmpty()) ||
-                (oldArt.size == characters.size && oldArt.all { art ->
+            CardReimportCandidate(existing.id, existing.name,
+                attackMatches = oldArt.size == characters.size && oldArt.all { art ->
                     val species = database.characterDao().getById(art.cardCharacterId) ?: return@all false
-                    art == ImportedAttackArtReader.read(species.id, card.characterStats.characterEntries[species.charaIndex],
-                        card.spriteData, card is BemCard)
-                })
+                    art == ImportedAttackArtReader.read(species.id, card.characterStats.characterEntries[species.charaIndex], card.spriteData, card is BemCard)
+                }, missingArt = oldArt.isEmpty())
         }
-        if (matchingCards.isNotEmpty()) {
+        val matchingCardId = CardReimportPolicy.select(candidates, cardModel.name)
+        if (matchingCardId != null) {
             database.withTransaction {
-                for (existing in matchingCards) importAttackArt(existing.id, card)
+                importAttackArt(matchingCardId, card)
+                importEvoData(matchingCardId, card)
+                importCardFusions(matchingCardId, card)
+                if (!sourceFileName.isNullOrBlank()) database.cardDao().refreshImportedName(matchingCardId, cardModel.name)
             }
-            return matchingCards.first().id
+            return matchingCardId
         }
 
         val cardId = database
@@ -85,22 +129,11 @@ class CardImportController(
 
         importCardFusions(cardId, card)
 
-        speciesRepository?.let { repo ->
-            runCatching {
-                val matched = repo.matchOfficialSpeciesForCard(cardId)
-                if (matched > 0) {
-                    database.cardDao().updateOfficialStatus(cardId, com.github.nacabaro.vbhelper.domain.card.OfficialStatus.OFFICIAL)
-                }
-            }.onFailure {
-                Log.w("CardImportController", "Failed to auto-match official species for cardId=$cardId", it)
-            }
-        }
-
         return cardId
     }
 
     private fun nameFromSourceFile(sourceFileName: String?, fallbackName: String): String {
-        val fileName = sourceFileName?.trim().orEmpty()
+        val fileName = sourceFileName?.trim()?.substringAfterLast('/')?.substringAfterLast('\\').orEmpty()
         if (fileName.isBlank()) return fallbackName
 
         return fileName
@@ -273,57 +306,16 @@ class CardImportController(
         cardId: Long,
         card: com.github.cfogrady.vb.dim.card.Card<*, *, *, *, *, *>
     ) {
-        Log.d("importCardFusions", "Importing card fusions")
-        if (card is DimCard) {
-            card
-                .attributeFusions
-                .entries
-                .forEach {
-                    Log.d("importCardFusions", "Importing fusion: ${it.attribute1Fusion}")
-                    if (it.attribute1Fusion != 65535 && it.characterIndex != 65535) {
-                        database
-                            .cardFusionsDao()
-                            .insertNewFusion(
-                                cardId = cardId,
-                                fromCharaId = it.characterIndex,
-                                attribute = NfcCharacter.Attribute.Virus,
-                                toCharaId = it.attribute1Fusion,
-                            )
-                    }
-
-                    if (it.attribute2Fusion != 65535 && it.characterIndex != 65535) {
-                        database
-                            .cardFusionsDao()
-                            .insertNewFusion(
-                                cardId = cardId,
-                                fromCharaId = it.characterIndex,
-                                attribute = NfcCharacter.Attribute.Data,
-                                toCharaId = it.attribute2Fusion,
-                            )
-                    }
-
-                    if (it.attribute3Fusion != 65535 && it.characterIndex != 65535) {
-                        database
-                            .cardFusionsDao()
-                            .insertNewFusion(
-                                cardId = cardId,
-                                fromCharaId = it.characterIndex,
-                                attribute = NfcCharacter.Attribute.Vaccine,
-                                toCharaId = it.attribute3Fusion,
-                            )
-                    }
-
-                    if (it.attribute4Fusion != 65535 && it.characterIndex != 65535) {
-                        database
-                            .cardFusionsDao()
-                            .insertNewFusion(
-                                cardId = cardId,
-                                fromCharaId = it.characterIndex,
-                                attribute = NfcCharacter.Attribute.Free,
-                                toCharaId = it.attribute4Fusion,
-                            )
-                    }
-                }
+        val routes = JogressImportReader.read(card)
+        val characters = database.characterDao().getCharactersForCard(cardId).associateBy { it.charaIndex }
+        database.withTransaction {
+            val dao = database.cardFusionsDao()
+            dao.deleteAttributeRoutesForCard(cardId)
+            dao.deleteSpecificRoutesForCard(cardId)
+            routes.attributes.forEach { dao.insertNewFusion(cardId, it.fromIndex, it.attribute, it.toIndex) }
+            routes.specific.forEach { dao.insertSpecificJogress(CardSpecificJogress(
+                characters.getValue(it.fromIndex).id, characters.getValue(it.toIndex).id,
+                it.partnerCardNumber, it.partnerCharaIndex)) }
         }
     }
 
@@ -331,6 +323,7 @@ class CardImportController(
         cardId: Long,
         card: com.github.cfogrady.vb.dim.card.Card<*, *, *, *, *, *>
     ) {
+        database.characterDao().deleteTransformationsForCard(cardId)
         for (index in 0 until card.transformationRequirements.transformationEntries.size) {
             val evo = card.transformationRequirements.transformationEntries[index]
 
@@ -348,7 +341,7 @@ class CardImportController(
                         .transformationEntries[index]
                         .requiredCompletedAdventureLevel == 65535
                 ) {
-                    0
+                    -1
                 } else {
                     card
                         .transformationRequirements
@@ -364,8 +357,8 @@ class CardImportController(
                     card
                         .adventureLevels
                         .levels
-                        .last()
-                        .bossCharacterIndex == card.transformationRequirements.transformationEntries[index].toCharacterIndex
+                        .lastOrNull()
+                        ?.bossCharacterIndex == card.transformationRequirements.transformationEntries[index].toCharacterIndex
                 ) {
                     14
                     /*
@@ -376,11 +369,9 @@ class CardImportController(
                     is the current index. If it is, we add stage 15 complete as a requirement for transformation.
                      */
                 } else {
-                    0
+                    -1
                     /*
-                    Another magic number...
-
-                    The rest of the characters are not locked.
+                    -1 means no adventure requirement; zero is a valid BEM adventure index.
                      */
                 }
             }

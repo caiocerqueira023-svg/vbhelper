@@ -30,6 +30,207 @@ switching to Home, Storage, Dex, Battle, and Settings during animated transition
 The World destination's entry owns its saved state throughout the outgoing frame;
 the test requires Android execution to verify the former missing-back-stack crash.
 
+## Card evolution chart (build checks only)
+
+Focused commands, from the repository root in PowerShell:
+
+```powershell
+.\gradlew.bat :app:testIntegrityCheckUnitTest --offline --console=plain --max-workers=2 `
+  --tests "com.github.nacabaro.vbhelper.screens.cardScreen.*" `
+  --tests "com.github.nacabaro.vbhelper.source.Card*Test" `
+  --tests "com.github.nacabaro.vbhelper.source.JogressImportReaderTest" `
+  --tests "com.github.nacabaro.vbhelper.source.SpeciesOriginQueueTest" `
+  --tests "com.github.nacabaro.vbhelper.ui.theme.ThemeSurfaceContrastTest"
+py -3 -B scripts/test-dex-evolution-db.py
+.\gradlew.bat :app:compileIntegrityCheckAndroidTestKotlin :app:lintDebug :app:assembleDebug --offline --console=plain --max-workers=2
+```
+
+`CardEvolutionLayoutTest` covers branches/merges, disconnected and fusion-only
+characters, deterministic placement, route deduplication/conditions, and bounds;
+shared overlapping buses, including mixed adjacent/skipped routes in the same gap;
+and presentation-only final sections for terminal evolution/Jogress results.
+Cycles retain imported stages while acyclic downstream terminal chains advance;
+results also reached from earlier stages and explicit BEM stages retain their
+imported placement rules. Toggling Jogress changes connectors, not node positions.
+`CardChartViewportTest` covers minimum 48dp node bounds, centroid-anchored zoom,
+bounded pan, fit behavior, and accessible scroll positions.
+
+`JogressImportReaderTest` covers DiM/BEM attribute and partner-specific tables,
+deduplication, absent tables, sentinels, and foreign-card endpoint isolation.
+`CardReimportPolicyTest` covers named variants, unique content matches, duplicate
+names, ambiguous candidates, and unambiguous legacy attack-art recovery. The eight
+host SQLite/migration checks execute production SQL for local-card route isolation,
+ownership/discovery, progress/order, correct destination art via
+`CardCharacter.spriteId`, both same-card Jogress partner edges, foreign partners as
+requirements only, automatic/manual name rules, and additive schema 30→31 retention.
+
+The 18 new JVM cases comprise seven `CardBatchImporterTest`, four
+`SpeciesOriginQueueTest`, four `CardDocumentReadTest`, two `CardImportRunGateTest`,
+and one `ThemeSurfaceContrastTest`. They cover mixed/new/re-import batches,
+duplicate URIs and aliases, 1,001-file selection without an app count cap,
+independent failures, committed progress on Stop, origin reservations/recovery,
+queued-name refresh by ID, close-before-persist (including close failure and late
+open), stalled-stream cancellation, and stale-run admission/publication ownership.
+The contrast test calculates luminance from the actual light/dark schemes and
+requires `onSurface` against all five `surfaceContainer*` roles to reach 4.5:1.
+
+### Import and requirement contract
+
+Dex selection uses `CardSelectionScaffold` with zero nested system insets;
+`TopBanner` places Import at top-left opposite Edit. Dex and Settings share
+`OpenMultipleDocuments` with no app-imposed file-count cap. `CardBatchImportPanel`
+shows preparation/progress, Stop/Stopping, added/updated/failed totals, dismissible
+results, and safe per-file issues (display name or file number, no raw exception/URI).
+Origin-bookkeeping issues remain distinct from failed imports of saved cards.
+
+Files run sequentially, with each new import or re-import committed atomically and
+returning `CardImportResult(cardId, cardName, isNew)`. Dex queues an origin choice
+only for a NEW card after commit; Settings respects its existing prompt toggle.
+Duplicate URIs are read once; matching aliases/re-imports add no new choices, but
+refresh an already-pending label by card ID. A choice is reserved by ID, its status
+saved before the queue entry is cleared, and failed saves release the reservation.
+Recovery runs once per retained model, filtering the existing queue to still-existing
+UNKNOWN cards; it does not enqueue every unknown card or replay classified choices.
+
+The retained `CardImportViewModel` uses Application services and `SavedStateHandle`
+for picker origin policy, so configuration changes retain the job/results without an
+Activity reference. `CardImportRunGate` guards admission and publication until the
+owning job and cleanup complete; completion supplies a terminal fallback even if
+cancellation precedes the lazy body. Provider name queries and opens receive a
+`CancellationSignal`; cancellation also closes the active stream. Parsing and close
+finish BEFORE persistence, including cleanup when open returns late, so close errors
+cannot turn an already-committed file into a failure.
+
+Schema 31 adds `CardSpecificJogress` and `Card.nameIsUserEdited`. DiM and BEM imports
+store both attribute and partner-specific Jogress; same-card partners contribute
+both local source edges, while foreign partner references remain requirements and
+never become false local nodes. Migration adds storage, not missing source routes:
+re-import the original card file to recover previously discarded Jogress and
+ambiguous legacy BEM adventure requirements.
+
+An unambiguous re-import refreshes ordinary evolution definitions, both Jogress
+tables, and attack art for one matching local card, retaining card/character IDs,
+owned individual IDs and state, discovery, and card progress. Same-body custom
+variants must not receive bulk refreshes; an unresolved match follows the new-card
+import path and leaves existing variants intact. A supplied filename refreshes the
+automatic card name unless `nameIsUserEdited` is set. Legacy name provenance was
+absent: the user explicitly chose to refresh legacy names on re-import, including
+names that may have been manually assigned before the flag existed. Future explicit
+manual renames set the flag and are protected from filename refresh.
+
+An absent adventure requirement is stored as `-1`. Valid BEM adventure index `0`
+displays stage `1`; nonnegative indices display index + 1. Migration normalizes only known
+legacy DiM zero values to `-1`, preserves BEM zero, and leaves source recovery to
+re-import. The chart's final sections are presentation-only and never rewrite
+imported character stages or stats.
+
+### Recorded evidence and limits
+
+- XML reports in `app/build/test-results/testIntegrityCheckUnitTest/` establish
+  **18 new tests passing**, with zero failures/errors/skips, in the five suites above.
+  Earlier chart evidence records 17 layout, seven viewport, three Jogress-reader,
+  and five re-import-policy tests passing. Main verification reports all **eight
+  host SQLite/migration checks passing**.
+- The latest full-app report at
+  `app/build/reports/tests/testIntegrityCheckUnitTest/index.html` records **407
+  tests, zero failures, and three private-fixture skips** (404 successful executions).
+  An earlier run exposed a pre-existing personality determinism test comparing
+  different clocks; both calls now use explicit `now = 1L` (application behavior
+  unchanged). Its latest three-case XML report has zero failures/errors/skips.
+- Final Android-test compilation, debug assembly, and lint passed. Current checks
+  use `--max-workers=2`; lint retains advisory/baselined findings.
+  APK output: `app/build/outputs/apk/debug/app-debug.apk`. The living-world results
+  below predate this extension.
+- Main's latest code review scored all four findings resolved: light-scheme contrast,
+  stale cancelled-run ownership, stream close after commit, and blocking-provider
+  Stop, including the pre-start terminal fallback. Earlier fixes for ambiguous
+  re-import, shared skipped-gap buses, cycle descendants, and BEM index zero remain.
+- `DexEvolutionPersistenceTest`, `CustomCardAttackArtTest`,
+  `CardEvolutionChartTest`, `DexCharacterDetailsTest`, and
+  `CardSelectionImportUiTest` remain compile-only Android coverage.
+  Their Room/Compose cases cover reactive ownership, in-place re-import, variant
+  isolation, name protection, BEM index zero, selection/navigation/scroll callbacks,
+  the disabled Jogress chip and overlay placement, readable requirements, and
+  obscured stats with an available Close action. New cases add two selection
+  header/body-bottom/Stop checks and two Room atomic-result/rollback checks;
+  compilation does not execute these assertions.
+
+**User-selected scope: BUILD CHECKS ONLY.** No installation, Android runtime tests,
+screenshots, font-scale checks, or TalkBack evidence. Compilation and semantic-click
+test coverage do not establish physical hit-testing or visual approval.
+
+### Deferred native acceptance
+
+- Select mixed DiM/BEM new cards and re-imports, large batches, and aliases from local
+  and multiple document providers through Dex and Settings. Check top-left Import
+  opposite Edit, disabled admission during a run, preparation/progress/Stop/results,
+  and no app count cap. Confirm Dex asks only for committed NEW cards; Settings keeps
+  its prior toggle behavior. Re-imports/aliases must not add choices, pending labels
+  must follow card IDs, and saving a choice must not consume the next card's prompt.
+- Mix valid, invalid, unreadable, and close-error files: later files continue, failed
+  files leave no partial rows/prompts, and saved cards retain their success counts
+  when origin bookkeeping fails. Stop during provider query/open/read and immediately
+  after starting; try a fast restart and rotate during picker/import/choice handling.
+  Require terminal Stopped state, cleanup before replacement admission, no stale
+  progress/results, retained completed cards, and recovery only of queued existing
+  UNKNOWN cards. Provider cancellation responsiveness still needs native evidence.
+- In both system appearances, check tonal dialogs and all container levels for
+  readable text; the light scheme maps every container role to incumbent purple.
+  Info/Jogress dialogs use medium cut-corner Material Cards on `surfaceContainerHigh`,
+  capped at 480dp/92% width and 88% height, following `StorageDialog` and
+  `TransformationHistoryCard`; info Close/Jogress text actions stay outside scrolling.
+- Inspect compact selection cards, logo/name/status/progress and edit controls, plus
+  the actual selection-body and chart-footer alignment with bottom navigation in
+  both system navigation modes and rotation. Require no duplicate inset gap; source
+  geometry and compile-only assertions do not establish rendered bottom alignment.
+- Inspect branches/merges with mixed adjacent and stage-skipping routes: every
+  shared gap uses an aligned overlapping bus, with shared segments drawn once and
+  skipped/backward routes outside unrelated nodes. Shared-path ambiguity is an
+  accepted user choice; require neither separate per-route tracks nor arrowheads.
+- Tap actual displayed nodes after sustained pan and pinch/button zoom; check
+  correct details and usable minimum 48dp node bounds. Check the subtle Fit/zoom
+  overlay's Material hit areas, zoom-limit disabled states, and taps near/under the
+  overlay so controls and chart gestures do not select unintended characters.
+  There is no drag/pinch hint text or separate controls strip.
+- Check chart-to-footer continuity; previous/next controls and logo/name remain
+  readable at the bottom-navigation boundary.
+- Start with Jogress off; keep its labeled chip visible but disabled when no stored
+  routes exist (including loading). Toggle dashed yellow Jogress visibility while
+  ordinary routes stay solid and nodes stay fixed, including fusion-only results,
+  both same-card partners, and foreign partners shown only as requirements in details.
+- Check terminal-only ordinary evolution and Jogress results in their final
+  presentation section even with Jogress off; acyclic downstream chains advance,
+  actual cycle members stay at imported stage, and descendants of cycles advance.
+  Earlier-stage incoming routes and explicit BEM stages retain their rules;
+  details/stored stats must still show the imported stage.
+- Check Official and Custom DiMs have active cyan technical frames, while Unknown
+  cards keep their distinct status/origin action; imported logo pixels remain crisp.
+- Check previous/next on first, last, and single-card catalogs, with matching
+  logo/title and Adventure destination; navigation must stay bounded.
+- Return from Adventure and rotate while zoomed/panned; check displayed-card,
+  selection, Jogress preference, and viewport restoration. Exercise loading, empty,
+  failure/retry, and reactive discovery/availability changes.
+- At large fonts and with long localized names/species descriptions/requirements,
+  inspect info and Jogress dialogs: clear HP/BP/AP hierarchy, imported name pixels,
+  species level/type/profile/moves, correct evolution destination on tap, attribute
+  and partner-specific requirements, scrollable content, and pinned Close/Jogress
+  actions. Verify the Custom species picker and its unavailable-data state, obscured
+  name/stats, absent stats/profile/routes, native Back/outside dismissal, and focus
+  return after nested Jogress/species dialogs. Adventure index `0` must visibly say
+  stage `1`, and `-1` must show no adventure requirement.
+- Check grayscale/static-color/animated ownership and reduced-motion behavior;
+  with TalkBack check node index/imported stage/ownership/selection, labeled
+  toggle/controls, route-card actions, pinned dialog actions, and consecutive
+  two-axis scrolling. Native readability, physical hit areas, and focus remain
+  acceptance work rather than inferred passes.
+- Re-import DiM/BEM fixtures with changed evolution/Jogress/attack definitions,
+  missing legacy data, filename changes, and an explicitly manually renamed card.
+  Exercise same-number/same-body custom variants, duplicate names, ambiguous content,
+  and missing-art recovery: only an unambiguous existing card is refreshed. Confirm
+  the chosen legacy-name refresh and future manual-name lock, retained local
+  card/character/individual IDs, owned stats, discovery/progress, and unaffected
+  other variants; verify repaired adventure requirements after reopen.
+
 ## Android persistence checks
 
 ### Radar living-world foundation

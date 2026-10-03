@@ -188,8 +188,48 @@
     <string name="battles_coming_soon">Coming soon</string>
 
     <string name="cards_my_cards_title">My cards</string>
+    <string name="cards_import">Import DiM/BEM cards</string>
+    <string name="cards_edit">Edit cards</string>
+    <string name="card_import_preparing">Preparing files…</string>
+    <string name="card_import_progress">Importing %1$d/%2$d</string>
+    <string name="card_import_complete">Import complete</string>
+    <string name="card_import_stop">Stop</string>
+    <string name="card_import_stopping">Stopping…</string>
+    <string name="card_import_stopped">Stopped at %1$d/%2$d</string>
+    <string name="card_import_summary">Added %1$d · Updated %2$d · Failed %3$d</string>
+    <string name="card_import_dismiss">Dismiss import results</string>
+    <string name="card_import_show_issues">View issues (%1$d)</string>
+    <string name="card_import_issues_title">Files needing attention</string>
+    <string name="card_import_file_number">File %1$d</string>
+    <string name="card_import_file_issue">This file could not be imported. Check the file and try again.</string>
+    <string name="card_import_origin_issue">The card was saved. Set Official or Custom from its card entry.</string>
+    <string name="card_origin_help">Official cards support automatic species recognition. Custom cards let you choose their species manually.</string>
 
     <string name="card_view_discovered_characters">Discovered characters</string>
+    <string name="dex_chart_title">Evolution dex</string>
+    <string name="dex_chart_progress">Obtained: %1$d/%2$d</string>
+    <string name="dex_chart_fusions">Jogress</string>
+    <string name="dex_chart_character">Character %1$d, stage %2$s</string>
+    <string name="dex_status_currently_available">Currently in app</string>
+    <string name="dex_chart_fit">Fit evolution chart</string>
+    <string name="dex_chart_zoom_in">Zoom in</string>
+    <string name="dex_chart_zoom_out">Zoom out</string>
+    <string name="dex_chart_previous_card">Previous Dim</string>
+    <string name="dex_chart_next_card">Next Dim</string>
+    <string name="dex_chart_loading">Loading evolution chart</string>
+    <string name="dex_chart_empty">This card contains no characters.</string>
+    <string name="dex_chart_load_error">Could not load the evolution chart.</string>
+    <string name="dex_chart_retry">Retry</string>
+    <string name="dex_detail_stage">Stage %1$s</string>
+    <string name="dex_detail_evolutions">Evolution requirements</string>
+    <string name="dex_detail_time">Time: %1$d h</string>
+    <string name="dex_detail_vitals">Vital points: %1$d</string>
+    <string name="dex_detail_trophies">Trophies: %1$d</string>
+    <string name="dex_detail_battles">Battles: %1$d</string>
+    <string name="dex_detail_win_rate">Win rate: %1$d%%</string>
+    <string name="dex_detail_adventure">Adventure stage: %1$d</string>
+    <string name="dex_detail_open_evolution">View this evolution</string>
+    <string name="dex_detail_jogress_partner">Partner: card %1$d, character %2$d</string>
     <string name="card_entry_retry_species_match">Retry species matching</string>
 
 
@@ -197,23 +237,14 @@
     <string name="dex_chara_name_icon_description">Character name</string>
     <string name="dex_status_never_obtained">Never in app</string>
     <string name="dex_status_previously_obtained">Previously in app</string>
-    <string name="dex_chara_stats">HP: %1$d, BP: %2$d, AP: %3$d</string>
-    <string name="dex_chara_stage_attribute">Stg: %1$s, Atr: %2$s</string>
     <string name="dex_chara_unknown_name">\?\?\?\?\?\?\?\?\?\?\?\?\?\?\?\?</string>
-    <string name="dex_chara_stage_attribute_unknown">Stg: -, Atr: -</string>
     <string name="dex_chara_stats_unknown">HP: -, BP: -, AP: -</string>
-    <string name="dex_chara_requirements">
-        Tr: %1$d; Bt: %2$d; Vr: %3$d; Wr: %4$d%%; Ct: %5$dh
-    </string>
-    <string name="dex_chara_adventure_level">AdvLvl %1$d</string>
-    <string name="dex_chara_fusions_button">Fusions</string>
+    <string name="dex_chara_fusions_button">Jogress</string>
     <string name="dex_chara_close_button">Close</string>
     <string name="dex_species_title">Species information</string>
-    <string name="dex_species_name">Species: %1$s</string>
     <string name="dex_species_level">Level: %1$s</string>
     <string name="dex_species_type">Type: %1$s</string>
     <string name="dex_species_attribute">Attribute: %1$s</string>
-    <string name="dex_species_profile">Profile: %1$s</string>
     <string name="dex_species_special_moves">Special moves: %1$s</string>
 
     <string name="card_adventure_missions_title">Adventure missions</string>
@@ -420,12 +451,9 @@
     <string name="ui_no_destination">No destination selected</string>
     <string name="ui_no_source">No source selected</string>
     <string name="ui_apk_cancelled">APK import cancelled</string>
-    <string name="ui_card_cancelled">Card import cancelled</string>
     <string name="ui_chat_saved">Chat settings saved!</string>
     <string name="ui_tamer_saved">Tamer name saved!</string>
-    <string name="ui_import_success">Import successful!</string>
     <string name="ui_dim_importing">Importing DiM…</string>
-    <string name="ui_dim_import_failed">DiM import failed: %1$s</string>
     <string name="ui_empty_file">Selected file is empty!</string>
     <string name="ui_secrets_import_failed">Secrets import failed. Please select the official app APK.</string>
     <string name="ui_secrets_imported">Secrets successfully imported. Connections with devices are now possible.</string>

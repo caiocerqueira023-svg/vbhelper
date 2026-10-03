@@ -15,12 +15,14 @@ class DigimonPersonalityGeneratorTest {
             individualId = "same",
             attribute = NfcCharacter.Attribute.Data,
             stage = 3,
+            now = 1L,
             random = Random(2026)
         )
         val second = DigimonPersonalityGenerator.generate(
             individualId = "same",
             attribute = NfcCharacter.Attribute.Data,
             stage = 3,
+            now = 1L,
             random = Random(2026)
         )
 

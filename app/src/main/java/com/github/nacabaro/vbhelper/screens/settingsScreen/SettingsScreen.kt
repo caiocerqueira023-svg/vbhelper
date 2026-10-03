@@ -54,6 +54,7 @@ import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
+import com.github.nacabaro.vbhelper.screens.cardScreen.CardBatchImportPanel
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 
@@ -85,6 +86,7 @@ fun SettingsScreen(
     val promptOriginAtImport by settingsScreenController.promptOriginAtImportTime.collectAsState(initial = false)
     val currentLanguage by settingsScreenController.currentLanguage.collectAsState()
     val currentFont by settingsScreenController.currentFont.collectAsState()
+    val cardImports by settingsScreenController.cardImportState.collectAsState()
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showFontDialog by remember { mutableStateOf(false) }
 
@@ -123,6 +125,8 @@ fun SettingsScreen(
             ) {
                 settingsScreenController.onClickImportCard()
             }
+            CardBatchImportPanel(cardImports, settingsScreenController::stopCardImport,
+                settingsScreenController::dismissCardImportResult)
 
             SettingsSection(title = stringResource(R.string.settings_section_appearance))
             SettingsEntry(

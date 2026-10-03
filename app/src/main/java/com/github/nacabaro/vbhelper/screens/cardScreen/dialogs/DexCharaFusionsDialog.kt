@@ -1,194 +1,60 @@
 package com.github.nacabaro.vbhelper.screens.cardScreen.dialogs
 
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardColors
-import androidx.compose.material3.CardDefaults
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
-import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
-import com.github.nacabaro.vbhelper.R
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.VitalButton
-import com.github.nacabaro.vbhelper.components.cyberFrame
-import com.github.nacabaro.vbhelper.ui.theme.SurfaceElevatedPurple
+import com.github.nacabaro.vbhelper.dtos.CardSpecificJogressDetails
+import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.utils.BitmapData
-import com.github.nacabaro.vbhelper.utils.getImageBitmap
 
 @Composable
-fun DexCharaFusionsDialog(
-    currentChara: CharacterDtos.CardCharaProgress,
-    currentCharaPossibleFusions: List<CharacterDtos.FusionsWithSpritesAndObtained>,
-    obscure: Boolean,
-    onClickDismiss: () -> Unit,
-) {
-    val nameMultiplier = 3
-    val charaMultiplier = 4
-
-    val charaBitmapData = BitmapData(
-        bitmap = currentChara.spriteIdle,
-        width = currentChara.spriteWidth,
-        height = currentChara.spriteHeight
-    )
-    val charaImageBitmapData = charaBitmapData.getImageBitmap(
-        context = LocalContext.current,
-        multiplier = charaMultiplier,
-        obscure = obscure
-    )
-
-    val nameBitmapData = BitmapData(
-        bitmap = currentChara.nameSprite,
-        width = currentChara.nameSpriteWidth,
-        height = currentChara.nameSpriteHeight
-    )
-    val nameImageBitmapData = nameBitmapData.getImageBitmap(
-        context = LocalContext.current,
-        multiplier = nameMultiplier,
-        obscure = obscure
-    )
-
-    Dialog(
-        onDismissRequest = onClickDismiss,
-    ) {
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .cyberFrame(active = true),
-            shape = RectangleShape,
-            colors = CardDefaults.cardColors(containerColor = SurfaceElevatedPurple)
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-            ) {
-                Row {
-                    Card (
-                        colors = CardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            contentColor = MaterialTheme.colorScheme.contentColorFor(
-                                backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                            ),
-                            disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                            disabledContentColor = MaterialTheme.colorScheme.contentColorFor(
-                                backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                            )
-                        )
-                    ) {
-                        Image(
-                            bitmap = charaImageBitmapData.imageBitmap,
-                            contentDescription = "Icon",
-                            modifier = Modifier
-                                .size(charaImageBitmapData.dpWidth)
-                                .padding(8.dp),
-                            colorFilter = when (obscure) {
-                                true -> ColorFilter.tint(color = MaterialTheme.colorScheme.secondary)
-                                false -> null
-                            },
-                            filterQuality = FilterQuality.None
-                        )
+fun DexCharaFusionsDialog(currentChara: CharacterDtos.CardCharaProgress,
+                         currentCharaPossibleFusions: List<CharacterDtos.FusionsWithSpritesAndObtained>,
+                         obscure: Boolean, onClickDismiss: () -> Unit,
+                         specificJogress: List<CardSpecificJogressDetails> = emptyList()) {
+    val maximumHeight = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() * .88f }
+    Dialog(onDismissRequest = onClickDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Card(modifier = Modifier.widthIn(max = 480.dp).fillMaxWidth(.92f).heightIn(max = maximumHeight),
+            shape = MaterialTheme.shapes.medium,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(stringResource(R.string.dex_chara_fusions_button), style = MaterialTheme.typography.titleLarge)
+                Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        DexSpritePortrait(BitmapData(currentChara.spriteIdle, currentChara.spriteWidth, currentChara.spriteHeight),
+                            Modifier.size(72.dp), grayscale = currentChara.discoveredOn == null, obscure = obscure)
+                        Column(Modifier.weight(1f)) { DexNameImage(currentChara, obscure) }
                     }
-
-                    Spacer(
-                        modifier = Modifier
-                            .padding(16.dp)
-                    )
-
-                    if (!obscure) {
-                        Column {
-                            Image(
-                                bitmap = nameImageBitmapData.imageBitmap,
-                                contentDescription = "Icon",
-                                modifier = Modifier
-                                    .width(nameImageBitmapData.dpWidth)
-                                    .height(nameImageBitmapData.dpHeight),
-                                filterQuality = FilterQuality.None
-                            )
+                    currentCharaPossibleFusions.forEach { route ->
+                        DexRouteCard(BitmapData(route.spriteIdle, route.spriteWidth, route.spriteHeight), route.discoveredOn) {
+                            Text(stringResource(R.string.ui_combine_with, route.fusionAttribute.toString()),
+                                style = MaterialTheme.typography.bodyMedium)
                         }
-                    } else {
-                        Column {
-                            Text(text = "????????????????")
+                    }
+                    specificJogress.forEach { route ->
+                        DexRouteCard(BitmapData(route.spriteIdle, route.spriteWidth, route.spriteHeight), route.discoveredOn) {
+                            Text(stringResource(R.string.dex_detail_jogress_partner, route.partnerCardNumber, route.partnerCharaIndex + 1),
+                                style = MaterialTheme.typography.bodyMedium)
                         }
                     }
                 }
-
-                Spacer(modifier = Modifier.padding(16.dp))
-                Column {
-                    currentCharaPossibleFusions.map {
-                        val selectedCharaBitmap = BitmapData(
-                            bitmap = it.spriteIdle,
-                            width = it.spriteWidth,
-                            height = it.spriteHeight
-                        )
-                        val selectedCharaImageBitmap = selectedCharaBitmap.getImageBitmap(
-                            context = LocalContext.current,
-                            multiplier = 4,
-                            obscure = false
-                        )
-
-                        Card (
-                            modifier = Modifier
-                                .padding(vertical = 8.dp)
-                        ) {
-                            Row (
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                            ) {
-                                Card (
-                                    colors = CardColors(
-                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                        contentColor = MaterialTheme.colorScheme.contentColorFor(
-                                            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                                        ),
-                                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                        disabledContentColor = MaterialTheme.colorScheme.contentColorFor(
-                                            backgroundColor = MaterialTheme.colorScheme.surfaceVariant,
-                                        )
-                                    )
-                                ) {
-                                    Image(
-                                        bitmap = selectedCharaImageBitmap.imageBitmap,
-                                        contentDescription = "Icon",
-                                        modifier = Modifier
-                                            .size(selectedCharaImageBitmap.dpWidth)
-                                            .padding(8.dp),
-                                        colorFilter = null,
-                                        filterQuality = FilterQuality.None
-                                    )
-                                }
-                                Spacer(
-                                    modifier = Modifier
-                                        .padding(16.dp)
-                                )
-                                Column {
-                                    Text(stringResource(R.string.ui_combine_with, it.fusionAttribute))
-                                }
-                            }
-                        }
-                    }
-                }
-
-                VitalButton(
-                    onClick = onClickDismiss
-                ) {
+                VitalButton(onClick = onClickDismiss, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                     Text(stringResource(R.string.ui_close))
                 }
             }

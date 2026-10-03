@@ -1,6 +1,7 @@
 package com.github.nacabaro.vbhelper.domain.card
 
 import androidx.room.Entity
+import androidx.room.ColumnInfo
 import androidx.room.PrimaryKey
 
 @Entity
@@ -16,7 +17,8 @@ data class Card(
     val isBEm: Boolean,
     val officialStatus: OfficialStatus = OfficialStatus.UNKNOWN,
     /** Whether characters from this DiM can be selected for new World spawns. */
-    val worldSpawnsEnabled: Boolean = true
+    val worldSpawnsEnabled: Boolean = true,
+    @ColumnInfo(defaultValue = "0") val nameIsUserEdited: Boolean = false,
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -34,6 +36,7 @@ data class Card(
         if (isBEm != other.isBEm) return false
         if (officialStatus != other.officialStatus) return false
         if (worldSpawnsEnabled != other.worldSpawnsEnabled) return false
+        if (nameIsUserEdited != other.nameIsUserEdited) return false
 
         return true
     }
@@ -49,6 +52,7 @@ data class Card(
         result = 31 * result + isBEm.hashCode()
         result = 31 * result + officialStatus.hashCode()
         result = 31 * result + worldSpawnsEnabled.hashCode()
+        result = 31 * result + nameIsUserEdited.hashCode()
         return result
     }
 }
