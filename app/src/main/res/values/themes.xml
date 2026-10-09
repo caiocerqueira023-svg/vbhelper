@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.VBHelper" parent="Theme.AppCompat.Light.NoActionBar" />
+    <style name="Theme.VBHelper.Base" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/deep_purple_bg</item>
+        <item name="android:statusBarColor">@color/deep_purple_bg</item>
+        <item name="android:navigationBarColor">@color/deep_purple_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
+    </style>
+    <style name="Theme.VBHelper" parent="Theme.VBHelper.Base" />
+    <style name="Theme.VBHelper.Lab" parent="Theme.VBHelper">
+        <item name="android:windowBackground">@color/lab_bg</item>
+        <item name="android:statusBarColor">@color/lab_bg</item>
+        <item name="android:navigationBarColor">@color/lab_bg</item>
+    </style>
+    <style name="Theme.VBHelper.Arena.Base" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:windowBackground">@color/arena_bg</item>
+        <item name="android:statusBarColor">@color/arena_bg</item>
+        <item name="android:navigationBarColor">@color/arena_bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+    <style name="Theme.VBHelper.Arena" parent="Theme.VBHelper.Arena.Base" />
 </resources>

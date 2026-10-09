@@ -60,11 +60,11 @@ internal fun WorldInteractionOverlay(
     }
     val wilds=participants.filter { it.role==InteractionRole.WILD }
     val joinable=current!=null && !current.state.terminal && snapshot.status==EcosystemStatus.READY &&
-        snapshot.playerFix?.isFresh(snapshot.observedAt)==true && wilds.all { p ->
+        snapshot.playerFix?.isFresh(snapshot.observedAt)==true && (com.github.nacabaro.vbhelper.world.RadarDebugInteraction.allowAnyDistance || wilds.all { p ->
             snapshot.individuals.firstOrNull { it.individualId==p.individualId }?.let { actor ->
                 com.github.nacabaro.vbhelper.world.RadarWorldGeometry.relative(snapshot.playerFix.position,actor.position).withinInteractionRange
             }==true
-        }
+        })
     val battleState=npc?.let { runCatching {
         Gson().fromJson(it.snapshotJson,NpcBattleSummary::class.java).also { summary -> summary.alliedMembers.size;summary.opposingMembers.size }
     }.getOrNull() }

@@ -1,7 +1,7 @@
 package com.github.nacabaro.vbhelper.screens.cardScreen
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
+import com.github.nacabaro.vbhelper.components.DimLogo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
@@ -183,17 +183,20 @@ private fun CardEvolutionChart(
                 },
         ) {
             val segments = remember(layout, showFusions) { layout.connectorSegments(showFusions) }
+            val gridColor = SurfaceStroke.copy(alpha = .3f)
+            val fusionColor = VitalYellow
+            val routeColor = TextSecondaryOnDark
             Canvas(Modifier.fillMaxSize()) {
                 // A quiet chart grid, anchored to the same world coordinates as the routes.
                 val step = 24.dp.toPx() * scale
                 var gridX = (panX * density % step + step) % step
                 while (gridX < size.width) {
-                    drawLine(SurfaceStroke.copy(alpha = .3f), Offset(gridX, 0f), Offset(gridX, size.height), 1f)
+                    drawLine(gridColor, Offset(gridX, 0f), Offset(gridX, size.height), 1f)
                     gridX += step
                 }
                 var gridY = (panY * density % step + step) % step
                 while (gridY < size.height) {
-                    drawLine(SurfaceStroke.copy(alpha = .3f), Offset(0f, gridY), Offset(size.width, gridY), 1f)
+                    drawLine(gridColor, Offset(0f, gridY), Offset(size.width, gridY), 1f)
                     gridY += step
                 }
                 withTransform({
@@ -202,7 +205,7 @@ private fun CardEvolutionChart(
                 }) {
                     segments.forEach { segment ->
                         drawLine(
-                            color = if (segment.isJogress) VitalYellow else TextSecondaryOnDark,
+                            color = if (segment.isJogress) fusionColor else routeColor,
                             start = Offset(segment.start.x * density, segment.start.y * density),
                             end = Offset(segment.end.x * density, segment.end.y * density),
                             strokeWidth = 1.5.dp.toPx() / scale,
@@ -306,7 +309,7 @@ private fun CardChartNavigation(card: CardDtos.CardProgress, cards: List<CardDto
             val bitmap = remember(card.cardLogo, card.logoWidth, card.logoHeight) {
                 BitmapData(card.cardLogo, card.logoWidth, card.logoHeight).getBitmap().asImageBitmap()
             }
-            Image(bitmap, contentDescription = null, filterQuality = FilterQuality.None,
+            DimLogo(bitmap, contentDescription = null, filterQuality = FilterQuality.None,
                 contentScale = ContentScale.Fit, modifier = Modifier.fillMaxWidth().height(48.dp))
             Text(card.cardName, style = MaterialTheme.typography.labelLarge, color = TextPrimaryOnDark,
                 maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))

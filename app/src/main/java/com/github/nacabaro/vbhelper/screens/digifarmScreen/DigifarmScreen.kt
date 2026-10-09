@@ -1,5 +1,7 @@
 package com.github.nacabaro.vbhelper.screens.digifarmScreen
 
+import androidx.lifecycle.repeatOnLifecycle
+
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -234,7 +236,8 @@ private fun FarmWorld(
     val messages by repository.observeMessages(farm.id).collectAsState(emptyList())
     val storageCharacters by storageRepository.getAllCharacters().collectAsState(emptyList())
     val residentCharacterIds by repository.observeResidentCharacterIds().collectAsState(emptyList())
-    val orchestrator = remember { FarmConversationOrchestrator(repository, app.container.chatRepository) }
+    val orchestrator = app.container.farmConversationOrchestrator
+    val farmLifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     val coordinator = app.container.farmSessionCoordinator
     val scope = rememberCoroutineScope()
     var selectedResident by remember { mutableStateOf<FarmResidentWithDetails?>(null) }
@@ -255,22 +258,26 @@ private fun FarmWorld(
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Single detailed session per app (§13): map and group share the coordinator.
-    LaunchedEffect(farm.id) {
-        withContext(Dispatchers.IO) { coordinator.acquire(farm.id) }
-        offlineSummary = withContext(Dispatchers.IO) { repository.summarizeReturn(farm.id) }
-        try {
-            awaitCancellation()
-        } finally {
-            withContext(Dispatchers.IO) { coordinator.release(farm.id) }
+    LaunchedEffect(farm.id, farmLifecycleOwner) {
+        farmLifecycleOwner.lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.RESUMED) {
+            orchestrator.acquire(farm.id)
+            offlineSummary = withContext(Dispatchers.IO) { repository.summarizeReturn(farm.id) }
+            withContext(Dispatchers.IO) { coordinator.acquire(farm.id) }
+            try { awaitCancellation() } finally {
+                orchestrator.release(farm.id)
+                withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) { coordinator.release(farm.id) }
+            }
         }
     }
-    LaunchedEffect(farm.id, residents.size, farm.autonomousDialogueEnabled) {
+    LaunchedEffect(farm.id, residents.size, farm.autonomousDialogueEnabled, farmLifecycleOwner) {
         if (residents.size < 2 || !farm.autonomousDialogueEnabled) return@LaunchedEffect
-        while (true) {
-            delay(20_000L)
-            val result = runCatching { withContext(Dispatchers.IO) { orchestrator.maybeGenerateAutonomous(farm.id) } }
-            dialogueIssue = result.exceptionOrNull()?.message
-            if (result.isFailure) break
+        farmLifecycleOwner.lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.RESUMED) {
+            while (true) {
+                delay(20_000L)
+                val result = runCatching { withContext(Dispatchers.IO) { orchestrator.maybeGenerateAutonomous(farm.id) } }
+                dialogueIssue = result.exceptionOrNull()?.message
+                if (result.isFailure) break
+            }
         }
     }
     LaunchedEffect(farm.id, scale, panX, panY) {

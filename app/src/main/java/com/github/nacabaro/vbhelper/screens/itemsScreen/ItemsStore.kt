@@ -1,4 +1,5 @@
 package com.github.nacabaro.vbhelper.screens.itemsScreen
+import androidx.room.withTransaction
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -133,21 +134,15 @@ suspend fun purchaseItem(
     item: ItemDtos.ItemsWithQuantities,
     currencyRepository: CurrencyRepository
 ): Int {
-    return if (currencyRepository.currencyValue.first() < item.price) {
-        R.string.items_not_enough_credits
-    } else {
-        db
-            .itemDao()
-            .purchaseItem(
-                item.id,
-                1
-            )
-
-        currencyRepository
-            .setCurrencyValue(
-                currencyRepository.currencyValue.first() - item.price
-            )
-
-        R.string.items_purchase_success
+    require(item.price >= 0)
+    currencyRepository.initializeWallet()
+    return kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+        db.withTransaction {
+            if (db.questDao().spendBits(item.price) != 1) R.string.items_not_enough_credits
+            else {
+                check(db.itemDao().grantQuestItem(item.id, 1) == 1)
+                R.string.items_purchase_success
+            }
+        }
     }
 }

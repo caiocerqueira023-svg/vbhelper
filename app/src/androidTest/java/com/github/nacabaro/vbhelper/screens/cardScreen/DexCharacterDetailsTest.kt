@@ -11,6 +11,8 @@ import com.github.cfogrady.vbnfc.data.NfcCharacter
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.screens.cardScreen.dialogs.DexCharacterDetailsContent
+import com.github.nacabaro.vbhelper.screens.cardScreen.dialogs.DigimonScanProgressContent
+import com.github.nacabaro.vbhelper.screens.cardScreen.dialogs.DigimonScanConvertButton
 import com.github.nacabaro.vbhelper.ui.theme.VBHelperTheme
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -58,5 +60,48 @@ class DexCharacterDetailsTest {
         compose.onNodeWithText("100").assertDoesNotExist()
         compose.onNodeWithText(context.getString(R.string.dex_chara_stats_unknown)).assertExists()
         compose.onNodeWithText(context.getString(R.string.dex_chara_close_button)).assertIsDisplayed()
+    }
+
+    @Test fun completeScanExposesManualConversionAndItsStorageDestination() {
+        var conversions = 0
+        compose.setContent {
+            VBHelperTheme {
+                DexCharacterDetailsContent(character, false, null, emptyList(), false, false, false,
+                    onClose = {}, onJogress = {}, onSelectCharacter = {}, onPickSpecies = {},
+                    modifier = Modifier.size(320.dp, 600.dp),
+                    scanContent = { DigimonScanProgressContent(100, null, false) },
+                    primaryAction = { DigimonScanConvertButton(100, false) { conversions++ } })
+            }
+        }
+        compose.onNodeWithText(context.getString(R.string.digimon_scan_ready)).assertExists()
+        compose.onNodeWithText(context.getString(R.string.digimon_scan_convert)).performClick()
+        compose.runOnIdle { assertEquals(1, conversions) }
+        compose.onNodeWithText(context.getString(R.string.dex_chara_close_button)).assertIsDisplayed()
+    }
+
+    @Test fun incompleteScanCannotBeConverted() {
+        compose.setContent { VBHelperTheme { DigimonScanConvertButton(80, false) {} } }
+        compose.onNodeWithText(context.getString(R.string.digimon_scan_convert)).assertDoesNotExist()
+    }
+
+    @Test fun zeroScanDetailsHideTheProgressSectionAndConversion() {
+        compose.setContent {
+            VBHelperTheme {
+                DexCharacterDetailsContent(character, false, null, emptyList(), false, false, false,
+                    onClose = {}, onJogress = {}, onSelectCharacter = {}, onPickSpecies = {},
+                    modifier = Modifier.size(320.dp, 600.dp),
+                    scanContent = { DigimonScanProgressContent(0, null, false) },
+                    primaryAction = { DigimonScanConvertButton(0, false) {} })
+            }
+        }
+        compose.onNodeWithText(context.getString(R.string.digimon_scan_title)).assertDoesNotExist()
+        compose.onNodeWithText(context.getString(R.string.digimon_scan_help)).assertDoesNotExist()
+        compose.onNodeWithText(context.getString(R.string.digimon_scan_convert)).assertDoesNotExist()
+        compose.onNodeWithText(context.getString(R.string.dex_chara_close_button)).assertIsDisplayed()
+    }
+
+    @Test fun busyConversionCannotBeSubmittedAgain() {
+        compose.setContent { VBHelperTheme { DigimonScanConvertButton(100, true) {} } }
+        compose.onNodeWithText(context.getString(R.string.digimon_scan_converting)).assertIsNotEnabled()
     }
 }

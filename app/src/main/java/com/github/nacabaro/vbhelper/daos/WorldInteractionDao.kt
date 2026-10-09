@@ -22,6 +22,13 @@ interface WorldInteractionDao {
 
     @Query("SELECT * FROM WorldInteraction WHERE state NOT IN ('ENDED', 'CANCELLED', 'INTERRUPTED') ORDER BY id")
     suspend fun getOpenInteractions(): List<WorldInteraction>
+    @Query("""
+        SELECT m.* FROM WorldInteractionMessage m JOIN WorldInteraction e ON e.id=m.interactionId
+        WHERE e.state IN ('ENDED','CANCELLED','INTERRUPTED') AND e.origin != 'DIRECT_PLAYER'
+            AND e.rulesVersion=:rulesVersion AND m.source IN ('MODEL','AUTHORED') AND m.tick>=:oldestTick
+        ORDER BY m.tick DESC,m.sequence DESC LIMIT 24
+    """)
+    suspend fun trailingPublicSpeech(oldestTick: Long, rulesVersion: Int = com.github.nacabaro.vbhelper.world.ecosystem.WorldEcosystemClock.RULES_VERSION): List<WorldInteractionMessage>
     @Query("SELECT MAX(startTick) FROM WorldInteraction WHERE publicReason LIKE 'WILD_%'")
     suspend fun getLatestPlayerInitiationTick(): Long?
     @Query("SELECT MAX(e.startTick) FROM WorldInteraction e JOIN WorldInteractionParticipant p ON p.interactionId=e.id WHERE p.individualId=:id AND e.publicReason LIKE 'WILD_%'")

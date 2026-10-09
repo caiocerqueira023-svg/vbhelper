@@ -132,9 +132,12 @@ class FromNfcConverter (
                 }
                 previous.characterId
             } else {
+                val questToken = IndividualIdentity.decode(nfcCharacter.appReserved1)
                 val insertedId = insertCharacterInTransaction(nfcCharacter, cardData)
                 val inserted = requireNotNull(database.userCharacterDao().getCharacterSync(insertedId))
                 database.watchTransferDao().recordImport(WatchImportReceipt(fingerprint, insertedId, inserted.individualId))
+                com.github.nacabaro.vbhelper.quests.QuestProgress(database).watchImportLocked(
+                    questToken, inserted.individualId, nfcCharacter, fingerprint, System.currentTimeMillis())
                 insertedId
             }
         })

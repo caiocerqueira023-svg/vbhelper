@@ -10,6 +10,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface WildRelationshipDao {
+    @Query("UPDATE WildRelationship SET contactUnlockedAt = COALESCE(contactUnlockedAt, :now), updatedAt = :now WHERE individualId = :individualId")
+    suspend fun unlockQuestContact(individualId: String, now: Long)
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(relationship: WildRelationship)
 

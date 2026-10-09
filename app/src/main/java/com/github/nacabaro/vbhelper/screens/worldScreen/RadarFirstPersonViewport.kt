@@ -17,6 +17,8 @@ import com.github.nacabaro.vbhelper.rendering.sprite3d.ResidentFrameImage
 import com.github.nacabaro.vbhelper.rendering.sprite3d.SpriteExtrusionGlb
 import com.github.nacabaro.vbhelper.screens.offlineBattle.OfflineArenaManifest
 import com.github.nacabaro.vbhelper.ui.theme.DeepPurpleBgAlt
+import com.github.nacabaro.vbhelper.ui.theme.AppTheme
+import androidx.compose.ui.graphics.Color
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.createARGBIntArray
 import com.github.nacabaro.vbhelper.world.GeoPoint
@@ -42,10 +44,11 @@ internal fun RadarFirstPersonViewport(
     active: Boolean, motion: Boolean, onProjection: (List<RadarProjection>) -> Unit,
     onFailure: () -> Unit, onReleased: () -> Unit, onCreated: () -> Unit = {}, modifier: Modifier = Modifier
 ) {
+    val backgroundColor = DeepPurpleBgAlt
     AndroidView(modifier = modifier, factory = { context ->
         FrameLayout(context).also { host ->
             val mainHandler=Handler(Looper.getMainLooper())
-            runCatching { RadarFirstPersonSceneView(context) }.onSuccess { scene ->
+            runCatching { RadarFirstPersonSceneView(context, backgroundColor) }.onSuccess { scene ->
                 host.addView(scene, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
                 scene.onFailure = { mainHandler.post(onFailure) }
                 scene.onReleased = { mainHandler.post(onReleased) }
@@ -64,7 +67,10 @@ internal fun RadarFirstPersonViewport(
 }
 
 /** Pinned ModelViewer 1.76.1 destroys its Engine synchronously in its detach listener. */
-internal class RadarFirstPersonSceneView(context: Context) : TextureView(context) {
+internal class RadarFirstPersonSceneView(
+    context: Context,
+    backgroundColor: Color = AppTheme.VB_HELPER.palette.backgroundAlt,
+) : TextureView(context) {
     private val engine: Engine
     private val viewer: ModelViewer
     private val provider: UbershaderProvider
@@ -112,7 +118,7 @@ internal class RadarFirstPersonSceneView(context: Context) : TextureView(context
         provider = UbershaderProvider(engine)
         loader = AssetLoader(engine, provider, EntityManager.get())
         resources = ResourceLoader(engine)
-        val color = Colors.toLinear(Colors.RgbType.SRGB, DeepPurpleBgAlt.red, DeepPurpleBgAlt.green, DeepPurpleBgAlt.blue)
+        val color = Colors.toLinear(Colors.RgbType.SRGB, backgroundColor.red, backgroundColor.green, backgroundColor.blue)
         skybox = Skybox.Builder().color(color[0], color[1], color[2], 1f).build(engine)
         viewer.scene.skybox = skybox
         isOpaque = false

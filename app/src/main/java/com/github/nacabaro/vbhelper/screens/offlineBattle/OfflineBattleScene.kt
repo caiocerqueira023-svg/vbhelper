@@ -8,15 +8,21 @@ import android.view.MotionEvent
 import android.view.TextureView
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import com.github.nacabaro.vbhelper.R
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleSnapshot
 import com.github.nacabaro.vbhelper.battle.offline.core.CombatantState
+import com.github.nacabaro.vbhelper.battle.offline.core.BattleFinisherKind
+import com.github.nacabaro.vbhelper.battle.offline.core.BattleFinisherPhase
+import com.github.nacabaro.vbhelper.battle.offline.core.BattlePosition
 import com.github.nacabaro.vbhelper.rendering.HybridSceneKind
 import com.github.nacabaro.vbhelper.rendering.applyHybridSceneProfile
 import com.github.nacabaro.vbhelper.rendering.sprite3d.cameraAssistedSpriteYaw
 import com.github.nacabaro.vbhelper.ui.theme.DeepPurpleBgAlt
+import com.github.nacabaro.vbhelper.ui.theme.AppTheme
+import androidx.compose.ui.graphics.Color
 import com.google.android.filament.Colors
 import com.google.android.filament.Engine
 import com.google.android.filament.EntityManager
@@ -50,14 +56,17 @@ fun OfflineBattleScene(
     renderingEnabled: Boolean = true,
     modifier: Modifier = Modifier,
     onReleased: () -> Unit = {},
-    onCreated: () -> Unit = {}
+    onCreated: () -> Unit = {},
+    preparedForms: Map<String, BattleFighterPresentation> = emptyMap(),
+    allowMotion: Boolean = true,
 ) {
     if (manifest == null) return
+    val backgroundColor = DeepPurpleBgAlt
     AndroidView(
         modifier = modifier,
         factory = { context ->
             FrameLayout(context).also { host ->
-                runCatching { OfflineBattleSceneView(context) }
+                runCatching { OfflineBattleSceneView(context, backgroundColor) }
                     .onSuccess { scene ->
                         onCreated()
                         host.addView(scene, FrameLayout.LayoutParams(
@@ -71,7 +80,7 @@ fun OfflineBattleScene(
                         Log.e("OfflineBattle3d", "Could not create arena renderer", failure)
                         host.post {
                             onReady(null)
-                            onAssetError(failure.message ?: "Não foi possível iniciar o renderizador 3D.")
+                            onAssetError(failure.message ?: context.getString(R.string.ui_battle_error_renderer))
                         }
                     }
             }
@@ -80,7 +89,8 @@ fun OfflineBattleScene(
             val scene = host.getChildAt(0) as? OfflineBattleSceneView
             scene?.setRenderingEnabled(renderingEnabled)
             scene?.setBattleState(
-                snapshot, fighters, sessionId, onSceneReady, onProjectionChanged, onFighterTapped
+                snapshot, fighters, sessionId, onSceneReady, onProjectionChanged, onFighterTapped,
+                preparedForms, allowMotion
             )
         },
         onRelease = { host ->
@@ -95,7 +105,10 @@ fun OfflineBattleScene(
     )
 }
 
-class OfflineBattleSceneView(context: Context) : TextureView(context) {
+class OfflineBattleSceneView(
+    context: Context,
+    backgroundColor: Color = AppTheme.VB_HELPER.palette.backgroundAlt,
+) : TextureView(context) {
     private val engine: Engine
     private val viewer: ModelViewer
     private val backgroundSkybox: Skybox
@@ -134,6 +147,16 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
     private var assetLoader: AssetLoader? = null
     private var resourceLoader: ResourceLoader? = null
     private val renderedFighters = linkedMapOf<String, RenderedFighter>()
+    /** Retained base/result/transition instances. Movies toggle them; they never replace assets. */
+    private val fighterPool = linkedMapOf<String, RenderedFighter>()
+    private var desiredPreparedForms: Map<String, BattleFighterPresentation> = emptyMap()
+    private var cinematicRenderer: BattleCinematicRenderer? = null
+    private var cinematicPreparedKeys: Set<String> = emptySet()
+    private var cinematicPreparationFailed = false
+    private var allowCinematicMotion = true
+    private var cinematicSequenceId: Long? = null
+    private var cinematicSavedCamera: CinematicCameraPose? = null
+    private var cinematicTargetY: Double? = null
     private val renderedImpacts = linkedMapOf<Pair<String, String>, RenderedImpact>()
     private val failedImpactKeys = mutableSetOf<Pair<String, String>>()
     private var latestSnapshot: BattleSnapshot? = null
@@ -145,7 +168,8 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
     private var onFighterTapped: ((String) -> Unit)? = null
     private var sceneReadyNotified = false
     private var lastProjectionNotifyNanos = 0L
-    private var failedFighterIds = linkedSetOf<String>()
+    /** (combatantId, setKey) pairs that failed to build; a new setKey always retries. */
+    private var failedFighterKeys = linkedSetOf<Pair<String, String>>()
     private var arenaEnergyMaterial: MaterialInstance? = null
     private var arenaDomeMotion: ArenaDomeMotion? = null
     private var arenaDomeStartNanos = 0L
@@ -172,6 +196,9 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
         val asset: FilamentAsset,
         val presentation: BattleFighterPresentation,
         val poses: Map<String, Int>,
+        val renderables: List<Int>,
+        val shadows: List<Int>,
+        val materials: List<MaterialInstance>,
         var activePose: String? = null,
         var poseChangedAtNanos: Long = 0L
     )
@@ -188,17 +215,35 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
     private val frameCallback = object : Choreographer.FrameCallback {
         override fun doFrame(frameTimeNanos: Long) {
             if (released || !renderingEnabled) return
-            updateAutomaticOrbit(frameTimeNanos)
-            updateFocusedCameraTarget(frameTimeNanos)
+            updateCinematicCamera()
+            if (latestSnapshot?.finisher == null) {
+                updateAutomaticOrbit(frameTimeNanos)
+                updateFocusedCameraTarget(frameTimeNanos)
+            }
             updateArenaDomeMotion(frameTimeNanos)
             updateArenaEmission(frameTimeNanos)
             updateArenaVoxelMotion(frameTimeNanos)
             projectionNotificationPending = projectionNotificationPending || cameraDirty
             applyCameraIfNeeded()
             syncFighters()
-            updateFighterTransforms((latestSnapshot?.elapsedMillis ?: 0L) * 1_000_000L)
+            fighterPool.values.filter { it !in renderedFighters.values }.forEach(::hideFighter)
+            val poseTime = (latestSnapshot?.elapsedMillis ?: 0L) +
+                (latestSnapshot?.finisher?.let { cinematicVisualSnapshot(it, allowCinematicMotion).elapsedMillis } ?: 0L)
+            updateFighterTransforms(poseTime * 1_000_000L)
+            updateCinematicActors()
             syncImpactAssets()
-            updateImpactTransforms(frameTimeNanos)
+            if (latestSnapshot?.finisher == null) {
+                cinematicRenderer?.hide()
+                updateImpactTransforms(frameTimeNanos)
+            } else {
+                renderedImpacts.values.forEach { effect -> effect.renderables.forEach {
+                    engine.renderableManager.setLayerMask(it, 0xFF, 0)
+                } }
+                latestSnapshot?.let { snapshot -> manifest?.let { arena ->
+                    cinematicRenderer?.update(snapshot, desiredFighters, desiredPreparedForms,
+                        arena, cameraYaw, cameraPitch, allowCinematicMotion)
+                } }
+            }
             val rendered = viewer.render(frameTimeNanos)
             if (projectionNotificationPending && frameTimeNanos - lastProjectionNotifyNanos >= PROJECTION_NOTIFY_NANOS) {
                 lastProjectionNotifyNanos = frameTimeNanos
@@ -206,7 +251,9 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
                 onProjectionChanged?.invoke()
             }
             if (!sceneReadyNotified && rendered && viewer.progress >= 1f && arenaLoaded && desiredFighters.isNotEmpty() &&
-                desiredFighters.keys.all { it in renderedFighters }) {
+                desiredFighters.keys.all { it in renderedFighters } &&
+                desiredPreparedForms.keys.all { it in fighterPool } &&
+                cinematicPreparedKeys.containsAll(desiredFighters.values.map { it.setKey } + desiredPreparedForms.keys)) {
                 sceneReadyNotified = true
                 onSceneReady?.invoke()
             }
@@ -221,7 +268,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
         viewer.view.applyHybridSceneProfile(HybridSceneKind.BATTLE)
         val backdrop = Colors.toLinear(
             Colors.RgbType.SRGB,
-            DeepPurpleBgAlt.red, DeepPurpleBgAlt.green, DeepPurpleBgAlt.blue
+            backgroundColor.red, backgroundColor.green, backgroundColor.blue
         )
         backgroundSkybox = Skybox.Builder()
             .color(backdrop[0], backdrop[1], backdrop[2], 1f)
@@ -230,7 +277,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
         radarSkybox = Skybox.Builder()
             .color(0f, 0f, 0f, 1f)
             .build(engine)
-        contentDescription = "Arena tridimensional. Toque em um Digimon para centralizar a câmera, arraste para orbitar e use dois dedos para ajustar o zoom."
+        contentDescription = context.getString(R.string.ui_battle_scene_description)
         isFocusable = true
         isOpaque = false
         setOnTouchListener { view, event ->
@@ -260,7 +307,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
                 context.assets.open(assetPath).use { it.readBytes() }
             }.getOrElse { failure ->
                 Log.e(TAG, "Could not read $assetPath", failure)
-                post { if (!released && generation == arenaLoadGeneration) onError("Arena não encontrada: ${failure.message}") }
+                post { if (!released && generation == arenaLoadGeneration) onError(context.getString(R.string.ui_battle_error_arena_missing, failure.message)) }
                 return@Thread
             }
             post {
@@ -283,7 +330,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
                     Log.i(TAG, "Loaded $assetPath (${bytes.size} bytes)")
                 }.onFailure { failure ->
                     Log.e(TAG, "Could not load arena GLB", failure)
-                    onError("Não foi possível carregar o Coliseu: ${failure.message}")
+                    onError(context.getString(R.string.ui_battle_error_colosseum_load, failure.message))
                 }
             }
         }, "offline-arena-loader").start()
@@ -295,11 +342,16 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
         sessionId: String?,
         onReady: () -> Unit,
         onProjectionChanged: () -> Unit,
-        onFighterTapped: (String) -> Unit
+        onFighterTapped: (String) -> Unit,
+        preparedForms: Map<String, BattleFighterPresentation> = emptyMap(),
+        allowMotion: Boolean = true,
     ) {
         if (released) return
         if (latestSessionId != sessionId) {
-            releaseImpacts()
+            if (latestSessionId != null) releaseFighters()
+            cinematicSequenceId = null
+            cinematicSavedCamera = null
+            cinematicTargetY = null
             cameraFocusFighterId = null
             initialCameraFocusFighterId = null
             initialCameraCompositionApplied = false
@@ -317,6 +369,8 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
         latestSessionId = sessionId
         latestSnapshot = snapshot
         desiredFighters = fighters
+        desiredPreparedForms = preparedForms
+        allowCinematicMotion = allowMotion
         onSceneReady = onReady
         this.onProjectionChanged = onProjectionChanged
         this.onFighterTapped = onFighterTapped
@@ -366,9 +420,9 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
     fun retryScene() {
         if (released) return
         sceneReadyNotified = false
-        failedFighterIds.clear()
+        failedFighterKeys.clear()
         arenaLoaded = false
-        renderedFighters.keys.toList().forEach(::destroyFighter)
+        releaseFighters()
         runCatching { if (viewer.asset != null) viewer.destroyModel() }
         val currentManifest = manifest ?: return
         onAssetError?.let { loadArena(currentManifest, it) }
@@ -424,7 +478,8 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
     private fun applyCameraIfNeeded() {
         if (!cameraDirty || viewportWidth <= 0 || viewportHeight <= 0) return
         cameraDirty = false
-        val impact = latestSnapshot?.impacts?.maxByOrNull { it.impactId }
+        val sequence = latestSnapshot?.finisher
+        val impact = latestSnapshot?.impacts?.maxByOrNull { it.impactId }.takeIf { sequence == null }
         val shake = impact?.let {
             battleImpactShake(it.impactId, it.remainingMillis, it.critical)
         } ?: BattleCameraShake(0.0, 0.0)
@@ -434,7 +489,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
         val cameraEye = manifest?.let {
             constrainArenaCameraEye(desiredEyeX, desiredEyeZ, it.cameraCollisionRadius)
         } ?: ArenaCameraPoint(desiredEyeX, desiredEyeZ)
-        val targetY = manifest?.cameraTargetY ?: 0.7
+        val targetY = cinematicTargetY ?: manifest?.cameraTargetY ?: 0.7
         val eyeY = targetY + cameraDistance * kotlin.math.sin(cameraPitch)
         viewer.camera.lookAt(
             cameraEye.x + shake.x, eyeY, cameraEye.z + shake.z,
@@ -673,6 +728,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
     }
 
     private fun handleCameraTouch(event: MotionEvent): Boolean {
+        if (latestSnapshot?.finisher != null) return true
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 pauseAutomaticOrbit()
@@ -775,45 +831,255 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
             assetLoader = AssetLoader(engine, nextProvider, EntityManager.get())
             resourceLoader = ResourceLoader(engine)
         }
-        for (id in renderedFighters.keys.toList()) {
-            val wanted = desiredFighters[id]
-            if (wanted == null || wanted.setKey != renderedFighters[id]?.presentation?.setKey) destroyFighter(id)
-        }
-        for ((id, presentation) in desiredFighters) {
-            if (id in renderedFighters || id in failedFighterIds) continue
-            runCatching {
-                val bytes = presentation.modelGlb
-                val buffer = ByteBuffer.allocateDirect(bytes.size)
-                    .order(ByteOrder.nativeOrder()).put(bytes).apply { flip() }
-                val asset = checkNotNull(assetLoader?.createAsset(buffer)) { "O GLB ${presentation.displayName} é inválido." }
-                resourceLoader?.loadResources(asset)
-                asset.releaseSourceData()
-                viewer.scene.addEntities(asset.entities)
-                val renderables = engine.renderableManager
-                asset.entities.forEach { entity ->
-                    if (renderables.hasComponent(entity)) {
-                        val instance = renderables.getInstance(entity)
-                        renderables.setCastShadows(instance, false)
-                        renderables.setReceiveShadows(instance, false)
-                    }
+        val presentations = desiredFighters.values + desiredPreparedForms.values
+        for (presentation in presentations) {
+            if (presentation.setKey !in fighterPool) {
+                tryCreateFighter(presentation.combatantId, presentation)?.let { fighterPool[presentation.setKey] = it }
+            }
+            presentation.transitionGlb?.let { bytes ->
+                val key = "${presentation.setKey}:transition"
+                if (key !in fighterPool) {
+                    tryCreateFighter(presentation.combatantId, presentation.copy(modelGlb = bytes,
+                        setKey = key, transitionGlb = null))?.let { fighterPool[key] = it }
                 }
-                val poses = presentation.poseNames.mapNotNull { pose ->
-                    val entity = asset.getFirstEntityByName("pose_$pose")
-                    if (entity != 0 && renderables.hasComponent(entity)) {
-                        val instance = renderables.getInstance(entity)
-                        renderables.setLayerMask(instance, 0xFF, 0)
-                        pose to entity
-                    } else null
-                }.toMap()
-                check(poses.isNotEmpty()) { "O modelo de ${presentation.displayName} não possui poses." }
-                renderedFighters[id] = RenderedFighter(asset, presentation, poses)
-                Log.i(TAG, "Loaded 3D fighter ${presentation.displayName} (${poses.size} poses)")
-            }.onFailure { failure ->
-                failedFighterIds += id
-                Log.e(TAG, "Could not load fighter ${presentation.displayName}", failure)
-                onAssetError?.invoke("Não foi possível carregar ${presentation.displayName}: ${failure.message}")
             }
         }
+        renderedFighters.keys.filter { it !in desiredFighters }.forEach { id ->
+            renderedFighters.remove(id)?.let(::hideFighter)
+        }
+        for ((id, presentation) in desiredFighters) {
+            // Keep the last valid actor if a new asset failed; don't poison its base identity.
+            fighterPool[presentation.setKey]?.let { replacement ->
+                if (renderedFighters[id] !== replacement) renderedFighters[id]?.let(::hideFighter)
+                renderedFighters[id] = replacement
+            }
+        }
+        val keys = presentations.map { it.setKey }.toSet()
+        if (cinematicPreparedKeys != keys && !cinematicPreparationFailed) {
+            runCatching {
+                val renderer = cinematicRenderer ?: BattleCinematicRenderer(engine, viewer.scene,
+                    requireNotNull(assetLoader), requireNotNull(resourceLoader)).also { cinematicRenderer = it }
+                renderer.prepare(presentations)
+                cinematicPreparedKeys = keys
+            }.onFailure { failure ->
+                cinematicPreparationFailed = true
+                Log.e(TAG, "Could not prepare finisher effects", failure)
+                onAssetError?.invoke(context.getString(R.string.ui_battle_error_fighter_load,
+                    desiredFighters.values.firstOrNull()?.displayName.orEmpty(), failure.message))
+            }
+        }
+    }
+
+    private fun tryCreateFighter(id: String, presentation: BattleFighterPresentation): RenderedFighter? {
+        val key = id to presentation.setKey
+        if (key in failedFighterKeys) return null
+        var pendingAsset: FilamentAsset? = null
+        return runCatching {
+            val bytes = presentation.modelGlb
+            val buffer = ByteBuffer.allocateDirect(bytes.size)
+                .order(ByteOrder.nativeOrder()).put(bytes).apply { flip() }
+            val asset = checkNotNull(assetLoader?.createAsset(buffer)) { "O GLB ${presentation.displayName} é inválido." }
+            pendingAsset = asset
+            resourceLoader?.loadResources(asset)
+            asset.releaseSourceData()
+            viewer.scene.addEntities(asset.entities)
+            val renderables = engine.renderableManager
+            val instances = asset.entities.filter(renderables::hasComponent).map(renderables::getInstance)
+            instances.forEach { renderables.setLayerMask(it, 0xFF, 0) }
+            asset.entities.forEach { entity ->
+                if (renderables.hasComponent(entity)) {
+                    val instance = renderables.getInstance(entity)
+                    renderables.setCastShadows(instance, false)
+                    renderables.setReceiveShadows(instance, false)
+                }
+            }
+            val poses = presentation.poseNames.mapNotNull { pose ->
+                val entity = asset.getFirstEntityByName("pose_$pose")
+                if (entity != 0 && renderables.hasComponent(entity)) {
+                    val instance = renderables.getInstance(entity)
+                    renderables.setLayerMask(instance, 0xFF, 0)
+                    pose to entity
+                } else null
+            }.toMap()
+            check(poses.isNotEmpty()) { "O modelo de ${presentation.displayName} não possui poses." }
+            val poseInstances = poses.values.map(renderables::getInstance).toSet()
+            val materials = instances.flatMap { instance ->
+                (0 until renderables.getPrimitiveCount(instance)).map { renderables.getMaterialInstanceAt(instance, it) }
+            }
+            if (presentation.setKey.endsWith(":transition")) {
+                materials.forEach { it.setDepthWrite(false) }
+            }
+            RenderedFighter(asset, presentation, poses, instances, instances.filter { it !in poseInstances }, materials).also {
+                pendingAsset = null
+                Log.i(TAG, "Loaded 3D fighter ${presentation.displayName} (${poses.size} poses)")
+            }
+        }.onFailure { failure ->
+            failedFighterKeys += key
+            pendingAsset?.let { viewer.scene.removeEntities(it.entities); assetLoader?.destroyAsset(it) }
+            Log.e(TAG, "Could not load fighter ${presentation.displayName}", failure)
+            // Initial loads still surface; a failed mid-battle Blast swap
+            // falls back to the current model silently.
+            if (id !in renderedFighters) {
+                onAssetError?.invoke(context.getString(R.string.ui_battle_error_fighter_load, presentation.displayName, failure.message))
+            }
+        }.getOrNull()
+    }
+
+    private fun hideFighter(fighter: RenderedFighter) {
+        fighter.renderables.forEach { engine.renderableManager.setLayerMask(it, 0xFF, 0) }
+        fighter.activePose = null
+    }
+
+    private fun updateCinematicCamera() {
+        val snapshot = latestSnapshot ?: return
+        val sequence = snapshot.finisher?.let { cinematicVisualSnapshot(it, allowCinematicMotion) }
+        if (sequence == null) {
+            cinematicSavedCamera?.let(::applyCinematicCamera)
+            if (cinematicSequenceId != null) {
+                lastCameraFrameNanos = 0L
+                lastOrbitFrameNanos = 0L
+                pauseAutomaticOrbit()
+            }
+            cinematicSequenceId = null
+            cinematicSavedCamera = null
+            cinematicTargetY = null
+            return
+        }
+        val arena = manifest ?: return
+        val members = (snapshot.alliedMembers + snapshot.opposingMembers).associateBy { it.combatantId }
+        val lead = members[sequence.leadId] ?: return
+        if (cinematicSequenceId != sequence.sequenceId) {
+            cinematicSequenceId = sequence.sequenceId
+            cinematicSavedCamera = CinematicCameraPose(cameraTargetX, cameraTargetZ,
+                arena.cameraTargetY, cameraYaw, cameraPitch, cameraDistance)
+        }
+        val result = preparedFinisherPresentation(sequence, desiredPreparedForms) ?: desiredFighters[sequence.leadId]
+        val height = arena.fighterScale * (result?.visualScaleMultiplier ?: 1f)
+        fun world(point: BattlePosition) = BattlePosition(point.x * arena.positionScale, point.z * arena.positionScale)
+        val pose = cinematicCameraPose(sequence, world(lead.position), members[sequence.partnerId]?.position?.let(::world),
+            members[sequence.targetId]?.position?.let(::world), height.toDouble(),
+            viewportWidth.toDouble() / viewportHeight.coerceAtLeast(1), requireNotNull(cinematicSavedCamera), allowCinematicMotion)
+        val shake = if (allowCinematicMotion && sequence.phase == BattleFinisherPhase.IMPACT && sequence.phaseProgress < 0.55f) {
+            val p = sequence.phaseProgress / 0.55f
+            kotlin.math.sin(p * Math.PI * 8) * (1f - p) * height * 0.045
+        } else 0.0
+        applyCinematicCamera(pose.copy(targetX = pose.targetX + shake))
+    }
+
+    private fun applyCinematicCamera(pose: CinematicCameraPose) {
+        cameraTargetX = pose.targetX
+        cameraTargetZ = pose.targetZ
+        cinematicTargetY = pose.targetY
+        cameraYaw = pose.yaw
+        cameraPitch = pose.pitch
+        cameraDistance = pose.distance
+        cameraDirty = true
+    }
+
+    private fun updateCinematicActors() {
+        val snapshot = latestSnapshot ?: return
+        val sequence = snapshot.finisher?.let { cinematicVisualSnapshot(it, allowCinematicMotion) } ?: return
+        val arena = manifest ?: return
+        val members = (snapshot.alliedMembers + snapshot.opposingMembers).associateBy { it.combatantId }
+        val lead = members[sequence.leadId] ?: return
+        val partner = members[sequence.partnerId]
+        val target = members[sequence.targetId]
+        val resultPresentation = preparedFinisherPresentation(sequence, desiredPreparedForms)
+        val result = resultPresentation?.let { fighterPool[it.setKey] }
+        val isTransform = sequence.kind in listOf(BattleFinisherKind.FORM, BattleFinisherKind.JOGRESS) && result != null
+        val frame = if (isTransform) sampleCinematicActors(sequence, allowCinematicMotion) else CinematicActorFrame(true)
+        val anchor = cinematicAnchor(lead.position, partner?.position, sequence.kind)
+        val style = (resultPresentation ?: desiredFighters[sequence.leadId])?.attackProfile?.style ?: FinisherAttackStyle.PROJECTILE
+        val p = sequence.phaseProgress
+        val attacking = sequence.phase in BattleFinisherPhase.CHARGE..BattleFinisherPhase.AFTERMATH
+        val pose = if (attacking) "attack" else "idle"
+        val fusionSources = if (sequence.kind == BattleFinisherKind.JOGRESS && partner != null) {
+            cinematicFusionSources(lead.position, partner.position, target?.position,
+                arena.fighterScale * (resultPresentation?.visualScaleMultiplier ?: 1f) / arena.positionScale)
+        } else null
+        fun bodyPosition(point: BattlePosition): BattlePosition {
+            if (style != FinisherAttackStyle.MELEE || target == null || !allowCinematicMotion) return point
+            val amount = when (sequence.phase) {
+                BattleFinisherPhase.RELEASE -> cinematicEase((p - 0.30f) / 0.70f)
+                BattleFinisherPhase.IMPACT -> 1f - cinematicEase((p - 0.20f) / 0.60f)
+                else -> 0f
+            }
+            val dx = target.position.x - point.x
+            val dz = target.position.z - point.z
+            val distance = kotlin.math.hypot(dx, dz).coerceAtLeast(0.01f)
+            val reach = (distance - 0.55f).coerceAtLeast(0f) * amount
+            return BattlePosition(point.x + dx / distance * reach, point.z + dz / distance * reach)
+        }
+        for (id in sequence.participantIds) {
+            val member = members[id] ?: continue
+            val source = renderedFighters[id] ?: continue
+            val staged = if (fusionSources != null) {
+                val point = if (id == sequence.leadId) fusionSources.first else fusionSources.second
+                val staging = if (sequence.phase == BattleFinisherPhase.FOCUS) cinematicEase(p)
+                    else if (sequence.phase == BattleFinisherPhase.RESTORE) 1f - cinematicEase((p - 0.65f) / 0.35f) else 1f
+                BattlePosition(member.position.x + (point.x - member.position.x) * staging,
+                    member.position.z + (point.z - member.position.z) * staging)
+            } else member.position
+            val merged = if (sequence.kind == BattleFinisherKind.JOGRESS) BattlePosition(
+                staged.x + (anchor.x - staged.x) * frame.mergeProgress,
+                staged.z + (anchor.z - staged.z) * frame.mergeProgress) else staged
+            if (frame.sourceVisible) {
+                showCinematicFighter(source, bodyPosition(merged), target?.position, pose,
+                    arena.fighterScale * source.presentation.visualScaleMultiplier)
+            } else hideFighter(source)
+            fighterPool["${source.presentation.setKey}:transition"]?.let { silhouette ->
+                if (frame.sourceTransition > 0f) showCinematicFighter(silhouette, merged, target?.position, "idle",
+                    arena.fighterScale * source.presentation.visualScaleMultiplier * (1f - frame.mergeProgress * 0.2f),
+                    opacity = frame.sourceTransition)
+            }
+        }
+        if (result != null && isTransform) {
+            val scale = arena.fighterScale * result.presentation.visualScaleMultiplier
+            if (frame.resultVisible) showCinematicFighter(result, bodyPosition(anchor), target?.position, pose, scale)
+            fighterPool["${result.presentation.setKey}:transition"]?.let { silhouette ->
+                if (frame.resultTransition > 0f) showCinematicFighter(silhouette, anchor, target?.position, "idle",
+                    scale * frame.resultScale * 1.008f, opacity = frame.resultTransition)
+            }
+        }
+        // Keep the affected target on-screen through a lethal aftermath; victory is deferred by core.
+        val hitSucceeded = sequence.damage > 0
+        if (target != null && hitSucceeded && sequence.phase in BattleFinisherPhase.IMPACT..BattleFinisherPhase.AFTERMATH) {
+            renderedFighters[target.combatantId]?.let { victim ->
+                val amount = if (sequence.phase == BattleFinisherPhase.IMPACT) cinematicEase(p / 0.7f) else 1f
+                val dx = target.position.x - anchor.x
+                val dz = target.position.z - anchor.z
+                val distance = kotlin.math.hypot(dx, dz).coerceAtLeast(0.01f)
+                val retreat = if (allowCinematicMotion) amount * 0.18f else 0f
+                showCinematicFighter(victim, BattlePosition(target.position.x + dx / distance * retreat,
+                    target.position.z + dz / distance * retreat), anchor,
+                    if (target.health <= 0) "defeated" else "guard",
+                    arena.fighterScale * victim.presentation.visualScaleMultiplier)
+            }
+        }
+    }
+
+    private fun showCinematicFighter(fighter: RenderedFighter, position: BattlePosition, target: BattlePosition?,
+        requestedPose: String, scale: Float, opacity: Float = 1f) {
+        val renderables = engine.renderableManager
+        val transition = fighter.presentation.setKey.endsWith(":transition")
+        val pose = animatedPose(fighter, requestedPose, (latestSnapshot?.finisher?.elapsedMillis ?: 0L) * 1_000_000L)
+        hideFighter(fighter)
+        fighter.poses[pose]?.let { renderables.setLayerMask(renderables.getInstance(it), 0xFF, 0x01) }
+        if (!transition) fighter.shadows.forEach { renderables.setLayerMask(it, 0xFF, 0x01) }
+        if (transition) fighter.materials.forEach { it.setParameter("baseColorFactor", 1f, 1f, 1f, opacity.coerceIn(0f, 1f)) }
+        fighter.activePose = pose
+        val arena = manifest ?: return
+        val dx = (target?.x ?: position.x + 1f) - position.x
+        val dz = (target?.z ?: position.z) - position.z
+        val yaw = cameraAssistedSpriteYaw(kotlin.math.atan2(-dz, dx), cameraYaw.toFloat())
+        val facesRight = dx * kotlin.math.cos(cameraYaw) - dz * kotlin.math.sin(cameraYaw) >= 0
+        Matrix.setIdentityM(fighterTransform, 0)
+        Matrix.translateM(fighterTransform, 0, position.x * arena.positionScale,
+            if (transition) 0.03f else 0.025f, position.z * arena.positionScale)
+        Matrix.rotateM(fighterTransform, 0, Math.toDegrees(yaw.toDouble()).toFloat(), 0f, 1f, 0f)
+        Matrix.scaleM(fighterTransform, 0, if (facesRight) -scale else scale, scale, scale)
+        val root = engine.transformManager.getInstance(fighter.asset.root)
+        if (root != 0) engine.transformManager.setTransform(root, fighterTransform)
     }
 
     private fun updateFighterTransforms(frameTimeNanos: Long) {
@@ -821,6 +1087,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
             ?: return
         for ((id, fighter) in renderedFighters) {
             val combatant = combatants[id] ?: continue
+            fighter.shadows.forEach { engine.renderableManager.setLayerMask(it, 0xFF, 0x01) }
             val requestedPose = when (combatant.state) {
                 CombatantState.MOVE_TO_TARGET, CombatantState.MOVE_AWAY,
                 CombatantState.POSITIONING, CombatantState.KNOCKBACK -> "walk"
@@ -967,6 +1234,7 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
 
     private fun destroyFighter(id: String) {
         val fighter = renderedFighters.remove(id) ?: return
+        fighterPool.remove(fighter.presentation.setKey)
         runCatching {
             viewer.scene.removeEntities(fighter.asset.entities)
             assetLoader?.destroyAsset(fighter.asset)
@@ -1008,7 +1276,17 @@ class OfflineBattleSceneView(context: Context) : TextureView(context) {
 
     private fun releaseFighters() {
         releaseImpacts()
-        renderedFighters.keys.toList().forEach(::destroyFighter)
+        cinematicRenderer?.release()
+        cinematicRenderer = null
+        cinematicPreparedKeys = emptySet()
+        cinematicPreparationFailed = false
+        fighterPool.values.forEach { fighter ->
+            viewer.scene.removeEntities(fighter.asset.entities)
+            assetLoader?.destroyAsset(fighter.asset)
+        }
+        fighterPool.clear()
+        renderedFighters.clear()
+        failedFighterKeys.clear()
         runCatching { assetLoader?.destroy() }
         assetLoader = null
         runCatching { resourceLoader?.destroy() }

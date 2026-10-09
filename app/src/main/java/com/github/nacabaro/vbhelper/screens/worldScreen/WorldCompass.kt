@@ -74,7 +74,6 @@ internal fun rememberWorldCompass(
         fun fieldTrusted() = trustworthyMagneticField(fieldAccuracy, fieldStrength, expectedField)
 
         fun publish(timestamp: Long) {
-            if (fieldTime == 0L) return
             val fix = currentLocation
             if (fix != null && fix !== lastFix) {
                 val model = GeomagneticField(
@@ -85,12 +84,9 @@ internal fun rememberWorldCompass(
                 expectedField = model.fieldStrength / 1000f // Android model returns nT.
                 lastFix = fix
             }
-            // The rotation-vector sensor can provide a useful heading immediately.
-            // Magnetometer quality still controls whether we label it as fully
-            // tracked, but it must not gate the first visible compass reading.
             val poseFresh = poseTime != 0L &&
                 kotlin.math.abs(timestamp - poseTime) <= 500_000_000L
-            val fieldFresh = fieldTime == 0L ||
+            val fieldFresh = fieldTime != 0L &&
                 kotlin.math.abs(timestamp - fieldTime) <= 500_000_000L
             val fresh = poseFresh && fieldFresh
             val trusted = fresh && fieldTrusted()
@@ -99,9 +95,15 @@ internal fun rememberWorldCompass(
             val calibrated = trusted && timestamp - (goodSince ?: timestamp) >= 500_000_000L
             val displayRotation = view.display?.rotation ?: 0
             val magnetic = compassBearing(rotationMatrix, displayRotation)
+            // A distorted magnetic field also distorts the fused rotation vector.
+            // Merely labelling that heading approximate still rotates both radar
+            // modes toward invalid bearings (including the opposite direction).
+            // Hold the last good heading until healthy samples resume. Devices
+            // without a magnetometer can still use the approximate pose fallback.
             val heading = filter.update(
-                magnetic.takeIf { poseFresh && it.isFinite() },
-                declination
+                magnetic,
+                declination,
+                sampleUsable = poseFresh && (fieldSensor == null || trusted)
             )
             val status = when {
                 calibrated && heading != null -> CompassStatus.TRACKING
@@ -165,9 +167,8 @@ internal fun rememberWorldCompass(
             val magneticActive = fieldSensor != null && manager.registerListener(
                 listener, fieldSensor, SensorManager.SENSOR_DELAY_GAME, handler
             )
-            // Rotation-vector readings can still provide an immediately useful
-            // approximate heading when the device has no magnetometer (or its
-            // magnetometer is temporarily reporting unreliable accuracy).
+            // Devices without a magnetometer can still provide an approximate
+            // heading. An existing but unreliable magnetometer cannot steer it.
             active = poseActive
             if (!active) {
                 manager.unregisterListener(listener)

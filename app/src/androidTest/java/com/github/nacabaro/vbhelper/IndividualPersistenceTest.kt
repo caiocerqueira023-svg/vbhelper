@@ -52,6 +52,13 @@ class IndividualPersistenceTest {
             AppDatabase.MIGRATION_28_29,
             AppDatabase.MIGRATION_29_30,
             AppDatabase.MIGRATION_30_31,
+            AppDatabase.MIGRATION_31_32,
+            AppDatabase.MIGRATION_32_33,
+            AppDatabase.MIGRATION_33_34,
+            AppDatabase.MIGRATION_34_35,
+            AppDatabase.MIGRATION_35_36,
+            AppDatabase.MIGRATION_36_37,
+            AppDatabase.MIGRATION_37_38,
         )
         .addCallback(IndividualIntegrity.callback).build()
 
@@ -596,6 +603,11 @@ class IndividualPersistenceTest {
         seed("DigimonIndividual", mapOf("individualId" to wild, "nickname" to "World recruit"))
         seed("ChatMessageEntity", mapOf("individualId" to wild, "role" to "user", "content" to "Before recruitment"))
         seed("WorldSpawn", mapOf("id" to 500, "individualId" to wild, "cardCharacterId" to 106, "recruitmentState" to "WILD"))
+        db.questDao().insertQuest(com.github.nacabaro.vbhelper.quests.QuestInstance(
+            "recruit:$wild", wild, 106, "World recruit", com.github.nacabaro.vbhelper.quests.QuestCategory.RECRUITMENT,
+            "recruitment", 1, 42, 3, state = com.github.nacabaro.vbhelper.quests.QuestState.READY, createdAt = 1))
+        db.questDao().insertObjectives(listOf(com.github.nacabaro.vbhelper.quests.QuestObjective(
+            "recruit:$wild:0", "recruit:$wild", 0, com.github.nacabaro.vbhelper.quests.QuestObjectiveType.WATCH_BATTLES, 6, progress = 6)))
         val repository = com.github.nacabaro.vbhelper.world.WorldRepository(db)
         val pool = Executors.newFixedThreadPool(2)
         try {

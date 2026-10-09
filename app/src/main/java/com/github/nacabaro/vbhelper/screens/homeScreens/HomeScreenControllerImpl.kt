@@ -75,8 +75,7 @@ class HomeScreenControllerImpl(
                 )
 
                 val randomAmount = (2..6).random() * 1000
-                val currentCurrency = application.container.currencyRepository.currencyValue.first()
-                application.container.currencyRepository.setCurrencyValue(currentCurrency + randomAmount)
+                application.container.currencyRepository.credit(randomAmount)
 
                 onCleared(purchasedItem, randomAmount)
             } else {
@@ -107,14 +106,12 @@ class HomeScreenControllerImpl(
                     "Degeneration requires a strictly lower stage."
                 }
 
-                val currentCurrency = application.container.currencyRepository.currencyValue.first()
-                check(currentCurrency >= DEGENERATION_COST) {
-                    "Not enough bits. $DEGENERATION_COST bits are required."
-                }
-
                 application.container.reactionRepository
                     .snapshotBeforeSendingToWatch(characterId)
                 database.withTransaction {
+                    check(database.questDao().spendBits(DEGENERATION_COST) == 1) {
+                        "Not enough bits. $DEGENERATION_COST bits are required."
+                    }
                     com.github.nacabaro.vbhelper.source.EvolutionHistoryRepository(database)
                         .repairCharacter(characterId)
                     val selected = database.userCharacterDao()
@@ -135,9 +132,6 @@ class HomeScreenControllerImpl(
                     com.github.nacabaro.vbhelper.source.EvolutionHistoryRepository(database)
                         .repairCharacter(characterId)
                 }
-                application.container.currencyRepository.setCurrencyValue(
-                    currentCurrency - DEGENERATION_COST
-                )
                 application.container.reactionRepository.evaluateAndReact(characterId)
             }
             componentActivity.runOnUiThread { onResult(result) }

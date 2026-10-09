@@ -1,5 +1,31 @@
 # Regression checks
 
+## Radar social behavior (schema 33 / ecosystem rules 3)
+
+See `RADAR_SOCIAL_IMPLEMENTATION.md` for implementation and verification details.
+
+```powershell
+.\gradlew.bat :app:testIntegrityCheckUnitTest --offline --console=plain --max-workers=2 --tests "com.github.nacabaro.vbhelper.domain.personality.*" --tests "com.github.nacabaro.vbhelper.world.ecosystem.*" --tests "com.github.nacabaro.vbhelper.digifarm.*" --tests "com.github.nacabaro.vbhelper.chat.*"
+py -3 -B scripts/test-world-social-db.py
+```
+
+Latest full app evidence: **466 cases, zero failures, three existing fixture-dependent
+skips**. Root reader tests, debug APK assembly, lint with the existing baseline, and
+Android-test compilation passed. Social/interaction/living-world/chat-memory host
+SQLite suites passed **31 checks**. The schema-33 migration is compared with Room's
+generated export and preserves existing identity, personality labels/timestamps,
+private history, player trust, and logical clock.
+
+New regressions verify non-cosmetic personality choices, balanced attacks, neutral
+meetings, explicit activity acceptance/refusal, locale-aware opening diversity,
+private/public memory separation, persistent social state, need-decay equivalence,
+and stale conversation epochs. Real Room approach/handoff, greeting-expiry, and
+activity-discussion/refusal cases are compile-only Android coverage. Live GPS,
+renderer behavior, and provider response quality still require device execution.
+
+Bugbot could not run because its agent type is unavailable; this change received
+a manual code review and corresponding corrective regressions.
+
 Run from the repository root in PowerShell:
 
 ```powershell
@@ -56,6 +82,26 @@ zero timeouts, p50 38.28–40.70s, and p95 48.65–51.41s. Double KOs were 2.5�
 stage and remain reported separately. Android runtime/renderer acceptance is not
 established by compilation.
 
+## Selectable color themes
+
+Settings → Appearance exposes VB Helper (the existing dark purple/cyan palette),
+VB Lab (charcoal/cyan), and VB Arena (white/silver/green). The choice is saved in
+`app_preferences` and applied immediately, independently of the phone's night mode.
+Typography, geometry, sprites, and motion remain shared.
+
+```powershell
+.\gradlew.bat :app:testIntegrityCheckUnitTest --tests "com.github.nacabaro.vbhelper.ui.theme.*" :app:compileIntegrityCheckAndroidTestKotlin :app:assembleDebug --offline --console=plain --max-workers=2
+.\gradlew.bat :app:lintDebug --offline --console=plain --max-workers=2
+```
+
+`AppThemeTest` checks saved-value fallback, all three choices, retained Helper colors,
+reference color families, text contrast, and primary action-label contrast.
+`ThemeSurfaceContrastTest` checks all five Material tonal surfaces in each palette.
+`AppThemeSelectionTest` exercises the real picker and preference store, restoring
+each choice and checking composition colors, typography, shapes, and light/dark
+configuration independence. Its execution requires a device/emulator; compilation
+alone does not establish runtime or screenshot acceptance.
+
 ## Card evolution chart (build checks only)
 
 Focused commands, from the repository root in PowerShell:
@@ -97,7 +143,7 @@ duplicate URIs and aliases, 1,001-file selection without an app count cap,
 independent failures, committed progress on Stop, origin reservations/recovery,
 queued-name refresh by ID, close-before-persist (including close failure and late
 open), stalled-stream cancellation, and stale-run admission/publication ownership.
-The contrast test calculates luminance from the actual light/dark schemes and
+The contrast test calculates luminance from all three selectable color schemes and
 requires `onSurface` against all five `surfaceContainer*` roles to reach 4.5:1.
 
 ### Import and requirement contract
@@ -257,6 +303,138 @@ test coverage do not establish physical hit-testing or visual approval.
   card/character/individual IDs, owned stats, discovery/progress, and unaffected
   other variants; verify repaired adventure requirements after reopen.
 
+## Digimon scan conversion (build checks only)
+
+### Behavior contract
+
+- Scan belongs to the local `cardCharacterId`: each distinct opposing wild awards
+  **+20 percentage points** only for a player `ALLIED_VICTORY`, capped at **100%**.
+  Friendly and autonomous encounters, losses, draws, and abandonment award nothing;
+  entries on other local cards remain isolated.
+- Scan rewards and the result receipt persist atomically. Victory feedback shows
+  committed reward receipts, so replay cannot award or announce an uncommitted result.
+- Conversion is manual in Dex, with a form/card preview and optional nickname. It
+  consumes **100%** into a fresh, inactive Storage individual with the matching VB/BE
+  profile: **VB countdown 1; BE countdown 0**. Conversion and Close actions stay
+  pinned outside scrolling content. UI strings cover English, Portuguese, and Japanese.
+- The persisted Settings debug switch awards **100 percentage points per eligible
+  defeat** only in a debuggable application; release ignores the saved switch.
+- Schema **32** is generated, with the additive **31→32** migration registered.
+
+### Recorded verification
+
+Historical scan-conversion implementation verification (before the Storage collection extension):
+
+```powershell
+.\gradlew.bat test :app:compileIntegrityCheckAndroidTestKotlin :app:lintDebug :app:assembleDebug --offline --console=plain --max-workers=2
+py -3 -B scripts/test-digimon-scan-db.py
+```
+
+- The final Gradle command passed with **BUILD SUCCESSFUL**. Full-app HTML at
+  `app/build/reports/tests/testIntegrityCheckUnitTest/index.html` records **438
+  cases, zero failures, three existing private-fixture skips** (435 executions),
+  including **nine new `DigimonScanPolicyTest` passes**. Earlier counts elsewhere
+  in this document remain records of their respective verification runs.
+- The host SQLite script passed **five tests** covering migration/retention,
+  per-entry isolation, guarded consumption, rollback, and receipt uniqueness.
+- `DigimonScanPersistenceTest` and the modified `WorldInteractionPersistenceTest`
+  and `DexCharacterDetailsTest` compiled only. Actual Room and Compose assertions
+  were **not executed**; host SQLite checks do not establish genuine Room migration passes.
+- Lint passed against the existing baseline with **174 warnings and seven hints**,
+  with no new errors. APK: `app/build/outputs/apk/debug/app-debug.apk`.
+- Initial source review required a VB countdown fix; the reviewer subsequently
+  scored it **resolved**. The ship verdict covers that source fix only and gives
+  **no native approval**. No screenshots, device/runtime evidence, or new shipping
+  rasters are claimed.
+
+### Deferred native acceptance
+
+- Complete end-to-end wild victories with normal rewards and the persisted debug
+  switch off/on; verify eligibility exclusions, local-entry isolation, the cap,
+  exactly-once committed feedback, and release ignoring the debug preference.
+- Convert, restart, and inspect nickname and inactive Storage state; check VB/BE
+  export profiles/countdowns and conversion while the farm is full.
+- Inspect English/Portuguese/Japanese UI at large fonts and with reduced motion;
+  verify pinned Convert/Close, system Back, IME clearance, and TalkBack focus/actions.
+- Execute genuine Room upgrades and persistence/reopen/rollback assertions on Android.
+
+## Storage scan collection (build checks only)
+
+### Behavior contract
+
+- Storage exposes a top-left **Scan data** icon chip opposite the existing
+  Adventure action. Scan data remains available when Storage has no individuals.
+- The collection observes all positive scan percentages across imported local
+  `cardCharacterId` entries, not just completed scans or currently owned species.
+  Production SQL orders by percentage descending (ready entries first), then
+  case-insensitive card name, character index, and local character ID.
+- Each row shows imported pixel portrait and name art, canonical species name
+  (or the existing fallback), card name, percentage, and cyan progress. Partial
+  entries remain visible with Convert disabled; Convert is enabled at **100%**.
+  Art and profile identity follow the local imported character rather than a
+  shared card number.
+- Storage and Dex reuse the extracted `DigimonScanConversionDialog`: form/card
+  preview, optional nickname, live readiness, and the existing guarded backend
+  conversion transaction. This extension adds no schema change or raster assets.
+- Consumption resets the scan to zero; the positive-only Room flow removes that
+  entry from the collection. The selected preview snapshot is retained through
+  that emission until conversion completes, so removal cannot prematurely
+  dismiss the preview. Feedback and Close remain outside the `LazyColumn`,
+  including when the last entry disappears.
+- Loading, loaded-empty, and read-failure/Retry states are explicit. Conversion
+  outcomes are reported separately. Strings cover English, Brazilian Portuguese,
+  and Japanese.
+
+### Current focused verification
+
+Evidence supplied by the implementation pass for this documentation update:
+
+```powershell
+py -3 -B scripts/test-digimon-scan-db.py
+.\gradlew.bat :app:testIntegrityCheckUnitTest --tests "com.github.nacabaro.vbhelper.source.DigimonScanPolicyTest" :app:compileIntegrityCheckAndroidTestKotlin :app:lintDebug :app:assembleDebug --offline --console=plain --max-workers=2
+```
+
+- Host SQLite: **eight passes**. Three newly added checks execute the actual
+  production collection SQL for positive-only filtering/order, local imported
+  art and profile identity, and consumed-entry disappearance. The five existing
+  migration/retention, isolation, guarded-consumption, rollback, and receipt
+  invariants also pass. Host SQLite does not execute Room flow delivery on Android.
+- Gradle: **BUILD SUCCESSFUL**, with **nine focused `DigimonScanPolicyTest`
+  passes**, Android-test Kotlin compilation, lint, and debug assembly passing.
+  The historical **438-case** full-app run above was **not rerun in this pass**.
+- Lint retains **174 existing warnings and seven hints**, with no errors.
+  Debug APK: `app/build/outputs/apk/debug/app-debug.apk`.
+- `StorageScanCollectionTest` has **three compile-only cases**: header Scan action
+  with Adventure preserved; visible partial versus enabled complete conversion;
+  and simulated reactive removal to empty with feedback and Close retained.
+  These Compose assertions were not executed and do not establish a live Room
+  conversion or actual button-corner geometry.
+- Source finish review returned **ship**, with no material introduced bugs.
+  That disposition is source-level only: **no visual/runtime approval**, device
+  execution, installation, or screenshots are established. This documentation
+  update records supplied evidence; it does not rerun the checks.
+
+### Deferred native acceptance
+
+- Tap the actual top-left Scan data chip and check its corner geometry, hit area,
+  and placement opposite Adventure. Enter from empty Storage and confirm both
+  actions remain usable and Adventure retains its destination.
+- Scroll a populated collection at large font scales, with long card/species
+  names and EN/PT-BR/JA strings. Inspect pixel art, local-card identity, ready-first
+  order, percentages/progress, and feedback/Close outside the scrolling list.
+  Confirm partial Convert is disabled and full Convert is enabled.
+- Exercise the shared preview from Storage and Dex: cancel, system Back, optional
+  nickname, IME clearance, focus/return focus, and guarded controls during conversion.
+- Complete one conversion against live Room: verify the new inactive Storage
+  individual and nickname, immediate Storage update, consumed-row disappearance,
+  selected-preview retention until completion, and feedback/Close after the last
+  scan disappears. Verify the existing VB/BE profile/countdown contract.
+- Rotate and restart during collection/preview/conversion and after completion;
+  verify safe state restoration, persisted scan/individual state, and no duplicate
+  consumption or creation.
+- Exercise loading, loaded-empty, read failure/Retry, and conversion failure on
+  Android. Require usable dismissal and recovery, not merely compiled assertions.
+
 ## Android persistence checks
 
 ### Radar living-world foundation
@@ -414,6 +592,29 @@ recovery, not automatically reassigned to a similar-looking individual. This is 
 conservative software safeguard, not a claim that backup-slot firmware behavior
 has been verified or corrected.
 
+## Debug Radar spawn picker
+
+Tap the debug spawn button to keep its random behavior; hold it to choose any
+loaded card character. The searchable picker includes undiscovered characters
+and cards excluded from automatic World spawning, identifies variants by their
+local character ID, and displays each sprite with its species and card name.
+An explicit selection is revalidated inside the spawn transaction; a removed
+character does not fall back to a random spawn.
+
+```powershell
+py -3 -B scripts/test-debug-spawn-db.py
+.\gradlew.bat :app:testIntegrityCheckUnitTest --tests "com.github.nacabaro.vbhelper.world.WorldSpawnSelectorTest" --tests "com.github.nacabaro.vbhelper.screens.worldScreen.*" :app:compileIntegrityCheckAndroidTestKotlin :app:lintDebug :app:assembleDebug --offline --console=plain --max-workers=2
+```
+
+The three host SQLite checks execute the production picker/automatic-spawn DAO
+queries for disabled cards, absent discovery/profile rows, manual names, sprite
+isolation, duplicate card slots, and card deletion. `DebugWorldSpawnTest` covers
+real Room spawning, individual/personality/relationship creation, the 20 m radius,
+random-pool eligibility, and stale selection rejection. `DebugSpawnControlsTest`
+covers tap versus hold, disabled gestures, and searching/selecting a card variant.
+Android tests require a device or emulator to execute; compilation alone does
+not establish touch, layout, or persistence runtime acceptance.
+
 ## Optional private fixtures
 
 Three official-APK integration tests are reported as skipped when these private
@@ -445,3 +646,42 @@ means there are no errors outside that baseline; it does not mean all historical
 warnings or baseline findings have been fixed. Dependency upgrades, resource
 removal, and persistence changes should be evaluated separately rather than made
 solely to remove advisory warnings.
+
+## Blast Evolution / Jogress cinematics
+
+The snapshot-owned finisher clock freezes ordinary combat while running focus,
+transform, reveal, charge, release, impact, aftermath, and restoration. FORM lasts
+7,400ms and JOGRESS 7,900ms. Core commits damage once at IMPACT; the renderer's
+150ms hit-stop never changes damage or the combat clock. Killing blows defer the
+terminal result until restoration. Jogress suspends both originals and presents
+one retained result instance; their actions/queues resume afterward.
+
+```powershell
+.\gradlew.bat :app:compileIntegrityCheckKotlin :app:mergeIntegrityCheckResources :app:testIntegrityCheckUnitTest --tests "com.github.nacabaro.vbhelper.battle.offline.*" --tests "com.github.nacabaro.vbhelper.screens.offlineBattle.*" --tests "com.github.nacabaro.vbhelper.rendering.*" --tests "com.github.nacabaro.vbhelper.world.ecosystem.*" :app:compileIntegrityCheckAndroidTestKotlin :app:assembleIntegrityCheck :app:lintIntegrityCheck --offline --console=plain --max-workers=2
+```
+
+`BattleFinisherTest` covers clock isolation, exactly-once damage/resource accounting,
+partner suspension, terminal aftermath, cancellation, later windows, and frame-chunk
+determinism. `BattleCinematicTest` covers fusion visibility through the entire attack,
+side-by-side staging, reduced motion, aspect-aware framing, restored camera composition,
+and visual hit-stop. Profile/transition/UI tests cover both equipped slots, validated
+move aliases, result titles, alpha-derived blend silhouettes, and compact layouts.
+
+Latest combined check: **295 JVM cases, zero failures/errors/skips** across the four
+filtered packages above. Kotlin/resource compilation, Android-test compilation,
+integrity-check APK assembly, and lint passed with the existing baseline. Cleanup
+regressions also verify that cinematic impacts/misses do not replay on combat resume.
+
+Runtime effects are original procedural planes and imported DIM attack artwork.
+Base/result/transition actors and effects are prepared before readiness and retained
+through each sequence; transformations toggle visibility instead of recreating GLBs.
+Sound/haptics honor system and saved audio settings, pause/background, and consumed
+phase guards. No additional distributed character images or music are introduced.
+
+Native acceptance is pending: ADB reports no connected device and no AVD is configured.
+When available, capture training and Radar in portrait/landscape, testing FORM,
+JOGRESS, non-fusion DUO, a killing blow, background/rotation during charge, reduced
+motion, and repeated activations. Verify no source body/shadow remains after fusion,
+result attack art stays visible through aftermath, camera bounds/occlusion, audio,
+frame time, and stable GPU entity/material counts. Compilation/unit tests do not
+establish those visual or hardware-performance results.

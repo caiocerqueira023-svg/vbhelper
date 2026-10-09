@@ -7,6 +7,14 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ItemDao {
+    @Query("SELECT * FROM Items ORDER BY id")
+    fun questItems(): List<com.github.nacabaro.vbhelper.domain.items.Items>
+
+    @Query("UPDATE Items SET quantity = quantity - :amount WHERE id = :id AND :amount > 0 AND quantity >= :amount")
+    fun handOver(id: Long, amount: Int): Int
+
+    @Query("UPDATE Items SET quantity = quantity + :amount WHERE id = :id AND :amount > 0 AND quantity <= 2147483647 - :amount")
+    fun grantQuestItem(id: Long, amount: Int): Int
     @Query(
         """
         SELECT *

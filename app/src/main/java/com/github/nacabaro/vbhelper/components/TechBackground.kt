@@ -34,8 +34,11 @@ fun TechBackground(modifier: Modifier = Modifier, content: @Composable () -> Uni
  * not invalidated every frame by the decorative ring rotation. */
 @Composable
 private fun TechStaticPattern(modifier: Modifier = Modifier) {
+    val strokeColor = SurfaceStroke
+    val textColor = TextPrimaryOnDark
+    val accentColor = VitalCyan
     Canvas(modifier) {
-        val subtle = SurfaceStroke.copy(alpha = 0.07f)
+        val subtle = strokeColor.copy(alpha = 0.07f)
         val grid = 64.dp.toPx()
         var x = 0f
         while (x <= size.width) {
@@ -48,18 +51,20 @@ private fun TechStaticPattern(modifier: Modifier = Modifier) {
             y += grid
         }
 
-        val circuit = TextPrimaryOnDark.copy(alpha = 0.035f)
+        val circuit = textColor.copy(alpha = 0.035f)
         val start = Offset(0f, size.height * .19f)
         val elbow = Offset(size.width * .18f, size.height * .19f)
         val end = Offset(size.width * .23f, size.height * .14f)
         drawLine(circuit, start, elbow, strokeWidth = 2.dp.toPx())
         drawLine(circuit, elbow, end, strokeWidth = 2.dp.toPx())
-        drawCircle(VitalCyan.copy(alpha = .09f), radius = 3.dp.toPx(), center = end)
+        drawCircle(accentColor.copy(alpha = .09f), radius = 3.dp.toPx(), center = end)
     }
 }
 
 @Composable
 private fun TechRotatingRings(modifier: Modifier = Modifier) {
+    val strokeColor = SurfaceStroke
+    val accentColor = VitalCyan
     val allowMotion = motionEnabled()
     val ringRotation = if (allowMotion) {
         rememberInfiniteTransition(label = "backgroundRings").animateFloat(
@@ -73,8 +78,8 @@ private fun TechRotatingRings(modifier: Modifier = Modifier) {
     Canvas(modifier) {
         // Partial rings create a restrained "device mechanism" motif without
         // competing with text or artwork in the foreground.
-        val subtle = SurfaceStroke.copy(alpha = 0.07f)
-        val faintCyan = VitalCyan.copy(alpha = 0.035f)
+        val subtle = strokeColor.copy(alpha = 0.07f)
+        val faintCyan = accentColor.copy(alpha = 0.035f)
         val center = Offset(size.width * 0.92f, size.height * 0.72f)
         val stroke = Stroke(width = 14.dp.toPx())
         rotate(ringRotation, center) {

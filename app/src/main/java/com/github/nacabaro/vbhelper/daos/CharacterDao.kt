@@ -6,6 +6,7 @@ import androidx.room.Query
 import com.github.nacabaro.vbhelper.domain.card.CardCharacter
 import com.github.nacabaro.vbhelper.domain.characters.Sprite
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
+import com.github.nacabaro.vbhelper.dtos.DebugSpawnCharacter
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -16,8 +17,23 @@ interface CharacterDao {
     @Query("SELECT * FROM CardCharacter WHERE cardId = :cardId")
     suspend fun getCharactersForCard(cardId: Long): List<CardCharacter>
 
+    @Query("SELECT * FROM PossibleTransformations WHERE charaId = :charaId AND toCharaId IS NOT NULL")
+    suspend fun getTransformationsFrom(charaId: Long): List<com.github.nacabaro.vbhelper.domain.card.PossibleTransformations>
+
     @Query("SELECT * FROM CardCharacter")
     suspend fun getAllCharacters(): List<CardCharacter>
+
+    @Query("""
+        SELECT character.id, character.charaIndex, card.name AS cardName,
+            COALESCE(NULLIF(profile.speciesName, ''), NULLIF(profile.matchedName, '')) AS speciesName,
+            sprite.spriteIdle1 AS spriteIdle, sprite.width AS spriteWidth, sprite.height AS spriteHeight
+        FROM CardCharacter character
+        JOIN Card card ON card.id = character.cardId
+        JOIN Sprite sprite ON sprite.id = character.spriteId
+        LEFT JOIN SpeciesProfile profile ON profile.cardCharacterId = character.id
+        ORDER BY card.name COLLATE NOCASE, character.charaIndex, character.id
+    """)
+    suspend fun getDebugSpawnCharacters(): List<DebugSpawnCharacter>
 
     @Query(
         """

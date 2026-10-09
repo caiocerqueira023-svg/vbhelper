@@ -22,10 +22,12 @@ class WorldChatMemoryRepository(private val db: AppDatabase, private val now: ()
         val messages=dao.getMessages(id)
         for(message in messages) {
             if(db.worldChatMemoryDao().getLink(message.id)!=null) continue
+            // System lines (recaps, summaries) are prompt-only state and must never
+            // enter private Digiline history as visible messages or citable evidence.
+            if(message.source==DialogueTextSource.SYSTEM) continue
             val role=when {
                 message.source==DialogueTextSource.PLAYER && message.speakerId=="trainer" -> "user"
                 message.speakerId==participant.individualId && message.source in listOf(DialogueTextSource.MODEL,DialogueTextSource.AUTHORED) -> "assistant"
-                message.source==DialogueTextSource.SYSTEM -> "system"
                 else -> continue
             }
             val text=if(role=="assistant") WorldDialogueCodec.visibleText(message.body,participant.individualId)
@@ -53,7 +55,7 @@ class WorldChatMemoryRepository(private val db: AppDatabase, private val now: ()
         val last=evidence.maxOrNull() ?: throw WorldInteractionException(InteractionFailure.UNAVAILABLE)
         if(!history.map { it.id }.containsAll(evidence)) throw WorldInteractionException(InteractionFailure.UNAVAILABLE)
         val context=history.filter { it.id<=last }.takeLast(12).map { message ->
-            BattleConversationTurn(message.role,if(message.role=="assistant")participantName(participant) else "Trainer",
+            BattleConversationTurn(message.role,if(message.role=="assistant")participantName(participant) else "Tamer",
                 if(message.role=="assistant") WorldDialogueCodec.visibleText(message.content,intent.initiatorId).orEmpty().take(1000) else message.content.take(1000))
         }
         db.worldChatMemoryDao().saveContext(WorldBattleContext(eventId,intent.sparring,intent.initiatorId,intent.reason,gson.toJson(context),now()))
@@ -75,10 +77,9 @@ class WorldChatMemoryRepository(private val db: AppDatabase, private val now: ()
             val memory=WorldBattleMemory(event.id,participant.individualId,participant.cardCharacterId,name,
                 opponentNames,perspective,friendly,context?.reason ?: event.publicReason.orEmpty(),
                 context?.transcriptJson ?: "[]",now(),needsReaction=participant.individualId==context?.chatIndividualId)
-            if(db.worldChatMemoryDao().insertMemory(memory)!=-1L && memory.needsReaction) {
-                db.chatDao().insertMessage(ChatMessageEntity(individualId=memory.individualId,role="system",
-                    content=WorldBattleMemoryPrompts.record(memory,PromptLocalization.currentLanguageTag()),timestamp=now()))
-            }
+            // The result context lives in the memory row (and the follow-up prompt),
+            // never as a visible chat message.
+            db.worldChatMemoryDao().insertMemory(memory)
         }
     }
 

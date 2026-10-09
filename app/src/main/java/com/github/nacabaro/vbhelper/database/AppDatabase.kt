@@ -14,6 +14,9 @@ import com.github.nacabaro.vbhelper.daos.CardAdventureDao
 import com.github.nacabaro.vbhelper.daos.CharacterDao
 import com.github.nacabaro.vbhelper.daos.ChatDao
 import com.github.nacabaro.vbhelper.daos.DexDao
+import com.github.nacabaro.vbhelper.daos.DigimonScanDao
+import com.github.nacabaro.vbhelper.domain.scan.DigimonScanProgress
+import com.github.nacabaro.vbhelper.domain.scan.DigimonScanReward
 import com.github.nacabaro.vbhelper.daos.DigimonIndividualDao
 import com.github.nacabaro.vbhelper.daos.DigimonTechniqueLoadoutDao
 import com.github.nacabaro.vbhelper.daos.DigimonStateSnapshotDao
@@ -90,7 +93,7 @@ import com.github.nacabaro.vbhelper.domain.digifarm.FarmResident
 import com.github.nacabaro.vbhelper.domain.digifarm.WildRelationship
 
 @Database(
-    version = 31,
+    version = 39,
     exportSchema = true,
     entities = [
         Card::class,
@@ -112,6 +115,8 @@ import com.github.nacabaro.vbhelper.domain.digifarm.WildRelationship
         TransformationHistory::class,
         VitalsHistory::class,
         Dex::class,
+        DigimonScanProgress::class,
+        DigimonScanReward::class,
         Items::class,
         Adventure::class,
         Background::class,
@@ -146,7 +151,23 @@ import com.github.nacabaro.vbhelper.domain.digifarm.WildRelationship
         WorldNpcBattle::class,
         WorldBattleContext::class,
         WorldBattleMemory::class,
-        WorldPrivateChatLink::class
+        WorldPrivateChatLink::class,
+        com.github.nacabaro.vbhelper.world.ecosystem.WorldSocialMemory::class,
+        com.github.nacabaro.vbhelper.world.ecosystem.IndividualSocialState::class,
+        com.github.nacabaro.vbhelper.quests.QuestInstance::class,
+        com.github.nacabaro.vbhelper.quests.QuestObjective::class,
+        com.github.nacabaro.vbhelper.quests.QuestEvidence::class,
+        com.github.nacabaro.vbhelper.quests.QuestRewardReceipt::class,
+        com.github.nacabaro.vbhelper.quests.QuestWatchBaseline::class,
+        com.github.nacabaro.vbhelper.quests.QuestWallet::class,
+        com.github.nacabaro.vbhelper.quests.QuestBattleStock::class,
+        com.github.nacabaro.vbhelper.quests.QuestBattleReservation::class,
+        com.github.nacabaro.vbhelper.quests.QuestToken::class,
+        com.github.nacabaro.vbhelper.quests.QuestPhaseReceipt::class,
+        com.github.nacabaro.vbhelper.quests.QuestBattleReport::class,
+        com.github.nacabaro.vbhelper.quests.QuestBattleMember::class,
+        com.github.nacabaro.vbhelper.quests.QuestBattleTechniqueHit::class,
+        com.github.nacabaro.vbhelper.quests.QuestBattleAttempt::class
     ]
 )
 @TypeConverters(SpeciesProfileConverters::class, PersonalityConverters::class)
@@ -161,6 +182,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun digimonTechniqueLoadoutDao(): DigimonTechniqueLoadoutDao
     abstract fun watchTransferDao(): WatchTransferDao
     abstract fun dexDao(): DexDao
+    abstract fun digimonScanDao(): DigimonScanDao
     abstract fun itemDao(): ItemDao
     abstract fun adventureDao(): AdventureDao
     abstract fun spriteDao(): SpriteDao
@@ -180,8 +202,52 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun worldEcosystemDao(): WorldEcosystemDao
     abstract fun worldInteractionDao(): WorldInteractionDao
     abstract fun worldChatMemoryDao(): WorldChatMemoryDao
+    abstract fun worldSocialDao(): com.github.nacabaro.vbhelper.daos.WorldSocialDao
+    abstract fun questDao(): com.github.nacabaro.vbhelper.daos.QuestDao
 
     companion object {
+        val MIGRATION_38_39 = object : Migration(38, 39) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                if (!hasColumn(db, "DigimonIndividual", "blastMode")) {
+                    db.execSQL("ALTER TABLE DigimonIndividual ADD COLUMN blastMode TEXT NOT NULL DEFAULT 'NONE'")
+                }
+                if (!hasColumn(db, "DigimonIndividual", "blastTargetSpecies")) {
+                    db.execSQL("ALTER TABLE DigimonIndividual ADD COLUMN blastTargetSpecies TEXT")
+                }
+                if (!hasColumn(db, "DigimonIndividual", "jogressResultSpecies")) {
+                    db.execSQL("ALTER TABLE DigimonIndividual ADD COLUMN jogressResultSpecies TEXT")
+                }
+            }
+        }
+
+        val MIGRATION_37_38 = object : Migration(37, 38) {
+            override fun migrate(db: SupportSQLiteDatabase) { QuestSchema.addWatchCapabilities(db) }
+        }
+
+        val MIGRATION_36_37 = object : Migration(36, 37) {
+            override fun migrate(db: SupportSQLiteDatabase) { QuestSchema.addFollowUps(db) }
+        }
+
+        val MIGRATION_35_36 = object : Migration(35, 36) {
+            override fun migrate(db: SupportSQLiteDatabase) { QuestSchema.addBattleConditions(db) }
+        }
+
+        val MIGRATION_34_35 = object : Migration(34, 35) {
+            override fun migrate(db: SupportSQLiteDatabase) { QuestSchema.addStorySteps(db) }
+        }
+
+        val MIGRATION_33_34 = object : Migration(33, 34) {
+            override fun migrate(db: SupportSQLiteDatabase) { QuestSchema.create(db) }
+        }
+
+        val MIGRATION_32_33 = object : Migration(32, 33) {
+            override fun migrate(db: SupportSQLiteDatabase) { WorldSocialSchema.create(db) }
+        }
+
+        val MIGRATION_31_32 = object : Migration(31, 32) {
+            override fun migrate(db: SupportSQLiteDatabase) { DigimonScanSchema.create(db) }
+        }
+
         val MIGRATION_30_31 = object : Migration(30, 31) {
             override fun migrate(db: SupportSQLiteDatabase) { CardJogressSchema.create(db) }
         }

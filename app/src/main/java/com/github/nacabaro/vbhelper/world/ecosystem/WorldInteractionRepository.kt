@@ -6,13 +6,18 @@ import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.domain.world.RecruitmentState
 import com.github.nacabaro.vbhelper.domain.world.WorldSpawn
 import com.github.nacabaro.vbhelper.world.RadarWorldGeometry
+import com.github.nacabaro.vbhelper.source.DigimonScanPolicy
+import com.github.nacabaro.vbhelper.source.DigimonScanRepository
+import kotlinx.coroutines.flow.first
 
 /**
  * All interaction commands and conflicting World mutations use the same Room transaction
  * contract. Unique claims/SQL guards protect callers outside this class as well. No network
  * work is permitted inside these transactions; commands revalidate after external work.
  */
-class WorldInteractionRepository(private val db: AppDatabase, private val now: () -> Long = System::currentTimeMillis) {
+class WorldInteractionRepository(private val db: AppDatabase,
+                                 private val scanPercentagePerDefeat: () -> Int = { DigimonScanPolicy.NORMAL_GAIN },
+                                 private val now: () -> Long = System::currentTimeMillis) {
     private val dao = db.worldInteractionDao()
 
     suspend fun reservePlayerBattle(
@@ -64,6 +69,7 @@ class WorldInteractionRepository(private val db: AppDatabase, private val now: (
             }
         }
         transitionLocked(event, InteractionState.PLAYER_CONTROLLED)
+        com.github.nacabaro.vbhelper.quests.QuestBattleInventory(db).reserveLocked(id)
         if (event.origin == InteractionOrigin.JOINED_PLAYER) event.parentInteractionId?.let { parentId ->
             dao.getInteraction(parentId)?.let { parent -> closeLocked(parent, InteractionState.CANCELLED, "PLAYER_JOINED") }
         }
@@ -90,14 +96,19 @@ class WorldInteractionRepository(private val db: AppDatabase, private val now: (
     }
 
     /** Only proposals are exposed to the future planner: approach/activation remains a later step. */
-    suspend fun proposeNpcInteraction(id: String, type: InteractionType, spawnIds: List<Long>, seed: Long, tick: Long): WorldInteraction = db.withTransaction {
+    suspend fun proposeNpcInteraction(id: String, type: InteractionType, spawnIds: List<Long>, seed: Long, tick: Long,
+        socialDecision: SocialEncounterDecision? = null): WorldInteraction = db.withTransaction {
         reconcileLocked()
         if (db.worldEcosystemDao().getSession()?.pauseReason == WorldPauseReason.PLAYER_BATTLE) fail(InteractionFailure.BUSY)
         require(spawnIds.size == 2 && spawnIds.distinct().size == 2)
         val cap = if (type == InteractionType.CHAT) 2 else 1
         if (dao.getOpenInteractions().count { it.origin == InteractionOrigin.AUTONOMOUS && it.type == type } >= cap) fail(InteractionFailure.BUSY)
         val spawns = spawnIds.map { eligibleSpawn(it) }.sortedBy { it.individualId }
-        val event = newInteraction(id, type, InteractionOrigin.AUTONOMOUS, seed, tick)
+        socialDecision?.let { require(it.initiatorId in spawns.map { s -> s.individualId } &&
+            it.targetId in spawns.map { s -> s.individualId } && it.initiatorId != it.targetId && it.type == type) }
+        val event = newInteraction(id, type, InteractionOrigin.AUTONOMOUS, seed, tick).copy(
+            publicReason = socialDecision?.description(),
+            socialContextJson = socialDecision?.let { WorldSocialRepository(db).encode(it) })
         insertLocked(event, spawns.mapIndexed { index, spawn -> WorldInteractionParticipant(
             id, spawn.individualId, InteractionRole.WILD,
             if (type == InteractionType.CHAT) InteractionSide.NEUTRAL else if (index == 0) InteractionSide.ALLIED else InteractionSide.OPPOSING,
@@ -108,7 +119,7 @@ class WorldInteractionRepository(private val db: AppDatabase, private val now: (
 
     /** Proposals activate only after their actual positions meet; no renderer can teleport them. */
     suspend fun initiateWildPlayerInteraction(id: String, type: InteractionType, spawnId: Long, fix: WorldPlayerFix,
-        seed: Long, tick: Long): WorldInteraction = db.withTransaction {
+        seed: Long, tick: Long, socialDecision: SocialEncounterDecision? = null, allowApproach: Boolean = false): WorldInteraction = db.withTransaction {
         reconcileLocked()
         validateFix(fix)
         if(db.worldEcosystemDao().getSession()?.pauseReason==WorldPauseReason.PLAYER_BATTLE ||
@@ -116,13 +127,34 @@ class WorldInteractionRepository(private val db: AppDatabase, private val now: (
         val cap=if(type==InteractionType.CHAT) 2 else 1
         if(dao.getOpenInteractions().count { it.origin==InteractionOrigin.AUTONOMOUS && it.type==type }>=cap) fail(InteractionFailure.BUSY)
         val spawn=eligibleSpawn(spawnId)
-        validateDistance(fix,spawn)
-        val event=newInteraction(id,type,InteractionOrigin.AUTONOMOUS,seed,tick).copy(state=InteractionState.ACTIVE,
+        val inRange = RadarWorldGeometry.relative(fix.position, com.github.nacabaro.vbhelper.world.GeoPoint(spawn.latitude, spawn.longitude)).withinInteractionRange
+        if (!inRange) {
+            if (!allowApproach || !WorldWildInitiationPolicy.eligible(spawn, fix, now(), true, false, false, true)) fail(InteractionFailure.UNAVAILABLE)
+        }
+        socialDecision?.let { require(it.initiatorId == spawn.individualId && it.targetId == "trainer" && it.type == type) }
+        val event=newInteraction(id,type,InteractionOrigin.AUTONOMOUS,seed,tick).copy(
+            state=if (inRange) InteractionState.ACTIVE else InteractionState.PROPOSED,
             nextActionTick=tick+if(type==InteractionType.BATTLE)4 else 1,
-            publicReason=if(type==InteractionType.BATTLE) "WILD_ATTACK:Territorial encounter" else "WILD_CHAT:Wild greeting")
+            deadlineTick = tick + if (!inRange) 60 else if (type == InteractionType.CHAT) WorldSocialPlanner.IGNORED_GREETING_LIFETIME_TICKS else 200,
+            publicReason=(if(type==InteractionType.BATTLE) "WILD_ATTACK:" else "WILD_CHAT:") + (socialDecision?.description() ?: "Wild encounter"),
+            socialContextJson = socialDecision?.let { WorldSocialRepository(db).encode(it) })
         insertLocked(event,listOf(WorldInteractionParticipant(id,spawn.individualId,InteractionRole.WILD,
             if(type==InteractionType.BATTLE)InteractionSide.OPPOSING else InteractionSide.NEUTRAL,spawnId=spawn.id,cardCharacterId=spawn.cardCharacterId)))
         event
+    }
+
+    suspend fun activateWildPlayerInteraction(id: String, expectedRevision: Long, tick: Long, fix: WorldPlayerFix): Boolean = db.withTransaction {
+        val event = dao.getInteraction(id) ?: return@withTransaction false
+        if (!event.isPlayerDirected || event.state != InteractionState.PROPOSED || event.revision != expectedRevision ||
+            !fix.isFresh(now()) || db.worldEcosystemDao().getSession()?.pauseReason == WorldPauseReason.PLAYER_BATTLE) return@withTransaction false
+        val participant = dao.getParticipants(id).singleOrNull { it.role == InteractionRole.WILD } ?: return@withTransaction false
+        requireClaimLocked(id, participant.individualId)
+        val spawn = db.worldSpawnDao().getByIndividualId(participant.individualId) ?: return@withTransaction false
+        if (!RadarWorldGeometry.relative(fix.position, com.github.nacabaro.vbhelper.world.GeoPoint(spawn.latitude, spawn.longitude)).withinInteractionRange) return@withTransaction false
+        if (event.type == InteractionType.BATTLE && db.userCharacterDao().getActiveCharacter().first() == null) return@withTransaction false
+        transitionLocked(event.copy(nextActionTick = tick + if (event.type == InteractionType.BATTLE) 4 else 1,
+            deadlineTick = tick + if (event.type == InteractionType.CHAT) WorldSocialPlanner.IGNORED_GREETING_LIFETIME_TICKS else 200), InteractionState.ACTIVE)
+        true
     }
 
     /** The attack transfers into the ordinary 1v1 battle owner without an Accept prompt. */
@@ -176,7 +208,8 @@ class WorldInteractionRepository(private val db: AppDatabase, private val now: (
 
     /** Apply one terminal result, including all participant effects, or nothing at all. */
     suspend fun completeBattle(id: String, outcome: BattleOutcome): Boolean = db.withTransaction {
-        reconcileLocked()
+        val recorded = db.questDao().battleReport(id)
+        if (recorded == null) reconcileLocked() else require(recorded.outcome == outcome) { "The terminal battle outcome is already recorded." }
         val event = dao.getInteraction(id) ?: return@withTransaction false
         if (dao.getResult(id) != null || event.type != InteractionType.BATTLE ||
             event.state !in listOf(InteractionState.ACTIVE, InteractionState.PLAYER_CONTROLLED)) return@withTransaction false
@@ -188,7 +221,8 @@ class WorldInteractionRepository(private val db: AppDatabase, private val now: (
         val result = WorldInteractionResult(id, outcome, timestamp)
         dao.insertResult(result)
         val resolving = transitionLocked(event, InteractionState.RESOLVING)
-        val effects = WorldInteractionPolicy.battleEffects(event.origin, outcome,context?.friendly ?: event.isFriendlyBattle)
+        val friendly = context?.friendly == true || event.isFriendlyBattle
+        val effects = WorldInteractionPolicy.battleEffects(event.origin, outcome, friendly)
         WorldChatMemoryRepository(db,now).recordBattle(event,participants,outcome,context)
         if (effects.ownedWon != null) {
             participants.filter { it.role == InteractionRole.OWNED }.forEach { participant ->
@@ -198,16 +232,23 @@ class WorldInteractionRepository(private val db: AppDatabase, private val now: (
                 check(db.userCharacterDao().recordBattleResult(characterId, effects.ownedWon) == 1)
             }
         }
+        DigimonScanRepository(db, now).awardBattleLocked(id,
+            DigimonScanPolicy.awards(event.origin, outcome, friendly, participants,
+                percentagePerDefeat = scanPercentagePerDefeat()), timestamp)
+        com.github.nacabaro.vbhelper.quests.QuestProgress(db).battleLocked(event, participants, outcome, timestamp)
         dao.releaseClaims(id)
+        applySocialResultLocked(event, participants, outcome)
         if (effects.removeOpposingWilds) {
             participants.filter { it.role == InteractionRole.WILD && it.side == InteractionSide.OPPOSING }.forEach { participant ->
                 val spawnId = participant.spawnId ?: fail(InteractionFailure.UNAVAILABLE)
-                check(db.worldSpawnDao().deleteById(spawnId) == 1)
+                if (db.questDao().unfinishedTargetCount(participant.individualId) == 0) {
+                    check(db.worldSpawnDao().deleteById(spawnId) == 1)
+                }
             }
         }
         transitionLocked(resolving, InteractionState.ENDED)
-        applySocialResultLocked(event, participants, outcome)
         check(dao.updateResult(result.copy(appliedAt = timestamp)) == 1)
+        com.github.nacabaro.vbhelper.quests.QuestBattleInventory(db).settleLocked(id)
         true
     }
 
@@ -217,6 +258,7 @@ class WorldInteractionRepository(private val db: AppDatabase, private val now: (
         if(event.type==InteractionType.BATTLE && event.state==InteractionState.PLAYER_CONTROLLED && db.worldChatMemoryDao().getContext(id)?.chatIndividualId!=null)
             return@withTransaction completeBattle(id,BattleOutcome.ABANDONED)
         if (event.origin == InteractionOrigin.JOINED_PLAYER && event.state == InteractionState.RESERVED) restoreParentLocked(event)
+        com.github.nacabaro.vbhelper.quests.QuestBattleInventory(db).settleLocked(id)
         closeLocked(event, if (event.state == InteractionState.RESOLVING) InteractionState.INTERRUPTED else InteractionState.CANCELLED, "CANCELLED")
         true
     }
@@ -267,7 +309,18 @@ class WorldInteractionRepository(private val db: AppDatabase, private val now: (
 
     suspend fun recoverInterruptedPlayerBattles() = db.withTransaction {
         dao.getOpenInteractions().filter { it.origin != InteractionOrigin.AUTONOMOUS }.forEach { event ->
+            val recorded = db.questDao().battleReport(event.id)
+            if (recorded != null && event.state == InteractionState.PLAYER_CONTROLLED && event.type == InteractionType.BATTLE) {
+                val participants = dao.getParticipants(event.id)
+                val ownedValid = participants.filter { it.role == InteractionRole.OWNED }.all { participant ->
+                    participant.ownedCharacterId?.let { db.userCharacterDao().getCharacterSync(it) }?.let { character ->
+                        character.individualId == participant.individualId && character.charId == participant.cardCharacterId
+                    } == true
+                }
+                if (ownedValid && completeBattle(event.id, recorded.outcome)) return@forEach
+            }
             if (event.origin == InteractionOrigin.JOINED_PLAYER && event.state == InteractionState.RESERVED) restoreParentLocked(event)
+            com.github.nacabaro.vbhelper.quests.QuestBattleInventory(db).settleLocked(event.id, interrupted = true)
             closeLocked(event, if (event.state == InteractionState.PLAYER_CONTROLLED || event.state == InteractionState.RESOLVING)
                 InteractionState.INTERRUPTED else InteractionState.CANCELLED, "PROCESS_INTERRUPTED")
         }
@@ -316,6 +369,8 @@ class WorldInteractionRepository(private val db: AppDatabase, private val now: (
 
     private suspend fun closeLocked(event: WorldInteraction, state: InteractionState, reason: String) {
         check(state.terminal)
+        com.github.nacabaro.vbhelper.quests.QuestBattleInventory(db).settleLocked(event.id,
+            interrupted = event.state == InteractionState.PLAYER_CONTROLLED)
         check(dao.updateInteraction(event.copy(state = state, revision = event.revision + 1,
             reservationExpiresAt = null, reservedFrom = null, endedAt = now(), terminalReason = reason)) == 1)
         dao.releaseClaims(event.id)
@@ -323,6 +378,7 @@ class WorldInteractionRepository(private val db: AppDatabase, private val now: (
 
     private fun validateFix(fix: WorldPlayerFix) { if (!fix.isFresh(now())) fail(InteractionFailure.STALE_LOCATION) }
     private fun validateDistance(fix: WorldPlayerFix, spawn: WorldSpawn) {
+        if (com.github.nacabaro.vbhelper.world.RadarDebugInteraction.allowAnyDistance) return
         val position = com.github.nacabaro.vbhelper.world.GeoPoint.fromOrNull(spawn.latitude, spawn.longitude) ?: fail(InteractionFailure.UNAVAILABLE)
         if (!RadarWorldGeometry.relative(fix.position, position).withinInteractionRange) fail(InteractionFailure.UNAVAILABLE)
     }
@@ -341,7 +397,8 @@ class WorldInteractionRepository(private val db: AppDatabase, private val now: (
         dao.releaseClaims(source.id)
         endConversationLocked(source, "CHALLENGE_ACCEPTED")
         val battle = newInteraction(id, InteractionType.BATTLE, InteractionOrigin.AUTONOMOUS,
-            EcosystemSeed.mix(source.seed, id, "context-battle", tick), tick).copy(parentInteractionId = source.id, publicReason = reason)
+            EcosystemSeed.mix(source.seed, id, "context-battle", tick), tick).copy(parentInteractionId = source.id, publicReason = reason,
+                socialContextJson = source.socialContextJson)
         insertLocked(battle, participants.mapIndexed { index, p -> p.copy(interactionId = id,
             side = if (index == 0) InteractionSide.ALLIED else InteractionSide.OPPOSING) })
         return battle
@@ -349,6 +406,7 @@ class WorldInteractionRepository(private val db: AppDatabase, private val now: (
 
     internal suspend fun transferWildAttackLocked(source: WorldInteraction, initiatorId: String, reason: String, tick: Long, sparring: Boolean = false): WorldInteraction? {
         if(source.type!=InteractionType.CHAT || source.state !in listOf(InteractionState.ACTIVE,InteractionState.PLAYER_CONTROLLED)) return null
+        if (db.userCharacterDao().getActiveCharacter().first() == null) return null
         if(dao.getOpenInteractions().any { it.type==InteractionType.BATTLE && it.origin==InteractionOrigin.AUTONOMOUS }) return null
         val attacker=dao.getParticipants(source.id).singleOrNull { it.individualId==initiatorId && it.role==InteractionRole.WILD } ?: return null
         requireClaimLocked(source.id,initiatorId)
@@ -357,7 +415,8 @@ class WorldInteractionRepository(private val db: AppDatabase, private val now: (
         endConversationLocked(source,"WILD_ATTACK")
         val attack=newInteraction(id,InteractionType.BATTLE,InteractionOrigin.AUTONOMOUS,
             EcosystemSeed.mix(source.seed,id,"hostile-player-attack",tick),tick).copy(state=InteractionState.ACTIVE,nextActionTick=tick+4,
-            parentInteractionId=source.id,publicReason=(if(sparring) "WILD_SPARRING:" else "WILD_ATTACK:")+reason)
+            parentInteractionId=source.id,publicReason=(if(sparring) "WILD_SPARRING:" else "WILD_ATTACK:")+reason,
+            socialContextJson = source.socialContextJson)
         insertLocked(attack,listOf(attacker.copy(interactionId=id,side=InteractionSide.OPPOSING)))
         return attack
     }
@@ -403,21 +462,41 @@ class WorldInteractionRepository(private val db: AppDatabase, private val now: (
 
     private suspend fun applySocialResultLocked(event: WorldInteraction, participants: List<WorldInteractionParticipant>, outcome: BattleOutcome) {
         val wilds = participants.filter { it.role == InteractionRole.WILD }.sortedBy { it.individualId }
-        if (wilds.size != 2) return
-        val pair = WildPairBond.create(wilds[0].individualId, wilds[1].individualId)
-        val old = db.worldEcosystemDao().getBond(pair.individualA, pair.individualB) ?: pair
         val tick = db.worldEcosystemDao().getSession()?.tickIndex ?: event.nextActionTick
-        val aAllied = wilds[0].side == InteractionSide.ALLIED
-        val aWon = (outcome == BattleOutcome.ALLIED_VICTORY && aAllied) || (outcome == BattleOutcome.OPPOSING_VICTORY && !aAllied)
-        val decisive = (outcome == BattleOutcome.ALLIED_VICTORY || outcome == BattleOutcome.OPPOSING_VICTORY) && wilds[0].side!=wilds[1].side
-        val diminishing = (5 / (1 + old.aWins + old.bWins)).coerceAtLeast(1)
         val friendly = event.isFriendlyBattle || db.worldChatMemoryDao().getContext(event.id)?.friendly==true
-        db.worldEcosystemDao().saveBond(old.copy(affinity = (old.affinity + if (friendly) 2 else -diminishing).coerceIn(-100,100),
-            aWins = old.aWins + if (decisive && aWon) 1 else 0,
-            bWins = old.bWins + if (decisive && !aWon) 1 else 0, draws = old.draws + if (outcome == BattleOutcome.DRAW) 1 else 0,
-            lastInteractionAt = now(), lastInteractionTick = tick, cooldownUntilTick = tick + 80))
+        if (wilds.size == 2) {
+            val pair = WildPairBond.create(wilds[0].individualId, wilds[1].individualId)
+            val old = db.worldEcosystemDao().getBond(pair.individualA, pair.individualB) ?: pair
+            val aAllied = wilds[0].side == InteractionSide.ALLIED
+            val aWon = (outcome == BattleOutcome.ALLIED_VICTORY && aAllied) || (outcome == BattleOutcome.OPPOSING_VICTORY && !aAllied)
+            val opposed = wilds[0].side != wilds[1].side
+            val decisive = (outcome == BattleOutcome.ALLIED_VICTORY || outcome == BattleOutcome.OPPOSING_VICTORY) && opposed
+            val diminishing = (5 / (1 + old.aWins + old.bWins)).coerceAtLeast(1)
+            db.worldEcosystemDao().saveBond(old.copy(affinity = (old.affinity + if (friendly || !opposed) 2 else -diminishing).coerceIn(-100,100),
+                aWins = old.aWins + if (decisive && aWon) 1 else 0,
+                bWins = old.bWins + if (decisive && !aWon) 1 else 0, draws = old.draws + if (outcome == BattleOutcome.DRAW) 1 else 0,
+                lastInteractionAt = now(), lastInteractionTick = tick, cooldownUntilTick = tick + 80))
+        }
         wilds.forEach { p -> db.worldSpawnDao().getByIndividualId(p.individualId)?.let { spawn ->
-            db.worldSpawnDao().adjustEcosystemEmotion(p.individualId, if (friendly) 2 else -3)
+            val profile = WorldSocialRepository(db).profile(p.individualId)
+            val won = outcome == if (p.side == InteractionSide.ALLIED) BattleOutcome.ALLIED_VICTORY else BattleOutcome.OPPOSING_VICTORY
+            val emotionDelta = when {
+                outcome == BattleOutcome.DRAW -> 0
+                outcome == BattleOutcome.ABANDONED -> -1
+                won -> (1 + profile.challenge * 3).toInt()
+                friendly && profile.training > .7 -> 1
+                else -> -(1 + profile.boundarySensitivity * 2).toInt()
+            }
+            db.worldSpawnDao().adjustEcosystemEmotion(p.individualId, emotionDelta)
+            val other = wilds.firstOrNull { it.individualId != p.individualId }
+            val partnerId = other?.individualId ?: "trainer"
+            val name = if (other == null) "Tamer" else other.spawnId?.let { db.worldSpawnDao().getSpawnById(it)?.speciesName } ?: "Digimon"
+            val perspective = when { outcome == BattleOutcome.DRAW -> "DRAW"; outcome == BattleOutcome.ABANDONED -> "ABANDONED"; won -> "WON"; else -> "LOST" }
+            val cooperation = other != null && other.side == p.side
+            db.worldSocialDao().saveMemory(WorldSocialMemory(p.individualId,event.id,partnerId,name,
+                if (friendly) SocialMotive.CHALLENGE_SPARRING.name else SocialMotive.HOSTILE_ATTACK.name,
+                perspective,"Public battle ${if (cooperation) "alongside" else "against"} $name: $perspective; friendly=$friendly.","",tick,now()))
+            db.worldSocialDao().prune(p.individualId)
             db.worldSpawnDao().checkpointMovement(p.individualId, spawn.latitude, spawn.longitude, spawn.homeLatitude, spawn.homeLongitude,
                 com.github.nacabaro.vbhelper.domain.world.WorldMovementState.RETURNING, tick + 1, tick + 80)
         } }

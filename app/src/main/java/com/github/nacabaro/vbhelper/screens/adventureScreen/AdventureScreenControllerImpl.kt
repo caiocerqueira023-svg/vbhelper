@@ -76,9 +76,8 @@ class AdventureScreenControllerImpl(
     }
 
     private suspend fun generateRandomCurrency(): Int {
-        val currentValue = application.container.currencyRepository.currencyValue.first()
         val random = (2..6).random() * 1000
-        application.container.currencyRepository.setCurrencyValue(currentValue + random)
+        application.container.currencyRepository.credit(random)
 
         return random
     }

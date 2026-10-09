@@ -19,6 +19,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
+import com.github.nacabaro.vbhelper.components.DimLogo
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -112,6 +113,7 @@ import com.github.nacabaro.vbhelper.components.cyberFrame
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.domain.card.Card
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
+import com.github.nacabaro.vbhelper.dtos.DebugSpawnCharacter
 import com.github.nacabaro.vbhelper.dtos.WorldDtos
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
 import com.github.nacabaro.vbhelper.screens.offlineBattleParticipant
@@ -245,6 +247,14 @@ fun RadarScreen(
     }
     var preparingSpawnId by remember { mutableStateOf<Long?>(null) }
     var debugSpawnInProgress by remember { mutableStateOf(false) }
+    var showDebugSpawnPicker by rememberSaveable { mutableStateOf(false) }
+    var debugSpawnCharacters by remember { mutableStateOf<List<DebugSpawnCharacter>?>(null) }
+    var debugSpawnPickerFailed by remember { mutableStateOf(false) }
+    var debugSpawnPickerAttempt by remember { mutableIntStateOf(0) }
+    var debugAnyDistance by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(debugAnyDistance) {
+        com.github.nacabaro.vbhelper.world.RadarDebugInteraction.allowAnyDistance = debugAnyDistance
+    }
     var battleSpawnId by rememberSaveable { mutableStateOf<Long?>(null) }
     var battleCharacterId by rememberSaveable { mutableStateOf<Long?>(null) }
     var battleSessionId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -253,6 +263,7 @@ fun RadarScreen(
     var battleExitInProgress by remember { mutableStateOf(false) }
     var pendingBattleEventId by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingBattleOutcome by rememberSaveable { mutableStateOf<BattleOutcome?>(null) }
+    var pendingBattleSnapshot by remember { mutableStateOf<com.github.nacabaro.vbhelper.battle.offline.core.BattleSnapshot?>(null) }
     val battleActive = battleSessionId != null
     val desiredRenderer = when {
         battleActive || requestedBattleRenderer -> RadarRendererOwner.BATTLE
@@ -305,6 +316,16 @@ fun RadarScreen(
     val isDebuggableBuild = (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
     var showCompassDiagnostics by remember { mutableStateOf(false) }
     val spawns by app.container.worldRepository.observeSpawns().collectAsState(initial = emptyList())
+    val questTasks by app.container.questRepository.observeTargetTasks().collectAsState(initial = emptyList())
+    val questTrials by app.container.questRepository.observeBattleTargets().collectAsState(initial = emptyList())
+    var questInteractionInProgress by remember { mutableStateOf<String?>(null) }
+    val questTarget by remember(worldState) { worldState.getStateFlow<String?>("radar-quest-target", null) }.collectAsState()
+    LaunchedEffect(questTarget, spawns) {
+        val target = spawns.firstOrNull { it.individualId == questTarget } ?: return@LaunchedEffect
+        selectedEncounterId = target.individualId
+        selectedEncounterName = target.speciesName
+        worldState.set<String?>("radar-quest-target", null)
+    }
     val activeOwned by app.container.db.userCharacterDao().getActiveCharacter().collectAsState(initial=null)
     val attemptedWildAttacks=remember { mutableMapOf<String,Int>() }
     val pendingRecruits by app.container.worldRepository.observePendingRecruits()
@@ -314,6 +335,17 @@ fun RadarScreen(
     val worldSpawnCards = worldSpawnCardsState.orEmpty()
     val currentBiome by app.container.worldRepository.currentBiome.collectAsState()
     val scope = rememberCoroutineScope()
+    LaunchedEffect(showDebugSpawnPicker, debugSpawnPickerAttempt) {
+        if (!showDebugSpawnPicker || !isDebuggableBuild) return@LaunchedEffect
+        debugSpawnCharacters = null
+        debugSpawnPickerFailed = false
+        try {
+            debugSpawnCharacters = withContext(Dispatchers.IO) { app.container.worldRepository.getDebugSpawnCharacters() }
+        } catch (failure: Exception) {
+            if (failure is CancellationException) throw failure
+            debugSpawnPickerFailed = true
+        }
+    }
     // At the default zoom, the entire nearby spawn radius (350 m) is visible.
     // Users can still zoom in for detail or out to the full 1 km radar range.
     var zoom by rememberSaveable { mutableFloatStateOf(1f) }
@@ -526,7 +558,8 @@ fun RadarScreen(
             try {
                 val result = withContext(NonCancellable + Dispatchers.IO) {
                     ecosystem.finishBattle {
-                        if (outcome != null) app.container.worldRepository.recordRadarBattleResult(id, outcome)
+                        val recordedOutcome = outcome ?: app.container.db.questDao().battleReport(id)?.outcome
+                        if (recordedOutcome != null) app.container.worldRepository.recordRadarBattleResult(id, recordedOutcome, snapshot = pendingBattleSnapshot)
                         else app.container.worldRepository.interactions.cancel(id)
                     }
                 }
@@ -540,6 +573,7 @@ fun RadarScreen(
                 }
                 pendingBattleEventId = null
                 pendingBattleOutcome = null
+                pendingBattleSnapshot = null
                 if(chat!=null && app.container.db.worldInteractionDao().getResult(id)!=null) {
                     navController.navigate(NavigationItems.WildContact.route.replace("{individualId}",android.net.Uri.encode(chat.first))
                         .replace("{cardCharacterId}",chat.second.toString())) { launchSingleTop=true }
@@ -557,6 +591,7 @@ fun RadarScreen(
         if (pendingBattleEventId != null || battleExitInProgress) return
         pendingBattleEventId = battleSessionId
         pendingBattleOutcome = battleTerminalOutcome ?: battleSessionState.snapshot?.result?.outcome
+        pendingBattleSnapshot = battleSessionState.snapshot?.takeIf { it.result != null }
         battleViewModel.finishSession()
         battleSpawnId = null
         battleCharacterId = null
@@ -634,6 +669,14 @@ fun RadarScreen(
             try {
                 val ticket = if(wildAttack==null) displayedCommand(RadarCommandKind.BATTLE_RESERVATION, spawn.individualId)
                     else RadarCommand(displayedCommandStamp ?: throw RadarCommandException(rejection=RadarRejection.NOT_READY),RadarCommandKind.EVENT_RESERVATION,interactionId=wildAttack.id)
+                // Quest battles field the bound quest partner automatically instead of
+                // requiring the player to switch the active partner manually.
+                val switchedPartnerName = withContext(Dispatchers.IO) {
+                    app.container.questRepository.useBoundPartnerForBattle(spawn.individualId)
+                }
+                if (switchedPartnerName != null) {
+                    Toast.makeText(context, resources.getString(R.string.quest_partner_auto_selected, switchedPartnerName), Toast.LENGTH_LONG).show()
+                }
                 // Resolve preparation reads before entering the bounded command transaction.
                 val owned = withContext(Dispatchers.IO) {
                     val characterDao = app.container.db.userCharacterDao()
@@ -741,6 +784,29 @@ fun RadarScreen(
     val regionMutationsEnabled = radarResumed && worldSnapshot.status == EcosystemStatus.READY &&
         worldSnapshot.playerFix?.isFresh(worldSnapshot.observedAt) == true && pendingBattleEventId == null
     val settingsMutationsEnabled = radarResumed && worldSnapshot.status == EcosystemStatus.READY && pendingBattleEventId == null
+
+    fun spawnDebugDigimon(cardCharacterId: Long? = null) {
+        if (!isDebuggableBuild || !regionMutationsEnabled || debugSpawnInProgress) return
+        debugSpawnInProgress = true
+        scope.launch {
+            try {
+                val spawnId = withContext(Dispatchers.IO) {
+                    ecosystem.executeCommand(radarLease, displayedCommand(RadarCommandKind.REGION)) { command ->
+                        val position = command.playerFix.position
+                        app.container.worldRepository.spawnDebugDigimon(position.latitude, position.longitude, cardCharacterId)
+                    }.getOrThrow()
+                }
+                Toast.makeText(context, resources.getString(
+                    if (spawnId != null) R.string.ui_world_debug_spawn_success else R.string.ui_world_debug_spawn_unavailable
+                ), Toast.LENGTH_SHORT).show()
+            } catch (failure: Exception) {
+                if (failure is CancellationException) throw failure
+                showRadarFailure(failure, R.string.ui_world_debug_spawn_unavailable)
+            } finally {
+                debugSpawnInProgress = false
+            }
+        }
+    }
     LaunchedEffect(worldSnapshot.session?.tickIndex,worldSnapshot.status,activeOwned?.id,radarResumed,battleActive,spawns) {
         if(!regionMutationsEnabled || battleActive || preparingSpawnId!=null || activeOwned==null || incomingChallengeId!=null || privateChallenge!=null) return@LaunchedEffect
         val attack=worldSnapshot.interactions.firstOrNull { it.type==InteractionType.BATTLE && it.state==InteractionState.ACTIVE &&
@@ -748,7 +814,8 @@ fun RadarScreen(
             (attemptedWildAttacks[it.id] ?: 0)<3 } ?: return@LaunchedEffect
         val attacker=spawns.firstOrNull { it.individualId in attack.participantIds } ?: return@LaunchedEffect
         val position=worldSnapshot.individuals.firstOrNull { it.individualId==attacker.individualId }?.position ?: return@LaunchedEffect
-        if(worldSnapshot.playerFix?.let { RadarWorldGeometry.relative(it.position,position).withinInteractionRange }!=true) return@LaunchedEffect
+        if(!com.github.nacabaro.vbhelper.world.RadarDebugInteraction.allowAnyDistance &&
+            worldSnapshot.playerFix?.let { RadarWorldGeometry.relative(it.position,position).withinInteractionRange }!=true) return@LaunchedEffect
         attemptedWildAttacks[attack.id]=(attemptedWildAttacks[attack.id] ?: 0)+1
         if(attack.publicReason?.startsWith("WILD_ATTACK:")==true) Toast.makeText(context,resources.getString(R.string.ui_world_wild_attack),Toast.LENGTH_SHORT).show()
         startRadarBattle(attacker,wildAttack=attack)
@@ -847,12 +914,16 @@ fun RadarScreen(
                         spawnId != null && characterId != null
                     ) {
                         committedBattleSessionId = activeSessionId
+                        val finalItems = battleSessionState.snapshot?.trainingItems
+                        val terminalSnapshot = battleSessionState.snapshot
                         scope.launch {
                             runCatching {
                                 withContext(NonCancellable + Dispatchers.IO) {
                                     app.container.worldRepository.recordRadarBattleResult(
                                         interactionId = activeSessionId,
-                                        outcome = outcome
+                                        outcome = outcome,
+                                        items = finalItems,
+                                        snapshot = terminalSnapshot
                                     )
                                 }
                             }.onFailure { failure ->
@@ -867,6 +938,7 @@ fun RadarScreen(
                     }
                 },
                 onExit = ::leaveRadarBattle,
+                rewardContent = { battleSessionId?.let { DigimonScanBattleRewards(app.container.db, it) } },
                 radarViewport = {
             if (firstPersonEnabled && rendererState.owner == RadarRendererOwner.FIRST_PERSON &&
                 rendererState.requested == RadarRendererOwner.FIRST_PERSON && !rendererState.releasing) {
@@ -946,6 +1018,10 @@ fun RadarScreen(
                 } ?: Offset.Zero
 
                 val primaryColor = MaterialTheme.colorScheme.primary
+                val gridColor = SurfaceStroke
+                val ringColor = TextPrimaryOnDark
+                val pulseColor = VitalCyan
+                val compassColor = RadarCompass
 
                 Canvas(modifier = Modifier.fillMaxSize()) {
                     // A grade representa o mundo, se desloca com o jogador e gira com a bússola.
@@ -967,7 +1043,7 @@ fun RadarScreen(
                         while (x > -diagonal) x -= gridSpacingPx
                         while (x < size.width + diagonal) {
                             drawLine(
-                                SurfaceStroke.copy(alpha = 0.72f),
+                                gridColor.copy(alpha = 0.72f),
                                 Offset(x, -diagonal),
                                 Offset(x, size.height + diagonal),
                                 strokeWidth = 2f
@@ -979,7 +1055,7 @@ fun RadarScreen(
                         while (y > -diagonal) y -= gridSpacingPx
                         while (y < size.height + diagonal) {
                             drawLine(
-                                SurfaceStroke.copy(alpha = 0.72f),
+                                gridColor.copy(alpha = 0.72f),
                                 Offset(-diagonal, y),
                                 Offset(size.width + diagonal, y),
                                 strokeWidth = 2f
@@ -990,7 +1066,7 @@ fun RadarScreen(
 
                     distanceRingMeters.forEach { meters ->
                         drawCircle(
-                            color = TextPrimaryOnDark.copy(alpha = 0.18f),
+                            color = ringColor.copy(alpha = 0.18f),
                             radius = meters * scale,
                             center = playerOffset,
                             style = Stroke(width = 1.5f)
@@ -999,7 +1075,7 @@ fun RadarScreen(
 
                     val pulseRadiusPx = radarPulse.value * visibleRadiusMeters.toFloat() * scale
                     drawCircle(
-                        color = VitalCyan.copy(alpha = 0.65f * (1f - radarPulse.value)),
+                        color = pulseColor.copy(alpha = 0.65f * (1f - radarPulse.value)),
                         radius = pulseRadiusPx,
                         center = playerOffset,
                         style = Stroke(width = 2.5f)
@@ -1161,9 +1237,9 @@ fun RadarScreen(
                     val arrowHalfWidth = 8.dp.toPx()
                     listOf(
                         0f to primaryColor,
-                        90f to RadarCompass,
-                        180f to RadarCompass,
-                        270f to RadarCompass
+                        90f to compassColor,
+                        180f to compassColor,
+                        270f to compassColor
                     ).forEach { (cardinalAzimuth, arrowColor) ->
                         val screenAngle = (cardinalAzimuth - radarHeading - 90f) * (PI / 180.0)
                         val direction = Offset(
@@ -1249,46 +1325,21 @@ fun RadarScreen(
                 VitalButton(onClick = { zoom = (zoom * 1.5f).coerceAtMost(4f) }) { Text("+") }
             }
             if (isDebuggableBuild) {
-                VitalButton(
-                    onClick = {
-                        if (debugSpawnInProgress) return@VitalButton
-                        debugSpawnInProgress = true
-                        scope.launch {
-                            try {
-                                val spawnId = withContext(Dispatchers.IO) {
-                                    ecosystem.executeCommand(radarLease, displayedCommand(RadarCommandKind.REGION)) { command ->
-                                        val position = command.playerFix.position
-                                        app.container.worldRepository.spawnDebugDigimon(position.latitude, position.longitude)
-                                    }.getOrThrow()
-                                }
-                                Toast.makeText(
-                                    context,
-                                    resources.getString(
-                                        if (spawnId != null) R.string.ui_world_debug_spawn_success
-                                        else R.string.ui_world_debug_spawn_unavailable
-                                    ),
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            } catch (failure: Exception) {
-                                if (failure is CancellationException) throw failure
-                                showRadarFailure(failure, R.string.ui_world_debug_spawn_unavailable)
-                            } finally {
-                                debugSpawnInProgress = false
-                            }
-                        }
-                    },
+                DebugSpawnButton(
+                    onRandomSpawn = { spawnDebugDigimon() },
+                    onChooseSpawn = { showDebugSpawnPicker = true },
+                    loading = debugSpawnInProgress,
                     enabled = regionMutationsEnabled && !debugSpawnInProgress,
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentWidth()
                         .padding(top = 8.dp)
-                ) {
-                    Text(
-                        stringResource(
-                            if (debugSpawnInProgress) R.string.ui_world_debug_spawn_loading
-                            else R.string.ui_world_debug_spawn_button
-                        )
-                    )
+                )
+                Text(stringResource(R.string.ui_world_debug_picker_hint), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
+                Row(Modifier.fillMaxWidth(),verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.ui_world_debug_any_distance),modifier = Modifier.weight(1f))
+                    Switch(checked = debugAnyDistance,onCheckedChange = { debugAnyDistance = it })
                 }
             }
             if (pendingRecruits.isNotEmpty()) {
@@ -1332,9 +1383,9 @@ fun RadarScreen(
             WorldEncounterActionSheet(
                 spawn = spawn,
                 displayName = spawn?.speciesName ?: selectedEncounterName,
-                preparingBattle = spawn != null && preparingSpawnId == spawn.id,
+                preparingBattle = (spawn != null && preparingSpawnId == spawn.id) || questInteractionInProgress != null,
                 blockedReason = blocker?.let { resources.getString(RadarCommandException(rejection = it).messageResource()) },
-                onDismiss = { if (preparingSpawnId == null) selectedEncounterId = null },
+                onDismiss = { if (preparingSpawnId == null && questInteractionInProgress == null) selectedEncounterId = null },
                 onChat = {
                     scope.launch {
                         try {
@@ -1356,9 +1407,66 @@ fun RadarScreen(
                         }
                     }
                 },
-                onBattle = { spawn?.let { startRadarBattle(it) } }
+                onBattle = { spawn?.let { startRadarBattle(it) } },
+                questContent = {
+                    QuestTargetActions(questTasks.filter { it.targetIndividualId == individualId },
+                        enabled = blocker == null && preparingSpawnId == null && questInteractionInProgress == null,
+                        trials = questTrials.filter { it.objective.targetIndividualId == individualId }) { task ->
+                        questInteractionInProgress = task.objectiveId
+                        scope.launch {
+                            try {
+                                val updated = withContext(Dispatchers.IO) {
+                                    ecosystem.executeCommand(radarLease, displayedCommand(RadarCommandKind.QUEST_INTERACTION, individualId)) { command ->
+                                        val quest = app.container.questRepository.interactTargetLocked(individualId,
+                                            task.objectiveId, task.revision, command.playerFix)
+                                        app.container.db.chatDao().insertMessage(com.github.nacabaro.vbhelper.domain.chat.ChatMessageEntity(
+                                            individualId = quest.giverId, role = "assistant",
+                                            content = resources.getString(R.string.quest_feedback_target_progress,
+                                                task.targetName ?: resources.getString(R.string.ui_world_wild_digimon)),
+                                            timestamp = System.currentTimeMillis()))
+                                        quest
+                                    }.getOrThrow()
+                                }
+                                selectedEncounterId = null
+                                Toast.makeText(context, resources.getString(R.string.quest_target_recorded, updated.giverName), Toast.LENGTH_LONG).show()
+                                scope.launch(Dispatchers.IO) {
+                                    try {
+                                        if (app.container.chatRepository.publicDialogueAvailable()) kotlinx.coroutines.withTimeout(20_000) {
+                                            app.container.chatRepository.triggerReactionForWildEncounter(updated.giverId, updated.giverCardCharacterId,
+                                                "The app committed a physical quest interaction: ${task.type} with ${task.targetName}. " +
+                                                    "React naturally to these registered facts in ${com.github.nacabaro.vbhelper.chat.PromptLocalization.currentLanguageTag()}; " +
+                                                    "do not invent progress or rewards.\n${app.container.questRepository.contextFor(updated.id)}")
+                                        }
+                                    } catch (failure: Exception) {
+                                        if (failure is CancellationException && failure !is kotlinx.coroutines.TimeoutCancellationException) throw failure
+                                    }
+                                }
+                            } catch (cancelled: CancellationException) {
+                                throw cancelled
+                            } catch (failure: Exception) {
+                                showRadarFailure(failure, R.string.ui_world_encounter_unavailable)
+                            } finally {
+                                questInteractionInProgress = null
+                            }
+                        }
+                    }
+                }
             )
         }
+    }
+
+    if (showDebugSpawnPicker && isDebuggableBuild) {
+        DebugSpawnPickerDialog(
+            characters = debugSpawnCharacters,
+            failed = debugSpawnPickerFailed,
+            enabled = regionMutationsEnabled && !debugSpawnInProgress,
+            onRetry = { debugSpawnPickerAttempt++ },
+            onSelect = { id ->
+                showDebugSpawnPicker = false
+                spawnDebugDigimon(id)
+            },
+            onDismiss = { showDebugSpawnPicker = false }
+        )
     }
 
     selectedSpecies?.let { species ->
@@ -1460,7 +1568,8 @@ private fun WorldEncounterActionSheet(
     blockedReason: String?,
     onDismiss: () -> Unit,
     onChat: () -> Unit,
-    onBattle: () -> Unit
+    onBattle: () -> Unit,
+    questContent: (@Composable () -> Unit)? = null
 ) {
     val wildLabel = stringResource(R.string.ui_world_encounter_wild)
     val sprite = remember(spawn?.id, spawn?.spriteIdle?.contentHashCode()) {
@@ -1478,7 +1587,7 @@ private fun WorldEncounterActionSheet(
         contentColor = TextPrimaryOnDark
     ) {
         Column(
-            Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 28.dp),
+            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
@@ -1499,6 +1608,7 @@ private fun WorldEncounterActionSheet(
                 color = TextSecondaryOnDark,
                 style = MaterialTheme.typography.bodyMedium
             )
+            questContent?.invoke()
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -1621,7 +1731,7 @@ private fun WorldSpawnDimRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         logo?.let { image ->
-            Image(
+            DimLogo(
                 bitmap = image,
                 contentDescription = card.name,
                 filterQuality = FilterQuality.None,

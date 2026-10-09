@@ -1,6 +1,7 @@
 package com.github.nacabaro.vbhelper.screens.cardScreen
 
 import androidx.compose.foundation.Image
+import com.github.nacabaro.vbhelper.components.DimLogo
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
@@ -86,7 +87,7 @@ fun CardAdventureEntry(
                 verticalArrangement = Arrangement.spacedBy(5.dp)
             ) {
                 if (!obscure) {
-                    Image(
+                    DimLogo(
                         bitmap = nameImageBitmapData.imageBitmap,
                         contentDescription = null,
                         modifier = Modifier

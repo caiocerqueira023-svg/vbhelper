@@ -30,7 +30,14 @@ data class TrainingParticipantInput(
     val techniqueIds: List<String> = GenericTechniqueCatalog.defaultTechniqueIds,
     val initialHealth: Int? = null,
     val initialEnergy: Int? = null,
-    val aiProfile: BattleAiProfile = BattleAiProfile()
+    val aiProfile: BattleAiProfile = BattleAiProfile(),
+    val specialDisplayNameOverride: String? = null,
+    val blastMode: String = "NONE",
+    val blastTargetSpecies: String? = null,
+    val blastFormSpecial: String? = null,
+    val jogressResultSpecies: String? = null,
+    /** Raw species name for universal-table matching; null degrades Jogress to dual-strike. */
+    val speciesName: String? = null
 )
 
 /** Builds the first training loadout without reading or modifying Room during a battle tick. */
@@ -48,7 +55,8 @@ object TrainingBattleFactory {
         allies: List<TrainingParticipantInput>,
         opponents: List<TrainingParticipantInput>,
         configuration: BattleConfiguration = BattleConfiguration(),
-        allowAlliedAdvantage: Boolean = false
+        allowAlliedAdvantage: Boolean = false,
+        itemLoadout: List<BattleItemDefinition> = trainingItems
     ): BattleSimulator {
         require(allies.size in 1..2) { "O treino aceita um ou dois parceiros." }
         require(opponents.size in 1..2) { "O treino aceita um ou dois oponentes." }
@@ -72,7 +80,7 @@ object TrainingBattleFactory {
                 members = opponents.map { it.toDefinition(BattleSide.OPPOSING) }
             ),
             techniqueCatalog = GenericTechniqueCatalog.definitionsForVersion(configuration.rulesetVersion),
-            trainingItems = trainingItems
+            trainingItems = itemLoadout
         )
     }
 
@@ -106,6 +114,12 @@ object TrainingBattleFactory {
             personalityType = personalityType,
             techniqueIds = loadout,
             specialTechniqueId = GenericTechniqueCatalog.trainingSpecialTechniqueId,
+            specialDisplayNameOverride = specialDisplayNameOverride,
+            blastMode = blastMode,
+            blastTargetSpecies = blastTargetSpecies,
+            blastFormSpecial = blastFormSpecial,
+            jogressResultSpecies = jogressResultSpecies,
+            speciesName = speciesName,
             initialHealth = initialHealth,
             initialEnergy = initialEnergy,
             aiProfile = aiProfile.copy(techniqueWeights = aiProfile.techniqueWeights.filterKeys { it in loadout }),

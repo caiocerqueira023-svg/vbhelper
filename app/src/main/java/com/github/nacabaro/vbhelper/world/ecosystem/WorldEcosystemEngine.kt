@@ -1,6 +1,7 @@
 package com.github.nacabaro.vbhelper.world.ecosystem
 
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityType
+import com.github.nacabaro.vbhelper.domain.personality.DigimonSocialProfile
 import com.github.nacabaro.vbhelper.domain.world.WorldMovementState
 import com.github.nacabaro.vbhelper.domain.world.WorldSpawn
 import com.github.nacabaro.vbhelper.world.GeoPoint
@@ -9,7 +10,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
 
-/** Rules v2: geographic fixed-step movement, independent of rendering, wall time or list order. */
+/** Geographic fixed-step behavior, independent of rendering, wall time or list order. */
 object WorldEcosystemEngine {
     const val WALK_METERS_PER_SECOND = 0.5
 
@@ -25,19 +26,16 @@ object WorldEcosystemEngine {
         val home = GeoPoint.fromOrNull(actor.homeLatitude, actor.homeLongitude) ?: return@map actor
         val position = GeoPoint.fromOrNull(actor.latitude, actor.longitude) ?: return@map actor
         val radius = actor.anchorRadiusMeters.coerceIn(1.0, 40.0)
+        val profile = DigimonSocialProfile.forIndividual(actor.individualId,
+            personalities[actor.individualId] ?: DigimonPersonalityType.FRIENDLY)
         val isClaimed = actor.individualId in claimed
         if (isClaimed && actor.movementState != WorldMovementState.APPROACHING) {
             return@map actor.copy(movementTick = tick)
         }
         if (!isClaimed && actor.wanderTargetLatitude == null && tick >= actor.nextDecisionTick) {
-            val personality = personalities[actor.individualId] ?: DigimonPersonalityType.FRIENDLY
-            val horizon = when (personality) {
-                DigimonPersonalityType.RECKLESS, DigimonPersonalityType.DARING, DigimonPersonalityType.SOCIABLE -> 20L
-                DigimonPersonalityType.TOLERANT, DigimonPersonalityType.DEVOTED, DigimonPersonalityType.ENLIGHTENED -> 50L
-                else -> 35L
-            }
+            val horizon = (20 + profile.patience * 35 - profile.initiative * 10).toLong().coerceIn(10, 60)
             val angle = unit(seed, actor.individualId, "wander-bearing", tick) * Math.PI * 2
-            val distance = sqrt(unit(seed, actor.individualId, "wander-radius", tick)) * radius
+            val distance = sqrt(unit(seed, actor.individualId, "wander-radius", tick)) * radius * (.35 + profile.curiosity * .65)
             val target = RadarWorldGeometry.offset(home, cos(angle) * distance, sin(angle) * distance)
             actor = actor.copy(wanderTargetLatitude = target.latitude, wanderTargetLongitude = target.longitude,
                 movementState = WorldMovementState.WANDERING, nextDecisionTick = tick + horizon +
@@ -51,7 +49,8 @@ object WorldEcosystemEngine {
                 movementState = WorldMovementState.RETURNING, movementTick = tick)
         }
         val remaining = RadarWorldGeometry.relative(position, target)
-        val stepMeters = WALK_METERS_PER_SECOND * WorldEcosystemClock.TICK_MILLIS / 1000
+        val pace = .75 + profile.initiative * .25
+        val stepMeters = WALK_METERS_PER_SECOND * pace * WorldEcosystemClock.TICK_MILLIS / 1000
         if (remaining.distanceMeters <= stepMeters) {
             if (actor.movementState == WorldMovementState.WANDERING) {
                 actor.copy(latitude = target.latitude, longitude = target.longitude,

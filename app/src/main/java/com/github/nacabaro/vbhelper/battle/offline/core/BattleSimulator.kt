@@ -8,6 +8,7 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToLong
 import kotlin.random.Random
+import com.github.nacabaro.vbhelper.domain.device_data.BlastEvolutionSlot
 
 /** Single-writer, fixed-step simulation. UI/rendering consume snapshots and submit orders. */
 class BattleSimulator(
@@ -26,7 +27,13 @@ class BattleSimulator(
     private val projectiles = linkedMapOf<Long, ActiveProjectile>()
     private val impacts = linkedMapOf<Long, ActiveImpact>()
     private val recentEvents = ArrayDeque<BattleEvent>()
+    private val techniqueHitCounts = linkedMapOf<Triple<String, String, String>, Int>()
     private val pendingSupport = linkedMapOf<String, Long>()
+    /** Allied combatantId to Blast window deadline; a confirmation consumes its window once. */
+    private val pendingBlast = linkedMapOf<String, BlastTiming>()
+    private var finisher: ActiveFinisher? = null
+    private var completedFinisherEventCount = 0L
+    private var nextFinisherSequenceId = 1L
     private val reservations = mutableMapOf<Long, Reservation>()
     private var accumulatedMillis = 0L
     private var thinkAccumulatedMillis = 0L
@@ -130,7 +137,14 @@ class BattleSimulator(
     /** Long stalls are capped; the owner must also pause while Android is in the background. */
     fun advance(frameDeltaMillis: Long) {
         if (paused || outcome != null || frameDeltaMillis <= 0) return
-        accumulatedMillis += frameDeltaMillis.coerceAtMost(250L)
+        var delta = frameDeltaMillis.coerceAtMost(250L)
+        finisher?.let { cinematic ->
+            val consumed = min(delta, cinematic.snapshot.durationMillis - cinematic.snapshot.elapsedMillis)
+            advanceFinisher(cinematic, consumed)
+            delta -= consumed
+        }
+        if (finisher != null || outcome != null) return
+        accumulatedMillis += delta
         while (accumulatedMillis >= STEP && outcome == null) {
             accumulatedMillis -= STEP
             step()
@@ -144,22 +158,22 @@ class BattleSimulator(
         lifetimeMillis: Long = 8_000L
     ): OrderUpdate {
         val id = nextOrderId++
-        fun reject(reason: String): OrderUpdate {
+        fun reject(reason: String, code: String): OrderUpdate {
             combatants[actorId]?.lastOrderFailure = reason
-            return publish(id, OrderStatus.FAILED, reason)
+            return publish(id, OrderStatus.FAILED, reason, code)
         }
-        if (outcome != null) return reject("A batalha terminou.")
-        val actor = combatants[actorId] ?: return reject("Parceiro não encontrado.")
-        if (actor.definition.side != BattleSide.ALLIED) return reject("Só os parceiros recebem ordens.")
-        if (actor.health <= 0) return reject("Este parceiro foi derrotado.")
+        if (outcome != null) return reject("A batalha terminou.", OrderFailure.BATTLE_ENDED)
+        val actor = combatants[actorId] ?: return reject("Parceiro não encontrado.", OrderFailure.PARTNER_MISSING)
+        if (actor.definition.side != BattleSide.ALLIED) return reject("Só os parceiros recebem ordens.", OrderFailure.NOT_ALLIED)
+        if (actor.health <= 0) return reject("Este parceiro foi derrotado.", OrderFailure.PARTNER_DEFEATED)
         actor.lastOrderFailure = null
-        if (lifetimeMillis <= 0) return reject("A ordem precisa de um prazo válido.")
+        if (lifetimeMillis <= 0) return reject("A ordem precisa de um prazo válido.", OrderFailure.BAD_LIFETIME)
         // Trainer actions do not wait behind an animation or occupy the physical queue.
         when (action) {
             TrainerAction.Support -> {
-                if (paused) return reject("Incentivo indisponível durante a pausa.")
-                val window = pendingSupport[actorId] ?: return reject("Não há janela de incentivo ativa.")
-                if (window <= elapsedMillis) return reject("A janela de incentivo terminou.")
+                if (paused) return reject("Incentivo indisponível durante a pausa.", OrderFailure.SUPPORT_PAUSED)
+                val window = pendingSupport[actorId] ?: return reject("Não há janela de incentivo ativa.", OrderFailure.SUPPORT_NO_WINDOW)
+                if (window <= elapsedMillis) return reject("A janela de incentivo terminou.", OrderFailure.SUPPORT_WINDOW_EXPIRED)
                 pendingSupport.remove(actorId)
                 val gained = min(8, configuration.maxCommandPoints - commandPoints)
                 commandPoints += gained
@@ -169,6 +183,29 @@ class BattleSimulator(
                 emit(BattleEvent.SupportSucceeded(actorId, gained))
                 return publish(id, OrderStatus.COMPLETED)
             }
+            is TrainerAction.ConfirmBlastTiming -> {
+                // The timing overlay deliberately pauses the sim while aiming;
+                // taps are only invalid under an unrelated pause.
+                if (paused && pauseReason != "blast-menu") {
+                    return reject("Blast timing is unavailable while paused.", OrderFailure.BLAST_PAUSED)
+                }
+                val window = pendingBlast[actorId] ?: return reject("No Blast timing window is active.", OrderFailure.BLAST_NO_WINDOW)
+                if (window.expiresAtMillis <= elapsedMillis) {
+                    pendingBlast.remove(actorId)
+                    return reject("The Blast timing window closed.", OrderFailure.BLAST_WINDOW_CLOSED)
+                }
+                val active = actor.active
+                if (finisher != null || active == null || active.phase != Phase.STARTUP || active.resolved ||
+                    active.technique.kind != TechniqueKind.SPECIAL || active.technique.techniqueId != window.techniqueId) {
+                    return reject("The Blast timing window closed.", OrderFailure.BLAST_WINDOW_CLOSED)
+                }
+                pendingBlast.remove(actorId)
+                launchFinisher(actor, active, action)
+                actor.lastDecision = "Blast timing confirmed."
+                publish(id, OrderStatus.EXECUTING)
+                emit(BattleEvent.BlastTimingResolved(actorId, window.techniqueId, BlastGrade.HIT))
+                return publish(id, OrderStatus.COMPLETED)
+            }
             is TrainerAction.ChangeStrategy -> {
                 actor.strategy = action.strategy
                 actor.lastDecision = "Estratégia alterada para ${action.strategy.name}."
@@ -176,7 +213,7 @@ class BattleSimulator(
                 return publish(id, OrderStatus.COMPLETED)
             }
             is TrainerAction.FocusTarget -> {
-                if (target(actor, action.targetId, false) == null) return reject("Alvo indisponível.")
+                if (target(actor, action.targetId, false) == null) return reject("Alvo indisponível.", OrderFailure.FOCUS_NO_TARGET)
                 actor.focusId = action.targetId
                 actor.focusUntil = elapsedMillis + 8_000L
                 actor.lastDecision = "Foco definido em ${action.targetId}."
@@ -189,30 +226,30 @@ class BattleSimulator(
             }
             else -> Unit
         }
-        if (actor.orders.size >= 4) return reject("A fila de ordens está cheia.")
-        if (action is TrainerAction.Defend && action.durationMillis <= 0) return reject("Duração de defesa inválida.")
+        if (actor.orders.size >= 4) return reject("A fila de ordens está cheia.", OrderFailure.ORDER_QUEUE_FULL)
+        if (action is TrainerAction.Defend && action.durationMillis <= 0) return reject("Duração de defesa inválida.", OrderFailure.BAD_DEFEND_DURATION)
         if (action is TrainerAction.UseTechnique) {
-            val technique = techniques[action.techniqueId] ?: return reject("Técnica inexistente.")
-            if (enhanced && technique.reactionOnly) return reject("Contra-ataques reagem a uma defesa; não são ataques diretos.")
+            val technique = techniques[action.techniqueId] ?: return reject("Técnica inexistente.", OrderFailure.TECHNIQUE_MISSING)
+            if (enhanced && technique.reactionOnly) return reject("Contra-ataques reagem a uma defesa; não são ataques diretos.", OrderFailure.COUNTER_REACTION_ONLY)
             if (action.techniqueId !in actor.definition.techniqueIds && actor.definition.specialTechniqueId != action.techniqueId && technique != BASIC) {
-                return reject("Esta técnica não pertence ao parceiro.")
+                return reject("Esta técnica não pertence ao parceiro.", OrderFailure.TECHNIQUE_NOT_OWNED)
             }
-            if (!ready(actor, technique)) return reject("A técnica está em cooldown.")
-            if (action.targetId != null && target(actor, action.targetId, isSupport(technique)) == null) return reject("Alvo indisponível.")
+            if (!ready(actor, technique)) return reject("A técnica está em cooldown.", OrderFailure.TECHNIQUE_COOLDOWN)
+            if (action.targetId != null && target(actor, action.targetId, isSupport(technique)) == null) return reject("Alvo indisponível.", OrderFailure.TARGET_MISSING)
             val specialChargeCost = if (technique.kind == TechniqueKind.SPECIAL) SPECIAL_CHARGE_MAX else 0
             if (specialChargeCost > 0 && availableSpecialCharge(actor) < specialChargeCost) {
-                return reject("O golpe especial ainda está carregando.")
+                return reject("O golpe especial ainda está carregando.", OrderFailure.SPECIAL_CHARGING)
             }
             if (availableEnergy(actor) < technique.energyCost || availableCommandPoints() < technique.commandPointCost) {
-                return reject("Faltam energia ou pontos de comando disponíveis.")
+                return reject("Faltam energia ou pontos de comando disponíveis.", OrderFailure.RESOURCES_MISSING)
             }
             reservations[id] = Reservation(actorId, technique.energyCost, technique.commandPointCost, specialChargeCost)
         }
         if (action is TrainerAction.UseItem) {
-            val item = itemDefinitions[action.itemId] ?: return reject("Item de treino inexistente.")
-            if (target(actor, action.targetId, true) == null) return reject("O item precisa de um parceiro vivo como alvo.")
+            val item = itemDefinitions[action.itemId] ?: return reject("Item de treino inexistente.", OrderFailure.ITEM_MISSING)
+            if (target(actor, action.targetId, true) == null) return reject("O item precisa de um parceiro vivo como alvo.", OrderFailure.ITEM_BAD_TARGET)
             val reserved = itemReservations.values.count { it == item.itemId }
-            if ((itemCounts[item.itemId] ?: 0) - reserved <= 0) return reject("Não há mais ${item.displayName} nesta sessão.")
+            if ((itemCounts[item.itemId] ?: 0) - reserved <= 0) return reject("Não há mais ${item.displayName} nesta sessão.", OrderFailure.ITEM_DEPLETED)
             itemReservations[id] = item.itemId
         }
         val order = BattleOrder(id, actorId, action, elapsedMillis,
@@ -220,6 +257,132 @@ class BattleSimulator(
         if (interruptCurrentAction) actor.orders.addFirst(order) else actor.orders.addLast(order)
         actor.lastDecision = "Ordem #${order.orderId} enfileirada."
         return publish(id, OrderStatus.QUEUED)
+    }
+
+    private fun launchFinisher(actor: Fighter, active: ActiveTechnique, action: TrainerAction.ConfirmBlastTiming) {
+        val partner = combatants.values.firstOrNull {
+            it.definition.side == actor.definition.side && it !== actor && it.health > 0
+        }
+        val fusion = if (partner != null && !action.fusionResult.isNullOrBlank())
+            actor.definition.jogressResultSpecies?.takeIf { it.isNotBlank() } ?: action.fusionResult else null
+        val form = actor.definition.blastTargetSpecies?.takeIf {
+            actor.definition.blastMode == BlastEvolutionSlot.FORM && it.isNotBlank()
+        }
+        val kind = when {
+            fusion != null -> BattleFinisherKind.JOGRESS
+            form != null -> BattleFinisherKind.FORM
+            partner != null -> BattleFinisherKind.DUO
+            else -> BattleFinisherKind.POWER
+        }
+        val resultSpecies = fusion ?: form
+        val specialName = when (kind) {
+            BattleFinisherKind.JOGRESS -> action.fusionSpecial
+            BattleFinisherKind.FORM -> actor.definition.blastFormSpecial
+            else -> null
+        } ?: actor.definition.specialDisplayNameOverride ?: active.technique.displayName
+        val snapshot = BattleFinisherTimeline.snapshot(nextFinisherSequenceId++, kind,
+            actor.definition.combatantId, partner?.definition?.combatantId,
+            active.targetId, resultSpecies, specialName)
+        finisher = ActiveFinisher(snapshot, actor, active)
+        actor.blastFormSpecies = resultSpecies
+        actor.blastFusionResult = fusion
+        when (kind) {
+            BattleFinisherKind.JOGRESS -> emit(BattleEvent.BlastJogressStarted(
+                snapshot.leadId, requireNotNull(snapshot.partnerId), requireNotNull(fusion)))
+            BattleFinisherKind.FORM -> emit(BattleEvent.BlastFormStarted(snapshot.leadId,
+                requireNotNull(form), specialName))
+            else -> Unit
+        }
+        // Optional DUO damage is owned by this sequence, never by a queued auto-order.
+        // Jogress is one fused attack and leaves the partner's action and resources intact.
+        if (kind == BattleFinisherKind.DUO && partner != null) {
+            finisher?.partnerAttack = prepareDuoAttack(partner, active.targetId)
+        }
+    }
+
+    private fun prepareDuoAttack(partner: Fighter, targetId: String): ActiveTechnique? {
+        val special = partner.definition.specialTechniqueId?.let(techniques::get) ?: return null
+        val recipient = target(partner, targetId, false) ?: return null
+        if (partner.active != null || partner.currentOrder != null || partner.orders.isNotEmpty() ||
+            partner.defendUntil > elapsedMillis || partner.knockbackRemainingMillis > 0 ||
+            partner.statuses.any { it.effect.preventsActions } || !ready(partner, special) ||
+            availableSpecialCharge(partner) < SPECIAL_CHARGE_MAX || availableEnergy(partner) < special.energyCost ||
+            availableCommandPoints() < special.commandPointCost || !inRange(partner, recipient, special) ||
+            enhanced && partner.readiness < readinessRequired(partner, special)) return null
+        partner.energy -= special.energyCost
+        partner.specialCharge = 0
+        commandPoints -= special.commandPointCost
+        if (enhanced) {
+            partner.readiness = max(BattleRules.READINESS_MIN, partner.readiness - BattleRules.readinessCost(special))
+            partner.techniqueUses[special.techniqueId] = (partner.techniqueUses[special.techniqueId] ?: 0) + 1
+        }
+        statistics = statistics.copy(specialsUsed = statistics.specialsUsed + 1)
+        emit(BattleEvent.SpecialStarted(partner.definition.combatantId, special.techniqueId, targetId))
+        emit(BattleEvent.TechniqueStarted(partner.definition.combatantId, special.techniqueId, targetId))
+        return ActiveTechnique(special, targetId)
+    }
+
+    private fun advanceFinisher(cinematic: ActiveFinisher, delta: Long) {
+        cinematic.snapshot = BattleFinisherTimeline.sample(cinematic.snapshot, cinematic.snapshot.elapsedMillis + delta)
+        val impactAt = BattleFinisherTimeline.phaseStartMillis(cinematic.snapshot.kind, BattleFinisherPhase.IMPACT)
+        if (!cinematic.snapshot.impactCommitted && cinematic.snapshot.elapsedMillis >= impactAt) {
+            // Publish the guard before resolving: defeat/status cleanup can call back into core.
+            cinematic.snapshot = cinematic.snapshot.copy(impactCommitted = true)
+            cinematic.firstImpactId = nextImpactId
+            val damageBefore = statistics.damageDealt
+            commitFinisherAttack(cinematic.lead, cinematic.attack)
+            cinematic.partnerAttack?.let { attack ->
+                combatants[cinematic.snapshot.partnerId]?.let { commitFinisherAttack(it, attack) }
+            }
+            cinematic.snapshot = cinematic.snapshot.copy(damage = (statistics.damageDealt - damageBefore).coerceAtLeast(0))
+        }
+        if (cinematic.snapshot.elapsedMillis >= cinematic.snapshot.durationMillis) {
+            restoreFinisher(cinematic)
+            cinematic.lead.lastTechniqueId = cinematic.attack.technique.techniqueId
+            cinematic.lead.active = null
+            finishOrder(cinematic.lead, OrderStatus.COMPLETED)
+            scheduleAutonomousRead(cinematic.lead)
+            checkBattleEnd()
+        }
+    }
+
+    private fun commitFinisherAttack(actor: Fighter, active: ActiveTechnique) {
+        active.phase = Phase.RECOVERY
+        active.phaseElapsed = 0L
+        actor.cooldowns[active.technique.techniqueId] = elapsedMillis + cooldownDuration(actor, active.technique)
+        resolveTechnique(actor, active, blastGrade = BlastGrade.HIT)
+    }
+
+    /** Idempotent exit cleanup, with the same spent-startup-charge policy as ordinary cancellation. */
+    fun cancelFinisher() {
+        val cinematic = finisher ?: return
+        restoreFinisher(cinematic)
+        cinematic.partnerAttack?.let { attack ->
+            val partner = combatants[cinematic.snapshot.partnerId] ?: return@let
+            if (!attack.resolved) {
+                attack.resolved = true
+                resolveSpecialOutcome(partner, attack.technique, attack.targetId, success = false)
+            }
+            partner.cooldowns[attack.technique.techniqueId] = elapsedMillis + cooldownDuration(partner, attack.technique)
+        }
+        cancelAction(cinematic.lead, "Finisher cancelled.", OrderFailure.ORDER_SUPERSEDED)
+        if (cinematic.lead.health > 0) scheduleAutonomousRead(cinematic.lead)
+    }
+
+    private fun restoreFinisher(cinematic: ActiveFinisher) {
+        if (finisher !== cinematic) return
+        finisher = null
+        cinematic.lead.blastFormSpecies = null
+        cinematic.lead.blastFusionResult = null
+        cinematic.firstImpactId?.let { first -> impacts.entries.removeAll { it.key >= first } }
+        when (cinematic.snapshot.kind) {
+            BattleFinisherKind.FORM -> emit(BattleEvent.BlastFormEnded(cinematic.snapshot.leadId,
+                requireNotNull(cinematic.snapshot.resultSpecies)))
+            BattleFinisherKind.JOGRESS -> emit(BattleEvent.BlastJogressEnded(cinematic.snapshot.leadId,
+                requireNotNull(cinematic.snapshot.resultSpecies)))
+            else -> Unit
+        }
+        completedFinisherEventCount = eventCount
     }
 
     fun snapshot(): BattleSnapshot {
@@ -257,7 +420,10 @@ class BattleSimulator(
                     meanTargetDistance = if (actor.distanceSamples > 0) (actor.distanceSum / actor.distanceSamples).toFloat() else 0f,
                     meanReadiness = if (actor.readinessSamples > 0) (actor.readinessSum / actor.readinessSamples).toFloat() else actor.readiness
                 ), def.techniqueIds, def.specialTechniqueId, actor.specialCharge, SPECIAL_CHARGE_MAX,
-                actor.specialCharge - availableSpecialCharge(actor), actor.active?.technique?.kind)
+                actor.specialCharge - availableSpecialCharge(actor), actor.active?.technique?.kind,
+                def.specialDisplayNameOverride, def.blastMode, def.blastTargetSpecies,
+                def.blastFormSpecial, def.jogressResultSpecies, actor.blastFormSpecies,
+                def.attribute, def.jogressPartnerSpecies, def.jogressPartnerAttribute)
         }
         return BattleSnapshot(elapsedMillis, paused, pauseReason, commandPoints, configuration.maxCommandPoints,
             members.filter { it.side == BattleSide.ALLIED }, members.filter { it.side == BattleSide.OPPOSING },
@@ -270,7 +436,10 @@ class BattleSimulator(
                 itemCounts[item.itemId] ?: 0, itemReservations.values.count { it == item.itemId }) }, statistics,
             impacts.values.map { impact -> BattleImpactSnapshot(impact.id, impact.targetId, impact.damage,
                 impact.critical, (impact.expiresAtMillis - elapsedMillis).coerceAtLeast(0L),
-                    impact.techniqueId, impact.isSpecial) }, rulesetVersion = configuration.rulesetVersion)
+                    impact.techniqueId, impact.isSpecial) }, rulesetVersion = configuration.rulesetVersion,
+            techniqueHitCounts = techniqueHitCounts.map { (key, hits) -> BattleTechniqueHitCount(key.first, key.second, key.third, hits) },
+            pendingBlastTiming = pendingBlast.mapValues { it.value.expiresAtMillis }, finisher = finisher?.snapshot,
+            lastFinisherEventCount = completedFinisherEventCount)
     }
 
     fun abandon(): BattleResult {
@@ -286,6 +455,7 @@ class BattleSimulator(
         val think = thinkAccumulatedMillis >= interval
         if (think) thinkAccumulatedMillis %= interval
         pendingSupport.entries.removeAll { it.value <= elapsedMillis }
+        pendingBlast.entries.removeAll { it.value.expiresAtMillis <= elapsedMillis }
         val actors = combatants.values.sortedBy { it.definition.combatantId }
         actors.filter { it.health > 0 }.forEach { actor ->
             expireOrders(actor)
@@ -355,8 +525,13 @@ class BattleSimulator(
                 }
             }
         }
-        val allies = actors.any { it.health > 0 && it.definition.side == BattleSide.ALLIED }
-        val enemies = actors.any { it.health > 0 && it.definition.side == BattleSide.OPPOSING }
+        checkBattleEnd()
+    }
+
+    private fun checkBattleEnd() {
+        if (finisher != null) return
+        val allies = combatants.values.any { it.health > 0 && it.definition.side == BattleSide.ALLIED }
+        val enemies = combatants.values.any { it.health > 0 && it.definition.side == BattleSide.OPPOSING }
         when {
             !allies && !enemies -> finish(BattleOutcome.DRAW)
             !allies -> finish(BattleOutcome.OPPOSING_VICTORY)
@@ -397,7 +572,7 @@ class BattleSimulator(
         val movementOrder = actor.currentOrder?.action
         if (movementOrder == TrainerAction.KeepDistance || movementOrder == TrainerAction.MoveCloser) {
             val enemy = target(actor, actor.targetId, false)
-            if (enemy == null) finishOrder(actor, OrderStatus.FAILED, "O alvo não está disponível.")
+            if (enemy == null) finishOrder(actor, OrderStatus.FAILED, "O alvo não está disponível.", OrderFailure.MOVE_NO_TARGET)
             else {
                 val distance = if (movementOrder == TrainerAction.KeepDistance) max(4f, actor.definition.preferredDistance)
                     else actor.definition.collisionRadius + enemy.definition.collisionRadius + 0.05f
@@ -425,14 +600,14 @@ class BattleSimulator(
                 iterator.remove()
                 reservations.remove(order.orderId)
                 itemReservations.remove(order.orderId)
-                publish(order.orderId, OrderStatus.EXPIRED, "A ordem expirou antes da execução.")
+                publish(order.orderId, OrderStatus.EXPIRED, "A ordem expirou antes da execução.", OrderFailure.ORDER_EXPIRED)
             }
         }
         // Techniques already started finish their phases; approaching a target has a deadline.
         val current = actor.currentOrder
         if (current != null && actor.active == null && (current.expiresAtMillis ?: Long.MAX_VALUE) <= elapsedMillis) {
             actor.defendUntil = 0
-            finishOrder(actor, OrderStatus.EXPIRED, "Não foi possível concluir a ordem a tempo.")
+            finishOrder(actor, OrderStatus.EXPIRED, "Não foi possível concluir a ordem a tempo.", OrderFailure.ORDER_TIMED_OUT)
         }
     }
 
@@ -441,7 +616,7 @@ class BattleSimulator(
         val occupied = actor.currentOrder != null || actor.active != null || actor.defendUntil > elapsedMillis
         if (occupied) {
             if (!next.interruptCurrentAction || !canInterrupt(actor)) return
-            cancelAction(actor, "Ação substituída por uma ordem.")
+            cancelAction(actor, "Ação substituída por uma ordem.", OrderFailure.ORDER_SUPERSEDED)
         }
         actor.orders.removeFirst()
         actor.plannedTechniqueId = null
@@ -456,21 +631,21 @@ class BattleSimulator(
             }
             TrainerAction.KeepDistance, TrainerAction.MoveCloser -> {
                 setTarget(actor, chooseEnemy(actor)?.definition?.combatantId)
-                if (actor.targetId == null) finishOrder(actor, OrderStatus.FAILED, "Não há alvo disponível.")
+                if (actor.targetId == null) finishOrder(actor, OrderStatus.FAILED, "Não há alvo disponível.", OrderFailure.TARGET_MISSING)
             }
             is TrainerAction.UseTechnique -> {
                 val technique = techniques.getValue(action.techniqueId)
                 val recipient = if (technique.rangeProfile == TechniqueRangeProfile.SELF) actor
                     else if (action.targetId != null) target(actor, action.targetId, isSupport(technique))
                     else if (isSupport(technique)) chooseAlly(actor) else chooseEnemy(actor)
-                if (recipient == null || !ready(actor, technique)) finishOrder(actor, OrderStatus.FAILED, "Alvo ou técnica indisponível.")
+                if (recipient == null || !ready(actor, technique)) finishOrder(actor, OrderStatus.FAILED, "Alvo ou técnica indisponível.", OrderFailure.TECHNIQUE_STALE)
                 else {
                     setTarget(actor, recipient.definition.combatantId)
                     actor.plannedTechniqueId = technique.techniqueId
                 }
             }
             is TrainerAction.UseItem -> executeItem(actor, next, action)
-            else -> finishOrder(actor, OrderStatus.FAILED, "Ordem inválida na fila física.")
+            else -> finishOrder(actor, OrderStatus.FAILED, "Ordem inválida na fila física.", OrderFailure.ORDER_INVALID)
         }
     }
 
@@ -818,7 +993,7 @@ class BattleSimulator(
         val recipient = if (technique.rangeProfile == TechniqueRangeProfile.SELF) actor
         else target(actor, actor.targetId, isSupport(technique))
         if (recipient == null || !ready(actor, technique)) {
-            finishOrder(actor, OrderStatus.FAILED, "Alvo ou técnica indisponível.")
+            finishOrder(actor, OrderStatus.FAILED, "Alvo ou técnica indisponível.", OrderFailure.TECHNIQUE_STALE)
             actor.plannedTechniqueId = null
             if (enhanced) scheduleAutonomousRead(actor)
             return
@@ -827,7 +1002,7 @@ class BattleSimulator(
         val enoughEnergy = if (explicit) actor.energy >= technique.energyCost else availableEnergy(actor) >= technique.energyCost
         val enoughSpecialCharge = technique.kind != TechniqueKind.SPECIAL || actor.specialCharge >= SPECIAL_CHARGE_MAX
         if (!enoughEnergy || explicit && commandPoints < technique.commandPointCost || !enoughSpecialCharge) {
-            finishOrder(actor, OrderStatus.FAILED, "Os recursos não estão disponíveis.")
+            finishOrder(actor, OrderStatus.FAILED, "Os recursos não estão disponíveis.", OrderFailure.RESOURCES_MISSING)
             actor.plannedTechniqueId = null
             return
         }
@@ -859,7 +1034,7 @@ class BattleSimulator(
             actor.unreachableUntil[technique.techniqueId] = elapsedMillis + 2_000L
             actor.positioningTechniqueId = null
             emit(BattleEvent.PositioningReplanned(actor.definition.combatantId, technique.techniqueId))
-            finishOrder(actor, OrderStatus.FAILED, "Não foi possível alcançar uma posição válida.")
+            finishOrder(actor, OrderStatus.FAILED, "Não foi possível alcançar uma posição válida.", OrderFailure.POSITIONING_FAILED)
             actor.plannedTechniqueId = null
             actor.lastDecision = "Posicionamento sem progresso; escolhendo outra ação."
             scheduleAutonomousRead(actor)
@@ -903,6 +1078,11 @@ class BattleSimulator(
         transition(actor, if (technique.kind == TechniqueKind.SPECIAL) CombatantState.USING_SPECIAL else CombatantState.ATTACK_STARTUP)
         if (technique.kind == TechniqueKind.SPECIAL) {
             emit(BattleEvent.SpecialStarted(actor.definition.combatantId, technique.techniqueId, recipient.definition.combatantId))
+            if (actor.definition.side == BattleSide.ALLIED && technique.startupMillis > 0) {
+                val deadline = elapsedMillis + technique.startupMillis
+                pendingBlast[actor.definition.combatantId] = BlastTiming(technique.techniqueId, deadline)
+                emit(BattleEvent.BlastTimingOpened(actor.definition.combatantId, technique.techniqueId, deadline))
+            }
         }
         emit(BattleEvent.TechniqueStarted(actor.definition.combatantId, technique.techniqueId, recipient.definition.combatantId))
     }
@@ -929,7 +1109,7 @@ class BattleSimulator(
                     actor.cooldowns[active.technique.techniqueId] =
                         elapsedMillis - active.phaseElapsed + cooldownDuration(actor, active.technique)
                     transition(actor, CombatantState.ATTACK_ACTIVE)
-                    impacts += actor to active
+                    if (!active.resolved) impacts += actor to active
                 }
                 Phase.ACTIVE -> {
                     active.phase = Phase.RECOVERY
@@ -945,14 +1125,30 @@ class BattleSimulator(
         }
     }
 
-    private fun resolveTechnique(actor: Fighter, active: ActiveTechnique, projectileImpact: Boolean = false, hitTargetId: String? = null) {
-        val technique = active.technique
+    private fun resolveTechnique(actor: Fighter, active: ActiveTechnique, projectileImpact: Boolean = false,
+        hitTargetId: String? = null, blastGrade: BlastGrade = BlastGrade.MISS) {
+        if (active.resolved) return
+        val base = active.technique
+        val blastHit = base.kind == TechniqueKind.SPECIAL && blastGrade == BlastGrade.HIT
+        val isFusionLead = blastHit && actor.blastFusionResult != null
+        val isForm = blastHit && !isFusionLead &&
+            actor.definition.blastMode == BlastEvolutionSlot.FORM &&
+            !actor.definition.blastTargetSpecies.isNullOrBlank()
+        val bonusPercent = when {
+            !blastHit -> 0
+            isFusionLead -> BLAST_FUSION_POWER_BONUS_PERCENT
+            isForm || actor.definition.blastMode == BlastEvolutionSlot.POWER -> BLAST_HIT_POWER_BONUS_PERCENT
+            else -> BLAST_BASE_HIT_BONUS_PERCENT
+        }
+        val technique = if (bonusPercent > 0) {
+            base.copy(power = base.power * (100 + bonusPercent) / 100)
+        } else base
         active.resolved = true
         val primary = if (technique.rangeProfile == TechniqueRangeProfile.SELF) actor
         else target(actor, hitTargetId ?: active.targetId, isSupport(technique))
         if (primary == null || !projectileImpact && !inRange(actor, primary, technique)) {
             emit(BattleEvent.TechniqueMissed(actor.definition.combatantId, technique.techniqueId, "Alvo indisponível ou fora do alcance."))
-            resolveSpecialOutcome(actor, technique, active.targetId, success = false)
+            resolveSpecialOutcome(actor, technique, active.targetId, success = false, blastHit = blastHit)
             return
         }
         if (isSupport(technique)) {
@@ -1049,7 +1245,7 @@ class BattleSimulator(
             addSpecialCharge(actor, SPECIAL_CHARGE_ON_ATTACK)
             damagedVictims.forEach { addSpecialCharge(it, SPECIAL_CHARGE_ON_HIT_RECEIVED) }
         }
-        resolveSpecialOutcome(actor, technique, primary.definition.combatantId, success = totalDamage > 0)
+        resolveSpecialOutcome(actor, technique, primary.definition.combatantId, success = totalDamage > 0, blastHit = blastHit)
     }
 
     private data class ResolvedHit(val damage: BattleDamageResult, val critical: Boolean)
@@ -1206,7 +1402,7 @@ class BattleSimulator(
         val dz = victim.position.z - source.position.z
         val length = hypot(dx, dz).coerceAtLeast(0.001f)
         val speed = 5f
-        cancelAction(victim, "Ação interrompida por impacto.")
+        cancelAction(victim, "Ação interrompida por impacto.", OrderFailure.STATUS_INTERRUPTED)
         victim.knockbackVelocityX = dx / length * speed
         victim.knockbackVelocityZ = dz / length * speed
         victim.knockbackRemainingMillis = (distance / speed * 1_000f).toLong().coerceAtLeast(1L)
@@ -1218,7 +1414,7 @@ class BattleSimulator(
         val item = itemId?.let(itemDefinitions::get)
         val recipient = target(actor, action.targetId, true)
         if (item == null || recipient == null || (itemCounts[item.itemId] ?: 0) <= 0) {
-            finishOrder(actor, OrderStatus.FAILED, "Alvo ou item de treino indisponível.")
+            finishOrder(actor, OrderStatus.FAILED, "Alvo ou item de treino indisponível.", OrderFailure.ITEM_UNUSABLE)
             return
         }
         val changed = when (item.kind) {
@@ -1236,7 +1432,7 @@ class BattleSimulator(
             } else recipient.statuses.size.also { recipient.statuses.clear() }
         }
         if (changed <= 0) {
-            finishOrder(actor, OrderStatus.FAILED, "O alvo não precisa deste item agora.")
+            finishOrder(actor, OrderStatus.FAILED, "O alvo não precisa deste item agora.", OrderFailure.ITEM_UNNEEDED)
             return
         }
         itemCounts[item.itemId] = (itemCounts[item.itemId] ?: 0) - 1
@@ -1466,7 +1662,8 @@ class BattleSimulator(
         actor: Fighter,
         technique: TechniqueDefinition,
         targetId: String?,
-        success: Boolean
+        success: Boolean,
+        blastHit: Boolean = false
     ) {
         if (technique.kind != TechniqueKind.SPECIAL) return
         statistics = if (success) {
@@ -1474,6 +1671,7 @@ class BattleSimulator(
         } else {
             statistics.copy(specialsMissed = statistics.specialsMissed + 1)
         }
+        if (blastHit) statistics = statistics.copy(blastTimedHits = statistics.blastTimedHits + 1)
         emit(BattleEvent.SpecialResolved(actor.definition.combatantId, technique.techniqueId, targetId, success))
     }
 
@@ -1535,7 +1733,7 @@ class BattleSimulator(
             }
             emit(BattleEvent.StatusApplied(actor.definition.combatantId, effect.id))
             if (effect.preventsActions) {
-                if (actor.active?.phase == Phase.STARTUP && canInterrupt(actor)) cancelAction(actor, "Ação interrompida por um efeito.")
+                if (actor.active?.phase == Phase.STARTUP && canInterrupt(actor)) cancelAction(actor, "Ação interrompida por um efeito.", OrderFailure.STATUS_INTERRUPTED)
                 transition(actor, CombatantState.STUNNED)
             }
         }
@@ -1553,21 +1751,22 @@ class BattleSimulator(
         it.phase == Phase.STARTUP && it.technique.interruptibleDuringStartup
     } ?: true
 
-    private fun cancelAction(actor: Fighter, reason: String) {
+    private fun cancelAction(actor: Fighter, reason: String, reasonCode: String? = null) {
         actor.active?.let {
             if (it.technique.kind == TechniqueKind.SPECIAL && !it.resolved) {
                 resolveSpecialOutcome(actor, it.technique, it.targetId, success = false)
             }
             actor.cooldowns[it.technique.techniqueId] = elapsedMillis + cooldownDuration(actor, it.technique)
         }
+        pendingBlast.remove(actor.definition.combatantId)
         actor.active = null
         actor.defendUntil = 0L
         actor.plannedTechniqueId = null
         actor.positioningTechniqueId = null
-        finishOrder(actor, OrderStatus.CANCELLED, reason)
+        finishOrder(actor, OrderStatus.CANCELLED, reason, reasonCode)
     }
 
-    private fun finishOrder(actor: Fighter, status: OrderStatus, reason: String? = null) {
+    private fun finishOrder(actor: Fighter, status: OrderStatus, reason: String? = null, reasonCode: String? = null) {
         val order = actor.currentOrder ?: return
         actor.currentOrder = null
         actor.plannedTechniqueId = null
@@ -1580,38 +1779,41 @@ class BattleSimulator(
             reason ?: "Ordem #${order.orderId} terminou: ${status.name.lowercase()}."
         }
         if (status == OrderStatus.FAILED || status == OrderStatus.EXPIRED) actor.lastOrderFailure = reason
-        publish(order.orderId, status, reason)
+        publish(order.orderId, status, reason, reasonCode)
     }
 
     private fun defeat(actor: Fighter) {
         if (actor.state == CombatantState.DEFEATED) return
-        cancelAction(actor, "O parceiro foi derrotado.")
-        cancelQueue(actor, "O parceiro foi derrotado.")
+        cancelAction(actor, "O parceiro foi derrotado.", OrderFailure.PARTNER_DEFEATED)
+        cancelQueue(actor, "O parceiro foi derrotado.", OrderFailure.PARTNER_DEFEATED)
         actor.statuses.clear()
         pendingSupport.remove(actor.definition.combatantId)
+        pendingBlast.remove(actor.definition.combatantId)
         transition(actor, CombatantState.DEFEATED)
         emit(BattleEvent.CombatantDefeated(actor.definition.combatantId))
     }
 
-    private fun cancelQueue(actor: Fighter, reason: String) {
+    private fun cancelQueue(actor: Fighter, reason: String, reasonCode: String? = null) {
         while (actor.orders.isNotEmpty()) {
             val order = actor.orders.removeFirst()
             reservations.remove(order.orderId)
             itemReservations.remove(order.orderId)
-            publish(order.orderId, OrderStatus.CANCELLED, reason)
+            publish(order.orderId, OrderStatus.CANCELLED, reason, reasonCode)
         }
     }
 
     private fun finish(result: BattleOutcome) {
         if (outcome != null) return
+        cancelFinisher()
         paused = true
         pauseReason = "finished"
         combatants.values.forEach {
-            cancelAction(it, "A batalha terminou.")
-            cancelQueue(it, "A batalha terminou.")
+            cancelAction(it, "A batalha terminou.", OrderFailure.BATTLE_ENDED)
+            cancelQueue(it, "A batalha terminou.", OrderFailure.BATTLE_ENDED)
             transition(it, if (it.health > 0) CombatantState.WAITING else CombatantState.DEFEATED)
         }
         pendingSupport.clear()
+        pendingBlast.clear()
         outcome = BattleResult(result, elapsedMillis, eventCount + 1, statistics)
         projectiles.clear()
         impacts.clear()
@@ -1625,13 +1827,21 @@ class BattleSimulator(
         emit(BattleEvent.StateChanged(actor.definition.combatantId, state))
     }
 
-    private fun publish(id: Long, status: OrderStatus, reason: String? = null): OrderUpdate {
-        val update = OrderUpdate(id, status, reason)
+    private fun publish(id: Long, status: OrderStatus, reason: String? = null, reasonCode: String? = null): OrderUpdate {
+        val update = OrderUpdate(id, status, reason, reasonCode)
         emit(BattleEvent.OrderChanged(update))
         return update
     }
 
     private fun emit(event: BattleEvent) {
+        if (event is BattleEvent.TechniqueHit && event.amount > 0) {
+            val actor = combatants[event.combatantId]
+            val target = combatants[event.targetId]
+            if (actor != null && target != null && actor.definition.side != target.definition.side) {
+                val key = Triple(event.combatantId, event.targetId, event.techniqueId)
+                techniqueHitCounts[key] = ((techniqueHitCounts[key] ?: 0).toLong() + 1).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+            }
+        }
         eventCount++
         if (recentEvents.size == 96) recentEvents.removeFirst()
         recentEvents.addLast(event)
@@ -1736,6 +1946,10 @@ class BattleSimulator(
         var lastTechniqueId: String? = null
         var plannedTechniqueId: String? = null
         var active: ActiveTechnique? = null
+        /** Species shown in place of the base form while a Blast transform is active. */
+        var blastFormSpecies: String? = null
+        /** Fusion result shown for a Jogress lead; drives fusion bonus independently of pairing. */
+        var blastFusionResult: String? = null
         var currentOrder: BattleOrder? = null
         val orders = ArrayDeque<BattleOrder>()
         val cooldowns = mutableMapOf<String, Long>()
@@ -1780,6 +1994,17 @@ class BattleSimulator(
         val commandPoints: Int,
         val specialCharge: Int = 0
     )
+    private data class BlastTiming(
+        val techniqueId: String,
+        val expiresAtMillis: Long
+    )
+    private class ActiveFinisher(
+        var snapshot: BattleFinisherSnapshot,
+        val lead: Fighter,
+        val attack: ActiveTechnique,
+        var partnerAttack: ActiveTechnique? = null,
+        var firstImpactId: Long? = null,
+    )
     private data class TacticalRangeWindow(
         val activationMin: Float,
         val activationMax: Float,
@@ -1796,6 +2021,9 @@ class BattleSimulator(
         const val SPECIAL_CHARGE_MAX = 100
         const val SPECIAL_CHARGE_ON_ATTACK = 18
         const val SPECIAL_CHARGE_ON_HIT_RECEIVED = 6
+        const val BLAST_HIT_POWER_BONUS_PERCENT = 50
+        const val BLAST_BASE_HIT_BONUS_PERCENT = 25
+        const val BLAST_FUSION_POWER_BONUS_PERCENT = 100
         val BASIC = TechniqueDefinition("basic_attack", "Ataque básico", TechniqueKind.BASIC, 48,
             maxRange = 1.8f, startupMillis = 360L, activeMillis = 100L, recoveryMillis = 720L,
             cooldownMillis = 1_800L, attackVisual = "small")

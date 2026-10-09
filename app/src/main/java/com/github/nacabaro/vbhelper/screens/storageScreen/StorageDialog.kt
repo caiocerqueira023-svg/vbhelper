@@ -1,6 +1,7 @@
 package com.github.nacabaro.vbhelper.screens.storageScreen
 
 import androidx.compose.foundation.Image
+import com.github.nacabaro.vbhelper.components.DimLogo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -178,7 +179,7 @@ fun StorageDialog(
                         )
                         val nameBitmap = remember (characterName.value!!) { characterName.value!!.getBitmap() }
                         val nameImageBitmap = remember(nameBitmap) { nameBitmap.asImageBitmap() }
-                        Image(
+                        DimLogo(
                             bitmap = nameImageBitmap,
                             contentDescription = stringResource(R.string.storage_character_image_description),
                             filterQuality = FilterQuality.None,

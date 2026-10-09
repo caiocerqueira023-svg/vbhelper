@@ -30,6 +30,8 @@ import com.github.nacabaro.vbhelper.rendering.approachSceneAxis
 import com.github.nacabaro.vbhelper.rendering.sprite3d.ResidentFrameImage
 import com.github.nacabaro.vbhelper.rendering.sprite3d.cameraAssistedSpriteYaw
 import com.github.nacabaro.vbhelper.ui.theme.DeepPurpleBgAlt
+import com.github.nacabaro.vbhelper.ui.theme.AppTheme
+import androidx.compose.ui.graphics.Color
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.ArrayDeque
@@ -86,11 +88,12 @@ fun Digifarm3dViewport(
     onReady: ((Digifarm3dSceneView) -> Unit)? = null,
     onAssetError: ((String) -> Unit)? = null,
 ) {
+    val backgroundColor = DeepPurpleBgAlt
     AndroidView(
         modifier = modifier,
         factory = { context ->
             FrameLayout(context).also { container ->
-                runCatching { Digifarm3dSceneView(context) }
+                runCatching { Digifarm3dSceneView(context, backgroundColor) }
                     .onSuccess { view ->
                         container.addView(
                             view,
@@ -132,7 +135,10 @@ fun Digifarm3dViewport(
 }
 
 /** A TextureView is used so Compose bubbles can be layered above it. */
-class Digifarm3dSceneView(context: Context) : TextureView(context) {
+class Digifarm3dSceneView(
+    context: Context,
+    backgroundColor: Color = AppTheme.VB_HELPER.palette.backgroundAlt,
+) : TextureView(context) {
     private val logTag = "Digifarm3d"
     private val engine: Engine
     private val viewer: ModelViewer
@@ -243,7 +249,7 @@ class Digifarm3dSceneView(context: Context) : TextureView(context) {
         viewer.view.applyHybridSceneProfile(HybridSceneKind.DIGIFARM)
         val backdrop = Colors.toLinear(
             Colors.RgbType.SRGB,
-            DeepPurpleBgAlt.red, DeepPurpleBgAlt.green, DeepPurpleBgAlt.blue,
+            backgroundColor.red, backgroundColor.green, backgroundColor.blue,
         )
         backgroundSkybox = Skybox.Builder()
             .color(backdrop[0], backdrop[1], backdrop[2], 1f)

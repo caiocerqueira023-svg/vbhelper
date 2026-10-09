@@ -107,6 +107,64 @@ class WorldInteractionPersistenceTest {
         assertEquals(greeting.id,db.worldInteractionDao().getClaim("wild-a")!!.interactionId)
         assertEquals(0,count("WorldInteractionResult"))
         assertEquals(82,db.wildRelationshipDao().get("wild-a")!!.trust)
+        assertNull(db.digimonScanDao().getProgress(100))
+    }
+
+    @Test fun aPlannedAttackMustApproachBeforeUsingTheOrdinaryBattleHandoff() = runBlocking {
+        val home = com.github.nacabaro.vbhelper.world.RadarWorldGeometry.offset(fix.position,50.0,0.0)
+        val target = com.github.nacabaro.vbhelper.world.RadarWorldGeometry.offset(fix.position,25.0,0.0)
+        db.openHelper.writableDatabase.execSQL("UPDATE WorldSpawn SET latitude=?,longitude=?,homeLatitude=?,homeLongitude=?,expiresAt=? WHERE id=1",
+            arrayOf<Any>(home.latitude,home.longitude,home.latitude,home.longitude,now+300_000))
+        val choice = SocialEncounterDecision("wild-a","trainer",SocialMotive.HOSTILE_ATTACK,0)
+        val proposed = repository.initiateWildPlayerInteraction("approach",InteractionType.BATTLE,1,fix,42,0,choice,allowApproach=true)
+        assertEquals(InteractionState.PROPOSED,proposed.state)
+        assertFalse(repository.activateWildPlayerInteraction(proposed.id,proposed.revision,1,fix))
+        db.worldSpawnDao().checkpointMovement("wild-a",home.latitude,home.longitude,target.latitude,target.longitude,
+            com.github.nacabaro.vbhelper.domain.world.WorldMovementState.APPROACHING,0,60)
+        var actor = db.worldSpawnDao().getByIndividualId("wild-a")!!
+        for (tick in 1L..35L) actor = WorldEcosystemEngine.step(42,tick,listOf(actor),setOf("wild-a"),
+            mapOf("wild-a" to com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityType.RECKLESS)).single()
+        db.worldSpawnDao().checkpointMovement(actor.individualId,actor.latitude,actor.longitude,actor.wanderTargetLatitude,
+            actor.wanderTargetLongitude,actor.movementState,actor.movementTick,actor.nextDecisionTick)
+        assertTrue(repository.activateWildPlayerInteraction(proposed.id,proposed.revision,35,fix))
+        val active = db.worldInteractionDao().getInteraction(proposed.id)!!
+        val handoff = repository.reserveWildAttack("handoff",active.id,active.revision,10,fix,40)
+        assertEquals(InteractionState.RESERVED,handoff.state)
+        assertTrue(repository.commitPlayerBattle(handoff.id,handoff.revision,fix,10))
+        assertEquals(InteractionState.PLAYER_CONTROLLED,db.worldInteractionDao().getInteraction(handoff.id)!!.state)
+        assertEquals(0,count("WorldDialogueIntent"))
+    }
+
+    @Test fun anIgnoredGreetingReleasesItsClaimAtTheShortLogicalDeadlineWithoutTrustGain() = runBlocking {
+        db.worldEcosystemDao().saveSession(WorldEcosystemSession(seed=42,tickIndex=10,lastCheckpointAt=now))
+        val greeting = repository.initiateWildPlayerInteraction("short-greeting",InteractionType.CHAT,1,fix,42,10,
+            SocialEncounterDecision("wild-a","trainer",SocialMotive.COMPANY,0))
+        assertEquals(34L,greeting.deadlineTick)
+        db.worldEcosystemDao().saveSession(WorldEcosystemSession(seed=42,tickIndex=34,lastCheckpointAt=now))
+        repository.reconcile()
+        assertTrue(db.worldInteractionDao().getInteraction(greeting.id)!!.state.terminal)
+        assertNull(db.worldInteractionDao().getClaim("wild-a"))
+        assertEquals(82,db.wildRelationshipDao().get("wild-a")!!.trust)
+    }
+
+    @Test fun discussingAnActivityDoesNotStartItAndAnExplicitRefusalEndsTheEncounter() = runBlocking {
+        val choice = SocialEncounterDecision("wild-a","wild-b",SocialMotive.SHARED_ACTIVITY,0)
+        val proposed = repository.proposeNpcInteraction("activity",InteractionType.CHAT,listOf(1,2),42,10,choice)
+        assertTrue(repository.activateNpcInteraction(proposed.id,proposed.revision,10))
+        val event = db.worldInteractionDao().getInteraction(proposed.id)!!
+        WorldSocialRepository(db).recordInitiation(event,choice,42,10)
+        val app = InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as com.github.nacabaro.vbhelper.di.VBHelper
+        val orchestrator = WorldInteractionOrchestrator(db,app.container.chatRepository)
+        assertTrue(orchestrator.commitExchange(event.id,event.revision,"discussion",DialogueExchange(listOf(
+            DialogueLine("wild-a","Let's explore."),DialogueLine("wild-b","What do you have in mind?")))))
+        val discussing = db.worldInteractionDao().getInteraction(event.id)!!
+        assertEquals(InteractionState.ACTIVE,discussing.state)
+        assertNull(db.worldSpawnDao().getByIndividualId("wild-b")!!.wanderTargetLatitude)
+        assertTrue(orchestrator.commitExchange(event.id,discussing.revision,"refusal",DialogueExchange(listOf(
+            DialogueLine("wild-b","No, thanks.",response=SocialResponse.DECLINE_INVITATION)))))
+        assertEquals(InteractionState.ENDED,db.worldInteractionDao().getInteraction(event.id)!!.state)
+        assertNull(db.worldInteractionDao().getClaim("wild-b"))
+        assertEquals("DECLINED",db.worldSocialDao().withPartner("wild-b","wild-a").single().outcome)
     }
 
     @Test fun wildInitiatedGreetingAndTalkShareOnePrivateHistoryWithoutDuplicatingMessages() = runBlocking {
@@ -137,6 +195,7 @@ class WorldInteractionPersistenceTest {
         assertEquals(reason,db.worldChatMemoryDao().getMemory(reserved.id,"wild-a")!!.reason)
         assertEquals(1,db.worldChatMemoryDao().getPendingReactions("wild-a").size)
         assertEquals(82,db.wildRelationshipDao().get("wild-a")!!.trust)
+        assertNull(db.digimonScanDao().getProgress(100))
     }
 
     @Test fun wildAttackHandoffRestoresItsSourceIfPreparationFailsAndRecordsOneResultWhenCommitted() = runBlocking {
@@ -192,6 +251,7 @@ class WorldInteractionPersistenceTest {
         assertEquals(1, db.userCharacterDao().getCharacterSync(10)!!.totalBattlesLost)
         assertEquals(0, db.userCharacterDao().getCharacterSync(10)!!.totalBattlesWon)
         assertNotNull(db.worldSpawnDao().getByIndividualId("wild-a"))
+        assertNull(db.digimonScanDao().getProgress(100))
         assertEquals(1, count("WorldInteractionResult"))
         assertEquals(0, count("WorldParticipationClaim"))
     }
@@ -206,6 +266,9 @@ class WorldInteractionPersistenceTest {
         assertEquals("wild-a", wild.individualId)
         assertEquals(3, count("ChatMessageEntity"))
         assertEquals(1, db.userCharacterDao().getCharacterSync(10)!!.totalBattlesWon)
+        assertEquals(20, db.digimonScanDao().getProgress(100))
+        assertFalse(repository.completeBattle("battle", BattleOutcome.ALLIED_VICTORY))
+        assertEquals(20, db.digimonScanDao().getProgress(100))
     }
 
     @Test fun staleRevisionCannotCommitAReservationAndCancellationIsIdempotent() = runBlocking {
@@ -279,6 +342,28 @@ class WorldInteractionPersistenceTest {
         assertEquals(1, count("WorldParticipationClaim"))
         assertNotNull(db.worldSpawnDao().getByIndividualId("wild-a"))
         assertEquals(InteractionState.PLAYER_CONTROLLED, db.worldInteractionDao().getInteraction("battle")!!.state)
+        assertNull(db.digimonScanDao().getProgress(100))
+    }
+
+    @Test fun failureAfterScanAwardRollsBackProgressAndRewardReceipt() = runBlocking {
+        val reserved = prepare()
+        repository.commitPlayerBattle("battle", reserved.revision, fix)
+        db.openHelper.writableDatabase.execSQL("CREATE TRIGGER reject_scan_enemy_delete BEFORE DELETE ON WorldSpawn BEGIN SELECT RAISE(ABORT, 'injected failure'); END")
+        assertTrue(runCatching { repository.completeBattle("battle", BattleOutcome.ALLIED_VICTORY) }.isFailure)
+        assertNull(db.digimonScanDao().getProgress(100))
+        assertEquals(0, count("DigimonScanReward"))
+        assertEquals(0, count("WorldInteractionResult"))
+        assertEquals(0, db.userCharacterDao().getCharacterSync(10)!!.totalBattlesWon)
+    }
+
+    @Test fun debugInstantScanCompletesInOneVictoryWithoutReplayRewards() = runBlocking {
+        repository = WorldInteractionRepository(db, scanPercentagePerDefeat = { 100 }, now = { now })
+        val reserved = prepare()
+        repository.commitPlayerBattle("battle", reserved.revision, fix)
+        assertTrue(repository.completeBattle("battle", BattleOutcome.ALLIED_VICTORY))
+        assertEquals(100, db.digimonScanDao().getProgress(100))
+        assertFalse(repository.completeBattle("battle", BattleOutcome.ALLIED_VICTORY))
+        assertEquals(1, count("DigimonScanReward"))
     }
 
     @Test fun autonomousOutcomesRetainBothWildsAndCannotAwardOrChangePlayerTrust() = runBlocking {
@@ -290,6 +375,7 @@ class WorldInteractionPersistenceTest {
         assertEquals(82, db.wildRelationshipDao().get("wild-b")!!.trust)
         assertEquals(0, db.userCharacterDao().getCharacterSync(10)!!.totalBattlesWon)
         assertEquals(0, count("WorldParticipationClaim"))
+        assertNull(db.digimonScanDao().getProgress(100))
     }
 
     @Test fun unknownEventRulesCancelOwnershipWithoutReplayingAnOutcome() = runBlocking {
@@ -307,6 +393,16 @@ class WorldInteractionPersistenceTest {
         assertFalse(repository.activateNpcInteraction("npc", proposed.revision, 18L))
         assertEquals(InteractionState.PROPOSED, db.worldInteractionDao().getInteraction("npc")!!.state)
         assertEquals(2, count("WorldParticipationClaim"))
+    }
+
+    @Test fun trustGrowsFastBelow75AndSlowlyAboveIt() = runBlocking {
+        val world = WorldRepository(db) { now }
+        db.wildRelationshipDao().updateTrust("wild-a", 50, now)
+        assertEquals(54, world.applyWildMoodDelta("wild-a", 2))
+        db.wildRelationshipDao().updateTrust("wild-a", 80, now)
+        assertEquals(82, world.applyWildMoodDelta("wild-a", 4))
+        assertEquals(83, world.applyWildMoodDelta("wild-a", 1))
+        assertEquals(79, world.applyWildMoodDelta("wild-a", -2))
     }
 
     @Test fun privateReplyCannotChangeTrustAfterItsClaimExpires() = runBlocking {
@@ -431,6 +527,7 @@ class WorldInteractionPersistenceTest {
         assertEquals(1,db.userCharacterDao().getCharacterSync(10)!!.totalBattlesWon)
         assertEquals(1,db.userCharacterDao().getCharacterSync(11)!!.totalBattlesWon)
         assertEquals(0,count("WorldSpawn"))
+        assertEquals(40, db.digimonScanDao().getProgress(100))
     }
 
     private fun count(table: String) = db.openHelper.writableDatabase.query("SELECT COUNT(*) FROM `$table`").use {

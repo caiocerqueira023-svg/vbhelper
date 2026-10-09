@@ -136,7 +136,11 @@ interface UserCharacterDao {
             COALESCE(be.trainingAp, 0) AS trainingAp,
             uc.vitalPoints AS vitalPoints,
             uc.mood AS mood,
-            ca.isBEm AS isBemCard
+            ca.isBEm AS isBemCard,
+            sp.specialMoves AS specialMovesJson,
+            di.blastMode AS blastMode,
+            di.blastTargetSpecies AS blastTargetSpecies,
+            di.jogressResultSpecies AS jogressResultSpecies
         FROM UserCharacter uc
         JOIN CardCharacter c ON c.id = uc.charId
         JOIN Card ca ON ca.id = c.cardId

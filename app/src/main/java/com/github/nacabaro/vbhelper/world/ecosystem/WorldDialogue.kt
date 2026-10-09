@@ -33,10 +33,14 @@ data class WorldNpcBattle(
     val startTick: Long, val nextRoundTick: Long, val snapshotJson: String = "{}"
 )
 
-data class DialogueLine(val speakerId: String, val text: String)
+enum class SocialResponse { ACCEPT_INVITATION, DECLINE_INVITATION, OBSERVE }
+
+data class DialogueLine(val speakerId: String, val text: String, val openingKey: String? = null,
+    val response: SocialResponse? = null)
 data class DialogueProposal(val type: DialogueIntentType, val speakerId: String, val targetIds: List<String>,
     val evidenceIds: List<String>, val reason: String, val sparring: Boolean = false)
-data class DialogueExchange(val lines: List<DialogueLine>, val intent: DialogueProposal? = null, val source: DialogueTextSource = DialogueTextSource.MODEL)
+data class DialogueExchange(val lines: List<DialogueLine>, val intent: DialogueProposal? = null,
+    val source: DialogueTextSource = DialogueTextSource.MODEL, val locallyPlanned: Boolean = false)
 
 data class NpcCombatantSummary(val combatantId:String,val displayName:String,val health:Int,val maxHealth:Int,val energy:Int,val maxEnergy:Int)
 data class NpcBattleSummary(val elapsedMillis:Long,val alliedMembers:List<NpcCombatantSummary>,val opposingMembers:List<NpcCombatantSummary>,

@@ -38,7 +38,7 @@ import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.components.CyberEmptyState
 import com.github.nacabaro.vbhelper.components.CyberPanel
 import com.github.nacabaro.vbhelper.domain.lorebook.LorebookEntry
-import com.github.nacabaro.vbhelper.ui.theme.SpaceBlack
+import com.github.nacabaro.vbhelper.ui.theme.OnVitalPrimary
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
@@ -65,7 +65,7 @@ fun LorebookScreen(
                 onClick = { showAddDialog = true },
                 shape = CutCornerShape(10.dp),
                 containerColor = VitalPurpleBright,
-                contentColor = SpaceBlack,
+                contentColor = OnVitalPrimary,
                 elevation = FloatingActionButtonDefaults.elevation(defaultElevation = 2.dp)
             ) {
                 Icon(

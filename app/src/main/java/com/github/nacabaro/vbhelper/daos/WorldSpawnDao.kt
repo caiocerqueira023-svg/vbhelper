@@ -12,6 +12,18 @@ import com.github.nacabaro.vbhelper.domain.world.WorldMovementState
 @Dao
 @RewriteQueriesToDropUnusedColumns
 interface WorldSpawnDao {
+    @Query("""UPDATE WorldSpawn SET latitude = :latitude, longitude = :longitude,
+        homeLatitude = :latitude, homeLongitude = :longitude, wanderTargetLatitude = NULL,
+        wanderTargetLongitude = NULL, movementState = 'HOME', denId = NULL, movementTick = :tick,
+        nextDecisionTick = :tick WHERE id = :id
+        AND NOT EXISTS(SELECT 1 FROM WorldParticipationClaim WHERE spawnId = :id)""")
+    suspend fun relocateQuestTarget(id: Long, latitude: Double, longitude: Double, tick: Long): Int
+    @Query("""UPDATE WorldSpawn SET expiresAt = :expiresAt
+        WHERE expiresAt = 9223372036854775807 AND recruitmentState = 'WILD'
+        AND EXISTS(SELECT 1 FROM QuestObjective WHERE targetIndividualId = WorldSpawn.individualId)
+        AND NOT EXISTS(SELECT 1 FROM QuestObjective o JOIN QuestInstance q ON q.id = o.questId
+            WHERE o.targetIndividualId = WorldSpawn.individualId AND o.progress < o.required AND q.state IN ('ACTIVE','READY'))""")
+    suspend fun releaseFinishedQuestTargets(expiresAt: Long)
     @Insert
     suspend fun insert(spawn: WorldSpawn): Long
 

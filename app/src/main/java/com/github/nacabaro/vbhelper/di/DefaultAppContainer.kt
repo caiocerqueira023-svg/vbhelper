@@ -84,7 +84,15 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
                 AppDatabase.MIGRATION_27_28,
                 AppDatabase.MIGRATION_28_29,
                 AppDatabase.MIGRATION_29_30,
-                AppDatabase.MIGRATION_30_31
+                AppDatabase.MIGRATION_30_31,
+                AppDatabase.MIGRATION_31_32,
+                AppDatabase.MIGRATION_32_33,
+                AppDatabase.MIGRATION_33_34,
+                AppDatabase.MIGRATION_34_35,
+                AppDatabase.MIGRATION_35_36,
+                AppDatabase.MIGRATION_36_37,
+                AppDatabase.MIGRATION_37_38,
+                AppDatabase.MIGRATION_38_39
             )
             // Missing migrations must preserve the database, never erase individuals/chats.
             .addCallback(com.github.nacabaro.vbhelper.database.IndividualIntegrity.callback)
@@ -94,7 +102,8 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
 
     override val dataStoreSecretsRepository = DataStoreSecretsRepository(context.secretsStore)
 
-    override val currencyRepository = CurrencyRepository(context.currencyStore)
+    override val currencyRepository by lazy { CurrencyRepository(context.currencyStore, db) }
+    override val questRepository by lazy { com.github.nacabaro.vbhelper.quests.QuestRepository(db, currencyRepository) }
 
     override val validatedCardManager by lazy {
         ValidatedCardManager(db.validatedCardDao())
@@ -131,11 +140,15 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
     }
 
     override val chatRepository by lazy {
-        ChatRepository(db, llmSettingsRepository, lorebookRepository, speciesRepository)
+        ChatRepository(db, llmSettingsRepository, lorebookRepository, speciesRepository, questRepository = questRepository)
     }
-    override val worldRepository by lazy { WorldRepository(db) }
+    private val debugScanSettings by lazy { com.github.nacabaro.vbhelper.source.DebugScanSettings(context) }
+    override val worldRepository by lazy { WorldRepository(db, scanPercentagePerDefeat = { debugScanSettings.percentagePerDefeat }) }
     override val digifarmRepository by lazy { DigifarmRepository(db) }
-    override val farmSessionCoordinator by lazy { FarmSessionCoordinator(digifarmRepository) }
+    override val farmConversationOrchestrator by lazy { digifarmRepository.conversationOwner(chatRepository) }
+    override val farmSessionCoordinator by lazy { FarmSessionCoordinator(digifarmRepository).also {
+        it.onSuspend = { farmId -> farmConversationOrchestrator.suspendFarm(farmId) }
+    } }
     override val worldInteractionOrchestrator by lazy { com.github.nacabaro.vbhelper.world.ecosystem.WorldInteractionOrchestrator(db,chatRepository) }
     override val worldEcosystemCoordinator by lazy {
         WorldEcosystemCoordinator(RoomWorldEcosystemStore(db,interactions=worldInteractionOrchestrator)).also { coordinator ->

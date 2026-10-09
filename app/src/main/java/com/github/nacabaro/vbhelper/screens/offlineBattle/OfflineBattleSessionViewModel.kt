@@ -1,6 +1,7 @@
 package com.github.nacabaro.vbhelper.screens.offlineBattle
 
 import android.content.Context
+import androidx.room.withTransaction
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleOutcome
@@ -29,8 +30,29 @@ data class OfflineBattleSessionState(
     val snapshot: BattleSnapshot? = null,
     val fighters: Map<String, BattleFighterPresentation> = emptyMap(),
     val arenaManifest: OfflineArenaManifest? = null,
-    val countdown: Int = 3
+    val countdown: Int = 3,
+    val preparedForms: Map<String, BattleFighterPresentation> = emptyMap(),
 )
+
+/**
+ * Visible fighter per combatant: the prebuilt transformed model while the
+ * snapshot reports an active Blast transform, else the base model.
+ */
+internal fun resolveVisibleFighters(
+    base: Map<String, BattleFighterPresentation>,
+    alts: Map<String, BattleFighterPresentation>,
+    snapshot: BattleSnapshot?
+): Map<String, BattleFighterPresentation> {
+    if (snapshot == null) return base
+    val transformed = (snapshot.alliedMembers + snapshot.opposingMembers)
+        .associate { it.combatantId to it.blastFormSpecies }
+    return base.mapValues { (id, fighter) ->
+        val form = transformed[id]
+        if (form != null) {
+            alts[id]?.takeIf { it.displayName.equals(form, ignoreCase = true) } ?: fighter
+        } else fighter
+    }
+}
 
 /** Keeps the pure battle controller and its render assets alive across screen recreation. */
 class OfflineBattleSessionViewModel : ViewModel() {
@@ -44,6 +66,7 @@ class OfflineBattleSessionViewModel : ViewModel() {
     private var countdownJob: Job? = null
     // Reasons survive asynchronous loading and Activity/renderer recreation.
     private val pauseReasons = linkedSetOf<String>()
+    private var baseFighters: Map<String, BattleFighterPresentation> = emptyMap()
     private var allies: List<OfflineBattleParticipant> = emptyList()
     private var opponents: List<OfflineBattleParticipant> = emptyList()
     private var seed = 1L
@@ -70,22 +93,56 @@ class OfflineBattleSessionViewModel : ViewModel() {
         loadingJob = scope.launch {
             runCatching {
                 TrainingBattlePresentationFactory.create(context.applicationContext, this@OfflineBattleSessionViewModel.allies,
-                    this@OfflineBattleSessionViewModel.opponents, seed, this@OfflineBattleSessionViewModel.arenaManifestPath)
+                    this@OfflineBattleSessionViewModel.opponents, seed, this@OfflineBattleSessionViewModel.arenaManifestPath,
+                    extraItems = if (this@OfflineBattleSessionViewModel.arenaManifestPath == OfflineArenaManifest.RADAR_MANIFEST_PATH) {
+                        kotlinx.coroutines.withContext(Dispatchers.IO) {
+                            val db = (context.applicationContext as com.github.nacabaro.vbhelper.di.VBHelper).container.db
+                            com.github.nacabaro.vbhelper.quests.QuestBattleInventory(db).loadoutLocked(sessionId)
+                        }
+                    } else emptyList())
             }.onSuccess { presentation ->
                 if (_state.value.sessionId != sessionId) return@onSuccess
                 val next = BattleSessionController(presentation.simulator, scope)
                 pauseReasons.forEach { next.setPaused(it, true) }
                 next.setPaused("menu", false)
                 controller = next
+                baseFighters = presentation.fighters
                 _state.value = OfflineBattleSessionState(
                     sessionId = sessionId,
                     snapshot = next.snapshot.value,
-                    fighters = presentation.fighters,
-                    arenaManifest = presentation.arenaManifest
+                    fighters = baseFighters,
+                    arenaManifest = presentation.arenaManifest,
+                    preparedForms = presentation.preparedForms,
                 )
                 snapshotJob = scope.launch {
+                    var recordedTerminal = false
+                    var recordedItems = emptyList<com.github.nacabaro.vbhelper.battle.offline.core.BattleItemSnapshot>()
                     next.snapshot.collect { snapshot ->
                         if (_state.value.sessionId == sessionId) {
+                            if (arenaManifestPath == OfflineArenaManifest.RADAR_MANIFEST_PATH &&
+                                (snapshot.trainingItems != recordedItems || (snapshot.result != null && !recordedTerminal))) {
+                                try {
+                                    kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
+                                        val db = (context.applicationContext as com.github.nacabaro.vbhelper.di.VBHelper).container.db
+                                        db.withTransaction {
+                                            val timestamp = System.currentTimeMillis()
+                                            com.github.nacabaro.vbhelper.quests.QuestBattleInventory(db).checkpointLocked(sessionId, snapshot.trainingItems, timestamp)
+                                            if (snapshot.result != null && !recordedTerminal) {
+                                                com.github.nacabaro.vbhelper.quests.QuestBattleFacts(db).recordTerminalLocked(sessionId, snapshot, timestamp)
+                                            }
+                                        }
+                                    }
+                                    recordedItems = snapshot.trainingItems
+                                    if (snapshot.result != null) recordedTerminal = true
+                                } catch (failure: Exception) {
+                                    if (failure is CancellationException) throw failure
+                                    next.setPaused("battle-record", true)
+                                    _state.value = _state.value.copy(error = failure.message ?: "Could not record the terminal battle facts.")
+                                    return@collect
+                                }
+                            }
+                            // The renderer owns active models/visibility using the finisher snapshot.
+                            // Retain both prepared maps and their GLB arrays across every simulation tick.
                             _state.value = _state.value.copy(snapshot = snapshot)
                         }
                     }
@@ -109,7 +166,8 @@ class OfflineBattleSessionViewModel : ViewModel() {
                 if (_state.value.sessionId == sessionId) {
                     _state.value = OfflineBattleSessionState(
                         sessionId = sessionId,
-                        error = failure.message?.takeIf(String::isNotBlank) ?: "Não foi possível abrir a arena de treino."
+                        error = failure.message?.takeIf(String::isNotBlank)
+                            ?: context.getString(com.github.nacabaro.vbhelper.R.string.ui_battle_error_open_arena)
                     )
                 }
             }
@@ -154,6 +212,7 @@ class OfflineBattleSessionViewModel : ViewModel() {
         snapshotJob = null
         controller?.close()
         controller = null
+        baseFighters = emptyMap()
     }
 
     override fun onCleared() {

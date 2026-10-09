@@ -41,7 +41,8 @@ data class WorldInteraction(
     val terminalReason: String? = null,
     val deadlineTick: Long? = null,
     @ColumnInfo(defaultValue = "0") val dialogueSequence: Long = 0,
-    val publicReason: String? = null
+    val publicReason: String? = null,
+    val socialContextJson: String? = null
 )
 
 /** Identity survives expiry/deletion for archived context; live references become null. */

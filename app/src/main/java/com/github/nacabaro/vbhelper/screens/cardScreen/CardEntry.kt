@@ -1,6 +1,6 @@
 package com.github.nacabaro.vbhelper.screens.cardScreen
 
-import androidx.compose.foundation.Image
+import com.github.nacabaro.vbhelper.components.DimLogo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -70,7 +70,7 @@ fun CardEntry(
                 shape = RectangleShape,
                 modifier = Modifier.size(76.dp)
             ) {
-                Image (
+                DimLogo (
                     bitmap = imageBitmap,
                     contentDescription = name,
                     filterQuality = FilterQuality.None,

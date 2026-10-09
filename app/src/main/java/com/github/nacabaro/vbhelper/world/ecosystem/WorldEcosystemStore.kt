@@ -9,7 +9,8 @@ data class EcosystemPopulation(
     val spawns: List<WorldSpawn>,
     val claimedIndividuals: Set<String> = emptySet(),
     val interactions: List<EcosystemInteractionSummary> = emptyList(),
-    val personalities: Map<String, DigimonPersonalityType> = emptyMap()
+    val personalities: Map<String, DigimonPersonalityType> = emptyMap(),
+    val trailingUtterances: List<EcosystemUtterance> = emptyList()
 )
 
 interface WorldEcosystemStore {
@@ -58,6 +59,8 @@ class RoomWorldEcosystemStore(private val db: AppDatabase, private val interacti
         ) }
         val actors = db.worldSpawnDao().getActiveSpawnsSync(now)
         val personalities = actors.mapNotNull { actor -> db.digimonIndividualDao().getPersonality(actor.individualId)?.let { actor.individualId to it.personalityType } }.toMap()
-        EcosystemPopulation(actors, dao.getClaimedIndividuals().toSet(), summaries, personalities)
+        val tick = db.worldEcosystemDao().getSession()?.tickIndex ?: 0
+        val trailing = dao.trailingPublicSpeech((tick - 8).coerceAtLeast(0)).map { EcosystemUtterance(it.speakerId,it.body,it.tick) }
+        EcosystemPopulation(actors, dao.getClaimedIndividuals().toSet(), summaries, personalities, trailing)
     }
 }

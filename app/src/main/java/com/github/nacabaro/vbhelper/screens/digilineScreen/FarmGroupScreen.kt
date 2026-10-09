@@ -49,6 +49,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.NonCancellable
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 
 @Composable
 fun FarmGroupScreen(navController: NavController, farmId: String) {
@@ -61,7 +66,8 @@ fun FarmGroupScreen(navController: NavController, farmId: String) {
     val messages = messagesDesc.asReversed()
     val messageListState = rememberLazyListState()
     var previousMessageCount by remember(farmId) { mutableStateOf(0) }
-    val orchestrator = remember { FarmConversationOrchestrator(repository, app.container.chatRepository) }
+    val orchestrator = app.container.farmConversationOrchestrator
+    val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
     var input by remember { mutableStateOf("") }
     var sending by remember { mutableStateOf(false) }
@@ -90,24 +96,28 @@ fun FarmGroupScreen(navController: NavController, farmId: String) {
         }
     }
     val coordinator = app.container.farmSessionCoordinator
-    LaunchedEffect(farmId) {
-        withContext(Dispatchers.IO) { coordinator.acquire(farmId) }
-        try {
-            while (true) delay(900L)
-        } finally {
-            withContext(Dispatchers.IO) { coordinator.release(farmId) }
+    LaunchedEffect(farmId, lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            orchestrator.acquire(farmId)
+            withContext(Dispatchers.IO) { coordinator.acquire(farmId) }
+            try { awaitCancellation() } finally {
+                orchestrator.release(farmId)
+                withContext(NonCancellable + Dispatchers.IO) { coordinator.release(farmId) }
+            }
         }
     }
-    LaunchedEffect(farmId, residents.size, farm?.autonomousDialogueEnabled) {
+    LaunchedEffect(farmId, residents.size, farm?.autonomousDialogueEnabled, lifecycleOwner) {
         if (residents.size < 2 || farm?.autonomousDialogueEnabled != true) return@LaunchedEffect
-        while (true) {
-            delay(20_000L)
-            val result = runCatching {
-                withContext(Dispatchers.IO) { orchestrator.maybeGenerateAutonomous(farmId) }
-            }
-            if (result.isFailure) {
-                error = dialogueUnavailable
-                break
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                delay(20_000L)
+                val result = runCatching {
+                    withContext(Dispatchers.IO) { orchestrator.maybeGenerateAutonomous(farmId) }
+                }
+                if (result.isFailure) {
+                    error = dialogueUnavailable
+                    break
+                }
             }
         }
     }

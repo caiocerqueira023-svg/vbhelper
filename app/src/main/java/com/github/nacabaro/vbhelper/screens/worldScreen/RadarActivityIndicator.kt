@@ -37,6 +37,7 @@ import kotlin.math.sin
 internal fun RadarActivityIndicator(type: InteractionType, speech: String?, frameNanos: Long, motion: Boolean, modifier: Modifier = Modifier, healthFraction: Float? = null) {
     val description=stringResource(if(type==InteractionType.CHAT) R.string.ui_world_spectate_chat else R.string.ui_world_spectate_battle)
     val color=if(type==InteractionType.CHAT) VitalCyan else StatusRed
+    val backdrop = SurfaceDeepPurple
     Column(modifier.heightIn(min=48.dp), horizontalAlignment=Alignment.CenterHorizontally) {
         if(!speech.isNullOrBlank()) Surface(color=SurfaceDeepPurple,shape=MaterialTheme.shapes.small) {
             Text(speech,color=TextPrimaryOnDark,style=MaterialTheme.typography.bodySmall,maxLines=2,
@@ -44,7 +45,7 @@ internal fun RadarActivityIndicator(type: InteractionType, speech: String?, fram
         }
         Canvas(Modifier.size(32.dp).semantics { contentDescription=description }) {
             val pulse=if(motion) (0.88 + 0.12*sin(frameNanos/350_000_000.0)).toFloat() else 1f
-            drawCircle(SurfaceDeepPurple, radius=size.minDimension/2)
+            drawCircle(backdrop, radius=size.minDimension/2)
             val stroke=2.dp.toPx()
             if(type==InteractionType.CHAT) {
                 drawRoundRect(color,Offset(size.width*0.2f,size.height*0.22f),Size(size.width*0.6f,size.height*0.44f),

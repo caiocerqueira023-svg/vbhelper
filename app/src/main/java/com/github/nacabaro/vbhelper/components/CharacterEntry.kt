@@ -70,6 +70,7 @@ import com.github.nacabaro.vbhelper.ui.theme.StatusRedDim
 import com.github.nacabaro.vbhelper.ui.theme.StatusYellow
 import com.github.nacabaro.vbhelper.ui.theme.StatusYellowDim
 import com.github.nacabaro.vbhelper.ui.theme.SpaceBlack
+import com.github.nacabaro.vbhelper.ui.theme.OnStatus
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceHighlightPurple
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
 import com.github.nacabaro.vbhelper.ui.theme.TextMutedOnDark
@@ -441,7 +442,7 @@ fun SpecialMissionsEntry(
 
     val (containerColor, contentColor, isVivid) = when (specialMission.status) {
         SpecialMission.Status.IN_PROGRESS -> Triple(bannerColorDim, TextPrimaryOnDark, false)
-        SpecialMission.Status.COMPLETED -> Triple(bannerColor, SpaceBlack, true)
+        SpecialMission.Status.COMPLETED -> Triple(bannerColor, OnStatus, true)
         SpecialMission.Status.FAILED -> Triple(StatusRedDim, TextPrimaryOnDark, false)
         else -> Triple(MaterialTheme.colorScheme.surfaceContainerHighest, TextMutedOnDark, false)
     }

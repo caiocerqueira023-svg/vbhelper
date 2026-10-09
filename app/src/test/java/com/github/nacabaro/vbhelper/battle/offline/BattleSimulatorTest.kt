@@ -107,7 +107,7 @@ class BattleSimulatorTest {
 
         val rejected = sim.issueOrder("a", TrainerAction.UseTechnique("missing"))
         assertEquals(OrderStatus.FAILED, rejected.status)
-        assertEquals("Técnica inexistente.", sim.snapshot().alliedMembers.single().debug.lastOrderFailure)
+        assertEquals(OrderFailure.TECHNIQUE_MISSING, rejected.reasonCode)
         assertTrue(sim.snapshot().recentEvents.size <= 96)
     }
 
@@ -540,6 +540,7 @@ class BattleSimulatorTest {
 
         assertEquals(OrderStatus.FAILED, update.status)
         assertEquals(0, sim.snapshot().alliedMembers.single().specialCharge)
+        assertEquals(OrderFailure.SPECIAL_CHARGING, update.reasonCode)
         assertTrue(update.reason.orEmpty().contains("especial", ignoreCase = true))
     }
 

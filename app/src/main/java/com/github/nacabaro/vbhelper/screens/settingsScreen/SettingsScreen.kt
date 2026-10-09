@@ -3,6 +3,7 @@ package com.github.nacabaro.vbhelper.screens.settingsScreen
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -29,6 +30,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -86,7 +89,9 @@ fun SettingsScreen(
     val promptOriginAtImport by settingsScreenController.promptOriginAtImportTime.collectAsState(initial = false)
     val currentLanguage by settingsScreenController.currentLanguage.collectAsState()
     val currentFont by settingsScreenController.currentFont.collectAsState()
+    val currentTheme by settingsScreenController.currentTheme.collectAsState()
     val cardImports by settingsScreenController.cardImportState.collectAsState()
+    val debugInstantScan by settingsScreenController.debugInstantScan.collectAsState()
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showFontDialog by remember { mutableStateOf(false) }
 
@@ -129,6 +134,7 @@ fun SettingsScreen(
                 settingsScreenController::dismissCardImportResult)
 
             SettingsSection(title = stringResource(R.string.settings_section_appearance))
+            AppThemePicker(currentTheme, settingsScreenController::setAppTheme)
             SettingsEntry(
                 title = stringResource(R.string.settings_font_title),
                 description = currentFont.displayName
@@ -215,6 +221,23 @@ fun SettingsScreen(
                     checked = promptOriginAtImport,
                     onCheckedChange = settingsScreenController::setPromptOriginAtImportTime
                 )
+            }
+
+            if (settingsScreenController.debugToolsEnabled) {
+                SettingsSection(title = stringResource(R.string.settings_section_debug))
+                Row(Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                    .semantics(mergeDescendants = true) {}
+                    .toggleable(value = debugInstantScan, role = Role.Switch,
+                        onValueChange = settingsScreenController::setDebugInstantScan)
+                    .padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Column(Modifier.weight(1f).padding(end = 12.dp)) {
+                        Text(stringResource(R.string.settings_debug_instant_scan_title),
+                            style = MaterialTheme.typography.titleSmall)
+                        Text(stringResource(R.string.settings_debug_instant_scan_description),
+                            style = MaterialTheme.typography.bodySmall, color = TextSecondaryOnDark)
+                    }
+                    Switch(checked = debugInstantScan, onCheckedChange = null)
+                }
             }
 
             SettingsSection(title = stringResource(R.string.settings_section_about))

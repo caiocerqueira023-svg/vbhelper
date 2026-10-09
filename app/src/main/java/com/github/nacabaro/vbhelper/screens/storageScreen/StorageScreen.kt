@@ -100,6 +100,7 @@ fun StorageScreen(
     }
 
     var selectedCharacter by remember { mutableStateOf<Long?>(null) }
+    var showScanCollection by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableStateOf(StorageFilter.ALL) }
     var sort by rememberSaveable { mutableStateOf(StorageSort.RECENT) }
@@ -179,6 +180,7 @@ fun StorageScreen(
         topBar = {
             TopBanner(
                 text = stringResource(R.string.storage_my_characters_title),
+                onScanDataClick = { showScanCollection = true },
                 onAdventureClick = { navController.navigate(NavigationItems.Adventure.route) }
             )
         }
@@ -397,6 +399,9 @@ fun StorageScreen(
                 }
             }
         }
+
+        if (showScanCollection) StorageScanCollectionDialog(application.container.db,
+            onClose = { showScanCollection = false })
 
         selectedCharacter?.let { characterId ->
             StorageDialog(

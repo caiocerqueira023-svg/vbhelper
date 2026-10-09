@@ -18,6 +18,7 @@ internal fun latestBattleMissCue(snapshot: BattleSnapshot): BattleMissCue? {
     }
     if (missIndex < 0) return null
     val eventId = snapshot.eventCount - (events.lastIndex - missIndex)
+    if (eventId <= snapshot.lastFinisherEventCount) return null
     return when (val miss = events[missIndex]) {
         is BattleEvent.TechniqueMissed -> {
             val start = events.subList(0, missIndex).asReversed()

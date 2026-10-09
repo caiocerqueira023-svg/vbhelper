@@ -35,6 +35,8 @@ import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.chat.ChatApiProvider
 import com.github.nacabaro.vbhelper.source.LlmProviderSettings
 import com.github.nacabaro.vbhelper.ui.theme.AppFont
+import com.github.nacabaro.vbhelper.ui.theme.AppTheme
+import com.github.nacabaro.vbhelper.source.AppThemeSettings
 
 class SettingsScreenControllerImpl(
     private val context: ComponentActivity,
@@ -46,6 +48,15 @@ class SettingsScreenControllerImpl(
     private val secretsImporter: SecretsImporter = ApkSecretsImporter()
     private val application = context.applicationContext as VBHelper
     private val languagePreferences = context.getSharedPreferences("app_preferences", 0)
+    private val debugScanSettings = com.github.nacabaro.vbhelper.source.DebugScanSettings(context)
+    val debugToolsEnabled = debugScanSettings.isAvailable
+    private val _debugInstantScan = MutableStateFlow(debugScanSettings.instantScan)
+    val debugInstantScan: StateFlow<Boolean> = _debugInstantScan.asStateFlow()
+
+    fun setDebugInstantScan(enabled: Boolean) {
+        debugScanSettings.instantScan = enabled
+        _debugInstantScan.value = debugScanSettings.instantScan
+    }
     private val secretsRepository: SecretsRepository = application.container.dataStoreSecretsRepository
     private val cardImports = ViewModelProvider(context, viewModelFactory {
         initializer { CardImportViewModel(application, createSavedStateHandle()) }
@@ -86,6 +97,13 @@ class SettingsScreenControllerImpl(
         AppFont.fromPreference(languagePreferences.getString("app_font", null))
     )
     val currentFont: StateFlow<AppFont> = _currentFont.asStateFlow()
+    private val themeSettings = AppThemeSettings(languagePreferences)
+    val currentTheme: StateFlow<AppTheme> = themeSettings.currentTheme
+
+    fun setAppTheme(appTheme: AppTheme) {
+        context.setTheme(appTheme.nativeThemeResource)
+        themeSettings.setTheme(appTheme)
+    }
 
     init {
         filePickerLauncher = context.registerForActivityResult(

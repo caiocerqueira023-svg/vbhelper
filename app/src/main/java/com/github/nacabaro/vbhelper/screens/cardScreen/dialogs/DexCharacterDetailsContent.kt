@@ -25,6 +25,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.VitalSectionHeader
+import com.github.nacabaro.vbhelper.components.DimLogo
 import com.github.nacabaro.vbhelper.components.motionEnabled
 import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
@@ -52,6 +53,8 @@ internal fun DexCharacterDetailsContent(
     onSelectCharacter: (Long) -> Unit,
     onPickSpecies: () -> Unit,
     modifier: Modifier = Modifier,
+    scanContent: @Composable () -> Unit = {},
+    primaryAction: @Composable () -> Unit = {},
 ) {
     Column(modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
@@ -83,6 +86,8 @@ internal fun DexCharacterDetailsContent(
                 else -> R.string.dex_status_never_obtained
             }), style = MaterialTheme.typography.labelMedium,
                 color = if (character.isCurrentlyAvailable) VitalCyan else TextSecondaryOnDark)
+
+            scanContent()
 
             if (obscure) Text(stringResource(R.string.dex_chara_stats_unknown))
             else if (character.baseHp != 65535) {
@@ -133,6 +138,7 @@ internal fun DexCharacterDetailsContent(
                 }
             }
         }
+        primaryAction()
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             if (hasJogress) TextButton(onClick = onJogress, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(stringResource(R.string.dex_chara_fusions_button))
@@ -151,7 +157,7 @@ internal fun DexNameImage(character: CharacterDtos.CardCharaProgress, obscure: B
         val bitmap = remember(character.nameSprite, character.nameSpriteWidth, character.nameSpriteHeight) {
             BitmapData(character.nameSprite, character.nameSpriteWidth, character.nameSpriteHeight).getBitmap().asImageBitmap()
         }
-        Image(bitmap, stringResource(R.string.dex_chara_name_icon_description), filterQuality = FilterQuality.None,
+        DimLogo(bitmap, stringResource(R.string.dex_chara_name_icon_description), filterQuality = FilterQuality.None,
             contentScale = ContentScale.Fit, alignment = Alignment.CenterStart,
             modifier = Modifier.fillMaxWidth().height(32.dp))
     }

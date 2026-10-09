@@ -16,6 +16,7 @@ import com.github.nacabaro.vbhelper.domain.world.RecruitmentState
 import com.github.nacabaro.vbhelper.domain.world.WorldSpawn
 import com.github.nacabaro.vbhelper.domain.digifarm.WildRelationship
 import com.github.nacabaro.vbhelper.dtos.WorldDtos
+import com.github.nacabaro.vbhelper.dtos.DebugSpawnCharacter
 import com.github.nacabaro.vbhelper.domain.identity.IndividualIdentity
 import com.github.nacabaro.vbhelper.utils.DeviceType
 import com.github.nacabaro.vbhelper.world.ecosystem.WorldInteractionRepository
@@ -30,14 +31,18 @@ import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.random.Random
 
-class WorldRepository(private val db: AppDatabase, private val clock: () -> Long = System::currentTimeMillis) {
+class WorldRepository(private val db: AppDatabase,
+                      private val scanPercentagePerDefeat: () -> Int = { com.github.nacabaro.vbhelper.source.DigimonScanPolicy.NORMAL_GAIN },
+                      private val clock: () -> Long = System::currentTimeMillis) {
     private val spawnDao: WorldSpawnDao = db.worldSpawnDao()
     private val biomeDetector = OpenStreetMapBiomeDetector()
-    val interactions = WorldInteractionRepository(db, clock)
+    val interactions = WorldInteractionRepository(db, scanPercentagePerDefeat, clock)
     private val _currentBiome = MutableStateFlow(WorldBiome.NULL)
     val currentBiome = _currentBiome.asStateFlow()
 
     companion object {
+        /** Chat trust gains slow down at/above this value so quests stay the compelling path to maximum. */
+        const val CONTACT_SOFT_CAP = 75
         private const val NEARBY_RADIUS_METERS = 350.0
         private const val TARGET_NEARBY_COUNT = 8
         // WorldScreen shows a 1 km radius at its furthest (50%) zoom level.
@@ -48,8 +53,6 @@ class WorldRepository(private val db: AppDatabase, private val clock: () -> Long
         private const val GLOBAL_ACTIVE_CAP = 60
         private const val DEBUG_SPAWN_RADIUS_METERS = 20.0
 
-        /** Placeholder: recrutamento exige o Digimon ativo com 5000+ vitais. */
-        const val RECRUIT_VITALS_REQUIREMENT = 5000
     }
 
     fun observeSpawns(): Flow<List<WorldDtos.SpawnWithDetails>> =
@@ -73,27 +76,62 @@ class WorldRepository(private val db: AppDatabase, private val clock: () -> Long
 
     suspend fun ensureSpawnsForBiome(latitude: Double, longitude: Double, biome: WorldBiome) {
         if (GeoPoint.fromOrNull(latitude, longitude) == null) return
-        db.withTransaction { ensureSpawnsLocked(latitude, longitude, biome) }
+        db.withTransaction {
+            materializeQuestTargetsLocked(latitude, longitude)
+            ensureSpawnsLocked(latitude, longitude, biome)
+        }
     }
 
     fun publishSpawnBiome(biome: WorldBiome) { _currentBiome.value = biome }
 
-    /** Creates one short-lived wild encounter near the current player location for debug builds. */
-    suspend fun spawnDebugDigimon(latitude: Double, longitude: Double): Long? =
-        db.withTransaction { spawnDebugDigimonLocked(latitude, longitude) }
-
-    private suspend fun spawnDebugDigimonLocked(latitude: Double, longitude: Double): Long? {
-        val player = GeoPoint.fromOrNull(latitude, longitude) ?: return null
+    private suspend fun materializeQuestTargetsLocked(latitude: Double, longitude: Double) {
+        val player = GeoPoint.fromOrNull(latitude, longitude) ?: return
         val now = clock()
-        interactions.reconcileLocked()
-        spawnDao.deleteExpired(now)
+        val claimed = db.worldInteractionDao().getClaimedIndividuals().toSet()
+        for (objective in db.questDao().pendingTargets()) {
+            val individual = objective.targetIndividualId ?: continue
+            val existing = spawnDao.getByIndividualId(individual)
+            if (existing != null && (individual in claimed || distanceMeters(latitude, longitude, existing.latitude, existing.longitude) <= WORLD_VISIBLE_RADIUS_METERS)) continue
+            if (db.userCharacterDao().getByIndividualIdSync(individual).isNotEmpty()) continue
+            if (existing == null && spawnDao.countActive(now) >= GLOBAL_ACTIVE_CAP) break
+            val character = objective.targetCardCharacterId?.let { db.characterDao().getById(it) } ?: continue
+            val random = Random(individual.hashCode())
+            val distance = 30.0 + random.nextDouble() * 90.0
+            val angle = random.nextDouble() * Math.PI * 2
+            val point = RadarWorldGeometry.offset(player, distance * cos(angle), distance * sin(angle))
+            if (existing == null) {
+                spawnDao.insert(WorldSpawn(cardCharacterId = character.id, individualId = individual,
+                    latitude = point.latitude, longitude = point.longitude, spawnedAt = now,
+                    expiresAt = Long.MAX_VALUE, interacted = true))
+            } else {
+                spawnDao.relocateQuestTarget(existing.id, point.latitude, point.longitude,
+                    db.worldEcosystemDao().getSession()?.tickIndex ?: existing.movementTick)
+            }
+        }
+        spawnDao.releaseFinishedQuestTargets(now + 30 * 60 * 1000L)
+    }
 
-        val characters = db.characterDao().getCharactersForWorldSpawns()
-        if (characters.isEmpty()) return null
+    suspend fun getDebugSpawnCharacters(): List<DebugSpawnCharacter> =
+        db.characterDao().getDebugSpawnCharacters()
+
+    /** An explicit debug selection may use any loaded card, regardless of automatic spawn settings. */
+    suspend fun spawnDebugDigimon(latitude: Double, longitude: Double, cardCharacterId: Long? = null): Long? =
+        db.withTransaction { spawnDebugDigimonLocked(latitude, longitude, cardCharacterId) }
+
+    private suspend fun spawnDebugDigimonLocked(latitude: Double, longitude: Double, cardCharacterId: Long?): Long? {
+        val player = GeoPoint.fromOrNull(latitude, longitude) ?: return null
         val speciesNames = db.speciesProfileDao().getAll().associate { profile ->
             profile.cardCharacterId to (profile.matchedName ?: profile.speciesName)
         }
-        val character = WorldSpawnSelector.selectCharacter(characters = characters, speciesNames = speciesNames) ?: return null
+        val character = if (cardCharacterId != null) {
+            db.characterDao().getById(cardCharacterId)
+        } else {
+            WorldSpawnSelector.selectCharacter(
+                characters = db.characterDao().getCharactersForWorldSpawns(), speciesNames = speciesNames)
+        } ?: return null
+        val now = clock()
+        interactions.reconcileLocked()
+        spawnDao.deleteExpired(now)
         val activeSpawns = spawnDao.getActiveSpawnsSync(now)
         val claimed = db.worldInteractionDao().getClaimedIndividuals().toSet()
         val evictionsNeeded = (activeSpawns.size + 1 - GLOBAL_ACTIVE_CAP).coerceAtLeast(0)
@@ -245,22 +283,27 @@ class WorldRepository(private val db: AppDatabase, private val clock: () -> Long
     /**
      * Aplica o delta de mood emitido pelo LLM, mas com peso assimétrico:
      * cai mais rápido do que sobe (mais fácil desagradar do que agradar).
+     * Acima de 75 de confiança, ganhos positivos caem para um quarto (mínimo +1)
+     * para que as quests continuem sendo o caminho atraente até o máximo;
+     * perdas nunca são desaceleradas.
      */
     suspend fun applyWildMoodDelta(individualId: String, rawDelta: Int, interactionId: String? = null): Int? = db.withTransaction {
         validatePlayerChatMutationLocked(individualId, interactionId)
         val spawn = spawnDao.getByIndividualId(individualId)
         val relationship = db.wildRelationshipDao().get(individualId) ?: return@withTransaction null
         val scaledDelta = WildMoodAnalyzer.scaleDelta(rawDelta)
-        val newMood = (relationship.trust + scaledDelta).coerceIn(0, 100)
+        // Fast bonding below the contact threshold, slow grind above it, always moving.
+        val pacedDelta = if (scaledDelta > 0 && relationship.trust >= CONTACT_SOFT_CAP) {
+            (scaledDelta / 4).coerceAtLeast(1)
+        } else scaledDelta
+        val newMood = (relationship.trust + pacedDelta).coerceIn(0, 100)
         db.wildRelationshipDao().updateTrust(individualId, newMood, clock())
         if (spawn != null) spawnDao.updateMood(individualId, newMood)
         newMood
     }
 
-    suspend fun meetsRecruitmentRequirements(): Boolean {
-        val active = db.userCharacterDao().getActiveCharacter().first() ?: return false
-        return active.vitalPoints >= RECRUIT_VITALS_REQUIREMENT
-    }
+    suspend fun meetsRecruitmentRequirements(individualId: String): Boolean =
+        com.github.nacabaro.vbhelper.quests.QuestRepository(db).recruitmentReadyLocked(individualId)
 
     suspend fun markPendingRecruitment(spawnId: Long) {
         db.withTransaction {
@@ -285,8 +328,17 @@ class WorldRepository(private val db: AppDatabase, private val clock: () -> Long
     }
 
     /** Participant roles and the unique result ledger are authoritative, including losses. */
-    suspend fun recordRadarBattleResult(interactionId: String, outcome: BattleOutcome): Boolean =
+    suspend fun recordRadarBattleResult(interactionId: String, outcome: BattleOutcome,
+        items: List<com.github.nacabaro.vbhelper.battle.offline.core.BattleItemSnapshot>? = null,
+        snapshot: com.github.nacabaro.vbhelper.battle.offline.core.BattleSnapshot? = null): Boolean = db.withTransaction {
+        if (snapshot != null) {
+            require(snapshot.result?.outcome == outcome)
+            com.github.nacabaro.vbhelper.quests.QuestBattleFacts(db).recordTerminalLocked(interactionId, snapshot, clock())
+        }
+        val inventory = snapshot?.trainingItems ?: items
+        if (inventory != null) com.github.nacabaro.vbhelper.quests.QuestBattleInventory(db).checkpointLocked(interactionId, inventory, clock())
         interactions.completeBattle(interactionId, outcome)
+    }
 
     /** Converte o spawn selvagem em um UserCharacter real, no Storage. */
     suspend fun recruitSpawn(spawnId: Long, interactionId: String? = null): Result<Long> {
@@ -299,19 +351,26 @@ class WorldRepository(private val db: AppDatabase, private val clock: () -> Long
     }
 
     /** Recruitment also works from an unlocked Digiline contact after its map spawn expires. */
-    suspend fun recruitIndividual(individualId: String): Result<Long> {
+    suspend fun recruitIndividual(individualId: String, interactionId: String? = null): Result<Long> {
         val relationship = db.wildRelationshipDao().get(individualId)
             ?: return Result.failure(IllegalStateException("Wild contact not found"))
-        return doRecruit(individualId, relationship.cardCharacterId)
+        return doRecruit(individualId, relationship.cardCharacterId, interactionId)
     }
 
     private suspend fun doRecruit(individualId: String, cardCharacterId: Long, interactionId: String? = null): Result<Long> = runCatching {
-        check(meetsRecruitmentRequirements()) { "Requirements not met" }
+        check(meetsRecruitmentRequirements(individualId)) { "Complete this Digimon's recruitment quest first." }
         db.wildRelationshipDao().get(individualId)?.let {
             check(it.recruitmentState != RecruitmentState.RECRUITED.name) { "Already recruited" }
         }
         check(db.userCharacterDao().getByIndividualIdSync(individualId).isEmpty()) { "Already in Storage" }
         val cardCharacter = db.characterDao().getById(cardCharacterId) ?: error("Species not found")
+        val card = db.cardDao().getCardById(cardCharacter.cardId) ?: error("Card not found")
+        val quest = db.questDao().forGiver(individualId).singleOrNull { it.category == com.github.nacabaro.vbhelper.quests.QuestCategory.RECRUITMENT }
+            ?: error("Complete this Digimon's recruitment quest first.")
+        val partnerFamily = quest.partnerDeviceType ?: quest.partnerId?.let {
+            db.userCharacterDao().getByIndividualIdSync(it).singleOrNull()?.characterType
+        }
+        val beProfile = card.isBEm || partnerFamily == DeviceType.BEDevice
 
         val userCharacter = UserCharacter(
             individualId = individualId,
@@ -319,7 +378,7 @@ class WorldRepository(private val db: AppDatabase, private val clock: () -> Long
             ageInDays = 0,
             mood = 80,
             vitalPoints = 0,
-            transformationCountdown = 0,
+            transformationCountdown = if (beProfile) 0 else 1,
             injuryStatus = NfcCharacter.InjuryStatus.None,
             trophies = 0,
             currentPhaseBattlesWon = 0,
@@ -328,7 +387,7 @@ class WorldRepository(private val db: AppDatabase, private val clock: () -> Long
             totalBattlesLost = 0,
             activityLevel = 0,
             heartRateCurrent = 0,
-            characterType = DeviceType.VBDevice,
+            characterType = if (beProfile) DeviceType.BEDevice else DeviceType.VBDevice,
             isActive = false
         )
         val now = clock()
@@ -338,7 +397,8 @@ class WorldRepository(private val db: AppDatabase, private val clock: () -> Long
         var characterId = 0L
         db.withTransaction {
             releasePlayerChatForMutationLocked(individualId, interactionId)
-            check((db.userCharacterDao().getActiveVitalPoints() ?: 0) >= RECRUIT_VITALS_REQUIREMENT) { "Requirements not met" }
+            check(com.github.nacabaro.vbhelper.quests.QuestRepository(db).recruitmentReadyLocked(individualId)) { "Complete this Digimon's recruitment quest first." }
+            check(db.questDao().unfinishedTargetCount(individualId) == 0) { "This Digimon is still needed by an active quest." }
             check(db.userCharacterDao().getByIndividualIdSync(individualId).isEmpty()) { "Already in Storage" }
             // Atomically claim the recruit. A double tap/concurrent recruitment
             // cannot clone it: the spawn row, or the wild contact, is claimed
@@ -354,9 +414,18 @@ class WorldRepository(private val db: AppDatabase, private val clock: () -> Long
             }
             characterId = db.userCharacterDao().insertCharacterData(userCharacter)
 
-            db.userCharacterDao().insertVBCharacterData(
-                VBCharacterData(id = characterId, generation = 0, totalTrophies = 0)
-            )
+            if (beProfile) {
+                db.userCharacterDao().insertBECharacterData(com.github.nacabaro.vbhelper.domain.device_data.BECharacterData(
+                    id = characterId, trainingHp = 0, trainingAp = 0, trainingBp = 0,
+                    remainingTrainingTimeInMinutes = 6000, itemEffectMentalStateValue = 0,
+                    itemEffectMentalStateMinutesRemaining = 0, itemEffectActivityLevelValue = 0,
+                    itemEffectActivityLevelMinutesRemaining = 0, itemEffectVitalPointsChangeValue = 0,
+                    itemEffectVitalPointsChangeMinutesRemaining = 0, abilityRarity = NfcCharacter.AbilityRarity.None,
+                    abilityType = 0, abilityBranch = 0, abilityReset = 0, rank = 0, itemType = 0,
+                    itemMultiplier = 0, itemRemainingTime = 0, otp0 = "", otp1 = "", minorVersion = 0, majorVersion = 0))
+            } else {
+                db.userCharacterDao().insertVBCharacterData(VBCharacterData(id = characterId, generation = 0, totalTrophies = 0))
+            }
 
             // Use the CardCharacter primary key directly. The previous implementation
             // looked it up again by (charaIndex, cardId), which could leave a character
@@ -383,13 +452,14 @@ class WorldRepository(private val db: AppDatabase, private val clock: () -> Long
                     missionType = SpecialMission.Type.NONE
                 )
             }
-            db.userCharacterDao().insertSpecialMissions(*missions.toTypedArray())
+            if (!beProfile) db.userCharacterDao().insertSpecialMissions(*missions.toTypedArray())
 
             db.dexDao().insertCharacter(cardCharacter.charaIndex, cardCharacter.cardId, now)
             com.github.nacabaro.vbhelper.source.EvolutionHistoryRepository(db).repairCharacter(characterId)
             db.wildRelationshipDao().updateRecruitmentState(
                 individualId, RecruitmentState.RECRUITED.name, now
             )
+            com.github.nacabaro.vbhelper.quests.QuestRepository(db).completeRecruitmentLocked(individualId)
         }
         characterId
     }

@@ -9,7 +9,7 @@ class ChatCompletionRequestTest {
     @Test
     fun `request serializes configured roleplay temperature`() {
         val request = ChatCompletionRequest(
-            model = "google/gemma-4-26b-a4b-it:free",
+            model = "openrouter/free",
             messages = listOf(ChatMessageDto("user", "Olá")),
             temperature = 0.95,
             max_tokens = 400
@@ -19,6 +19,6 @@ class ChatCompletionRequestTest {
 
         assertTrue(json.contains("\"temperature\":0.95"))
         assertTrue(json.contains("\"max_tokens\":400"))
-        assertTrue(json.contains("\"model\":\"google/gemma-4-26b-a4b-it:free\""))
+        assertTrue(json.contains("\"model\":\"openrouter/free\""))
     }
 }

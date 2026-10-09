@@ -24,11 +24,26 @@ data class BattleParticipantProfile(
     val trainingAp: Int,
     val vitalPoints: Int,
     val mood: Int,
-    val isBemCard: Boolean
+    val isBemCard: Boolean,
+    /** Raw SpeciesProfile.specialMoves JSON; parsed lazily so the DAO stays a plain projection. */
+    val specialMovesJson: String? = null,
+    /** Solo Blast Evolution slot (NONE/POWER/FORM); see BlastEvolutionSlot. */
+    val blastMode: String = "NONE",
+    /** Target species for a FORM Blast. */
+    val blastTargetSpecies: String? = null,
+    /** Duo Jogress slot: result species chosen by this individual as fusion lead. */
+    val jogressResultSpecies: String? = null
 ) {
     /** Stable across side changes and battle sessions; consumed by the RNG phase. */
     val stableRngKey: String
         get() = individualId
+
+    /** First species skill-list entry, used as the innate special's display name. */
+    fun firstSpecialMove(): String? = runCatching {
+        val raw = specialMovesJson?.takeIf { it.isNotBlank() } ?: return null
+        com.google.gson.JsonParser.parseString(raw).asJsonArray
+            .firstOrNull()?.asString?.takeIf { it.isNotBlank() }
+    }.getOrNull()
 
     val statSourceScale: BattleStatSourceScale
         get() = if (isBemCard) BattleStatSourceScale.CARD_BEM else BattleStatSourceScale.CARD_DIM

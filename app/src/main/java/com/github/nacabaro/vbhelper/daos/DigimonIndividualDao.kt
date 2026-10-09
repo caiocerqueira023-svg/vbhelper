@@ -46,6 +46,25 @@ interface DigimonIndividualDao {
     @Query(
         """
         UPDATE DigimonIndividual
+        SET blastMode = :mode,
+            blastTargetSpecies = :targetSpecies
+        WHERE individualId = :individualId
+        """
+    )
+    suspend fun updateBlastChoice(individualId: String, mode: String, targetSpecies: String?)
+
+    @Query(
+        """
+        UPDATE DigimonIndividual
+        SET jogressResultSpecies = :resultSpecies
+        WHERE individualId = :individualId
+        """
+    )
+    suspend fun updateJogressChoice(individualId: String, resultSpecies: String?)
+
+    @Query(
+        """
+        UPDATE DigimonIndividual
         SET nickname = :nickname
         WHERE individualId = (
             SELECT individualId FROM UserCharacter WHERE id = :characterId

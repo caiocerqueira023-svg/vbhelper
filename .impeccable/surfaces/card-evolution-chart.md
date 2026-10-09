@@ -7,6 +7,56 @@ related_targets: ["app/src/main/java/com/github/nacabaro/vbhelper/screens/cardSc
 
 # Dim evolution dex
 
+## Scan conversion extension
+
+Mode: Operate. Extend existing details with per-imported-entry scan progress and manual conversion into Storage.
+
+THESIS: A visible 100% acquisition goal connects won Radar encounters to the existing collection.
+OWN-WORLD: Inherit the existing Material type, cut-corner tonal dialogs, cyan progress, and imported sprites.
+STORY: Earn data, inspect its percentage, preview the scanned form and card, optionally name a fresh partner, and convert into Storage.
+FIRST VIEWPORT: Scan progress follows ownership status; conversion sits above the pinned Close/Jogress actions. Loading, insufficient data, saving, success, and failure remain explicit.
+FORM: Precisely scoped code-led extension of an existing surface; no concept seed or replacement visual world.
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance
+
+Victory feedback displays only committed reward receipts. Settings adds a debug-build-only, persisted one-win scan switch in the existing native list. No new raster assets are supplied. Native execution remains subject to the existing build-check-only verification scope.
+
+### Scan behavior and verification
+
+- Progress is scoped to each local `cardCharacterId`: **+20 percentage points per
+  distinct opposing wild** only on player `ALLIED_VICTORY`, capped at **100%**.
+  Friendly/autonomous encounters, losses, draws, and abandonment award no scan.
+  Reward and result receipt persistence is atomic; feedback uses committed receipts.
+- Dex offers manual form/card preview and optional nickname, consuming **100%** into
+  a fresh inactive Storage individual with its VB/BE profile. The corrected initial
+  countdown is **1 for VB, 0 for BE**. Convert and Close remain pinned outside
+  scrolling content; English, Portuguese, and Japanese UI strings are implemented.
+- Settings persists the debug switch, awarding **100 percentage points per eligible
+  defeat** only for a debuggable application; release ignores its saved value.
+  Schema **32** is generated and the additive **31→32** migration is registered.
+- Supplied final verification command:
+  `.\gradlew.bat test :app:compileIntegrityCheckAndroidTestKotlin :app:lintDebug :app:assembleDebug --offline --console=plain --max-workers=2`
+  passed with **BUILD SUCCESSFUL**. Full-app HTML records **438 cases, zero failures,
+  three existing private-fixture skips** (435 executions), including **nine new
+  `DigimonScanPolicyTest` passes**. These are scan-extension results; historical
+  chart counts below retain their original verification scope.
+- `py -3 -B scripts/test-digimon-scan-db.py` passed **five** host SQLite tests for
+  migration/retention, per-entry isolation, guarded consumption, rollback, and
+  receipt uniqueness. `DigimonScanPersistenceTest` and modified
+  `WorldInteractionPersistenceTest`/`DexCharacterDetailsTest` are **compile-only**;
+  actual Room/Compose assertions were not executed. Lint passed the existing
+  baseline with **174 warnings, seven hints, no new errors**. Debug APK:
+  `app/build/outputs/apk/debug/app-debug.apk`.
+- Initial source review required the VB countdown fix; the reviewer then scored
+  it **resolved**. **Ship verdict: source fix only, no native approval.** The
+  extension inherits the existing design system; its documentation is confined to
+  this brief and TESTING.md. No new shipping rasters were added.
+
+Deferred native acceptance: end-to-end wild victories with normal/debug toggles;
+conversion/restart/nickname/inactive Storage and VB/BE export, including a full farm;
+localized UI, large fonts, reduced motion, Back, IME, pinned actions and TalkBack;
+and genuine Room migrations/persistence assertions. No screenshots, device, or
+runtime evidence is claimed. TESTING.md records the commands and acceptance cases.
+
 Mode: Operate. Owners browse every character on an imported DiM/BEM, follow evolution/Jogress routes, and inspect readable stats, species information, and requirements.
 
 Confirmed: the reference's vertical evolution chart replaces the grid; shared overlapping connector buses are intentional and their route ambiguity is acceptable. Reuse grayscale/static-color/animated-color ownership states; keep Jogress initially off with an always-visible labeled toggle, disabled without stored routes. Fit/zoom sits subtly over the chart; remove drag/pinch text and the separate controls strip. The imported-logo footer meets the app bottom navigation without a gap. Selection cards keep active cyan technical frames; info/Jogress dialogs use medium cut-corner tonal Material Cards and pinned actions. Dex gains top-left multi-file Import opposite Edit, sharing Settings' importer.

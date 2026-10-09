@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.VBHelper" parent="Theme.VBHelper.Base">
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+    <style name="Theme.VBHelper.Arena" parent="Theme.VBHelper.Arena.Base">
+        <item name="android:forceDarkAllowed">false</item>
+    </style>
+</resources>

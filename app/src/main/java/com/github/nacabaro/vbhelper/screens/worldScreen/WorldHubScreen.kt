@@ -37,7 +37,10 @@ fun WorldScreen(
         worldEntry.savedStateHandle.getStateFlow<String?>("radar-challenge",null)
     }.collectAsState()
     val incomingInteraction by remember(worldEntry) { worldEntry.savedStateHandle.getStateFlow<String?>("radar-interaction",null) }.collectAsState()
-    LaunchedEffect(incomingChallenge,incomingInteraction) { if(incomingChallenge!=null || incomingInteraction!=null) selectedTab=0 }
+    val incomingQuestTarget by remember(worldEntry) { worldEntry.savedStateHandle.getStateFlow<String?>("radar-quest-target",null) }.collectAsState()
+    LaunchedEffect(incomingChallenge,incomingInteraction,incomingQuestTarget) {
+        if(incomingChallenge!=null || incomingInteraction!=null || incomingQuestTarget!=null) selectedTab=0
+    }
     when (selectedTab) {
         0 -> RadarScreen(
             navController = navController,
@@ -63,6 +66,7 @@ internal fun WorldSectionTabs(
     selectedTab: Int,
     onTabSelected: (Int) -> Unit
 ) {
+    val indicatorColor = VitalCyan
     PrimaryTabRow(
         selectedTabIndex = selectedTab,
         containerColor = MaterialTheme.colorScheme.background,
@@ -77,7 +81,7 @@ internal fun WorldSectionTabs(
             modifier = Modifier.drawBehind {
                 if (selectedTab == 0) {
                     drawLine(
-                        color = VitalCyan,
+                        color = indicatorColor,
                         start = Offset(12.dp.toPx(), size.height - 2.dp.toPx()),
                         end = Offset(size.width - 12.dp.toPx(), size.height - 2.dp.toPx()),
                         strokeWidth = 3.dp.toPx()
@@ -99,7 +103,7 @@ internal fun WorldSectionTabs(
             modifier = Modifier.drawBehind {
                 if (selectedTab == 1) {
                     drawLine(
-                        color = VitalCyan,
+                        color = indicatorColor,
                         start = Offset(12.dp.toPx(), size.height - 2.dp.toPx()),
                         end = Offset(size.width - 12.dp.toPx(), size.height - 2.dp.toPx()),
                         strokeWidth = 3.dp.toPx()

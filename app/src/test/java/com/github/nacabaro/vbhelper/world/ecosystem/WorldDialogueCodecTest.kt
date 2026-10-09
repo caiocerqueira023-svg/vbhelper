@@ -34,6 +34,30 @@ class WorldDialogueCodecTest {
             WorldDialogueCodec.parse("""{"lines":[{"speakerId":"a","text":"Will you spar?"}],"intent":{"type":"CHALLENGE_BATTLE","speakerId":"a","targetIds":["b"],"evidenceIds":["missing"],"reason":"sparring","sparring":true}}""", setOf("a"), emptySet(), targetsAllowed = setOf("a","b"))
         }
     }
+    @Test fun abbreviatedAndLowercaseTypesStillResolveToBattleIntents() {
+        val accept = WorldDialogueCodec.parse("""{"lines":[{"speakerId":"a","text":"Lets do it!"}],"intent":{"type":"ACCEPT","speakerId":"a","targetIds":["trainer"],"evidenceIds":["this:a"],"reason":"accepted the duel","sparring":true}}""", setOf("a"), emptySet(), targetsAllowed = setOf("a","trainer")).intent
+        assertNotNull(accept)
+        assertEquals(DialogueIntentType.ACCEPT_CHALLENGE, accept?.type)
+        assertEquals(true, accept?.sparring)
+        val lower = WorldDialogueCodec.parse("""{"lines":[{"speakerId":"a","text":"En garde."}],"intent":{"type":"challenge_battle","speakerId":"a","targetIds":["trainer"],"evidenceIds":["this:a"],"reason":"hostile attack","sparring":false}}""", setOf("a"), emptySet(), targetsAllowed = setOf("a","trainer")).intent
+        assertEquals(DialogueIntentType.CHALLENGE_BATTLE, lower?.type)
+    }
+    @Test fun singularEvidenceIdAndCapitalizedTrainerAreAccepted() {
+        val result = WorldDialogueCodec.parse("""{"lines":[{"speakerId":"a","text":"We fight."}],"intent":{"type":"CHALLENGE_BATTLE","speakerId":"a","targetIds":["Trainer"],"evidenceId":"this:a","reason":"rivalry","sparring":true}}""", setOf("a"), emptySet(), targetsAllowed = setOf("a","trainer")).intent
+        assertEquals(DialogueIntentType.CHALLENGE_BATTLE, result?.type)
+        assertEquals(listOf("trainer"), result?.targetIds)
+    }
+    @Test fun overlongReasonIsTruncatedInsteadOfDroppingAFightAgreement() {
+        val longReason = "x".repeat(500)
+        val result = WorldDialogueCodec.parse("""{"lines":[{"speakerId":"a","text":"Lets do it!"}],"intent":{"type":"ACCEPT_CHALLENGE","speakerId":"a","targetIds":["trainer"],"evidenceIds":["this:a"],"reason":"$longReason","sparring":true}}""", setOf("a"), emptySet(), targetsAllowed = setOf("a","trainer")).intent
+        assertEquals(DialogueIntentType.ACCEPT_CHALLENGE, result?.type)
+        assertTrue((result?.reason?.length ?: 999) <= 160)
+    }
+    @Test fun unknownIntentTypeStillFailsClosed() {
+        assertThrows(IllegalArgumentException::class.java) {
+            WorldDialogueCodec.parse("""{"lines":[{"speakerId":"a","text":"Attack!"}],"intent":{"type":"GRANT_REWARD","speakerId":"a","targetIds":["trainer"],"evidenceIds":["this:a"],"reason":"loot","sparring":false}}""", setOf("a"), emptySet(), targetsAllowed = setOf("a","trainer"))
+        }
+    }
     @Test fun contextualSparringUsesAnAttributedCurrentLineAndAnAllowedTarget() {
         val result = WorldDialogueCodec.parse("""{"lines":[{"speakerId":"a","text":"Will you spar with me?"}],"intent":{"type":"CHALLENGE_BATTLE","speakerId":"a","targetIds":["trainer"],"evidenceIds":["this:a"],"reason":"friendly practice","sparring":true}}""", setOf("a"), emptySet(), targetsAllowed = setOf("a","trainer"))
         assertEquals(DialogueIntentType.CHALLENGE_BATTLE, result.intent!!.type)

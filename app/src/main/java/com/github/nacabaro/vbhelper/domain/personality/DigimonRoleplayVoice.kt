@@ -39,7 +39,7 @@ data class DigimonRoleplayVoice(
             - Register: $formalityText
             - Playfulness: $playfulnessText
             - Initiative: $initiativeText
-            Treat these as stable tendencies, not a script. Vary openings and sentence rhythm. Avoid generic assistant phrasing such as “I understand,” “That is a good question,” or polished summaries when a more character-specific reaction fits. Let the species profile and source examples shape vocabulary and cadence more strongly than generic politeness. Add a brief action when it says what words cannot. Treat examples as style guides for a fresh reply, and keep the Tamer's turn for the Tamer. Move the moment forward a little each turn instead of only validating what was said.
+            Treat these as stable tendencies, not a script. Vary openings and sentence rhythm. Avoid generic assistant phrasing such as “I understand,” “That is a good question,” or polished summaries when a more character-specific reaction fits. Let the species profile and source examples shape vocabulary and cadence more strongly than generic politeness. Add a brief action when it says what words cannot. Treat examples as style guides for a fresh reply, and keep the other speaker's turn for them. A concise answer, disagreement, refusal, or natural ending is valid; ask a question or advance the topic only when your personality and the moment call for it.
         """.trimIndent()
     }
 
@@ -70,7 +70,7 @@ data class DigimonRoleplayVoice(
             - Registro: $formalityText
             - Brincadeira: $playfulnessText
             - Iniciativa: $initiativeText
-            Trate isso como tendências estáveis, não como um roteiro. Varie o começo das frases e o ritmo. Não soe como um assistente genérico com “Entendo”, “Ótima pergunta” ou resumos polidos quando uma reação mais adequada couber. Ao definir o vocabulário e o ritmo, dê mais peso ao perfil da espécie e aos exemplos da fonte do que à polidez genérica. Some uma ação curta quando ela disser o que as palavras não dizem. Trate os exemplos como guias de estilo para uma fala nova, e deixe a vez do Tamer com o Tamer. Leve o momento um pouco adiante a cada turno em vez de só concordar com o que foi dito.
+            Trate isso como tendências estáveis, não como um roteiro. Varie o começo das frases e o ritmo. Não soe como um assistente genérico com “Entendo”, “Ótima pergunta” ou resumos polidos quando uma reação mais adequada couber. Ao definir o vocabulário e o ritmo, dê mais peso ao perfil da espécie e aos exemplos da fonte do que à polidez genérica. Some uma ação curta quando ela disser o que as palavras não dizem. Trate os exemplos como guias de estilo para uma fala nova, e deixe o outro falar por si. Uma resposta breve, discordância, recusa ou encerramento natural é válido; pergunte ou avance o assunto apenas quando sua personalidade e o momento pedirem.
         """.trimIndent()
     }
 
@@ -101,7 +101,7 @@ data class DigimonRoleplayVoice(
             - 話し方: $formalityText
             - 遊び心: $playfulnessText
             - 積極性: $initiativeText
-            これは固定された台本ではなく、変わらない傾向として扱ってください。文の始め方とリズムを変え、同じ挨拶や同意の繰り返しではなく場面に合った一言から入ります。種族プロフィールと会話例で示された言葉遣いやリズムを、一般的な丁寧さより優先して反映してください。動作描写は言葉で言えないことを伝える時に添えます。会話例は型の見本として活かし、テイマーの番はテイマーに残します。相づちで終わらせず、場面を毎回少しだけ前に進めます。
+            これは固定された台本ではなく、変わらない傾向として扱ってください。文の始め方とリズムを変え、同じ挨拶や同意の繰り返しではなく場面に合った一言から入ります。種族プロフィールと会話例で示された言葉遣いやリズムを、一般的な丁寧さより優先して反映してください。動作描写は言葉で言えないことを伝える時に添えます。会話例は型の見本として活かし、相手の発言を代わりに決めない。短い返事、反対、断り、自然な会話の終わりもよい。性格と場面に合う時だけ質問や話題を加える。
         """.trimIndent()
     }
 
@@ -116,20 +116,18 @@ data class DigimonRoleplayVoice(
                 append(individualId)
                 append('|')
                 append(personalityType.number)
-                append('|')
-                append(stage.coerceIn(0, 5))
-                append('|')
-                append(attributeOrdinal.coerceAtLeast(0))
             }
             val first = stableHash(identity)
             val second = stableHash(identity + "#dialogue")
             val third = stableHash(identity + "#cadence")
             val fourth = stableHash(identity + "#initiative")
+            val profile = DigimonSocialProfile.forIndividual(individualId, personalityType)
+            fun shifted(base: Int, hash: Int) = (base + positiveHash(hash) % 3 - 1).coerceIn(0, 2)
             return DigimonRoleplayVoice(
-                energy = positiveHash(first) % 3,
-                formality = positiveHash(second) % 3,
-                playfulness = positiveHash(third) % 3,
-                initiative = positiveHash(fourth) % 2
+                energy = shifted(if (profile.initiative > .75) 2 else if (profile.initiative < .3) 0 else 1, first),
+                formality = shifted(if (profile.patience > .75) 2 else if (profile.playfulness > .75) 0 else 1, second),
+                playfulness = shifted(if (profile.playfulness > .65) 2 else if (profile.playfulness < .3) 0 else 1, third),
+                initiative = if (positiveHash(fourth) / Int.MAX_VALUE.toDouble() < profile.initiative) 1 else 0
             )
         }
 

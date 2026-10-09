@@ -26,9 +26,10 @@ fun EcosystemSnapshot.publicInteractionFor(individualId: String): EcosystemInter
     !it.state.terminal && individualId in it.participantIds && !(it.type == InteractionType.CHAT && it.origin == InteractionOrigin.DIRECT_PLAYER)
 }
 
-fun EcosystemSnapshot.speechFor(individualId: String): String? = publicInteractionFor(individualId)?.utterances
-    ?.lastOrNull { it.speakerId == individualId && (session?.tickIndex ?: 0) - it.tick in 0..8 }
-    ?.body?.take(100)
+fun EcosystemSnapshot.speechFor(individualId: String): String? =
+    (publicInteractionFor(individualId)?.utterances.orEmpty() + trailingUtterances)
+        .filter { it.speakerId == individualId && (session?.tickIndex ?: 0) - it.tick in 0..8 }
+        .maxByOrNull { it.tick }?.body?.take(100)
 
 data class EcosystemIndividual(
     val individualId: String,
@@ -54,7 +55,8 @@ data class EcosystemSnapshot(
     val claimedIndividuals: Set<String> = emptySet(),
     val playerFix: WorldPlayerFix? = null,
     val leaseEpoch: Long = 0,
-    val observedAt: Long = 0
+    val observedAt: Long = 0,
+    val trailingUtterances: List<EcosystemUtterance> = emptyList()
 ) {
     val commandStamp: RadarCommandStamp? get() = session?.let { RadarCommandStamp(leaseEpoch, it.revision, status) }
 }

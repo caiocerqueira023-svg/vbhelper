@@ -20,6 +20,14 @@ interface SpeciesProfileDao {
     @Query("SELECT * FROM SpeciesProfile")
     suspend fun getAll(): List<SpeciesProfile>
 
+    /**
+     * Distinct species names with a profile row, i.e. loaded in at least one
+     * DIM of the app. Used to gate universal Blast/Jogress options: a form or
+     * fusion result is only offered when its species is present here.
+     */
+    @Query("SELECT DISTINCT COALESCE(NULLIF(speciesName, ''), NULLIF(matchedName, '')) FROM SpeciesProfile")
+    suspend fun getPresentSpeciesNames(): List<String?>
+
     @Query("""
         SELECT sp.* FROM SpeciesProfile sp
         JOIN CardCharacter cc ON cc.id = sp.cardCharacterId

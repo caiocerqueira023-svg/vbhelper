@@ -20,10 +20,11 @@ class OfflineTrainingBattleScreenTest {
 
     @Test
     fun arenaAndCommandDeckShareTheVisiblePhoneSurface() {
+        val viewModel = OfflineBattleSessionViewModel()
         composeRule.setContent {
             MaterialTheme {
                 OfflineTrainingBattleScreen(
-                    viewModel = OfflineBattleSessionViewModel(),
+                    viewModel = viewModel,
                     onExit = {}
                 )
             }
@@ -53,10 +54,11 @@ class OfflineTrainingBattleScreenTest {
 
     @Test
     fun touchDeckKeepsNineCommandSlotsInAStableLowerRegion() {
+        val viewModel = OfflineBattleSessionViewModel()
         composeRule.setContent {
             MaterialTheme {
                 OfflineTrainingBattleScreen(
-                    viewModel = OfflineBattleSessionViewModel(),
+                    viewModel = viewModel,
                     onExit = {}
                 )
             }
@@ -83,10 +85,11 @@ class OfflineTrainingBattleScreenTest {
 
     @Test
     fun radarBattleUsesTheSameSeparatedNineCommandDeck() {
+        val viewModel = OfflineBattleSessionViewModel()
         composeRule.setContent {
             MaterialTheme {
                 WorldRadarBattleContent(
-                    viewModel = OfflineBattleSessionViewModel(),
+                    viewModel = viewModel,
                     battleActive = true,
                     onOutcome = {},
                     onExit = {},

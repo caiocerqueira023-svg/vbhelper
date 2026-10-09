@@ -25,6 +25,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -51,7 +52,7 @@ import com.github.nacabaro.vbhelper.dtos.DigilineFarmThread
 import com.github.nacabaro.vbhelper.dtos.DigilineStorageThread
 import com.github.nacabaro.vbhelper.dtos.DigilineWildThread
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
-import com.github.nacabaro.vbhelper.ui.theme.SpaceBlack
+import com.github.nacabaro.vbhelper.ui.theme.OnVitalAccent
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceDeepPurple
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
@@ -123,12 +124,21 @@ fun DigilineScreen(navController: NavController) {
     }
 }
 
+fun trackQuestTarget(navController: NavController, individualId: String) {
+    if (runCatching { navController.getBackStackEntry(NavigationItems.World.route) }.getOrNull() == null) {
+        navController.navigate(NavigationItems.World.route)
+    }
+    navController.getBackStackEntry(NavigationItems.World.route).savedStateHandle["radar-quest-target"] = individualId
+    navController.popBackStack(NavigationItems.World.route, false)
+}
+
 @Composable
 private fun DigilineTab(
     selected: Boolean,
     onClick: () -> Unit,
     label: String
 ) {
+    val indicatorColor = VitalCyan
     Tab(
         selected = selected,
         onClick = onClick,
@@ -137,7 +147,7 @@ private fun DigilineTab(
         modifier = Modifier.drawBehind {
             if (selected) {
                 drawLine(
-                    color = VitalCyan,
+                    color = indicatorColor,
                     start = Offset(12.dp.toPx(), size.height - 2.dp.toPx()),
                     end = Offset(size.width - 12.dp.toPx(), size.height - 2.dp.toPx()),
                     strokeWidth = 3.dp.toPx()
@@ -163,7 +173,9 @@ private fun WildThreadList(items: List<DigilineWildThread>, empty: String, onCli
     if (items.isEmpty()) return EmptyList(empty)
     LazyColumn(Modifier.fillMaxSize()) {
         items(items, key = { it.individualId }) { item ->
-            ThreadRow(item.speciesName ?: "Digimon", item.lastMessage ?: stringResource(R.string.ui_digiline_trust, item.trust), item.unreadCount, null, 0, 0) { onClick(item) }
+            ThreadRow(item.speciesName ?: "Digimon",
+                item.lastMessage ?: stringResource(R.string.ui_digiline_trust, item.trust),
+                item.unreadCount, null, 0, 0) { onClick(item) }
         }
     }
 }
@@ -256,7 +268,7 @@ private fun ThreadRow(
             if (unread > 0) {
                 Badge(
                     containerColor = VitalCyan,
-                    contentColor = SpaceBlack
+                    contentColor = OnVitalAccent
                 ) { Text(unread.toString()) }
             }
         }

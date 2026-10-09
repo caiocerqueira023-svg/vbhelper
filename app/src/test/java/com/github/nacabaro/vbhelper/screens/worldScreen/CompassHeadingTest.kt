@@ -1,5 +1,7 @@
 package com.github.nacabaro.vbhelper.screens.worldScreen
 
+import com.github.nacabaro.vbhelper.world.GeoPoint
+import com.github.nacabaro.vbhelper.world.RadarWorldGeometry
 import org.junit.Assert.*
 import org.junit.Test
 import kotlin.math.cos
@@ -35,6 +37,44 @@ class CompassHeadingTest {
         repeat(1000) { assertEquals(180f, filter.update(null, -23f)!!, 0.001f) }
         repeat(50) { filter.update(293f, -23f) }
         assertEquals(270f, filter.update(293f, -23f)!!, 0.01f)
+    }
+
+    @Test fun `unreliable rotation readings cannot acquire or reverse the radar heading`() {
+        val filter = CompassHeading()
+        repeat(20) { assertNull(filter.update(203f, -23f, sampleUsable = false)) }
+        assertEquals(0f, filter.update(23f, -23f, sampleUsable = true)!!, 0.001f)
+        repeat(100) {
+            assertEquals(0f, filter.update(203f, -23f, sampleUsable = false)!!, 0.001f)
+        }
+        repeat(50) { filter.update(113f, -23f, sampleUsable = true) }
+        assertEquals(90f, filter.update(113f, -23f, sampleUsable = true)!!, 0.01f)
+    }
+
+    @Test fun `walking toward an upright phone bearing approaches the target in both radar modes`() {
+        val origin = GeoPoint(-23.55, -46.63)
+        for (yaw in 0 until 360 step 45) {
+            val radians = Math.toRadians(yaw.toDouble())
+            val target = RadarWorldGeometry.offset(
+                origin, cos(radians) * 100.0, sin(radians) * 100.0)
+            val heading = compassBearing(pose(yaw.toDouble(), 85.0))
+            val camera = radarFirstPersonCamera(heading, 0f)
+            var previousDistance = Double.POSITIVE_INFINITY
+            var previousDepth = Double.POSITIVE_INFINITY
+            for (walked in 0..60 step 10) {
+                val player = RadarWorldGeometry.offset(
+                    origin, cos(radians) * walked, sin(radians) * walked)
+                val relative = RadarWorldGeometry.relative(player, target)
+                val map = relative.mapOffset(heading.toDouble())
+                val point = relative.firstPersonDisplayPoint()
+                val depth = point.x * camera.targetX + point.z * camera.targetZ
+                assertEquals("target stays ahead on map: yaw=$yaw", 0.0, map.xMeters, 0.01)
+                assertTrue(map.yMeters < 0.0)
+                assertTrue("map approaches: yaw=$yaw walked=$walked", -map.yMeters < previousDistance)
+                assertTrue("first person approaches: yaw=$yaw walked=$walked", depth > 0.0 && depth < previousDepth)
+                previousDistance = -map.yMeters
+                previousDepth = depth
+            }
+        }
     }
 
     @Test fun `north crossing follows the short path both ways`() {

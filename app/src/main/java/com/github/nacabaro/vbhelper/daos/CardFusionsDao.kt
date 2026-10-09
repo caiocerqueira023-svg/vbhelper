@@ -23,6 +23,12 @@ interface CardFusionsDao {
     @Query("DELETE FROM CardSpecificJogress WHERE fromCharaId IN (SELECT id FROM CardCharacter WHERE cardId = :cardId)")
     suspend fun deleteSpecificRoutesForCard(cardId: Long)
 
+    @Query("SELECT * FROM CardSpecificJogress WHERE fromCharaId = :charaId")
+    suspend fun getSpecificRoutesFrom(charaId: Long): List<CardSpecificJogress>
+
+    @Query("SELECT * FROM CardFusions WHERE fromCharaId = :charaId")
+    suspend fun getAttributeRoutesFrom(charaId: Long): List<com.github.nacabaro.vbhelper.domain.card.CardFusions>
+
     @Query("""
         SELECT destination.id AS charaId, s.spriteIdle1 AS spriteIdle, s.width AS spriteWidth,
             s.height AS spriteHeight, d.discoveredOn AS discoveredOn,

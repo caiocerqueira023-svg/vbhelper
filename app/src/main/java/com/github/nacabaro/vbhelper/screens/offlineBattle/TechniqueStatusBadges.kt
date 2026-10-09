@@ -10,6 +10,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.res.stringResource
+import com.github.nacabaro.vbhelper.R
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -46,7 +48,7 @@ internal fun TechniqueStatusBadges(
                 shape = CutCornerShape(topStart = 4.dp, bottomEnd = 4.dp)
             ) {
                 Text(
-                    text = "${if (status.tone == TechniqueStatusTone.AILMENT) "STATUS" else "BUFF"} · ${status.name}" +
+                    text = "${if (status.tone == TechniqueStatusTone.AILMENT) stringResource(R.string.ui_battle_badge_status) else stringResource(R.string.ui_battle_badge_buff)} · ${battleStatusLabel(status.effectId, status.name)}" +
                         if (status.chancePercent < 100) " · ${status.chancePercent}%" else "",
                     modifier = Modifier.padding(horizontal = 7.dp, vertical = 3.dp),
                     color = Color.Unspecified,

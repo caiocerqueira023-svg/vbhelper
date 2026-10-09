@@ -1,6 +1,6 @@
 package com.github.nacabaro.vbhelper.chat
 
-const val OPENROUTER_FREE_ROLEPLAY_MODEL = "google/gemma-4-26b-a4b-it:free"
+const val OPENROUTER_FREE_ROLEPLAY_MODEL = "google/gemma-4-31b-it:free"
 
 /** Known OpenAI Chat Completions-compatible gateways. */
 enum class ChatApiProvider(

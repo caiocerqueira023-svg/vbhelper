@@ -28,7 +28,8 @@ class WorldPrivateDuelPolicyTest {
         assertTrue(prompt.contains("WON"))
         assertTrue(prompt.contains("if you win I tell you my name"))
         assertTrue(prompt.contains("ask"))
-        assertTrue(prompt.contains("profile"))
+        assertTrue(prompt.contains("wager"))
+        assertFalse(prompt.contains("configured name"))
         assertTrue(WorldBattleMemoryPrompts.reaction(memory.copy(perspective=BattleMemoryPerspective.LOST)).contains("LOST"))
     }
 }

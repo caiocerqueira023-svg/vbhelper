@@ -8,6 +8,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.SystemBarStyle
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.compose.runtime.Composable
@@ -31,6 +32,8 @@ import com.github.nacabaro.vbhelper.screens.lorebookScreen.LorebookScreenControl
 import com.github.nacabaro.vbhelper.screens.worldScreen.WorldChatScreenControllerImpl
 import com.github.nacabaro.vbhelper.source.VitalWearCharacterImporter
 import com.github.nacabaro.vbhelper.ui.theme.VBHelperTheme
+import com.github.nacabaro.vbhelper.source.AppThemeSettings
+import androidx.compose.ui.graphics.toArgb
 import com.github.nacabaro.vbhelper.components.TechBackground
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -52,6 +55,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val initialTheme = AppThemeSettings.readTheme(getSharedPreferences("app_preferences", 0))
+        setTheme(initialTheme.nativeThemeResource)
         super.onCreate(savedInstanceState)
         applyDefaultLanguageIfUnset()
 
@@ -74,13 +79,18 @@ class MainActivity : AppCompatActivity() {
         val lorebookScreenController = LorebookScreenControllerImpl(this)
         val worldChatScreenController = WorldChatScreenControllerImpl(this)
 
-        enableEdgeToEdge()
+        val palette = settingsScreenController.currentTheme.value.palette
+        val barColor = palette.background.toArgb()
+        val barStyle = if (palette.isDark) SystemBarStyle.dark(barColor)
+            else SystemBarStyle.light(barColor, barColor)
+        enableEdgeToEdge(statusBarStyle = barStyle, navigationBarStyle = barStyle)
 
         initialRoute = getInitialRouteFromIntent(intent)
 
         setContent {
             val appFont by settingsScreenController.currentFont.collectAsState()
-            VBHelperTheme(appFont = appFont) {
+            val appTheme by settingsScreenController.currentTheme.collectAsState()
+            VBHelperTheme(appFont = appFont, appTheme = appTheme) {
                 TechBackground {
                     MainApplication(
                         scanScreenController = scanScreenController,

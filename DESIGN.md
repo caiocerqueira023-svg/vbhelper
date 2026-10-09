@@ -105,6 +105,14 @@ A base escura cria um espaço calmo para sprites e dados. Roxo constrói a atmos
 
 ## Colors
 
+### Selectable Color Themes
+
+- **VB Helper:** preserves the incumbent dark purple/cyan appearance and is the default.
+- **VB Lab:** charcoal and neutral gray surfaces, white lettering, and electric cyan signals, based on the supplied Vital Bracelet Lab references.
+- **VB Arena:** white/silver surfaces, charcoal lettering, and mint-green accents, based on the supplied Vital Bracelet Arena references. Small green text uses a deeper green to remain readable.
+- Users select a saved palette in Settings → Appearance. Phone light/dark mode and wallpaper colors never select or alter it.
+- Variants change colors only: layouts, typography, shapes, imported artwork, interactions, and animation remain shared. The dark-surface rules below describe VB Helper and VB Lab; VB Arena uses equivalent light tonal levels.
+
 A paleta usa profundidade violeta para o mundo do produto e energia ciano para tornar estados vivos e valores importantes imediatamente localizáveis.
 
 ### Primary
@@ -212,3 +220,20 @@ Moldura técnica quadrada para painéis de vitais, itens e Digimon. Os quatro ca
 - **Don't** arredondar painéis que já possuem os quatro cantos reforçados da moldura técnica.
 - **Don't** depender somente de cor para comunicar erro, progresso ou seleção.
 - **Don't** substituir padrões de navegação e interação nativos do Android por controles de aparência iOS.
+
+## Battle finisher motion
+
+- Finisher movies use one snapshot-owned sequence: focus, transform, reveal, charge,
+  release, impact, aftermath, and restore. The attack receives more time than the reveal.
+- Blast Evolution shows the imported result; Jogress stages both sources, hides their
+  bodies and shadows, presents one result, and then restores both originals.
+- Preserve crisp imported pixel art. Original procedural effects stay local to actors,
+  attack paths, and impacts; the arena remains visible without a darkening scrim.
+- Shallow, aspect-fitted camera shots preserve the current side of the attack axis.
+  Result recognition and charge have a settled camera; action shots fit the full path.
+  Player composition returns after the sequence. No automatic orbit during a movie.
+- Titles and committed damage use discreet theme-aware text. Training temporarily
+  compacts its command deck; Radar retains its square viewport and existing World shell.
+- Reduced motion retains correct participant visibility and phase feedback. Audio and
+  haptics honor settings and lifecycle. Native visual/performance acceptance remains
+  pending until device/emulator captures; see `TESTING.md`.

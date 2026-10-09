@@ -1,61 +1,49 @@
 package com.github.nacabaro.vbhelper.ui.theme
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
 
-// ---------------------------------------------------------------------------
-// "Vital Arena" palette
-// Dark navy/purple base inspired by the Vital Bracelet / Pendulum app UI:
-// deep space backgrounds, glassy purple surfaces and a cyan "vitals" accent.
-// ---------------------------------------------------------------------------
-
-// Backgrounds
-val SpaceBlack = Color(0xFF0A0812)
-val DeepPurpleBg = Color(0xFF120F1F)
-val DeepPurpleBgAlt = Color(0xFF171327)
-
-// Surfaces (cards, banners, nav bar)
-val SurfaceDeepPurple = Color(0xFF1C1730)
-val SurfaceElevatedPurple = Color(0xFF251E3D)
-val SurfaceHighlightPurple = Color(0xFF2F2650)
-val SurfaceStroke = Color(0xFF3C3260)
-
-// Brand / primary accents
-val VitalPurple = Color(0xFF8B5CF6)
-val VitalPurpleBright = Color(0xFFA78BFA)
-val VitalPurpleDim = Color(0xFF4C3A82)
-
-// Cyan "vitals" accent (progress rings, active nav item, highlights)
-val VitalCyan = Color(0xFF2DE1FC)
-val VitalCyanDim = Color(0xFF1A8FA6)
-
-// World radar and map overlays
-val RadarCompass = Color(0xFFB0B0B0)
-val RadarFollower = Color(0xFF4FC3F7)
-
-// Warm accent used for the sun / attribute icon highlight
-val VitalOrange = Color.White
-val VitalYellow = Color(0xFFFFD447)
-
-// Status / mission colors (mirrors the colorful mission banners)
-val StatusGreen = Color(0xFF35D48B)
-val StatusGreenDim = Color(0xFF1E6E4C)
-val StatusBlue = Color(0xFF4C8DFF)
-val StatusBlueDim = Color(0xFF25417D)
-val StatusRed = Color(0xFFFF4D6A)
-val StatusRedDim = Color(0xFF7A2436)
-val StatusYellow = Color(0xFFFFC93C)
-val StatusYellowDim = Color(0xFF7A631B)
-
-// Text
-val TextPrimaryOnDark = Color(0xFFF4F1FF)
-val TextSecondaryOnDark = Color(0xFFB7AFD6)
-val TextMutedOnDark = Color(0xFF8A82AC)
-
-// Legacy Material defaults (kept so nothing else referencing them breaks)
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
-
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Existing UI token names remain source-compatible while resolving from the selected
+// palette. Read them in composition and capture the result for drawing/event callbacks.
+val SpaceBlack: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.base
+val DeepPurpleBg: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.background
+val DeepPurpleBgAlt: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.backgroundAlt
+val SurfaceDeepPurple: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.surface
+val SurfaceElevatedPurple: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.surfaceElevated
+val SurfaceHighlightPurple: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.surfaceHighlight
+val SurfaceStroke: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.stroke
+val VitalPurple: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.primary
+val VitalPurpleBright: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.primaryBright
+val VitalPurpleDim: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.primaryDim
+val OnVitalPrimary: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.onPrimary
+val VitalCyan: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.accent
+val VitalCyanDim: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.accentDim
+val OnVitalAccent: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.onAccent
+val RadarCompass: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.compass
+val RadarFollower: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.follower
+val VitalOrange: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.tertiary
+val VitalYellow: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.yellow
+val StatusGreen: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.green
+val StatusGreenDim: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.greenDim
+val StatusBlue: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.blue
+val StatusBlueDim: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.blueDim
+val StatusRed: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.red
+val StatusRedDim: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.redDim
+val StatusYellow: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.statusYellow
+val StatusYellowDim: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.yellowDim
+val TextPrimaryOnDark: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.textPrimary
+val TextSecondaryOnDark: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.textSecondary
+val TextMutedOnDark: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.textMuted
+val OnStatus: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.onStatus
+val TextSignalHint: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.signalHint
+val BattlePanel: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.battlePanel
+val BattleBackdrop: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.battleBackdrop
+val BattleErrorSurface: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.battleErrorSurface
+val BattleErrorOutline: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.battleErrorOutline
+val BattleErrorHint: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.battleErrorHint
+val BattleDestructive: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.battleDestructive
+val BattleEnemyHealth: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.battleEnemyHealth
+val BattleTrack: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.battleTrack
+val SceneTextShadow: Color @Composable @ReadOnlyComposable get() =
+    if (LocalAppPalette.current.isDark) Color.Black else Color.White

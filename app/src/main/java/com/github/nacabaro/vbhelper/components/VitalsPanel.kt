@@ -75,7 +75,7 @@ fun VitalsHeaderStat(
                 Icon(
                     painter = painterResource(icon),
                     contentDescription = label,
-                    tint = TextSecondaryHint,
+                    tint = VitalCyan,
                     modifier = Modifier.size(26.dp)
                 )
             }
@@ -128,8 +128,6 @@ fun VitalsHeaderStat(
         }
     }
 }
-
-private val TextSecondaryHint = VitalCyan
 
 /**
  * Small icon + label + value row, used for the Level / Attribute / Days

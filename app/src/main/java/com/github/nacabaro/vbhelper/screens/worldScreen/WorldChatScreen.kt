@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
@@ -63,6 +64,14 @@ fun WorldChatScreen(
     var conversationReady by remember { mutableStateOf(false) }
     val messages by controller.getHistory(individualId).collectAsState(emptyList())
     val mood by controller.observeMood(individualId).collectAsState(initial = null)
+    val quests by controller.observeQuests(individualId).collectAsState(emptyList())
+    val questByOfferMessage = remember(quests) {
+        quests.mapNotNull { details ->
+            details.quest.offerMessageId?.let { it to details.quest.id }
+        }.toMap()
+    }
+    // Battle-result context is prompt-only state; it is never exhibited as chat history.
+    val visibleMessages = remember(messages) { messages.filter { it.role != "system" } }
     var input by remember { mutableStateOf("") }
     var sending by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -78,6 +87,7 @@ fun WorldChatScreen(
     LaunchedEffect(individualId) {
         // Entering the chat protects this encounter from distance-based eviction.
         controller.markInteracted(individualId)
+        controller.prepareQuests(individualId)
     }
 
     LaunchedEffect(individualId,lifecycle) {
@@ -91,7 +101,10 @@ fun WorldChatScreen(
                 conversationId=opened
                 conversationReady=true
                 launch {
-                    try { withContext(Dispatchers.IO) { app.container.chatRepository.reactToPendingBattles(individualId,cardCharacterId) } }
+                    try { withContext(Dispatchers.IO) {
+                        app.container.chatRepository.reactToPendingBattles(individualId,cardCharacterId)
+                        app.container.chatRepository.reactToPendingQuestOffers(individualId,cardCharacterId)
+                    } }
                     catch(failure:Exception) {
                         if(failure is CancellationException && failure !is TimeoutCancellationException) throw failure
                         error=failure.message
@@ -117,8 +130,8 @@ fun WorldChatScreen(
         }
     }
 
-    LaunchedEffect(messages.size) {
-        if (followingBottom && messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1)
+    LaunchedEffect(visibleMessages.size) {
+        if (followingBottom && visibleMessages.isNotEmpty()) listState.animateScrollToItem(visibleMessages.size - 1)
     }
 
     Scaffold(
@@ -145,7 +158,7 @@ fun WorldChatScreen(
             }
 
             ChatHistoryPanel(
-                isEmpty = messages.isEmpty(),
+                isEmpty = visibleMessages.isEmpty(),
                 emptyMessage = stringResource(R.string.ui_chat_empty),
                 modifier = Modifier
                     .weight(1f)
@@ -158,18 +171,26 @@ fun WorldChatScreen(
                         .padding(horizontal = 8.dp)
                 ) {
                     items(
-                        items = messages,
+                        items = visibleMessages,
                         key = { it.id },
                         contentType = { "chat-message" }
                     ) { message ->
                         val visibleText=if(message.role=="user") message.content else
                             com.github.nacabaro.vbhelper.chat.WorldDialogueCodec.visibleText(message.content,individualId)
                                 ?: com.github.nacabaro.vbhelper.chat.WorldDialogueCodec.unreadableReply(com.github.nacabaro.vbhelper.chat.PromptLocalization.currentLanguageTag())
-                        ChatMessageBubble(
-                            text = visibleText,
-                            isUser = message.role == "user",
-                            onLongClick = { selectedMessage = message.copy(content=visibleText) }
-                        )
+                        val offerQuestId = questByOfferMessage[message.id]
+                        androidx.compose.foundation.layout.Column {
+                            ChatMessageBubble(
+                                text = visibleText,
+                                isUser = message.role == "user",
+                                onLongClick = { selectedMessage = message.copy(content=visibleText) }
+                            )
+                            if (offerQuestId != null) {
+                                TextButton(
+                                    onClick = { com.github.nacabaro.vbhelper.screens.questScreen.openQuestDetails(navController, offerQuestId) }
+                                ) { Text(stringResource(R.string.quest_view_quest)) }
+                            }
+                        }
                     }
                 }
             }
@@ -268,6 +289,7 @@ fun WorldChatScreen(
         val (title, body) = when (event) {
             is WildChatEvent.Recruited -> stringResource(R.string.ui_world_recruited_title) to event.message
             is WildChatEvent.Pending -> stringResource(R.string.ui_world_pending_title) to event.message
+            is WildChatEvent.QuestUpdated -> stringResource(R.string.quest_title) to event.message
             is WildChatEvent.Vanished -> stringResource(R.string.ui_world_vanished_title) to event.message
             is WildChatEvent.Challenge -> stringResource(R.string.ui_world_accept_challenge) to event.message
             WildChatEvent.None -> return@let
@@ -296,6 +318,7 @@ fun WorldChatScreen(
                         is WildChatEvent.Pending -> {
                             Toast.makeText(context, resources.getString(R.string.ui_world_pending_toast), Toast.LENGTH_LONG).show()
                         }
+                        is WildChatEvent.QuestUpdated -> Unit
                         is WildChatEvent.Challenge -> {
                             if(runCatching { navController.getBackStackEntry(NavigationItems.World.route) }.getOrNull()==null) {
                                 navController.navigate(NavigationItems.World.route)

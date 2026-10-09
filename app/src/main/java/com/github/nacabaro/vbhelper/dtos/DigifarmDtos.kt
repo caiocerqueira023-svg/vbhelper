@@ -28,7 +28,8 @@ data class FarmResidentWithDetails(
     val social: Int,
     val funLevel: Int,
     val activityStartedAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val socialTargetId: String? = null
 ) {
     val displayName: String get() = nickname?.takeIf(String::isNotBlank)
         ?: speciesName?.takeIf(String::isNotBlank)
@@ -37,7 +38,7 @@ data class FarmResidentWithDetails(
     override fun equals(other: Any?): Boolean = other is FarmResidentWithDetails &&
         individualId == other.individualId && positionX == other.positionX &&
         positionY == other.positionY && targetX == other.targetX && targetY == other.targetY &&
-        activity == other.activity && energy == other.energy && satiety == other.satiety &&
+        activity == other.activity && socialTargetId == other.socialTargetId && energy == other.energy && satiety == other.satiety &&
         social == other.social && funLevel == other.funLevel &&
         spriteIdle.contentEquals(other.spriteIdle)
 

@@ -2035,7 +2035,19 @@ fun BattlesScreen(
                             offlineBattleParticipant(character, profile).copy(
                                 techniqueIds = com.github.nacabaro.vbhelper.battle.offline.data.GenericTechniqueLoadout
                                     .resolve(techniqueLoadouts[profile.individualId].orEmpty())
-                            )
+                            ).let { participant ->
+                                // The DAO emits an English fallback when the character has no name
+                                // of its own; re-resolve it in the current locale.
+                                val storedId = participant.displayName.removePrefix("Stored Digimon #")
+                                if (storedId != participant.displayName) {
+                                    participant.copy(
+                                        displayName = application.getString(
+                                            R.string.ui_battle_entry_stored_fallback,
+                                            storedId.toLongOrNull() ?: character.id
+                                        )
+                                    )
+                                } else participant
+                            }
                         }
                     }
                     val packagedOfflineOpponents = listOf(
@@ -3052,7 +3064,7 @@ fun MultiLayerAnimatedBattleBackground(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF0A0812))
+            .background(com.github.nacabaro.vbhelper.ui.theme.SpaceBlack)
     ) {
         // Calculate how many times to repeat the image to fill the screen width
         val safeScreenWidth = screenWidth.value.coerceAtLeast(1f)

@@ -16,11 +16,14 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.github.nacabaro.vbhelper.R
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
+import com.github.nacabaro.vbhelper.domain.device_data.BlastEvolutionSlot
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleAttribute
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleAiProfile
 import com.github.nacabaro.vbhelper.battle.offline.data.TrainingBattleStats
@@ -63,6 +66,16 @@ data class OfflineBattleParticipant(
     val personalityType: DigimonPersonalityType = DigimonPersonalityType.FRIENDLY,
     val techniqueIds: List<String> = GenericTechniqueCatalog.defaultTechniqueIds,
     val spriteSet: OfflineBattleSpriteSet? = null,
+    /** Species special-move name for the innate special; null keeps the catalog name. */
+    val specialDisplayNameOverride: String? = null,
+    /** Solo Blast Evolution slot (NONE/POWER/FORM). */
+    val blastMode: String = BlastEvolutionSlot.NONE,
+    /** Target species for a FORM Blast. */
+    val blastTargetSpecies: String? = null,
+    /** Duo Jogress slot: result species chosen by this individual as fusion lead. */
+    val jogressResultSpecies: String? = null,
+    /** Raw species name for universal-table matching; null degrades Jogress to dual-strike. */
+    val speciesName: String? = null,
     val initialHealth: Int? = null,
     val initialEnergy: Int? = null,
     /** Local species key for wild participants; stored partners use character.charId. */
@@ -94,7 +107,18 @@ fun offlineBattleParticipant(
     personalityType: DigimonPersonalityType = DigimonPersonalityType.FRIENDLY,
     individualId: String? = null,
     stableRngKey: String? = null,
-    sourceScale: BattleStatSourceScale? = null
+    sourceScale: BattleStatSourceScale? = null,
+    storedFallbackName: String? = null,
+    /** Species special-move name for the innate special; null keeps the catalog name. */
+    specialDisplayNameOverride: String? = null,
+    /** Solo Blast Evolution slot (NONE/POWER/FORM). */
+    blastMode: String = BlastEvolutionSlot.NONE,
+    /** Target species for a FORM Blast. */
+    blastTargetSpecies: String? = null,
+    /** Duo Jogress slot: result species chosen by this individual as fusion lead. */
+    jogressResultSpecies: String? = null,
+    /** Raw species name for universal-table matching; null degrades Jogress to dual-strike. */
+    speciesName: String? = null
 ): OfflineBattleParticipant {
     val profile = VitalBattleProfile(
         scale = if (character.isBemCard) VitalStatScale.BEM else VitalStatScale.DIM,
@@ -112,7 +136,7 @@ fun offlineBattleParticipant(
         assetCharacterId = null,
         displayName = character.nickname?.takeIf { it.isNotBlank() }
             ?: character.speciesName?.takeIf { it.isNotBlank() }
-            ?: "Stored Digimon #${character.id}",
+            ?: storedFallbackName ?: "Stored Digimon #${character.id}",
         maxHp = maxHp.coerceAtLeast(1),
         attackPower = attackPower.coerceAtLeast(1),
         stage = character.stage,
@@ -121,6 +145,11 @@ fun offlineBattleParticipant(
         individualId = individualId,
         stableRngKey = stableRngKey ?: individualId ?: character.id.toString(),
         personalityType = personalityType,
+        specialDisplayNameOverride = specialDisplayNameOverride,
+        blastMode = blastMode,
+        blastTargetSpecies = blastTargetSpecies,
+        jogressResultSpecies = jogressResultSpecies,
+        speciesName = speciesName,
         statSourceScale = sourceScale ?: when (profile?.scale) {
             VitalStatScale.DIM -> BattleStatSourceScale.CARD_DIM
             VitalStatScale.BEM -> BattleStatSourceScale.CARD_BEM
@@ -166,7 +195,12 @@ fun offlineBattleParticipant(
         personalityType = profile.personalityType ?: DigimonPersonalityType.FRIENDLY,
         individualId = profile.individualId,
         stableRngKey = profile.stableRngKey,
-        sourceScale = profile.statSourceScale
+        sourceScale = profile.statSourceScale,
+        specialDisplayNameOverride = profile.firstSpecialMove(),
+        blastMode = profile.blastMode,
+        blastTargetSpecies = profile.blastTargetSpecies,
+        jogressResultSpecies = profile.jogressResultSpecies,
+        speciesName = character.speciesName
     ).copy(displayName = profile.displayName)
 }
 
@@ -205,6 +239,7 @@ fun assetOfflineBattleParticipant(
         stableRngKey = "asset:$characterId:profile-v1",
         personalityType = DigimonPersonalityType.FRIENDLY,
         techniqueIds = encounter.techniqueIds,
+        speciesName = displayName,
         aiProfile = encounter.ai.copy(profileId = "arena:${encounter.ai.profileId}", autonomousSpecial = false),
         statSourceScale = if (vitalProfile != null) {
             BattleStatSourceScale.ARENA_EXTRACTED
@@ -235,22 +270,22 @@ fun OfflineBattleEntryPanel(
             verticalArrangement = Arrangement.spacedBy(5.dp)
         ) {
             Text(
-                text = "Treino de batalha offline",
+                text = stringResource(R.string.ui_battle_entry_title),
                 color = TextPrimaryOnDark,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "Prepare a equipe e lute na arena 3D. O treino não altera o Storage nem o inventário.",
+                text = stringResource(R.string.ui_battle_entry_subtitle),
                 color = TextSecondaryOnDark,
                 fontSize = 12.sp
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(
                     text = when {
-                        player != null -> "PARCEIRO  ${player.displayName}"
-                        isLoading -> "PARCEIRO  preparando..."
-                        else -> "PARCEIRO  indisponível"
+                        player != null -> stringResource(R.string.ui_battle_entry_partner, player.displayName)
+                        isLoading -> stringResource(R.string.ui_battle_entry_partner_loading)
+                        else -> stringResource(R.string.ui_battle_entry_partner_missing)
                     },
                     modifier = Modifier.weight(1f),
                     color = VitalCyan,
@@ -259,7 +294,7 @@ fun OfflineBattleEntryPanel(
                     maxLines = 1
                 )
                 Text(
-                    text = if (isLoading) "carregando" else "${opponents.size} oponentes",
+                    text = if (isLoading) stringResource(R.string.ui_battle_entry_loading_short) else stringResource(R.string.ui_battle_entry_opponents, opponents.size),
                     color = TextSecondaryOnDark,
                     fontSize = 11.sp
                 )
@@ -274,14 +309,14 @@ fun OfflineBattleEntryPanel(
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             ) {
-                Text("Configurar equipes", fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.ui_battle_entry_configure), fontWeight = FontWeight.Bold)
             }
             Text(
                 text = when {
-                    isLoading -> "Preparando Digimon e oponentes..."
-                    player == null -> "Nenhum Digimon ativo encontrado no Storage."
-                    opponents.isEmpty() -> "Nenhum oponente local está disponível."
-                    else -> "Escolha o formato e os combatentes na próxima etapa."
+                    isLoading -> stringResource(R.string.ui_battle_entry_status_preparing)
+                    player == null -> stringResource(R.string.ui_battle_entry_status_no_partner)
+                    opponents.isEmpty() -> stringResource(R.string.ui_battle_entry_status_no_foes)
+                    else -> stringResource(R.string.ui_battle_entry_status_ready)
                 },
                 modifier = Modifier.height(16.dp),
                 color = TextSecondaryOnDark,

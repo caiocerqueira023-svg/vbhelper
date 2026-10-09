@@ -42,8 +42,8 @@ internal fun trustworthyMagneticField(accuracy: Int, strengthUt: Float, expected
 internal class CompassHeading {
     private var filtered: Float? = null
 
-    fun update(magneticDegrees: Float?, declination: Float): Float? {
-        if (magneticDegrees == null || !magneticDegrees.isFinite() || !declination.isFinite()) {
+    fun update(magneticDegrees: Float?, declination: Float, sampleUsable: Boolean = true): Float? {
+        if (!sampleUsable || magneticDegrees == null || !magneticDegrees.isFinite() || !declination.isFinite()) {
             return filtered
         }
         val target = compassDegrees(magneticDegrees + declination)

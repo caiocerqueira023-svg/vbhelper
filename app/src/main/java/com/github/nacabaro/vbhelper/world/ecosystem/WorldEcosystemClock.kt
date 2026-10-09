@@ -8,7 +8,7 @@ data class EcosystemClockAdvance(
 
 /** Pure clock contract shared by live ticks and resume. No wall clock or network access here. */
 object WorldEcosystemClock {
-    const val RULES_VERSION = 2
+    const val RULES_VERSION = 3
     const val TICK_MILLIS = 1_500L
     const val MAX_CATCH_UP_MILLIS = 30 * 60 * 1_000L
 

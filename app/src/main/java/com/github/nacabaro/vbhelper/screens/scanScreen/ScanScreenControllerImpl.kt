@@ -223,6 +223,10 @@ class ScanScreenControllerImpl(
                     check(IndividualIdentity.decode(nfcCharacter.appReserved1) == transfer.token) { "Transfer token changed." }
                     val transfers = WatchTransferRepository(database)
                     transfers.prepare(transfer)
+                    database.runInTransaction {
+                        com.github.nacabaro.vbhelper.quests.QuestProgress(database).captureExportLocked(
+                            transfer.token, transfer.individualId, nfcCharacter, System.currentTimeMillis())
+                    }
                     if (nfcCharacter is VBNfcCharacter) {
                         Log.d("SendCharacter", "VBNfcCharacter")
                         tagCommunicator.sendCharacter(nfcCharacter)

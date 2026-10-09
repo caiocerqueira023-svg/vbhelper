@@ -1,6 +1,7 @@
 package com.github.nacabaro.vbhelper.screens.itemsScreen
 
 import androidx.activity.ComponentActivity
+import androidx.room.withTransaction
 import androidx.lifecycle.lifecycleScope
 import com.github.cfogrady.vbnfc.vb.SpecialMission
 import com.github.nacabaro.vbhelper.domain.device_data.SpecialMissions
@@ -50,6 +51,7 @@ class ItemsScreenControllerImpl (
     override fun applyItem(itemId: Long, characterId: Long, onCompletion: () -> Unit) {
         context.lifecycleScope.launch {
             val itemName = withContext(Dispatchers.IO) {
+                database.withTransaction {
                 val item = getItem(itemId)
                 check(item.quantity > 0) { "This item is no longer available." }
                 val characterData = database.userCharacterDao().getCharacter(characterId)
@@ -135,6 +137,7 @@ class ItemsScreenControllerImpl (
                     "This item is no longer available."
                 }
                 item.name
+                }
             }
 
             // The state change and inventory consumption are complete now. Do

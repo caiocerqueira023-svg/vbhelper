@@ -42,3 +42,14 @@ Turn a nearby World encounter into a battle without navigating away from the Rad
 ## Verification boundary
 
 Compilation, unit tests, asset structure, and APK packaging can be verified locally. Camera composition, Filament rendering, touch targets, and transition feel require an approved device installation or emulator capture.
+
+## Debug spawn picker direction contract
+
+- **THESIS / Operate:** extend the existing debug control with direct selection of any loaded character; a tap still performs a random spawn, a hold opens selection.
+- **OWN-WORLD:** inherit the Radar's cut-corner outline and Material dialog styling, with theme text roles and pixel-sharp imported sprites.
+- **STORY:** search by species, card, or slot; distinguish same-species variants by card name; tap a row to spawn that exact local character within 20 m.
+- **FIRST VIEWPORT:** the existing debug control gains a brief hold hint. The picker opens with a labelled search field and a bounded, lazy sprite/name/card list; Cancel and Android Back dismiss it.
+- **FORM:** precisely scoped extension, with a single tap/hold gesture handler, 48 dp-plus targets, and loading, retry, empty, and no-match states.
+- **FINISH:** unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance.
+
+Finish review: source/layout and state review completed; host SQLite tests, focused JVM tests, lint, APK assembly, and Android-test compilation verified. Existing DESIGN.md and user-imported sprites supply the visual authority; no new raster assets. Device visual and gesture acceptance remains unverified because no Android device is connected.

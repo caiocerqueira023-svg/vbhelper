@@ -43,6 +43,7 @@ fun TopBanner(
     onModifyClick: (() -> Unit)? = null,
     onImportClick: (() -> Unit)? = null,
     importEnabled: Boolean = true,
+    onScanDataClick: (() -> Unit)? = null,
 ) {
     Box(
         modifier = modifier
@@ -94,7 +95,15 @@ fun TopBanner(
             )
         }
 
-        if (onImportClick != null) {
+        if (onScanDataClick != null) {
+            TopBannerIconChip(
+                icon = R.drawable.baseline_data_24,
+                contentDescription = stringResource(R.string.digimon_scan_title),
+                onClick = onScanDataClick,
+                modifier = Modifier.align(Alignment.CenterStart),
+                accent = true,
+            )
+        } else if (onImportClick != null) {
             TopBannerIconChip(
                 icon = R.drawable.baseline_file_upload_24,
                 contentDescription = stringResource(R.string.cards_import),

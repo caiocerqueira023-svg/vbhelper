@@ -40,7 +40,7 @@ internal object WorldDialoguePolicy {
         }
         if (proposal.type == DialogueIntentType.ACCEPT_CHALLENGE) {
             // An NPC-only transfer requires explicit, reciprocal consent from the two wilds.
-            // Challenges involving the trainer always go through the player's Accept action.
+            // Challenges involving the tamer always go through the player's Accept action.
             val challenge = related.filter {
                 it.initiatorId != "trainer" && "trainer" !in it.targetIds &&
                     it.targetIds == setOf(proposal.speakerId) && targets == setOf(it.initiatorId)

@@ -144,7 +144,23 @@ data class CombatantDefinition(
     val counterTechniqueId: String? = null,
     val signatureTechniqueId: String? = null,
     /** Bounded additive power, measured in this simulator's compact units. */
-    val signaturePowerBonus: Int = 0
+    val signaturePowerBonus: Int = 0,
+    /** Species special-move name shown for the innate special; null keeps the catalog name. */
+    val specialDisplayNameOverride: String? = null,
+    /** Solo Blast Evolution slot (NONE/POWER/FORM); behavior lands in Phase 4. */
+    val blastMode: String = "NONE",
+    /** Target species for a FORM Blast. */
+    val blastTargetSpecies: String? = null,
+    /** Duo Jogress slot: result species chosen by this individual as fusion lead. */
+    val jogressResultSpecies: String? = null,
+    /** Resolved FORM attack name (universal table special); null falls back to own special name. */
+    val blastFormSpecial: String? = null,
+    /** Raw species name for universal-table matching. */
+    val speciesName: String? = null,
+    /** Partner species accepted for the equipped Jogress result (universal + Dex). */
+    val jogressPartnerSpecies: List<String> = emptyList(),
+    /** Partner attribute accepted for the equipped Jogress result (Dex attribute routes). */
+    val jogressPartnerAttribute: BattleAttribute? = null
 )
 
 data class TechniqueDefinition(
@@ -235,7 +251,9 @@ data class BattleStatistics(
     val projectilesMissed: Int = 0,
     val specialsUsed: Int = 0,
     val specialsHit: Int = 0,
-    val specialsMissed: Int = 0
+    val specialsMissed: Int = 0,
+    /** Specials resolved with a confirmed Blast HIT grade. */
+    val blastTimedHits: Int = 0
 )
 
 data class BattleConfiguration(
@@ -273,15 +291,63 @@ sealed interface TrainerAction {
     data object MoveCloser : TrainerAction
     data object KeepDistance : TrainerAction
     data object Support : TrainerAction
+    /** Confirms the Blast timing while the actor's special is in STARTUP; never queued. */
+    data class ConfirmBlastTiming(
+        val fusionResult: String? = null,
+        val fusionSpecial: String? = null
+    ) : TrainerAction
 }
+
+enum class BlastGrade { MISS, HIT }
 
 enum class OrderStatus { QUEUED, EXECUTING, COMPLETED, FAILED, CANCELLED, EXPIRED }
 
 data class OrderUpdate(
     val orderId: Long,
     val status: OrderStatus,
-    val reason: String? = null
+    val reason: String? = null,
+    /** Stable machine-readable failure key; UI maps it to a localized line. */
+    val reasonCode: String? = null
 )
+
+/** Stable order-failure keys published in [OrderUpdate.reasonCode]. */
+object OrderFailure {
+    const val BATTLE_ENDED = "battle_ended"
+    const val PARTNER_MISSING = "partner_missing"
+    const val NOT_ALLIED = "not_allied"
+    const val PARTNER_DEFEATED = "partner_defeated"
+    const val BAD_LIFETIME = "bad_lifetime"
+    const val SUPPORT_PAUSED = "support_paused"
+    const val SUPPORT_NO_WINDOW = "support_no_window"
+    const val SUPPORT_WINDOW_EXPIRED = "support_window_expired"
+    const val BLAST_PAUSED = "blast_paused"
+    const val BLAST_NO_WINDOW = "blast_no_window"
+    const val BLAST_WINDOW_CLOSED = "blast_window_closed"
+    const val FOCUS_NO_TARGET = "focus_no_target"
+    const val ORDER_QUEUE_FULL = "order_queue_full"
+    const val BAD_DEFEND_DURATION = "bad_defend_duration"
+    const val TECHNIQUE_MISSING = "technique_missing"
+    const val COUNTER_REACTION_ONLY = "counter_reaction_only"
+    const val TECHNIQUE_NOT_OWNED = "technique_not_owned"
+    const val TECHNIQUE_COOLDOWN = "technique_cooldown"
+    const val TARGET_MISSING = "target_missing"
+    const val SPECIAL_CHARGING = "special_charging"
+    const val RESOURCES_MISSING = "resources_missing"
+    const val ITEM_MISSING = "item_missing"
+    const val ITEM_BAD_TARGET = "item_bad_target"
+    const val ITEM_DEPLETED = "item_depleted"
+    const val DUO_UNAVAILABLE = "duo_unavailable"
+    const val MOVE_NO_TARGET = "move_no_target"
+    const val TECHNIQUE_STALE = "technique_stale"
+    const val ORDER_INVALID = "order_invalid"
+    const val ORDER_EXPIRED = "order_expired"
+    const val ORDER_TIMED_OUT = "order_timed_out"
+    const val POSITIONING_FAILED = "positioning_failed"
+    const val ITEM_UNUSABLE = "item_unusable"
+    const val ITEM_UNNEEDED = "item_unneeded"
+    const val ORDER_SUPERSEDED = "order_superseded"
+    const val STATUS_INTERRUPTED = "status_interrupted"
+}
 
 data class CombatantSnapshot(
     val combatantId: String,
@@ -309,7 +375,17 @@ data class CombatantSnapshot(
     val specialCharge: Int = 0,
     val maxSpecialCharge: Int = 100,
     val reservedSpecialCharge: Int = 0,
-    val activeTechniqueKind: TechniqueKind? = null
+    val activeTechniqueKind: TechniqueKind? = null,
+    val specialDisplayNameOverride: String? = null,
+    val blastMode: String = "NONE",
+    val blastTargetSpecies: String? = null,
+    val blastFormSpecial: String? = null,
+    val jogressResultSpecies: String? = null,
+    /** Species currently shown in place of the base form during a Blast transform. */
+    val blastFormSpecies: String? = null,
+    val attribute: BattleAttribute = BattleAttribute.NONE,
+    val jogressPartnerSpecies: List<String> = emptyList(),
+    val jogressPartnerAttribute: BattleAttribute? = null
 )
 
 /** Bounded diagnostics for developer tooling; never persisted with the training session. */
@@ -348,6 +424,9 @@ data class BattleResult(
     val statistics: BattleStatistics = BattleStatistics()
 )
 
+/** Cumulative successful damaging hits; independent of the bounded presentation-event tail. */
+data class BattleTechniqueHitCount(val combatantId: String, val targetId: String, val techniqueId: String, val hits: Int)
+
 data class BattleSnapshot(
     val elapsedMillis: Long,
     val isPaused: Boolean,
@@ -366,7 +445,13 @@ data class BattleSnapshot(
     val trainingItems: List<BattleItemSnapshot> = emptyList(),
     val statistics: BattleStatistics = BattleStatistics(),
     val impacts: List<BattleImpactSnapshot> = emptyList(),
-    val rulesetVersion: Int = BattleRules.CURRENT_VERSION
+    val rulesetVersion: Int = BattleRules.CURRENT_VERSION,
+    val techniqueHitCounts: List<BattleTechniqueHitCount> = emptyList(),
+    /** Allied combatantId to Blast window deadline (elapsed millis); absence means MISS. */
+    val pendingBlastTiming: Map<String, Long> = emptyMap(),
+    val finisher: BattleFinisherSnapshot? = null,
+    /** Presentation effects through this event were already shown by a completed cinematic. */
+    val lastFinisherEventCount: Long = 0L,
 )
 
 sealed interface BattleEvent {
@@ -381,6 +466,12 @@ sealed interface BattleEvent {
         val targetId: String?,
         val success: Boolean
     ) : BattleEvent
+    data class BlastTimingOpened(val combatantId: String, val techniqueId: String, val expiresAtMillis: Long) : BattleEvent
+    data class BlastTimingResolved(val combatantId: String, val techniqueId: String, val grade: BlastGrade) : BattleEvent
+    data class BlastFormStarted(val combatantId: String, val targetSpecies: String, val specialName: String) : BattleEvent
+    data class BlastFormEnded(val combatantId: String, val targetSpecies: String) : BattleEvent
+    data class BlastJogressStarted(val leadId: String, val partnerId: String, val resultSpecies: String) : BattleEvent
+    data class BlastJogressEnded(val leadId: String, val resultSpecies: String) : BattleEvent
     data class TechniqueHit(
         val combatantId: String,
         val targetId: String,

@@ -9,6 +9,7 @@ enum class TechniqueStatusTone {
 }
 
 data class TechniqueStatusLabel(
+    val effectId: String,
     val name: String,
     val tone: TechniqueStatusTone,
     val chancePercent: Int = 100
@@ -21,20 +22,20 @@ object TechniqueStatusPresentation {
         .distinctBy { it.name }
 
     private fun forEffect(effect: BattleStatusEffect): TechniqueStatusLabel? = when (effect.id) {
-        "decode_poison" -> TechniqueStatusLabel("Veneno", TechniqueStatusTone.AILMENT)
-        "battle_burn" -> TechniqueStatusLabel("Queimadura", TechniqueStatusTone.AILMENT)
-        "battle_freeze" -> TechniqueStatusLabel("Congelamento", TechniqueStatusTone.AILMENT)
-        "battle_shock" -> TechniqueStatusLabel("Choque", TechniqueStatusTone.AILMENT)
-        "decode_paralysis" -> TechniqueStatusLabel("Paralisia", TechniqueStatusTone.AILMENT)
-        "decode_stun" -> TechniqueStatusLabel("Stun", TechniqueStatusTone.AILMENT)
-        "decode_slow" -> TechniqueStatusLabel("Slow", TechniqueStatusTone.AILMENT)
-        "decode_confusion" -> TechniqueStatusLabel("Confusão", TechniqueStatusTone.AILMENT)
-        "decode_liquid_crystalization" -> TechniqueStatusLabel("Liquid Crystalization", TechniqueStatusTone.AILMENT)
-        "decode_noise" -> TechniqueStatusLabel("Noise", TechniqueStatusTone.AILMENT)
-        "decode_attack_up" -> TechniqueStatusLabel("Ataque ↑", TechniqueStatusTone.BOOST)
-        "decode_defense_up" -> TechniqueStatusLabel("Defesa ↑", TechniqueStatusTone.BOOST)
-        "decode_speed_up" -> TechniqueStatusLabel("Velocidade ↑", TechniqueStatusTone.BOOST)
-        "decode_all_stats_up" -> TechniqueStatusLabel("Todos os atributos ↑", TechniqueStatusTone.BOOST)
+        "decode_poison" -> TechniqueStatusLabel(effect.id, "Veneno", TechniqueStatusTone.AILMENT)
+        "battle_burn" -> TechniqueStatusLabel(effect.id, "Queimadura", TechniqueStatusTone.AILMENT)
+        "battle_freeze" -> TechniqueStatusLabel(effect.id, "Congelamento", TechniqueStatusTone.AILMENT)
+        "battle_shock" -> TechniqueStatusLabel(effect.id, "Choque", TechniqueStatusTone.AILMENT)
+        "decode_paralysis" -> TechniqueStatusLabel(effect.id, "Paralisia", TechniqueStatusTone.AILMENT)
+        "decode_stun" -> TechniqueStatusLabel(effect.id, "Stun", TechniqueStatusTone.AILMENT)
+        "decode_slow" -> TechniqueStatusLabel(effect.id, "Slow", TechniqueStatusTone.AILMENT)
+        "decode_confusion" -> TechniqueStatusLabel(effect.id, "Confusão", TechniqueStatusTone.AILMENT)
+        "decode_liquid_crystalization" -> TechniqueStatusLabel(effect.id, "Liquid Crystalization", TechniqueStatusTone.AILMENT)
+        "decode_noise" -> TechniqueStatusLabel(effect.id, "Noise", TechniqueStatusTone.AILMENT)
+        "decode_attack_up" -> TechniqueStatusLabel(effect.id, "Ataque ↑", TechniqueStatusTone.BOOST)
+        "decode_defense_up" -> TechniqueStatusLabel(effect.id, "Defesa ↑", TechniqueStatusTone.BOOST)
+        "decode_speed_up" -> TechniqueStatusLabel(effect.id, "Velocidade ↑", TechniqueStatusTone.BOOST)
+        "decode_all_stats_up" -> TechniqueStatusLabel(effect.id, "Todos os atributos ↑", TechniqueStatusTone.BOOST)
         else -> null
     }
 }

@@ -153,4 +153,10 @@ sealed class NavigationItems(
         R.drawable.baseline_catching_pokemon_24,
         R.string.nav_world
     )
+
+    object Quests : NavigationItems(
+        "Quests",
+        R.drawable.baseline_fort_24,
+        R.string.quest_title
+    )
 }

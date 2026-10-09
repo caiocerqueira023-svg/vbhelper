@@ -36,6 +36,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
+import com.github.nacabaro.vbhelper.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -52,6 +54,7 @@ import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
+import com.github.nacabaro.vbhelper.ui.theme.OnVitalPrimary
 import com.github.nacabaro.vbhelper.ui.theme.VitalPurpleBright
 import com.github.nacabaro.vbhelper.utils.BitmapData
 
@@ -70,14 +73,14 @@ private enum class TrainingFormat(val id: String, val label: String, val allies:
 
 private enum class BattleTeamSlot(
     val key: String,
-    val title: String,
+    val titleRes: Int,
     val tag: String,
     val allied: Boolean
 ) {
-    ALLY_ONE("ally-one", "Parceiro ativo", TrainingBattleTags.AllyOneSlot, true),
-    ALLY_TWO("ally-two", "Segundo parceiro", TrainingBattleTags.AllyTwoSlot, true),
-    OPPONENT_ONE("opponent-one", "Oponente 1", TrainingBattleTags.OpponentOneSlot, false),
-    OPPONENT_TWO("opponent-two", "Oponente 2", TrainingBattleTags.OpponentTwoSlot, false)
+    ALLY_ONE("ally-one", R.string.ui_battle_slot_ally_one, TrainingBattleTags.AllyOneSlot, true),
+    ALLY_TWO("ally-two", R.string.ui_battle_slot_ally_two, TrainingBattleTags.AllyTwoSlot, true),
+    OPPONENT_ONE("opponent-one", R.string.ui_battle_slot_opponent_one, TrainingBattleTags.OpponentOneSlot, false),
+    OPPONENT_TWO("opponent-two", R.string.ui_battle_slot_opponent_two, TrainingBattleTags.OpponentTwoSlot, false)
 }
 
 @Composable
@@ -127,9 +130,9 @@ fun TrainingBattlePreparation(
         verticalArrangement = Arrangement.spacedBy(9.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("Arena de treino", style = MaterialTheme.typography.headlineSmall,
+            Text(stringResource(R.string.ui_battle_training_title), style = MaterialTheme.typography.headlineSmall,
                 color = TextPrimaryOnDark, fontWeight = FontWeight.Bold)
-            Text("Monte as equipes e acompanhe o combate em tempo real.",
+            Text(stringResource(R.string.ui_battle_prep_subtitle),
                 style = MaterialTheme.typography.bodyMedium, color = TextSecondaryOnDark,
                 maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
@@ -141,7 +144,7 @@ fun TrainingBattlePreparation(
             border = BorderStroke(1.dp, SurfaceStroke)
         ) {
             Column(Modifier.padding(horizontal = 12.dp, vertical = 9.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                Text("Formato da luta", style = MaterialTheme.typography.labelLarge,
+                Text(stringResource(R.string.ui_battle_prep_format), style = MaterialTheme.typography.labelLarge,
                     color = TextPrimaryOnDark, fontWeight = FontWeight.SemiBold)
                 Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
                     TrainingFormat.entries.forEach { option ->
@@ -153,7 +156,7 @@ fun TrainingBattlePreparation(
                             border = if (isSelected) null else BorderStroke(1.dp, SurfaceStroke),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = if (isSelected) VitalPurpleBright else DeepPurpleBgAlt,
-                                contentColor = if (isSelected) Color(0xFF0A0812) else TextPrimaryOnDark
+                                contentColor = if (isSelected) OnVitalPrimary else TextPrimaryOnDark
                             )
                         ) {
                             Text(option.label, fontSize = 15.sp, fontWeight = FontWeight.Bold)
@@ -198,9 +201,9 @@ fun TrainingBattlePreparation(
                 border = BorderStroke(1.dp, SurfaceStroke)
             ) {
                 Column(Modifier.padding(horizontal = 12.dp, vertical = 9.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text("Treino sem consequências", color = TextPrimaryOnDark, fontWeight = FontWeight.SemiBold,
+                    Text(stringResource(R.string.ui_battle_prep_casual_title), color = TextPrimaryOnDark, fontWeight = FontWeight.SemiBold,
                         style = MaterialTheme.typography.labelLarge)
-                    Text("HP, energia, itens e resultado valem só nesta sessão; o Storage permanece intacto.",
+                    Text(stringResource(R.string.ui_battle_prep_casual_sub),
                         style = MaterialTheme.typography.bodySmall, color = TextSecondaryOnDark)
                 }
             }
@@ -231,7 +234,7 @@ fun TrainingBattlePreparation(
                 modifier = Modifier.weight(0.8f).height(52.dp),
                 shape = CutCornerShape(7.dp),
                 border = BorderStroke(1.dp, SurfaceStroke)
-            ) { Text("Voltar", color = TextPrimaryOnDark) }
+            ) { Text(stringResource(R.string.ui_battle_back), color = TextPrimaryOnDark) }
             Button(
                 onClick = {
                     onStart(selectedAllies, selectedOpponents)
@@ -241,9 +244,9 @@ fun TrainingBattlePreparation(
                 shape = CutCornerShape(7.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = VitalPurpleBright,
-                    contentColor = Color(0xFF0A0812)
+                    contentColor = OnVitalPrimary
                 )
-            ) { Text("Entrar na arena", fontWeight = FontWeight.Bold, maxLines = 1) }
+            ) { Text(stringResource(R.string.ui_battle_prep_enter), fontWeight = FontWeight.Bold, maxLines = 1) }
         }
     }
 
@@ -277,7 +280,7 @@ fun TrainingBattlePreparation(
                     searchableTerms = listOfNotNull(
                         participant.assetCharacterId,
                         participant.externalCharacterId,
-                        "estágio ${participant.stage}"
+                        stringResource(R.string.ui_battle_prep_stage_term, participant.stage)
                     ),
                     content = { onClick ->
                         ParticipantPickerTile(
@@ -290,8 +293,8 @@ fun TrainingBattlePreparation(
             }
         StorageCharacterPickerDialog(
             characters = availableChoices.mapNotNull { it.character },
-            title = "Escolher ${pickerSlot.title}",
-            emptyMessage = "Nenhum Digimon disponível para este time.",
+            title = stringResource(R.string.ui_battle_prep_choose, stringResource(pickerSlot.titleRes)),
+            emptyMessage = stringResource(R.string.ui_battle_prep_empty),
             supplementalOptions = supplementalOptions,
             onDismiss = dismissPicker,
             onCharacterSelected = { characterId ->
@@ -322,21 +325,21 @@ private fun TeamSlotButton(
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(slot.title.uppercase(), style = MaterialTheme.typography.labelSmall,
+                Text(stringResource(slot.titleRes).uppercase(), style = MaterialTheme.typography.labelSmall,
                     color = if (participant != null) VitalCyan else TextSecondaryOnDark,
                     fontWeight = FontWeight.Bold)
-                Text(participant?.displayName ?: "Adicionar Digimon", style = MaterialTheme.typography.titleSmall,
+                Text(participant?.displayName ?: stringResource(R.string.ui_battle_prep_add), style = MaterialTheme.typography.titleSmall,
                     color = TextPrimaryOnDark, fontWeight = FontWeight.SemiBold,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)
                 participant?.let {
                     val stats = it.trainingStats()
-                    Text("Estágio ${it.stage} · HP ${stats.health} · AP ${stats.attack} · BP ${stats.defense}",
+                    Text(stringResource(R.string.ui_battle_prep_stats, it.stage, stats.health, stats.attack, stats.defense),
                         style = MaterialTheme.typography.labelSmall, color = TextSecondaryOnDark,
                         maxLines = 1, overflow = TextOverflow.Ellipsis)
-                } ?: Text("Escolha no Storage", style = MaterialTheme.typography.labelSmall,
+                } ?: Text(stringResource(R.string.ui_battle_prep_choose_storage), style = MaterialTheme.typography.labelSmall,
                     color = TextSecondaryOnDark, maxLines = 1)
             }
-            Text(if (participant == null) "SELECIONAR" else "TROCAR",
+            Text(if (participant == null) stringResource(R.string.ui_battle_prep_select) else stringResource(R.string.ui_battle_prep_swap),
                 style = MaterialTheme.typography.labelSmall, color = VitalCyan, fontWeight = FontWeight.Bold)
         }
     }
@@ -380,7 +383,7 @@ private fun ParticipantPickerTile(
                 style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
             val stats = participant.trainingStats()
-            Text("HP ${stats.health} · AP ${stats.attack} · BP ${stats.defense}",
+            Text(stringResource(R.string.ui_battle_prep_stats_short, stats.health, stats.attack, stats.defense),
                 color = TextSecondaryOnDark, style = MaterialTheme.typography.labelSmall,
                 maxLines = 1, overflow = TextOverflow.Ellipsis)
         }

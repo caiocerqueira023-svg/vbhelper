@@ -23,6 +23,7 @@ class WorldInteractionOrchestrator(private val db: AppDatabase, private val chat
     private val gson = Gson()
     private val dao = db.worldInteractionDao()
     private val npcDialogue = NpcDialogueService(chat) { id -> db.digimonIndividualDao().getPersonality(id)?.personalityType }
+    private val social = WorldSocialRepository(db)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val networkMutex = Mutex()
     private val battles = mutableMapOf<String, BattleSimulator>()
@@ -49,65 +50,106 @@ class WorldInteractionOrchestrator(private val db: AppDatabase, private val chat
     suspend fun step(session: WorldEcosystemSession, actors: List<WorldSpawn>, replay: Boolean, playerFix: WorldPlayerFix? = null): Boolean {
         val tick = session.tickIndex
         val repository = WorldInteractionRepository(db) { session.lastCheckpointAt }
+        val profiles = mutableMapOf<String,com.github.nacabaro.vbhelper.domain.personality.DigimonSocialProfile>()
+        suspend fun profileFor(id: String) = profiles[id] ?: social.profile(id).also { profiles[id] = it }
+        val socialStates = mutableMapOf<String,IndividualSocialState?>()
+        suspend fun stateFor(id: String): IndividualSocialState? {
+            if (!socialStates.containsKey(id)) socialStates[id] = db.worldSocialDao().getState(id)?.takeIf { it.sessionSeed == session.seed }
+            return socialStates[id]
+        }
         var changed = false
         var open = dao.getOpenInteractions()
+        // An unanswered invitation is short-lived; it must not monopolize every future player encounter.
+        open.filter { it.publicReason?.startsWith("WILD_CHAT:") == true && it.state == InteractionState.ACTIVE &&
+            it.deadlineTick?.let { deadline -> tick >= deadline } == true }.forEach { repository.cancel(it.id); changed = true }
+        if (changed) open = dao.getOpenInteractions()
         // Positions used for meeting/activation are exactly this logical step, not a display interpolation.
-        if (tick % 40L == 0L || open.any { it.state == InteractionState.PROPOSED }) {
+        if (tick % 20L == 0L || open.any { it.state == InteractionState.PROPOSED }) {
             actors.forEach { savePosition(it) }
         }
         if(!replay && visible && autonomousEnabled && tick%20L==0L && open.none { it.isPlayerDirected } &&
             tick-(dao.getLatestPlayerInitiationTick() ?: -WorldWildInitiationPolicy.GLOBAL_COOLDOWN_TICKS)>=WorldWildInitiationPolicy.GLOBAL_COOLDOWN_TICKS) {
             val claimed=dao.getClaimedIndividuals().toSet()
-            val hasPartner=db.userCharacterDao().getActiveCharacter().first()!=null
-            for(actor in actors.sortedBy { it.individualId }) {
-                if(!WorldWildInitiationPolicy.eligible(actor,playerFix,System.currentTimeMillis(),visible,replay,actor.individualId in claimed)) continue
-                if(tick-(dao.getLatestPlayerInitiationTick(actor.individualId) ?: -WorldWildInitiationPolicy.INDIVIDUAL_COOLDOWN_TICKS)<WorldWildInitiationPolicy.INDIVIDUAL_COOLDOWN_TICKS) continue
-                val personality=db.digimonIndividualDao().getPersonality(actor.individualId)?.personalityType
-                    ?: com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityType.FRIENDLY
-                val type=WorldWildInitiationPolicy.kind(personality,actor.ecosystemEmotion,hasPartner,
-                    WorldEcosystemEngine.unit(session.seed,actor.individualId,"player-initiative",tick))
+            val activePartner = db.userCharacterDao().getActiveCharacter().first()
+            val hasPartner = activePartner != null
+            val partnerNeedsCare = activePartner?.let {
+                db.userCharacterDao().getCharacterWithSprites(it.id).injuryStatus != com.github.cfogrady.vbnfc.data.NfcCharacter.InjuryStatus.None
+            } ?: false
+            val candidates = actors.filter { WorldWildInitiationPolicy.eligible(it, playerFix,
+                System.currentTimeMillis(), visible, replay, it.individualId in claimed, allowApproach = true) }
+                .map { actor ->
+                    val state = stateFor(actor.individualId)
+                    val relation = db.wildRelationshipDao().get(actor.individualId)
+                    val homeDistance = playerFix?.let { RadarWorldGeometry.relative(it.position,
+                        GeoPoint(actor.homeLatitude, actor.homeLongitude)).distanceMeters } ?: Double.MAX_VALUE
+                    SocialCandidate(actor.individualId, profileFor(actor.individualId), actor.ecosystemEmotion,
+                        relation?.trust ?: 50, db.worldSocialDao().familiarity(actor.individualId, "trainer"),
+                        state?.lastPlayerInitiationTick ?: (dao.getLatestPlayerInitiationTick(actor.individualId) ?: -1_000),
+                        (1.0 - homeDistance / actor.anchorRadiusMeters.coerceAtLeast(1.0)).coerceIn(0.0, 1.0),
+                        needsHelp = partnerNeedsCare)
+                }
+            val choice = WorldSocialPlanner.choosePlayer(session.seed, tick, candidates, hasPartner)
+            val actor = choice?.let { selected -> actors.firstOrNull { it.individualId == selected.initiatorId } }
+            if (choice != null && actor != null) {
                 savePosition(actor)
                 val id="wild-player:${session.seed}:$tick:${actor.individualId}"
-                val initiated=try { repository.initiateWildPlayerInteraction(id,type,actor.id,checkNotNull(playerFix),
-                    EcosystemSeed.mix(session.seed,id,"wild-player-event",tick),tick) } catch(rejected:WorldInteractionException) { continue }
-                val name=db.worldSpawnDao().getSpawnById(actor.id)?.speciesName ?: "Digimon"
-                val line=if(type==InteractionType.BATTLE) publicText("You are in my territory. Defend yourself!","Você está no meu território. Defenda-se!","ここは私の縄張りだ。勝負だ！")
-                    else publicText("Hello there! I saw you passing by.","Olá! Vi você passando por aqui.","こんにちは！ 通りかかったのを見かけたよ。")
-                dao.insertMessage(WorldInteractionMessage("opening:$id",id,1,actor.individualId,name,line,DialogueTextSource.AUTHORED,
-                    "opening:$id",tick,System.currentTimeMillis()))
-                val event=initiated.copy(dialogueSequence=1)
-                dao.updateInteraction(event)
-                if(type==InteractionType.CHAT) WorldChatMemoryRepository(db) { session.lastCheckpointAt }.adoptPlayerConversation(event.id,close=false)
-                db.worldSpawnDao().checkpointMovement(actor.individualId,actor.latitude,actor.longitude,null,null,WorldMovementState.HOME,tick+1,tick+80)
-                open=open+event
-                changed=true
-                break
+                val initiated=try { repository.initiateWildPlayerInteraction(id,choice.type,actor.id,checkNotNull(playerFix),
+                    EcosystemSeed.mix(session.seed,id,"wild-player-event",tick),tick,choice,allowApproach = true) }
+                    catch(rejected:WorldInteractionException) { null }
+                if (initiated != null) {
+                    if (initiated.state == InteractionState.ACTIVE) deliverPlayerOpening(initiated, choice, session, tick)
+                    else {
+                        social.recordInitiation(initiated, choice, session.seed, tick)
+                        approachPlayer(actor, checkNotNull(playerFix), tick)
+                    }
+                    open = dao.getOpenInteractions()
+                    changed = true
+                }
             }
         }
         if (tick % 40L == 0L && (replay || autonomousEnabled)) {
             val byId = actors.associateBy { it.individualId }
             val claimed = dao.getClaimedIndividuals().toSet()
-            val bonds = db.worldEcosystemDao().getBonds()
-            for (bond in bonds.sortedWith(compareByDescending<WildPairBond> { kotlin.math.abs(it.affinity) }.thenBy { it.individualA })) {
-                val a = byId[bond.individualA] ?: continue
-                val b = byId[bond.individualB] ?: continue
-                if (a.individualId in claimed || b.individualId in claimed || tick < bond.cooldownUntilTick) continue
-                val type = when { bond.affinity >= 30 -> InteractionType.CHAT; bond.affinity <= -30 -> InteractionType.BATTLE; else -> continue }
-                if (open.count { it.origin == InteractionOrigin.AUTONOMOUS && it.type == type } >= if (type == InteractionType.CHAT) 2 else 1) continue
+            val bonds = db.worldEcosystemDao().getBonds().associateBy { it.individualA to it.individualB }
+            val available = actors.filter { it.individualId !in claimed }.sortedBy { it.individualId }
+            val candidates = mutableListOf<SocialPairCandidate>()
+            for (i in available.indices) for (j in i + 1 until available.size) {
+                val a = available[i]; val b = available[j]
                 val ah = GeoPoint(a.homeLatitude,a.homeLongitude); val bh = GeoPoint(b.homeLatitude,b.homeLongitude)
                 val between = RadarWorldGeometry.relative(ah,bh)
                 if (between.distanceMeters > a.anchorRadiusMeters + b.anchorRadiusMeters) continue
+                val pair = bonds[a.individualId to b.individualId] ?: WildPairBond.create(a.individualId, b.individualId)
+                val aState = stateFor(a.individualId)
+                val bState = stateFor(b.individualId)
+                if (tick - (aState?.lastPeerInitiationTick ?: -1_000) < 60 || tick - (bState?.lastPeerInitiationTick ?: -1_000) < 60) continue
+                candidates += SocialPairCandidate(
+                    SocialCandidate(a.individualId, profileFor(a.individualId), a.ecosystemEmotion),
+                    SocialCandidate(b.individualId, profileFor(b.individualId), b.ecosystemEmotion),
+                    pair.affinity, maxOf(pair.chatCount,db.worldSocialDao().familiarity(a.individualId,b.individualId)),
+                    if (pair.lastInteractionAt == 0L) -1_000 else pair.lastInteractionTick, pair.cooldownUntilTick)
+            }
+            val choice = WorldSocialPlanner.choosePair(session.seed, tick, candidates)
+            val a = choice?.let { byId[it.initiatorId] }
+            val b = choice?.let { byId[it.targetId] }
+            if (choice != null && a != null && b != null && open.count { it.origin == InteractionOrigin.AUTONOMOUS && it.type == choice.type } <
+                if (choice.type == InteractionType.CHAT) 2 else 1) {
+                val ah = GeoPoint(a.homeLatitude,a.homeLongitude); val bh = GeoPoint(b.homeLatitude,b.homeLongitude)
+                val between = RadarWorldGeometry.relative(ah,bh)
                 val fromA = ((between.distanceMeters + a.anchorRadiusMeters - b.anchorRadiusMeters) / 2).coerceIn(0.0, between.distanceMeters)
                 val ratio = if (between.distanceMeters == 0.0) 0.0 else fromA / between.distanceMeters
                 val meeting = RadarWorldGeometry.offset(ah, between.northMeters * ratio, between.eastMeters * ratio)
                 val id = "npc:${session.seed}:$tick:${a.individualId}:${b.individualId}"
-                val event = runCatching { repository.proposeNpcInteraction(id,type,listOf(a.id,b.id),
-                    EcosystemSeed.mix(session.seed,id,"social",tick),tick) }.getOrNull() ?: continue
-                listOf(a,b).forEach { actor -> db.worldSpawnDao().checkpointMovement(actor.individualId,actor.latitude,actor.longitude,
-                    meeting.latitude,meeting.longitude,WorldMovementState.APPROACHING,tick+1,tick+60) }
-                db.worldEcosystemDao().saveBond(bond.copy(cooldownUntilTick=tick+80))
-                open = open + event; changed = true
-                break // Bounded density; do not fill the entire region in one scheduling tick.
+                val event = runCatching { repository.proposeNpcInteraction(id,choice.type,listOf(a.id,b.id),
+                    EcosystemSeed.mix(session.seed,id,"social",tick),tick,choice) }.getOrNull()
+                if (event != null) {
+                    listOf(a,b).forEach { actor -> db.worldSpawnDao().checkpointMovement(actor.individualId,actor.latitude,actor.longitude,
+                        meeting.latitude,meeting.longitude,WorldMovementState.APPROACHING,tick+1,tick+60) }
+                    val pair = WildPairBond.create(a.individualId,b.individualId)
+                    val bond = db.worldEcosystemDao().getBond(pair.individualA,pair.individualB) ?: pair
+                    db.worldEcosystemDao().saveBond(bond.copy(cooldownUntilTick=tick+80))
+                    social.recordInitiation(event, choice, session.seed, tick)
+                    open = open + event; changed = true
+                }
             }
         }
         for (event in open.sortedBy { it.id }) {
@@ -116,12 +158,25 @@ class WorldInteractionOrchestrator(private val db: AppDatabase, private val chat
             if (event.deadlineTick != null && tick >= event.deadlineTick && event.state != InteractionState.RESOLVING) {
                 repository.cancel(event.id); changed = true; continue
             }
-            if(event.isPlayerBattle) continue // Player handoff owns this 1v1; there is no NPC opponent simulator.
+            if(event.isPlayerBattle && event.state != InteractionState.PROPOSED) continue
             if (event.state == InteractionState.PROPOSED) {
-                if (repository.activateNpcInteraction(event.id,event.revision,tick)) {
+                val activatedNow = if (event.isPlayerDirected) {
+                    !replay && visible && playerFix?.isFresh(System.currentTimeMillis()) == true &&
+                        repository.activateWildPlayerInteraction(event.id,event.revision,tick,playerFix)
+                } else repository.activateNpcInteraction(event.id,event.revision,tick)
+                if (activatedNow) {
                     val activated = dao.getInteraction(event.id)!!
-                    dao.updateInteraction(activated.copy(nextActionTick=tick+if(event.type==InteractionType.BATTLE)4 else 1))
-                    if (event.type == InteractionType.BATTLE) systemLine(activated, "standoff", publicText("A rivalry turns into a standoff.","Uma rivalidade vira um confronto.","ライバル同士が対峙しています。"),tick)
+                    if (event.isPlayerDirected) social.decision(activated)?.let { deliverPlayerOpening(activated,it,session,tick) }
+                    else {
+                        val scheduled = activated.copy(nextActionTick=tick+if(event.type==InteractionType.BATTLE)4 else 1)
+                        dao.updateInteraction(scheduled)
+                        social.decision(scheduled)?.let {
+                            if (!replay && visible) deliverPeerOpening(scheduled,it,session,tick)
+                            else social.recordInitiation(scheduled,it,session.seed,tick)
+                        }
+                        if (event.type == InteractionType.BATTLE) systemLine(dao.getInteraction(event.id) ?: scheduled, "standoff",
+                            publicText("A rivalry turns into a standoff.","Uma rivalidade vira um confronto.","ライバル同士が対峙しています。"),tick)
+                    }
                     changed = true
                 }
                 continue
@@ -164,7 +219,8 @@ class WorldInteractionOrchestrator(private val db: AppDatabase, private val chat
             if (tick>=intent.expiresAtTick || source.state.terminal && source.origin==InteractionOrigin.AUTONOMOUS) { dao.updateIntent(intent.copy(status=DialogueIntentStatus.EXPIRED)); changed=true; continue }
             val targets=jsonStrings(intent.targetIdsJson)
             val attacking=WorldDialoguePolicy.canStartWithoutReply(intent.type,intent.sparring)
-            if(attacking && "trainer" in targets && !replay && visible && playerFix?.isFresh(System.currentTimeMillis())==true) {
+            if(attacking && "trainer" in targets && !replay && visible && playerFix?.isFresh(System.currentTimeMillis())==true &&
+                db.userCharacterDao().getActiveCharacter().first() != null) {
                 val attacker=actors.firstOrNull { it.individualId==intent.initiatorId }
                 if(attacker!=null && RadarWorldGeometry.relative(playerFix.position,GeoPoint(attacker.latitude,attacker.longitude)).withinInteractionRange) {
                     val battle=repository.transferWildAttackLocked(source,intent.initiatorId,intent.reason,tick)
@@ -184,6 +240,65 @@ class WorldInteractionOrchestrator(private val db: AppDatabase, private val chat
 
     private suspend fun savePosition(actor: WorldSpawn) = db.worldSpawnDao().checkpointMovement(actor.individualId,actor.latitude,actor.longitude,
         actor.wanderTargetLatitude,actor.wanderTargetLongitude,actor.movementState,actor.movementTick,actor.nextDecisionTick)
+
+    private suspend fun approachPlayer(actor: WorldSpawn, fix: WorldPlayerFix, tick: Long) {
+        val home = GeoPoint(actor.homeLatitude,actor.homeLongitude)
+        val towards = RadarWorldGeometry.relative(home,fix.position)
+        val ratio = if (towards.distanceMeters == 0.0) 0.0 else
+            minOf(towards.distanceMeters, actor.anchorRadiusMeters.coerceIn(1.0,40.0) - .1) / towards.distanceMeters
+        val destination = RadarWorldGeometry.offset(home,towards.northMeters * ratio,towards.eastMeters * ratio)
+        db.worldSpawnDao().checkpointMovement(actor.individualId,actor.latitude,actor.longitude,
+            destination.latitude,destination.longitude,WorldMovementState.APPROACHING,tick+1,tick+60)
+    }
+
+    private suspend fun deliverPlayerOpening(event: WorldInteraction, choice: SocialEncounterDecision, session: WorldEcosystemSession, tick: Long) {
+        val language = PromptLocalization.currentLanguageTag()
+        val opening = social.opening(event,choice,language)
+        val participant = dao.getParticipants(event.id).single { it.role == InteractionRole.WILD }
+        val name = participant.spawnId?.let { db.worldSpawnDao().getSpawnById(it)?.speciesName } ?: "Digimon"
+        dao.insertMessage(WorldInteractionMessage("opening:${event.id}",event.id,1,choice.initiatorId,name,opening.text,
+            DialogueTextSource.AUTHORED,"opening:${event.id}",tick,System.currentTimeMillis()))
+        val delivered = event.copy(dialogueSequence = 1)
+        dao.updateInteraction(delivered)
+        social.recordInitiation(delivered,choice,session.seed,tick,opening.key,language)
+        if (event.type == InteractionType.CHAT) WorldChatMemoryRepository(db) { session.lastCheckpointAt }.adoptPlayerConversation(event.id,close=false)
+        if (choice.motive in listOf(SocialMotive.AVOIDANCE, SocialMotive.REFUSAL)) {
+            WorldInteractionRepository(db).endConversationLocked(delivered,"KEPT_DISTANCE")
+            val actor = db.worldSpawnDao().getByIndividualId(choice.initiatorId) ?: return
+            val home = GeoPoint(actor.homeLatitude,actor.homeLongitude)
+            val fix = session.regionLatitude?.let { lat -> session.regionLongitude?.let { lon -> GeoPoint.fromOrNull(lat,lon) } }
+            val direction = fix?.let { RadarWorldGeometry.relative(it,home) }
+            val length = direction?.distanceMeters?.coerceAtLeast(.01) ?: 1.0
+            val radius = actor.anchorRadiusMeters.coerceIn(1.0,40.0) * .8
+            val destination = RadarWorldGeometry.offset(home,
+                (direction?.northMeters ?: 1.0) / length * radius,
+                (direction?.eastMeters ?: 0.0) / length * radius)
+            db.worldSpawnDao().checkpointMovement(actor.individualId,actor.latitude,actor.longitude,
+                destination.latitude,destination.longitude,WorldMovementState.WANDERING,tick+1,tick+80)
+        } else if (choice.motive == SocialMotive.TERRITORIAL_WARNING) {
+            val actor = db.worldSpawnDao().getByIndividualId(choice.initiatorId) ?: return
+            db.worldSpawnDao().checkpointMovement(actor.individualId,actor.latitude,actor.longitude,
+                null,null,WorldMovementState.HOME,tick+1,tick+80)
+        }
+    }
+
+    private suspend fun deliverPeerOpening(event: WorldInteraction, choice: SocialEncounterDecision, session: WorldEcosystemSession, tick: Long) {
+        val opening = social.opening(event,choice,PromptLocalization.currentLanguageTag())
+        val participant = dao.getParticipants(event.id).firstOrNull { it.individualId == choice.initiatorId } ?: return
+        val name = participant.spawnId?.let { db.worldSpawnDao().getSpawnById(it)?.speciesName } ?: "Digimon"
+        val messageId = "opening:${event.id}"
+        val next = event.dialogueSequence + 1
+        dao.insertMessage(WorldInteractionMessage(messageId,event.id,next,choice.initiatorId,name,opening.text,
+            DialogueTextSource.AUTHORED,messageId,tick,System.currentTimeMillis()))
+        val delivered = event.copy(dialogueSequence = next)
+        dao.updateInteraction(delivered)
+        social.recordInitiation(delivered,choice,session.seed,tick,opening.key,PromptLocalization.currentLanguageTag())
+        if (event.type == InteractionType.CHAT && choice.motive == SocialMotive.CHALLENGE_SPARRING) {
+            dao.insertIntent(WorldDialogueIntent("invite:${event.id}",event.id,delivered.revision,choice.initiatorId,
+                gson.toJson(listOf(choice.targetId)),gson.toJson(listOf(messageId)),DialogueIntentType.CHALLENGE_BATTLE,
+                DialogueIntentStatus.PENDING,"Invitation to friendly practice",true,tick + 20))
+        }
+    }
 
     private suspend fun createBattle(event: WorldInteraction,tick:Long):WorldNpcBattle {
         val definitions=dao.getParticipants(event.id).filter { it.role==InteractionRole.WILD }.map { p ->
@@ -214,9 +329,16 @@ class WorldInteractionOrchestrator(private val db: AppDatabase, private val chat
                 val participants=dao.getParticipants(event.id).filter { it.role==InteractionRole.WILD }
                 val messages=dao.getMessages(event.id)
                 val intents=dao.getPendingIntents().filter { it.interactionId==event.id }
-                val context=messages.takeLast(12).joinToString("\n") { "${it.id} ${it.speakerId} (${it.speakerName}): ${it.body}" }+
+                val context=social.publicContext(event) + "\n" + messages.takeLast(12).joinToString("\n") { "${it.id} ${it.speakerId} (${it.speakerName}): ${it.body}" }+
                     "\nPending challenges: "+intents.joinToString { "${it.id}: ${it.type} ${it.initiatorId} ${it.reason}; sparring=${it.sparring}" }
-                val exchange=npcDialogue.exchange(participants.map { it.individualId to it.cardCharacterId!! },context,messages.map { it.id }.toSet())
+                val keys = participants.associate { it.individualId to db.worldSocialDao().recent(it.individualId).map { memory -> memory.openingKey }.toSet() }
+                val turnChoice = social.decision(event)?.let { it.copy(variation = ((it.variation + event.dialogueSequence * 3) % 64).toInt()) }
+                val pendingChallenge = intents.firstOrNull { it.type == DialogueIntentType.CHALLENGE_BATTLE &&
+                    it.status == DialogueIntentStatus.PENDING && (db.worldEcosystemDao().getSession()?.tickIndex ?: event.nextActionTick) < it.expiresAtTick }?.let {
+                    DialogueProposal(it.type,it.initiatorId,jsonStrings(it.targetIdsJson),jsonStrings(it.evidenceIdsJson),it.reason,it.sparring)
+                }
+                val exchange=npcDialogue.exchange(participants.map { it.individualId to it.cardCharacterId!! },context,messages.map { it.id }.toSet(),
+                    turnChoice, keys, pendingChallenge)
                 if(visible && token==generation) acceptInput { commitExchange(event.id,event.revision,"exchange:${event.id}:${event.dialogueSequence}",exchange) }
             }
         }
@@ -227,8 +349,8 @@ class WorldInteractionOrchestrator(private val db: AppDatabase, private val chat
         if(event.revision!=revision || event.type!=InteractionType.CHAT || event.state !in listOf(InteractionState.ACTIVE,InteractionState.PLAYER_CONTROLLED)) return@withTransaction false
         val participants=dao.getParticipants(id).associateBy { it.individualId }
         if(exchange.source !in listOf(DialogueTextSource.MODEL,DialogueTextSource.AUTHORED) ||
-            exchange.lines.map { it.speakerId }.toSet()!=participants.keys ||
-            exchange.lines.size!=participants.size || exchange.lines.any { it.text.isBlank() || it.text.length>500 }) return@withTransaction false
+            exchange.lines.isEmpty() || exchange.lines.map { it.speakerId }.distinct().size != exchange.lines.size ||
+            exchange.lines.any { it.speakerId !in participants || it.text.isBlank() || it.text.length>500 }) return@withTransaction false
         val existing=dao.getMessages(id)
         if(existing.any { it.requestId==requestId }) return@withTransaction false
         val tick=db.worldEcosystemDao().getSession()?.tickIndex ?: event.nextActionTick
@@ -238,7 +360,11 @@ class WorldInteractionOrchestrator(private val db: AppDatabase, private val chat
             WorldInteractionMessage("$requestId:${line.speakerId}",id,++sequence,line.speakerId,name,line.text,exchange.source,requestId,tick,System.currentTimeMillis()).also { dao.insertMessage(it) }
         }
         val pending=dao.getPendingIntents().filter { it.interactionId==id }
-        val proposal=exchange.intent?.takeIf { exchange.source==DialogueTextSource.MODEL }?.let { raw ->
+        val plannedChoice = social.decision(event)
+        val response = WorldSocialExchangePolicy.response(plannedChoice, exchange.lines)
+        val proposal=exchange.intent?.takeIf {
+            exchange.source==DialogueTextSource.MODEL || exchange.source==DialogueTextSource.AUTHORED && exchange.locallyPlanned && plannedChoice != null
+        }?.takeIf { !(response == SocialResponse.DECLINE_INVITATION && it.type == DialogueIntentType.ACCEPT_CHALLENGE) }?.let { raw ->
             raw.copy(evidenceIds=raw.evidenceIds.map { evidenceId ->
                 if(evidenceId=="this:${raw.speakerId}") committed.firstOrNull { it.speakerId==raw.speakerId }?.id ?: evidenceId else evidenceId
             })
@@ -264,16 +390,76 @@ class WorldInteractionOrchestrator(private val db: AppDatabase, private val chat
                 publicText("A challenge was proposed: ","Um desafio foi proposto: ","挑戦が提案されました：")+validated.reason,tick)
         }
         val wilds=participants.keys.sorted()
-        val socialDelta=WorldDialoguePolicy.socialDelta(acceptedProposal)
-        wilds.forEach { db.worldSpawnDao().adjustEcosystemEmotion(it,socialDelta) }
+        val choice = social.decision(event)
+        val insulted = exchange.lines.any { com.github.nacabaro.vbhelper.domain.personality.SocialEventAppraisal.classify(it.text) ==
+            com.github.nacabaro.vbhelper.domain.personality.SocialStimulus.INSULT }
+        val socialDelta=if (choice == null) WorldDialoguePolicy.socialDelta(acceptedProposal) else when {
+            insulted -> -2
+            response == SocialResponse.DECLINE_INVITATION || exchange.lines.size < participants.size -> 0
+            acceptedProposal?.proposal?.type == DialogueIntentType.CHALLENGE_BATTLE && !acceptedProposal.proposal.sparring -> -4
+            acceptedProposal?.proposal?.type == DialogueIntentType.DEESCALATE -> 2
+            choice.motive == SocialMotive.RECONCILE -> 2
+            choice.motive == SocialMotive.TERRITORIAL_WARNING -> 0
+            else -> 1
+        }
+        wilds.forEach { id ->
+            val profile = social.profile(id)
+            val incoming = exchange.lines.firstOrNull { it.speakerId != id }?.text
+            val stimulus = incoming?.let { com.github.nacabaro.vbhelper.domain.personality.SocialEventAppraisal.classify(it) }
+            val appraisal = if (choice == null) socialDelta else when {
+                stimulus != null && stimulus != com.github.nacabaro.vbhelper.domain.personality.SocialStimulus.NEUTRAL ->
+                    com.github.nacabaro.vbhelper.domain.personality.SocialEventAppraisal.delta(profile,stimulus)
+                response == SocialResponse.DECLINE_INVITATION || incoming == null -> 0
+                choice.motive == SocialMotive.PLAYFUL_TEASING -> com.github.nacabaro.vbhelper.domain.personality.SocialEventAppraisal.delta(profile,
+                    com.github.nacabaro.vbhelper.domain.personality.SocialStimulus.TEASING)
+                choice.motive == SocialMotive.CHALLENGE_SPARRING -> com.github.nacabaro.vbhelper.domain.personality.SocialEventAppraisal.delta(profile,
+                    com.github.nacabaro.vbhelper.domain.personality.SocialStimulus.CHALLENGE)
+                else -> socialDelta
+            }
+            if (appraisal != 0) db.worldSpawnDao().adjustEcosystemEmotion(id,appraisal)
+        }
         if(wilds.size==2) {
             val pair=WildPairBond.create(wilds[0],wilds[1])
             val old=db.worldEcosystemDao().getBond(pair.individualA,pair.individualB) ?: pair
-            db.worldEcosystemDao().saveBond(old.copy(chatCount=old.chatCount+1,affinity=(old.affinity+socialDelta).coerceIn(-100,100),lastInteractionAt=System.currentTimeMillis(),lastInteractionTick=tick))
+            db.worldEcosystemDao().saveBond(old.copy(chatCount=old.chatCount + if (exchange.lines.size > 1) 1 else 0,
+                affinity=(old.affinity+socialDelta).coerceIn(-100,100),lastInteractionAt=System.currentTimeMillis(),lastInteractionTick=tick))
         }
         val next=dao.getMessages(id).maxOfOrNull { it.sequence } ?: sequence
         dao.updateInteraction(event.copy(revision=revision+1,dialogueSequence=next,nextActionTick=tick+10))
+        social.recordExchange(event,exchange,tick)
+        if (response == SocialResponse.DECLINE_INVITATION || choice?.motive in listOf(SocialMotive.AVOIDANCE, SocialMotive.REFUSAL)) {
+            val current = dao.getInteraction(id) ?: return@withTransaction true
+            WorldInteractionRepository(db).endConversationLocked(current,"SOCIAL_BOUNDARY_RESPECTED")
+        } else if (choice?.motive == SocialMotive.SHARED_ACTIVITY && response == SocialResponse.ACCEPT_INVITATION &&
+            acceptedProposal == null && exchange.lines.map { it.speakerId }.toSet() == participants.keys &&
+            choice.targetId != "trainer" && event.origin == InteractionOrigin.AUTONOMOUS) {
+            val current = dao.getInteraction(id) ?: return@withTransaction true
+            WorldInteractionRepository(db).endConversationLocked(current,"SHARED_EXPLORATION_ACCEPTED")
+            startSharedExploration(participants.values.toList(),event.seed,tick)
+        }
         true
+    }
+
+    private suspend fun startSharedExploration(participants: List<WorldInteractionParticipant>, seed: Long, tick: Long) {
+        val actors = participants.mapNotNull { db.worldSpawnDao().getByIndividualId(it.individualId) }
+        if (actors.size != 2) return
+        val a = actors[0]; val b = actors[1]
+        val ah = GeoPoint(a.homeLatitude,a.homeLongitude)
+        val bh = GeoPoint(b.homeLatitude,b.homeLongitude)
+        val between = RadarWorldGeometry.relative(ah,bh)
+        val distanceFromA = ((between.distanceMeters + a.anchorRadiusMeters - b.anchorRadiusMeters) / 2).coerceIn(0.0,between.distanceMeters)
+        val ratio = if (between.distanceMeters == 0.0) 0.0 else distanceFromA / between.distanceMeters
+        val origin = RadarWorldGeometry.offset(ah,between.northMeters * ratio,between.eastMeters * ratio)
+        val angle = WorldEcosystemEngine.unit(seed,a.individualId + "|" + b.individualId,"shared-exploration",tick) * Math.PI * 2
+        val raw = RadarWorldGeometry.offset(origin,kotlin.math.cos(angle) * 5,kotlin.math.sin(angle) * 5)
+        val target = if (actors.all { RadarWorldGeometry.relative(GeoPoint(it.homeLatitude,it.homeLongitude),raw).withinRadius(it.anchorRadiusMeters) }) raw else origin
+        actors.forEach { actor ->
+            db.worldSpawnDao().checkpointMovement(actor.individualId,actor.latitude,actor.longitude,target.latitude,target.longitude,
+                WorldMovementState.WANDERING,tick+1,tick+80)
+            val previous = db.worldSocialDao().recent(actor.individualId).firstOrNull { it.eventId == participants.first().interactionId }
+            if (previous != null) db.worldSocialDao().saveMemory(previous.copy(outcome="SET_OUT_TOGETHER",
+                summary="Accepted a shared exploration invitation and set out nearby with ${previous.partnerName}.",tick=tick))
+        }
     }
 
     suspend fun joinConversation(id:String,revision:Long,fix:WorldPlayerFix):Boolean=db.withTransaction {
@@ -298,7 +484,7 @@ class WorldInteractionOrchestrator(private val db: AppDatabase, private val chat
             if(!visible || current.type!=InteractionType.CHAT || current.state!=InteractionState.PLAYER_CONTROLLED || current.revision!=revision) return@withTransaction false
             validateParticipation(current,fix)
             val message=WorldInteractionMessage("player:$id:${current.dialogueSequence+1}",id,current.dialogueSequence+1,"trainer",
-                publicText("Trainer","Tamer","テイマー"),text,DialogueTextSource.PLAYER,"player:$id:${current.dialogueSequence+1}",
+                publicText("Tamer","Tamer","テイマー"),text,DialogueTextSource.PLAYER,"player:$id:${current.dialogueSequence+1}",
                 db.worldEcosystemDao().getSession()?.tickIndex ?: 0,System.currentTimeMillis())
             dao.insertMessage(message)
             acceptedEvent=current.copy(revision=revision+1,dialogueSequence=message.sequence).also { dao.updateInteraction(it) }
@@ -407,7 +593,9 @@ class WorldInteractionOrchestrator(private val db: AppDatabase, private val chat
         if(!fix.isFresh(System.currentTimeMillis())) throw WorldInteractionException(InteractionFailure.STALE_LOCATION)
         dao.getParticipants(event.id).filter { it.role==InteractionRole.WILD }.forEach { p ->
             val spawn=db.worldSpawnDao().getByIndividualId(p.individualId) ?: throw WorldInteractionException(InteractionFailure.UNAVAILABLE)
-            if(dao.getClaim(p.individualId)?.interactionId!=event.id || !RadarWorldGeometry.relative(fix.position,GeoPoint(spawn.latitude,spawn.longitude)).withinInteractionRange)
+            if(dao.getClaim(p.individualId)?.interactionId!=event.id ||
+                (!com.github.nacabaro.vbhelper.world.RadarDebugInteraction.allowAnyDistance &&
+                !RadarWorldGeometry.relative(fix.position,GeoPoint(spawn.latitude,spawn.longitude)).withinInteractionRange))
                 throw WorldInteractionException(InteractionFailure.UNAVAILABLE)
         }
     }

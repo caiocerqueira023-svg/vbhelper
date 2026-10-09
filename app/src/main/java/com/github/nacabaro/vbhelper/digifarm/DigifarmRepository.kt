@@ -15,9 +15,23 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import java.util.UUID
 import kotlin.random.Random
+import com.github.nacabaro.vbhelper.domain.personality.DigimonSocialProfile
+import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityType
+import com.github.nacabaro.vbhelper.chat.ChatRepository
+import com.github.nacabaro.vbhelper.digifarm.social.FarmConversationOrchestrator
 
 class DigifarmRepository(private val db: AppDatabase) {
     private val dao = db.digifarmDao()
+    private var conversations: FarmConversationOrchestrator? = null
+
+    @Synchronized
+    fun conversationOwner(chat: ChatRepository): FarmConversationOrchestrator = conversations ?:
+        FarmConversationOrchestrator(this, chat).also { conversations = it }
+
+    suspend fun socialProfile(id: String) = DigimonSocialProfile.forIndividual(id,
+        db.digimonIndividualDao().getPersonality(id)?.personalityType ?: DigimonPersonalityType.FRIENDLY)
+    suspend fun residentStates(farmId: String) = dao.getResidentEntities(farmId)
+    suspend fun relationships(id: String) = dao.relationships(id)
 
     fun observeFarms(): Flow<List<Farm>> = dao.observeFarms()
     fun observeResidents(farmId: String): Flow<List<FarmResidentWithDetails>> = dao.observeResidents(farmId)
@@ -50,6 +64,9 @@ class DigifarmRepository(private val db: AppDatabase) {
         val farm = dao.getFarm(farmId) ?: error("Digifarm not found")
         check(dao.residentCount(farmId) < farm.capacity) { "This Digifarm is full" }
         val character = db.userCharacterDao().getCharacter(characterId)
+        if (db.digimonIndividualDao().getPersonality(character.individualId) == null) {
+            com.github.nacabaro.vbhelper.source.StorageRepository(db).getOrCreatePersonality(characterId)
+        }
         val slot = DigifarmGround.safeSpawns[dao.residentCount(farmId) % DigifarmGround.safeSpawns.size]
         val now = System.currentTimeMillis()
         dao.insertResident(
@@ -90,6 +107,7 @@ class DigifarmRepository(private val db: AppDatabase) {
                 targetX = slot.x,
                 targetY = slot.y,
                 activity = "EXPLORE",
+                socialTargetId = null,
                 activityStartedAt = now,
                 updatedAt = now
             )
@@ -137,18 +155,35 @@ class DigifarmRepository(private val db: AppDatabase) {
             targetX = resident.positionX,
             targetY = resident.positionY,
             updatedAt = now,
+            socialTargetId = null,
         ))
+    }
+
+    /** Both NPCs have chosen this activity locally; physical availability is revalidated at commit. */
+    suspend fun beginSharedActivity(farmId: String, firstId: String, secondId: String, activity: String): Boolean = db.withTransaction {
+        require(activity in setOf("PLAY", "TRAIN") && firstId != secondId)
+        val first = dao.getResident(firstId)?.takeIf { it.farmId == farmId } ?: return@withTransaction false
+        val second = dao.getResident(secondId)?.takeIf { it.farmId == farmId } ?: return@withTransaction false
+        val now = System.currentTimeMillis()
+        if (!FarmBehaviorPolicy.available(first,socialProfile(firstId),now) ||
+            !FarmBehaviorPolicy.available(second,socialProfile(secondId),now) ||
+            kotlin.math.hypot((first.positionX-second.positionX).toDouble(),(first.positionY-second.positionY).toDouble()) > 220) return@withTransaction false
+        listOf(first,second).forEach { resident -> dao.updateResident(resident.copy(activity = activity,
+            activityStartedAt = now, targetX = resident.positionX, targetY = resident.positionY,
+            socialTargetId = null, updatedAt = now)) }
+        true
     }
 
     /** Nudges a resident toward a point (approach before talking, §8). */
     suspend fun steerToward(farmId: String, individualId: String, x: Float, y: Float) {
         val resident = dao.getResidentEntities(farmId).firstOrNull { it.individualId == individualId } ?: return
+        if (!FarmBehaviorPolicy.available(resident, socialProfile(individualId), System.currentTimeMillis())) return
         val safe = DigifarmGround.clamp(MapPoint(x, y))
         dao.updateResident(
             resident.copy(
                 targetX = safe.x,
                 targetY = safe.y,
-                activity = "EXPLORE",
+                activity = "SOCIALIZE",
                 activityStartedAt = System.currentTimeMillis(),
                 updatedAt = System.currentTimeMillis()
             )
@@ -177,16 +212,28 @@ class DigifarmRepository(private val db: AppDatabase) {
             resident.individualId to DigifarmGround.clamp(MapPoint(resident.positionX, resident.positionY))
         }.toMutableMap()
         residents.forEachIndexed { index, resident ->
+            val profile = socialProfile(resident.individualId)
+            val needs = FarmBehaviorPolicy.advanceNeeds(resident, now)
             // Offline state is accounted for below; position only advances by
             // one visible step so reopening the farm cannot teleport a resident.
             val elapsedSeconds = ((now - resident.updatedAt).coerceAtLeast(0) / 1000f).coerceAtMost(1.2f)
             val current = DigifarmGround.clamp(MapPoint(resident.positionX, resident.positionY))
-            val nextActivity = activityFor(resident, now)
+            var nextActivity = FarmBehaviorPolicy.activity(needs, profile, now, farm.randomSeed)
+            val relationships = if (nextActivity == "SOCIALIZE") dao.relationships(resident.individualId).associateBy { it.otherId } else emptyMap()
+            val socialPartner = if (nextActivity == "SOCIALIZE") {
+                residents.firstOrNull { it.individualId == resident.socialTargetId &&
+                    it.activity !in listOf("REST", "EAT") && it.energy >= 25 && it.satiety >= 25 }
+                    ?: FarmBehaviorPolicy.partner(resident,residents,profile,relationships,farm.randomSeed,now)
+            } else null
+            if (nextActivity == "SOCIALIZE" && socialPartner == null) nextActivity = "EXPLORE"
             val moving = nextActivity in DigifarmGround.movingActivities
             var target = if (moving) DigifarmGround.clamp(MapPoint(resident.targetX, resident.targetY))
                 else current
             val distance = DigifarmGround.worldDistance(current, target)
-            if (moving && (nextActivity != resident.activity || distance < 0.018f)) {
+            if (socialPartner != null) {
+                val offset = if (resident.individualId < socialPartner.individualId) -140f else 140f
+                target = DigifarmGround.clamp(MapPoint(socialPartner.positionX + offset, socialPartner.positionY))
+            } else if (moving && (nextActivity != resident.activity || distance < 0.018f)) {
                 val choice = Random(farm.randomSeed xor now / 10_000L xor index.toLong())
                 val spots = DigifarmGround.activityPoints[nextActivity]
                 val raw = if (spots != null && choice.nextBoolean()) {
@@ -208,11 +255,6 @@ class DigifarmRepository(private val db: AppDatabase) {
                 current
             }
             reservedPositions[resident.individualId] = position
-            // State changes use coarse time buckets so the 900 ms simulation loop cannot
-            // inflate needs, while a return after time away is still summarized locally.
-            val stateTicks = ((now / STATE_TICK_MILLIS) - (resident.updatedAt / STATE_TICK_MILLIS))
-                .coerceIn(0L, MAX_OFFLINE_STATE_TICKS)
-                .toInt()
             dao.updateResident(
                 resident.copy(
                     positionX = position.x,
@@ -221,14 +263,11 @@ class DigifarmRepository(private val db: AppDatabase) {
                     targetY = target.y,
                     facingLeft = if (position.x != current.x) position.x < current.x else resident.facingLeft,
                     activity = nextActivity,
-                    energy = (resident.energy - stateTicks / 2 + when (resident.activity) {
-                        "REST" -> stateTicks * 2
-                        "TRAIN" -> -stateTicks
-                        else -> 0
-                    }).coerceIn(10, 100),
-                    satiety = (resident.satiety - stateTicks / 3 + if (resident.activity == "EAT") stateTicks * 3 else 0).coerceIn(10, 100),
-                    social = (resident.social - stateTicks / 6 + if (resident.activity in setOf("PLAY", "SOCIALIZE")) stateTicks else 0).coerceIn(10, 100),
-                    funLevel = (resident.funLevel - stateTicks / 6 + if (resident.activity == "PLAY") stateTicks * 2 else 0).coerceIn(10, 100),
+                    energy = needs.energy,
+                    satiety = needs.satiety,
+                    social = needs.social,
+                    funLevel = needs.funLevel,
+                    socialTargetId = socialPartner?.individualId,
                     activityStartedAt = if (nextActivity != resident.activity) now else resident.activityStartedAt,
                     updatedAt = now
                 )
@@ -244,10 +283,17 @@ class DigifarmRepository(private val db: AppDatabase) {
         body: String,
         recipientIds: List<String> = emptyList(),
         type: String = if (authorIndividualId == null) "USER" else "SPEECH",
-        sessionId: String? = null
+        sessionId: String? = null,
+        publicationAllowed: (() -> Boolean)? = null
     ): FarmMessage = db.withTransaction {
+        if (publicationAllowed?.invoke() == false) throw kotlinx.coroutines.CancellationException("Conversation surface is no longer active")
         val clean = body.trim().take(600)
         require(clean.isNotEmpty())
+        val farm = dao.getFarm(farmId) ?: error("Digifarm not found")
+        check(farm.archivedAt == null) { "This farm is archived." }
+        if (authorIndividualId != null) check(dao.getResident(authorIndividualId)?.farmId == farmId) { "The speaker is no longer in this farm." }
+        val residents = dao.getResidentEntities(farmId).map { it.individualId }.toSet()
+        require(recipientIds.all { it in residents }) { "A recipient is no longer in this farm." }
         val message = FarmMessage(
             id = UUID.randomUUID().toString(),
             farmId = farmId,
@@ -261,16 +307,17 @@ class DigifarmRepository(private val db: AppDatabase) {
             timestamp = System.currentTimeMillis()
         )
         dao.insertMessageWithRecipients(message, recipientIds.distinct().map { FarmMessageRecipient(message.id, it) })
+        if (publicationAllowed?.invoke() == false) throw kotlinx.coroutines.CancellationException("Conversation surface left before publication")
         message
     }
 
     suspend fun markRead(farmId: String, sequence: Long) = dao.upsertReadState(FarmReadState(farmId, sequence))
 
-    suspend fun recordInteraction(firstId: String, secondId: String) {
-        if (firstId == secondId) return
+    suspend fun recordInteraction(firstId: String, secondId: String, firstDelta: Int = 1, secondDelta: Int = 1) = db.withTransaction {
+        if (firstId == secondId) return@withTransaction
         val now = System.currentTimeMillis()
-        dao.recordInteraction(firstId, secondId, now)
-        dao.recordInteraction(secondId, firstId, now)
+        dao.applySocialInteraction(firstId, secondId, firstDelta.coerceIn(-3, 3), now)
+        dao.applySocialInteraction(secondId, firstId, secondDelta.coerceIn(-3, 3), now)
     }
 
     suspend fun rememberConversation(
@@ -292,15 +339,8 @@ class DigifarmRepository(private val db: AppDatabase) {
         dao.pruneMemories(observerId)
     }
 
-    suspend fun memories(individualId: String) = dao.getMemories(individualId)
-
-    private fun activityFor(resident: FarmResident, now: Long): String {
-        if (now - resident.activityStartedAt < 20_000L) return resident.activity
-        if (resident.energy < 25) return "REST"
-        if (resident.satiety < 25) return "EAT"
-        val phase = ((now / 20_000L + resident.individualId.hashCode()) % 5).toInt()
-        return listOf("EXPLORE", "PLAY", "TRAIN", "SOCIALIZE", "EXPLORE")[kotlin.math.abs(phase)]
-    }
+    suspend fun memories(individualId: String, otherId: String? = null) =
+        if (otherId == null) dao.getMemories(individualId) else dao.memoriesWith(individualId, otherId)
 
     private companion object {
         const val STATE_TICK_MILLIS = 30_000L

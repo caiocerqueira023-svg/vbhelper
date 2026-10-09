@@ -60,7 +60,8 @@ data class FarmResident(
     val social: Int = 70,
     val funLevel: Int = 70,
     val activityStartedAt: Long,
-    val updatedAt: Long
+    val updatedAt: Long,
+    val socialTargetId: String? = null
 )
 
 @Entity(

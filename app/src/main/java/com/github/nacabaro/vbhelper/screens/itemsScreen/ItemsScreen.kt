@@ -31,6 +31,7 @@ fun ItemsScreen(
     navController: NavController,
 ) {
     var selectedTabItem by remember { mutableStateOf(0) }
+    val indicatorColor = VitalCyan
     val items = listOf(
         NavigationItems.MyItems,
         NavigationItems.ItemsStore
@@ -54,7 +55,7 @@ fun ItemsScreen(
                             modifier = Modifier.drawBehind {
                                 if (selectedTabItem == index) {
                                     drawLine(
-                                        color = VitalCyan,
+                                        color = indicatorColor,
                                         start = Offset(12.dp.toPx(), size.height - 2.dp.toPx()),
                                         end = Offset(size.width - 12.dp.toPx(), size.height - 2.dp.toPx()),
                                         strokeWidth = 3.dp.toPx()
@@ -63,6 +64,8 @@ fun ItemsScreen(
                             }
                         )
                     }
+                    Tab(selected = selectedTabItem == 2, onClick = { selectedTabItem = 2 },
+                        text = { Text(stringResource(R.string.quest_battle_items)) })
                 }
             }
         }
@@ -75,6 +78,7 @@ fun ItemsScreen(
             when (selectedTabItem) {
                 0 -> MyItems(navController)
                 1 -> ItemsStore(navController)
+                2 -> QuestBattleItems()
             }
         }
     }

@@ -63,4 +63,11 @@ class BattleVfxCueTest {
         assertEquals(BattleMissCue(eventId = 4L, anchorCombatantId = "enemy", isSpecial = true), cue)
     }
 
+    @Test fun cinematicMissDoesNotReplayAfterItsOwnAftermath() {
+        val ended = snapshot(listOf(BattleEvent.SpecialResolved("ally", "innate", "enemy", success = false)), 50)
+            .copy(lastFinisherEventCount = 50)
+        assertNull(latestBattleMissCue(ended))
+        assertEquals(BattleMissCue(51, "enemy", true), latestBattleMissCue(ended.copy(eventCount = 51)))
+    }
+
 }

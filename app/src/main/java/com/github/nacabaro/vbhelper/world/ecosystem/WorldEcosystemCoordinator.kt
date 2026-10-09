@@ -38,6 +38,7 @@ class WorldEcosystemCoordinator(
     private var session: WorldEcosystemSession? = null
     private var individuals = emptyList<EcosystemIndividual>()
     private var interactions = emptyList<EcosystemInteractionSummary>()
+    private var trailingUtterances = emptyList<EcosystemUtterance>()
     private var claimedIndividuals = emptySet<String>()
     private var playerFix: WorldPlayerFix? = null
     private var leaseEpoch = 0L
@@ -298,7 +299,7 @@ class WorldEcosystemCoordinator(
         if (session == null) {
             session = store.loadSession() ?: WorldEcosystemSession(seed = newSeed(), lastCheckpointAt = now().coerceAtLeast(0))
             lastPersistedAt = session!!.lastCheckpointAt
-            if (session!!.rulesVersion == 1) {
+            if (session!!.rulesVersion in 1 until WorldEcosystemClock.RULES_VERSION) {
                 // v1 had no moving actors or autonomous reducers. Rebase once, preserving
                 // identity/seed/history without inventing retroactive movement under new rules.
                 session = session!!.copy(rulesVersion = WorldEcosystemClock.RULES_VERSION,
@@ -354,6 +355,7 @@ class WorldEcosystemCoordinator(
         val population = store.loadPopulation(timestamp)
         val previousIndividuals = individuals
         val previousInteractions = interactions
+        val previousTrailing = trailingUtterances
         val previousClaims = claimedIndividuals
         val moving = actors.associateBy { it.individualId }
         actors = if (player == null) emptyList() else population.spawns.asSequence()
@@ -373,10 +375,11 @@ class WorldEcosystemCoordinator(
             .sortedBy { it.individualId }
             .toList()
         interactions = population.interactions
+        trailingUtterances = population.trailingUtterances
         claimedIndividuals = population.claimedIndividuals
         personalities = population.personalities
         rebuildIndividualsLocked()
-        if (previousIndividuals != individuals || previousInteractions != interactions || previousClaims != claimedIndividuals) {
+        if (previousIndividuals != individuals || previousInteractions != interactions || previousClaims != claimedIndividuals || previousTrailing != trailingUtterances) {
             session = checkpoint.copy(revision = checkpoint.revision + 1)
         }
     }
@@ -411,7 +414,8 @@ class WorldEcosystemCoordinator(
 
     private fun currentSnapshot(status: EcosystemStatus) = EcosystemSnapshot(
         status = status, session = session, individuals = individuals, interactions = interactions,
-        claimedIndividuals = claimedIndividuals, playerFix = playerFix, leaseEpoch = leaseEpoch, observedAt = now()
+        claimedIndividuals = claimedIndividuals, playerFix = playerFix, leaseEpoch = leaseEpoch, observedAt = now(),
+        trailingUtterances = trailingUtterances
     )
 
     private data class Memory(
@@ -419,10 +423,11 @@ class WorldEcosystemCoordinator(
         val interactions: List<EcosystemInteractionSummary>, val claims: Set<String>,
         val fix: WorldPlayerFix?, val lastPersistedAt: Long,
         val actors: List<WorldSpawn>, val personalities: Map<String, DigimonPersonalityType>,
-        val previousPositions: Map<String, GeoPoint>, val motionFrameNanos: Long
+        val previousPositions: Map<String, GeoPoint>, val motionFrameNanos: Long,
+        val trailing: List<EcosystemUtterance>
     )
     private fun memory() = Memory(session, individuals, interactions, claimedIndividuals, playerFix, lastPersistedAt,
-        actors, personalities, previousPositions, motionFrameNanos)
+        actors, personalities, previousPositions, motionFrameNanos, trailingUtterances)
     private fun restore(memory: Memory) {
         session = memory.session
         individuals = memory.individuals
@@ -434,6 +439,7 @@ class WorldEcosystemCoordinator(
         personalities = memory.personalities
         previousPositions = memory.previousPositions
         motionFrameNanos = memory.motionFrameNanos
+        trailingUtterances = memory.trailing
     }
     private suspend fun <T> checkpointLocked(action: suspend () -> T): T {
         val previous = memory()

@@ -20,6 +20,8 @@ interface AppContainer {
     val db: AppDatabase
     val dataStoreSecretsRepository: DataStoreSecretsRepository
     val currencyRepository: CurrencyRepository
+    val questRepository: com.github.nacabaro.vbhelper.quests.QuestRepository
+        get() = com.github.nacabaro.vbhelper.quests.QuestRepository(db, currencyRepository)
     val validatedCardManager: ValidatedCardManager
     val companionLogService: CompanionLogService
     val llmSettingsRepository: LlmSettingsRepository
@@ -32,6 +34,8 @@ interface AppContainer {
     val worldRepository: WorldRepository
     val digifarmRepository: DigifarmRepository
     val farmSessionCoordinator: FarmSessionCoordinator
+    val farmConversationOrchestrator: com.github.nacabaro.vbhelper.digifarm.social.FarmConversationOrchestrator
+        get() = digifarmRepository.conversationOwner(chatRepository)
     val worldEcosystemCoordinator: WorldEcosystemCoordinator
     val worldInteractionOrchestrator: com.github.nacabaro.vbhelper.world.ecosystem.WorldInteractionOrchestrator
 }

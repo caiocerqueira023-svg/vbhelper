@@ -61,7 +61,10 @@ class BattleSessionController(
         check(!closed) { "A sessão foi fechada." }
         require(reason.isNotBlank())
         if (paused) pauseReasons += reason else pauseReasons -= reason
-        simulator.setPaused(pauseReasons.isNotEmpty(), pauseReasons.lastOrNull())
+        // blast-menu is the only pause which accepts timing taps; it must never mask
+        // an external pause merely because its overlay was opened most recently.
+        val effectiveReason = pauseReasons.lastOrNull { it != "blast-menu" } ?: pauseReasons.lastOrNull()
+        simulator.setPaused(pauseReasons.isNotEmpty(), effectiveReason)
         previousFrameNanos = nanoTime()
         fractionalNanos = 0L
         _snapshot.value = simulator.snapshot()
@@ -94,6 +97,7 @@ class BattleSessionController(
         tickJob = null
         previousFrameNanos = null
         fractionalNanos = 0L
+        simulator.cancelFinisher()
         simulator.setPaused(true, "closed")
         _snapshot.value = simulator.snapshot()
     }

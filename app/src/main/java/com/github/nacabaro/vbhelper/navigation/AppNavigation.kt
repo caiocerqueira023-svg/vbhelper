@@ -80,6 +80,7 @@ import com.github.nacabaro.vbhelper.screens.worldScreen.WorldConversationScreen
 import com.github.nacabaro.vbhelper.screens.worldScreen.WorldChatScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.digilineScreen.DigilineScreen
 import com.github.nacabaro.vbhelper.screens.digilineScreen.FarmGroupScreen
+import com.github.nacabaro.vbhelper.screens.questScreen.QuestScreen
 import com.github.nacabaro.vbhelper.dtos.WorldDtos
 
 data class AppNavigationHandlers(
@@ -265,6 +266,7 @@ fun AppNavigation(
                 )
             }
             composable(NavigationItems.Digiline.route) { DigilineScreen(navController) }
+            composable(NavigationItems.Quests.route) { QuestScreen(navController) }
             composable(NavigationItems.FarmGroup.route) { entry ->
                 entry.arguments?.getString("farmId")?.let { FarmGroupScreen(navController, it) }
             }

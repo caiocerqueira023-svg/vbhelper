@@ -48,27 +48,30 @@ import com.github.nacabaro.vbhelper.ui.theme.TextMutedOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 
 /** Quiet technical frame for panels that need to communicate state or selection. */
-fun Modifier.cyberFrame(active: Boolean = false): Modifier = drawBehind {
+@Composable
+fun Modifier.cyberFrame(active: Boolean = false): Modifier {
     val color = if (active) VitalCyan else SurfaceStroke
-    val alpha = if (active) 0.82f else 0.52f
-    val stroke = 1.dp.toPx()
-    val corner = 11.dp.toPx()
-    val w = size.width
-    val h = size.height
-    drawRect(color.copy(alpha = alpha), style = androidx.compose.ui.graphics.drawscope.Stroke(stroke))
-    if (active) {
-        drawRect(
-            color.copy(alpha = 0.06f),
-            topLeft = Offset(stroke, stroke),
-            size = androidx.compose.ui.geometry.Size(w - 2 * stroke, h - 2 * stroke)
-        )
+    return drawBehind {
+        val alpha = if (active) 0.82f else 0.52f
+        val stroke = 1.dp.toPx()
+        val corner = 11.dp.toPx()
+        val w = size.width
+        val h = size.height
+        drawRect(color.copy(alpha = alpha), style = androidx.compose.ui.graphics.drawscope.Stroke(stroke))
+        if (active) {
+            drawRect(
+                color.copy(alpha = 0.06f),
+                topLeft = Offset(stroke, stroke),
+                size = androidx.compose.ui.geometry.Size(w - 2 * stroke, h - 2 * stroke)
+            )
+        }
+        listOf(
+            Offset(0f, 0f) to Offset(corner, 0f), Offset(0f, 0f) to Offset(0f, corner),
+            Offset(w, 0f) to Offset(w - corner, 0f), Offset(w, 0f) to Offset(w, corner),
+            Offset(0f, h) to Offset(corner, h), Offset(0f, h) to Offset(0f, h - corner),
+            Offset(w, h) to Offset(w - corner, h), Offset(w, h) to Offset(w, h - corner)
+        ).forEach { (from, to) -> drawLine(color.copy(alpha = alpha), from, to, strokeWidth = 2.dp.toPx()) }
     }
-    listOf(
-        Offset(0f, 0f) to Offset(corner, 0f), Offset(0f, 0f) to Offset(0f, corner),
-        Offset(w, 0f) to Offset(w - corner, 0f), Offset(w, 0f) to Offset(w, corner),
-        Offset(0f, h) to Offset(corner, h), Offset(0f, h) to Offset(0f, h - corner),
-        Offset(w, h) to Offset(w - corner, h), Offset(w, h) to Offset(w, h - corner)
-    ).forEach { (from, to) -> drawLine(color.copy(alpha = alpha), from, to, strokeWidth = 2.dp.toPx()) }
 }
 
 @Composable

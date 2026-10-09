@@ -19,7 +19,7 @@ class LlmSettingsRepositoryTest {
     fun `openrouter defaults to the recommended free roleplay model`() = runBlocking {
         val repository = LlmSettingsRepository(FakeDataStore())
 
-        assertEquals("google/gemma-4-26b-a4b-it:free", repository.model.first())
+        assertEquals("google/gemma-4-31b-it:free", repository.model.first())
         assertEquals(0.95, repository.temperature.first(), 0.0001)
     }
 
@@ -31,7 +31,7 @@ class LlmSettingsRepositoryTest {
         val store = FakeDataStore(preferences)
         val repository = LlmSettingsRepository(store)
 
-        assertEquals("google/gemma-4-26b-a4b-it:free", repository.model.first())
+        assertEquals("google/gemma-4-31b-it:free", repository.model.first())
     }
 
     @Test

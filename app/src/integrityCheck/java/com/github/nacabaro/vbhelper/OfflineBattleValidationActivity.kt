@@ -26,7 +26,7 @@ class OfflineBattleValidationActivity : ComponentActivity() {
             battleModel.start(this, "runtime", listOf(a), listOf(b), 7)
         }
         setContent {
-            VBHelperTheme(darkTheme = true) {
+            VBHelperTheme {
                 OfflineTrainingBattleScreen(battleModel, { finish() },
                     Modifier.fillMaxSize().background(DeepPurpleBgAlt).statusBarsPadding())
             }

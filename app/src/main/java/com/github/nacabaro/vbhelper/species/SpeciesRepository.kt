@@ -7,6 +7,8 @@ import com.github.nacabaro.vbhelper.domain.species.SpeciesSource
 import com.github.nacabaro.vbhelper.source.SpeciesSettingsRepository
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import timber.log.Timber
 import java.text.Normalizer
 import java.util.Locale
@@ -21,10 +23,24 @@ class SpeciesRepository(
     companion object {
         const val SPECIES_DB_URL =
             "https://raw.githubusercontent.com/TamerCaio/vbhelper-species-db/main/species.json"
+        /** Freshness window for the in-memory species database. */
+        const val DATABASE_CACHE_TTL_MILLIS = 24 * 60 * 60 * 1000L
+
+        // Process-wide so short-lived owners (per-dialog repositories) share one
+        // fetch instead of each paying a network round trip on first use.
+        private val databaseMutex = Mutex()
+        private var cachedDatabase: SpeciesDatabaseDto? = null
+        private var cachedDatabaseAt: Long = 0L
+
+        internal fun clearDatabaseCacheForTests() {
+            cachedDatabase = null
+            cachedDatabaseAt = 0L
+        }
     }
 
     private val gson = Gson()
     private var conversationExamplesCache: List<SpeciesConversationEntry>? = null
+    internal var clock: () -> Long = System::currentTimeMillis
 
     suspend fun matchOfficialSpeciesForCard(cardId: Long): Int {
         val db = database ?: return 0
@@ -216,8 +232,10 @@ class SpeciesRepository(
         specialMoves: List<String>
     ) {
         val existing = getProfileForCharacter(cardCharacterId)
+        // Enrichment uses only locally available data: the name the user picked
+        // is authoritative and must not wait on a network fetch to be saved.
         val matched = runCatching {
-            fetchDatabase()
+            cachedDatabaseSnapshot()
                 ?.species
                 ?.values
                 ?.asSequence()
@@ -336,20 +354,42 @@ class SpeciesRepository(
         }.getOrDefault(emptyList())
     }
 
-    internal suspend fun fetchDatabase(): SpeciesDatabaseDto? = try {
-        val remoteUrl = "$SPECIES_DB_URL?cacheBust=${System.currentTimeMillis()}"
-        val remote = parseDatabase(service.getSpeciesDatabase(remoteUrl).string())
-        remote.also {
-            settingsRepository.cacheDatabase(gson.toJson(it), it.version)
+    internal suspend fun fetchDatabase(): SpeciesDatabaseDto? = databaseMutex.withLock {
+        val fresh = cachedDatabase
+        if (fresh != null && clock() - cachedDatabaseAt <= DATABASE_CACHE_TTL_MILLIS) return fresh
+        try {
+            val remoteUrl = "$SPECIES_DB_URL?cacheBust=${System.currentTimeMillis()}"
+            val remote = parseDatabase(service.getSpeciesDatabase(remoteUrl).string())
+            remote.also {
+                settingsRepository.cacheDatabase(gson.toJson(it), it.version)
+            }
+            cachedDatabase = remote
+            cachedDatabaseAt = clock()
+            remote
+        } catch (exception: Exception) {
+            Timber.w(exception, "Failed to fetch species database; trying cached/bundled copy")
+            // Remember the fallback as fresh so one offline stretch does not
+            // pay a network timeout on every dialog open and import.
+            val fallback = cachedDatabase ?: cachedDatabase() ?: assetDatabase()
+            if (fallback != null) {
+                cachedDatabase = fallback
+                cachedDatabaseAt = clock()
+            }
+            fallback
         }
-    } catch (exception: Exception) {
-        Timber.w(exception, "Failed to fetch species database; trying cached/bundled copy")
-        cachedDatabase() ?: assetDatabase()
     }
 
     private suspend fun cachedDatabase(): SpeciesDatabaseDto? {
         val json = settingsRepository.cachedDatabaseJson.first() ?: return null
         return runCatching { parseDatabase(json) }
+            .onFailure { Timber.w(it, "Failed to parse cached species database") }
+            .getOrNull()
+    }
+
+    /** Local-only snapshot for enrichment: in-memory first, then the DataStore cache. Never hits the network. */
+    private suspend fun cachedDatabaseSnapshot(): SpeciesDatabaseDto? {
+        databaseMutex.withLock { cachedDatabase }?.let { return it }
+        return runCatching { settingsRepository.cachedDatabaseJson.first()?.let { parseDatabase(it) } }
             .onFailure { Timber.w(it, "Failed to parse cached species database") }
             .getOrNull()
     }

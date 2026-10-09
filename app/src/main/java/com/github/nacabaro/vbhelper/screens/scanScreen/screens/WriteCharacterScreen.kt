@@ -1,6 +1,6 @@
 package com.github.nacabaro.vbhelper.screens.scanScreen.screens
 
-import androidx.compose.foundation.Image
+import com.github.nacabaro.vbhelper.components.DimLogo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -106,7 +106,7 @@ fun WriteCharacterScreen(
                             shape = RectangleShape,
                             modifier = Modifier.size(96.dp)
                         ) {
-                            Image(
+                            DimLogo(
                                 bitmap = charaImageBitmapData.imageBitmap,
                                 contentDescription = stringResource(R.string.write_character_icon_description),
                                 modifier = Modifier

@@ -9,10 +9,14 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import java.io.IOException
 
 class SpeciesRepositoryTest {
+
+    // The species database cache is process-wide, so every test starts cold.
+    @Before fun clearSharedCache() = SpeciesRepository.clearDatabaseCacheForTests()
 
     private fun createRepository(
         database: AppDatabase? = null,

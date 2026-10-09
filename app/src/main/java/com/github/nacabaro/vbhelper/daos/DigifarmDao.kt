@@ -140,6 +140,20 @@ interface DigifarmDao {
     )
     suspend fun recordInteraction(observerId: String, otherId: String, now: Long)
 
+    @Query("""
+        INSERT INTO FarmRelationship(observerId,otherId,affinity,familiarity,lastInteractionAt)
+        VALUES(:observer,:other,MIN(100,MAX(0,50 + :delta)),1,:now)
+        ON CONFLICT(observerId,otherId) DO UPDATE SET
+            affinity=MIN(100,MAX(0,affinity + :delta)), familiarity=MIN(100,familiarity+1), lastInteractionAt=:now
+    """)
+    suspend fun applySocialInteraction(observer: String, other: String, delta: Int, now: Long)
+
+    @Query("SELECT * FROM FarmRelationship WHERE observerId = :id")
+    suspend fun relationships(id: String): List<com.github.nacabaro.vbhelper.domain.digifarm.FarmRelationship>
+
+    @Query("SELECT * FROM FarmMemory WHERE observerId = :id AND relatedIndividualId = :other ORDER BY relevance DESC,createdAt DESC LIMIT :limit")
+    suspend fun memoriesWith(id: String, other: String, limit: Int = 5): List<FarmMemory>
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertMemory(memory: FarmMemory)
 
@@ -162,7 +176,7 @@ interface DigifarmDao {
         JOIN CardCharacter cc ON cc.id = uc.charId
         JOIN Sprite s ON s.id = cc.spriteId
         LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = cc.id
-        WHERE EXISTS(SELECT 1 FROM ChatMessageEntity cm WHERE cm.individualId = uc.individualId AND cm.role = 'user')
+        WHERE EXISTS(SELECT 1 FROM ChatMessageEntity cm WHERE cm.individualId = uc.individualId AND cm.role IN ('user','assistant'))
         ORDER BY COALESCE(lastTimestamp, 0) DESC
         """
     )
