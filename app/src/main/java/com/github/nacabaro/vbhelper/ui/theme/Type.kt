@@ -16,6 +16,8 @@ fun appTypography(fontFamily: FontFamily) = Typography(
         lineHeight = 44.sp,
         letterSpacing = 0.sp
     ),
+    displayMedium = TextStyle(fontFamily = fontFamily, fontWeight = FontWeight.Black, fontSize = 32.sp, lineHeight = 38.sp),
+    displaySmall = TextStyle(fontFamily = fontFamily, fontWeight = FontWeight.ExtraBold, fontSize = 28.sp, lineHeight = 34.sp),
     headlineLarge = TextStyle(
         fontFamily = fontFamily,
         fontWeight = FontWeight.ExtraBold,
@@ -23,6 +25,8 @@ fun appTypography(fontFamily: FontFamily) = Typography(
         lineHeight = 32.sp,
         letterSpacing = 0.sp
     ),
+    headlineMedium = TextStyle(fontFamily = fontFamily, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 30.sp),
+    headlineSmall = TextStyle(fontFamily = fontFamily, fontWeight = FontWeight.Bold, fontSize = 20.sp, lineHeight = 26.sp),
     titleLarge = TextStyle(
         fontFamily = fontFamily,
         fontWeight = FontWeight.Bold,
@@ -58,6 +62,7 @@ fun appTypography(fontFamily: FontFamily) = Typography(
         lineHeight = 20.sp,
         letterSpacing = 0.25.sp
     ),
+    bodySmall = TextStyle(fontFamily = fontFamily, fontWeight = FontWeight.Normal, fontSize = 12.sp, lineHeight = 18.sp, letterSpacing = 0.25.sp),
     labelLarge = TextStyle(
         fontFamily = fontFamily,
         fontWeight = FontWeight.Bold,
@@ -65,6 +70,7 @@ fun appTypography(fontFamily: FontFamily) = Typography(
         lineHeight = 18.sp,
         letterSpacing = 0.2.sp
     ),
+    labelMedium = TextStyle(fontFamily = fontFamily, fontWeight = FontWeight.Medium, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.2.sp),
     labelSmall = TextStyle(
         fontFamily = fontFamily,
         fontWeight = FontWeight.SemiBold,

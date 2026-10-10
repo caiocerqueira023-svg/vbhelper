@@ -18,11 +18,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.github.nacabaro.vbhelper.components.VitalButton
+import com.github.nacabaro.vbhelper.components.editorDialogBounds
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
 import androidx.compose.ui.window.DialogProperties
@@ -42,26 +45,26 @@ fun SpeciesManualEditDialog(
     onSkip: () -> Unit,
     onSave: (SpeciesManualEditResult) -> Unit
 ) {
-    var name by remember { mutableStateOf("") }
-    var level by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf("") }
-    var profile by remember { mutableStateOf("") }
-    var specialMoves by remember { mutableStateOf("") }
+    var name by rememberSaveable(cardName) { mutableStateOf("") }
+    var level by rememberSaveable(cardName) { mutableStateOf("") }
+    var type by rememberSaveable(cardName) { mutableStateOf("") }
+    var profile by rememberSaveable(cardName) { mutableStateOf("") }
+    var specialMoves by rememberSaveable(cardName) { mutableStateOf("") }
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(dismissOnClickOutside = false)
+        properties = DialogProperties(dismissOnClickOutside = false, decorFitsSystemWindows = false)
     ) {
-        Card {
+        Card(modifier = Modifier.editorDialogBounds()) {
             Column(
                 Modifier.padding(16.dp).verticalScroll(rememberScrollState())
             ) {
                 Text(stringResource(R.string.ui_species_question), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "Card \"$cardName\". Only the name is required.",
+                    stringResource(R.string.app_species_card_hint, cardName),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(12.dp))
                 OutlinedTextField(name, { name = it }, label = { Text(stringResource(R.string.ui_species_name_required)) }, modifier = Modifier.fillMaxWidth())
@@ -78,10 +81,11 @@ fun SpeciesManualEditDialog(
                     label = {                     Text(stringResource(R.string.ui_optional_profile)) },
                     modifier = Modifier.fillMaxWidth()
                 )
-                Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End) {
+                FlowRow(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = onSkip) { Text(stringResource(R.string.ui_skip)) }
                     TextButton(onClick = onDismiss) { Text(stringResource(R.string.ui_cancel)) }
                     VitalButton(
+                        style = com.github.nacabaro.vbhelper.components.VitalButtonStyle.PRIMARY,
                         enabled = name.isNotBlank(),
                         onClick = {
                             onSave(

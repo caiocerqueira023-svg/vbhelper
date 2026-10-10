@@ -12,6 +12,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.github.nacabaro.vbhelper.components.VitalButton
+import com.github.nacabaro.vbhelper.components.VitalButtonStyle
+import androidx.compose.ui.res.stringResource
+import com.github.nacabaro.vbhelper.R
 
 @Composable
 fun CompanionConfirmation(
@@ -30,11 +33,11 @@ fun CompanionConfirmation(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceEvenly,
         ) {
-            VitalButton(onClick = { onResult(true) }) {
-                Text(text = "Ok")
+            VitalButton(onClick = { onResult(true) }, style = VitalButtonStyle.PRIMARY) {
+                Text(stringResource(R.string.ui_ok))
             }
             VitalButton(onClick = { onResult(false) }) {
-                Text(text = "Cancel")
+                Text(stringResource(R.string.ui_cancel))
             }
         }
     }

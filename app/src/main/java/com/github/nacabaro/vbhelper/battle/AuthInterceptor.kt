@@ -23,8 +23,7 @@ class AuthInterceptor(private val token: String) : Interceptor {
             .build()
         
         // Debug: Log which header is being used (first few chars of token for security)
-        val tokenPreview = if (token.length > 8) "${token.take(4)}...${token.takeLast(4)}" else "***"
-        println("AuthInterceptor: Adding X-Session-Token header (token: $tokenPreview)")
+        // Credentials are never included in request diagnostics.
         
         return chain.proceed(authenticatedRequest)
     }

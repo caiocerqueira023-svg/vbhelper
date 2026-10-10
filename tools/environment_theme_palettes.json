@@ -1,0 +1,6 @@
+{
+  "vb_helper": {"light": false, "floor": "#0A0812", "panel": "#120F1F", "elevated": "#251E3D", "structureDark": "#171327", "structureLight": "#BBAAC2", "grid": "#3C3260", "energy": "#8B5CF6", "secondaryEnergy": "#2DE1FC"},
+  "vb_lab": {"light": false, "floor": "#111111", "panel": "#202020", "elevated": "#383838", "structureDark": "#15191C", "structureLight": "#929EA4", "grid": "#626F76", "energy": "#00BDE3", "secondaryEnergy": "#43D6F3"},
+  "vb_arena": {"light": true, "floor": "#EFF3F0", "panel": "#E3EAE5", "elevated": "#F8FCF9", "structureDark": "#A6B5AC", "structureLight": "#F5FAF7", "grid": "#7C9588", "energy": "#24E88A", "secondaryEnergy": "#007648"},
+  "digimon_net": {"light": true, "floor": "#F1F5FF", "panel": "#D9E3FA", "elevated": "#F6F8FF", "structureDark": "#91A5CB", "structureLight": "#F7F9FF", "grid": "#6883B5", "energy": "#1251D0", "secondaryEnergy": "#F6FF00"}
+}

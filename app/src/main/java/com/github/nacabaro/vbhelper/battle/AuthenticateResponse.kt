@@ -16,6 +16,6 @@ data class AuthenticateResponse(
     val success: Boolean,
     val message: String? = null,
     val userInfo: UserInfo? = null,
-    val sessionToken: String? = null
+    val sessionToken: String? = null,
+    val failureCode: Int? = null,
 )
-

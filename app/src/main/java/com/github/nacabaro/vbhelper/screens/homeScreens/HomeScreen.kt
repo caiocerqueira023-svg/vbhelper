@@ -17,6 +17,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.produceState
+import androidx.compose.foundation.layout.Box
+import com.github.nacabaro.vbhelper.components.CyberEmptyState
+import com.github.nacabaro.vbhelper.source.isMissingSecrets
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
+import com.github.nacabaro.vbhelper.components.showAppFeedback
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -43,8 +54,6 @@ import com.github.nacabaro.vbhelper.dtos.CardDtos
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.source.CardRepository
 import com.github.nacabaro.vbhelper.source.DexRepository
-import com.github.nacabaro.vbhelper.source.VitalWearCharacterExporter
-import android.widget.Toast
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.screens.homeScreens.dialogs.DegenerateDialog
 import com.github.nacabaro.vbhelper.screens.cardScreen.dialogs.DexCharaDetailsDialog
@@ -59,7 +68,10 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 fun HomeScreen(
     navController: NavController,
     homeScreenController: HomeScreenControllerImpl,
-    storageScreenController: StorageScreenControllerImpl
+    storageScreenController: StorageScreenControllerImpl,
+    onImportCards: () -> Unit = { navController.navigate(NavigationItems.Dex.route) },
+    onImportConnection: () -> Unit = { navController.navigate(NavigationItems.Settings.route) },
+    importingConnection: Boolean = false,
 ) {
     val context = LocalContext.current
     val application = context.applicationContext as VBHelper
@@ -68,13 +80,25 @@ fun HomeScreen(
     val cardRepository = remember { CardRepository(application.container.db) }
     val dexRepository = remember { DexRepository(application.container.db) }
 
-    val activeMon by storageRepository
-        .getActiveCharacter()
-        .collectAsState(initial = null)
-
-    val allCharacters by storageRepository
-        .getAllCharacters()
-        .collectAsState(initial = emptyList())
+    var reload by rememberSaveable { androidx.compose.runtime.mutableIntStateOf(0) }
+    var collectionFailed by remember(reload) { mutableStateOf(false) }
+    var cardsFailed by remember(reload) { mutableStateOf(false) }
+    val collection by produceState(homeScreenController.cachedHomeCollection, storageRepository, reload) {
+        try { storageRepository.getAllCharacters().collect { homeScreenController.cachedHomeCollection = it; value = it } }
+        catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { collectionFailed = true }
+    }
+    val allCharacters = collection.orEmpty()
+    val activeMon = allCharacters.firstOrNull { it.active }
+    val cards by produceState(homeScreenController.cachedHomeCards, dexRepository, reload) {
+        try { dexRepository.getAllDims().collect { homeScreenController.cachedHomeCards = it; value = it } }
+        catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { cardsFailed = true }
+    }
+    val secrets by application.container.dataStoreSecretsRepository.secretsFlow.collectAsState(initial = null)
+    val connectionReady = secrets?.let { !it.isMissingSecrets() }
+    val preferences = remember { application.getSharedPreferences("app_preferences", 0) }
+    var setupDismissed by rememberSaveable { mutableStateOf(preferences.getBoolean("home_setup_dismissed", false)) }
     val favoriteCharacters = remember(allCharacters) {
         allCharacters
             .filter { it.isFavorite && !it.isInAdventure }
@@ -116,13 +140,30 @@ fun HomeScreen(
         activeMon?.let { homeScreenController.checkDailyDiary(it.id) }
     }
 
-    val cardIconData by (
-        activeMon
-            ?.let { chara ->
-                cardRepository.getCardIconByCharaId(chara.charId)
-            }
-            ?: flowOf<CardDtos.CardIcon?>(null)
-    ).collectAsState(initial = null)
+    val cachedDetails = homeScreenController.cachedPartnerDetails?.takeIf {
+        it.characterId == activeMon?.id && it.cardCharacterId == activeMon?.charId
+    }
+    var profileLoading by remember(activeMon?.id, activeMon?.charId, reload) { mutableStateOf(activeMon != null && cachedDetails == null) }
+    val partnerDetails by produceState(cachedDetails, activeMon?.id, activeMon?.charId, reload) {
+        value = cachedDetails
+        val partner = activeMon ?: return@produceState
+        profileLoading = value == null
+        try {
+            val vb: Flow<VBCharacterData?> = if (partner.characterType == DeviceType.VBDevice)
+                storageRepository.getCharacterVbData(partner.id) else flowOf(null)
+            val be: Flow<BECharacterData?> = if (partner.characterType == DeviceType.BEDevice)
+                storageRepository.getCharacterBeData(partner.id) else flowOf(null)
+            combine(vb, be, cardRepository.getCardIconByCharaId(partner.charId)) {
+                    vbData, beData, icon -> HomePartnerDetails(partner.id, partner.charId, vbData, beData, icon)
+            }.collect { homeScreenController.cachedPartnerDetails = it; value = it; profileLoading = false }
+        } catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { value = null }
+        finally { profileLoading = false }
+    }
+    val currentDetails = partnerDetails?.takeIf { it.characterId == activeMon?.id && it.cardCharacterId == activeMon?.charId }
+    val cardIconData = currentDetails?.icon
+    val vbData = currentDetails?.vbData
+    val beData = currentDetails?.beData
 
     val speciesProfile by (
         activeMon
@@ -133,13 +174,10 @@ fun HomeScreen(
             ?: flowOf<com.github.nacabaro.vbhelper.domain.species.SpeciesProfile?>(null)
     ).collectAsState(initial = null)
 
-    val transformationHistory by (
-        activeMon
-            ?.let { chara ->
-                storageRepository.getTransformationHistory(chara.id)
-            }
-            ?: flowOf(emptyList())
-    ).collectAsState(initial = emptyList())
+    val historyFlow = remember(storageRepository, activeMon?.id) {
+        activeMon?.id?.let(storageRepository::getTransformationHistory) ?: flowOf(emptyList())
+    }
+    val transformationHistory by historyFlow.collectAsState(initial = emptyList())
 
     val vbSpecialMissions by (
         activeMon
@@ -150,30 +188,11 @@ fun HomeScreen(
             ?: flowOf(emptyList())
     ).collectAsState(initial = emptyList())
 
-    val vbData by (
-        activeMon
-            ?.takeIf { it.characterType == DeviceType.VBDevice }
-            ?.let { chara ->
-                storageRepository.getCharacterVbData(chara.id)
-            }
-            ?: flowOf<VBCharacterData?>(null)
-    ).collectAsState(initial = null)
-
-    val beData by (
-        activeMon
-            ?.takeIf { it.characterType == DeviceType.BEDevice }
-            ?.let { chara ->
-                storageRepository.getCharacterBeData(chara.id)
-            }
-            ?: flowOf<BECharacterData?>(null)
-    ).collectAsState(initial = null)
-
     var adventureMissionsFinished by rememberSaveable { mutableStateOf(false) }
     var collectedItem by remember { mutableStateOf<ItemDtos.PurchasedItem?>(null) }
     var collectedCurrency by remember { mutableStateOf<Int?>(null) }
-    var selectedTransformation by remember {
-        mutableStateOf<CharacterDtos.TransformationHistory?>(null)
-    }
+    var selectedTransformationId by rememberSaveable(activeMon?.id) { mutableStateOf<Long?>(null) }
+    val selectedTransformation = transformationHistory.firstOrNull { it.id == selectedTransformationId }
     var vitalsHistory by remember {
         mutableStateOf<List<com.github.nacabaro.vbhelper.domain.device_data.VitalsHistory>>(emptyList())
     }
@@ -207,18 +226,41 @@ fun HomeScreen(
             )
         }
     ) { contentPadding ->
-        if (activeMon == null || (beData == null && vbData == null) || cardIconData == null || transformationHistory.isEmpty()) {
-            Column (
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = contentPadding.calculateTopPadding())
-            ) {
-                Text(text = stringResource(R.string.adventure_empty_state))
-            }
+        val state = homeReadiness(collection?.size, cards?.size, connectionReady, activeMon != null,
+            cardIconData != null && (beData != null || vbData != null))
+        val contentModifier = Modifier.fillMaxSize().padding(contentPadding)
+        val onRead = { navController.navigate(NavigationItems.Scan.route) }
+        if (collectionFailed || (activeMon == null && cardsFailed)) {
+            CyberEmptyState(stringResource(R.string.app_load_failed), contentModifier,
+                actionLabel = stringResource(R.string.app_retry), onAction = { reload++ })
+        } else if (state == HomeReadiness.LOADING || profileLoading) {
+            HomeLoadingPanel(activeMon != null, contentModifier)
+        } else if (state == HomeReadiness.SETUP && !setupDismissed) {
+            HomeSetupPanel(cardsReady = !cards.isNullOrEmpty(), connectionReady = connectionReady == true,
+                onImportCards = onImportCards, onImportConnection = onImportConnection, onRead = onRead,
+                onSkip = { setupDismissed = true; preferences.edit().putBoolean("home_setup_dismissed", true).apply() },
+                importingConnection = importingConnection,
+                modifier = contentModifier)
+        } else if (state == HomeReadiness.CHOOSE_PARTNER) {
+            CyberEmptyState(stringResource(R.string.app_home_no_partner_body), contentModifier,
+                title = stringResource(R.string.app_home_no_partner_title),
+                actionLabel = stringResource(R.string.app_select_partner),
+                onAction = { navController.navigate(NavigationItems.Storage.route) })
+        } else if (state == HomeReadiness.PROFILE_UNAVAILABLE) {
+            CyberEmptyState(stringResource(R.string.app_profile_unavailable_body), contentModifier,
+                title = stringResource(R.string.app_profile_unavailable_title),
+                actionLabel = stringResource(R.string.app_reload_details), onAction = { reload++ },
+                secondaryLabel = stringResource(R.string.app_open_dex), onSecondaryAction = onImportCards)
+        } else if (state == HomeReadiness.EMPTY || state == HomeReadiness.SETUP) {
+            CyberEmptyState(stringResource(R.string.app_home_empty_body), contentModifier,
+                title = stringResource(R.string.app_home_empty_title),
+                actionLabel = stringResource(if (state == HomeReadiness.SETUP) R.string.app_setup_resume else R.string.app_scan_first),
+                onAction = if (state == HomeReadiness.SETUP) ({ setupDismissed = false; preferences.edit().putBoolean("home_setup_dismissed", false).apply() }) else onRead,
+                secondaryLabel = stringResource(R.string.app_open_dex),
+                onSecondaryAction = { navController.navigate(NavigationItems.Dex.route) })
         } else {
-            Column(modifier = Modifier.padding(top = contentPadding.calculateTopPadding())) {
+            Column(modifier = Modifier.fillMaxSize().padding(contentPadding)) {
+                Box(Modifier.weight(1f)) {
                 val cardIcon = BitmapData(
                     bitmap = cardIconData!!.cardIcon,
                     width = cardIconData!!.cardIconWidth,
@@ -249,7 +291,7 @@ fun HomeScreen(
                         favoriteCount = favoriteCharacters.size,
                         onClickTransformation = {
                             if (it.stageId != activeMon!!.charId && it.stage <= activeMon!!.stage) {
-                                selectedTransformation = it
+                                selectedTransformationId = it.id
                             }
                         },
                         vitalsHistory = vitalsHistory
@@ -278,7 +320,7 @@ fun HomeScreen(
                         favoriteCount = favoriteCharacters.size,
                         onClickTransformation = {
                             if (it.stageId != activeMon!!.charId && it.stage <= activeMon!!.stage) {
-                                selectedTransformation = it
+                                selectedTransformationId = it.id
                             }
                         },
                         vitalsHistory = vitalsHistory
@@ -313,33 +355,13 @@ fun HomeScreen(
                         favoriteCount = favoriteCharacters.size,
                         onClickTransformation = {
                             if (it.stageId != activeMon!!.charId && it.stage <= activeMon!!.stage) {
-                                selectedTransformation = it
+                                selectedTransformationId = it.id
                             }
                         },
                         vitalsHistory = vitalsHistory
                     )
                 }
 
-                VitalButton(
-                    onClick = {
-                        try {
-                            val intent = VitalWearCharacterExporter(application, application.container.db)
-                                .buildShareIntent(activeMon!!.id)
-                                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                            application.startActivity(intent)
-                        } catch (e: Exception) {
-                            Toast.makeText(
-                                application,
-                                "Could not send character to VitalWear: ${e.message}",
-                                Toast.LENGTH_LONG
-                            ).show()
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Text(text = "Send to VitalWear")
                 }
             }
         }
@@ -398,19 +420,15 @@ fun HomeScreen(
     if (transformation != null && currentCharacter != null) {
         DegenerateDialog(
                 targetStage = transformation.stage,
-            onDismiss = { selectedTransformation = null },
+            onDismiss = { selectedTransformationId = null },
             onConfirm = {
                 homeScreenController.degenerate(
                     characterId = currentCharacter.id,
                     transformation = transformation
                 ) { result ->
-                    selectedTransformation = null
+                    selectedTransformationId = null
                     result.onFailure {
-                        Toast.makeText(
-                            application,
-                            it.message ?: "Could not degenerate this Digimon.",
-                            Toast.LENGTH_LONG
-                        ).show()
+                        context.showAppFeedback(R.string.app_partner_update_failed, important = true)
                     }
                 }
             }
@@ -418,3 +436,11 @@ fun HomeScreen(
     }
 
 }
+
+internal data class HomePartnerDetails(
+    val characterId: Long,
+    val cardCharacterId: Long,
+    val vbData: VBCharacterData?,
+    val beData: BECharacterData?,
+    val icon: CardDtos.CardIcon?,
+)

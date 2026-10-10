@@ -40,6 +40,17 @@ class NpcBattleVersionTest {
         assertEquals(2, replay.snapshot().rulesetVersion)
     }
 
+    @Test fun oldV3EnvelopeWithoutMovementVersionRetainsItsHistoricalReplay() {
+        val configuration = BattleConfiguration(randomSeed = 42, movementRulesVersion = BattleMovementRules.LEGACY_VERSION)
+        val oldJson = JsonParser.parseString(NpcBattleAdapter.encode(definitions, configuration)).asJsonObject
+        oldJson.getAsJsonObject("configuration").remove("movementRulesVersion")
+        val record = WorldNpcBattle("npc", oldJson.toString(), startTick = 1, nextRoundTick = 1)
+        val expected = NpcBattleAdapter.recover(event, record.copy(definitionsJson = NpcBattleAdapter.encode(definitions, configuration)))
+        repeat(137) { expected.advance(34) }
+        val actual = NpcBattleAdapter.recover(event, record.copy(elapsedMillis = expected.snapshot().elapsedMillis))
+        assertEquals(expected.snapshot(), actual.snapshot())
+    }
+
     @Test fun unknownCheckpointVersionIsRejectedInsteadOfReplayedUsingCurrentRules() {
         val json = NpcBattleAdapter.encode(definitions, BattleConfiguration(randomSeed = 42))
             .replace("\"rulesetVersion\":3", "\"rulesetVersion\":999")

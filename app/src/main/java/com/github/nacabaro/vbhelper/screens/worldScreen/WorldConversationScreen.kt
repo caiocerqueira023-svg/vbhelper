@@ -78,7 +78,7 @@ fun WorldConversationScreen(navController: NavController, interactionId: String)
         error=when(failure) {
             is RadarCommandException -> resources.getString(failure.messageResource())
             is WorldInteractionException -> resources.getString(failure.messageResource())
-            else -> failure.message ?: resources.getString(R.string.ui_world_encounter_unavailable)
+            else -> resources.getString(R.string.app_chat_failed)
         }
     }
 
@@ -143,7 +143,7 @@ fun WorldConversationScreen(navController: NavController, interactionId: String)
     Scaffold(topBar={ TopBanner(text=if(group) stringResource(R.string.ui_world_group_chat)
         else names.values.firstOrNull() ?: stringResource(R.string.ui_world_wild_digimon),onBackClick={navController.popBackStack()}) },
         contentWindowInsets=WindowInsets.statusBars) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).imePadding().padding(horizontal=16.dp,vertical=12.dp),
+        Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding().padding(horizontal=16.dp,vertical=12.dp),
             verticalArrangement=Arrangement.spacedBy(8.dp)) {
             if(group || !canParticipate) ChatContextPanel {
                 if(group) Text(names.values.joinToString(" · "),style=MaterialTheme.typography.labelLarge,color=TextSecondaryOnDark)

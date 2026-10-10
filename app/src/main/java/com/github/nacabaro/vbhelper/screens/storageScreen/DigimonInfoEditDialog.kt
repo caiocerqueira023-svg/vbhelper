@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -28,6 +29,8 @@ import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.chat.PromptLocalization
 import com.github.nacabaro.vbhelper.components.VitalButton
+import com.github.nacabaro.vbhelper.components.editorDialogBounds
+import androidx.compose.foundation.layout.FlowRow
 import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
 
@@ -49,20 +52,20 @@ fun DigimonInfoEditDialog(
     onDismiss: () -> Unit,
     onSave: (DigimonInfoEditResult) -> Unit
 ) {
-    var editedNickname by remember { mutableStateOf(nickname.orEmpty()) }
-    var speciesName by remember { mutableStateOf(profile?.speciesName.orEmpty()) }
-    var level by remember { mutableStateOf(profile?.level.orEmpty()) }
-    var type by remember { mutableStateOf(profile?.type.orEmpty()) }
-    var description by remember { mutableStateOf(profile?.profileDescription.orEmpty()) }
-    var specialMoves by remember {
+    var editedNickname by rememberSaveable(cardName) { mutableStateOf(nickname.orEmpty()) }
+    var speciesName by rememberSaveable(cardName) { mutableStateOf(profile?.speciesName.orEmpty()) }
+    var level by rememberSaveable(cardName) { mutableStateOf(profile?.level.orEmpty()) }
+    var type by rememberSaveable(cardName) { mutableStateOf(profile?.type.orEmpty()) }
+    var description by rememberSaveable(cardName) { mutableStateOf(profile?.profileDescription.orEmpty()) }
+    var specialMoves by rememberSaveable(cardName) {
         mutableStateOf(profile?.specialMoves?.joinToString(", ").orEmpty())
     }
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(dismissOnClickOutside = false)
+        properties = DialogProperties(dismissOnClickOutside = false, decorFitsSystemWindows = false)
     ) {
-        Card {
+        Card(modifier = Modifier.editorDialogBounds()) {
             Column(
                 Modifier
                     .padding(16.dp)
@@ -147,12 +150,13 @@ fun DigimonInfoEditDialog(
                     }
                 }
 
-                Row(
+                FlowRow(
                     Modifier.fillMaxWidth().padding(top = 8.dp),
                     horizontalArrangement = Arrangement.End
                 ) {
                     TextButton(onClick = onDismiss) { Text(stringResource(R.string.ui_cancel)) }
                     VitalButton(
+                        style = com.github.nacabaro.vbhelper.components.VitalButtonStyle.PRIMARY,
                         enabled = speciesName.isNotBlank(),
                         onClick = {
                             onSave(

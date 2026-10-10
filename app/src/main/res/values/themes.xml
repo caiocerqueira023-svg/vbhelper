@@ -22,4 +22,9 @@
         <item name="android:windowLightNavigationBar">true</item>
     </style>
     <style name="Theme.VBHelper.Arena" parent="Theme.VBHelper.Arena.Base" />
+    <style name="Theme.VBHelper.DigimonNet" parent="Theme.VBHelper.Arena">
+        <item name="android:windowBackground">@color/digimon_net_bg</item>
+        <item name="android:statusBarColor">@color/digimon_net_bg</item>
+        <item name="android:navigationBarColor">@color/digimon_net_bg</item>
+    </style>
 </resources>

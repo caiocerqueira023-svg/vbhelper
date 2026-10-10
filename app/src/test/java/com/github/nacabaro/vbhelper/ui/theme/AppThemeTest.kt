@@ -14,8 +14,8 @@ class AppThemeTest {
     }
 
     @Test fun eachThemeHasAStableDistinctSavedValue() {
-        assertEquals(3, AppTheme.entries.size)
-        assertEquals(3, AppTheme.entries.map { it.preferenceValue }.toSet().size)
+        assertEquals(4, AppTheme.entries.size)
+        assertEquals(4, AppTheme.entries.map { it.preferenceValue }.toSet().size)
         for (theme in AppTheme.entries) {
             assertEquals(theme, AppTheme.fromPreference(theme.preferenceValue))
         }
@@ -32,7 +32,7 @@ class AppThemeTest {
         assertTrue(palette.isDark)
     }
 
-    @Test fun labAndArenaFollowTheirReferenceColorFamilies() {
+    @Test fun labArenaAndDigimonNetFollowTheirReferenceColorFamilies() {
         val lab = AppTheme.VB_LAB.palette
         val arena = AppTheme.VB_ARENA.palette
         assertTrue(lab.isDark)
@@ -44,6 +44,12 @@ class AppThemeTest {
         assertTrue(arena.background.luminance() > .9f)
         assertTrue(arena.primary.green > arena.primary.red)
         assertTrue(arena.primary.green > arena.primary.blue)
+        val website = AppTheme.DIGIMON_NET.palette
+        assertTrue(!website.isDark)
+        assertEquals(Color.White, website.background)
+        assertEquals(Color(0xFF1251D0), website.primaryBright)
+        assertEquals(Color(0xFFF6FF00), website.primaryDim)
+        assertEquals(Color(0xFFE4E9FF), website.surfaceElevated)
     }
 
     @Test fun paletteTextAndActionLabelsAreReadable() {
@@ -64,5 +70,15 @@ class AppThemeTest {
         val b = background.luminance()
         val contrast = (maxOf(a, b) + .05f) / (minOf(a, b) + .05f)
         assertTrue("${theme.displayName}: text contrast $contrast must reach 4.5:1", contrast >= 4.5f)
+    }
+
+    @Test fun blastConfirmationAndNeedleRemainReadableInEveryPalette() {
+        for (theme in AppTheme.entries) {
+            val palette = theme.palette
+            assertContrast(theme, palette.onBlastControl, palette.blastControl)
+            val light = maxOf(palette.blastNeedle.luminance(), palette.blastTrack.luminance())
+            val dark = minOf(palette.blastNeedle.luminance(), palette.blastTrack.luminance())
+            assertTrue((light + .05f) / (dark + .05f) >= 3f)
+        }
     }
 }

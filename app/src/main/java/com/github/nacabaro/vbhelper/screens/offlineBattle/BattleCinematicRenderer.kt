@@ -15,7 +15,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import kotlin.math.*
 
-/** Session-owned depth-tested effect pool. No GLB creation or uploads occur while a movie plays. */
+/** Shared, prewarmed depth-tested effects for ordinary wind-ups and finisher cinematics. */
 internal class BattleCinematicRenderer(
     private val engine: Engine,
     private val scene: Scene,
@@ -26,21 +26,34 @@ internal class BattleCinematicRenderer(
     private val effects = linkedMapOf<String, Effect>()
     private val transform = FloatArray(16)
     private val colors = mutableMapOf<Int, FloatArray>()
+    private val attackSpriteColors = mutableMapOf<String, Map<String, Int>>()
     var assetLoadCount = 0
         private set
 
     fun prepare(presentations: Collection<BattleFighterPresentation>) {
         val generic = cinematicEffectModels
-        listOf("charge", "impact", "after", "ring-a", "ring-b", "beam", "slash").forEach { key ->
+        listOf("charge", "impact", "after", "ring-a", "ring-b", "beam", "trail-a", "trail-b", "slash").forEach { key ->
             load(key, generic.getValue(when {
                 key.startsWith("ring") -> "ring"
-                key == "beam" -> "beam"
+                key == "beam" || key.startsWith("trail") -> "beam"
                 key == "slash" -> "slash"
                 else -> "orb"
             }))
         }
         repeat(20) { load("data:$it", generic.getValue("data")) }
         for (presentation in presentations) {
+            attackSpriteColors.getOrPut(presentation.setKey) {
+                presentation.attackVisuals.mapValues { (variant, bitmap) ->
+                    val pixels = IntArray(bitmap.width * bitmap.height)
+                    bitmap.getPixels(pixels, 0, bitmap.width, 0, 0, bitmap.width, bitmap.height)
+                    dominantAttackSpriteColor(pixels, if (variant == "large") presentation.attackProfile.colorArgb
+                        else 0xFF2DE1FC.toInt())
+                }
+            }
+            val startup = "startup:${presentation.combatantId}"
+            load("$startup:orb", generic.getValue("orb"))
+            load("$startup:ring", generic.getValue("ring"))
+            repeat(8) { load("$startup:data:$it", generic.getValue("data")) }
             val key = "shot:${presentation.setKey}"
             if (key in effects) continue
             val image = presentation.attackVisuals["large"] ?: presentation.attackVisuals["small"]
@@ -50,6 +63,7 @@ internal class BattleCinematicRenderer(
                 SpriteExtrusionGlb.buildBillboard(ResidentFrameImage(pixels, bitmap.width, bitmap.height))
             } ?: generic.getValue("orb")
             load(key, bytes)
+            presentation.impactModels["special"]?.let { load("hit:${presentation.setKey}", it) }
             if (presentation.attackProfile.style == FinisherAttackStyle.BARRAGE) {
                 load("$key:1", bytes)
                 load("$key:2", bytes)
@@ -88,6 +102,62 @@ internal class BattleCinematicRenderer(
         effects.values.forEach { effect -> effect.instances.forEach { engine.renderableManager.setLayerMask(it, 0xFF, 0) } }
     }
 
+    fun updateStartup(
+        snapshot: BattleSnapshot,
+        fighters: Map<String, BattleFighterPresentation>,
+        manifest: OfflineArenaManifest,
+        yaw: Double,
+        pitch: Double,
+        anchors: Map<String, BattleEffectAnchor>,
+        allowMotion: Boolean,
+    ) {
+        hide()
+        val members = (snapshot.alliedMembers + snapshot.opposingMembers).associateBy { it.combatantId }
+        for (member in members.values) {
+            val progress = member.activeTechniqueStartupProgress ?: continue
+            if (member.health <= 0 || member.state !in listOf(CombatantState.ATTACK_STARTUP, CombatantState.USING_SPECIAL)) continue
+            val presentation = fighters[member.combatantId] ?: continue
+            val scale = manifest.fighterScale * presentation.visualScaleMultiplier
+            val special = member.activeTechniqueKind == TechniqueKind.SPECIAL
+            val cue = battleStartupVisual(progress, special, allowMotion)
+            val point = world(member.position, manifest.positionScale)
+            val anchor = anchors[member.combatantId] ?: BattleEffectAnchor(point.x, scale * 0.55f, point.z)
+            val target = members[member.targetId]
+            val towardRight = target?.let {
+                (it.position.x-member.position.x)*cos(yaw) - (it.position.z-member.position.z)*sin(yaw)
+            } ?: 1.0
+            val leading = if (towardRight >= 0.0) 1f else -1f
+            val support = member.activeTechniqueKind == TechniqueKind.SUPPORT || member.activeTechniqueKind == TechniqueKind.HEAL
+            val lateral = if (support) 0f else leading * scale * 0.28f
+            val up = scale * 0.10f
+            val x = anchor.x + cos(yaw).toFloat()*lateral - (sin(yaw)*sin(pitch)).toFloat()*up
+            val y = anchor.y + cos(pitch).toFloat()*up
+            val z = anchor.z - sin(yaw).toFloat()*lateral - (cos(yaw)*sin(pitch)).toFloat()*up
+            val fallbackColor = when {
+                special -> presentation.attackProfile.colorArgb
+                support -> 0xFF35D48B.toInt()
+                else -> 0xFF2DE1FC.toInt()
+            }
+            val color = startupAttackSpriteColor(member.activeTechniqueKind,
+                attackSpriteColors[presentation.setKey].orEmpty(), fallbackColor)
+            val key = "startup:${member.combatantId}"
+            show("$key:orb", x, y, z, scale*cue.orbSize, scale*cue.orbSize,
+                cue.orbOpacity, color, yaw, pitch)
+            ring("$key:ring", point, scale*cue.floorSize, cue.floorOpacity, color)
+            if (allowMotion) repeat(cue.particleCount) { index ->
+                val phase = (progress + index.toFloat()/cue.particleCount) % 1f
+                val radius = scale * (0.36f*(1f-phase) + 0.05f)
+                val angle = index*2.39996f + progress*0.9f
+                val horizontal = cos(angle)*radius
+                val vertical = sin(angle)*radius
+                show("$key:data:$index", x + cos(yaw).toFloat()*horizontal - (sin(yaw)*sin(pitch)).toFloat()*vertical,
+                    y + cos(pitch).toFloat()*vertical,
+                    z - sin(yaw).toFloat()*horizontal - (cos(yaw)*sin(pitch)).toFloat()*vertical,
+                    scale*0.045f, scale*0.045f, (0.20f + phase*0.35f), color, yaw, pitch, index*30f)
+            }
+        }
+    }
+
     fun update(
         snapshot: BattleSnapshot,
         fighters: Map<String, BattleFighterPresentation>,
@@ -96,6 +166,7 @@ internal class BattleCinematicRenderer(
         yaw: Double,
         pitch: Double,
         allowMotion: Boolean,
+        anchors: Map<String, BattleEffectAnchor> = emptyMap(),
     ) {
         hide()
         val sequence = snapshot.finisher?.let { cinematicVisualSnapshot(it, allowMotion) } ?: return
@@ -150,32 +221,59 @@ internal class BattleCinematicRenderer(
                 }
             }
             BattleFinisherPhase.RELEASE -> {
-                val travel = cinematicEase((p - 0.28f) / 0.72f)
-                if (p < 0.40f) show("charge", muzzle.x, height, muzzle.z,
-                    scale * 0.45f, scale * 0.45f, 1f - p / 0.40f, color, yaw, pitch)
+                val travel = cinematicLaunchProgress(p)
+                if (p < 0.28f) show("charge", muzzle.x, height, muzzle.z,
+                    scale * 0.55f, scale * 0.55f, 1f - p / 0.28f, color, yaw, pitch)
                 ring("ring-a", from, scale * (0.8f + p * 1.2f), (1f - p) * 0.4f, color)
                 when (result.attackProfile.style) {
                     FinisherAttackStyle.BEAM -> beam(muzzle, to, height, scale * 0.64f, travel, 0.85f, color, yaw, pitch)
                     FinisherAttackStyle.MELEE -> if (p > 0.65f) show("slash", to.x, height, to.z,
                         scale * 1.25f, scale * 1.25f, cinematicEase((p - 0.65f) / 0.35f), color, yaw, pitch, -25f)
-                    FinisherAttackStyle.PROJECTILE -> shot(result, muzzle, to, height, travel, scale * 0.65f, yaw, pitch)
+                    FinisherAttackStyle.PROJECTILE -> {
+                        shot(result, muzzle, to, height, travel, scale * 0.82f, yaw, pitch)
+                        if (allowMotion && travel > 0f) {
+                            val tail = cinematicAttackPoint(muzzle, to, (travel - 0.18f).coerceAtLeast(0f))
+                            val head = cinematicAttackPoint(muzzle, to, travel)
+                            beam(tail, head, height, scale * 0.20f, 1f, 0.55f, color, yaw, pitch, "trail-a")
+                        }
+                    }
                     FinisherAttackStyle.BARRAGE -> repeat(3) { index ->
-                        val t = ((p - 0.22f - index * 0.12f) / (0.78f - index * 0.12f)).coerceIn(0f, 1f)
+                        val t = cinematicLaunchProgress(p, index)
                         if (t > 0f) shot(result, muzzle, to, height + (index - 1) * scale * 0.12f,
-                            cinematicEase(t), scale * 0.42f, yaw, pitch, index)
+                            t, scale * 0.58f, yaw, pitch, index)
                     }
                 }
                 if (sequence.kind == BattleFinisherKind.DUO && partner != null) fighters[partner.combatantId]?.let { other ->
                     shot(other, world(partner.position, manifest.positionScale), to, height,
-                        cinematicEase((p - 0.35f) / 0.65f), scale * 0.55f, yaw, pitch)
+                        cinematicLaunchProgress(p, 1), scale * 0.70f, yaw, pitch)
                 }
             }
             BattleFinisherPhase.IMPACT -> {
                 val success = sequence.damage > 0
                 val burst = if (success) 1f else 0.32f
-                show("impact", to.x, height * 0.8f, to.z, scale * (0.7f + p * 1.5f), scale * (0.7f + p * 1.5f),
+                val victim = fighters[sequence.targetId]
+                val victimScale = manifest.fighterScale * (victim?.visualScaleMultiplier ?: 1f)
+                if (success && victim != null && p < 0.42f) {
+                    val size = 1.65f + cinematicEase(p / 0.42f) * 0.45f
+                    val placement = anchors[sequence.targetId]?.let {
+                        battleImpactPlacementFromAnchor(it, victimScale, yaw, pitch, size)
+                    } ?: battleImpactPlacement(to.x, to.z, victimScale, yaw, pitch, size)
+                    show("hit:${victim.setKey}", placement.x, placement.y, placement.z, placement.height, placement.height,
+                        (1f - p / 0.42f).coerceIn(0f, 1f), 0xFFFFFFFF.toInt(), yaw, pitch)
+                }
+                val contact = anchors[sequence.targetId]?.let {
+                    battleImpactPlacementFromAnchor(it, victimScale, yaw, pitch, 1.35f + p*1.6f)
+                } ?: battleImpactPlacement(to.x, to.z, victimScale, yaw, pitch)
+                show("impact", contact.x, contact.y, contact.z, victimScale * (1.35f + p * 1.6f), victimScale * (1.35f + p * 1.6f),
                     burst * (1f - p).pow(1.5f), color, yaw, pitch)
-                ring("ring-a", to, scale * (0.8f + p * 2.1f), burst * (1f - p) * 0.55f, color)
+                ring("ring-a", to, victimScale * (1.2f + p * 2.3f), burst * (1f - p) * 0.70f, color)
+                if (success && allowMotion) repeat(12) { index ->
+                    val angle = index * 2.39996f
+                    val radius = victimScale * (0.25f + cinematicEase(p) * 1.3f)
+                    show("data:$index", contact.x + cos(angle) * radius, contact.y + sin(angle) * radius * 0.65f,
+                        contact.z + sin(angle) * radius * 0.35f, victimScale * 0.065f, victimScale * 0.27f,
+                        (1f - p).pow(2f) * 0.85f, color, yaw, pitch, Math.toDegrees(angle.toDouble()).toFloat() - 90f)
+                }
                 if (result.attackProfile.style == FinisherAttackStyle.BEAM && p < 0.65f) {
                     beam(muzzle, to, height, scale * 0.64f * (1f - p), 1f, 1f - p, color, yaw, pitch)
                 }
@@ -194,15 +292,18 @@ internal class BattleCinematicRenderer(
     private fun shot(presentation: BattleFighterPresentation, from: BattlePosition, to: BattlePosition,
         height: Float, progress: Float, size: Float, yaw: Double, pitch: Double, index: Int = 0) {
         val key = "shot:${presentation.setKey}" + if (index == 0) "" else ":$index"
+        val facing = worldAttackFacing(to.x - from.x, to.z - from.z, yaw, pitch,
+            authoredFacingLeft = BATTLE_ATTACK_ART_FACES_LEFT)
         show(key, from.x + (to.x - from.x) * progress, height, from.z + (to.z - from.z) * progress,
-            size, size, if (progress > 0f) 1f else 0f, 0xFFFFFFFF.toInt(), yaw, pitch)
+            size, size, if (progress > 0f) 1f else 0f, 0xFFFFFFFF.toInt(), yaw, pitch,
+            facing.rotationDegrees, facing.scaleX)
     }
 
     private fun ring(key: String, point: BattlePosition, size: Float, opacity: Float, color: Int) =
         show(key, point.x, 0.045f, point.z, size, size, opacity, color, 0.0, PI / 2)
 
     private fun show(key: String, x: Float, y: Float, z: Float, width: Float, height: Float,
-        opacity: Float, color: Int, yaw: Double, pitch: Double, roll: Float = 0f) {
+        opacity: Float, color: Int, yaw: Double, pitch: Double, roll: Float = 0f, horizontalScale: Float = 1f) {
         val effect = effects[key] ?: return
         if (opacity <= 0.01f) return
         Matrix.setIdentityM(transform, 0)
@@ -210,13 +311,13 @@ internal class BattleCinematicRenderer(
         Matrix.rotateM(transform, 0, Math.toDegrees(yaw).toFloat(), 0f, 1f, 0f)
         Matrix.rotateM(transform, 0, -Math.toDegrees(pitch).toFloat(), 1f, 0f, 0f)
         Matrix.rotateM(transform, 0, roll, 0f, 0f, 1f)
-        Matrix.scaleM(transform, 0, width.coerceAtLeast(0.001f), height.coerceAtLeast(0.001f), 1f)
+        Matrix.scaleM(transform, 0, width.coerceAtLeast(0.001f) * horizontalScale, height.coerceAtLeast(0.001f), 1f)
         display(effect, opacity, color)
     }
 
     private fun beam(from: BattlePosition, to: BattlePosition, height: Float, thickness: Float,
-        progress: Float, opacity: Float, color: Int, yaw: Double, pitch: Double) {
-        val effect = effects["beam"] ?: return
+        progress: Float, opacity: Float, color: Int, yaw: Double, pitch: Double, key: String = "beam") {
+        val effect = effects[key] ?: return
         if (progress <= 0.01f) return
         val dx = (to.x - from.x) * progress
         val dz = (to.z - from.z) * progress
@@ -252,6 +353,7 @@ internal class BattleCinematicRenderer(
         effects.values.forEach { scene.removeEntities(it.asset.entities); loader.destroyAsset(it.asset) }
         effects.clear()
         colors.clear()
+        attackSpriteColors.clear()
     }
 }
 

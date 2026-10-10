@@ -38,12 +38,12 @@ class DexCharacterDetailsTest {
                     modifier = Modifier.size(320.dp, 600.dp))
             }
         }
-        compose.onNodeWithText("100").assertExists()
+        compose.onNodeWithText("100").performScrollTo().assertExists()
         compose.onNodeWithText(context.getString(R.string.dex_detail_evolutions)).assertExists()
         compose.onNodeWithText(context.getString(R.string.dex_detail_trophies, 10)).assertExists()
         compose.onNodeWithText(context.getString(R.string.dex_detail_vitals, 1200)).assertExists()
         compose.onNodeWithText(context.getString(R.string.dex_detail_adventure, 1)).assertExists()
-        compose.onNodeWithContentDescription(context.getString(R.string.dex_detail_open_evolution)).performClick()
+        compose.onNodeWithContentDescription(context.getString(R.string.dex_detail_open_evolution)).performScrollTo().performClick()
         compose.runOnIdle { assertEquals(102L, selected) }
         compose.onNodeWithText(context.getString(R.string.dex_chara_fusions_button)).assertExists()
         compose.onNodeWithText(context.getString(R.string.dex_chara_close_button)).assertIsDisplayed()
@@ -73,7 +73,7 @@ class DexCharacterDetailsTest {
                     primaryAction = { DigimonScanConvertButton(100, false) { conversions++ } })
             }
         }
-        compose.onNodeWithText(context.getString(R.string.digimon_scan_ready)).assertExists()
+        compose.onNodeWithText(context.getString(R.string.digimon_scan_ready)).performScrollTo().assertExists()
         compose.onNodeWithText(context.getString(R.string.digimon_scan_convert)).performClick()
         compose.runOnIdle { assertEquals(1, conversions) }
         compose.onNodeWithText(context.getString(R.string.dex_chara_close_button)).assertIsDisplayed()

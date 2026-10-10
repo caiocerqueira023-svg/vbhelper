@@ -3,8 +3,9 @@ package com.github.nacabaro.vbhelper.screens.cardScreen
 import com.github.nacabaro.vbhelper.components.DimLogo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
@@ -28,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.getBitmap
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.domain.card.OfficialStatus
@@ -124,42 +126,41 @@ fun CardEntry(
                         )
                     }
                 }
-                if (displayModify && officialStatus != OfficialStatus.CUSTOM) {
-                    TextButton(onClick = onClickRetrySpeciesMatch) {
-                        Text(
-                            text = stringResource(R.string.card_entry_retry_species_match),
-                            fontSize = MaterialTheme.typography.labelSmall.fontSize
-                        )
-                    }
-                }
             }
-            if (displayModify) {
-                Row (
-                    modifier = Modifier,
-                    horizontalArrangement = Arrangement.End,
+        }
+        if (displayModify) {
+            Row (
+                modifier = Modifier.fillMaxWidth().testTag("card-entry-actions"),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                TextButton(onClick = onClickRetrySpeciesMatch) {
+                    Text(
+                        text = stringResource(R.string.card_entry_retry_species_match),
+                        fontSize = MaterialTheme.typography.labelSmall.fontSize
+                    )
+                }
+                Spacer(modifier = Modifier.weight(1f))
+                IconButton(onClick = onClickSetOrigin) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = stringResource(R.string.card_entry_set_origin)
+                    )
+                }
+                IconButton(
+                    onClick = onClickModify
                 ) {
-                    IconButton(onClick = onClickSetOrigin) {
-                        Icon(
-                            imageVector = Icons.Default.Info,
-                            contentDescription = stringResource(R.string.card_entry_set_origin)
-                        )
-                    }
-                    IconButton(
-                        onClick = onClickModify
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = stringResource(R.string.card_entry_edit)
-                        )
-                    }
-                    IconButton(
-                        onClick = onClickDelete
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = stringResource(R.string.card_entry_delete)
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = stringResource(R.string.card_entry_edit)
+                    )
+                }
+                IconButton(
+                    onClick = onClickDelete
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = stringResource(R.string.card_entry_delete)
+                    )
                 }
             }
         }

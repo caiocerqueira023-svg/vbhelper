@@ -229,7 +229,7 @@
     <string name="card_import_file_number">File %1$d</string>
     <string name="card_import_file_issue">This file could not be imported. Check the file and try again.</string>
     <string name="card_import_origin_issue">The card was saved. Set Official or Custom from its card entry.</string>
-    <string name="card_origin_help">Official cards support automatic species recognition. Custom cards let you choose their species manually.</string>
+    <string name="card_origin_help">Official cards support automatic species recognition. Custom cards recognize species when their sprite frames exactly match official artwork. You can also choose species manually.</string>
 
     <string name="card_view_discovered_characters">Discovered characters</string>
     <string name="dex_chart_title">Evolution dex</string>

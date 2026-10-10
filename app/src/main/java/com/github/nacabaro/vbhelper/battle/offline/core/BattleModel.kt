@@ -160,7 +160,8 @@ data class CombatantDefinition(
     /** Partner species accepted for the equipped Jogress result (universal + Dex). */
     val jogressPartnerSpecies: List<String> = emptyList(),
     /** Partner attribute accepted for the equipped Jogress result (Dex attribute routes). */
-    val jogressPartnerAttribute: BattleAttribute? = null
+    val jogressPartnerAttribute: BattleAttribute? = null,
+    val jogressSpecial: String? = null,
 )
 
 data class TechniqueDefinition(
@@ -270,7 +271,12 @@ data class BattleConfiguration(
     val randomSeed: Long = 1L,
     val maxDurationMillis: Long = 300_000L,
     val rulesetVersion: Int = BattleRules.CURRENT_VERSION,
-    val damageFormula: BattleDamageFormula = BattleDamageFormula.ADAPTED
+    val damageFormula: BattleDamageFormula = BattleDamageFormula.ADAPTED,
+    /** Independent replay version; checkpoint recovery explicitly pins absent fields to legacy. */
+    val movementRulesVersion: Int = BattleMovementRules.CURRENT_VERSION,
+    /** Opt-in arena rules; legacy training/radar checkpoints retain their original behavior. */
+    val itemCooldownMillis: Long = 0L,
+    val strictFinisherEligibility: Boolean = false,
 )
 
 data class BattleOrder(
@@ -345,6 +351,7 @@ object OrderFailure {
     const val POSITIONING_FAILED = "positioning_failed"
     const val ITEM_UNUSABLE = "item_unusable"
     const val ITEM_UNNEEDED = "item_unneeded"
+    const val ITEM_COOLDOWN = "item_cooldown"
     const val ORDER_SUPERSEDED = "order_superseded"
     const val STATUS_INTERRUPTED = "status_interrupted"
 }
@@ -385,7 +392,9 @@ data class CombatantSnapshot(
     val blastFormSpecies: String? = null,
     val attribute: BattleAttribute = BattleAttribute.NONE,
     val jogressPartnerSpecies: List<String> = emptyList(),
-    val jogressPartnerAttribute: BattleAttribute? = null
+    val jogressPartnerAttribute: BattleAttribute? = null,
+    /** Read-only visual progress for the current STARTUP; null outside wind-up. */
+    val activeTechniqueStartupProgress: Float? = null,
 )
 
 /** Bounded diagnostics for developer tooling; never persisted with the training session. */
@@ -452,6 +461,10 @@ data class BattleSnapshot(
     val finisher: BattleFinisherSnapshot? = null,
     /** Presentation effects through this event were already shown by a completed cinematic. */
     val lastFinisherEventCount: Long = 0L,
+    val opposingItems: List<BattleItemSnapshot> = emptyList(),
+    val opposingCommandPoints: Int = 0,
+    val alliedItemCooldownMillis: Long = 0L,
+    val opposingItemCooldownMillis: Long = 0L,
 )
 
 sealed interface BattleEvent {

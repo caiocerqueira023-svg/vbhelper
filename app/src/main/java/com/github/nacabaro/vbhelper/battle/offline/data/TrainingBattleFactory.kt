@@ -37,7 +37,11 @@ data class TrainingParticipantInput(
     val blastFormSpecial: String? = null,
     val jogressResultSpecies: String? = null,
     /** Raw species name for universal-table matching; null degrades Jogress to dual-strike. */
-    val speciesName: String? = null
+    val speciesName: String? = null,
+    val battleTechniques: List<TechniqueDefinition> = emptyList(),
+    val specialTechniqueId: String? = null,
+    val jogressPartnerSpecies: List<String> = emptyList(),
+    val jogressSpecial: String? = null,
 )
 
 /** Builds the first training loadout without reading or modifying Room during a battle tick. */
@@ -89,8 +93,14 @@ object TrainingBattleFactory {
     private fun TrainingParticipantInput.toDefinition(side: BattleSide): CombatantDefinition {
         val stage = stage.coerceIn(0, 5)
         val stats = TrainingBattleStats.forParticipant(stage, vitalStats)
-        val loadout = GenericTechniqueLoadout.resolve(techniqueIds)
-        val signature = loadout.firstOrNull { GenericTechniqueCatalog.definition(it).power > 0 }
+        val catalog = (GenericTechniqueCatalog.battleDefinitions + battleTechniques).associateBy { it.techniqueId }
+        val loadout = if (battleTechniques.isEmpty()) GenericTechniqueLoadout.resolve(techniqueIds)
+            else techniqueIds.distinct().also { ids ->
+                require(ids.size in 1..3 && ids.all { it in catalog }) {
+                    "Arena loadouts need 1-3 known techniques, got $ids"
+                }
+            }
+        val signature = loadout.firstOrNull { catalog.getValue(it).power > 0 }
         return CombatantDefinition(
             combatantId = "${if (side == BattleSide.ALLIED) "ally" else "opponent"}:$instanceId",
             sourceCharacterId = sourceCharacterId,
@@ -113,12 +123,14 @@ object TrainingBattleFactory {
             stableRngKey = stableRngKey,
             personalityType = personalityType,
             techniqueIds = loadout,
-            specialTechniqueId = GenericTechniqueCatalog.trainingSpecialTechniqueId,
+            specialTechniqueId = specialTechniqueId ?: GenericTechniqueCatalog.trainingSpecialTechniqueId,
             specialDisplayNameOverride = specialDisplayNameOverride,
             blastMode = blastMode,
             blastTargetSpecies = blastTargetSpecies,
             blastFormSpecial = blastFormSpecial,
             jogressResultSpecies = jogressResultSpecies,
+            jogressPartnerSpecies = jogressPartnerSpecies,
+            jogressSpecial = jogressSpecial,
             speciesName = speciesName,
             initialHealth = initialHealth,
             initialEnergy = initialEnergy,
@@ -127,7 +139,7 @@ object TrainingBattleFactory {
             counterTechniqueId = GenericTechniqueCatalog.counterTechniqueId,
             signatureTechniqueId = signature,
             signaturePowerBonus = signature?.let {
-                (GenericTechniqueCatalog.definition(it).power * 0.05f).toInt().coerceIn(1, 12)
+                (catalog.getValue(it).power * 0.05f).toInt().coerceIn(1, 12)
             } ?: 0
         )
     }

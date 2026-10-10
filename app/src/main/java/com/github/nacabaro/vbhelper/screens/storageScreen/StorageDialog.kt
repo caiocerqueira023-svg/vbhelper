@@ -25,6 +25,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
+import com.github.nacabaro.vbhelper.components.VitalButtonStyle
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -77,13 +87,16 @@ fun StorageDialog(
     val character = remember { mutableStateOf<CharacterDtos.CharacterWithSprites?>(null) }
     val characterSprite = remember { mutableStateOf<BitmapData?>(null) }
     val characterName = remember { mutableStateOf<BitmapData?>(null) }
-    var onSendToAdventureClicked by remember { mutableStateOf(false) }
+    var onSendToAdventureClicked by rememberSaveable(characterId) { mutableStateOf(false) }
     var nickname by remember { mutableStateOf("") }
     var cardName by remember { mutableStateOf("") }
-    var showInfoEditor by remember { mutableStateOf(false) }
+    var showInfoEditor by rememberSaveable(characterId) { mutableStateOf(false) }
     var speciesProfile by remember { mutableStateOf<com.github.nacabaro.vbhelper.domain.species.SpeciesProfile?>(null) }
     var personality by remember { mutableStateOf<DigimonPersonalityTraits?>(null) }
-    var showDeleteConfirmation by remember { mutableStateOf(false) }
+    var showDeleteConfirmation by rememberSaveable(characterId) { mutableStateOf(false) }
+    var loadFailed by remember(characterId) { mutableStateOf(false) }
+    var reload by remember(characterId) { mutableIntStateOf(0) }
+    val maxHeight = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() * 0.88f }
     var idleFrame by remember { mutableIntStateOf(0) }
     var isFavorite by remember { mutableStateOf(false) }
     val motionEnabled = motionEnabled()
@@ -91,7 +104,9 @@ fun StorageDialog(
         SpeciesRepository(application.container.db, application.container.speciesSettingsRepository)
     }
 
-    LaunchedEffect(characterId) {
+    LaunchedEffect(characterId, reload) {
+        loadFailed = false
+        try {
         val loaded = withContext(Dispatchers.IO) {
             val loadedCharacter = storageRepository.getSingleCharacter(characterId)
             val loadedCardName = application.container.db.cardDao()
@@ -122,6 +137,8 @@ fun StorageDialog(
             width = loaded.character.nameSpriteWidth,
             height = loaded.character.nameSpriteHeight
         )
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { loadFailed = true }
     }
 
     LaunchedEffect(character.value?.id, motionEnabled) {
@@ -152,8 +169,18 @@ fun StorageDialog(
         ) {
             Column (
                 modifier = Modifier
+                    .heightIn(max = maxHeight)
                     .padding(16.dp)
             ) {
+                Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (loadFailed) {
+                    Text(stringResource(R.string.app_details_failed), style = MaterialTheme.typography.bodyMedium)
+                    VitalButton(onClick = { reload++ }) { Text(stringResource(R.string.app_retry)) }
+                } else if (character.value == null) {
+                    CircularProgressIndicator()
+                    Text(stringResource(R.string.app_loading_partner))
+                }
                 if (character.value != null) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (characterSprite.value != null && characterName.value != null) {
@@ -203,6 +230,8 @@ fun StorageDialog(
                         .fillMaxWidth()
                 ) {
                     VitalButton(
+                        style = VitalButtonStyle.PRIMARY,
+                        enabled = character.value != null,
                         onClick = onSendToBracelet,
                         modifier = Modifier
                             .weight(1f)
@@ -214,12 +243,14 @@ fun StorageDialog(
                             .padding(4.dp)
                     )
                     VitalButton(
+                        enabled = character.value != null,
                         onClick = onClickSetActive,
                     ) {
                         Text(text = stringResource(R.string.storage_set_active))
                     }
                 }
                 VitalButton(
+                    enabled = character.value != null,
                     onClick = onClickChat,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -227,10 +258,11 @@ fun StorageDialog(
                     Text(text = stringResource(R.string.storage_chat_with_digimon))
                 }
                 VitalButton(
+                    enabled = character.value != null,
                     onClick = onClickTechniques,
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text(text = "Escolher técnicas")
+                    Text(stringResource(R.string.app_techniques))
                 }
                 VitalButton(
                     onClick = {
@@ -254,6 +286,7 @@ fun StorageDialog(
                     )
                 }
                 VitalButton(
+                    enabled = character.value != null,
                     onClick = {
                         onSendToAdventureClicked = true
                     },
@@ -263,17 +296,17 @@ fun StorageDialog(
                     Text(text = stringResource(R.string.storage_send_on_adventure))
                 }
                 VitalButton(
+                    style = VitalButtonStyle.DESTRUCTIVE,
+                    enabled = character.value != null,
                     modifier = Modifier
                         .fillMaxWidth(),
                     onClick = { showDeleteConfirmation = true }
                 ) {
                     Text(text = stringResource(R.string.storage_delete_character))
                 }
-                VitalButton(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    onClick = onDismissRequest
-                ) {
+                }
+                HorizontalDivider(Modifier.padding(vertical = 8.dp))
+                TextButton(modifier = Modifier.fillMaxWidth(), onClick = onDismissRequest) {
                     Text(text = stringResource(R.string.storage_close))
                 }
             }
@@ -329,6 +362,7 @@ fun StorageDialog(
             },
             confirmButton = {
                 VitalButton(
+                    style = VitalButtonStyle.DESTRUCTIVE,
                     onClick = {
                         showDeleteConfirmation = false
                         onClickDelete()

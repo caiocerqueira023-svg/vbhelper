@@ -3,6 +3,7 @@ package com.github.nacabaro.vbhelper.screens.homeScreens.screens
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -146,7 +147,7 @@ fun VBDiMHomeScreen(
                 definition = stringResource(R.string.home_vbdim_mood),
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f)
+                    .heightIn(min = 104.dp)
                     .padding(8.dp)
             )
             ItemDisplay(
@@ -155,7 +156,7 @@ fun VBDiMHomeScreen(
                 definition = stringResource(R.string.home_vbdim_trophies),
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f)
+                    .heightIn(min = 104.dp)
                     .padding(8.dp)
             )
             val transformationCountdownInHours = activeMon.transformationCountdown / 60
@@ -168,7 +169,7 @@ fun VBDiMHomeScreen(
                 definition = stringResource(R.string.home_vbdim_next_timer),
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f)
+                    .heightIn(min = 104.dp)
                     .padding(8.dp)
             )
         }
@@ -192,7 +193,7 @@ fun VBDiMHomeScreen(
                 definition = stringResource(R.string.home_vbdim_total_battle_win),
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f)
+                    .heightIn(min = 104.dp)
                     .padding(8.dp)
             )
             ItemDisplay(
@@ -212,7 +213,7 @@ fun VBDiMHomeScreen(
                 definition = stringResource(R.string.home_vbdim_current_phase_win),
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f)
+                    .heightIn(min = 104.dp)
                     .padding(8.dp)
             )
         }

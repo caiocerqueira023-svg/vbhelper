@@ -61,11 +61,9 @@ class CardImportController(
             CardImportResult(id, stored.name, created)
         }
         // Matching can do I/O: it belongs after commit, never in the card transaction.
-        if (result.isNew) speciesRepository?.let { repo ->
+        speciesRepository?.let { repo ->
             try {
-                val matched = repo.matchOfficialSpeciesForCard(result.cardId)
-                if (matched > 0) database.cardDao().updateOfficialStatus(result.cardId,
-                    com.github.nacabaro.vbhelper.domain.card.OfficialStatus.OFFICIAL)
+                repo.matchSpeciesForCard(result.cardId)
             } catch (e: CancellationException) { throw e }
             catch (e: Exception) { Log.w("CardImportController", "Failed to match imported species", e) }
         }

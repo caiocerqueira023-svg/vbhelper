@@ -38,7 +38,7 @@ fun CardOriginDialog(
                 Text(
                     stringResource(R.string.card_origin_help),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(Modifier.height(16.dp))
                 if (isImporting) {

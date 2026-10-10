@@ -7,6 +7,21 @@ related_targets: ["app/src/main/java/com/github/nacabaro/vbhelper/screens/cardSc
 
 # Dim evolution dex
 
+## Mobile species-profile layout
+
+Mode: Read. The supplied Digimon.net mobile profile screenshot governs structure,
+while the app retains its own fonts, palettes, pixel artwork and technical frames.
+Reading order is imported name/species name → centered 176dp portrait → divided
+Level/Type/Attribute/Special Moves/Stage rows → Profile → base stats and earned scan
+data → evolution requirements. Custom species selection remains in the header;
+Close, Jogress and eligible conversion remain pinned outside the scrolling body.
+Optional empty fields are omitted, and obscured species retain privacy gating.
+
+Native review uses existing bundled Pulsemon art and explicitly labeled profile
+fixture text; no new shipping art is supplied. It covers the four palettes and
+1.3× text on a Samsung SM-A346M, with focused checks for scrolling, pinned actions,
+scan visibility, conversion eligibility, custom selection and obscured information.
+
 ## Scan conversion extension
 
 Mode: Operate. Extend existing details with per-imported-entry scan progress and manual conversion into Storage.

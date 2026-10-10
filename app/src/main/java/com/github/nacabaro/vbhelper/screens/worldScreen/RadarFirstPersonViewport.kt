@@ -18,6 +18,8 @@ import com.github.nacabaro.vbhelper.rendering.sprite3d.SpriteExtrusionGlb
 import com.github.nacabaro.vbhelper.screens.offlineBattle.OfflineArenaManifest
 import com.github.nacabaro.vbhelper.ui.theme.DeepPurpleBgAlt
 import com.github.nacabaro.vbhelper.ui.theme.AppTheme
+import com.github.nacabaro.vbhelper.ui.theme.LocalAppTheme
+import com.github.nacabaro.vbhelper.rendering.EnvironmentThemeController
 import androidx.compose.ui.graphics.Color
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.createARGBIntArray
@@ -45,10 +47,11 @@ internal fun RadarFirstPersonViewport(
     onFailure: () -> Unit, onReleased: () -> Unit, onCreated: () -> Unit = {}, modifier: Modifier = Modifier
 ) {
     val backgroundColor = DeepPurpleBgAlt
+    val appTheme = LocalAppTheme.current
     AndroidView(modifier = modifier, factory = { context ->
         FrameLayout(context).also { host ->
             val mainHandler=Handler(Looper.getMainLooper())
-            runCatching { RadarFirstPersonSceneView(context, backgroundColor) }.onSuccess { scene ->
+            runCatching { RadarFirstPersonSceneView(context, backgroundColor, appTheme) }.onSuccess { scene ->
                 host.addView(scene, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
                 scene.onFailure = { mainHandler.post(onFailure) }
                 scene.onReleased = { mainHandler.post(onReleased) }
@@ -56,7 +59,10 @@ internal fun RadarFirstPersonViewport(
             }.onFailure { mainHandler.post { onFailure(); onReleased() } }
         }
     }, update = { host ->
-        (host.getChildAt(0) as? RadarFirstPersonSceneView)?.update(snapshot, presentations, heading, pitch, active, motion, onProjection)
+        (host.getChildAt(0) as? RadarFirstPersonSceneView)?.apply {
+            setTheme(appTheme)
+            update(snapshot, presentations, heading, pitch, active, motion, onProjection)
+        }
     }, onRelease = { host ->
         val scene = host.getChildAt(0) as? RadarFirstPersonSceneView
         scene?.releaseScene()
@@ -70,9 +76,16 @@ internal fun RadarFirstPersonViewport(
 internal class RadarFirstPersonSceneView(
     context: Context,
     backgroundColor: Color = AppTheme.VB_HELPER.palette.backgroundAlt,
+    initialTheme: AppTheme = AppTheme.VB_HELPER,
 ) : TextureView(context) {
     private val engine: Engine
     private val viewer: ModelViewer
+    private val environmentThemes: EnvironmentThemeController
+    private var sceneTheme = initialTheme
+    internal val appliedEnvironmentTheme get() = environmentThemes.appliedTheme
+    internal val environmentThemeFailure get() = environmentThemes.failure
+    internal val environmentMaterialNames get() = environmentThemes.boundMaterialNames
+    internal val environmentLoadCount get() = environmentThemes.bindCount
     private val provider: UbershaderProvider
     private val loader: AssetLoader
     private val resources: ResourceLoader
@@ -114,6 +127,7 @@ internal class RadarFirstPersonSceneView(
         System.loadLibrary("gltfio-jni")
         engine = Engine.create()
         viewer = ModelViewer(this, engine, UiHelper(UiHelper.ContextErrorPolicy.DONT_CHECK), null)
+        environmentThemes = EnvironmentThemeController(context, engine, initialTheme)
         viewer.view.applyHybridSceneProfile(HybridSceneKind.RADAR_FP)
         provider = UbershaderProvider(engine)
         loader = AssetLoader(engine, provider, EntityManager.get())
@@ -143,6 +157,7 @@ internal class RadarFirstPersonSceneView(
                             val instance = engine.renderableManager.getInstance(entity)
                             if (instance != 0) engine.renderableManager.setLayerMask(instance, 0xFF, 0)
                         }
+                        environmentThemes.bind(asset, manifest.assetPath)
                         loaded = true
                     }.onFailure { onFailure() }
                 }.onFailure { onFailure() }
@@ -185,6 +200,15 @@ internal class RadarFirstPersonSceneView(
                 }
             }
         }
+    }
+
+    fun setTheme(theme: AppTheme) {
+        if (released || theme == sceneTheme) return
+        sceneTheme = theme
+        val c = theme.palette.backgroundAlt
+        val linear = Colors.toLinear(Colors.RgbType.SRGB, c.red, c.green, c.blue)
+        skybox.setColor(linear[0], linear[1], linear[2], 1f)
+        environmentThemes.setTheme(theme)
     }
 
     private fun render(now: Long) {
@@ -230,6 +254,7 @@ internal class RadarFirstPersonSceneView(
             }
         }
         viewer.render(now)
+        environmentThemes.onFrame(viewer.progress >= 1f)
         if (now - lastProjection >= 100_000_000L) {
             lastProjection = now
             val view = viewer.camera.getViewMatrix(FloatArray(16))
@@ -266,6 +291,7 @@ internal class RadarFirstPersonSceneView(
         Choreographer.getInstance().removeFrameCallback(frame)
         meshes.values.forEach { viewer.scene.removeEntities(it.entities); loader.destroyAsset(it) }; meshes.clear()
         loader.destroy(); resources.destroy(); provider.destroyMaterials(); provider.destroy()
+        environmentThemes.release()
         viewer.scene.skybox = null; engine.destroySkybox(skybox)
     }
     fun releaseUnattached() {

@@ -10,7 +10,8 @@ data class ExtractedBattleCharacter(
     val ap: Int,
     val bp: Int,
     val smallAttackFile: String,
-    val largeAttackFile: String
+    val largeAttackFile: String,
+    val attribute: com.github.nacabaro.vbhelper.battle.offline.core.BattleAttribute = com.github.nacabaro.vbhelper.battle.offline.core.BattleAttribute.NONE
 ) {
     val hasAnyUsableStats: Boolean
         get() = listOf(hp, ap, bp).any { it in 1 until 65_535 }
@@ -31,6 +32,7 @@ object BattleCharacterCatalog {
     private val hpPattern = Regex("\\bhp=(-?\\d+)")
     private val apPattern = Regex("\\bap=(-?\\d+)")
     private val bpPattern = Regex("\\bbp=(-?\\d+)")
+    private val typePattern = Regex("\\btype=(-?\\d+)")
     private val smallAttackPattern = Regex("smalefilename='([^']*)'")
     private val largeAttackPattern = Regex("laugeFileName='([^']*)'")
 
@@ -68,7 +70,14 @@ object BattleCharacterCatalog {
             ap = intValue(apPattern),
             bp = intValue(bpPattern),
             smallAttackFile = stringValue(smallAttackPattern),
-            largeAttackFile = stringValue(largeAttackPattern)
+            largeAttackFile = stringValue(largeAttackPattern),
+            attribute = when (intValue(typePattern)) {
+                1 -> com.github.nacabaro.vbhelper.battle.offline.core.BattleAttribute.VACCINE
+                2 -> com.github.nacabaro.vbhelper.battle.offline.core.BattleAttribute.VIRUS
+                3 -> com.github.nacabaro.vbhelper.battle.offline.core.BattleAttribute.DATA
+                4 -> com.github.nacabaro.vbhelper.battle.offline.core.BattleAttribute.FREE
+                else -> com.github.nacabaro.vbhelper.battle.offline.core.BattleAttribute.NONE
+            }
         )
     }
 }

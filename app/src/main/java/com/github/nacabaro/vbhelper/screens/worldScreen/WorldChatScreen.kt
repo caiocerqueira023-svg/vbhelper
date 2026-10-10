@@ -10,6 +10,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,6 +30,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalContext
@@ -44,9 +49,11 @@ import com.github.nacabaro.vbhelper.components.ChatMessageBubble
 import com.github.nacabaro.vbhelper.components.ChatStatusPanel
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.components.VitalButton
+import com.github.nacabaro.vbhelper.components.showAppFeedback
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 fun WorldChatScreen(
     navController: NavController,
     controller: WorldChatScreenControllerImpl,
@@ -72,7 +79,7 @@ fun WorldChatScreen(
     }
     // Battle-result context is prompt-only state; it is never exhibited as chat history.
     val visibleMessages = remember(messages) { messages.filter { it.role != "system" } }
-    var input by remember { mutableStateOf("") }
+    var input by rememberSaveable(individualId) { mutableStateOf("") }
     var sending by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var selectedMessage by remember { mutableStateOf<com.github.nacabaro.vbhelper.domain.chat.ChatMessageEntity?>(null) }
@@ -107,7 +114,7 @@ fun WorldChatScreen(
                     } }
                     catch(failure:Exception) {
                         if(failure is CancellationException && failure !is TimeoutCancellationException) throw failure
-                        error=failure.message
+                        error=resources.getString(R.string.app_chat_failed)
                     }
                 }
                 val activeConversation=opened
@@ -118,7 +125,7 @@ fun WorldChatScreen(
             } catch(failure:Exception) {
                 if(failure is CancellationException) throw failure
                 error=if(failure is com.github.nacabaro.vbhelper.world.ecosystem.WorldInteractionException)
-                    resources.getString(failure.messageResource()) else failure.message
+                    resources.getString(failure.messageResource()) else resources.getString(R.string.app_chat_failed)
             } finally {
                 conversationReady=false
                 conversationId=null
@@ -146,11 +153,13 @@ fun WorldChatScreen(
         Column(
             modifier = Modifier
                 .padding(contentPadding)
+                .consumeWindowInsets(contentPadding)
+                .imePadding()
                 .fillMaxSize()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            mood?.let { moodValue ->
+            mood?.takeIf { !WindowInsets.isImeVisible }?.let { moodValue ->
                 ChatStatusPanel(
                     label = stringResource(R.string.ui_world_mood_label, moodValue),
                     value = moodValue
@@ -229,7 +238,7 @@ fun WorldChatScreen(
                                             result.onSuccess { event ->
                                                 if (event !is WildChatEvent.None) eventDialog = event
                                             }
-                                            result.onFailure { error = it.message }
+                                            result.onFailure { error = resources.getString(R.string.app_chat_failed) }
                                         }
                                     },
                                     modifier = Modifier.fillMaxWidth()
@@ -261,6 +270,8 @@ fun WorldChatScreen(
                 sending = sending,
                 enabled = conversationReady,
                 errorMessage = error,
+                errorActionLabel = stringResource(R.string.ui_settings),
+                onErrorAction = { navController.navigate(NavigationItems.Settings.route) },
                 onSend = {
                     val text = input
                     sending = true
@@ -271,7 +282,7 @@ fun WorldChatScreen(
                             if (event !is WildChatEvent.None) eventDialog = event
                             if (input == text) input = ""
                         }
-                        result.onFailure { error = it.message }
+                        result.onFailure { error = resources.getString(R.string.app_chat_failed) }
                     }
                 }
             )
@@ -308,15 +319,15 @@ fun WorldChatScreen(
                     eventDialog = null
                     when (event) {
                         is WildChatEvent.Recruited -> {
-                            Toast.makeText(context, resources.getString(R.string.ui_world_recruited_toast), Toast.LENGTH_LONG).show()
+                            context.showAppFeedback(R.string.ui_world_recruited_toast)
                             navController.popBackStack()
                         }
                         is WildChatEvent.Vanished -> {
-                            Toast.makeText(context, resources.getString(R.string.ui_world_vanished_toast), Toast.LENGTH_LONG).show()
+                            context.showAppFeedback(R.string.ui_world_vanished_toast)
                             navController.popBackStack()
                         }
                         is WildChatEvent.Pending -> {
-                            Toast.makeText(context, resources.getString(R.string.ui_world_pending_toast), Toast.LENGTH_LONG).show()
+                            context.showAppFeedback(R.string.ui_world_pending_toast)
                         }
                         is WildChatEvent.QuestUpdated -> Unit
                         is WildChatEvent.Challenge -> {

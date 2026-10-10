@@ -19,6 +19,7 @@ import com.github.nacabaro.vbhelper.source.StorageRepository
 class VBHelper : Application() {
     lateinit var container: DefaultAppContainer
     val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    val feedback = com.github.nacabaro.vbhelper.components.AppFeedback()
 
     val validatedCardManager: ValidatedCardManager
         get() = container.validatedCardManager

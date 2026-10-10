@@ -52,18 +52,22 @@ class ScanScreenControllerImpl(
     private var pendingWatchTransfer: WatchTransfer? = null
     private var selectedImportCardId: Long? = null
     private val handlingTag = AtomicBoolean(false)
-    private val nfcAdapter: NfcAdapter
+    private val nfcAdapter: NfcAdapter?
+    private val feedback = (componentActivity.applicationContext as VBHelper).feedback
+    override val transferStatus = feedback.transferStatus
+
+    private fun notifyTransfer(message: String) { feedback.transfer(message) }
 
     init {
         val maybeNfcAdapter = NfcAdapter.getDefaultAdapter(componentActivity)
         if (maybeNfcAdapter == null) {
-            Toast.makeText(componentActivity,  componentActivity.getString(R.string.scan_no_nfc_on_device), Toast.LENGTH_SHORT).show()
+            notifyTransfer(componentActivity.getString(R.string.scan_no_nfc_on_device))
         }
         nfcAdapter = maybeNfcAdapter
-        checkSecrets()
     }
 
     override fun onClickRead(secrets: Secrets, onComplete: ()->Unit, onMultipleCards: (List<Card>) -> Unit) {
+        feedback.clearTransfer()
         handleTag(
             secrets,
             handlerFunc = { tagCommunicator ->
@@ -89,10 +93,7 @@ class ScanScreenControllerImpl(
                     resultMessage
                 } catch (e: Exception) {
                     Log.e("NFC_READ", "Error reading character from NFC", e)
-                    componentActivity.runOnUiThread {
-                        Toast.makeText(componentActivity, componentActivity.getString(R.string.scan_error_generic) + ": " + (e.message ?: e.javaClass.simpleName), Toast.LENGTH_LONG).show()
-                    }
-                    componentActivity.getString(R.string.scan_error_generic)
+                    componentActivity.getString(R.string.app_transfer_recovery)
                 }
             },
             hceHandler = { isoDep ->
@@ -101,9 +102,7 @@ class ScanScreenControllerImpl(
                     val importer = VitalWearCharacterImporter(database)
                     val received = client.moveCharacterFromWatch { character ->
                         val result = importer.importCharacter(character)
-                        componentActivity.runOnUiThread {
-                            Toast.makeText(componentActivity, result.message, Toast.LENGTH_SHORT).show()
-                        }
+                        notifyTransfer(result.message)
                         result.success
                     }
                     if (received) {
@@ -112,16 +111,14 @@ class ScanScreenControllerImpl(
                     }
                 } catch (e: Exception) {
                     Log.e("NFC_READ", "Error reading character from VitalWear HCE", e)
-                    componentActivity.runOnUiThread {
-                        Toast.makeText(componentActivity, componentActivity.getString(R.string.scan_error_generic) + ": " + (e.message ?: e.javaClass.simpleName), Toast.LENGTH_LONG).show()
-                    }
+                    notifyTransfer(componentActivity.getString(R.string.app_transfer_recovery))
                 }
             }
         )
     }
 
     override fun cancelRead() {
-        if(nfcAdapter.isEnabled) {
+        if(nfcAdapter?.isEnabled == true) {
             nfcAdapter.disableReaderMode(componentActivity)
         }
     }
@@ -142,13 +139,17 @@ class ScanScreenControllerImpl(
         handlerFunc: (TagCommunicator) -> String,
         hceHandler: ((IsoDep) -> Unit)? = null,
     ) {
-        if (!nfcAdapter.isEnabled) {
+        val adapter = nfcAdapter ?: run {
+            notifyTransfer(componentActivity.getString(R.string.scan_no_nfc_on_device))
+            return
+        }
+        if (!adapter.isEnabled) {
             showWirelessSettings()
         } else {
             val options = Bundle()
             // Work around for some broken Nfc firmware implementations that poll the card too fast
             options.putInt(NfcAdapter.EXTRA_READER_PRESENCE_CHECK_DELAY, 250)
-            nfcAdapter.enableReaderMode(
+            adapter.enableReaderMode(
                 componentActivity,
                 buildOnReadTag(secrets, handlerFunc, hceHandler),
                 NfcAdapter.FLAG_READER_NFC_A or NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK,
@@ -174,25 +175,19 @@ class ScanScreenControllerImpl(
                 // Physical Vital Bracelet via raw NFC-A
                 val nfcData = NfcA.get(tag)
                 if (nfcData == null) {
-                    componentActivity.runOnUiThread {
-                        Toast.makeText(componentActivity, componentActivity.getString(R.string.scan_tag_not_vb), Toast.LENGTH_SHORT).show()
-                    }
+                    notifyTransfer(componentActivity.getString(R.string.scan_tag_not_vb))
                 } else {
                     nfcData.connect()
                     nfcData.use {
                         val tagCommunicator = TagCommunicator.getInstance(nfcData, secrets.getCryptographicTransformerMap())
                         val successText = handlerFunc(tagCommunicator)
-                        componentActivity.runOnUiThread {
-                            Toast.makeText(componentActivity, successText, Toast.LENGTH_SHORT).show()
-                        }
+                        notifyTransfer(successText)
                     }
                 }
             }
             } catch (failure: Exception) {
                 Log.e("NFC_TRANSFER", "Could not complete NFC operation", failure)
-                componentActivity.runOnUiThread {
-                    Toast.makeText(componentActivity, failure.message ?: componentActivity.getString(R.string.scan_error_generic), Toast.LENGTH_LONG).show()
-                }
+                notifyTransfer(componentActivity.getString(R.string.app_transfer_recovery))
             } finally {
                 handlingTag.set(false)
             }
@@ -240,14 +235,17 @@ class ScanScreenControllerImpl(
                     componentActivity.getString(R.string.scan_sent_character_success)
                 } catch (e: Throwable) {
                     Log.e("TAG", e.stackTraceToString())
-                    e.message ?: componentActivity.getString(R.string.scan_error_generic)
+                    componentActivity.getString(R.string.app_transfer_recovery)
                 }
             },
             hceHandler = { isoDep ->
                 try {
                     val characterId = requireNotNull(pendingExportCharacterId)
                     val source = requireNotNull(database.userCharacterDao().getCharacterSync(characterId))
-                    val proto = VitalWearCharacterExporter(componentActivity, database).buildCharacterProto(characterId)
+                    // Reader callbacks run on Android's NFC worker, never the UI thread.
+                    val proto = kotlinx.coroutines.runBlocking {
+                        VitalWearCharacterExporter(componentActivity.applicationContext, database).buildCharacterProto(characterId)
+                    }
                     check(VitalWearHceReaderClient(isoDep).sendCharacterToWatchAndConfirm(proto)) {
                         "VitalWear did not confirm import. The storage copy has been preserved."
                     }
@@ -256,12 +254,11 @@ class ScanScreenControllerImpl(
                         database.userCharacterDao().deleteCharacterById(characterId)
                     }
                     cancelRead()
+                    notifyTransfer(componentActivity.getString(R.string.scan_sent_character_success))
                     componentActivity.runOnUiThread { onComplete() }
                 } catch (failure: Exception) {
                     Log.e("NFC_WRITE", "VitalWear send failed; source retained", failure)
-                    componentActivity.runOnUiThread {
-                        Toast.makeText(componentActivity, componentActivity.getString(R.string.scan_error_generic), Toast.LENGTH_LONG).show()
-                    }
+                    notifyTransfer(componentActivity.getString(R.string.app_transfer_recovery))
                 }
             }
         )
@@ -288,7 +285,7 @@ class ScanScreenControllerImpl(
 
     // EXTRACTED DIRECTLY FROM EXAMPLE APP
     private fun showWirelessSettings() {
-        Toast.makeText(componentActivity,  componentActivity.getString(R.string.scan_nfc_must_be_enabled), Toast.LENGTH_SHORT).show()
+        notifyTransfer(componentActivity.getString(R.string.scan_nfc_must_be_enabled))
         componentActivity.startActivity(Intent(Settings.ACTION_WIRELESS_SETTINGS))
     }
 
@@ -332,6 +329,6 @@ class ScanScreenControllerImpl(
         // Read it again with this selection, persisting before acknowledging transfer.
         selectedImportCardId = cardId
         lastScannedCharacter = null
-        Toast.makeText(componentActivity, R.string.scan_selected_card_rescan, Toast.LENGTH_LONG).show()
+        notifyTransfer(componentActivity.getString(R.string.scan_selected_card_rescan))
     }
 }

@@ -11,14 +11,20 @@ import com.github.nacabaro.vbhelper.R
 enum class AppTheme(val preferenceValue: String, val displayName: String, val nativeThemeResource: Int) {
     VB_HELPER("vb_helper", "VB Helper", R.style.Theme_VBHelper),
     VB_LAB("vb_lab", "VB Lab", R.style.Theme_VBHelper_Lab),
-    VB_ARENA("vb_arena", "VB Arena", R.style.Theme_VBHelper_Arena);
+    VB_ARENA("vb_arena", "VB Arena", R.style.Theme_VBHelper_Arena),
+    DIGIMON_NET("digimon_net", "Digimon.net", R.style.Theme_VBHelper_DigimonNet);
 
     val palette: AppPalette
         get() = when (this) {
             VB_HELPER -> HelperPalette
             VB_LAB -> LabPalette
             VB_ARENA -> ArenaPalette
+            DIGIMON_NET -> DigimonNetPalette
         }
+
+    val previewColors: List<Color>
+        get() = listOf(palette.background, palette.primary,
+            if (this == DIGIMON_NET) palette.primaryDim else palette.accent)
 
     companion object {
         fun fromPreference(value: String?): AppTheme =
@@ -69,6 +75,13 @@ data class AppPalette(
     val battleDestructive: Color = Color(0xFFB34363),
     val battleEnemyHealth: Color = Color(0xFFFF7899),
     val battleTrack: Color = Color(0xFF45394C),
+    val blastControl: Color = Color(0xFFC2185B),
+    val onBlastControl: Color = Color.White,
+    val blastOutline: Color = Color(0xFF6E6E7A),
+    val blastTrack: Color = Color(0xFF2A2A33),
+    val blastTarget: Color = Color(0xFFE5484D),
+    val blastProgress: Color = Color(0xFFFFD447),
+    val blastNeedle: Color = Color.White,
 ) {
     val colorScheme: ColorScheme
         get() {
@@ -119,6 +132,7 @@ private val LabPalette = HelperPalette.copy(
     signalHint = Color(0xFFA6ECF5), battlePanel = Color(0xFF303030),
     battleBackdrop = Color(0xFF202020), battleErrorSurface = Color(0xFF40272D),
     battleTrack = Color(0xFF555555),
+    blastOutline = Color(0xFFAAAAAA), blastTrack = Color(0xFF202020),
 )
 
 // VB Arena references: white/silver surfaces, vivid mint green and charcoal lettering.
@@ -144,6 +158,39 @@ private val ArenaPalette = HelperPalette.copy(
     battleErrorSurface = Color(0xFFFFDFE5), battleErrorOutline = Color(0xFFBA2144),
     battleErrorHint = Color(0xFFBA2144), battleDestructive = Color(0xFFBA2144),
     battleEnemyHealth = Color(0xFFBA2144), battleTrack = Color(0xFFDDE5DF),
+    blastControl = Color(0xFFBA2144), blastOutline = Color(0xFF59675E),
+    blastTrack = Color(0xFFE9EEEB), blastTarget = Color(0xFFBA2144),
+    blastProgress = Color(0xFF806000), blastNeedle = Color(0xFF151A17),
+)
+
+// Official portal: https://digimon.net/css/layout.css and /css/top.css.
+// Preserve its #1251D0 blue, #F6FF00 yellow, white and #E4E9FF pale-blue palette.
+// Yellow is a filled highlight, while text and signals stay blue for light-surface contrast.
+private val DigimonNetPalette = HelperPalette.copy(
+    isDark = false, base = Color.White, background = Color.White,
+    backgroundAlt = Color(0xFFF4F7FF), surface = Color.White,
+    surfaceElevated = Color(0xFFE4E9FF), surfaceHighlight = Color(0xFFD9E3FA),
+    stroke = Color(0xFF6883B5), primary = Color(0xFF1251D0),
+    primaryBright = Color(0xFF1251D0), primaryDim = Color(0xFFF6FF00),
+    onPrimary = Color.White, accent = Color(0xFF1251D0),
+    accentDim = Color(0xFFE4E9FF), onAccent = Color.White,
+    tertiary = Color(0xFF675400), yellow = Color(0xFF675400),
+    green = Color(0xFF156747), greenDim = Color(0xFFDFEEDD),
+    blue = Color(0xFF1251D0), blueDim = Color(0xFFE4E9FF),
+    red = Color(0xFFB52849), redDim = Color(0xFFFFE2E9),
+    statusYellow = Color(0xFF675400), yellowDim = Color(0xFFF6FF00),
+    textPrimary = Color(0xFF222222), textSecondary = Color(0xFF455575),
+    textMuted = Color(0xFF596A8A), compass = Color(0xFF596A8A),
+    follower = Color(0xFF1251D0), onStatus = Color.White,
+    signalHint = Color(0xFF1251D0), battlePanel = Color.White,
+    battleBackdrop = Color(0xFFF4F7FF), battleErrorSurface = Color(0xFFFFE2E9),
+    battleErrorOutline = Color(0xFFB52849), battleErrorHint = Color(0xFFB52849),
+    battleDestructive = Color(0xFFB52849), battleEnemyHealth = Color(0xFFB52849),
+    battleTrack = Color(0xFFD9E3FA), blastControl = Color(0xFF1251D0),
+    onBlastControl = Color.White, blastOutline = Color(0xFF455575),
+    blastTrack = Color(0xFFE4E9FF), blastTarget = Color(0xFFB52849),
+    blastProgress = Color(0xFF675400), blastNeedle = Color(0xFF222222),
 )
 
 internal val LocalAppPalette = staticCompositionLocalOf { AppTheme.VB_HELPER.palette }
+internal val LocalAppTheme = staticCompositionLocalOf { AppTheme.VB_HELPER }

@@ -16,14 +16,23 @@ class BattleSimulator(
     alliedTeam: BattleTeam,
     opposingTeam: BattleTeam,
     techniqueCatalog: Collection<TechniqueDefinition>,
-    trainingItems: Collection<BattleItemDefinition> = emptyList()
+    trainingItems: Collection<BattleItemDefinition> = emptyList(),
+    opposingItems: Collection<BattleItemDefinition> = emptyList(),
+    trainerPolicies: Map<BattleSide, TrainerAiPolicy> = emptyMap(),
 ) {
     private val enhanced = configuration.rulesetVersion == BattleRules.CURRENT_VERSION
+    private val adaptiveMovement = enhanced && configuration.movementRulesVersion == BattleMovementRules.CURRENT_VERSION
     private val techniques = techniqueCatalog.associate { it.techniqueId to it.copy(statusEffects = it.statusEffects.toList()) }.toMutableMap()
     private val combatants = linkedMapOf<String, Fighter>()
     private val itemDefinitions = trainingItems.associateBy { it.itemId }
     private val itemCounts = trainingItems.associate { it.itemId to it.quantity }.toMutableMap()
-    private val itemReservations = mutableMapOf<Long, String>()
+    private val opposingItemDefinitions = opposingItems.associateBy { it.itemId }
+    private val opposingItemCounts = opposingItems.associate { it.itemId to it.quantity }.toMutableMap()
+    private val itemReservations = mutableMapOf<Long, ItemReservation>()
+    private val itemReadyAt = mutableMapOf<BattleSide, Long>()
+    private val trainerControllers = trainerPolicies.mapValues { (side, policy) ->
+        TamerTrainerController(side, policy, configuration.randomSeed)
+    }
     private val projectiles = linkedMapOf<Long, ActiveProjectile>()
     private val impacts = linkedMapOf<Long, ActiveImpact>()
     private val recentEvents = ArrayDeque<BattleEvent>()
@@ -45,22 +54,26 @@ class BattleSimulator(
     private var pauseReason: String? = if (paused) "menu" else null
     private var outcome: BattleResult? = null
     private var commandPoints = configuration.commandPoints
+    private var opposingCommandPoints = configuration.commandPoints
     private var nextProjectileId = 1L
     private var statistics = BattleStatistics()
 
     init {
         require(configuration.rulesetVersion in BattleRules.LEGACY_VERSION..BattleRules.CURRENT_VERSION)
+        require(configuration.movementRulesVersion in 0..BattleMovementRules.CURRENT_VERSION)
         require(configuration.arenaRadius.isFinite() && configuration.arenaRadius > 0f)
         require(configuration.lineupRowSpacing.isFinite() && configuration.lineupRowSpacing > 0f)
         require(configuration.lineupDepthRatio.isFinite() && configuration.lineupDepthRatio in 0f..1f)
         require(configuration.minimumLineupDepth.isFinite() && configuration.minimumLineupDepth >= 0f)
         require(configuration.maxCommandPoints >= 0 && commandPoints in 0..configuration.maxCommandPoints)
         require(configuration.decisionIntervalMillis > 0 && configuration.maxDurationMillis > 0)
+        require(configuration.itemCooldownMillis in 0L..60_000L)
         require(alliedTeam.side == BattleSide.ALLIED && opposingTeam.side == BattleSide.OPPOSING)
         require(alliedTeam.teamId != opposingTeam.teamId)
         require(techniques.size == techniqueCatalog.size) { "Duplicate technique IDs" }
         require(itemDefinitions.size == trainingItems.size) { "Duplicate training item IDs" }
-        trainingItems.forEach { require(it.itemId.isNotBlank() && it.displayName.isNotBlank() && it.quantity >= 0 && it.amount >= 0) }
+        require(opposingItemDefinitions.size == opposingItems.size) { "Duplicate opposing item IDs" }
+        (trainingItems + opposingItems).forEach { require(it.itemId.isNotBlank() && it.displayName.isNotBlank() && it.quantity >= 0 && it.amount >= 0) }
         require(BASIC.techniqueId !in techniques) { "The fallback basic attack is reserved" }
         techniqueCatalog.forEach(::validateTechnique)
         techniques[BASIC.techniqueId] = BASIC
@@ -145,13 +158,21 @@ class BattleSimulator(
         }
         if (finisher != null || outcome != null) return
         accumulatedMillis += delta
-        while (accumulatedMillis >= STEP && outcome == null) {
+        while (accumulatedMillis >= STEP && outcome == null && finisher == null) {
             accumulatedMillis -= STEP
             step()
         }
     }
 
     fun issueOrder(
+        actorId: String,
+        action: TrainerAction,
+        interruptCurrentAction: Boolean = false,
+        lifetimeMillis: Long = 8_000L
+    ): OrderUpdate = issueSideOrder(BattleSide.ALLIED, actorId, action, interruptCurrentAction, lifetimeMillis)
+
+    private fun issueSideOrder(
+        controllingSide: BattleSide,
         actorId: String,
         action: TrainerAction,
         interruptCurrentAction: Boolean = false,
@@ -164,7 +185,7 @@ class BattleSimulator(
         }
         if (outcome != null) return reject("A batalha terminou.", OrderFailure.BATTLE_ENDED)
         val actor = combatants[actorId] ?: return reject("Parceiro não encontrado.", OrderFailure.PARTNER_MISSING)
-        if (actor.definition.side != BattleSide.ALLIED) return reject("Só os parceiros recebem ordens.", OrderFailure.NOT_ALLIED)
+        if (actor.definition.side != controllingSide) return reject("Só os parceiros recebem ordens.", OrderFailure.NOT_ALLIED)
         if (actor.health <= 0) return reject("Este parceiro foi derrotado.", OrderFailure.PARTNER_DEFEATED)
         actor.lastOrderFailure = null
         if (lifetimeMillis <= 0) return reject("A ordem precisa de um prazo válido.", OrderFailure.BAD_LIFETIME)
@@ -175,9 +196,9 @@ class BattleSimulator(
                 val window = pendingSupport[actorId] ?: return reject("Não há janela de incentivo ativa.", OrderFailure.SUPPORT_NO_WINDOW)
                 if (window <= elapsedMillis) return reject("A janela de incentivo terminou.", OrderFailure.SUPPORT_WINDOW_EXPIRED)
                 pendingSupport.remove(actorId)
-                val gained = min(8, configuration.maxCommandPoints - commandPoints)
-                commandPoints += gained
-                statistics = statistics.copy(supportCommands = statistics.supportCommands + 1)
+                val gained = min(8, configuration.maxCommandPoints - commandPointsFor(controllingSide))
+                spendCommandPoints(controllingSide, -gained)
+                if (controllingSide == BattleSide.ALLIED) statistics = statistics.copy(supportCommands = statistics.supportCommands + 1)
                 actor.lastDecision = "Incentivo reconhecido; +$gained CP."
                 publish(id, OrderStatus.EXECUTING)
                 emit(BattleEvent.SupportSucceeded(actorId, gained))
@@ -240,17 +261,19 @@ class BattleSimulator(
             if (specialChargeCost > 0 && availableSpecialCharge(actor) < specialChargeCost) {
                 return reject("O golpe especial ainda está carregando.", OrderFailure.SPECIAL_CHARGING)
             }
-            if (availableEnergy(actor) < technique.energyCost || availableCommandPoints() < technique.commandPointCost) {
+            if (availableEnergy(actor) < technique.energyCost || availableCommandPoints(controllingSide) < technique.commandPointCost) {
                 return reject("Faltam energia ou pontos de comando disponíveis.", OrderFailure.RESOURCES_MISSING)
             }
             reservations[id] = Reservation(actorId, technique.energyCost, technique.commandPointCost, specialChargeCost)
         }
         if (action is TrainerAction.UseItem) {
-            val item = itemDefinitions[action.itemId] ?: return reject("Item de treino inexistente.", OrderFailure.ITEM_MISSING)
+            val item = itemsFor(controllingSide)[action.itemId] ?: return reject("Item de treino inexistente.", OrderFailure.ITEM_MISSING)
             if (target(actor, action.targetId, true) == null) return reject("O item precisa de um parceiro vivo como alvo.", OrderFailure.ITEM_BAD_TARGET)
-            val reserved = itemReservations.values.count { it == item.itemId }
-            if ((itemCounts[item.itemId] ?: 0) - reserved <= 0) return reject("Não há mais ${item.displayName} nesta sessão.", OrderFailure.ITEM_DEPLETED)
-            itemReservations[id] = item.itemId
+            if ((itemReadyAt[controllingSide] ?: 0L) > elapsedMillis || configuration.itemCooldownMillis > 0 &&
+                itemReservations.values.any { it.side == controllingSide }) return reject("Aguarde antes de usar outro item.", OrderFailure.ITEM_COOLDOWN)
+            val reserved = itemReservations.values.count { it.side == controllingSide && it.itemId == item.itemId }
+            if ((itemCountsFor(controllingSide)[item.itemId] ?: 0) - reserved <= 0) return reject("Não há mais ${item.displayName} nesta sessão.", OrderFailure.ITEM_DEPLETED)
+            itemReservations[id] = ItemReservation(controllingSide, item.itemId)
         }
         val order = BattleOrder(id, actorId, action, elapsedMillis,
             elapsedMillis + lifetimeMillis.coerceAtMost(configuration.maxDurationMillis), interruptCurrentAction)
@@ -263,8 +286,17 @@ class BattleSimulator(
         val partner = combatants.values.firstOrNull {
             it.definition.side == actor.definition.side && it !== actor && it.health > 0
         }
-        val fusion = if (partner != null && !action.fusionResult.isNullOrBlank())
-            actor.definition.jogressResultSpecies?.takeIf { it.isNotBlank() } ?: action.fusionResult else null
+        val equippedFusion = if (partner != null && configuration.strictFinisherEligibility) {
+            val acceptsSpecies = actor.definition.jogressPartnerSpecies.any {
+                BattleSpeciesIdentity.normalize(it) == BattleSpeciesIdentity.normalize(partner.definition.speciesName.orEmpty())
+            }
+            val acceptsAttribute = actor.definition.jogressPartnerAttribute != null &&
+                actor.definition.jogressPartnerAttribute == partner.definition.attribute
+            actor.definition.jogressResultSpecies?.takeIf { acceptsSpecies || acceptsAttribute }
+        } else null
+        val fusion = if (configuration.strictFinisherEligibility) equippedFusion else
+            if (partner != null && !action.fusionResult.isNullOrBlank())
+                actor.definition.jogressResultSpecies?.takeIf { it.isNotBlank() } ?: action.fusionResult else null
         val form = actor.definition.blastTargetSpecies?.takeIf {
             actor.definition.blastMode == BlastEvolutionSlot.FORM && it.isNotBlank()
         }
@@ -276,7 +308,7 @@ class BattleSimulator(
         }
         val resultSpecies = fusion ?: form
         val specialName = when (kind) {
-            BattleFinisherKind.JOGRESS -> action.fusionSpecial
+            BattleFinisherKind.JOGRESS -> actor.definition.jogressSpecial ?: action.fusionSpecial
             BattleFinisherKind.FORM -> actor.definition.blastFormSpecial
             else -> null
         } ?: actor.definition.specialDisplayNameOverride ?: active.technique.displayName
@@ -307,11 +339,11 @@ class BattleSimulator(
             partner.defendUntil > elapsedMillis || partner.knockbackRemainingMillis > 0 ||
             partner.statuses.any { it.effect.preventsActions } || !ready(partner, special) ||
             availableSpecialCharge(partner) < SPECIAL_CHARGE_MAX || availableEnergy(partner) < special.energyCost ||
-            availableCommandPoints() < special.commandPointCost || !inRange(partner, recipient, special) ||
+            availableCommandPoints(partner.definition.side) < special.commandPointCost || !inRange(partner, recipient, special) ||
             enhanced && partner.readiness < readinessRequired(partner, special)) return null
         partner.energy -= special.energyCost
         partner.specialCharge = 0
-        commandPoints -= special.commandPointCost
+        spendCommandPoints(partner.definition.side, special.commandPointCost)
         if (enhanced) {
             partner.readiness = max(BattleRules.READINESS_MIN, partner.readiness - BattleRules.readinessCost(special))
             partner.techniqueUses[special.techniqueId] = (partner.techniqueUses[special.techniqueId] ?: 0) + 1
@@ -329,12 +361,12 @@ class BattleSimulator(
             // Publish the guard before resolving: defeat/status cleanup can call back into core.
             cinematic.snapshot = cinematic.snapshot.copy(impactCommitted = true)
             cinematic.firstImpactId = nextImpactId
-            val damageBefore = statistics.damageDealt
+            val healthBefore = combatants.values.sumOf { it.health }
             commitFinisherAttack(cinematic.lead, cinematic.attack)
             cinematic.partnerAttack?.let { attack ->
                 combatants[cinematic.snapshot.partnerId]?.let { commitFinisherAttack(it, attack) }
             }
-            cinematic.snapshot = cinematic.snapshot.copy(damage = (statistics.damageDealt - damageBefore).coerceAtLeast(0))
+            cinematic.snapshot = cinematic.snapshot.copy(damage = (healthBefore - combatants.values.sumOf { it.health }).coerceAtLeast(0))
         }
         if (cinematic.snapshot.elapsedMillis >= cinematic.snapshot.durationMillis) {
             restoreFinisher(cinematic)
@@ -423,7 +455,10 @@ class BattleSimulator(
                 actor.specialCharge - availableSpecialCharge(actor), actor.active?.technique?.kind,
                 def.specialDisplayNameOverride, def.blastMode, def.blastTargetSpecies,
                 def.blastFormSpecial, def.jogressResultSpecies, actor.blastFormSpecies,
-                def.attribute, def.jogressPartnerSpecies, def.jogressPartnerAttribute)
+                def.attribute, def.jogressPartnerSpecies, def.jogressPartnerAttribute,
+                activeTechniqueStartupProgress = actor.active?.takeIf { it.phase == Phase.STARTUP }?.let {
+                    (it.phaseElapsed.toFloat() / it.technique.startupMillis.coerceAtLeast(1L)).coerceIn(0f, 1f)
+                })
         }
         return BattleSnapshot(elapsedMillis, paused, pauseReason, commandPoints, configuration.maxCommandPoints,
             members.filter { it.side == BattleSide.ALLIED }, members.filter { it.side == BattleSide.OPPOSING },
@@ -433,13 +468,18 @@ class BattleSimulator(
                 attackSpriteVariantFor(projectile.technique.kind) ?: projectile.technique.attackVisual,
                 projectile.position, projectile.velocityX, projectile.velocityZ) },
             itemDefinitions.values.map { item -> BattleItemSnapshot(item.itemId, item.displayName,
-                itemCounts[item.itemId] ?: 0, itemReservations.values.count { it == item.itemId }) }, statistics,
+                itemCounts[item.itemId] ?: 0, itemReservations.values.count { it.side == BattleSide.ALLIED && it.itemId == item.itemId }) }, statistics,
             impacts.values.map { impact -> BattleImpactSnapshot(impact.id, impact.targetId, impact.damage,
                 impact.critical, (impact.expiresAtMillis - elapsedMillis).coerceAtLeast(0L),
                     impact.techniqueId, impact.isSpecial) }, rulesetVersion = configuration.rulesetVersion,
             techniqueHitCounts = techniqueHitCounts.map { (key, hits) -> BattleTechniqueHitCount(key.first, key.second, key.third, hits) },
             pendingBlastTiming = pendingBlast.mapValues { it.value.expiresAtMillis }, finisher = finisher?.snapshot,
-            lastFinisherEventCount = completedFinisherEventCount)
+            lastFinisherEventCount = completedFinisherEventCount,
+            opposingItems = opposingItemDefinitions.values.map { item -> BattleItemSnapshot(item.itemId, item.displayName,
+                opposingItemCounts[item.itemId] ?: 0, itemReservations.values.count { it.side == BattleSide.OPPOSING && it.itemId == item.itemId }) },
+            opposingCommandPoints = opposingCommandPoints,
+            alliedItemCooldownMillis = ((itemReadyAt[BattleSide.ALLIED] ?: 0L) - elapsedMillis).coerceAtLeast(0L),
+            opposingItemCooldownMillis = ((itemReadyAt[BattleSide.OPPOSING] ?: 0L) - elapsedMillis).coerceAtLeast(0L))
     }
 
     fun abandon(): BattleResult {
@@ -479,6 +519,15 @@ class BattleSimulator(
                 }
             }
         }
+        if (trainerControllers.isNotEmpty() && finisher == null) {
+            val observed = snapshot()
+            trainerControllers.forEach { (side, controller) ->
+                if (finisher == null) controller.decide(observed, techniques).forEach { decision ->
+                    if (finisher == null) issueSideOrder(side, decision.actorId, decision.action, decision.interrupt)
+                }
+            }
+            if (finisher != null) return
+        }
         if (enhanced && think) {
             // Read every target/startup before any actor commits this tick's new action.
             val eligible = actors.filter { it.health > 0 && it.active == null && it.currentOrder == null &&
@@ -488,7 +537,22 @@ class BattleSimulator(
             eligible.forEach { actor ->
                 if (actor.plannedTechniqueId == null && elapsedMillis >= actor.nextDecisionAt) {
                     planAutonomousAction(actor, targets[actor])
-                } else targets[actor]?.let { tryAutonomousGuard(actor, it) }
+                } else targets[actor]?.let { observed ->
+                    val planned = actor.plannedTechniqueId?.let(techniques::get)
+                    if (adaptiveMovement && planned === BASIC &&
+                        autonomousTechniqueCandidates(actor, chooseAlly(actor)).any { it !== BASIC }) {
+                        planAutonomousAction(actor, observed)
+                        return@let
+                    }
+                    if (adaptiveMovement && planned != null && !isSupport(planned) &&
+                        planned.rangeProfile != TechniqueRangeProfile.SELF &&
+                        elapsedMillis >= actor.nextTargetReviewAt && actor.targetId != observed.definition.combatantId) {
+                        setTarget(actor, observed.definition.combatantId)
+                        actor.nextTargetReviewAt = elapsedMillis + 650L
+                        actor.lastDecision = "Reavaliou o alvo enquanto procurava posição, antes do startup."
+                    }
+                    tryAutonomousGuard(actor, observed)
+                }
             }
         }
         val impacts = mutableListOf<Pair<Fighter, ActiveTechnique>>()
@@ -658,6 +722,9 @@ class BattleSimulator(
         actor.nextDecisionAt = elapsedMillis + delay
         val enemy = chooseEnemy(actor)
         actor.roamDestination = enemy?.let { tacticalRoamDestination(actor, it) }
+        actor.roamTargetId = enemy?.definition?.combatantId
+        actor.roamTargetPosition = enemy?.position
+        actor.readinessDestination = null
         actor.lastDecision = if (opening) {
             "Lendo o campo e procurando espaço."
         } else {
@@ -676,14 +743,20 @@ class BattleSimulator(
         // Do not guess a generic stance before the action is selected. A self/field/support
         // option needs no enemy-range movement, while incompatible attack lanes would make
         // the Digimon walk one way and immediately reverse after choosing its technique.
-        if (candidates.any { isSupport(it) || !it.rangeProfile.isPositionalProfile() }) return actor.position
+        val positional = candidates.filter { !isSupport(it) && it.rangeProfile.isPositionalProfile() }
+        if (candidates.any { isSupport(it) || !it.rangeProfile.isPositionalProfile() }) {
+            return if (adaptiveMovement && positional.isNotEmpty()) lateralReadDestination(actor, enemy)
+                else actor.position
+        }
         val equippedWindows = candidates.asSequence()
             .map { tacticalRangeWindow(actor, enemy, it) }
             .toList()
         if (equippedWindows.isEmpty()) return actor.position
         val sharedMinimum = equippedWindows.maxOf { it.tacticalMin }
         val sharedMaximum = equippedWindows.minOf { it.tacticalMax }
-        if (sharedMinimum > sharedMaximum) return actor.position
+        if (sharedMinimum > sharedMaximum) {
+            return if (adaptiveMovement) lateralReadDestination(actor, enemy) else actor.position
+        }
         val sharedPreferred = equippedWindows.map { it.preferred }.average().toFloat()
         val strategyOffset = when (actor.strategy) {
             BattleStrategy.AGGRESSIVE -> -0.65f
@@ -709,7 +782,29 @@ class BattleSimulator(
         )
     }
 
+    /** Undecided mixed kits can change angle without prematurely closing or opening their range. */
+    private fun lateralReadDestination(actor: Fighter, enemy: Fighter): BattlePosition {
+        val dx = actor.position.x - enemy.position.x
+        val dz = actor.position.z - enemy.position.z
+        val radius = hypot(dx, dz).coerceAtLeast(0.001f)
+        val side = if (actor.movementRandom.nextBoolean()) 1f else -1f
+        val angle = side * min(0.20f, 1f / radius)
+        val c = kotlin.math.cos(angle)
+        val s = kotlin.math.sin(angle)
+        return clamp(BattlePosition(enemy.position.x + dx * c - dz * s,
+            enemy.position.z + dz * c + dx * s), actor.definition.collisionRadius)
+    }
+
     private fun continueAutonomousRead(actor: Fighter) {
+        if (adaptiveMovement) {
+            val observed = chooseEnemy(actor)
+            if (observed != null && (actor.roamTargetId != observed.definition.combatantId ||
+                    actor.roamTargetPosition?.distanceTo(observed.position)?.let { it > 0.65f } == true)) {
+                actor.roamTargetId = observed.definition.combatantId
+                actor.roamTargetPosition = observed.position
+                actor.roamDestination = tacticalRoamDestination(actor, observed)
+            }
+        }
         val destination = actor.roamDestination ?: run {
             transition(actor, CombatantState.WAITING)
             return
@@ -726,11 +821,46 @@ class BattleSimulator(
         val movementMultiplier = movementMultiplier(actor)
         val step = min(distance, actor.definition.movementSpeed * movementMultiplier *
             (1f - slow.coerceIn(0f, 1f)) * STEP / 1000f)
-        actor.position = clamp(
+        actor.position = if (adaptiveMovement) steer(actor, destination, step) else clamp(
             BattlePosition(actor.position.x + dx / distance * step, actor.position.z + dz / distance * step),
             actor.definition.collisionRadius
         )
         transition(actor, CombatantState.POSITIONING)
+    }
+
+    private fun steer(actor: Fighter, destination: BattlePosition, step: Float): BattlePosition = steerBattlePosition(
+        actor.position, destination, step, actor.definition.collisionRadius, configuration.arenaRadius,
+        combatants.values.filter { it !== actor && it.health > 0 }.map {
+            BattleMovementObstacle(it.position, it.definition.collisionRadius)
+        }, movementSide(actor))
+
+    private fun movementSide(actor: Fighter): Float = actor.steeringSide ?: run {
+        (if (actor.movementRandom.nextBoolean()) 1f else -1f).also { actor.steeringSide = it }
+    }
+
+    private fun readinessFootwork(actor: Fighter, recipient: Fighter, window: TacticalRangeWindow) {
+        val destination = actor.readinessDestination
+        if (destination == null || actor.position.distanceTo(destination) <= POSITION_EPSILON ||
+            actor.readinessTargetPosition?.distanceTo(recipient.position)?.let { it > 0.65f } == true) {
+            val dx = actor.position.x - recipient.position.x
+            val dz = actor.position.z - recipient.position.z
+            val length = hypot(dx, dz).coerceAtLeast(0.001f)
+            val radius = length.coerceIn(window.tacticalMin, window.tacticalMax)
+            val side = movementSide(actor)
+            val angle = side * min(0.28f, 0.75f / radius.coerceAtLeast(0.1f))
+            val c = kotlin.math.cos(angle)
+            val s = kotlin.math.sin(angle)
+            actor.readinessDestination = clamp(BattlePosition(
+                recipient.position.x + (dx * c - dz * s) / length * radius,
+                recipient.position.z + (dz * c + dx * s) / length * radius), actor.definition.collisionRadius)
+            actor.readinessTargetPosition = recipient.position
+        }
+        val slow = actor.statuses.filter { it.effect.slowsMovement }.maxOfOrNull { it.effect.magnitude } ?: 0f
+        val stride = actor.definition.movementSpeed * movementMultiplier(actor) *
+            (1f - slow.coerceIn(0f, 1f)) * 0.7f * STEP / 1000f
+        val previous = actor.position
+        actor.position = steer(actor, requireNotNull(actor.readinessDestination), stride)
+        transition(actor, if (actor.position.distanceTo(previous) > 0.0001f) CombatantState.POSITIONING else CombatantState.WAITING)
     }
 
     private fun planAutonomousAction(actor: Fighter, observedEnemy: Fighter? = chooseEnemy(actor)) {
@@ -1001,7 +1131,7 @@ class BattleSimulator(
         val explicit = actor.currentOrder != null
         val enoughEnergy = if (explicit) actor.energy >= technique.energyCost else availableEnergy(actor) >= technique.energyCost
         val enoughSpecialCharge = technique.kind != TechniqueKind.SPECIAL || actor.specialCharge >= SPECIAL_CHARGE_MAX
-        if (!enoughEnergy || explicit && commandPoints < technique.commandPointCost || !enoughSpecialCharge) {
+        if (!enoughEnergy || explicit && commandPointsFor(actor.definition.side) < technique.commandPointCost || !enoughSpecialCharge) {
             finishOrder(actor, OrderStatus.FAILED, "Os recursos não estão disponíveis.", OrderFailure.RESOURCES_MISSING)
             actor.plannedTechniqueId = null
             return
@@ -1052,7 +1182,10 @@ class BattleSimulator(
         if (enhanced && actor.readiness < readinessRequired(actor, technique)) {
             actor.readinessWaitingMillis += STEP
             actor.lastDecision = "Recuperando prontidão (${actor.readiness.toInt()}/${readinessRequired(actor, technique).toInt()})."
-            if (chargeMode(actor) == BattleChargeMode.FULL && technique.rangeProfile.isPositionalProfile()) {
+            if (adaptiveMovement && actor.currentOrder == null && !isSupport(technique) &&
+                technique.rangeProfile != TechniqueRangeProfile.SELF && technique.rangeProfile != TechniqueRangeProfile.ALL_FIELD) {
+                readinessFootwork(actor, recipient, rangeWindow)
+            } else if (chargeMode(actor) == BattleChargeMode.FULL && technique.rangeProfile.isPositionalProfile()) {
                 move(actor, recipient, min(rangeWindow.activationMax, rangeWindow.preferred + 0.4f), STEP)
             } else transition(actor, CombatantState.WAITING)
             return
@@ -1068,17 +1201,18 @@ class BattleSimulator(
             statistics = statistics.copy(specialsUsed = statistics.specialsUsed + 1)
         }
         if (explicit) {
-            commandPoints -= technique.commandPointCost
+            spendCommandPoints(actor.definition.side, technique.commandPointCost)
             reservations.remove(actor.currentOrder!!.orderId)
         }
         actor.active = ActiveTechnique(technique, recipient.definition.combatantId)
+        actor.readinessDestination = null
         if (enhanced) actor.techniqueUses[technique.techniqueId] = (actor.techniqueUses[technique.techniqueId] ?: 0) + 1
         actor.plannedTechniqueId = null
         if (explicit) actor.lastDecision = "Executando ${technique.displayName} por ordem do treinador."
         transition(actor, if (technique.kind == TechniqueKind.SPECIAL) CombatantState.USING_SPECIAL else CombatantState.ATTACK_STARTUP)
         if (technique.kind == TechniqueKind.SPECIAL) {
             emit(BattleEvent.SpecialStarted(actor.definition.combatantId, technique.techniqueId, recipient.definition.combatantId))
-            if (actor.definition.side == BattleSide.ALLIED && technique.startupMillis > 0) {
+            if ((actor.definition.side == BattleSide.ALLIED || actor.definition.side in trainerControllers) && technique.startupMillis > 0) {
                 val deadline = elapsedMillis + technique.startupMillis
                 pendingBlast[actor.definition.combatantId] = BlastTiming(technique.techniqueId, deadline)
                 emit(BattleEvent.BlastTimingOpened(actor.definition.combatantId, technique.techniqueId, deadline))
@@ -1161,6 +1295,7 @@ class BattleSimulator(
             combatants.values.filter { it.health > 0 && it.definition.side != actor.definition.side }
                 .forEach { addThreat(it, actor, restored / 2) }
             applyStatuses(primary, technique.statusEffects.map { it.copy(sourceCombatantId = actor.definition.combatantId) })
+            if (technique.kind == TechniqueKind.SPECIAL) resolveSpecialOutcome(actor, technique, active.targetId, success = restored > 0, blastHit = blastHit)
             return
         }
         val victims = when (technique.impactShape) {
@@ -1216,7 +1351,7 @@ class BattleSimulator(
                 addThreat(victim, actor, damage)
                 emit(BattleEvent.TechniqueHit(actor.definition.combatantId, victim.definition.combatantId,
                     technique.techniqueId, damage, critical))
-                if (damage > 0 && actor.health > 0 && actor.definition.side == BattleSide.ALLIED) {
+                if (damage > 0 && actor.health > 0 && (actor.definition.side == BattleSide.ALLIED || actor.definition.side in trainerControllers)) {
                     val expiry = elapsedMillis + 1_000L
                     pendingSupport[actor.definition.combatantId] = expiry
                     emit(BattleEvent.SupportWindowOpened(actor.definition.combatantId, expiry))
@@ -1410,11 +1545,17 @@ class BattleSimulator(
     }
 
     private fun executeItem(actor: Fighter, order: BattleOrder, action: TrainerAction.UseItem) {
-        val itemId = itemReservations[order.orderId]
-        val item = itemId?.let(itemDefinitions::get)
+        val reservation = itemReservations[order.orderId]
+        val side = actor.definition.side
+        val counts = itemCountsFor(side)
+        val item = reservation?.takeIf { it.side == side }?.itemId?.let(itemsFor(side)::get)
         val recipient = target(actor, action.targetId, true)
-        if (item == null || recipient == null || (itemCounts[item.itemId] ?: 0) <= 0) {
+        if (item == null || recipient == null || (counts[item.itemId] ?: 0) <= 0) {
             finishOrder(actor, OrderStatus.FAILED, "Alvo ou item de treino indisponível.", OrderFailure.ITEM_UNUSABLE)
+            return
+        }
+        if ((itemReadyAt[side] ?: 0L) > elapsedMillis) {
+            finishOrder(actor, OrderStatus.FAILED, "Aguarde antes de usar outro item.", OrderFailure.ITEM_COOLDOWN)
             return
         }
         val changed = when (item.kind) {
@@ -1435,7 +1576,8 @@ class BattleSimulator(
             finishOrder(actor, OrderStatus.FAILED, "O alvo não precisa deste item agora.", OrderFailure.ITEM_UNNEEDED)
             return
         }
-        itemCounts[item.itemId] = (itemCounts[item.itemId] ?: 0) - 1
+        counts[item.itemId] = (counts[item.itemId] ?: 0) - 1
+        itemReadyAt[side] = elapsedMillis + configuration.itemCooldownMillis
         itemReservations.remove(order.orderId)
         if (actor.definition.side == BattleSide.ALLIED) statistics = statistics.copy(itemsUsed = statistics.itemsUsed + 1)
         transition(recipient, CombatantState.USING_ITEM_EFFECT)
@@ -1462,7 +1604,9 @@ class BattleSimulator(
         val nx = if (distance > 0.0001f) dx / distance else 1f
         val nz = if (distance > 0.0001f) dz / distance else 0f
         val previous = actor.position
-        actor.position = clamp(BattlePosition(actor.position.x + nx * step * sign, actor.position.z + nz * step * sign), actor.definition.collisionRadius)
+        actor.position = if (adaptiveMovement) steer(actor, BattlePosition(recipient.position.x - nx * desiredDistance,
+            recipient.position.z - nz * desiredDistance), step)
+        else clamp(BattlePosition(actor.position.x + nx * step * sign, actor.position.z + nz * step * sign), actor.definition.collisionRadius)
         return actor.position.distanceTo(previous) > 0.0001f
     }
 
@@ -1544,7 +1688,8 @@ class BattleSimulator(
             val threat = (actor.threat[enemy.definition.combatantId] ?: 0L).toDouble() / maximumThreat
             val vulnerability = 1.0 - enemy.health.toDouble() / enemy.definition.maxHealth
             val status = if (enemy.statuses.any { !isBuff(it.effect) }) 1.0 else 0.0
-            val coordinated = if (actor.personality.teamWeight >= 1.06f && combatants.values.any {
+            val coordinated = if ((!adaptiveMovement || actor.profile.targetPolicy != BattleTargetPolicy.CLOSEST) &&
+                actor.personality.teamWeight >= 1.06f && combatants.values.any {
                 it.health > 0 && it !== actor && it.definition.side == actor.definition.side &&
                     it.targetId == enemy.definition.combatantId
             }) 0.15 else 0.0
@@ -1558,7 +1703,10 @@ class BattleSimulator(
         val best = enemies.maxWithOrNull(compareBy<Fighter> { score(it) }.thenByDescending { it.definition.stableRngKey }) ?: return null
         val current = target(actor, actor.targetId, false)
         val threshold = actor.profile.targetSwitchThreshold + actor.personality.targetStickiness * 0.15f
-        val selected = if (current != null && current !== best && score(best) < score(current) + threshold) current else best
+        val requiredImprovement = current?.let {
+            if (adaptiveMovement) score(it) * (1.0 + threshold) else score(it) + threshold
+        } ?: 0.0
+        val selected = if (current != null && current !== best && score(best) < requiredImprovement) current else best
         actor.targetReason = "${actor.profile.targetPolicy.name}: alvo válido com limiar de troca (${(threshold * 100).toInt()}%)."
         return selected
     }
@@ -1590,6 +1738,7 @@ class BattleSimulator(
         if (enhanced) {
             actor.targetChanges++
             actor.positioningTechniqueId = null
+            actor.readinessDestination = null
         }
         emit(BattleEvent.TargetChanged(actor.definition.combatantId, id))
     }
@@ -1642,9 +1791,17 @@ class BattleSimulator(
     }
 
     private fun ready(actor: Fighter, technique: TechniqueDefinition) = (actor.cooldowns[technique.techniqueId] ?: 0L) <= elapsedMillis
-    private fun isSupport(technique: TechniqueDefinition) = technique.kind == TechniqueKind.HEAL || technique.kind == TechniqueKind.SUPPORT
+    private fun isSupport(technique: TechniqueDefinition) = technique.kind == TechniqueKind.HEAL || technique.kind == TechniqueKind.SUPPORT ||
+        technique.kind == TechniqueKind.SPECIAL && technique.healPower > 0
     private fun availableEnergy(actor: Fighter) = actor.energy - reservations.values.filter { it.actorId == actor.definition.combatantId }.sumOf { it.energy }
-    private fun availableCommandPoints() = commandPoints - reservations.values.sumOf { it.commandPoints }
+    private fun commandPointsFor(side: BattleSide) = if (side == BattleSide.ALLIED) commandPoints else opposingCommandPoints
+    private fun spendCommandPoints(side: BattleSide, amount: Int) {
+        if (side == BattleSide.ALLIED) commandPoints -= amount else opposingCommandPoints -= amount
+    }
+    private fun availableCommandPoints(side: BattleSide = BattleSide.ALLIED) = commandPointsFor(side) -
+        reservations.values.filter { combatants[it.actorId]?.definition?.side == side }.sumOf { it.commandPoints }
+    private fun itemsFor(side: BattleSide) = if (side == BattleSide.ALLIED) itemDefinitions else opposingItemDefinitions
+    private fun itemCountsFor(side: BattleSide) = if (side == BattleSide.ALLIED) itemCounts else opposingItemCounts
     private fun availableSpecialCharge(actor: Fighter) = actor.specialCharge - reservations.values
         .filter { it.actorId == actor.definition.combatantId }
         .sumOf { it.specialCharge }
@@ -1942,7 +2099,13 @@ class BattleSimulator(
         var knockbackVelocityX = 0f
         var knockbackVelocityZ = 0f
         var nextDecisionAt = 0L
+        var nextTargetReviewAt = 0L
         var roamDestination: BattlePosition? = null
+        var roamTargetId: String? = null
+        var roamTargetPosition: BattlePosition? = null
+        var readinessDestination: BattlePosition? = null
+        var readinessTargetPosition: BattlePosition? = null
+        var steeringSide: Float? = null
         var lastTechniqueId: String? = null
         var plannedTechniqueId: String? = null
         var active: ActiveTechnique? = null
@@ -1994,6 +2157,7 @@ class BattleSimulator(
         val commandPoints: Int,
         val specialCharge: Int = 0
     )
+    private data class ItemReservation(val side: BattleSide, val itemId: String)
     private data class BlastTiming(
         val techniqueId: String,
         val expiresAtMillis: Long

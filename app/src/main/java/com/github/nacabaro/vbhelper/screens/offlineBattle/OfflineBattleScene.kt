@@ -22,6 +22,8 @@ import com.github.nacabaro.vbhelper.rendering.applyHybridSceneProfile
 import com.github.nacabaro.vbhelper.rendering.sprite3d.cameraAssistedSpriteYaw
 import com.github.nacabaro.vbhelper.ui.theme.DeepPurpleBgAlt
 import com.github.nacabaro.vbhelper.ui.theme.AppTheme
+import com.github.nacabaro.vbhelper.ui.theme.LocalAppTheme
+import com.github.nacabaro.vbhelper.rendering.EnvironmentThemeController
 import androidx.compose.ui.graphics.Color
 import com.google.android.filament.Colors
 import com.google.android.filament.Engine
@@ -62,11 +64,12 @@ fun OfflineBattleScene(
 ) {
     if (manifest == null) return
     val backgroundColor = DeepPurpleBgAlt
+    val appTheme = LocalAppTheme.current
     AndroidView(
         modifier = modifier,
         factory = { context ->
             FrameLayout(context).also { host ->
-                runCatching { OfflineBattleSceneView(context, backgroundColor) }
+                runCatching { OfflineBattleSceneView(context, backgroundColor, appTheme) }
                     .onSuccess { scene ->
                         onCreated()
                         host.addView(scene, FrameLayout.LayoutParams(
@@ -87,6 +90,7 @@ fun OfflineBattleScene(
         },
         update = { host ->
             val scene = host.getChildAt(0) as? OfflineBattleSceneView
+            scene?.setTheme(appTheme)
             scene?.setRenderingEnabled(renderingEnabled)
             scene?.setBattleState(
                 snapshot, fighters, sessionId, onSceneReady, onProjectionChanged, onFighterTapped,
@@ -108,9 +112,16 @@ fun OfflineBattleScene(
 class OfflineBattleSceneView(
     context: Context,
     backgroundColor: Color = AppTheme.VB_HELPER.palette.backgroundAlt,
+    initialTheme: AppTheme = AppTheme.VB_HELPER,
 ) : TextureView(context) {
     private val engine: Engine
     private val viewer: ModelViewer
+    private val environmentThemes: EnvironmentThemeController
+    private var sceneTheme = initialTheme
+    internal val appliedEnvironmentTheme get() = environmentThemes.appliedTheme
+    internal val environmentThemeFailure get() = environmentThemes.failure
+    internal val environmentMaterialNames get() = environmentThemes.boundMaterialNames
+    internal val environmentLoadCount get() = environmentThemes.bindCount
     private val backgroundSkybox: Skybox
     private val radarSkybox: Skybox
     private var released = false
@@ -126,6 +137,8 @@ class OfflineBattleSceneView(
     private var pinchPointerId = -1
     private var cameraYaw = 0.0
     private var cameraPitch = 0.27
+    private var effectCameraYaw = 0.0
+    private var effectCameraPitch = 0.27
     private var cameraDistance = 13.5
     private var cameraTargetX = 0.0
     private var cameraTargetZ = 0.0
@@ -147,6 +160,7 @@ class OfflineBattleSceneView(
     private var assetLoader: AssetLoader? = null
     private var resourceLoader: ResourceLoader? = null
     private val renderedFighters = linkedMapOf<String, RenderedFighter>()
+    private val fighterFacings = linkedMapOf<String, BattleFighterFacing>()
     /** Retained base/result/transition instances. Movies toggle them; they never replace assets. */
     private val fighterPool = linkedMapOf<String, RenderedFighter>()
     private var desiredPreparedForms: Map<String, BattleFighterPresentation> = emptyMap()
@@ -156,6 +170,7 @@ class OfflineBattleSceneView(
     private var allowCinematicMotion = true
     private var cinematicSequenceId: Long? = null
     private var cinematicSavedCamera: CinematicCameraPose? = null
+    private var cinematicAttackSide: Int? = null
     private var cinematicTargetY: Double? = null
     private val renderedImpacts = linkedMapOf<Pair<String, String>, RenderedImpact>()
     private val failedImpactKeys = mutableSetOf<Pair<String, String>>()
@@ -167,6 +182,8 @@ class OfflineBattleSceneView(
     private var onProjectionChanged: (() -> Unit)? = null
     private var onFighterTapped: ((String) -> Unit)? = null
     private var sceneReadyNotified = false
+    internal var fighterAssetLoadCount = 0
+        private set
     private var lastProjectionNotifyNanos = 0L
     /** (combatantId, setKey) pairs that failed to build; a new setKey always retries. */
     private var failedFighterKeys = linkedSetOf<Pair<String, String>>()
@@ -199,6 +216,9 @@ class OfflineBattleSceneView(
         val renderables: List<Int>,
         val shadows: List<Int>,
         val materials: List<MaterialInstance>,
+        val boundsCenter: FloatArray = asset.boundingBox.center.copyOf(),
+        val boundsHalfExtent: FloatArray = asset.boundingBox.halfExtent.copyOf(),
+        val worldTransform: FloatArray = FloatArray(16),
         var activePose: String? = null,
         var poseChangedAtNanos: Long = 0L
     )
@@ -231,9 +251,13 @@ class OfflineBattleSceneView(
                 (latestSnapshot?.finisher?.let { cinematicVisualSnapshot(it, allowCinematicMotion).elapsedMillis } ?: 0L)
             updateFighterTransforms(poseTime * 1_000_000L)
             updateCinematicActors()
+            val effectAnchors = renderedFighters.mapValues { (_, fighter) -> frontEffectAnchor(fighter) }
             syncImpactAssets()
             if (latestSnapshot?.finisher == null) {
-                cinematicRenderer?.hide()
+                latestSnapshot?.let { snapshot -> manifest?.let { arena ->
+                    cinematicRenderer?.updateStartup(snapshot, desiredFighters, arena,
+                        effectCameraYaw, effectCameraPitch, effectAnchors, allowCinematicMotion)
+                } }
                 updateImpactTransforms(frameTimeNanos)
             } else {
                 renderedImpacts.values.forEach { effect -> effect.renderables.forEach {
@@ -241,15 +265,17 @@ class OfflineBattleSceneView(
                 } }
                 latestSnapshot?.let { snapshot -> manifest?.let { arena ->
                     cinematicRenderer?.update(snapshot, desiredFighters, desiredPreparedForms,
-                        arena, cameraYaw, cameraPitch, allowCinematicMotion)
+                        arena, effectCameraYaw, effectCameraPitch, allowCinematicMotion, effectAnchors)
                 } }
             }
             val rendered = viewer.render(frameTimeNanos)
+            environmentThemes.onFrame(viewer.progress >= 1f)
             if (projectionNotificationPending && frameTimeNanos - lastProjectionNotifyNanos >= PROJECTION_NOTIFY_NANOS) {
                 lastProjectionNotifyNanos = frameTimeNanos
                 projectionNotificationPending = false
                 onProjectionChanged?.invoke()
             }
+            // Cosmetic palette preparation must not gate combat readiness or trap the loading overlay.
             if (!sceneReadyNotified && rendered && viewer.progress >= 1f && arenaLoaded && desiredFighters.isNotEmpty() &&
                 desiredFighters.keys.all { it in renderedFighters } &&
                 desiredPreparedForms.keys.all { it in fighterPool } &&
@@ -265,6 +291,7 @@ class OfflineBattleSceneView(
         ensureFilament()
         engine = Engine.create()
         viewer = ModelViewer(this, engine, UiHelper(UiHelper.ContextErrorPolicy.DONT_CHECK), null)
+        environmentThemes = EnvironmentThemeController(context, engine, initialTheme)
         viewer.view.applyHybridSceneProfile(HybridSceneKind.BATTLE)
         val backdrop = Colors.toLinear(
             Colors.RgbType.SRGB,
@@ -277,6 +304,7 @@ class OfflineBattleSceneView(
         radarSkybox = Skybox.Builder()
             .color(0f, 0f, 0f, 1f)
             .build(engine)
+        updateThemeBackdrop()
         contentDescription = context.getString(R.string.ui_battle_scene_description)
         isFocusable = true
         isOpaque = false
@@ -325,6 +353,7 @@ class OfflineBattleSceneView(
                     engine.transformManager.setTransform(transform, arenaTransform)
                     configureArenaEmission(arena)
                     configureArenaVoxelMotion(arena)
+                    environmentThemes.bind(arena, assetPath)
                     arenaLoaded = true
                     cameraDirty = true
                     Log.i(TAG, "Loaded $assetPath (${bytes.size} bytes)")
@@ -348,7 +377,27 @@ class OfflineBattleSceneView(
     ) {
         if (released) return
         if (latestSessionId != sessionId) {
-            if (latestSessionId != null) releaseFighters()
+            fighterFacings.clear()
+            val reuse = canReuseBattleRenderAssets(sceneReadyNotified && !cinematicPreparationFailed,
+                desiredFighters, fighters, desiredPreparedForms, preparedForms)
+            if (latestSessionId != null && !reuse) releaseFighters()
+            if (!reuse) cinematicAttackSide = null
+            if (reuse) {
+                // Reset match-local poses/effects without decoding or uploading any GLB again.
+                cinematicRenderer?.hide()
+                fighterPool.values.forEach { fighter ->
+                    hideFighter(fighter)
+                    fighter.activePose = null
+                    fighter.poseChangedAtNanos = 0L
+                }
+                renderedFighters.clear()
+                renderedImpacts.values.forEach { impact ->
+                    impact.impactId = null
+                    impact.firstShownAtNanos = 0L
+                    impact.renderables.forEach { engine.renderableManager.setLayerMask(it, 0xFF, 0) }
+                }
+                failedImpactKeys.clear()
+            }
             cinematicSequenceId = null
             cinematicSavedCamera = null
             cinematicTargetY = null
@@ -417,11 +466,31 @@ class OfflineBattleSceneView(
         }
     }
 
+    fun setTheme(theme: AppTheme) {
+        if (released || sceneTheme == theme) return
+        sceneTheme = theme
+        updateThemeBackdrop()
+        environmentThemes.setTheme(theme)
+    }
+
+    private fun updateThemeBackdrop() {
+        val c = sceneTheme.palette.backgroundAlt
+        val linear = Colors.toLinear(Colors.RgbType.SRGB, c.red, c.green, c.blue)
+        backgroundSkybox.setColor(linear[0], linear[1], linear[2], 1f)
+        if (sceneTheme == AppTheme.VB_HELPER) radarSkybox.setColor(0f, 0f, 0f, 1f)
+        else radarSkybox.setColor(linear[0], linear[1], linear[2], 1f)
+    }
+
     fun retryScene() {
         if (released) return
         sceneReadyNotified = false
         failedFighterKeys.clear()
         arenaLoaded = false
+        arenaEnergyMaterial = null
+        arenaDomeMotion = null
+        arenaVoxelGroups = emptyList()
+        arenaVoxelCubes = emptyList()
+        environmentThemes.clearEnvironment()
         releaseFighters()
         runCatching { if (viewer.asset != null) viewer.destroyModel() }
         val currentManifest = manifest ?: return
@@ -491,6 +560,9 @@ class OfflineBattleSceneView(
         } ?: ArenaCameraPoint(desiredEyeX, desiredEyeZ)
         val targetY = cinematicTargetY ?: manifest?.cameraTargetY ?: 0.7
         val eyeY = targetY + cameraDistance * kotlin.math.sin(cameraPitch)
+        effectCameraYaw = kotlin.math.atan2(cameraEye.x-cameraTargetX, cameraEye.z-cameraTargetZ)
+        effectCameraPitch = kotlin.math.atan2(eyeY-targetY,
+            kotlin.math.hypot(cameraEye.x-cameraTargetX, cameraEye.z-cameraTargetZ))
         viewer.camera.lookAt(
             cameraEye.x + shake.x, eyeY, cameraEye.z + shake.z,
             cameraTargetX + shake.x, targetY, cameraTargetZ + shake.z,
@@ -673,6 +745,7 @@ class OfflineBattleSceneView(
             val strength = RADAR_DOME_ENERGY_BASE +
                 RADAR_DOME_ENERGY_AMPLITUDE * pulse +
                 RADAR_DOME_SECONDARY_AMPLITUDE * slowPulse
+            arenaEnergyMaterial?.let { if (environmentThemes.updateEmission(it, strength)) return }
             arenaEnergyMaterial?.setParameter(
                 "emissiveFactor",
                 0.68f * strength,
@@ -681,6 +754,7 @@ class OfflineBattleSceneView(
             )
         } else {
             val strength = ARENA_ENERGY_BASE + ARENA_ENERGY_AMPLITUDE * pulse
+            arenaEnergyMaterial?.let { if (environmentThemes.updateEmission(it, strength)) return }
             arenaEnergyMaterial?.setParameter(
                 "emissiveFactor",
                 0.50f * strength,
@@ -911,6 +985,7 @@ class OfflineBattleSceneView(
             }
             RenderedFighter(asset, presentation, poses, instances, instances.filter { it !in poseInstances }, materials).also {
                 pendingAsset = null
+                fighterAssetLoadCount++
                 Log.i(TAG, "Loaded 3D fighter ${presentation.displayName} (${poses.size} poses)")
             }
         }.onFailure { failure ->
@@ -929,6 +1004,11 @@ class OfflineBattleSceneView(
         fighter.renderables.forEach { engine.renderableManager.setLayerMask(it, 0xFF, 0) }
         fighter.activePose = null
     }
+
+    private fun frontEffectAnchor(fighter: RenderedFighter): BattleEffectAnchor = battleFrontEffectAnchor(
+        fighter.worldTransform, fighter.boundsCenter, fighter.boundsHalfExtent,
+        (manifest?.fighterScale ?: 1.65f)*fighter.presentation.visualScaleMultiplier,
+        effectCameraYaw, effectCameraPitch)
 
     private fun updateCinematicCamera() {
         val snapshot = latestSnapshot ?: return
@@ -956,12 +1036,21 @@ class OfflineBattleSceneView(
         val result = preparedFinisherPresentation(sequence, desiredPreparedForms) ?: desiredFighters[sequence.leadId]
         val height = arena.fighterScale * (result?.visualScaleMultiplier ?: 1f)
         fun world(point: BattlePosition) = BattlePosition(point.x * arena.positionScale, point.z * arena.positionScale)
+        if (cinematicAttackSide == null) {
+            val anchor = cinematicAnchor(lead.position, members[sequence.partnerId]?.position, sequence.kind)
+            val target = members[sequence.targetId]?.position ?: BattlePosition(anchor.x + 2f, anchor.z)
+            val dx = target.x - anchor.x
+            val dz = target.z - anchor.z
+            cinematicAttackSide = if (dx * kotlin.math.cos(cameraYaw) - dz * kotlin.math.sin(cameraYaw) >= 0) 1 else -1
+        }
         val pose = cinematicCameraPose(sequence, world(lead.position), members[sequence.partnerId]?.position?.let(::world),
             members[sequence.targetId]?.position?.let(::world), height.toDouble(),
-            viewportWidth.toDouble() / viewportHeight.coerceAtLeast(1), requireNotNull(cinematicSavedCamera), allowCinematicMotion)
+            viewportWidth.toDouble() / viewportHeight.coerceAtLeast(1), requireNotNull(cinematicSavedCamera), allowCinematicMotion,
+            attackSide = cinematicAttackSide, attackStyle = result?.attackProfile?.style ?: FinisherAttackStyle.PROJECTILE,
+            emitterHeight = result?.attackProfile?.emitterHeight ?: 0.7f)
         val shake = if (allowCinematicMotion && sequence.phase == BattleFinisherPhase.IMPACT && sequence.phaseProgress < 0.55f) {
             val p = sequence.phaseProgress / 0.55f
-            kotlin.math.sin(p * Math.PI * 8) * (1f - p) * height * 0.045
+            kotlin.math.sin(p * Math.PI * 8) * (1f - p) * height * 0.085
         } else 0.0
         applyCinematicCamera(pose.copy(targetX = pose.targetX + shake))
     }
@@ -1000,7 +1089,7 @@ class OfflineBattleSceneView(
         fun bodyPosition(point: BattlePosition): BattlePosition {
             if (style != FinisherAttackStyle.MELEE || target == null || !allowCinematicMotion) return point
             val amount = when (sequence.phase) {
-                BattleFinisherPhase.RELEASE -> cinematicEase((p - 0.30f) / 0.70f)
+                BattleFinisherPhase.RELEASE -> cinematicLaunchProgress(p)
                 BattleFinisherPhase.IMPACT -> 1f - cinematicEase((p - 0.20f) / 0.60f)
                 else -> 0f
             }
@@ -1079,6 +1168,7 @@ class OfflineBattleSceneView(
         Matrix.rotateM(fighterTransform, 0, Math.toDegrees(yaw.toDouble()).toFloat(), 0f, 1f, 0f)
         Matrix.scaleM(fighterTransform, 0, if (facesRight) -scale else scale, scale, scale)
         val root = engine.transformManager.getInstance(fighter.asset.root)
+        fighterTransform.copyInto(fighter.worldTransform)
         if (root != 0) engine.transformManager.setTransform(root, fighterTransform)
     }
 
@@ -1117,8 +1207,10 @@ class OfflineBattleSceneView(
             val target = combatants[combatant.targetId]?.takeIf { it.side != combatant.side }
                 ?: combatants.values.filter { it.side != combatant.side && it.health > 0 }
                     .minByOrNull { it.position.distanceTo(combatant.position) }
-            val dx = (target?.position?.x ?: -combatant.position.x) - combatant.position.x
-            val dz = (target?.position?.z ?: -combatant.position.z) - combatant.position.z
+            val direction = fighterFacings.getOrPut(id) { BattleFighterFacing() }.direction(
+                combatant.position, target?.position, combatant.state, latestSnapshot?.elapsedMillis ?: 0L)
+            val dx = direction.x
+            val dz = direction.z
             val worldHeadingYaw = kotlin.math.atan2(-dz, dx)
             val visibleYaw = cameraAssistedSpriteYaw(worldHeadingYaw, cameraYaw.toFloat())
             Matrix.rotateM(fighterTransform, 0,
@@ -1128,6 +1220,7 @@ class OfflineBattleSceneView(
                 if (facesRight) -scale else scale,
                 scale, scale)
             val root = engine.transformManager.getInstance(fighter.asset.root)
+            fighterTransform.copyInto(fighter.worldTransform)
             if (root != 0) engine.transformManager.setTransform(root, fighterTransform)
         }
     }
@@ -1206,14 +1299,18 @@ class OfflineBattleSceneView(
             } ?: 0f
             val visible = opacity > 0f && target != null && variant == desiredVariant
             effect.renderables.forEach { engine.renderableManager.setLayerMask(it, 0xFF, if (visible) 0x01 else 0) }
-            if (!visible) continue
+            if (!visible || impact == null) continue
             val fighterScale = currentManifest.fighterScale * (desiredFighters[targetId]?.visualScaleMultiplier ?: 1f)
-            val placement = battleImpactPlacement(target.position.x * currentManifest.positionScale,
-                target.position.z * currentManifest.positionScale, fighterScale, cameraYaw, cameraPitch)
+            val size = battleImpactSizeMultiplier(impact.remainingMillis,
+                (frameTimeNanos - effect.firstShownAtNanos) / 1_000_000L, impact.isSpecial, impact.critical)
+            val placement = renderedFighters[targetId]?.let {
+                battleImpactPlacementFromAnchor(frontEffectAnchor(it), fighterScale, effectCameraYaw, effectCameraPitch, size)
+            } ?: battleImpactPlacement(target.position.x * currentManifest.positionScale,
+                target.position.z * currentManifest.positionScale, fighterScale, effectCameraYaw, effectCameraPitch, size)
             Matrix.setIdentityM(impactTransform, 0)
             Matrix.translateM(impactTransform, 0, placement.x, placement.y, placement.z)
-            Matrix.rotateM(impactTransform, 0, Math.toDegrees(cameraYaw).toFloat(), 0f, 1f, 0f)
-            Matrix.rotateM(impactTransform, 0, -Math.toDegrees(cameraPitch).toFloat(), 1f, 0f, 0f)
+            Matrix.rotateM(impactTransform, 0, Math.toDegrees(effectCameraYaw).toFloat(), 0f, 1f, 0f)
+            Matrix.rotateM(impactTransform, 0, -Math.toDegrees(effectCameraPitch).toFloat(), 1f, 0f, 0f)
             Matrix.scaleM(impactTransform, 0, placement.height, placement.height, placement.height)
             val root = engine.transformManager.getInstance(effect.asset.root)
             if (root != 0) engine.transformManager.setTransform(root, impactTransform)
@@ -1248,6 +1345,7 @@ class OfflineBattleSceneView(
         Choreographer.getInstance().removeFrameCallback(frameCallback)
         releaseFighters()
         arenaEnergyMaterial = null
+        environmentThemes.release()
         arenaDomeMotion = null
         arenaVoxelGroups = emptyList()
         arenaVoxelCubes = emptyList()
@@ -1262,6 +1360,7 @@ class OfflineBattleSceneView(
             Choreographer.getInstance().removeFrameCallback(frameCallback)
             releaseFighters()
             arenaEnergyMaterial = null
+            environmentThemes.release()
             arenaDomeMotion = null
             arenaVoxelGroups = emptyList()
             arenaVoxelCubes = emptyList()
@@ -1285,6 +1384,7 @@ class OfflineBattleSceneView(
             assetLoader?.destroyAsset(fighter.asset)
         }
         fighterPool.clear()
+        fighterFacings.clear()
         renderedFighters.clear()
         failedFighterKeys.clear()
         runCatching { assetLoader?.destroy() }

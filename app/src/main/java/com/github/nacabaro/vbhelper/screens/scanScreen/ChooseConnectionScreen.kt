@@ -23,6 +23,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.annotation.StringRes
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.R
@@ -40,7 +43,8 @@ fun ChooseConnectOption(
     feedbackMessage: String? = null,
     onFeedbackAction: (() -> Unit)? = null,
     onDismissFeedback: (() -> Unit)? = null,
-    navController: NavController
+    navController: NavController,
+    @StringRes feedbackActionLabel: Int = R.string.ui_settings,
 ) {
     Scaffold(
         topBar = {
@@ -58,6 +62,7 @@ fun ChooseConnectOption(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(contentPadding)
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp)
         ) {
             feedbackMessage?.let { message ->
@@ -70,7 +75,7 @@ fun ChooseConnectOption(
                     Text(message, color = TextPrimaryOnDark)
                     if (onFeedbackAction != null) {
                         TextButton(onClick = onFeedbackAction) {
-                            Text(stringResource(R.string.ui_settings), color = StatusRed)
+                            Text(stringResource(feedbackActionLabel))
                         }
                     }
                     if (onDismissFeedback != null) {

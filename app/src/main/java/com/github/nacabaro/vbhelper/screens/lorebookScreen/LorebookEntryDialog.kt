@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -24,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.components.CyberPanel
+import com.github.nacabaro.vbhelper.components.editorDialogBounds
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.ui.window.DialogProperties
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.domain.lorebook.LorebookEntry
@@ -34,16 +37,16 @@ fun LorebookEntryDialog(
     onDismiss: () -> Unit,
     onSave: (String, List<String>, String, Int) -> Unit
 ) {
-    var title by remember { mutableStateOf(entry?.title.orEmpty()) }
-    var keys by remember { mutableStateOf(entry?.triggerKeys?.joinToString(", ").orEmpty()) }
-    var content by remember { mutableStateOf(entry?.content.orEmpty()) }
-    var priority by remember { mutableStateOf((entry?.priority ?: 0).toString()) }
+    var title by rememberSaveable(entry?.id) { mutableStateOf(entry?.title.orEmpty()) }
+    var keys by rememberSaveable(entry?.id) { mutableStateOf(entry?.triggerKeys?.joinToString(", ").orEmpty()) }
+    var content by rememberSaveable(entry?.id) { mutableStateOf(entry?.content.orEmpty()) }
+    var priority by rememberSaveable(entry?.id) { mutableStateOf((entry?.priority ?: 0).toString()) }
 
     Dialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(dismissOnClickOutside = false)
+        properties = DialogProperties(dismissOnClickOutside = false, decorFitsSystemWindows = false)
     ) {
-        CyberPanel(modifier = Modifier.fillMaxWidth(), active = true) {
+        CyberPanel(modifier = Modifier.editorDialogBounds().fillMaxWidth(), active = true) {
             Column(
                 Modifier
                     .verticalScroll(rememberScrollState())
@@ -86,7 +89,7 @@ fun LorebookEntryDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                Row(
+                FlowRow(
                     Modifier
                         .fillMaxWidth()
                         .padding(top = 12.dp),
@@ -96,6 +99,7 @@ fun LorebookEntryDialog(
                         Text(stringResource(R.string.ui_cancel))
                     }
                     VitalButton(
+                        style = com.github.nacabaro.vbhelper.components.VitalButtonStyle.PRIMARY,
                         enabled = title.isNotBlank() && keys.isNotBlank() && content.isNotBlank(),
                         onClick = {
                             onSave(

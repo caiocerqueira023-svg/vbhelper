@@ -40,11 +40,17 @@ object NpcBattleAdapter {
         }
         require(checkpoint.catalogVersion == checkpoint.configuration.rulesetVersion) { "Incompatible NPC battle catalog" }
         require(checkpoint.configuration.randomSeed == event.seed) { "NPC battle seed mismatch" }
+        val movementVersionPresent = !root.isJsonArray &&
+            root.asJsonObject.getAsJsonObject("configuration")?.has("movementRulesVersion") == true
+        // BattleConfiguration has a no-arg default constructor, so Gson alone would silently
+        // apply new movement to old envelopes. Pin missing fields to the historical version.
+        val configuration = if (movementVersionPresent) checkpoint.configuration
+            else checkpoint.configuration.copy(movementRulesVersion = BattleMovementRules.LEGACY_VERSION)
         require(record.elapsedMillis >= 0 && record.elapsedMillis % BattleRules.STEP_MILLIS == 0L) {
             "NPC battle checkpoint is not on a fixed-step boundary"
         }
         val definitions = checkpoint.definitions
-        val simulator=BattleSimulator(checkpoint.configuration.copy(defaultPaused = false),
+        val simulator=BattleSimulator(configuration.copy(defaultPaused = false),
             BattleTeam("allies",BattleSide.ALLIED,definitions.filter { it.side==BattleSide.ALLIED }),
             BattleTeam("opponents",BattleSide.OPPOSING,definitions.filter { it.side==BattleSide.OPPOSING }),
             GenericTechniqueCatalog.definitionsForVersion(checkpoint.catalogVersion))

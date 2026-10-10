@@ -214,7 +214,7 @@ fun SettingsScreen(
                     Text(
                         stringResource(R.string.ui_card_origin_toggle_description),
                         fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.outline
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 Switch(

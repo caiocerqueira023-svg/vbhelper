@@ -94,13 +94,13 @@ class CardImportViewModel(private val application: VBHelper, private val savedSt
                     importer.importParsedCardWithResult(parsed, document.displayName)
                 }, onNewCard = { result ->
                     if (askOrigin) settings.setPendingCardOriginPrompt(result.cardId, result.cardName, isImporting = false)
-                    else {
-                        val matched = application.container.speciesRepository.matchOfficialSpeciesForCard(result.cardId)
-                        if (matched > 0) application.container.db.cardDao().updateOfficialStatus(result.cardId, OfficialStatus.OFFICIAL)
-                    }
+                    // The batch has recorded the committed result before enrichment runs,
+                    // so Stop cannot hide a saved card or lose its origin choice.
+                    application.container.speciesRepository.matchSpeciesForCard(result.cardId)
                 }, onReimport = { result ->
                     if (settings.pendingCardOriginPrompts.first().any { it.cardId == result.cardId })
                         settings.refreshPendingCardName(result.cardId, result.cardName)
+                    application.container.speciesRepository.matchSpeciesForCard(result.cardId)
                 }).run(documents) { progress ->
                     if (progress.isRunning) publish(owner, progress)
                     else terminal = progress
@@ -154,8 +154,8 @@ class CardImportViewModel(private val application: VBHelper, private val savedSt
                         application.container.db.cardDao().updateOfficialStatus(cardId, status)
                         settings.clearPendingCardOriginPrompt(cardId)
                     }
-                    if (status == OfficialStatus.OFFICIAL) {
-                        try { application.container.speciesRepository.matchOfficialSpeciesForCard(cardId) }
+                    if (status != OfficialStatus.UNKNOWN) {
+                        try { application.container.speciesRepository.matchSpeciesForCard(cardId) }
                         catch (e: CancellationException) { throw e }
                         catch (e: Exception) { Timber.w(e, "Species recognition failed after saving card origin") }
                     }

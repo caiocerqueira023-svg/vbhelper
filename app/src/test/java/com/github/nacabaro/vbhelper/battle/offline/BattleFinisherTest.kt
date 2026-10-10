@@ -68,14 +68,14 @@ class BattleFinisherTest {
     }
 
     @Test fun authoredTimelineHasExactBoundariesAndVisibility() {
-        assertEquals(7_400L, BattleFinisherTimeline.durationMillis(BattleFinisherKind.FORM))
-        assertEquals(7_900L, BattleFinisherTimeline.durationMillis(BattleFinisherKind.JOGRESS))
+        assertEquals(6_500L, BattleFinisherTimeline.durationMillis(BattleFinisherKind.FORM))
+        assertEquals(7_000L, BattleFinisherTimeline.durationMillis(BattleFinisherKind.JOGRESS))
         val start = BattleFinisherTimeline.snapshot(sequenceId = 4, kind = BattleFinisherKind.FORM,
             leadId = "a", partnerId = "p", elapsedMillis = -1)
         assertEquals(listOf("a"), start.participantIds)
         assertEquals(0L, start.elapsedMillis)
         assertFalse(start.resultVisible)
-        val durations = listOf(250L, 1100L, 800L, 1200L, 1500L, 800L, 1100L, 650L)
+        val durations = listOf(250L, 1100L, 800L, 1200L, 600L, 800L, 1100L, 650L)
         var boundary = 0L
         BattleFinisherPhase.entries.forEachIndexed { index, phase ->
             val beat = BattleFinisherTimeline.sample(start, boundary)
@@ -87,7 +87,7 @@ class BattleFinisherTest {
             boundary += durations[index]
         }
         val end = BattleFinisherTimeline.sample(start, 99_000)
-        assertEquals(7_400L, end.elapsedMillis)
+        assertEquals(BattleFinisherTimeline.durationMillis(BattleFinisherKind.FORM), end.elapsedMillis)
         assertEquals(BattleFinisherPhase.RESTORE, end.phase)
         assertEquals(1f, end.phaseProgress, 0f)
         assertEquals(listOf("a", "p"), start.copy(kind = BattleFinisherKind.JOGRESS).participantIds)
@@ -132,7 +132,7 @@ class BattleFinisherTest {
         assertEquals(0, impact.alliedMembers.single().specialCharge)
         assertEquals(orderId, impact.alliedMembers.single().currentOrderId)
         val healthAfterImpact = impact.opposingMembers.single().health
-        advance(sim, 7_400 - impactAt - 1)
+        advance(sim, BattleFinisherTimeline.durationMillis(BattleFinisherKind.FORM) - impactAt - 1)
         assertEquals(healthAfterImpact, sim.snapshot().opposingMembers.single().health)
         assertEquals("WarGreymon X", sim.snapshot().alliedMembers.single().blastFormSpecies)
         assertEquals(BattleFinisherPhase.RESTORE, sim.snapshot().finisher!!.phase)
@@ -176,7 +176,7 @@ class BattleFinisherTest {
         val queued = sim.issueOrder("p", TrainerAction.Defend(), lifetimeMillis = 100)
         confirm(sim)
         val frozen = sim.snapshot()
-        advance(sim, 3_000)
+        advance(sim, BattleFinisherTimeline.phaseStartMillis(frozen.finisher!!.kind, BattleFinisherPhase.IMPACT) - 1)
         val later = sim.snapshot()
         assertEquals(frozen.elapsedMillis, later.elapsedMillis)
         assertEquals(frozen.projectiles, later.projectiles)
@@ -200,7 +200,7 @@ class BattleFinisherTest {
         assertEquals("Equipped Lead Result", finisher.resultSpecies)
         assertEquals("Fusion Special", finisher.specialName)
         assertEquals(listOf("a", "p"), finisher.participantIds)
-        advance(sim, 7_899)
+        advance(sim, finisher.durationMillis - 1)
         assertEquals(before, sim.snapshot().alliedMembers.last())
         assertEquals(1, sim.snapshot().statistics.specialsUsed)
         assertEquals(1, sim.snapshot().statistics.specialsHit)
@@ -223,7 +223,7 @@ class BattleFinisherTest {
         assertEquals(0, sim.snapshot().opposingMembers.single().health)
         assertNull(sim.snapshot().result)
         assertTrue(sim.snapshot().finisher!!.resultVisible)
-        advance(sim, 2_399)
+        advance(sim, BattleFinisherTimeline.durationMillis(BattleFinisherKind.FORM) - 5_000 - 1)
         assertNull(sim.snapshot().result)
         sim.advance(1)
         val ended = sim.snapshot()
@@ -242,7 +242,7 @@ class BattleFinisherTest {
         confirm(sim)
         advance(sim, 5_000)
         assertTrue(sim.snapshot().impacts.any { it.isSpecial })
-        advance(sim, 2_400)
+        advance(sim, BattleFinisherTimeline.durationMillis(BattleFinisherKind.FORM) - 5_000)
         assertNull(sim.snapshot().finisher)
         assertTrue("Cinematic impact already had its aftermath and must not flash again", sim.snapshot().impacts.isEmpty())
     }

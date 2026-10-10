@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dex_profile_attribute">属性</string>
+    <string name="dex_profile_special_moves">必殺技</string>
+    <string name="dex_profile_stage">進化段階</string>
+    <string name="dex_profile_stats">基本ステータス</string>
+</resources>

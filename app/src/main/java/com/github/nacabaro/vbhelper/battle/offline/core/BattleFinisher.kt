@@ -45,7 +45,7 @@ object BattleFinisherTimeline {
             BattleFinisherKind.FORM, BattleFinisherKind.JOGRESS -> 800L
         }
         BattleFinisherPhase.CHARGE -> 1_200L
-        BattleFinisherPhase.RELEASE -> 1_500L
+        BattleFinisherPhase.RELEASE -> 600L
         BattleFinisherPhase.IMPACT -> 800L
         BattleFinisherPhase.AFTERMATH -> 1_100L
         BattleFinisherPhase.RESTORE -> 650L

@@ -93,7 +93,7 @@ import com.github.nacabaro.vbhelper.domain.digifarm.FarmResident
 import com.github.nacabaro.vbhelper.domain.digifarm.WildRelationship
 
 @Database(
-    version = 39,
+    version = 40,
     exportSchema = true,
     entities = [
         Card::class,
@@ -167,7 +167,10 @@ import com.github.nacabaro.vbhelper.domain.digifarm.WildRelationship
         com.github.nacabaro.vbhelper.quests.QuestBattleReport::class,
         com.github.nacabaro.vbhelper.quests.QuestBattleMember::class,
         com.github.nacabaro.vbhelper.quests.QuestBattleTechniqueHit::class,
-        com.github.nacabaro.vbhelper.quests.QuestBattleAttempt::class
+        com.github.nacabaro.vbhelper.quests.QuestBattleAttempt::class,
+        com.github.nacabaro.vbhelper.battle.offline.tamers.ArenaRunEntity::class,
+        com.github.nacabaro.vbhelper.battle.offline.tamers.ArenaMatchEntity::class,
+        com.github.nacabaro.vbhelper.battle.offline.tamers.ArenaRewardReceipt::class
     ]
 )
 @TypeConverters(SpeciesProfileConverters::class, PersonalityConverters::class)
@@ -204,8 +207,13 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun worldChatMemoryDao(): WorldChatMemoryDao
     abstract fun worldSocialDao(): com.github.nacabaro.vbhelper.daos.WorldSocialDao
     abstract fun questDao(): com.github.nacabaro.vbhelper.daos.QuestDao
+    abstract fun arenaDao(): com.github.nacabaro.vbhelper.daos.ArenaDao
 
     companion object {
+        val MIGRATION_39_40 = object : Migration(39, 40) {
+            override fun migrate(db: SupportSQLiteDatabase) { ArenaSchema.create(db) }
+        }
+
         val MIGRATION_38_39 = object : Migration(38, 39) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 if (!hasColumn(db, "DigimonIndividual", "blastMode")) {

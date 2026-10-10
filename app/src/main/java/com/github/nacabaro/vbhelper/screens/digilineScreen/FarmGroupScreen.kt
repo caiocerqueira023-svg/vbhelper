@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -25,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
@@ -69,9 +72,10 @@ fun FarmGroupScreen(navController: NavController, farmId: String) {
     val orchestrator = app.container.farmConversationOrchestrator
     val lifecycleOwner = LocalLifecycleOwner.current
     val scope = rememberCoroutineScope()
-    var input by remember { mutableStateOf("") }
+    var input by rememberSaveable(farmId) { mutableStateOf("") }
     var sending by remember { mutableStateOf(false) }
-    var selected by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var selectedIds by rememberSaveable(farmId) { mutableStateOf(arrayListOf<String>()) }
+    val selected = selectedIds.toSet()
     var error by remember { mutableStateOf<String?>(null) }
     var recipientsByMessage by remember { mutableStateOf<Map<String, List<String>>>(emptyMap()) }
     val dialogueUnavailable = stringResource(R.string.ui_digifarm_dialogue_unavailable)
@@ -138,6 +142,8 @@ fun FarmGroupScreen(navController: NavController, farmId: String) {
             Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .consumeWindowInsets(padding)
+                .imePadding()
                 .padding(start = 16.dp, end = 16.dp, top = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -160,11 +166,7 @@ fun FarmGroupScreen(navController: NavController, farmId: String) {
                             val isSelected = resident.individualId in selected
                             VitalButton(
                                 onClick = {
-                                    selected = if (isSelected) {
-                                        selected - resident.individualId
-                                    } else {
-                                        selected + resident.individualId
-                                    }
+                                     selectedIds = ArrayList(if (isSelected) selected - resident.individualId else selected + resident.individualId)
                                 },
                                 modifier = Modifier.height(48.dp),
                                 borderColor = if (isSelected) VitalCyan else SurfaceStroke,
@@ -238,7 +240,7 @@ fun FarmGroupScreen(navController: NavController, farmId: String) {
                                 result.onSuccess {
                                     if (input.trim() == text) input = ""
                                 }
-                                error = result.exceptionOrNull()?.message
+                                error = if (result.isFailure) dialogueUnavailable else null
                             }
                         }
                     }

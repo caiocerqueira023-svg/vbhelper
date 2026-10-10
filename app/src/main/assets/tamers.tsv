@@ -1,0 +1,225 @@
+# Tamer Arena catalog v1. Fields: id|name|aliases|series|primary|secondary|origin|guest|style|legacy line hint (ignored)|Wikimon page
+# Character-specific forms and source evidence are in TamerCanonicalPartners; the former whole-line hint is not canonical proof.
+taichi-adventure|Yagami Taichi|Tai Kamiya|Digimon Adventure|Agumon|||yamato|RUSH|canon|Yagami_Taichi_(Adventure)
+yamato|Ishida Yamato|Matt Ishida|Digimon Adventure|Gabumon|||taichi-adventure|TACTICAL|canon|Ishida_Yamato
+sora|Takenouchi Sora|Sora Takenouchi|Digimon Adventure|Piyomon|||mimi|RANGED|canon|Takenouchi_Sora
+koushiro|Izumi Koushiro|Izzy Izumi;Koshiro|Digimon Adventure|Tentomon|||jo|TACTICAL|canon|Izumi_Kōshirō
+mimi|Tachikawa Mimi|Mimi Tachikawa|Digimon Adventure|Palmon|||sora|SUPPORT|canon|Tachikawa_Mimi
+jo|Kido Jo|Joe Kido|Digimon Adventure|Gomamon|||koushiro|GUARD|canon|Kido_Jo
+takeru|Takaishi Takeru|T.K. Takaishi;TK|Digimon Adventure 02|Patamon|||hikari|GUARD|canon|Takaishi_Takeru
+hikari|Yagami Hikari|Kari Kamiya|Digimon Adventure 02|Tailmon|Wizarmon|ASSOCIATED|miyako|SUPPORT|canon|Yagami_Hikari
+daisuke|Motomiya Daisuke|Davis Motomiya|Digimon Adventure 02|V-mon|||ken|RUSH|canon|Motomiya_Daisuke
+ken|Ichijouji Ken|Ken Ichijouji|Digimon Adventure 02|Wormmon|||daisuke|TACTICAL|canon|Ichijouji_Ken
+miyako|Inoue Miyako|Yolei Inoue|Digimon Adventure 02|Hawkmon|||hikari|RANGED|canon|Inoue_Miyako
+iori|Hida Iori|Cody Hida|Digimon Adventure 02|Armadimon|||takeru|GUARD|canon|Hida_Iori
+wallace|Wallace|Willis|Digimon Adventure 02|Terriermon|Lopmon|OWNED||SUPPORT|canon|Wallace
+meiko|Mochizuki Meiko|Meiko Mochizuki|Digimon Adventure tri.|Meicoomon|||hikari|CONTROL|canon|Mochizuki_Meiko
+maki|Himekawa Maki|Maki Himekawa|Digimon Adventure tri.|Bakumon|||daigo|CONTROL|adapted|Himekawa_Maki
+daigo|Nishijima Daigo|Daigo Nishijima|Digimon Adventure tri.|Bearmon|||maki|GUARD|adapted|Nishijima_Daigo
+menoa|Menoa Bellucci||Digimon Adventure Kizuna|Morphomon|Eosmon|ASSOCIATED||CONTROL|adapted|Menoa_Bellucci
+lui|Ohwada Lui|Lui Ohwada|Digimon Adventure 02 The Beginning|Ukkomon|||daisuke|SUPPORT|adapted|Ohwada_Lui
+michael|Michael||Digimon Adventure 02|Betamon|||mimi|BALANCED|canon|Michael
+tatum|Tatum||Digimon Adventure 02|Airdramon|||michael|RANGED|adapted|Tatum
+sam|Sam||Digimon Adventure 02|Flare Lizamon|||michael|RUSH|adapted|Sam
+maria|Maria||Digimon Adventure 02|Centalmon|||michael|TACTICAL|adapted|Maria
+lou|Lou||Digimon Adventure 02|Tortamon|||michael|GUARD|adapted|Lou
+steve|Steve||Digimon Adventure 02|Yukidarumon|||michael|GUARD|adapted|Steve
+yuehon|Yuehon||Digimon Adventure 02|Hanumon|||michael|RUSH|adapted|Yuehon
+dien|Dien||Digimon Adventure 02|Gorimon|||michael|RUSH|adapted|Dien
+mina|Mina||Digimon Adventure 02|Meramon|||michael|RUSH|adapted|Mina
+dingo|Dingo|Derek|Digimon Adventure 02|Ganimon|||michael|GUARD|adapted|Dingo
+catherine-adventure|Catherine Deneuve|Catherine|Digimon Adventure 02|Floramon|||mimi|SUPPORT|adapted|Catherine_Deneuve
+takato|Matsuda Takato|Takato Matsuki|Digimon Tamers|Guilmon|||jianliang|RUSH|canon|Matsuda_Takato
+jianliang|Lee Jianliang|Henry Wong|Digimon Tamers|Terriermon|||ruki|TACTICAL|canon|Lee_Jianliang
+ruki|Makino Ruki|Rika Nonaka|Digimon Tamers|Renamon|||jianliang|RANGED|canon|Makino_Ruki
+ryo-tamers|Akiyama Ryo|Ryo Akiyama|Digimon Tamers|Cyberdramon|||takato|RUSH|canon|Akiyama_Ryo
+hirokazu|Shiota Hirokazu|Kazu Shioda|Digimon Tamers|Guardromon|||kenta|GUARD|adapted|Shiota_Hirokazu
+kenta|Kitagawa Kenta|Kenta Kitagawa|Digimon Tamers|Marin Angemon|||hirokazu|SUPPORT|adapted|Kitagawa_Kenta
+juri|Katou Juri|Jeri Katou|Digimon Tamers|Leomon|Impmon|ASSOCIATED|takato|SUPPORT|adapted|Katou_Juri
+shaochung|Lee Shaochung|Suzie Wong|Digimon Tamers|Lopmon|||jianliang|SUPPORT|canon|Lee_Shaochung
+ai-makoto|Ai and Makoto|Ai;Mako|Digimon Tamers|Impmon|||takato|RANGED|canon|Ai_and_Makoto
+masaru|Daimon Masaru|Marcus Damon|Digimon Savers|Agumon (2006)|||thoma|RUSH|canon|Daimon_Masaru
+thoma|Thoma H. Norstein|Thomas H. Norstein|Digimon Savers|Gaomon|||masaru|TACTICAL|canon|Thoma_H._Norstein
+yoshino|Fujieda Yoshino|Yoshi Fujieda|Digimon Savers|Lalamon|||ikuto|SUPPORT|canon|Fujieda_Yoshino
+ikuto|Noguchi Ikuto|Keenan Crier|Digimon Savers|Falcomon (2006)|||yoshino|RANGED|canon|Noguchi_Ikuto
+miki|Kurosaki Miki|Miki Kurosaki|Digimon Savers|Pawn Chessmon (Black)|||megumi|GUARD|canon|Kurosaki_Miki
+megumi|Shirakawa Megumi|Megumi Shirakawa|Digimon Savers|Pawn Chessmon (White)|||miki|SUPPORT|canon|Shirakawa_Megumi
+satsuma|Satsuma Rentarou|Richard Sampson|Digimon Savers|Kudamon (2006)|||yushima|TACTICAL|canon|Satsuma_Rentarou
+yushima|Yushima Hiroshi|Homer Yushima|Digimon Savers|Kamemon|||satsuma|GUARD|canon|Yushima_Hiroshi
+suguru|Daimon Suguru|Spencer Damon|Digimon Savers|Bancho Leomon|||masaru|RUSH|adapted|Daimon_Suguru
+hiro|Amanokawa Hiro|Hiro Amanokawa|Digimon Ghost Game|Gammamon|Espimon|OWNED||BALANCED|canon|Amanokawa_Hiro
+ruli|Tsukiyono Ruli|Ruli Tsukiyono;Ruri|Digimon Ghost Game|Angoramon|||kiyoshiro|GUARD|canon|Tsukiyono_Ruli
+kiyoshiro|Higashimitarai Kiyoshiro|Kiyoshiro Higashimitarai|Digimon Ghost Game|Jellymon|||ruli|TACTICAL|canon|Higashimitarai_Kiyoshiro
+hokuto|Amanokawa Hokuto|Hokuto Amanokawa|Digimon Ghost Game|Terriermon Assistant|||hiro|SUPPORT|adapted|Amanokawa_Hokuto
+takuya|Kanbara Takuya|Takuya Kanbara|Digimon Frontier|Agnimon|||kouji|RUSH|canon|Kanbara_Takuya
+kouji|Minamoto Kouji|Koji Minamoto|Digimon Frontier|Wolfmon|||takuya|TACTICAL|canon|Minamoto_Kouji
+tomoki|Himi Tomoki|Tommy Himi|Digimon Frontier|Chackmon|||junpei|GUARD|canon|Himi_Tomoki
+izumi|Orimoto Izumi|Zoe Orimoto|Digimon Frontier|Fairimon|||tomoki|RANGED|canon|Orimoto_Izumi
+junpei|Shibayama Junpei|J.P. Shibayama|Digimon Frontier|Blitzmon|||izumi|GUARD|canon|Shibayama_Junpei
+kouichi|Kimura Kouichi|Koichi Kimura|Digimon Frontier|Löwemon|||kouji|CONTROL|canon|Kimura_Kouichi
+taiki|Kudou Taiki|Mikey Kudo|Digimon Xros Wars|Shoutmon|Ballistamon|OWNED|yuu|TACTICAL|canon|Kudou_Taiki
+kiriha|Aonuma Kiriha|Christopher Aonuma|Digimon Xros Wars|Greymon (2010 Anime Version)|Mail Birdramon|OWNED|taiki|RANGED|canon|Aonuma_Kiriha
+nene|Amano Nene|Nene Amano|Digimon Xros Wars|Sparrowmon|Mervamon|OWNED|taiki|RANGED|canon|Amano_Nene
+yuu|Amano Yuu|Ewan Amano|Digimon Xros Wars|Damemon|||taiki|CONTROL|canon|Amano_Yuu
+akari|Hinomoto Akari|Angie Hinomoto|Digimon Xros Wars Manga|Dorulumon|||zenjirou|SUPPORT|adapted|Hinomoto_Akari
+zenjirou|Tsurugi Zenjirou|Jeremy Tsurgi|Digimon Xros Wars Manga|Ballistamon|||akari|GUARD|adapted|Tsurugi_Zenjirou
+kotone|Amano Kotone||Digimon Xros Wars Manga|Sparrowmon|||nene|RANGED|adapted|Amano_Kotone
+tagiru|Akashi Tagiru|Tagiru Akashi|Digimon Hunters|Gumdramon|||yuu|RUSH|canon|Akashi_Tagiru
+ryouma|Mogami Ryouma|Ryoma Mogami|Digimon Hunters|Psychemon|||ren|TACTICAL|canon|Mogami_Ryouma
+ren|Tobari Ren|Ren Tobari|Digimon Hunters|Dracumon|||airu|CONTROL|canon|Tobari_Ren
+airu|Suzaki Airu|Airu Suzaki|Digimon Hunters|Opossumon|||ryouma|CONTROL|adapted|Suzaki_Airu
+hideaki|Mashimo Hideaki||Digimon Hunters|Dobermon|||tagiru|RUSH|adapted|Mashimo_Hideaki
+kiichi|Funabashi Kiichi||Digimon Hunters|Locomon|||tagiru|GUARD|adapted|Funabashi_Kiichi
+mizuki|Mizuki||Digimon Hunters|Submarimon|||tagiru|RANGED|adapted|Mizuki
+clock-shop|Old Clock Shop Man||Digimon Hunters|Clockmon|||tagiru|TACTICAL|adapted|Old_Clock_Shop_Man
+taichi-vtamer|Yagami Taichi|Tai;V-Tamer Taichi|Digimon V-Tamer 01|V-dramon|||hideto|TACTICAL|canon|Yagami_Taichi_(V-Tamer)
+neo|Saiba Neo|Neo Saiba|Digimon V-Tamer 01|Arkadimon Child|Devimon|OWNED||CONTROL|canon|Saiba_Neo
+hideto|Fujimoto Hideto|Hideto Fujimoto|Digimon V-Tamer 01|War Greymon|Metal Garurumon|OWNED|taichi-vtamer|TACTICAL|adapted|Fujimoto_Hideto
+mari|Gotojuki Mari|Mari Goutokuji|Digimon V-Tamer 01|Rosemon|||sigma|SUPPORT|adapted|Gotojuki_Mari
+sigma|Sigma||Digimon V-Tamer 01|Piemon|||mari|CONTROL|adapted|Sigma
+tsurugi|Tatsuno Tsurugi|Tsurugi Tatsuno|Digimon Next|Agumon (2006)|||yuu-next|RUSH|canon|Tatsuno_Tsurugi
+yuu-next|Inui Yuu|Yuu Inui|Digimon Next|Gaomon|||tsurugi|TACTICAL|canon|Inui_Yuu
+shou|Kahara Shou|Sho Kahara|Digimon Next|Peckmon|||ami-next|RANGED|canon|Kahara_Shou
+ami-next|Kitajima Ami|Ami Kitajima|Digimon Next|Pitchmon|||shou|SUPPORT|adapted|Kitajima_Ami
+kouta-chronicle|Doumoto Kouta|Kota Doumoto|Digimon Chronicle|DORUmon|||yuuji|TACTICAL|canon|Doumoto_Kouta
+yuuji|Musha Yuuji|Yuji Musha|Digimon Chronicle|Ryudamon|||kouta-chronicle|GUARD|canon|Musha_Yuuji
+long|Long Zhiguang|Lóng Zhìguāng;Hikaru|D-Cyber|DORUmon|||fang|RUSH|canon|Lóng_Zhìguāng
+fang|Fang Shengjian|Fāng Shēngjiàn;Masuken|D-Cyber|Ryudamon|||long|TACTICAL|canon|Fāng_Shēngjiàn
+luo|Luo Hui|Luò Huī;Teru|D-Cyber|Agumon (X-Antibody)|||long|RUSH|canon|Luò_Huī
+ritsu|Kodou Ritsu|Ritsu Kodo;Ritsu Kodou|Digimon Dreamers|Pulsemon|||jo-dreamers|RUSH|canon|Kodou_Ritsu
+jo-dreamers|Wakamiya Jo||Digimon Dreamers|Wingdramon|||ritsu|RANGED|adapted|Wakamiya_Jo
+eiji|Nagasumi Eiji|Eiji Nagasumi;Fang|Digimon Seekers|Loogamon|Tyranomon|OWNED|leon|RUSH|canon|Nagasumi_Eiji
+leon|Leon Alexander||Digimon Seekers|Pulsemon|||eiji|TACTICAL|canon|Leon_Alexander
+yulin|Xu Yulin||Digimon Seekers|Ryudamon|||kosuke|GUARD|canon|Xu_Yulin
+kosuke|Kisakata Kosuke||Digimon Seekers|DORUmon|Agumon (Black)|OWNED||CONTROL|canon|Kisakata_Kosuke
+satsuki|Tamahime Satsuki||Digimon Seekers|Numemon|||yulin|CONTROL|adapted|Tamahime_Satsuki
+marvin|Marvin Jackson||Digimon Seekers|Airdramon|||kosuke|RANGED|adapted|Marvin_Jackson
+shoto|Kazama Shoto|Shoto Kazama|Digimon Liberator|Pteromon|Muchomon|OWNED||BALANCED|canon|Kazama_Shoto
+arisa|Kinosaki Arisa|Arisa Kinosaki|Digimon Liberator|Shoemon|Junkmon|OWNED||SUPPORT|canon|Kinosaki_Arisa
+owen|Owen Dreadnought||Digimon Liberator|Elizamon|Agumon|OWNED||RUSH|canon|Owen_Dreadnought
+violet|Violet Inboots||Digimon Liberator|Ghostmon|||yuuki|CONTROL|canon|Violet_Inboots
+qinglan|Yao Qinglan||Digimon Liberator|Sangomon|||shoto|SUPPORT|canon|Yao_Qinglan
+cool-boy|Cool Boy||Digimon Liberator|Omekamon|||owen|TACTICAL|adapted|Cool_Boy
+close|Close||Digimon Liberator|Sunarizamon|||arisa|GUARD|canon|Close
+zenith|Zenith||Digimon Liberator|BEMmon|||close|CONTROL|canon|Zenith
+yuuki|Yuuki||Digimon Liberator|Impmon|||violet|RANGED|adapted|Yuuki
+saikiyo|Saikiyo||Digimon Liberator|Funbeemon|||shoto|TACTICAL|canon|Saikiyo
+ryutaro|Ryutaro Williams||Digimon Liberator|Tyranomon|||owen|RUSH|canon|Ryutaro_Williams
+aruba|Aruba Dokuson||Digimon Liberator|Cupimon|||zenith|CONTROL|canon|Aruba_Dokuson
+suzune|Kazuki Suzune||Digimon Liberator|Yukidarumon|||qinglan|GUARD|adapted|Kazuki_Suzune
+reina-liberator|Oumi Reina||Digimon Liberator|Pico Devimon|||violet|CONTROL|adapted|Oumi_Reina
+altea|Altea||Digimon Liberator|Espimon|||cool-boy|TACTICAL|adapted|Altea
+chitose-liberator|Horaiji Chitose||Digimon Liberator|Gazimon|||yuuki|RUSH|adapted|Horaiji_Chitose
+mayu-recollection|Nozomi Mayu||Digimon ReCollection|Agumon|Terriermon|OWNED||BALANCED|adapted|Nozomi_Mayu
+eve|Eve||Digimon Paradox|Kuwagamon|Dark Tyranomon|ASSOCIATED||RUSH|adapted|Eve
+hajime|Kawashima Hajime||Digimon Knuckles|Gankoomon|||haruka|RUSH|adapted|Kawashima_Hajime
+haruka|Kawashima Haruka||Digimon Knuckles|Gankoomon|||hajime|TACTICAL|adapted|Kawashima_Haruka
+mameo|Mameo|Digimon World Player;Hiro|Digimon World|Mamemon|||takuto|TACTICAL|adapted|Player_(Digimon_World)
+akira|Akira||Digimon World 2|Agumon|Patamon|OWNED||BALANCED|adapted|Akira_(Digimon_World_2)
+luckyta|Luckyta||Digimon World 2|Angewomon|||cecilia|SUPPORT|adapted|Luckyta
+vandar|Vandar||Digimon World 2|Metal Mamemon|Mamemon|OWNED||GUARD|adapted|Vandar
+esmeralda|Esmeralda||Digimon World 2|Tentomon|Piyomon|OWNED||RANGED|adapted|Esmeralda
+arc-schultz|Arc Schultz||Digimon World 2|Saberdramon|Gururumon|OWNED||RUSH|adapted|Arc_Schultz
+blanc|Blanc Weissman|Brian Wiseman|Digimon World 2|Garudamon|Aero V-dramon|OWNED||TACTICAL|adapted|Blanc_Weissman
+cecilia|Cecilia||Digimon World 2|Holydramon|Marin Angemon|OWNED||SUPPORT|adapted|Cecilia
+zudokan|Zudokan||Digimon World 2|Mega Seadramon|Lilimon|OWNED||RANGED|adapted|Zudokan
+vivi|Vivi||Digimon World 2|Palmon|Mamemon|OWNED||SUPPORT|adapted|Vivi
+yaruyaru|Yaruyaru||Digimon World 2|Elecmon|Gottsumon|OWNED||BALANCED|adapted|Yaruyaru
+ben|Ben Oldman||Digimon World 2|Centalmon|Meramon|OWNED||TACTICAL|adapted|Ben_Oldman
+skull|Skull||Digimon World 2|Hagurumon|Pico Devimon|OWNED||CONTROL|adapted|Skull
+shina|Ototate Shina||Digimon World 2|Otamamon|Gazimon|OWNED||CONTROL|adapted|Ototate_Shina
+klon|Klon Gander||Digimon World 2|Bakemon|Megadramon|OWNED||CONTROL|adapted|Klon_Gander
+kiruri|Kiruri Bait||Digimon World 2|Megadramon|Waru Monzaemon|OWNED||RUSH|adapted|Kiruri_Bait
+crimson|Crimson||Digimon World 2|Vamdemon|Deltamon|OWNED||CONTROL|adapted|Crimson
+damedabose|Damedabose||Digimon World 2|Etemon|Orgemon|OWNED||RUSH|adapted|Damedabose
+ayumi|Ayumi||Digimon World 2|Wizarmon|Seadramon|OWNED||SUPPORT|adapted|Ayumi
+atsushi|Atsushi|Junior|Digimon World 3|Guilmon|Patamon|OWNED||BALANCED|adapted|Atsushi
+kazuya|Kazuya||Digimon Story|Gabumon|Cherubimon (Vice)|OWNED||CONTROL|adapted|Kazuya
+kain|Kain||Digimon Story|Atlur Kabuterimon (Red)|Dagomon|OWNED||CONTROL|adapted|Kain
+yuji-story|Yuji||Digimon Story|Cyberdramon|Imperialdramon Dragon Mode (Black)|OWNED||RUSH|adapted|Yuji
+peter|Peter||Digimon Story|Black Rapidmon|Infermon|OWNED||RANGED|adapted|Peter
+sueann|SueAnn||Digimon Story|Mugendramon|Lady Devimon|OWNED||CONTROL|adapted|SueAnn
+chan|Chan||Digimon Story|Cannondramon|Cyberdramon|OWNED||RANGED|adapted|Chan
+chris|Chris||Digimon Story|Metal Greymon|Agumon (2006)|OWNED||RUSH|adapted|Chris
+robert|Robert||Digimon Story|Dukemon|Diablomon|OWNED||TACTICAL|adapted|Robert
+sarah|Sarah||Digimon Story|Demon|Gigadramon|OWNED||CONTROL|adapted|Sarah
+koh|Koh||Digimon Story Dawn and Dusk|Coronamon|Rize Greymon|OWNED||RUSH|canon|Koh
+sayo|Sayo||Digimon Story Dawn and Dusk|Lunamon|Mach Gaogamon|OWNED||TACTICAL|canon|Sayo
+glare|Glare||Digimon Story Dawn and Dusk|Ofanimon|||koh|SUPPORT|adapted|Glare
+julia|Julia||Digimon Story Dawn and Dusk|Chaos Dukemon|||sayo|CONTROL|adapted|Julia
+shuu|Shuu||Digimon Story Lost Evolution|Agumon (2006)|||kizuna|BALANCED|adapted|Shuu_(Lost_Evolution)
+kizuna|Kizuna||Digimon Story Lost Evolution|Agumon (2006)|Gabumon|OWNED|shuu|TACTICAL|adapted|Kizuna
+taiga|Taiga||Digimon ReDigitize|Agumon|Plotmon (X-Antibody)|ASSOCIATED|rina|BALANCED|canon|Taiga
+akiho|Rindou Akiho|Akiho Rindou|Digimon ReDigitize|Piyomon|||nicolai|RANGED|canon|Rindou_Akiho
+nicolai|Nicolai Petrov|Nico|Digimon ReDigitize|Gaomon|Agumon|ASSOCIATED||TACTICAL|adapted|Nicolai_Petrov
+mirei|Mikagura Mirei|Mirei Mikagura|Digimon ReDigitize|Angewomon|Lady Devimon|OWNED|rina|SUPPORT|adapted|Mikagura_Mirei
+yuuya|Kuga Yuuya|Yuuya Kuga|Digimon ReDigitize|Black War Greymon (X-Antibody)|DORUgamon|ASSOCIATED||CONTROL|adapted|Kuga_Yuuya
+petrov|Professor Petrov|Yakov Petrov|Digimon ReDigitize|Rize Greymon|||yuuya|RANGED|adapted|Professor_Petrov
+rina|Shinomiya Rina|Rina Shinomiya|Digimon ReDigitize|V-dramon|||taiga|RUSH|canon|Shinomiya_Rina
+lili|Lili|Emilie de Rochefort|Digimon ReDigitize|Numemon|Lilithmon|ASSOCIATED||CONTROL|adapted|Lili
+sebastian|Sebastian||Digimon ReDigitize|Angemon|||lili|SUPPORT|adapted|Sebastian
+takumi-cs|Aiba Takumi|Takumi Aiba|Digimon Cyber Sleuth|Terriermon|Hagurumon|OWNED||BALANCED|adapted|Aiba_Takumi
+ami-cs|Aiba Ami|Ami Aiba|Digimon Cyber Sleuth|Palmon|Terriermon|OWNED||TACTICAL|adapted|Aiba_Ami
+nokia|Shiramine Nokia|Nokia Shiramine|Digimon Cyber Sleuth|Agumon|Gabumon|OWNED|arata|RUSH|canon|Shiramine_Nokia
+arata|Sanada Arata|Arata Sanada|Digimon Cyber Sleuth|Keramon|||nokia|CONTROL|canon|Sanada_Arata
+yuuko|Kamishiro Yuuko|Yuuko Kamishiro;YUUGO|Digimon Cyber Sleuth|Rize Greymon|||fei|TACTICAL|adapted|Kamishiro_Yuuko
+fei|Fei Wong Tomoe Ignacio|Fei|Digimon Cyber Sleuth|Tiger Vespamon|||yuuko|RUSH|adapted|Fei
+keisuke|Amazawa Keisuke|Keisuke Amazawa;Amasawa|Digimon Hackers Memory|Betamon|Tentomon|OWNED||BALANCED|adapted|Amazawa_Keisuke
+erika|Mishima Erika|Erika Mishima|Digimon Hackers Memory|Wormmon|||chitose|SUPPORT|canon|Mishima_Erika
+ryuji|Mishima Ryuji|Ryuji Mishima|Digimon Hackers Memory|Cyberdramon|Arkadimon Child|OWNED||RUSH|canon|Mishima_Ryuji
+chitose|Imai Chitose|Chitose Imai|Digimon Hackers Memory|Ankylomon|||erika|GUARD|adapted|Imai_Chitose
+takuto|Takuto||Digimon Next Order|Agumon|Gabumon|OWNED||BALANCED|adapted|Takuto_(-next_0rder-)
+shiki|Shiki||Digimon Next Order|Piyomon|Palmon|OWNED||SUPPORT|adapted|Shiki
+kouta-next|Hirose Kouta|Kouta Hirose|Digimon Next Order|Guilmon|||himari|RUSH|canon|Hirose_Kouta
+himari|Oofuchi Himari|Himari Oofuchi|Digimon Next Order|Plotmon|||kouta-next|SUPPORT|canon|Oofuchi_Himari
+shoma|Tsuzuki Shoma|Shoma Tsuzuki|Digimon Next Order|Gaioumon|Kuzuhamon|OWNED||CONTROL|adapted|Tsuzuki_Shoma
+rearise-player|ReArise Protagonist||Digimon ReArise|Herissmon|||takumi-rearise|BALANCED|canon|Player_(ReArise)
+takumi-rearise|Hiiragi Takumi|Takumi Hiiragi|Digimon ReArise|DORUmon|||rearise-player|TACTICAL|canon|Hiiragi_Takumi
+michi|Shinjo Michi|Michi Shinjo|Digimon ReArise|Plotmon|||mayu-rearise|SUPPORT|canon|Shinjō_Michi
+keito|Tamada Keito|Keito Tamada|Digimon ReArise|Elecmon|||nozomi|RUSH|canon|Tamada_Keito
+mayu-rearise|Kohinata Mayu|Mayu Kohinata|Digimon ReArise|Kudamon|||michi|SUPPORT|canon|Kohinata_Mayu
+nozomi|Tamada Nozomi|Nozomi Tamada|Digimon ReArise|Pumpmon|||keito|CONTROL|canon|Tamada_Nozomi
+chihiro|Tsukimori Chihiro|Chihiro Tsukimori|Digimon ReArise|Lopmon|||mayu-rearise|SUPPORT|canon|Tsukimori_Chihiro
+mon|Mon||Digimon ReArise|Hackmon|||kazuma|TACTICAL|canon|Mon_(ReArise)
+kazuma|Natsuyagi Kazuma|Kazuma Natsuyagi|Digimon ReArise|Bearmon|||mon|GUARD|canon|Natsuyagi_Kazuma
+takuma|Momotsuka Takuma|Takuma Momotsuka|Digimon Survive|Agumon|||minoru|BALANCED|adapted|Momotsuka_Takuma
+minoru|Hinata Minoru|Minoru Hinata|Digimon Survive|Falcomon|||takuma|RANGED|canon|Hinata_Minoru
+aoi|Shibuya Aoi|Aoi Shibuya|Digimon Survive|Labramon|||saki|SUPPORT|canon|Shibuya_Aoi
+saki|Kimishima Saki|Saki Kimishima|Digimon Survive|Floramon|||aoi|SUPPORT|canon|Kimishima_Saki
+ryo-survive|Tominaga Ryo|Ryo Tominaga|Digimon Survive|Kunemon|||shuuji|CONTROL|canon|Tominaga_Ryo
+shuuji|Kayama Shuuji|Shuuji Kayama|Digimon Survive|Lopmon|||ryo-survive|GUARD|adapted|Kayama_Shuuji
+kaito|Shinonome Kaito|Kaito Shinonome|Digimon Survive|Dracumon|||miu|RUSH|canon|Shinonome_Kaito
+miu|Shinonome Miu|Miu Shinonome|Digimon Survive|Shakomon|||kaito|RANGED|canon|Shinonome_Miu
+inori|Misono Inori|Inori Misono|Digimon Time Stranger|Aegiomon|||asuna|SUPPORT|canon|Misono_Inori
+asuna|Shiroki Asuna|Asuna Shiroki|Digimon Time Stranger|Black Tailmon|||inori|CONTROL|adapted|Shiroki_Asuna
+dan|Yuki Dan|Dan Yuki|Digimon Time Stranger|Patamon|Gomamon|OWNED||BALANCED|adapted|Yuki_Dan
+kanan|Yuki Kanan|Kanan Yuki|Digimon Time Stranger|Gomamon|Pico Devimon|OWNED||TACTICAL|adapted|Yuki_Kanan
+tomoro|Tenma Tomoro||Digimon Beatbreak|Gekkomon|||reina-beatbreak|BALANCED|canon|Tenma_Tomoro
+reina-beatbreak|Sakuya Reina||Digimon Beatbreak|Pristimon|||tomoro|TACTICAL|canon|Sakuya_Reina
+makoto-beatbreak|Kuonji Makoto||Digimon Beatbreak|Chiropmon|||kyo|CONTROL|canon|Kuonji_Makoto
+kyo|Sawashiro Kyo||Digimon Beatbreak|Murasamemon|||makoto-beatbreak|GUARD|adapted|Sawashiro_Kyo
+raito|Souda Raito||Digimon Beatbreak|Monodramon|||hotaruko|RUSH|adapted|Souda_Raito
+hotaruko|Kanuma Hotaruko||Digimon Beatbreak|Shakomon|||raito|RANGED|adapted|Kanuma_Hotaruko
+granit|Granit||Digimon Beatbreak|Ludomon|||raito|GUARD|adapted|Granit
+haruomi|Sone Haruomi||Digimon Beatbreak|Commandramon|Elizamon|OWNED||TACTICAL|adapted|Sone_Haruomi
+ichinosuke|Ichinosuke||Digimon Beatbreak|Vulturemon|||nichika|RANGED|adapted|Ichinosuke
+nichika|Nichika||Digimon Beatbreak|Sealsdramon|||sanpei|RUSH|adapted|Nichika
+sanpei|Sanpei||Digimon Beatbreak|Hi-Commandramon|||nichika|RANGED|adapted|Sanpei
+meto|Enishida Meto||Digimon Beatbreak|Toropiamon|||kanon|CONTROL|adapted|Enishida_Meto
+kanon|Tsuwabuki Kanon||Digimon Beatbreak|Oleamon|||meto|SUPPORT|adapted|Tsuwabuki_Kanon
+haruko|Yamada Haruko||Digimon Beatbreak|Shademon|||handa|CONTROL|adapted|Yamada_Haruko
+handa|Handa||Digimon Beatbreak|Starmon|||haruko|RUSH|adapted|Handa
+miharu|Kagemori Miharu||Digimon Beatbreak|Mephismon|||hori|CONTROL|adapted|Kagemori_Miharu
+hori|Hori||Digimon Beatbreak|Jokermon|||miharu|CONTROL|adapted|Hori
+riku|Hosho Riku||Digimon Beatbreak|Loogarmon|||haruomi|RUSH|adapted|Hosho_Riku
+sana|Tsujimine Sana||Digimon Beatbreak|Bombermon|||riku|RANGED|adapted|Tsujimine_Sana
+mitsuo|Minezaki Mitsuo||Digimon Beatbreak|Funbeemon|||hiroichi|TACTICAL|adapted|Minezaki_Mitsuo
+hiroichi|Hiroichi||Digimon Beatbreak|Greymon|||mitsuo|RUSH|adapted|Hiroichi
+manabu|Akasaka Manabu||Digimon Beatbreak|Moosemon|||hiroichi|GUARD|adapted|Akasaka_Manabu
+yume|Ikuhara Yume||Digimon Beatbreak|Tinkermon|||hitomi|SUPPORT|adapted|Ikuhara_Yume
+hitomi|Shinomiya Hitomi||Digimon Beatbreak|Cutemon|||yume|SUPPORT|adapted|Shinomiya_Hitomi
+sui|Sui||Digimon UP|Tyranomon|||shion|RUSH|adapted|Digimon_UP
+shion|Shion||Digimon UP|Tuskmon|||sui|RUSH|adapted|Digimon_UP
+yuzu|Yuzu||Digimon UP|Mammon|||en|GUARD|adapted|Digimon_UP
+en|En||Digimon UP|Andromon|||yuzu|TACTICAL|adapted|Digimon_UP
+noah|Noah||Digimon UP|Tyranomon|||sui|RUSH|adapted|Digimon_UP

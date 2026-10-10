@@ -38,6 +38,8 @@ import com.github.nacabaro.vbhelper.ui.theme.SurfaceElevatedPurple
 import com.github.nacabaro.vbhelper.source.DEFAULT_ROLEPLAY_TEMPERATURE
 import com.github.nacabaro.vbhelper.source.LlmProviderSettings
 import androidx.compose.ui.window.DialogProperties
+import com.github.nacabaro.vbhelper.components.editorDialogBounds
+import androidx.compose.foundation.layout.FlowRow
 
 @Composable
 fun LlmSettingsDialog(
@@ -65,18 +67,18 @@ fun LlmSettingsDialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
             dismissOnBackPress = true,
-            dismissOnClickOutside = true
+            dismissOnClickOutside = true,
+            decorFitsSystemWindows = false,
         )
     ) {
         Card(
-            modifier = Modifier.fillMaxWidth().cyberFrame(active = true),
+            modifier = Modifier.editorDialogBounds().fillMaxWidth().cyberFrame(active = true),
             shape = RectangleShape,
             colors = CardDefaults.cardColors(containerColor = SurfaceElevatedPurple)
         ) {
             Column(
                 modifier = Modifier
                     .padding(16.dp)
-                    .imePadding()
                     .verticalScroll(rememberScrollState())
             ) {
                 Text(
@@ -115,7 +117,7 @@ fun LlmSettingsDialog(
                 Text(
                     text = stringResource(R.string.ui_api_key_help),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
 
                 Spacer2()
@@ -173,7 +175,7 @@ fun LlmSettingsDialog(
 
                 Spacer2()
 
-                Row(
+                FlowRow(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
@@ -181,6 +183,7 @@ fun LlmSettingsDialog(
                         Text(stringResource(R.string.ui_cancel))
                     }
                     VitalButton(
+                        style = com.github.nacabaro.vbhelper.components.VitalButtonStyle.PRIMARY,
                         enabled = apiKey.isNotBlank() &&
                             model.isNotBlank() &&
                             baseUrl.startsWith("https://") &&

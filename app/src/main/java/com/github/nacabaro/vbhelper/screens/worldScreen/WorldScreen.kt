@@ -75,6 +75,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
+import com.github.nacabaro.vbhelper.components.showAppFeedback
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -452,9 +453,9 @@ fun RadarScreen(
         val message = when (failure) {
             is RadarCommandException -> resources.getString(failure.messageResource())
             is WorldInteractionException -> resources.getString(failure.messageResource())
-            else -> failure.message ?: resources.getString(fallback)
+            else -> resources.getString(fallback)
         }
-        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        context.showAppFeedback(message, important = true)
     }
 
     fun requestPopulationRefresh(force: Boolean = false) {
@@ -675,7 +676,7 @@ fun RadarScreen(
                     app.container.questRepository.useBoundPartnerForBattle(spawn.individualId)
                 }
                 if (switchedPartnerName != null) {
-                    Toast.makeText(context, resources.getString(R.string.quest_partner_auto_selected, switchedPartnerName), Toast.LENGTH_LONG).show()
+                    context.showAppFeedback(R.string.quest_partner_auto_selected, switchedPartnerName)
                 }
                 // Resolve preparation reads before entering the bounded command transaction.
                 val owned = withContext(Dispatchers.IO) {
@@ -796,9 +797,9 @@ fun RadarScreen(
                         app.container.worldRepository.spawnDebugDigimon(position.latitude, position.longitude, cardCharacterId)
                     }.getOrThrow()
                 }
-                Toast.makeText(context, resources.getString(
+                context.showAppFeedback(
                     if (spawnId != null) R.string.ui_world_debug_spawn_success else R.string.ui_world_debug_spawn_unavailable
-                ), Toast.LENGTH_SHORT).show()
+                )
             } catch (failure: Exception) {
                 if (failure is CancellationException) throw failure
                 showRadarFailure(failure, R.string.ui_world_debug_spawn_unavailable)
@@ -817,7 +818,7 @@ fun RadarScreen(
         if(!com.github.nacabaro.vbhelper.world.RadarDebugInteraction.allowAnyDistance &&
             worldSnapshot.playerFix?.let { RadarWorldGeometry.relative(it.position,position).withinInteractionRange }!=true) return@LaunchedEffect
         attemptedWildAttacks[attack.id]=(attemptedWildAttacks[attack.id] ?: 0)+1
-        if(attack.publicReason?.startsWith("WILD_ATTACK:")==true) Toast.makeText(context,resources.getString(R.string.ui_world_wild_attack),Toast.LENGTH_SHORT).show()
+        if(attack.publicReason?.startsWith("WILD_ATTACK:")==true) context.showAppFeedback(R.string.ui_world_wild_attack)
         startRadarBattle(attacker,wildAttack=attack)
     }
     LaunchedEffect(privateChallenge,regionMutationsEnabled,activeOwned?.id,worldSnapshot.claimedIndividuals) {
@@ -928,11 +929,7 @@ fun RadarScreen(
                                 }
                             }.onFailure { failure ->
                                 committedBattleSessionId = null
-                                Toast.makeText(
-                                    context,
-                                    failure.message ?: resources.getString(R.string.ui_world_battle_record_failed),
-                                    Toast.LENGTH_LONG
-                                ).show()
+                                context.showAppFeedback(R.string.ui_world_battle_record_failed, important = true)
                             }
                         }
                     }
@@ -1428,7 +1425,7 @@ fun RadarScreen(
                                     }.getOrThrow()
                                 }
                                 selectedEncounterId = null
-                                Toast.makeText(context, resources.getString(R.string.quest_target_recorded, updated.giverName), Toast.LENGTH_LONG).show()
+                                context.showAppFeedback(R.string.quest_target_recorded, updated.giverName)
                                 scope.launch(Dispatchers.IO) {
                                     try {
                                         if (app.container.chatRepository.publicDialogueAvailable()) kotlinx.coroutines.withTimeout(20_000) {

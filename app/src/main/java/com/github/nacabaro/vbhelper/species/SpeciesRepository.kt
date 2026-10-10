@@ -1,14 +1,20 @@
 package com.github.nacabaro.vbhelper.species
 
+import androidx.room.withTransaction
 import com.github.nacabaro.vbhelper.database.AppDatabase
-import com.github.nacabaro.vbhelper.domain.card.Card
+import com.github.nacabaro.vbhelper.domain.card.OfficialStatus
+import com.github.nacabaro.vbhelper.domain.characters.Sprite
 import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
 import com.github.nacabaro.vbhelper.domain.species.SpeciesSource
 import com.github.nacabaro.vbhelper.source.SpeciesSettingsRepository
 import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import timber.log.Timber
 import java.text.Normalizer
 import java.util.Locale
@@ -18,7 +24,8 @@ class SpeciesRepository(
     private val settingsRepository: SpeciesSettingsRepository,
     private val service: SpeciesDatabaseService = SpeciesDatabaseClient.create(),
     private val assetLoader: (() -> String?)? = null,
-    private val conversationExamplesLoader: (() -> String?)? = null
+    private val conversationExamplesLoader: (() -> String?)? = null,
+    private val spriteMatcher: OfficialSpriteMatcher? = null
 ) {
     companion object {
         const val SPECIES_DB_URL =
@@ -42,9 +49,78 @@ class SpeciesRepository(
     private var conversationExamplesCache: List<SpeciesConversationEntry>? = null
     internal var clock: () -> Long = System::currentTimeMillis
 
+    /** Only explicitly official cards may identify species by their card number/slot. */
+    suspend fun matchSpeciesForCard(cardId: Long): Int {
+        val card = database?.cardDao()?.getCardById(cardId) ?: return 0
+        return if (card.officialStatus == OfficialStatus.OFFICIAL) matchOfficialSpeciesForCard(cardId)
+        else matchCustomSpeciesForCard(cardId)
+    }
+
+    suspend fun matchCustomSpeciesForCard(cardId: Long): Int = withContext(Dispatchers.IO) {
+        val db = database ?: return@withContext 0
+        if (spriteMatcher == null) return@withContext 0
+        val card = db.cardDao().getCardById(cardId) ?: return@withContext 0
+        // Recognition works offline, including a first import with no downloaded species cache.
+        val databaseSpecies = cachedDatabaseSnapshot() ?: assetDatabase() ?: return@withContext 0
+        var matchedCount = 0
+        for (character in db.characterDao().getCharactersForCard(cardId)) {
+            currentCoroutineContext().ensureActive()
+            if (db.speciesProfileDao().getByCardCharacterId(character.id)?.source == SpeciesSource.MANUAL) continue
+            val sprite = db.spriteDao().getForCharacter(character.id) ?: continue
+            val profile = profileForSpriteMatch(character.id, sprite, databaseSpecies, null,
+                compactDim = !card.isBEm && character.charaIndex < 2) ?: continue
+            // A manual edit made while the catalog was decoded still takes priority.
+            db.withTransaction {
+                if (db.characterDao().getById(character.id) != null &&
+                    db.speciesProfileDao().getByCardCharacterId(character.id)?.source != SpeciesSource.MANUAL) {
+                    db.speciesProfileDao().upsert(profile)
+                    matchedCount++
+                }
+            }
+        }
+        matchedCount
+    }
+
+    internal fun profileForSpriteMatch(
+        cardCharacterId: Long,
+        sprite: Sprite,
+        databaseSpecies: SpeciesDatabaseDto,
+        current: SpeciesProfile?,
+        compactDim: Boolean = false
+    ): SpeciesProfile? {
+        if (current?.source == SpeciesSource.MANUAL) return null
+        val matches = spriteMatcher?.findMatches(sprite, compactDim).orEmpty().mapNotNull { identity ->
+            val entries = findCatalogNumber(databaseSpecies.species, identity.cardNumber)
+                ?: return@mapNotNull null
+            findCatalogNumber(entries, identity.charaIndex + 1)?.takeIf { it.name.isNotBlank() }
+        }
+        // Reused art is fine when every resolved candidate names the same species.
+        if (matches.map { normalizeSpeciesName(it.name) }.distinct().size != 1) return null
+        val matched = matches.first()
+        return SpeciesProfile(
+            cardCharacterId = cardCharacterId,
+            speciesName = matched.name,
+            matchedName = matched.name,
+            level = matched.level,
+            type = matched.type,
+            profileDescription = matched.profile,
+            specialMoves = matched.specialMoves,
+            source = SpeciesSource.OFFICIAL_MATCHED
+        )
+    }
+
+    // Bundled folder numbers are decimal and mon slots are one-indexed. A missing
+    // decimal 24 must not alias hex "18", nor may a missing slot fall back to its neighbor.
+    private fun <T> findCatalogNumber(entries: Map<String, T>, number: Int): T? =
+        entries[number.toString()] ?: entries.entries.firstOrNull { (key, _) ->
+            key.toIntOrNull() == number ||
+                (key.startsWith("0x", ignoreCase = true) && key.substring(2).toIntOrNull(16) == number)
+        }?.value
+
     suspend fun matchOfficialSpeciesForCard(cardId: Long): Int {
         val db = database ?: return 0
         val card = db.cardDao().getCardById(cardId) ?: return 0
+        if (card.officialStatus == OfficialStatus.CUSTOM) return matchCustomSpeciesForCard(cardId)
         val databaseSpecies = fetchDatabase() ?: return 0
         val speciesForCard = findSpeciesForCard(databaseSpecies, card.cardId, card.isBEm)
         if (speciesForCard == null) {
@@ -60,6 +136,7 @@ class SpeciesRepository(
             val matched = findCharacterEntry(speciesForCard, character.charaIndex)
                 ?: return@forEach
             val current = db.speciesProfileDao().getByCardCharacterId(character.id)
+            if (current?.source == SpeciesSource.MANUAL) return@forEach
             db.speciesProfileDao().upsert(
                 SpeciesProfile(
                     cardCharacterId = character.id,

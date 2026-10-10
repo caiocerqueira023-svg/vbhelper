@@ -37,10 +37,13 @@ import com.github.nacabaro.vbhelper.source.LlmProviderSettings
 import com.github.nacabaro.vbhelper.ui.theme.AppFont
 import com.github.nacabaro.vbhelper.ui.theme.AppTheme
 import com.github.nacabaro.vbhelper.source.AppThemeSettings
+import com.github.nacabaro.vbhelper.source.isMissingSecrets
+import com.github.nacabaro.vbhelper.components.showAppFeedback
 
 class SettingsScreenControllerImpl(
     private val context: ComponentActivity,
 ): SettingsScreenController {
+    private val restoredDialogs = context.savedStateRegistry.consumeRestoredStateForKey("vbhelper.settings_dialogs")
     private val filePickerLauncher: ActivityResultLauncher<String>
     private val filePickerOpenerLauncher: ActivityResultLauncher<Array<String>>
     private val filePickerApk: ActivityResultLauncher<Array<String>>
@@ -82,11 +85,11 @@ class SettingsScreenControllerImpl(
     val promptOriginAtImportTime: Flow<Boolean> = speciesSettingsRepository.promptOriginAtImportTime
     val pendingCardOriginPrompts: StateFlow<List<PendingCardOriginPrompt>> = cardImports.pendingOrigins
 
-    private val _showLlmDialog = MutableStateFlow(false)
+    private val _showLlmDialog = MutableStateFlow(restoredDialogs?.getBoolean("llm") ?: false)
     val showLlmDialog: StateFlow<Boolean> = _showLlmDialog
-    private val _showPromptTemplateDialog = MutableStateFlow(false)
+    private val _showPromptTemplateDialog = MutableStateFlow(restoredDialogs?.getBoolean("prompt") ?: false)
     val showPromptTemplateDialog: StateFlow<Boolean> = _showPromptTemplateDialog
-    private val _showWildPromptTemplateDialog = MutableStateFlow(false)
+    private val _showWildPromptTemplateDialog = MutableStateFlow(restoredDialogs?.getBoolean("wild_prompt") ?: false)
     val showWildPromptTemplateDialog: StateFlow<Boolean> = _showWildPromptTemplateDialog
     private val _currentLanguage = MutableStateFlow(
         languagePreferences.getString("language_tag", null)
@@ -99,6 +102,8 @@ class SettingsScreenControllerImpl(
     val currentFont: StateFlow<AppFont> = _currentFont.asStateFlow()
     private val themeSettings = AppThemeSettings(languagePreferences)
     val currentTheme: StateFlow<AppTheme> = themeSettings.currentTheme
+    private val mutableImportingConnection = MutableStateFlow(false)
+    val importingConnection = mutableImportingConnection.asStateFlow()
 
     fun setAppTheme(appTheme: AppTheme) {
         context.setTheme(appTheme.nativeThemeResource)
@@ -106,6 +111,13 @@ class SettingsScreenControllerImpl(
     }
 
     init {
+        context.savedStateRegistry.registerSavedStateProvider("vbhelper.settings_dialogs") {
+            android.os.Bundle().apply {
+                putBoolean("llm", _showLlmDialog.value)
+                putBoolean("prompt", _showPromptTemplateDialog.value)
+                putBoolean("wild_prompt", _showWildPromptTemplateDialog.value)
+            }
+        }
         filePickerLauncher = context.registerForActivityResult(
             ActivityResultContracts.CreateDocument("application/octet-stream")
         ) { uri ->
@@ -159,6 +171,7 @@ class SettingsScreenControllerImpl(
     }
 
     override fun onClickImportApk() {
+        if (mutableImportingConnection.value) return
         filePickerApk.launch(arrayOf("*/*"))
     }
 
@@ -202,7 +215,7 @@ class SettingsScreenControllerImpl(
             )
 
             context.runOnUiThread {
-                Toast.makeText(context, context.getString(R.string.ui_chat_saved), Toast.LENGTH_SHORT).show()
+                context.showAppFeedback(R.string.ui_chat_saved)
                 dismissLlmDialog()
             }
         }
@@ -242,7 +255,7 @@ class SettingsScreenControllerImpl(
         context.lifecycleScope.launch(Dispatchers.IO) {
             llmSettingsRepository.setTamerName(name)
             context.runOnUiThread {
-                Toast.makeText(context, context.getString(R.string.ui_tamer_saved), Toast.LENGTH_SHORT).show()
+                context.showAppFeedback(R.string.ui_tamer_saved)
             }
         }
     }
@@ -285,35 +298,18 @@ class SettingsScreenControllerImpl(
     }
 
     private fun importApk(uri: Uri) {
+        if (mutableImportingConnection.value) return
+        mutableImportingConnection.value = true
         context.lifecycleScope.launch(Dispatchers.IO) {
-            context.contentResolver.openInputStream(uri).use {
-                if(it == null) {
-                    context.runOnUiThread {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.ui_empty_file),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                    return@launch
-                }
-                val secrets: Secrets?
-                try {
-                    secrets = secretsImporter.importSecrets(it)
-                } catch (e: Exception) {
-                    context.runOnUiThread {
-                        Toast.makeText(context, context.getString(R.string.ui_secrets_import_failed), Toast.LENGTH_SHORT).show()
-                    }
-                    return@launch
-                }
-                context.lifecycleScope.launch(Dispatchers.IO) {
-                    secretsRepository.updateSecrets(secrets)
-                }.invokeOnCompletion {
-                    context.runOnUiThread {
-                        Toast.makeText(context, context.getString(R.string.ui_secrets_imported), Toast.LENGTH_SHORT).show()
-                    }
-                }
-            }
+            try {
+                val imported = context.contentResolver.openInputStream(uri)?.use(secretsImporter::importSecrets)
+                    ?: error("No connection data")
+                check(!imported.isMissingSecrets()) { "Incomplete connection data" }
+                secretsRepository.updateSecrets(imported)
+                context.showAppFeedback(R.string.ui_secrets_imported, important = true)
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { context.showAppFeedback(R.string.ui_secrets_import_failed, important = true) }
+            finally { mutableImportingConnection.value = false }
         }
     }
 }

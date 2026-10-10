@@ -157,7 +157,7 @@ fun InfoStatRow(
         ) {
             Icon(
                 painter = painterResource(icon),
-                contentDescription = label,
+                contentDescription = null,
                 tint = TextMutedOnDark,
                 modifier = Modifier.size(14.dp)
             )
@@ -169,8 +169,7 @@ fun InfoStatRow(
                 Text(
                     text = label,
                     color = TextPrimaryOnDark,
-                    fontSize = 10.sp,
-                    lineHeight = 11.sp,
+                    style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
@@ -178,8 +177,7 @@ fun InfoStatRow(
                 Text(
                     text = value,
                     color = valueColor,
-                    fontSize = 14.sp,
-                    lineHeight = 15.sp,
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis

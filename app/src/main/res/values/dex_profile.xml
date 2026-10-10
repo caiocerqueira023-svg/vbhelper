@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="dex_profile_attribute">Attribute</string>
+    <string name="dex_profile_special_moves">Special moves</string>
+    <string name="dex_profile_stage">Stage</string>
+    <string name="dex_profile_stats">Base stats</string>
+</resources>

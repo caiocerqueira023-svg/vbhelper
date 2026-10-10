@@ -42,7 +42,7 @@ class AppThemeSelectionTest {
                 }
             }
             compose.onNodeWithText("VB Helper").assertIsSelected()
-            for (theme in listOf(AppTheme.VB_LAB, AppTheme.VB_ARENA, AppTheme.VB_HELPER)) {
+            for (theme in AppTheme.entries.drop(1) + AppTheme.VB_HELPER) {
                 compose.onNodeWithText(theme.displayName).performClick().assertIsSelected()
                 compose.runOnIdle {
                     assertEquals(theme.palette.textPrimary, observedText)

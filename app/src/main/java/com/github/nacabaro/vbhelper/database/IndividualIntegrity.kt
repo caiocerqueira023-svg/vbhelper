@@ -14,11 +14,33 @@ object IndividualIntegrity {
     }
 
     fun install(db: SupportSQLiteDatabase) {
+        val ownsTransaction = !db.inTransaction()
+        if (ownsTransaction) db.beginTransaction()
+        try {
+            installGuards(db)
+            if (ownsTransaction) db.setTransactionSuccessful()
+        } finally {
+            if (ownsTransaction) db.endTransaction()
+        }
+    }
+
+    private fun installGuards(db: SupportSQLiteDatabase) {
+        // This installer also runs during older migrations, before Blast slots exist.
+        val hasBlastSlot = db.query("PRAGMA table_info(DigimonIndividual)").use { columns ->
+            val name = columns.getColumnIndexOrThrow("name")
+            var found = false
+            while (columns.moveToNext()) if (columns.getString(name) == "blastMode") found = true
+            found
+        }
+        val slotColumn = if (hasBlastSlot) ", blastMode" else ""
+        val slotValue = if (hasBlastSlot) ", 'NONE'" else ""
         // Repair missing permanent rows without changing any existing identity or chat.
         db.execSQL("""
-            INSERT OR IGNORE INTO DigimonIndividual(individualId, createdAt, lastCelebratedWinsMilestone, lastCelebratedTrophyMilestone)
-            SELECT individualId, 0, 0, 0 FROM UserCharacter WHERE length(trim(individualId)) > 0
+            INSERT OR IGNORE INTO DigimonIndividual(individualId, createdAt, lastCelebratedWinsMilestone, lastCelebratedTrophyMilestone$slotColumn)
+            SELECT individualId, 0, 0, 0$slotValue FROM UserCharacter WHERE length(trim(individualId)) > 0
         """.trimIndent())
+        // Refresh the guard atomically for databases created by an earlier build.
+        db.execSQL("DROP TRIGGER IF EXISTS guard_user_individual_insert")
         db.execSQL("""
             CREATE TRIGGER IF NOT EXISTS guard_user_individual_insert BEFORE INSERT ON UserCharacter
             BEGIN
@@ -27,8 +49,8 @@ object IndividualIntegrity {
                     SELECT 1 FROM UserCharacter WHERE individualId = NEW.individualId AND id != NEW.id);
                 SELECT RAISE(ABORT, 'Individual is still in World') WHERE EXISTS(
                     SELECT 1 FROM WorldSpawn WHERE individualId = NEW.individualId);
-                INSERT INTO DigimonIndividual(individualId, createdAt, lastCelebratedWinsMilestone, lastCelebratedTrophyMilestone)
-                    SELECT NEW.individualId, CAST(strftime('%s', 'now') AS INTEGER) * 1000, 0, 0
+                INSERT INTO DigimonIndividual(individualId, createdAt, lastCelebratedWinsMilestone, lastCelebratedTrophyMilestone$slotColumn)
+                    SELECT NEW.individualId, CAST(strftime('%s', 'now') AS INTEGER) * 1000, 0, 0$slotValue
                     WHERE NOT EXISTS(SELECT 1 FROM DigimonIndividual WHERE individualId = NEW.individualId);
             END
         """.trimIndent())

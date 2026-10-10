@@ -18,9 +18,21 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.isImeVisible
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.exclude
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -32,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
@@ -72,6 +85,9 @@ import com.github.nacabaro.vbhelper.screens.storageScreen.StorageScreenControlle
 import com.github.nacabaro.vbhelper.source.StorageRepository
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.repeatOnLifecycle
+import com.github.nacabaro.vbhelper.components.FeedbackDestination
+import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.screens.lorebookScreen.LorebookScreen
 import com.github.nacabaro.vbhelper.screens.lorebookScreen.LorebookScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.worldScreen.WorldScreen
@@ -98,6 +114,7 @@ data class AppNavigationHandlers(
 )
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 fun AppNavigation(
     applicationNavigationHandlers: AppNavigationHandlers,
     initialRoute: String? = null
@@ -112,7 +129,30 @@ fun AppNavigation(
     val battleChromeMotionDuration = if (allowMotion) 240 else 0
     val battleChromeFadeDuration = if (allowMotion) 160 else 0
     val context = LocalContext.current
+    val resources = LocalResources.current
     val lifecycleOwner = LocalLifecycleOwner.current
+    val feedback = (context.applicationContext as VBHelper).feedback
+    val snackbar = remember { SnackbarHostState() }
+    val keyboardVisible = WindowInsets.isImeVisible
+    LaunchedEffect(feedback, lifecycleOwner, resources) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            feedback.messages.collect { message ->
+                val label = when (message.destination) {
+                    FeedbackDestination.SETTINGS -> resources.getString(R.string.ui_settings)
+                    FeedbackDestination.BATTLES -> resources.getString(R.string.nav_battle)
+                    null -> null
+                }
+                val result = snackbar.showSnackbar(message.resolve(resources), actionLabel = label,
+                    withDismissAction = message.important,
+                    duration = if (message.important) SnackbarDuration.Long else SnackbarDuration.Short)
+                if (result == SnackbarResult.ActionPerformed) when (message.destination) {
+                    FeedbackDestination.SETTINGS -> navController.navigatePrimary(NavigationItems.Settings)
+                    FeedbackDestination.BATTLES -> navController.navigatePrimary(NavigationItems.Battles)
+                    null -> Unit
+                }
+            }
+        }
+    }
     val musicController = remember { AppMusicController(context) }
 
     LaunchedEffect(currentRoute) {
@@ -145,10 +185,13 @@ fun AppNavigation(
     BoxWithConstraints {
         val expandedNavigation = maxWidth >= 840.dp
         Scaffold(
+            // The shell owns system bars/cutouts; editable screens own the IME.
+            contentWindowInsets = WindowInsets.safeDrawing.exclude(WindowInsets.ime),
+            snackbarHost = { SnackbarHost(snackbar, Modifier.imePadding()) },
             bottomBar = {
                 if (!expandedNavigation) {
                     AnimatedVisibility(
-                        visible = !battleFullScreen,
+                        visible = !battleFullScreen && !keyboardVisible,
                         enter = slideInVertically(
                             animationSpec = tween(battleChromeMotionDuration, easing = FastOutSlowInEasing),
                             initialOffsetY = { it }
@@ -173,6 +216,7 @@ fun AppNavigation(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(contentPadding)
+                    .consumeWindowInsets(contentPadding)
             ) {
                 if (expandedNavigation) {
                     AnimatedVisibility(
@@ -198,18 +242,6 @@ fun AppNavigation(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .tabSwipeNavigation(
-                            currentRoute = currentRoute,
-                            thresholdPx = tabSwipeThresholdPx,
-                            // The World hub (Radar/Digifarm) owns every
-                            // horizontal gesture — 3D orbit, radar pinch —
-                            // so the global tab swipe is off there to stop
-                            // stealing camera moves into tab switches.
-                            enabled = currentRoute != NavigationItems.World.route,
-                            onNavigate = { destination ->
-                                navController.navigatePrimary(destination)
-                            }
-                        )
                 ) {
                 NavHost(
             navController = navController,
@@ -252,10 +284,17 @@ fun AppNavigation(
                 )
             }
             composable(NavigationItems.Home.route) {
+                val importingConnection by settingsScreenController.importingConnection.collectAsState()
                 HomeScreen(
                     navController = navController,
                     homeScreenController = applicationNavigationHandlers.homeScreenController,
-                    storageScreenController = applicationNavigationHandlers.storageScreenController
+                    storageScreenController = applicationNavigationHandlers.storageScreenController,
+                    onImportCards = {
+                        navController.navigatePrimary(NavigationItems.Dex)
+                        settingsScreenController.onClickImportCardsFromDex()
+                    },
+                    onImportConnection = settingsScreenController::onClickImportApk,
+                    importingConnection = importingConnection,
                 )
             }
             composable(NavigationItems.World.route) { entry ->
@@ -462,40 +501,6 @@ fun AppNavigation(
             onSelect = { status -> settingsScreenController.setPendingCardOrigin(prompt.cardId, status) }
         )
     }
-}
-
-/**
- * Keeps the primary tabs reachable with a deliberate horizontal swipe while
- * leaving secondary destinations (dialogs, chat, settings, etc.) untouched.
- * Screens that own horizontal gestures (World hub) opt out via [enabled].
- */
-private fun Modifier.tabSwipeNavigation(
-    currentRoute: String?,
-    thresholdPx: Float,
-    enabled: Boolean,
-    onNavigate: (NavigationItems) -> Unit
-): Modifier = pointerInput(currentRoute, thresholdPx, enabled) {
-    if (!enabled) return@pointerInput
-    val currentIndex = primaryDestinations.indexOfFirst { it.route == currentRoute }
-    if (currentIndex < 0) return@pointerInput
-
-    var dragDistance = 0f
-    detectHorizontalDragGestures(
-        onDragStart = { dragDistance = 0f },
-        onHorizontalDrag = { _, dragAmount ->
-            dragDistance += dragAmount
-        },
-        onDragEnd = {
-            val targetIndex = when {
-                dragDistance <= -thresholdPx -> currentIndex + 1
-                dragDistance >= thresholdPx -> currentIndex - 1
-                else -> -1
-            }
-            primaryDestinations.getOrNull(targetIndex)?.let(onNavigate)
-            dragDistance = 0f
-        },
-        onDragCancel = { dragDistance = 0f }
-    )
 }
 
 private fun primaryTabTransitionDirection(initialRoute: String?, targetRoute: String?): Int {

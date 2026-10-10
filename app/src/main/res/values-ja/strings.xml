@@ -78,7 +78,7 @@
     <string name="card_import_file_number">ファイル %1$d</string>
     <string name="card_import_file_issue">このファイルをインポートできませんでした。確認して再試行してください。</string>
     <string name="card_import_origin_issue">カードは保存済みです。一覧から公式またはカスタムを設定してください。</string>
-    <string name="card_origin_help">公式カードは種族の自動認識に対応しています。カスタムカードでは種族を手動で選択できます。</string>
+    <string name="card_origin_help">公式カードは種族の自動認識に対応しています。カスタムカードも、スプライトの全フレームが公式の画像と完全に一致すれば種族を認識します。種族を手動で選択することもできます。</string>
     <string name="writing_character_action_title">キャラクター情報書き込み中</string>
     <string name="items_title">アイテム</string>
     <string name="items_no_items">アイテムはありません。</string>

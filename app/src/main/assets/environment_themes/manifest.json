@@ -1,0 +1,1185 @@
+{
+  "schema": 1,
+  "palettes": {
+    "vb_helper": {
+      "light": false,
+      "floor": "#0A0812",
+      "panel": "#120F1F",
+      "elevated": "#251E3D",
+      "structureDark": "#171327",
+      "structureLight": "#BBAAC2",
+      "grid": "#3C3260",
+      "energy": "#8B5CF6",
+      "secondaryEnergy": "#2DE1FC"
+    },
+    "vb_lab": {
+      "light": false,
+      "floor": "#111111",
+      "panel": "#202020",
+      "elevated": "#383838",
+      "structureDark": "#15191C",
+      "structureLight": "#929EA4",
+      "grid": "#626F76",
+      "energy": "#00BDE3",
+      "secondaryEnergy": "#43D6F3"
+    },
+    "vb_arena": {
+      "light": true,
+      "floor": "#EFF3F0",
+      "panel": "#E3EAE5",
+      "elevated": "#F8FCF9",
+      "structureDark": "#A6B5AC",
+      "structureLight": "#F5FAF7",
+      "grid": "#7C9588",
+      "energy": "#24E88A",
+      "secondaryEnergy": "#007648"
+    },
+    "digimon_net": {
+      "light": true,
+      "floor": "#F1F5FF",
+      "panel": "#D9E3FA",
+      "elevated": "#F6F8FF",
+      "structureDark": "#91A5CB",
+      "structureLight": "#F7F9FF",
+      "grid": "#6883B5",
+      "energy": "#1251D0",
+      "secondaryEnergy": "#F6FF00"
+    }
+  },
+  "scenes": {
+    "farm": {
+      "asset": "digifarm/3d/digi_farm_3d.glb",
+      "sourceSha256": "2f920bc0cd37ae4147d3ca3322af75e26dd51a6ef5283eb40ff183f47f35b8c1",
+      "materials": [
+        {
+          "name": "island_top_baked",
+          "role": "grass_patches",
+          "variants": {
+            "vb_helper": {
+              "baseColorFactor": [
+                0,
+                0,
+                0,
+                1
+              ],
+              "emissiveFactor": [
+                1,
+                1,
+                1
+              ],
+              "textures": {
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/a4999f07ca34d73a158a1bc3c7b27d291b06a2ec6997337951b08aecd415fb30.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_lab": {
+              "baseColorFactor": [
+                0,
+                0,
+                0,
+                1
+              ],
+              "emissiveFactor": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "textures": {
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/ee88d028537d3e0610d6ec16176329c3d28f67fda26a73b5d552b909e8cbe432.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_arena": {
+              "baseColorFactor": [
+                0,
+                0,
+                0,
+                1
+              ],
+              "emissiveFactor": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "textures": {
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/4c48ad56aaead6bb9fd36e5bd1bb482bfde71fe2e6fa031462cd2a269384d6ec.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "digimon_net": {
+              "baseColorFactor": [
+                0,
+                0,
+                0,
+                1
+              ],
+              "emissiveFactor": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "textures": {
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/37e1da00763a25b9b2a0c58ba4cf880641d5842f115a217647f0ac00c8b9c262.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "island_side_baked",
+          "role": "structure",
+          "variants": {
+            "vb_helper": {
+              "baseColorFactor": [
+                1,
+                1,
+                1,
+                1
+              ],
+              "emissiveFactor": [
+                1,
+                1,
+                1
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/867573bdbdaf51b9491118e346a3ee1b9cd5d6583bcd55025cbac5286fae8bd8.png",
+                  "wrapS": 10497,
+                  "wrapT": 33071,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                },
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/867573bdbdaf51b9491118e346a3ee1b9cd5d6583bcd55025cbac5286fae8bd8.png",
+                  "wrapS": 10497,
+                  "wrapT": 33071,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_lab": {
+              "baseColorFactor": [
+                1,
+                1,
+                1,
+                1
+              ],
+              "emissiveFactor": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/6ca7a78c915a64894415a464245201ba3bcff074964efe993fa7afc47245f2ed.png",
+                  "wrapS": 10497,
+                  "wrapT": 33071,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                },
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/6ca7a78c915a64894415a464245201ba3bcff074964efe993fa7afc47245f2ed.png",
+                  "wrapS": 10497,
+                  "wrapT": 33071,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_arena": {
+              "baseColorFactor": [
+                1,
+                1,
+                1,
+                1
+              ],
+              "emissiveFactor": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/4ad97708934a3ea4cdc1cce9d88a53b7a0c83f10eb66b5957784e4cad0e27bc0.png",
+                  "wrapS": 10497,
+                  "wrapT": 33071,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                },
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/4ad97708934a3ea4cdc1cce9d88a53b7a0c83f10eb66b5957784e4cad0e27bc0.png",
+                  "wrapS": 10497,
+                  "wrapT": 33071,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "digimon_net": {
+              "baseColorFactor": [
+                1,
+                1,
+                1,
+                1
+              ],
+              "emissiveFactor": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/3ccdbdc803e2c72109f697a2012f397e2ce6c0aaabc44d1930869b4d533ff5c7.png",
+                  "wrapS": 10497,
+                  "wrapT": 33071,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                },
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/3ccdbdc803e2c72109f697a2012f397e2ce6c0aaabc44d1930869b4d533ff5c7.png",
+                  "wrapS": 10497,
+                  "wrapT": 33071,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "voxel_block_dark_baked",
+          "role": "panel",
+          "variants": {
+            "vb_helper": {
+              "baseColorFactor": [
+                0,
+                0,
+                0,
+                1
+              ],
+              "emissiveFactor": [
+                1,
+                1,
+                1
+              ],
+              "textures": {
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/c444c77b1547e3385fb7bc86a1e79ac1eab865b9cc4e4ac18829118e61401143.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_lab": {
+              "baseColorFactor": [
+                0,
+                0,
+                0,
+                1
+              ],
+              "emissiveFactor": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "textures": {
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/34da69a33d070107a35a34f565054b8eaa3a5f9098bb98f3e4191d49dbe36ab6.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_arena": {
+              "baseColorFactor": [
+                0,
+                0,
+                0,
+                1
+              ],
+              "emissiveFactor": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "textures": {
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/b299b6257d12fb2e102f6b482d908dbc09fe27dbee9e48028379f2ba670d23ed.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "digimon_net": {
+              "baseColorFactor": [
+                0,
+                0,
+                0,
+                1
+              ],
+              "emissiveFactor": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "textures": {
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/735a1196bb3e952ba51058a3db195d7d647382df768e5b188ed40f3636b48b66.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "voxel_block_lit_baked",
+          "role": "panel",
+          "variants": {
+            "vb_helper": {
+              "baseColorFactor": [
+                0,
+                0,
+                0,
+                1
+              ],
+              "emissiveFactor": [
+                1,
+                1,
+                1
+              ],
+              "textures": {
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/1d99226cd8f566c9f4c81b3b329409631792ca33a21ea2576d063887cba5ada2.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_lab": {
+              "baseColorFactor": [
+                0,
+                0,
+                0,
+                1
+              ],
+              "emissiveFactor": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "textures": {
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/e74034ec04cf451dd01b84502c28f67c6368e3f647e99d57bcc4f07e83682b33.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_arena": {
+              "baseColorFactor": [
+                0,
+                0,
+                0,
+                1
+              ],
+              "emissiveFactor": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "textures": {
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/b51864417dfad65a241c99de6d5f7bddc8cda14d27e3b6d0e9d494aad5dcc578.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "digimon_net": {
+              "baseColorFactor": [
+                0,
+                0,
+                0,
+                1
+              ],
+              "emissiveFactor": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "textures": {
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/39e344c8597b9282d8c99d2cbcef1a96c055522039881a18aaa0458c2819f73e.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "colosseum": {
+      "asset": "Arena/Colosseum/Colosseum.glb",
+      "sourceSha256": "3ad37b956013e9ddce5eff6e377adcba484bf9f1e93afc613bc63eadb2ad2e4d",
+      "materials": [
+        {
+          "name": "Ground",
+          "role": "structure",
+          "variants": {
+            "vb_helper": {
+              "baseColorFactor": [
+                1,
+                1,
+                1,
+                1
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/49845fc8021109ec5e43b60e9212918234231d635035aced401a891b44368a1f.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_lab": {
+              "baseColorFactor": [
+                1,
+                1,
+                1,
+                1
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/45d59699364f95a250b1cf5f74a84fb66fdd926ecc0814d4f4b5d0cae2fed6b5.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_arena": {
+              "baseColorFactor": [
+                1,
+                1,
+                1,
+                1
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/081a706b479c3a1a317a40dbb7651b40bbd9da311fecd607ef6b1c7ba2158fc0.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "digimon_net": {
+              "baseColorFactor": [
+                1,
+                1,
+                1,
+                1
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/ce1cb68551cfc50016c532c975ea73233d4e854b0f001a9fe5ba8e5fd31853f1.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Sphere001",
+          "role": "dome",
+          "variants": {
+            "vb_helper": {
+              "baseColorFactor": [
+                1,
+                1,
+                1,
+                1
+              ],
+              "emissiveFactor": [
+                0.5,
+                0.16,
+                1.0
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/c5ce23127c67dc182e49e14c04d9cfff771d1b7434cea0ef9d33d9c87a57eb93.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                },
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/c5ce23127c67dc182e49e14c04d9cfff771d1b7434cea0ef9d33d9c87a57eb93.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_lab": {
+              "baseColorFactor": [
+                1,
+                1,
+                1,
+                1
+              ],
+              "emissiveFactor": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/e2c8c49d1c0446fc5d71a93495b13876a17b7d6bc2ff5f0d2c83fd1cb7adc429.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                },
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/657940e596847c610047eba8841fa8d35c928aa7ba7fbd247db684db2ddcd1c6.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_arena": {
+              "baseColorFactor": [
+                1,
+                1,
+                1,
+                1
+              ],
+              "emissiveFactor": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/9628a20ebdc031030740cf313f0471fe9567629033344e71bd5eb0ee8f446b10.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                },
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/52a682edfab5daa57690b941db2498adfb734d98c3f18588f6adda08f0ba8659.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "digimon_net": {
+              "baseColorFactor": [
+                1,
+                1,
+                1,
+                1
+              ],
+              "emissiveFactor": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/3d7dfb69d28e9fe03a360eccecd0a26b79f62bccdbca8a5b1a88fc3f3ab407b1.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                },
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/c05940a139b3b326c242c3067d03aecb57de8ec57e5cfe647e40876bfe6e445a.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "radar": {
+      "asset": "Arena/Radar/radar_grid.glb",
+      "sourceSha256": "d12068e91a58694d3ed4b1e5bdc673925ee2e68eb5bfa185948ee97107a228be",
+      "materials": [
+        {
+          "name": "radar_floor",
+          "role": "floor",
+          "variants": {
+            "vb_helper": {
+              "baseColorFactor": [
+                0.003035269835488375,
+                0.0024282158683907,
+                0.006048833022857054,
+                1.0
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {}
+            },
+            "vb_lab": {
+              "baseColorFactor": [
+                0.005605391624202723,
+                0.005605391624202723,
+                0.005605391624202723,
+                1.0
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {}
+            },
+            "vb_arena": {
+              "baseColorFactor": [
+                0.8631572134541023,
+                0.8962693533742664,
+                0.8713671191987972,
+                1.0
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {}
+            },
+            "digimon_net": {
+              "baseColorFactor": [
+                0.8796223968878317,
+                0.9130986517934192,
+                1.0,
+                1.0
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {}
+            }
+          }
+        },
+        {
+          "name": "world_grid",
+          "role": "grid",
+          "variants": {
+            "vb_helper": {
+              "baseColorFactor": [
+                0.04518620438567554,
+                0.03189603307301153,
+                0.11697066775851084,
+                0.72
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {}
+            },
+            "vb_lab": {
+              "baseColorFactor": [
+                0.12213877222960187,
+                0.1589608350608804,
+                0.18116424424986022,
+                0.72
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {}
+            },
+            "vb_arena": {
+              "baseColorFactor": [
+                0.20155625379439707,
+                0.3005437944157765,
+                0.24620132670783548,
+                0.72
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {}
+            },
+            "digimon_net": {
+              "baseColorFactor": [
+                0.13843161503245183,
+                0.22696587351009836,
+                0.4620769996544071,
+                0.72
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {}
+            }
+          }
+        },
+        {
+          "name": "battle_boundary",
+          "role": "boundary",
+          "variants": {
+            "vb_helper": {
+              "baseColorFactor": [
+                0.026241221894849898,
+                0.7529422167760779,
+                0.9734452903984125,
+                0.65
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {}
+            },
+            "vb_lab": {
+              "baseColorFactor": [
+                0.0,
+                0.5088813208549338,
+                0.768151147247507,
+                0.65
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {}
+            },
+            "vb_arena": {
+              "baseColorFactor": [
+                0.017641954488384078,
+                0.8069522576692516,
+                0.25415209433082675,
+                0.65
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {}
+            },
+            "digimon_net": {
+              "baseColorFactor": [
+                0.006048833022857054,
+                0.0822827071298148,
+                0.6307571363461468,
+                0.65
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {}
+            }
+          }
+        },
+        {
+          "name": "voxel_block_dark_baked",
+          "role": "panel",
+          "variants": {
+            "vb_helper": {
+              "baseColorFactor": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/19616bbbd5790b7deb02a3c4a240cce0911e841bfc63b5691bab74c07676aa3c.png",
+                  "wrapS": 33071,
+                  "wrapT": 33071,
+                  "minFilter": 9729,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_lab": {
+              "baseColorFactor": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/6b5a6a6500bd9f777a2a6a33906eef432e638ecabea56d6a56738f9e8cc1cc66.png",
+                  "wrapS": 33071,
+                  "wrapT": 33071,
+                  "minFilter": 9729,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_arena": {
+              "baseColorFactor": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/011b80568b947e35064c175363a359e101ab3b12395fb737166ac0617a5ea52a.png",
+                  "wrapS": 33071,
+                  "wrapT": 33071,
+                  "minFilter": 9729,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "digimon_net": {
+              "baseColorFactor": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/bbaf5e5fc41fe126b29fb21b55236f2c3e90dc27cf6076f01823d547c2ab308c.png",
+                  "wrapS": 33071,
+                  "wrapT": 33071,
+                  "minFilter": 9729,
+                  "magFilter": 9729
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "voxel_block_lit_baked",
+          "role": "panel",
+          "variants": {
+            "vb_helper": {
+              "baseColorFactor": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/c0c9206c382d58c28366b72df5d2a88673d1aa2fa414d8c770a64655c27d6534.png",
+                  "wrapS": 33071,
+                  "wrapT": 33071,
+                  "minFilter": 9729,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_lab": {
+              "baseColorFactor": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/84f60684f6ffa1937559b53b73fa3ef2968674fd249e9b5f3b5f50a2e7083f6a.png",
+                  "wrapS": 33071,
+                  "wrapT": 33071,
+                  "minFilter": 9729,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_arena": {
+              "baseColorFactor": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/89b55240f7696165fb8cb0936c6654eec8c8fc6ceff7bd2764c60d92f3f9d786.png",
+                  "wrapS": 33071,
+                  "wrapT": 33071,
+                  "minFilter": 9729,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "digimon_net": {
+              "baseColorFactor": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "emissiveFactor": [
+                0,
+                0,
+                0
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/1f9e89ae4281a1e157424b779813dbeba993713306feda1c038421cfa424d570.png",
+                  "wrapS": 33071,
+                  "wrapT": 33071,
+                  "minFilter": 9729,
+                  "magFilter": 9729
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "RadarSkyDome",
+          "role": "dome",
+          "variants": {
+            "vb_helper": {
+              "baseColorFactor": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "emissiveFactor": [
+                0.68,
+                0.68,
+                0.68
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/7533bf52f6fcb72a57ad4c26479aea1c8df5d4590f83adfa6e169b3bbca333f5.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                },
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/fff27860cbedd164ebc60b716966591912822515d4625057eafc5edeef54fea0.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_lab": {
+              "baseColorFactor": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "emissiveFactor": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/0e7fb3127012e7806862876fcd59b453f617b5970b58aecbeb7d1aea6f2d334e.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                },
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/a523e1d4b3a79a87651aadc803efccb4cb878fd3f02fab6a4f28f2c2d0e467f0.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_arena": {
+              "baseColorFactor": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "emissiveFactor": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/bf69fcd8ff4d19104aba19198a0a7f6a784710e9c2555d1915b7893b2b815e65.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                },
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/866c41df5b625702b8ce708ee56102b7127553b37bc98e460d83abca36a0b8b2.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "digimon_net": {
+              "baseColorFactor": [
+                1.0,
+                1.0,
+                1.0,
+                1.0
+              ],
+              "emissiveFactor": [
+                0.75,
+                0.75,
+                0.75
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/82f91d92560ab22239d4b249c622b9c3ff918e5fe5afae66c7943136af3cd4b3.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                },
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/9465fe7f64d3e2b74033f105764dd2d2b158692da8df55e0ad8cf039422a219c.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

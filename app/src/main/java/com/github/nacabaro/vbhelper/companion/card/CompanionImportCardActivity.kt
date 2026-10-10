@@ -165,7 +165,7 @@ class CompanionImportCardActivity : ComponentActivity() {
     @Composable
     private fun NameOrUnique() {
         val selectedUri = uri
-        val filePath = selectedUri?.path ?: "No file selected"
+        val filePath = selectedUri?.path ?: stringResource(R.string.app_file)
         val name by cardName.collectAsState()
         val unique by uniqueSprites.collectAsState()
         val convert by convertToBem.collectAsState()
@@ -182,7 +182,7 @@ class CompanionImportCardActivity : ComponentActivity() {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 VitalButton(modifier = Modifier.padding(end = 10.dp), onClick = { importState.value = ImportState.PickFile }) {
-                    Text(text = "File")
+                    Text(stringResource(R.string.app_file))
                 }
                 Text(text = filePath)
             }
@@ -193,7 +193,7 @@ class CompanionImportCardActivity : ComponentActivity() {
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(text = "Name:", modifier = Modifier.padding(end = 10.dp))
+                Text(stringResource(R.string.app_field_name), modifier = Modifier.padding(end = 10.dp))
                 TextField(value = name, onValueChange = { cardName.value = it })
             }
             Row(
@@ -203,7 +203,7 @@ class CompanionImportCardActivity : ComponentActivity() {
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(text = "Unique Sprites:")
+                Text(stringResource(R.string.app_unique_sprites))
                 Checkbox(checked = unique, onCheckedChange = { uniqueSprites.value = it })
             }
             Row(
@@ -213,15 +213,16 @@ class CompanionImportCardActivity : ComponentActivity() {
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(text = "Convert to BeM:")
+                Text(stringResource(R.string.app_convert_to_bem))
                 Checkbox(checked = convert, onCheckedChange = { convertToBem.value = it })
             }
             VitalButton(
+                style = com.github.nacabaro.vbhelper.components.VitalButtonStyle.PRIMARY,
                 modifier = Modifier.padding(top = 16.dp),
                 enabled = selectedUri != null,
                 onClick = { importState.value = ImportState.LoadFile },
             ) {
-                Text(text = "Import")
+                Text(stringResource(R.string.app_import))
             }
         }
     }

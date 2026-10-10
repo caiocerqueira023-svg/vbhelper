@@ -31,6 +31,8 @@ import com.github.nacabaro.vbhelper.rendering.sprite3d.ResidentFrameImage
 import com.github.nacabaro.vbhelper.rendering.sprite3d.cameraAssistedSpriteYaw
 import com.github.nacabaro.vbhelper.ui.theme.DeepPurpleBgAlt
 import com.github.nacabaro.vbhelper.ui.theme.AppTheme
+import com.github.nacabaro.vbhelper.ui.theme.LocalAppTheme
+import com.github.nacabaro.vbhelper.rendering.EnvironmentThemeController
 import androidx.compose.ui.graphics.Color
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
@@ -89,11 +91,12 @@ fun Digifarm3dViewport(
     onAssetError: ((String) -> Unit)? = null,
 ) {
     val backgroundColor = DeepPurpleBgAlt
+    val appTheme = LocalAppTheme.current
     AndroidView(
         modifier = modifier,
         factory = { context ->
             FrameLayout(context).also { container ->
-                runCatching { Digifarm3dSceneView(context, backgroundColor) }
+                runCatching { Digifarm3dSceneView(context, backgroundColor, appTheme) }
                     .onSuccess { view ->
                         container.addView(
                             view,
@@ -128,8 +131,10 @@ fun Digifarm3dViewport(
         update = { container ->
             // Toggle path (e.g. wireframe on/off): hot-swap inside the live
             // Engine. Recreating the whole GL view here crashed on devices.
-            (container.getChildAt(0) as? Digifarm3dSceneView)
-                ?.switchAsset(assetName, onAssetError)
+            (container.getChildAt(0) as? Digifarm3dSceneView)?.apply {
+                setTheme(appTheme)
+                switchAsset(assetName, onAssetError)
+            }
         },
     )
 }
@@ -138,10 +143,17 @@ fun Digifarm3dViewport(
 class Digifarm3dSceneView(
     context: Context,
     backgroundColor: Color = AppTheme.VB_HELPER.palette.backgroundAlt,
+    initialTheme: AppTheme = AppTheme.VB_HELPER,
 ) : TextureView(context) {
     private val logTag = "Digifarm3d"
     private val engine: Engine
     private val viewer: ModelViewer
+    private val environmentThemes: EnvironmentThemeController
+    private var sceneTheme = initialTheme
+    internal val appliedEnvironmentTheme get() = environmentThemes.appliedTheme
+    internal val environmentThemeFailure get() = environmentThemes.failure
+    internal val environmentMaterialNames get() = environmentThemes.boundMaterialNames
+    internal val environmentLoadCount get() = environmentThemes.bindCount
     private var backgroundSkybox: Skybox? = null
     private var released = false
     private var residentsReleased = false
@@ -235,6 +247,7 @@ class Digifarm3dSceneView(
             updateFloatingBlocks(frameTimeNanos)
             updateResidentTransforms()
             viewer.render(frameTimeNanos)
+            environmentThemes.onFrame(viewer.progress >= 1f)
             notifyCameraChangeIfMoved(frameTimeNanos)
             Choreographer.getInstance().postFrameCallback(this)
         }
@@ -246,6 +259,7 @@ class Digifarm3dSceneView(
         engine = Engine.create()
         val helper = UiHelper(UiHelper.ContextErrorPolicy.DONT_CHECK)
         viewer = ModelViewer(this, engine, helper, null)
+        environmentThemes = EnvironmentThemeController(context, engine, initialTheme)
         viewer.view.applyHybridSceneProfile(HybridSceneKind.DIGIFARM)
         val backdrop = Colors.toLinear(
             Colors.RgbType.SRGB,
@@ -288,7 +302,17 @@ class Digifarm3dSceneView(
     fun loadAsset(assetName: String, onAssetError: ((String) -> Unit)? = null) {
         if (released) return
         loadGen += 1
+        requestedAssetName = assetName
         launchLoad(assetName, loadGen, onAssetError)
+    }
+
+    fun setTheme(theme: AppTheme) {
+        if (released || theme == sceneTheme) return
+        sceneTheme = theme
+        val c = theme.palette.backgroundAlt
+        val linear = Colors.toLinear(Colors.RgbType.SRGB, c.red, c.green, c.blue)
+        backgroundSkybox?.setColor(linear[0], linear[1], linear[2], 1f)
+        environmentThemes.setTheme(theme)
     }
 
     /**
@@ -298,19 +322,21 @@ class Digifarm3dSceneView(
      */
     fun switchAsset(assetName: String, onAssetError: ((String) -> Unit)? = null) {
         if (released) return
-        if (assetName == loadedAssetName && viewer.asset != null) return
+        if (assetName == requestedAssetName) return
         floatingBlocks = emptyList()
         floatingCubes = emptyList()
         floatingIsland = null
         pulsingGlows = emptyList()
         islandFloatOffsetY = 0f
         floatingStartNanos = 0L
+        environmentThemes.clearEnvironment()
         runCatching { viewer.destroyModel() }
         loadGen += 1
+        requestedAssetName = assetName
         launchLoad(assetName, loadGen, onAssetError)
     }
 
-    private var loadedAssetName: String? = null
+    private var requestedAssetName: String? = null
     private var loadGen = 0
 
     private fun launchLoad(assetName: String, gen: Int, onAssetError: ((String) -> Unit)? = null) {
@@ -334,6 +360,8 @@ class Digifarm3dSceneView(
             }.getOrElse { failure ->
                 Log.e(logTag, "Could not read Digifarm asset $assetName", failure)
                 post {
+                    if (released || gen != loadGen) return@post
+                    requestedAssetName = null
                     onAssetError?.invoke(
                         describeDigifarmFailure(failure, "Digifarm 3D asset unavailable")
                     )
@@ -362,9 +390,10 @@ class Digifarm3dSceneView(
                     viewer.clearRootTransform()
                     collectFloatingBlocks(checkNotNull(viewer.asset))
                     collectPulsingGlows(checkNotNull(viewer.asset))
-                    loadedAssetName = assetName
+                    environmentThemes.bind(checkNotNull(viewer.asset), assetName)
                     Log.i(logTag, "Digifarm asset loaded: $assetName (${bytes.size} bytes)")
                 }.onFailure { failure ->
+                    requestedAssetName = null
                     Log.e(logTag, "Could not load Digifarm asset $assetName", failure)
                     onAssetError?.invoke(
                         describeDigifarmFailure(
@@ -481,7 +510,9 @@ class Digifarm3dSceneView(
         pulsingGlows.forEach { glow ->
             val pulse = (0.5 + 0.5 * sin(elapsed * GLOW_PULSE_SPEED + glow.phase)).toFloat()
             val strength = GLOW_BASE_INTENSITY + glow.amplitude * pulse
-            glow.material.setParameter("emissiveFactor", strength, strength, strength)
+            if (!environmentThemes.updateEmission(glow.material, strength)) {
+                glow.material.setParameter("emissiveFactor", strength, strength, strength)
+            }
         }
     }
 
@@ -685,6 +716,7 @@ class Digifarm3dSceneView(
         released = true
         Choreographer.getInstance().removeFrameCallback(frameCallback)
         destroyResidents()
+        environmentThemes.release()
         releaseBackgroundSkybox()
         // ModelViewer registers its own detach listener and owns destruction
         // of the Engine. Marking the view released here prevents another frame
@@ -699,6 +731,7 @@ class Digifarm3dSceneView(
         // Resident textures, assets and loaders must be freed BEFORE
         // ModelViewer's detach listener destroys the Engine.
         destroyResidents()
+        environmentThemes.release()
         releaseBackgroundSkybox()
         super.onDetachedFromWindow()
     }

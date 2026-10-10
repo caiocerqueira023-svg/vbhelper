@@ -8,9 +8,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import androidx.compose.ui.res.stringResource
@@ -24,14 +26,15 @@ import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.screens.chatScreen.dialogs.SpeciesManualEditDialog
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 fun ChatScreen(
     navController: NavController,
     chatScreenController: ChatScreenController,
     characterId: Long
 ) {
     var speciesContext by remember { mutableStateOf<SpeciesContext?>(null) }
-    var showManualDialog by remember { mutableStateOf(false) }
-    var speciesGateResolved by remember { mutableStateOf(false) }
+    var showManualDialog by rememberSaveable(characterId) { mutableStateOf(false) }
+    var speciesGateResolved by rememberSaveable(characterId) { mutableStateOf(false) }
     val conversationTitle = speciesContext?.existingProfile?.speciesName?.takeIf { it.isNotBlank() }
         ?: speciesContext?.cardName?.takeIf { it.isNotBlank() }
         ?: stringResource(R.string.nav_chat)
@@ -39,7 +42,7 @@ fun ChatScreen(
     LaunchedEffect(characterId) {
         chatScreenController.getSpeciesContext(characterId) { context ->
             speciesContext = context
-            if (context.existingProfile == null) showManualDialog = true else speciesGateResolved = true
+            if (context.existingProfile == null && !speciesGateResolved) showManualDialog = true else speciesGateResolved = true
         }
     }
 
@@ -79,11 +82,12 @@ fun ChatScreen(
 
     val messages by chatScreenController.getHistory(characterId).collectAsState(emptyList())
     val mood by chatScreenController.getMood(characterId).collectAsState(50)
-    var input by remember { mutableStateOf("") }
+    var input by rememberSaveable(characterId) { mutableStateOf("") }
     var sending by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var selectedMessage by remember { mutableStateOf<com.github.nacabaro.vbhelper.domain.chat.ChatMessageEntity?>(null) }
     val context = LocalContext.current
+    val resources = LocalResources.current
     val listState = rememberLazyListState()
 
     LaunchedEffect(messages.size) {
@@ -103,11 +107,13 @@ fun ChatScreen(
         Column(
             modifier = Modifier
                 .padding(contentPadding)
+                .consumeWindowInsets(contentPadding)
+                .imePadding()
                 .fillMaxSize()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            ChatStatusPanel(
+            if (!WindowInsets.isImeVisible) ChatStatusPanel(
                 label = stringResource(R.string.ui_chat_mood_title, mood),
                 value = mood
             )
@@ -164,7 +170,7 @@ fun ChatScreen(
                                         selectedMessage = null
                                         chatScreenController.resendMessage(characterId, message.id, message.content) { result ->
                                             sending = false
-                                            result.onFailure { error = it.message }
+                                             result.onFailure { error = resources.getString(R.string.app_chat_failed) }
                                         }
                                     },
                                     modifier = Modifier.fillMaxWidth()
@@ -195,6 +201,8 @@ fun ChatScreen(
                 sendLabel = stringResource(R.string.ui_send),
                 sending = sending,
                 errorMessage = error,
+                errorActionLabel = stringResource(R.string.ui_settings),
+                onErrorAction = { navController.navigate(com.github.nacabaro.vbhelper.navigation.NavigationItems.Settings.route) },
                 onSend = {
                     val text = input
                     sending = true
@@ -204,7 +212,7 @@ fun ChatScreen(
                         result.onSuccess {
                             if (input == text) input = ""
                         }
-                        result.onFailure { e -> error = e.message }
+                        result.onFailure { error = resources.getString(R.string.app_chat_failed) }
                     }
                 }
             )

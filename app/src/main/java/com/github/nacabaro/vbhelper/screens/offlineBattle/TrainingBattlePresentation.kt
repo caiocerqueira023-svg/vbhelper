@@ -14,6 +14,13 @@ import com.github.nacabaro.vbhelper.battle.offline.core.BattleSimulator
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleStrategy
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleTeam
 import com.github.nacabaro.vbhelper.battle.offline.core.CombatantDefinition
+import com.github.nacabaro.vbhelper.battle.offline.core.TechniqueDefinition
+import com.github.nacabaro.vbhelper.battle.offline.core.BattleItemDefinition
+import com.github.nacabaro.vbhelper.battle.offline.core.TrainerAiPolicy
+import com.github.nacabaro.vbhelper.battle.offline.core.BattleSpeciesIdentity
+import com.github.nacabaro.vbhelper.battle.offline.tamers.ArenaMatchSpec
+import com.github.nacabaro.vbhelper.battle.offline.tamers.ArenaSpecies
+import com.github.nacabaro.vbhelper.battle.offline.tamers.TamerBattleFactory
 import com.github.nacabaro.vbhelper.battle.offline.data.GenericTechniqueCatalog
 import com.github.nacabaro.vbhelper.battle.offline.data.TrainingBattleFactory
 import com.github.nacabaro.vbhelper.battle.offline.data.TrainingParticipantInput
@@ -81,7 +88,34 @@ data class TrainingBattlePresentation(
     val altForms: Map<String, BattleFighterPresentation> = emptyMap(),
     /** Every equipped FORM and Jogress result, keyed by the result presentation's setKey. */
     val preparedForms: Map<String, BattleFighterPresentation> = emptyMap(),
-)
+    val configuration: BattleConfiguration = BattleConfiguration(defaultPaused = true,
+        arenaRadius = arenaManifest.playableRadius, lineupRowSpacing = arenaManifest.lineupRowSpacing,
+        lineupDepthRatio = arenaManifest.lineupDepthRatio, minimumLineupDepth = arenaManifest.minimumLineupDepth),
+    val initialItems: List<com.github.nacabaro.vbhelper.battle.offline.core.BattleItemDefinition> = TrainingBattleFactory.trainingItems,
+    val techniqueDefinitions: List<TechniqueDefinition> = GenericTechniqueCatalog.definitionsForVersion(configuration.rulesetVersion),
+    val initialOpposingItems: List<BattleItemDefinition> = emptyList(),
+    val trainerPolicies: Map<BattleSide, TrainerAiPolicy> = emptyMap(),
+) {
+    /** Restart the simulation only; immutable sprites, models and arena stay prepared. */
+    fun rematch(randomSeed: Long): TrainingBattlePresentation {
+        val nextConfiguration = configuration.copy(randomSeed = randomSeed, defaultPaused = true)
+        val next = BattleSimulator(nextConfiguration,
+            BattleTeam(nextConfiguration.alliedTeamId, BattleSide.ALLIED, alliedDefinitions),
+            BattleTeam(nextConfiguration.opposingTeamId, BattleSide.OPPOSING, opposingDefinitions),
+            techniqueDefinitions, initialItems, initialOpposingItems, trainerPolicies)
+        return copy(simulator = next, configuration = nextConfiguration)
+    }
+}
+
+internal fun canReuseBattleRenderAssets(
+    ready: Boolean,
+    previous: Map<String, BattleFighterPresentation>,
+    next: Map<String, BattleFighterPresentation>,
+    previousForms: Map<String, BattleFighterPresentation>,
+    nextForms: Map<String, BattleFighterPresentation>,
+): Boolean = ready && previous.isNotEmpty() && previous.keys == next.keys &&
+    previous.all { (id, art) -> next[id]?.setKey == art.setKey } &&
+    previousForms.keys == nextForms.keys && previousForms.all { (id, art) -> nextForms[id]?.setKey == art.setKey }
 
 /** Reads and extrudes user-owned sprite art before the 30 Hz simulation begins. */
 object TrainingBattlePresentationFactory {
@@ -91,12 +125,15 @@ object TrainingBattlePresentationFactory {
         opponents: List<OfflineBattleParticipant>,
         randomSeed: Long,
         arenaManifestPath: String = OfflineArenaManifest.DEFAULT_MANIFEST_PATH,
-        extraItems: List<com.github.nacabaro.vbhelper.battle.offline.core.BattleItemDefinition> = emptyList()
+        extraItems: List<com.github.nacabaro.vbhelper.battle.offline.core.BattleItemDefinition> = emptyList(),
+        arenaSpec: ArenaMatchSpec? = null,
     ): TrainingBattlePresentation = withContext(Dispatchers.IO) {
         val radar = arenaManifestPath == OfflineArenaManifest.RADAR_MANIFEST_PATH
-        require(allies.size in 1..2 && opponents.size in 1..2 && (radar || allies.size <= opponents.size))
+        require(allies.size in 1..2 && opponents.size in 1..2 && (radar || allies.size <= opponents.size)) {
+            "Arena formats are 1x1, 1x2 and 2x2 (yours ${allies.size}, opponents ${opponents.size})"
+        }
         require((allies + opponents).all { it.stableId.isNotBlank() }) { "Instância sem identidade." }
-        val alliedSources = allies.mapNotNull { it.character?.id }
+        val alliedSources = allies.mapNotNull { it.character?.id ?: it.sourceCharacterId }
         require(alliedSources.distinct().size == alliedSources.size) { "Um parceiro não pode ocupar dois slots aliados." }
         val combatantIds = allies.map { "ally:${it.stableId}" } + opponents.map { "opponent:${it.stableId}" }
         require(combatantIds.distinct().size == combatantIds.size) { "Cada combatente precisa ter uma instância própria." }
@@ -144,8 +181,8 @@ object TrainingBattlePresentationFactory {
         val attackSpriteManager = AttackSpriteManager(appContext)
         val hitEffectSpriteManager = HitEffectSpriteManager(appContext)
         val impactModels = buildMap {
-            hitEffectSpriteManager.loadHitSprite("hit_01")?.toResidentFrame()?.let { put("normal", SpriteExtrusionGlb.buildBillboard(it)) }
-            hitEffectSpriteManager.loadHitSprite("hit_02")?.toResidentFrame()?.let { put("special", SpriteExtrusionGlb.buildBillboard(it)) }
+            hitEffectSpriteManager.loadHitSprite("hit_01")?.toResidentFrame()?.let { put("normal", SpriteExtrusionGlb.buildBillboard(cropBattleImpactFrame(it))) }
+            hitEffectSpriteManager.loadHitSprite("hit_02")?.toResidentFrame()?.let { put("special", SpriteExtrusionGlb.buildBillboard(cropBattleImpactFrame(it))) }
         }
         try {
             val fighters = LinkedHashMap<String, BattleFighterPresentation>()
@@ -204,7 +241,7 @@ object TrainingBattlePresentationFactory {
                         setKey = "${combatantId}:${model.contentHashCode()}:${profile.stage}",
                         attackVisuals = attackVisuals(cardCharacterId, artId),
                         impactModels = impactModels,
-                        visualScaleMultiplier = battleFighterScaleMultiplier(profile.stage),
+                        visualScaleMultiplier = battleFighterScaleMultiplier(participant.visualStage ?: profile.stage),
                         specialDisplayName = profile.specialDisplayNameOverride,
                         speciesName = profile.speciesName,
                         attackProfile = resolveFinisherAttackProfile(profile.specialDisplayNameOverride),
@@ -220,14 +257,15 @@ object TrainingBattlePresentationFactory {
                 .map { TrainingBattleFactory.definition(it, BattleSide.OPPOSING) }
                 .map { withJogressConstraints(it, jogressConstraints) }
             val preparedForms = buildPreparedForms(db, blastData, resultProfiles, fighters,
-                initialAlliedDefinitions + initialOpposingDefinitions, ::posesForCharacter, ::attackVisuals, ::transition)
+                initialAlliedDefinitions + initialOpposingDefinitions, ::posesForCharacter, ::attackVisuals, ::transition,
+                arenaSpec?.resultSpecies.orEmpty(), spriteManager)
             fun enrichedDefinition(definition: CombatantDefinition): CombatantDefinition {
                 val form = preparedForms.values.firstOrNull {
                     it.combatantId == definition.combatantId && definition.blastMode == BlastEvolutionSlot.FORM &&
                         BlastEvolutionRepository.normalize(blastData, it.displayName) ==
                         BlastEvolutionRepository.normalize(blastData, definition.blastTargetSpecies.orEmpty())
                 }
-                return definition.copy(blastFormSpecial = form?.specialDisplayName)
+                return definition.copy(blastFormSpecial = form?.specialDisplayName ?: definition.blastFormSpecial)
             }
             val alliedDefinitions = initialAlliedDefinitions.map(::enrichedDefinition)
             val opposingDefinitions = initialOpposingDefinitions.map(::enrichedDefinition)
@@ -241,7 +279,7 @@ object TrainingBattlePresentationFactory {
                 alt?.let { definition.combatantId to it }
             }.toMap()
             // Use these exact enriched definitions in both the simulator and the presentation.
-            val configuration = BattleConfiguration(
+            val configuration = (arenaSpec?.configuration ?: BattleConfiguration()).copy(
                 randomSeed = randomSeed,
                 defaultPaused = true,
                 arenaRadius = arenaManifest.playableRadius,
@@ -249,14 +287,24 @@ object TrainingBattlePresentationFactory {
                 lineupDepthRatio = arenaManifest.lineupDepthRatio,
                 minimumLineupDepth = arenaManifest.minimumLineupDepth,
             )
+            val techniques = arenaSpec?.let(TamerBattleFactory::techniques)
+                ?: GenericTechniqueCatalog.definitionsForVersion(configuration.rulesetVersion)
+            val items = if (arenaSpec != null) {
+                if (arenaSpec.tiebreakRound > 0) emptyList() else TamerBattleFactory.items(allies)
+            } else TrainingBattleFactory.trainingItems + extraItems
+            val opposingItems = if (arenaSpec != null && arenaSpec.tiebreakRound == 0) TamerBattleFactory.items(opponents) else emptyList()
+            val policies = arenaSpec?.let { mapOf(BattleSide.OPPOSING to it.right.policy) }.orEmpty()
             val simulator = BattleSimulator(
                 configuration = configuration,
                 alliedTeam = BattleTeam(configuration.alliedTeamId, BattleSide.ALLIED, alliedDefinitions),
                 opposingTeam = BattleTeam(configuration.opposingTeamId, BattleSide.OPPOSING, opposingDefinitions),
-                techniqueCatalog = GenericTechniqueCatalog.definitionsForVersion(configuration.rulesetVersion),
-                trainingItems = TrainingBattleFactory.trainingItems + extraItems,
+                techniqueCatalog = techniques,
+                trainingItems = items,
+                opposingItems = opposingItems,
+                trainerPolicies = policies,
             )
-            TrainingBattlePresentation(simulator, alliedDefinitions, opposingDefinitions, fighters, arenaManifest, altForms, preparedForms)
+            TrainingBattlePresentation(simulator, alliedDefinitions, opposingDefinitions, fighters, arenaManifest, altForms, preparedForms,
+                configuration, items, techniques, opposingItems, policies)
         } catch (failure: Throwable) {
             Log.e("OfflineBattle", "Could not create training battle art", failure)
             throw failure
@@ -276,6 +324,8 @@ object TrainingBattlePresentationFactory {
         posesForCharacter: suspend (Long) -> Map<String, ResidentFrameImage>?,
         attackVisuals: suspend (Long?, String) -> Map<String, Bitmap>,
         transition: (ByteArray, Map<String, ResidentFrameImage>) -> ByteArray,
+        pinnedResults: List<ArenaSpecies> = emptyList(),
+        spriteManager: IndividualSpriteManager,
     ): Map<String, BattleFighterPresentation> {
         val results = LinkedHashMap<String, BattleFighterPresentation>()
         val resultArt = mutableMapOf<String, BattleFighterPresentation?>()
@@ -287,7 +337,24 @@ object TrainingBattlePresentationFactory {
                 val normalizedTarget = BlastEvolutionRepository.normalize(blastData, target)
                 if (!resultArt.containsKey(normalizedTarget)) {
                     var importedResult: BattleFighterPresentation? = null
-                    for (profile in profiles[normalizedTarget].orEmpty()) {
+                    val pinned = pinnedResults.firstOrNull {
+                        BattleSpeciesIdentity.normalize(it.name) == BattleSpeciesIdentity.normalize(target)
+                    }
+                    if (pinned != null) {
+                        val poses = pinned.cardCharacterId?.let { posesForCharacter(it) }
+                            ?: pinned.assetId?.let { assetPoses(spriteManager, it) }
+                            ?: emptyMap()
+                        check(poses.isNotEmpty()) { "The equipped form $target needs its original artwork." }
+                        val model = SpriteExtrusionGlb.build(poses)
+                        val artId = pinned.assetId ?: "card:${pinned.cardCharacterId}"
+                        val special = pinned.specialMoves.firstOrNull()
+                        importedResult = BattleFighterPresentation(definition.combatantId, artId, target, model,
+                            poses.keys, "$normalizedTarget:$artId:${model.contentHashCode()}",
+                            attackVisuals(pinned.cardCharacterId, artId), base.impactModels,
+                            battleFighterScaleMultiplier(pinned.stage), special, pinned.name,
+                            resolveFinisherAttackProfile(special), transition(model, poses))
+                    }
+                    for (profile in if (pinned == null) profiles[normalizedTarget].orEmpty() else emptyList()) {
                         val poses = posesForCharacter(profile.cardCharacterId) ?: continue
                         val model = SpriteExtrusionGlb.build(poses)
                         val artId = "card:${profile.cardCharacterId}"
@@ -355,7 +422,7 @@ object TrainingBattlePresentationFactory {
         constraints: Map<String, Pair<List<String>, BattleAttribute?>>
     ): CombatantDefinition {
         val (species, attribute) = constraints[definition.combatantId] ?: return definition
-        return definition.copy(jogressPartnerSpecies = species, jogressPartnerAttribute = attribute)
+        return definition.copy(jogressPartnerSpecies = (definition.jogressPartnerSpecies + species).distinct(), jogressPartnerAttribute = attribute)
     }
 
     /**
@@ -381,30 +448,7 @@ object TrainingBattlePresentationFactory {
     }
 
     private fun OfflineBattleParticipant.toInput(): TrainingParticipantInput {
-        val identity = stableId
-        return TrainingParticipantInput(
-            instanceId = identity,
-            sourceCharacterId = character?.id,
-            externalCharacterId = externalCharacterId ?: assetCharacterId,
-            displayName = displayName,
-            stage = stage,
-            maxHealth = maxHp,
-            attack = attackPower,
-            strategy = BattleStrategy.BALANCED,
-            vitalStats = vitalStats,
-            attribute = attribute,
-            stableRngKey = stableRngKey,
-            personalityType = personalityType,
-            techniqueIds = techniqueIds,
-            initialHealth = initialHealth,
-            initialEnergy = initialEnergy,
-            aiProfile = aiProfile,
-            specialDisplayNameOverride = specialDisplayNameOverride,
-            blastMode = blastMode,
-            blastTargetSpecies = blastTargetSpecies,
-            jogressResultSpecies = jogressResultSpecies,
-            speciesName = speciesName
-        )
+        return TamerBattleFactory.input(this)
     }
 
     private fun databasePoses(character: CharacterDtos.CharacterWithSprites): Map<String, ResidentFrameImage> {

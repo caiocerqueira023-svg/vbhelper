@@ -92,7 +92,8 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
                 AppDatabase.MIGRATION_35_36,
                 AppDatabase.MIGRATION_36_37,
                 AppDatabase.MIGRATION_37_38,
-                AppDatabase.MIGRATION_38_39
+                AppDatabase.MIGRATION_38_39,
+                AppDatabase.MIGRATION_39_40
             )
             // Missing migrations must preserve the database, never erase individuals/chats.
             .addCallback(com.github.nacabaro.vbhelper.database.IndividualIntegrity.callback)
@@ -128,7 +129,8 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
                 runCatching {
                     context.assets.open("species_chat_examples.json").bufferedReader().use { it.readText() }
                 }.getOrNull()
-            }
+            },
+            spriteMatcher = com.github.nacabaro.vbhelper.species.bundledOfficialSpriteMatcher(context.assets)
         )
     }
 

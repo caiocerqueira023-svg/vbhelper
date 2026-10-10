@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface ScanScreenController {
     val secretsFlow: Flow<Secrets>
+    val transferStatus: Flow<String?> get() = kotlinx.coroutines.flow.flowOf(null)
     fun onClickRead(secrets: Secrets, onComplete: ()->Unit, onMultipleCards: (List<Card>) -> Unit)
     fun onClickCheckCard(secrets: Secrets, nfcCharacter: NfcCharacter, onComplete: () -> Unit)
     fun onClickWrite(secrets: Secrets, nfcCharacter: NfcCharacter, onComplete: () -> Unit)

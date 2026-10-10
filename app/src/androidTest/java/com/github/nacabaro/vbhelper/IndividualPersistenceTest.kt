@@ -59,6 +59,7 @@ class IndividualPersistenceTest {
             AppDatabase.MIGRATION_35_36,
             AppDatabase.MIGRATION_36_37,
             AppDatabase.MIGRATION_37_38,
+            AppDatabase.MIGRATION_38_39,
         )
         .addCallback(IndividualIntegrity.callback).build()
 
@@ -148,7 +149,7 @@ class IndividualPersistenceTest {
         assertEquals(before, TransferFingerprint.of(db.userCharacterDao().getCharacterSync(key)!!))
     }
 
-    @Test fun vitalWearExportPreservesBeTrainingAndStats() {
+    @Test fun vitalWearExportPreservesBeTrainingAndStats() = runBlocking {
         val key = store()
         markAsBe(key)
         val proto = com.github.nacabaro.vbhelper.source.VitalWearCharacterExporter(context, db).buildCharacterProto(key)
@@ -162,19 +163,25 @@ class IndividualPersistenceTest {
         assertEquals(individual, db.userCharacterDao().getCharacterSync(key)!!.individualId)
     }
 
-    @Test fun vitalWearExportKeepsCurrentZeroTrainingForVb() {
+    @Test fun freshStorageRowsInitializeBlastSlotsWithoutASqlDefault() = runBlocking {
+        store()
+        assertEquals(com.github.nacabaro.vbhelper.domain.device_data.BlastEvolutionSlot.NONE,
+            db.digimonIndividualDao().getIndividual(individual)?.blastMode)
+    }
+
+    @Test fun vitalWearExportKeepsCurrentZeroTrainingForVb() = runBlocking {
         val key = store()
         val proto = com.github.nacabaro.vbhelper.source.VitalWearCharacterExporter(context, db).buildCharacterProto(key)
         assertEquals(0L, proto.characterStats.trainingTimeRemainingInSeconds)
         assertEquals(30, proto.characterStats.trainedPp)
     }
 
-    @Test fun vitalWearExportRejectsMissingBeDataWithoutChangingIndividual() {
+    @Test fun vitalWearExportRejectsMissingBeDataWithoutChangingIndividual() = runBlocking {
         val key = store()
         db.openHelper.writableDatabase.execSQL("UPDATE UserCharacter SET characterType='BEDevice' WHERE id=?", arrayOf(key))
         val before = TransferFingerprint.of(db.userCharacterDao().getCharacterSync(key)!!)
         assertThrows(IllegalStateException::class.java) {
-            com.github.nacabaro.vbhelper.source.VitalWearCharacterExporter(context, db).buildCharacterProto(key)
+            runBlocking { com.github.nacabaro.vbhelper.source.VitalWearCharacterExporter(context, db).buildCharacterProto(key) }
         }
         assertEquals(before, TransferFingerprint.of(db.userCharacterDao().getCharacterSync(key)!!))
     }
@@ -490,7 +497,7 @@ class IndividualPersistenceTest {
         assertEquals(1, db.chatDao().getMessagesSync(individual).size)
     }
 
-    @Test fun migrationFrom17PreservesChatsStatsAndOutstandingTransfer() = runBlocking {
+    @Test fun migration17To18PreservesChatsStatsAndOutstandingTransfer() = runBlocking {
         val key = store(); personalData()
         val before = requireNotNull(db.userCharacterDao().getCharacterSync(key))
         val sql = db.openHelper.writableDatabase
@@ -498,13 +505,15 @@ class IndividualPersistenceTest {
         sql.execSQL("DROP TABLE WatchTransfer")
         AppDatabase.MIGRATION_16_17.migrate(sql)
         sql.execSQL("INSERT INTO WatchTransfer VALUES('old-token', ?, 1, 27, 2, 4, 40, 10, '2:2026:9:12;')", arrayOf(individual))
-        sql.version = 17
+        // Exercise the production receipt migration against its reconstructed old table.
+        // Relabelling a current database as version 17 incorrectly replays later migrations.
+        AppDatabase.MIGRATION_17_18.migrate(sql)
         db.close(); db = open()
         assertEquals(before, db.userCharacterDao().getCharacterSync(key))
         assertEquals("1stmaru", db.digimonIndividualDao().getIndividual(individual)?.nickname)
         assertEquals(1, db.chatDao().getMessagesSync(individual).size)
         assertEquals(individual, db.watchTransferDao().get("old-token")?.individualId)
-        assertEquals(28, db.openHelper.writableDatabase.version)
+        assertEquals(39, db.openHelper.writableDatabase.version)
     }
 
     @Test fun missingMigrationFailsWithoutErasingCharacters() {
@@ -523,7 +532,7 @@ class IndividualPersistenceTest {
         db = open()
     }
 
-    @Test fun migrationFrom20PreservesDataAndUnlocksOnlyTrustAbove75() = runBlocking {
+    @Test fun migrations20To22PreserveDataAndUnlockOnlyTrustAbove75() = runBlocking {
         val first = IndividualIdentity.generate()
         val second = IndividualIdentity.generate()
         seed("DigimonIndividual", mapOf("individualId" to first))
@@ -549,11 +558,12 @@ class IndividualPersistenceTest {
             "FarmMessageRecipient", "FarmReadState", "FarmResident", "FarmMessage",
             "FarmRelationship", "FarmMemory", "WildRelationship", "Farm",
         ).forEach { sql.execSQL("DROP TABLE `$it`") }
-        sql.version = 20
+        AppDatabase.MIGRATION_20_21.migrate(sql)
+        AppDatabase.MIGRATION_21_22.migrate(sql)
         db.close()
 
         db = open()
-        assertEquals(28, db.openHelper.writableDatabase.version)
+        assertEquals(39, db.openHelper.writableDatabase.version)
         assertEquals(2, count("WildRelationship"))
         assertNull(db.wildRelationshipDao().get(first)?.contactUnlockedAt)
         assertNotNull(db.wildRelationshipDao().get(second)?.contactUnlockedAt)

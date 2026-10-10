@@ -3,6 +3,8 @@ package com.github.nacabaro.vbhelper.components
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -26,12 +28,19 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceDeepPurple
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceElevatedPurple
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
@@ -179,13 +188,16 @@ fun ChatComposer(
     enabled: Boolean = true,
     singleLine: Boolean = false,
     maxLength: Int? = null,
-    errorMessage: String? = null
+    errorMessage: String? = null,
+    errorActionLabel: String? = null,
+    onErrorAction: (() -> Unit)? = null,
 ) {
     val canSend = enabled && !sending && value.isNotBlank()
 
     Column(
         modifier = modifier
             .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
             .background(SurfaceDeepPurple.copy(alpha = 0.72f))
             .cyberFrame()
             .padding(8.dp),
@@ -194,23 +206,27 @@ fun ChatComposer(
         errorMessage?.takeIf { it.isNotBlank() }?.let {
             Text(
                 text = it,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp).semantics { liveRegion = LiveRegionMode.Polite },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error
             )
+            if (errorActionLabel != null && onErrorAction != null) {
+                TextButton(onClick = onErrorAction) { Text(errorActionLabel) }
+            }
         }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.Bottom
         ) {
             TextField(
                 value = value,
                 onValueChange = { next ->
                     onValueChange(maxLength?.let(next::take) ?: next)
                 },
-                modifier = Modifier.weight(1f).heightIn(min = 52.dp),
+                modifier = Modifier.weight(1f).heightIn(min = 52.dp).testTag("chat-composer-input"),
+                label = { Text(stringResource(R.string.app_message_label)) },
                 placeholder = { Text(placeholder) },
                 enabled = enabled && !sending,
                 singleLine = singleLine,
@@ -238,19 +254,16 @@ fun ChatComposer(
                 )
             )
             VitalButton(
+                style = VitalButtonStyle.PRIMARY,
                 onClick = onSend,
-                modifier = Modifier.heightIn(min = 52.dp),
+                modifier = Modifier.heightIn(min = 52.dp).testTag("chat-composer-send"),
                 enabled = canSend,
-                borderColor = if (canSend) VitalCyan else SurfaceStroke,
-                contentColor = if (canSend) VitalCyan else TextSecondaryOnDark,
-                disabledContentColor = TextMutedOnDark,
-                containerColor = if (canSend) VitalCyan.copy(alpha = 0.1f) else SurfaceDeepPurple,
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp)
             ) {
                 if (sending) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
-                        color = VitalCyan,
+                        color = MaterialTheme.colorScheme.onSurface,
                         strokeWidth = 2.dp
                     )
                     Spacer(Modifier.width(8.dp))

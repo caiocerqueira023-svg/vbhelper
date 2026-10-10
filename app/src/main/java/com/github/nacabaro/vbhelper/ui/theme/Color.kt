@@ -45,5 +45,12 @@ val BattleErrorHint: Color @Composable @ReadOnlyComposable get() = LocalAppPalet
 val BattleDestructive: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.battleDestructive
 val BattleEnemyHealth: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.battleEnemyHealth
 val BattleTrack: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.battleTrack
+val BlastControl: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.blastControl
+val OnBlastControl: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.onBlastControl
+val BlastOutline: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.blastOutline
+val BlastTrack: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.blastTrack
+val BlastTarget: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.blastTarget
+val BlastProgress: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.blastProgress
+val BlastNeedle: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.blastNeedle
 val SceneTextShadow: Color @Composable @ReadOnlyComposable get() =
     if (LocalAppPalette.current.isDark) Color.Black else Color.White

@@ -1,0 +1,20 @@
+# Tamer Arena partner nicknames v2. Fields: tamerId|partner anchor|nickname|Wikimon page[|form species]
+# Only names the tamer actually uses for that partner in canon. Anchors must match
+# tamers.tsv; species forms and scaling never change which individual a nickname
+# belongs to, and guests keep their own nicknames. An optional form species
+# restricts the nickname to that resolved form, excluding missing-art fallbacks.
+taiga|Agumon|Digimaru|Taiga
+rina|V-dramon|V.V.|Shinomiya_Rina
+taichi-vtamer|V-dramon|Zeromaru|Zeromaru
+hideto|War Greymon|Warg|Omegamon_(V-Tamer)
+hideto|Metal Garurumon|Melga|Omegamon_(V-Tamer)
+kouta-next|Guilmon|Yukimura|Hirose_Kouta
+himari|Plotmon|Rikka|Oofuchi_Himari
+nicolai|Gaomon|Sashenka|Nicolai_Petrov
+akiho|Piyomon|Digitorin|Rindou_Akiho
+yuuya|Black War Greymon (X-Antibody)|Black|Kuga_Yuuya
+lili|Numemon|Catherine|Lili
+zudokan|Mega Seadramon|AKAGI|Zudokan
+zudokan|Lilimon|NAOMI|Zudokan
+zudokan|Triceramon|DINOGON|Zudokan
+shoma|Gaioumon|Noir|Omegamon_Alter-B|Omegamon Alter-B

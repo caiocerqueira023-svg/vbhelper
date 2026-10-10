@@ -311,7 +311,6 @@ fun ItemDisplay(
     modifier: Modifier = Modifier,
     definition: String = "",
 ) {
-    val context = LocalContext.current
     Card(
         modifier = modifier,
         shape = MaterialTheme.shapes.medium,
@@ -319,15 +318,12 @@ fun ItemDisplay(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
         border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceStroke),
-        onClick = {
-            Toast.makeText(context, definition, Toast.LENGTH_SHORT).show()
-        }
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
             modifier = Modifier
-                .fillMaxSize()
+                .fillMaxWidth()
                 .padding(6.dp)
         ) {
             Box(
@@ -340,7 +336,7 @@ fun ItemDisplay(
             ) {
                 Icon(
                     painter = painterResource(icon),
-                    contentDescription = definition,
+                    contentDescription = null,
                     tint = VitalCyan,
                     modifier = Modifier.fillMaxSize(0.55f)
                 )
@@ -349,6 +345,7 @@ fun ItemDisplay(
                 text = textValue,
                 textAlign = TextAlign.Center,
                 fontFamily = MaterialTheme.typography.titleMedium.fontFamily,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimaryOnDark,
                 maxLines = 1,
@@ -358,8 +355,7 @@ fun ItemDisplay(
                 Text(
                     text = definition,
                     textAlign = TextAlign.Center,
-                    fontSize = 10.sp,
-                    lineHeight = 11.sp,
+                    style = MaterialTheme.typography.labelSmall,
                     color = TextMutedOnDark,
                     minLines = 2,
                     maxLines = 2

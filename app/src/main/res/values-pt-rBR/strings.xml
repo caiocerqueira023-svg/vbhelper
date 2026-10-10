@@ -201,7 +201,7 @@
     <string name="card_import_file_number">Arquivo %1$d</string>
     <string name="card_import_file_issue">Não foi possível importar este arquivo. Verifique-o e tente novamente.</string>
     <string name="card_import_origin_issue">O card foi salvo. Defina Oficial ou Custom no card da lista.</string>
-    <string name="card_origin_help">Cards oficiais permitem reconhecimento automático de espécies. Cards customizados permitem escolher as espécies manualmente.</string>
+    <string name="card_origin_help">Cards oficiais permitem reconhecimento automático de espécies. Cards customizados reconhecem espécies quando todos os quadros dos sprites são idênticos aos oficiais. Você também pode escolher as espécies manualmente.</string>
 
     <string name="card_view_discovered_characters">Personagens descobertos</string>
     <string name="dex_chart_title">Dex de evolução</string>

@@ -77,7 +77,8 @@ class CardImportProvider : ContentProvider() {
                             db.cardDao().getCardByCardId(dimId).isNotEmpty()
 
                         if (!alreadyExists) {
-                            val importedCardId = CardImportController(db).importCard(cardBytes.inputStream())
+                            val importedCardId = CardImportController(db, application.container.speciesRepository)
+                                .importCard(cardBytes.inputStream())
                             // Rename to the user's custom label if it differs from the DIM's text
                             if (!customName.isNullOrBlank() && customName != builtInName) {
                                 db.cardDao().getCardByName(builtInName)?.let { card ->

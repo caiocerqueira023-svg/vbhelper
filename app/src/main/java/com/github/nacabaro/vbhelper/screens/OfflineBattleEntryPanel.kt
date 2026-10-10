@@ -62,7 +62,7 @@ data class OfflineBattleParticipant(
     val vitalStats: VitalBattleProfile? = null,
     val attribute: BattleAttribute = BattleAttribute.NONE,
     val individualId: String? = null,
-    val stableRngKey: String = individualId ?: assetCharacterId ?: character?.id?.toString() ?: displayName,
+    val stableRngKey: String = individualId?.takeIf { it.isNotBlank() } ?: assetCharacterId ?: character?.id?.toString() ?: displayName,
     val personalityType: DigimonPersonalityType = DigimonPersonalityType.FRIENDLY,
     val techniqueIds: List<String> = GenericTechniqueCatalog.defaultTechniqueIds,
     val spriteSet: OfflineBattleSpriteSet? = null,
@@ -81,6 +81,16 @@ data class OfflineBattleParticipant(
     /** Local species key for wild participants; stored partners use character.charId. */
     val cardCharacterId: Long? = null,
     val aiProfile: BattleAiProfile = BattleAiProfile(),
+    val battleInstanceId: String? = null,
+    val sourceCharacterId: Long? = null,
+    val strategy: com.github.nacabaro.vbhelper.battle.offline.core.BattleStrategy = com.github.nacabaro.vbhelper.battle.offline.core.BattleStrategy.BALANCED,
+    val battleTechniques: List<com.github.nacabaro.vbhelper.battle.offline.core.TechniqueDefinition> = emptyList(),
+    val specialTechniqueId: String? = null,
+    val jogressPartnerSpecies: List<String> = emptyList(),
+    val jogressSpecial: String? = null,
+    val blastFormSpecial: String? = null,
+    /** The actual documented form's size; independent of a stat-scaled arena tier. */
+    val visualStage: Int? = null,
     val statSourceScale: BattleStatSourceScale = when (vitalStats?.scale) {
         VitalStatScale.DIM -> BattleStatSourceScale.CARD_DIM
         VitalStatScale.BEM -> BattleStatSourceScale.CARD_BEM
@@ -90,7 +100,11 @@ data class OfflineBattleParticipant(
     }
 ) {
     val stableId: String
-        get() = individualId ?: character?.id?.toString() ?: assetCharacterId ?: displayName
+        get() = battleInstanceId?.takeIf { it.isNotBlank() }
+            ?: individualId?.takeIf { it.isNotBlank() }
+            ?: character?.id?.toString()
+            ?: assetCharacterId
+            ?: displayName
 
     fun trainingStats(): TrainingBattleStats = TrainingBattleStats.forParticipant(stage, vitalStats)
 }

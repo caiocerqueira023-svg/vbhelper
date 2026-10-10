@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.Spacer
@@ -36,6 +37,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.TextButton
+import com.github.nacabaro.vbhelper.components.showAppFeedback
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.draw.scale
@@ -1539,19 +1544,22 @@ fun BattlesScreen(
 ) {
     val TAG = "BattleScreen"
     val context = LocalContext.current
+    val battleScope = rememberCoroutineScope()
+    val api = remember(battleScope) { RetrofitHelper(battleScope) }
     val resources = LocalResources.current
     val allowMotion = motionEnabled()
     var currentView by rememberSaveable { mutableStateOf("main") }
     val offlineBattleViewModel = offlineBattleViewModel(
         LocalViewModelStoreOwner.current ?: error("BattlesScreen precisa de um ViewModelStoreOwner.")
     )
+    var tamerBattleActive by remember { mutableStateOf(false) }
 
-    LaunchedEffect(currentView) {
-        onFullScreenBattleChanged(currentView == "offline-battle")
+    LaunchedEffect(currentView, tamerBattleActive) {
+        onFullScreenBattleChanged(currentView == "offline-battle" || currentView == "tamer-arena" && tamerBattleActive)
     }
 
-    LaunchedEffect(currentView) {
-        val track = if (currentView == "battle-main" || currentView == "offline-battle") {
+    LaunchedEffect(currentView, tamerBattleActive) {
+        val track = if (currentView == "battle-main" || currentView == "offline-battle" || currentView == "tamer-arena" && tamerBattleActive) {
             BattleAssetPaths.BATTLE_MUSIC
         } else {
             BattleAssetPaths.HOME_MUSIC
@@ -1571,6 +1579,9 @@ fun BattlesScreen(
     var processedTokens by rememberSaveable { mutableStateOf<Set<String>>(emptySet()) }
 
     var opponentsList by remember { mutableStateOf(ArrayList<APIBattleCharacter>()) }
+    var opponentsLoading by remember { mutableStateOf(false) }
+    var opponentsFailed by remember { mutableStateOf(false) }
+    var opponentsRetry by rememberSaveable { mutableIntStateOf(0) }
 
     var activeCharacter by remember { mutableStateOf<APIBattleCharacter?>(null) }
     var selectedOpponent by remember { mutableStateOf<APIBattleCharacter?>(null) }
@@ -1658,7 +1669,8 @@ fun BattlesScreen(
     
     // Load opponents automatically based on player's stage
     // Only load if authenticated and character is ready
-    LaunchedEffect(activeUserCharacter, isAuthenticated) {
+    // Opponents depend on stage/authentication, not every stored vitals or mood update.
+    LaunchedEffect(playerBattleType, isAuthenticated, opponentsRetry) {
         // Wait for authentication to complete before loading opponents
         if (!isAuthenticated) {
             return@LaunchedEffect
@@ -1666,20 +1678,20 @@ fun BattlesScreen(
         
         val currentCharacter = activeUserCharacter
         if (currentCharacter != null && canBattle && playerBattleType != null) {
+            opponentsLoading = true
+            opponentsFailed = false
+            var received = false
+            var request: kotlinx.coroutines.Job? = null
             try {
-                RetrofitHelper().getOpponents(context, playerBattleType) { opponents ->
-                    try {
-                        // Create a new list to trigger UI recomposition
-                        opponentsList = ArrayList(opponents.opponentsList)
-                        } catch (e: Exception) {
-                            Log.d(TAG, "Error processing opponents data: ${e.message}")
-                            e.printStackTrace()
-                        }
-                    }
-                } catch (e: Exception) {
-                    Log.d(TAG,"Error calling getOpponents: ${e.message}")
-                    e.printStackTrace()
+                request = api.getOpponents(context, playerBattleType) { opponents ->
+                    opponentsList = ArrayList(opponents.opponentsList)
+                    received = true
                 }
+                request.join()
+                opponentsFailed = !received
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { opponentsFailed = true }
+            finally { request?.cancel(); opponentsLoading = false }
         } else {
             println("BATTLESCREEN: Cannot load opponents - activeUserCharacter: $currentCharacter")
             println("BATTLESCREEN: canBattle: $canBattle")
@@ -1709,8 +1721,9 @@ fun BattlesScreen(
                 processedTokens = processedTokens + token
                 
                 // Exchange token with battle server
-                RetrofitHelper().authenticate(context, token) { response ->
-                    if (response.success) {
+                isCheckingAuth = true
+                api.authenticate(context, token) { response ->
+                    if (response.success && response.userInfo?.userId?.toLongOrNull() != null) {
                         // Extract userId and sessionToken from response
                         val extractedUserId = response.userInfo?.userId?.toLongOrNull()
                         val sessionToken = response.sessionToken
@@ -1718,33 +1731,38 @@ fun BattlesScreen(
                         println("BATTLESCREEN: Authentication successful, userId: $extractedUserId, sessionToken: ${if (sessionToken != null) "present" else "missing"}")
                         
                         // Store both nacatech token (for re-auth) and sessionToken (for API calls)
-                        kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
-                            battleAuthContainer.authRepository.setAuthenticated(
+                        battleScope.launch {
+                            try {
+                            withContext(Dispatchers.IO) { battleAuthContainer.authRepository.setAuthenticated(
                                 isAuthenticated = true,
                                 nacatechToken = token,
                                 sessionToken = sessionToken,
                                 userId = extractedUserId
-                            )
-                        }
-                        // Update UI state on main thread
-                        kotlinx.coroutines.CoroutineScope(Dispatchers.Main).launch {
+                            ) }
                             isAuthenticated = true
                             isCheckingAuth = false
                             userId = extractedUserId
                             println("BATTLESCREEN: Authentication successful, userId: $extractedUserId")
-                            android.widget.Toast.makeText(context, resources.getString(R.string.ui_auth_success), android.widget.Toast.LENGTH_SHORT).show()
+                            context.showAppFeedback(R.string.ui_auth_success)
+                            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                            catch (_: Exception) {
+                                isAuthenticated = false
+                                isCheckingAuth = false
+                                context.showAppFeedback(R.string.app_auth_recovery, important = true)
+                            }
                         }
                     } else {
+                        isCheckingAuth = false
                         println("BATTLESCREEN: Authentication failed: ${response.message}")
                         // If it's an "Invalid user nonce" error, the token was already used - keep it marked to prevent retries
-                        if (response.message?.contains("Invalid user nonce") == true || response.message?.contains("nonce") == true) {
+                        if (response.failureCode in listOf(401, 403) || response.message?.contains("Invalid user nonce") == true || response.message?.contains("nonce") == true) {
                             println("BATTLESCREEN: Token was already used (Invalid user nonce), keeping it marked to prevent retries")
                             // Token already marked as processed, just handle the error
                             // Clear authentication state and open login page
-                            kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+                            battleScope.launch(Dispatchers.IO) {
                                 battleAuthContainer.authRepository.logout()
                             }
-                            kotlinx.coroutines.CoroutineScope(Dispatchers.Main).launch {
+                            battleScope.launch {
                                 isAuthenticated = false
                                 isCheckingAuth = false
                                 // Keep the user in the battle screen; re-authentication is now explicit.
@@ -1754,15 +1772,19 @@ fun BattlesScreen(
                             // For other errors, remove from processed set to allow retry with a new token
                             println("BATTLESCREEN: Authentication failed, removing token from processed set to allow retry")
                             processedTokens = processedTokens - token
+                            isAuthenticated = false
                         }
-                        // Show toast on main thread
-                        kotlinx.coroutines.CoroutineScope(Dispatchers.Main).launch {
-                            android.widget.Toast.makeText(context, resources.getString(R.string.ui_auth_failed, response.message), android.widget.Toast.LENGTH_SHORT).show()
-                        }
+                        // Keep sign-in failure actionable without exposing server details.
+                        context.showAppFeedback(R.string.app_auth_recovery, important = true)
                     }
                 }
+            } else {
+                // A recreated screen must not exchange a single-use callback again.
+                isCheckingAuth = false
+                if (userId == null) isAuthenticated = false
             }
         } else {
+            isCheckingAuth = false
             println("BATTLESCREEN: No token found in URI: $uri (checked 'c' and 'token' parameters)")
         }
     }
@@ -1782,7 +1804,7 @@ fun BattlesScreen(
             
             // If we have a stored token, set authenticated state optimistically FIRST (before checking deep links)
             // This must happen immediately to prevent UI from showing "Checking authentication"
-            if (localAuthState && storedToken != null && storedToken.isNotEmpty()) {
+            if (localAuthState && storedToken != null && storedToken.isNotEmpty() && storedUserId != null) {
                 // Set authenticated state immediately to prevent redirect on rotation and show UI
                 isAuthenticated = true
                 isCheckingAuth = false
@@ -1817,16 +1839,17 @@ fun BattlesScreen(
                 // We have a token but no userId - try to validate once to get userId
                 // This should only happen on first login or if userId was lost
                 println("BATTLESCREEN: Have token but no userId, validating once to get userId...")
-                RetrofitHelper().authenticate(context, storedToken) { response ->
+                api.authenticate(context, storedToken) { response ->
                     // Update UI on main thread
-                    kotlinx.coroutines.CoroutineScope(Dispatchers.Main).launch {
-                        if (response.success) {
+                    battleScope.launch {
+                        try {
+                        if (response.success && response.userInfo?.userId?.toLongOrNull() != null) {
                             val extractedUserId = response.userInfo?.userId?.toLongOrNull()
                             val sessionToken = response.sessionToken
                             
                             // Update stored userId and sessionToken
                             if (extractedUserId != null) {
-                                kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+                                withContext(Dispatchers.IO) {
                                     authRepository.setAuthenticated(
                                         isAuthenticated = true,
                                         nacatechToken = storedToken,
@@ -1842,7 +1865,7 @@ fun BattlesScreen(
                         } else {
                             println("BATTLESCREEN: Token validation failed: ${response.message}")
                             // Check if it's a critical error that requires re-authentication
-                            val isCriticalError = response.message?.contains("Invalid user nonce") == true || 
+                            val isCriticalError = response.failureCode in listOf(401, 403) || response.message?.contains("Invalid user nonce") == true ||
                                                   response.message?.contains("nonce") == true ||
                                                   response.message?.contains("invalid") == true ||
                                                   response.message?.contains("expired") == true
@@ -1850,7 +1873,7 @@ fun BattlesScreen(
                             if (isCriticalError) {
                                 // Critical error - token is invalid, need to re-authenticate
                                 println("BATTLESCREEN: Critical authentication error, clearing state and showing sign-in action")
-                                kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+                                battleScope.launch(Dispatchers.IO) {
                                     authRepository.logout()
                                 }
                                 isAuthenticated = false
@@ -1858,9 +1881,15 @@ fun BattlesScreen(
                             } else {
                                 // Non-critical error (e.g., network issue) - keep authenticated state
                                 println("BATTLESCREEN: Non-critical validation error, keeping authenticated state")
-                                isAuthenticated = true
+                                isAuthenticated = storedUserId != null
                                 isCheckingAuth = false
                             }
+                        }
+                        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                        catch (_: Exception) {
+                            isAuthenticated = false
+                            isCheckingAuth = false
+                            context.showAppFeedback(R.string.app_auth_recovery, important = true)
                         }
                     }
                 }
@@ -2131,7 +2160,7 @@ fun BattlesScreen(
         topBar = {
             AnimatedVisibility(
                 visible = currentView != "battle-main" && currentView != "battle-results" &&
-                    currentView != "offline-battle",
+                    currentView != "offline-battle" && currentView != "tamer-arena",
                 enter = slideInVertically(
                     animationSpec = tween(if (allowMotion) 240 else 0, easing = FastOutSlowInEasing),
                     initialOffsetY = { -it }
@@ -2180,6 +2209,18 @@ fun BattlesScreen(
                             .padding(horizontal = 16.dp, vertical = 8.dp)
                     )
 
+                    CyberPanel(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)) {
+                        Text(stringResource(R.string.arena_title), style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.arena_entry_subtitle), style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        com.github.nacabaro.vbhelper.components.VitalButton(onClick = { currentView = "tamer-arena" },
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+                            style = com.github.nacabaro.vbhelper.components.VitalButtonStyle.PRIMARY) {
+                            Text(stringResource(R.string.arena_entry_action))
+                        }
+                    }
+
                     // Show loading/authentication message if not authenticated
                     if (isCheckingAuth || !isAuthenticated) {
                         BattleAuthenticationPrompt(
@@ -2189,11 +2230,7 @@ fun BattlesScreen(
                                 try {
                                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(authUrl)))
                                 } catch (e: Exception) {
-                                    android.widget.Toast.makeText(
-                                        context,
-                                        R.string.ui_battle_auth_open_failed,
-                                        android.widget.Toast.LENGTH_SHORT
-                                    ).show()
+                                    context.showAppFeedback(R.string.ui_battle_auth_open_failed, important = true)
                                 }
                             }
                         )
@@ -2241,7 +2278,12 @@ fun BattlesScreen(
                                     //Text("Debug: opponentsList.size = ${opponentsList.size}", fontSize = 12.sp, color = Color.Gray)
                                     Spacer(modifier = Modifier.height(8.dp))
                                     
-                                    if (opponentsList.isNotEmpty()) {
+                                    if (opponentsLoading) {
+                                        CircularProgressIndicator()
+                                    } else if (opponentsFailed) {
+                                        Text(stringResource(R.string.app_request_recovery), color = TextSecondaryOnDark)
+                                        TextButton(onClick = { opponentsRetry++ }) { Text(stringResource(R.string.app_retry)) }
+                                    } else if (opponentsList.isNotEmpty()) {
                                         // This list is part of the screen's single scroll surface.
                                         Column(
                                             modifier = Modifier
@@ -2266,7 +2308,7 @@ fun BattlesScreen(
                                                                 else -> 0
                                                             }
                                                             
-                                                            RetrofitHelper().getPVPWinner(context, 0, userId ?: 2L, cardId, apiStage, 0, opponent.charaId, apiStage) { apiResult ->
+                                                            api.getPVPWinner(context, 0, userId ?: 2L, cardId, apiStage, 0, opponent.charaId, apiStage) { apiResult ->
                                                                 // Check if there's an existing match
                                                                 when {
                                                                     apiResult.status.contains("Existing match found", ignoreCase = true) -> {
@@ -2362,6 +2404,15 @@ fun BattlesScreen(
                         modifier = Modifier.fillMaxSize()
                     )
                 }
+
+                "tamer-arena" -> com.github.nacabaro.vbhelper.screens.tamerArena.TamerArenaScreen(
+                    viewModel = com.github.nacabaro.vbhelper.screens.tamerArena.tamerArenaViewModel(context,
+                        LocalViewModelStoreOwner.current ?: error("Tamer Arena needs a ViewModel owner.")),
+                    battleViewModel = offlineBattleViewModel,
+                    onBack = { currentView = "main" },
+                    onBattleActiveChanged = { tamerBattleActive = it },
+                    modifier = Modifier.fillMaxSize(),
+                )
 
                 "offline-battle" -> OfflineTrainingBattleScreen(
                     viewModel = offlineBattleViewModel,
@@ -2517,7 +2568,7 @@ fun BattlesScreen(
                                 playerWonResult = finalPlayerWon
                                 
                                 // Update battle stats in database using the most reliable determination
-                                kotlinx.coroutines.CoroutineScope(Dispatchers.IO).launch {
+                                battleScope.launch(Dispatchers.IO) {
                                     try {
                                         val application = context.applicationContext as VBHelper
                                         val database = application.container.db

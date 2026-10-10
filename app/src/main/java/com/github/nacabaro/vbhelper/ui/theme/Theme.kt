@@ -47,6 +47,7 @@ fun VBHelperTheme(
     }
     CompositionLocalProvider(
         LocalAppPalette provides palette,
+        LocalAppTheme provides appTheme,
         LocalMinimumInteractiveComponentSize provides 48.dp,
     ) {
         MaterialTheme(

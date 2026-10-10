@@ -35,6 +35,7 @@ import com.github.nacabaro.vbhelper.ui.theme.VBHelperTheme
 import com.github.nacabaro.vbhelper.source.AppThemeSettings
 import androidx.compose.ui.graphics.toArgb
 import com.github.nacabaro.vbhelper.components.TechBackground
+import com.github.nacabaro.vbhelper.components.showAppFeedback
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -148,18 +149,16 @@ class MainActivity : AppCompatActivity() {
                     VitalWearCharacterImporter(application.container.db).importCharacter(character)
                 } ?: VitalWearCharacterImporter.ImportResult(
                     success = false,
-                    message = "VitalWear import file could not be opened."
+                    message = getString(R.string.app_transfer_import_failed)
                 )
             }.getOrElse {
                 VitalWearCharacterImporter.ImportResult(
                     success = false,
-                    message = "VitalWear import failed: ${it.message ?: "Unknown error"}"
+                    message = getString(R.string.app_transfer_import_failed)
                 )
             }
 
-            runOnUiThread {
-                Toast.makeText(this@MainActivity, result.message, Toast.LENGTH_LONG).show()
-            }
+            application.feedback.transfer(result.message)
         }
     }
 

@@ -99,7 +99,7 @@ fun StorageScreen(
         }
     }
 
-    var selectedCharacter by remember { mutableStateOf<Long?>(null) }
+    var selectedCharacter by rememberSaveable { mutableStateOf<Long?>(null) }
     var showScanCollection by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableStateOf(StorageFilter.ALL) }

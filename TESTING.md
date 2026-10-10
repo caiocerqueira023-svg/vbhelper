@@ -1,5 +1,165 @@
 # Regression checks
 
+## Character-specific tamer histories and genuine-gap stat scaling
+
+- Audited all 223 roster entries against their character/partner histories.
+  `TamerCanonicalPartnersTest` passed **22 cases**, including a roster-wide
+  synthetic-art check over 350+ documented primary-stage selections, continuity
+  differences, mandatory combined partners, mixed-stage component exclusion,
+  guest-owned Blast forms and legacy cup refresh without player/seed changes.
+- Consolidated offline battle, presentation, NPC replay and Radar-flow regression
+  run: **272 tests, zero failures or skips**. The initial run caught a spelling
+  alias typo (Grap/Grappu Leomon); it was corrected before the successful rerun.
+- Bundled-art availability evidence: **164 Rookie-tier 1×1 teams** and **135
+  Champion-tier 2×2 teams**. These counts include explicitly labeled stat-scaled
+  documented forms, not invented evolutions. Canonical artwork requirements remain
+  enforced when a form at the requested stage is documented.
+- Research parser checks: **four passes** covering comment/citation exclusion,
+  nested templates and separate Hybrid/DigiXros evidence.
+- Debug and integrity APK assembly, Android-test assembly and lint with the
+  existing baseline passed. No lint baseline expansion.
+- On the connected Android device, both `ArenaPersistenceTest` cases passed
+  against actual Room: concurrent settlement credits one reward; an overflowing
+  wallet rolls back the result/receipt and permits a clean retry. Only the isolated
+  `.integritycheck` application was installed for these checks.
+
+```powershell
+.\gradlew.bat :app:testIntegrityCheckUnitTest --tests "com.github.nacabaro.vbhelper.battle.offline.*" --tests "com.github.nacabaro.vbhelper.screens.offlineBattle.*" --tests "com.github.nacabaro.vbhelper.world.ecosystem.NpcBattle*Test" --tests "com.github.nacabaro.vbhelper.world.RadarBattleFlowTest" :app:lintDebug :app:assembleDebug :app:assembleIntegrityCheck :app:assembleIntegrityCheckAndroidTest --offline --console=plain --max-workers=1
+py -3 -B tools/test_audit_tamer_canon.py
+```
+
+See `TAMER_CANON_AUDIT.md` for evidence policy and source gaps, and
+`TAMER_ARENA_IMPLEMENTATION.md` for registration/recovery behavior.
+
+## Tamer Arena lobby polish (refinement, same behavior)
+
+- Reworked the lobby into one compact native header, a collapsed team summary
+  with a dedicated setup editor, search/franchise/Ready filters, larger
+  pixel-sprite roster rows with missing-artwork reasons, and a team briefing that
+  leads with the real opponent team (owned/associated/guest/combined/scaled
+  labels), tactics, inspected partner stats, attack geometry, finishers, shared
+  supplies and exact rewards. Cups use summary cards with round progress and a
+  per-round bracket; results keep damage/item/time breakdowns in place while the
+  next match prepares, and matching rematches reuse prepared render resources.
+- Follow-up compression: the team summary is now a single 48dp row
+  (partners/stages, format, difficulty, Change), filters share one scrollable
+  chip row, and roster rows dropped to 88dp with smaller sprites, so the list
+  owns the screen. Results/finishers/battle rules are unchanged.
+- Fusion-duo follow-up: owned DigiXros pairs (Taiki's Shoutmon + Ballistamon,
+  Kiriha's Greymon + MailBirdramon, Shoma's Gaioumon + Kuzuhamon) are permitted
+  their combined finishers, and the 02 DNA partners complete each other's teams
+  as late guest alternatives, so Paildramon, Silphymon and Shakkoumon equip when
+  both components field. Shoma is the solo-only variant: alone at Mega he fields
+  Alter-B (Noir), beside Kuzuhamon he fields Gaioumon and equips the Jogress.
+  Owned companions and guests compete openly for the second slot: completing an
+  approved fusion wins, owned beats guest on ties. Absorbed fusion components
+  can never reappear beside their own combined form, and the fusion movie stays
+  gated on result artwork (Shoutmon X2 and Omegamon Alter-B ship without bundled
+  sprites, so Taiki's and Shoma's pairs fight until their cards are imported).
+- Hardened the 2×2 challenge path behind a "Failed requirement" report: blank
+  stored identities now fall through to usable fallbacks, frozen arena stages
+  are coerced to the 0–5 tier both sides mirror, and every previously bare
+  validation in match setup, settlement and tournament creation names its
+  problem. Behavior for valid setups is unchanged.
+- Shared `CyberPanel`/`VitalButton` controls replace one-off rounded actions; no
+  new raster assets or tamer portraits were added. Results/finishers/battle rules
+  are unchanged.
+- `ArenaPresentationTest` (3 cases) covers Ready filtering with alias search,
+  no-partner browsing, and displayed base rewards matching the settlement rule.
+  `TamerArenaLayoutTest` (4 cases, Android) covers search → briefing → challenge,
+  team editor at 1.3× font, two-partner briefing with the Challenge action pinned,
+  and records/cup creation across all four app themes; it compiles but has not
+  executed yet because the wireless device dropped mid-pass (`adb reconnect`
+  finds nothing; re-enable wireless debugging to run it).
+- Focused suites pass: **52 arena tests, zero failures** (12 arena, 26 canonical,
+  2 roster-assets, 1 sweep, 3 presentation, 8 nicknames). `lintDebug`,
+  `assembleDebug`, `assembleIntegrityCheck` and `assembleIntegrityCheckAndroidTest`
+  pass with the existing baseline unexpanded. Partner nicknames (Digimaru, V.V.,
+  Zeromaru, Warg/Melga, Yukimura, Rikka, Sashenka, Digitorin, Black, Catherine,
+  AKAGI/NAOMI/DINOGON) resolve per partner, travel with guests, never leak
+  across tamers, and appear in battles, briefings, roster rows and search.
+- Shoma's **Noir** nickname is restricted to his resolved solo Omegamon Alter-B
+  form. `TamerNicknamesTest` also covers loaded Alter-B display/species identity,
+  the unnamed 2×2 Gaioumon/Kuzuhamon pair, and the Gaioumon fallback when Alter-B
+  artwork is missing.
+
+```powershell
+.\gradlew.bat :app:testIntegrityCheckUnitTest --tests "com.github.nacabaro.vbhelper.battle.offline.TamerArenaTest" --tests "com.github.nacabaro.vbhelper.battle.offline.TamerCanonicalPartnersTest" --tests "com.github.nacabaro.vbhelper.battle.offline.TamerRosterAssetsTest" --tests "com.github.nacabaro.vbhelper.screens.tamerArena.*" --offline --console=plain --max-workers=1
+.\gradlew.bat :app:lintDebug :app:assembleDebug :app:assembleIntegrityCheck :app:assembleIntegrityCheckAndroidTest --offline --console=plain --max-workers=1
+```
+
+This pass does not establish on-device visual acceptance of the polished lobby;
+run `TamerArenaLayoutTest` on the reconnected device and inspect its
+`tamer-arena-polish` captures before calling the polish finished.
+
+## Home/navigation corrections and warm rematch
+
+- Restored the compact cut-corner bottom bar with tab semantics and retained
+  overflow navigation; removed the Home VitalWear footer. The three partner stat
+  panels again share a square column matching the Digimon portrait's overall height.
+- Home retains its latest loaded snapshots across navigation, reads history separately,
+  and does not block an existing partner on watch setup, the Dex catalog or history repair.
+- Training rematch restarts the simulator from captured definitions/configuration/items,
+  retaining base/result art and the arena. Render-resource reuse is limited to ready,
+  matching base and transformed assets; renderer failure/different art still reloads.
+- Full app JVM run: **599 cases, zero failures, three existing private-fixture skips**.
+  Reader tests, lint with the existing baseline and debug APK assembly passed.
+- Samsung SM-A346M / Android 15: all eight `UiRefinementsTest` cases passed. The
+  focused `OfflineBattleRematchTest` then passed against actual Filament: same scene
+  instance and asset generation, the same prepared maps, reset outcome and resumed
+  combat, **zero additional fighter GLB uploads**, and no loading overlay on rematch.
+- The first combined device run reached eight successful UI cases but the rematch
+  test waited for global Compose idleness in a continuously rendered arena. Its action
+  now runs directly on the UI thread (the same ViewModel action used by the button),
+  and the focused rerun passed. This is a test synchronization correction.
+
+```powershell
+.\gradlew.bat test :app:lintDebug :app:assembleDebug :app:assembleIntegrityCheckAndroidTest --offline --console=plain --max-workers=2
+.\gradlew.bat :app:connectedIntegrityCheckAndroidTest --offline --console=plain --max-workers=2 "-Pandroid.testInstrumentationRunnerArguments.class=com.github.nacabaro.vbhelper.ui.UiRefinementsTest,com.github.nacabaro.vbhelper.OfflineBattleRematchTest"
+```
+
+## UI refinements 1–6 (native device verification)
+
+Implemented shared typography/action hierarchy and three-palette Blast controls,
+Material navigation and safe inset ownership, actionable Home readiness/setup,
+shared transient feedback with persistent transfer status, non-blocking exports
+and battle requests, and restored conversation/editor drafts.
+
+```powershell
+.\gradlew.bat test :app:lintDebug :app:assembleDebug --offline --console=plain --max-workers=2
+.\gradlew.bat :app:connectedIntegrityCheckAndroidTest --offline --console=plain --max-workers=2 "-Pandroid.testInstrumentationRunnerArguments.class=com.github.nacabaro.vbhelper.ui.UiRefinementsTest,com.github.nacabaro.vbhelper.IndividualPersistenceTest,com.github.nacabaro.vbhelper.ui.theme.AppThemeSelectionTest"
+```
+
+- Full app JVM evidence: **596 cases, zero failures, three existing private-fixture
+  skips**. Reader tests and debug APK assembly passed.
+- Lint passed with the existing baseline, **zero unfiltered errors**, 208 warnings
+  and seven hints. The baseline was not expanded.
+- Real device: **Samsung SM-A346M, Android 15**, separate `.integritycheck`
+  installation. The broad final device pass verified 47 cases; the two corrected
+  legacy migration fixtures passed in a focused rerun: **49 distinct checks verified**.
+- Eight `UiRefinementsTest` cases exercise the real UI components: readiness-driven
+  setup and visible fixed actions; saved chat draft; preserved input and safe error
+  copy; selected/labeled compact navigation; short-window rail scrolling; small-window
+  large-font empty-state actions; non-overlapping scaled stat text; and retained,
+  explicitly selected adventure duration. The existing palette selection test also ran.
+- Real Room checks cover VB/BE export values, missing-profile rejection, identities,
+  receipts, retries, source preservation, and restart behavior. Device execution
+  exposed the existing fresh-schema `blastMode` insertion failure: the identity guard
+  now supplies NONE explicitly and refreshes atomically, without changing the schema
+  or overwriting existing Blast choices. A dedicated fresh-row regression passed.
+- The legacy fixtures now exercise actual 17→18 receipt and 20→22 contact/farm SQL
+  against reconstructed old tables. They do not relabel a current schema as an old
+  one and therefore do not falsely claim complete historical upgrade-path coverage.
+- A wireless-debugging disconnect interrupted one intermediate run; the connection
+  was recovered and the device checks above completed afterward.
+
+Native Home capture and app launch were inspected on the physical phone. Physical
+watch radio transfer, live battle-server authentication, every foldable posture,
+and complete TalkBack speech traversal were not exercised by these checks.
+
+APKs: `app/build/outputs/apk/debug/app-debug.apk` and the isolated device-test build
+`app/build/outputs/apk/integrityCheck/app-integrityCheck.apk`.
+
 ## Radar social behavior (schema 33 / ecosystem rules 3)
 
 See `RADAR_SOCIAL_IMPLEMENTATION.md` for implementation and verification details.
@@ -82,10 +242,77 @@ zero timeouts, p50 38.28–40.70s, and p95 48.65–51.41s. Double KOs were 2.5�
 stage and remain reported separately. Android runtime/renderer acceptance is not
 established by compilation.
 
+## Theme-aware 3D environments
+
+Digifarm, Colosseum and Radar use generated four-theme texture bindings and
+environment-only material allowlists. Radar floor/grid/boundary factors also
+change directly. Compose delivers theme changes to retained native views, and
+emissive animation consumes the applied theme's factors. The first Helper load
+retains original gltfio textures; Helper source PNGs/factors, natural grass,
+transparency and sampler settings are preserved by the asset contract.
+
+```powershell
+py -3 -B tools/build_environment_themes.py --check
+.\gradlew.bat :app:testIntegrityCheckUnitTest --tests "com.github.nacabaro.vbhelper.rendering.*" --tests "com.github.nacabaro.vbhelper.ui.theme.*" :app:assembleIntegrityCheck :app:assembleIntegrityCheckAndroidTest :app:assembleDebug --offline --console=plain --max-workers=2
+.\gradlew.bat :app:lintDebug --offline --console=plain --max-workers=2
+```
+
+Asset validation, focused JVM checks, debug/integrity/test builds and lint passed.
+The generated pack contains 43 content-addressed PNGs for 48 texture bindings.
+The initial build-only delivery was not executed natively because the device
+disconnected. The follow-up reproduced Filament's `GEN_MIPMAPPABLE` precondition:
+texture generation aborted and the cosmetic palette readiness gate stalled battle
+loading. The corrected textures declare the required usage, and combat readiness
+is independent of palette preparation. Light dome emission also has a pale base
+to avoid opaque black patches.
+
+All **five** `EnvironmentThemeRuntimeTest` cases and `OfflineBattleRematchTest`
+passed on the Samsung SM-A346M running Android 15: **six native passes**. Coverage
+includes all four themes on each retained environment, inactive/resume updates,
+Colosseum retry/rebinding, actual cold VB Lab combat startup, live battle recoloring
+without fighter reloads, and rematch. Sixteen native `TextureView` captures were
+collected; representative dark/light farm, arena and Radar views were reviewed.
+The corrected debug APK was installed on the connected regular app with `adb
+install -r`, retaining app data. Tablet-specific acceptance and performance
+profiling remain unverified. See `tools/ENVIRONMENT_THEMES.md` for provenance.
+
+## Mobile species-profile layout
+
+Dex species details follow the supplied Digimon.net mobile reference's structure:
+name and ownership, centered framed portrait, divided species facts, Profile,
+then base stats, earned scan data, and evolution requirements. All four palettes,
+imported name shadows, ownership/grayscale/obscured states, custom species selection,
+and pinned Close/Jogress/eligible conversion actions remain shared.
+
+Verification: debug and integrity APKs and Android tests built successfully.
+`DexCharacterDetailsTest` (six cases) and `DexSpeciesProfileLayoutTest` (three cases)
+passed on the connected Samsung SM-A346M running Android 15. The layout suite was
+confirmed again after improving its paragraph capture. Checks cover portrait/name
+order and centering, all four themes, long descriptions at 1.3× text, footer actions,
+species selection, privacy gating, zero/incomplete/complete scans, and evolution
+selection. The layout detector reported no findings.
+
+Native captures were inspected in all four palettes, with paragraph and large-text
+views. Captures use existing bundled Pulsemon art and explicitly labeled fixture
+profile text; they are not claims about official species data. They are written to
+the integrity app's external-files `dex-profile-layout` directory by the layout
+test. Tablet-specific visual acceptance and a full TalkBack pass remain unverified.
+
+```powershell
+.\gradlew.bat :app:assembleIntegrityCheck :app:assembleIntegrityCheckAndroidTest :app:assembleDebug --offline --console=plain --max-workers=2
+```
+
+After installing the integrity app and its Android-test APK, the focused native run is:
+
+```powershell
+adb shell am instrument -w -e class "com.github.nacabaro.vbhelper.screens.cardScreen.DexCharacterDetailsTest,com.github.nacabaro.vbhelper.screens.cardScreen.DexSpeciesProfileLayoutTest" com.github.nacabaro.vbhelper.integritycheck.test/androidx.test.runner.AndroidJUnitRunner
+```
+
 ## Selectable color themes
 
 Settings → Appearance exposes VB Helper (the existing dark purple/cyan palette),
-VB Lab (charcoal/cyan), and VB Arena (white/silver/green). The choice is saved in
+VB Lab (charcoal/cyan), VB Arena (white/silver/green), and Digimon.net
+(white/pale blue, royal blue, and lemon yellow). The choice is saved in
 `app_preferences` and applied immediately, independently of the phone's night mode.
 Typography, geometry, sprites, and motion remain shared.
 
@@ -94,13 +321,20 @@ Typography, geometry, sprites, and motion remain shared.
 .\gradlew.bat :app:lintDebug --offline --console=plain --max-workers=2
 ```
 
-`AppThemeTest` checks saved-value fallback, all three choices, retained Helper colors,
+`AppThemeTest` checks saved-value fallback, all four choices, retained Helper colors,
 reference color families, text contrast, and primary action-label contrast.
 `ThemeSurfaceContrastTest` checks all five Material tonal surfaces in each palette.
 `AppThemeSelectionTest` exercises the real picker and preference store, restoring
 each choice and checking composition colors, typography, shapes, and light/dark
 configuration independence. Its execution requires a device/emulator; compilation
 alone does not establish runtime or screenshot acceptance.
+
+Digimon.net addition: focused theme/typography JVM checks, Android-test compilation,
+and debug assembly passed. The two `AppThemeSelectionTest` cases also passed on a
+connected Samsung SM-A346M running Android 15, covering selection/restoration and
+light/dark configuration independence for all four palettes. A native Storage
+capture was inspected for the new white/blue/yellow colors and readable controls;
+this does not establish visual acceptance for every screen or tablet layout.
 
 ## Card evolution chart (build checks only)
 
@@ -143,7 +377,7 @@ duplicate URIs and aliases, 1,001-file selection without an app count cap,
 independent failures, committed progress on Stop, origin reservations/recovery,
 queued-name refresh by ID, close-before-persist (including close failure and late
 open), stalled-stream cancellation, and stale-run admission/publication ownership.
-The contrast test calculates luminance from all three selectable color schemes and
+The contrast test calculates luminance from all four selectable color schemes and
 requires `onSurface` against all five `surfaceContainer*` roles to reach 4.5:1.
 
 ### Import and requirement contract
@@ -649,9 +883,38 @@ solely to remove advisory warnings.
 
 ## Blast Evolution / Jogress cinematics
 
+### Hit depth and shared wind-up effects
+
+The hit-depth follow-up replaces the fixed centre offset with the support plane of
+the rendered fighter's transformed bounding box, including turned/mirrored models
+and the actual camera direction after arena collision constraints. Large hit sprites
+lift within their camera plane so their lower edge clears the floor. Both ordinary
+and cinematic impacts use these anchors while retaining scene depth tests.
+
+Ordinary wind-ups reuse prewarmed cinematic glow/data/ripple assets in per-fighter
+pools. `activeTechniqueStartupProgress` is a read-only snapshot field, published only
+in STARTUP and frozen by simulation pause. The old fixed-size Compose startup rings
+are removed. Reduced motion omits orbiting motes and retains a restrained charge cue.
+Wind-up colors are extracted once at preparation from the matching small/large attack
+sprite's dominant visible hue; transparency, dark outlines, and white cores do not
+wash it out, and missing art keeps the existing neutral/support fallbacks.
+
+One final focused check passed: **14 cases** in `BattleImpactVisualTest`,
+`BattleStartupVisualTest`, and `BattleAttackSpriteColorTest`, plus Kotlin compilation.
+It covers projected clearance of all bounds corners under rotation/mirroring, floor
+clearance without changing depth, charge progression, reduced motion, paused startup
+progress, sprite-hue extraction, and small/large sprite selection. Native render review
+was not performed for this follow-up.
+
+```powershell
+.\gradlew.bat :app:testIntegrityCheckUnitTest --tests "com.github.nacabaro.vbhelper.screens.offlineBattle.BattleImpactVisualTest" --tests "com.github.nacabaro.vbhelper.screens.offlineBattle.BattleStartupVisualTest" --tests "com.github.nacabaro.vbhelper.screens.offlineBattle.BattleAttackSpriteColorTest" --offline --console=plain --max-workers=1
+```
+
+### Finisher lifecycle
+
 The snapshot-owned finisher clock freezes ordinary combat while running focus,
 transform, reveal, charge, release, impact, aftermath, and restoration. FORM lasts
-7,400ms and JOGRESS 7,900ms. Core commits damage once at IMPACT; the renderer's
+6,500ms and JOGRESS 7,000ms after the launch beat was shortened to 600ms. Core commits damage once at IMPACT; the renderer's
 150ms hit-stop never changes damage or the combat clock. Killing blows defer the
 terminal result until restoration. Jogress suspends both originals and presents
 one retained result instance; their actions/queues resume afterward.
@@ -665,9 +928,9 @@ partner suspension, terminal aftermath, cancellation, later windows, and frame-c
 determinism. `BattleCinematicTest` covers fusion visibility through the entire attack,
 side-by-side staging, reduced motion, aspect-aware framing, restored camera composition,
 and visual hit-stop. Profile/transition/UI tests cover both equipped slots, validated
-move aliases, result titles, alpha-derived blend silhouettes, and compact layouts.
+move aliases, result titles, alpha-derived blend silhouettes, and fixed arena/command layouts.
 
-Latest combined check: **295 JVM cases, zero failures/errors/skips** across the four
+Initial combined check: **295 JVM cases, zero failures/errors/skips** across the four
 filtered packages above. Kotlin/resource compilation, Android-test compilation,
 integrity-check APK assembly, and lint passed with the existing baseline. Cleanup
 regressions also verify that cinematic impacts/misses do not replay on combat resume.
@@ -678,10 +941,68 @@ through each sequence; transformations toggle visibility instead of recreating G
 Sound/haptics honor system and saved audio settings, pause/background, and consumed
 phase guards. No additional distributed character images or music are introduced.
 
-Native acceptance is pending: ADB reports no connected device and no AVD is configured.
-When available, capture training and Radar in portrait/landscape, testing FORM,
-JOGRESS, non-fusion DUO, a killing blow, background/rotation during charge, reduced
-motion, and repeated activations. Verify no source body/shadow remains after fusion,
-result attack art stays visible through aftermath, camera bounds/occlusion, audio,
-frame time, and stable GPU entity/material counts. Compilation/unit tests do not
-establish those visual or hardware-performance results.
+Presentation follow-up: **220 JVM cases, zero failures/errors/skips** across battle,
+offline-screen, and rendering packages. APK/test-APK assembly and lint passed.
+`BattleAttackMotionTest` checks fresh vector-based facing, the standard left-authored
+large-art convention, acceleration into contact, tracking continuity, whole-victim
+framing, and transparent-padding removal without modifying source art. Regular hit
+sprites expand around a body-sized footprint; special/critical hits are larger.
+
+`OfflineBattleFinisherPresentationTest` passed on Galaxy A34 / SM-A346M in the isolated
+`.integritycheck` application. It asserts all nine command bounds and arena bounds
+remain unchanged (1px tolerance) before, during, and after successive stronger specials
+in portrait and landscape, with no fighter-asset reloads during playback. One batched
+inspection plus one confirmation used six native screenshots each, covering pre-launch,
+flight, and impact. Confirmation showed correct repeated large-sprite direction,
+complete victim framing, foreground impact bursts, and actual committed damage
+(286/313 in the two controlled captures). Review captures are in
+`C:/Users/julye/AppData/Local/Temp/opencode/finisher-presentation-confirmation`.
+
+```powershell
+.\gradlew.bat :app:testIntegrityCheckUnitTest --tests "com.github.nacabaro.vbhelper.battle.offline.*" --tests "com.github.nacabaro.vbhelper.screens.offlineBattle.*" --tests "com.github.nacabaro.vbhelper.rendering.*" :app:assembleIntegrityCheck :app:assembleIntegrityCheckAndroidTest :app:lintIntegrityCheck --offline --console=plain --max-workers=2
+adb -s <serial> shell am instrument -w -r -e class com.github.nacabaro.vbhelper.OfflineBattleFinisherPresentationTest com.github.nacabaro.vbhelper.integritycheck.test/androidx.test.runner.AndroidJUnitRunner
+```
+
+The new native fixture exercises shared POWER-special presentation; imported FORM/
+JOGRESS variants, Radar-specific encounters, prolonged frame-time/thermal behavior,
+and device audio remain separate acceptance coverage. Pure regressions cover the
+shared FORM/JOGRESS lifecycle and retained visibility through aftermath.
+
+## Adaptive battle repositioning (movement rules 2)
+
+Live configurations default to `BattleMovementRules.CURRENT_VERSION` independently
+of damage/catalog ruleset 3. `NpcBattleAdapter` explicitly pins older envelopes that
+omit `movementRulesVersion` to movement version 1: Gson invokes the configuration's
+default constructor, so absence cannot be detected from the decoded value alone.
+Explicit version 0 also retains historical movement for unsafe legacy data.
+
+The new policy reevaluates autonomous preparation before wind-up, uses relative
+target hysteresis, allows lateral observation/charging footwork, upgrades an unstarted
+basic fallback when an equipped move becomes available, and steers around occupied
+lanes or clamped arena edges. Explicit orders/focus and committed wind-ups retain
+their targets. Rendering follows travel heading while moving, with a simulation-time
+hold between unchanged render samples to avoid facing flicker.
+
+Verified: **324 JVM cases, zero failures/errors/skips**, including the 12,000-battle
+paired-seed balance matrix. APK assembly, Android-test compilation, and lint passed
+with the existing baseline. The first combined packaging attempt stalled in dex;
+fresh single-worker packaging recovered successfully.
+
+`BattleRepositioningTest` covers lateral mixed-kit observation, readiness footwork
+without extra damage/resource spending, pre-start target/technique reassessment,
+explicit focus/order retention, committed wind-up retention, blocked lanes, boundary
+escape, and legacy movement. `BattleFighterFacingTest` covers travel versus attack/
+knockback facing and unchanged-frame heading retention. `NpcBattleVersionTest`
+compares missing-field v3 checkpoint recovery with its historical replay.
+
+```powershell
+.\gradlew.bat :app:testIntegrityCheckUnitTest --tests "com.github.nacabaro.vbhelper.battle.offline.*" --tests "com.github.nacabaro.vbhelper.screens.offlineBattle.*" --tests "com.github.nacabaro.vbhelper.rendering.*" --tests "com.github.nacabaro.vbhelper.world.ecosystem.*" --offline --console=plain --max-workers=2
+.\gradlew.bat :app:assembleIntegrityCheck :app:assembleIntegrityCheckAndroidTest :app:lintIntegrityCheck --offline --console=plain --max-workers=1
+adb -s <serial> shell am instrument -w -r -e class com.github.nacabaro.vbhelper.OfflineBattleRepositioningTest com.github.nacabaro.vbhelper.integritycheck.test/androidx.test.runner.AndroidJUnitRunner
+```
+
+The added native fixture samples a real 2v2 session for travelled distance, lateral
+spread, playable bounds, and renderer errors, with three staged captures. It is
+compile-verified but **not executed**: the Galaxy A34 connection dropped during the
+build, and ADB/mDNS currently show no device. Earlier finisher screenshots do not
+establish this movement change's visual acceptance.

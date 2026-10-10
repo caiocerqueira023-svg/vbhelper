@@ -21,12 +21,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Button
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,11 +43,15 @@ import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceElevatedPurple
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.TextMutedOnDark
+import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
+import com.github.nacabaro.vbhelper.ui.theme.StatusRed
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 
 /** Quiet technical frame for panels that need to communicate state or selection. */
@@ -75,16 +82,25 @@ fun Modifier.cyberFrame(active: Boolean = false): Modifier {
 }
 
 @Composable
-fun CyberEmptyState(message: String, modifier: Modifier = Modifier) {
+fun CyberEmptyState(
+    message: String,
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
+    secondaryLabel: String? = null,
+    onSecondaryAction: (() -> Unit)? = null,
+) {
+    Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
     Column(
-        modifier = modifier.fillMaxSize().padding(32.dp),
+        modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
         Surface(
             modifier = Modifier
-                .fillMaxWidth()
                 .widthIn(max = 480.dp)
+                .fillMaxWidth()
                 .cyberFrame(),
             color = SurfaceElevatedPurple,
             shape = RectangleShape
@@ -94,6 +110,10 @@ fun CyberEmptyState(message: String, modifier: Modifier = Modifier) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                title?.let {
+                    Text(it, style = MaterialTheme.typography.titleLarge, color = TextPrimaryOnDark,
+                        modifier = Modifier.semantics { heading() }, textAlign = TextAlign.Center)
+                }
                 Box(
                     Modifier
                         .width(36.dp)
@@ -104,12 +124,22 @@ fun CyberEmptyState(message: String, modifier: Modifier = Modifier) {
                     text = message,
                     modifier = Modifier.fillMaxWidth(),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = TextMutedOnDark,
+                    color = TextSecondaryOnDark,
                     textAlign = TextAlign.Center
                 )
+                if (actionLabel != null && onAction != null) {
+                    VitalButton(onClick = onAction, style = VitalButtonStyle.PRIMARY, modifier = Modifier.fillMaxWidth()) {
+                        Text(actionLabel)
+                    }
+                }
+                if (secondaryLabel != null && onSecondaryAction != null) {
+                    androidx.compose.material3.TextButton(onClick = onSecondaryAction) { Text(secondaryLabel) }
+                }
             }
         }
     }
+}
+
 }
 
 /** Shared, square technical surface used by Home/Storage-level secondary flows. */
@@ -171,6 +201,8 @@ fun VitalSectionHeader(
  * The default content color is deliberately white for readable contrast;
  * callers can still opt into a status color for a genuinely semantic action.
  */
+enum class VitalButtonStyle { PRIMARY, SECONDARY, DESTRUCTIVE }
+
 @Composable
 fun VitalButton(
     onClick: () -> Unit,
@@ -183,17 +215,27 @@ fun VitalButton(
     containerColor: Color = Color.Transparent,
     disabledContainerColor: Color = Color.Transparent,
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
+    style: VitalButtonStyle = VitalButtonStyle.SECONDARY,
     content: @Composable RowScope.() -> Unit
 ) {
+    if (style == VitalButtonStyle.PRIMARY) {
+        Button(
+            onClick = onClick, modifier = modifier, enabled = enabled, shape = shape,
+            colors = ButtonDefaults.buttonColors(), contentPadding = contentPadding, content = content,
+        )
+        return
+    }
     OutlinedButton(
         onClick = onClick,
         modifier = modifier,
         enabled = enabled,
         shape = shape,
-        border = BorderStroke(1.dp, borderColor),
+        border = BorderStroke(1.dp, (if (style == VitalButtonStyle.DESTRUCTIVE) StatusRed else borderColor).let {
+            if (enabled) it else it.copy(alpha = 0.38f)
+        }),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = containerColor,
-            contentColor = contentColor,
+            contentColor = if (style == VitalButtonStyle.DESTRUCTIVE) StatusRed else contentColor,
             disabledContainerColor = disabledContainerColor,
             disabledContentColor = disabledContentColor
         ),

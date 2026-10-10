@@ -2,6 +2,7 @@ package com.github.nacabaro.vbhelper.screens.homeScreens
 
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.initializer
 import androidx.room.withTransaction
 import com.github.cfogrady.vbnfc.vb.SpecialMission
 import com.github.nacabaro.vbhelper.di.VBHelper
@@ -19,6 +20,17 @@ class HomeScreenControllerImpl(
 ): HomeScreenController {
     private val application = componentActivity.applicationContext as VBHelper
     private val database = application.container.db
+    internal var cachedHomeCollection: List<CharacterDtos.CharacterWithSprites>? = null
+    internal var cachedHomeCards: List<com.github.nacabaro.vbhelper.dtos.CardDtos.CardProgress>? = null
+    internal var cachedPartnerDetails: HomePartnerDetails? = null
+    val shareExport by lazy { androidx.lifecycle.ViewModelProvider(componentActivity,
+        androidx.lifecycle.viewmodel.viewModelFactory {
+            initializer {
+                VitalWearShareViewModel { id ->
+                    com.github.nacabaro.vbhelper.source.VitalWearCharacterExporter(application, database).buildShareIntent(id)
+                }
+            }
+        })[VitalWearShareViewModel::class.java].export }
 
     override fun didAdventureMissionsFinish(onCompletion: (Boolean) -> Unit) {
         componentActivity.lifecycleScope.launch {

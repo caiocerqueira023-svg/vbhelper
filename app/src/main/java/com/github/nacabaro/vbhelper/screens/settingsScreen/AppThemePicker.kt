@@ -42,8 +42,7 @@ fun AppThemePicker(selectedTheme: AppTheme, onThemeSelected: (AppTheme) -> Unit)
                 Text(theme.displayName, modifier = Modifier.weight(1f).padding(start = 8.dp),
                     style = MaterialTheme.typography.bodyLarge)
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    val palette = theme.palette
-                    listOf(palette.background, palette.primary, palette.accent).forEach { color ->
+                    theme.previewColors.forEach { color ->
                         Box(Modifier.size(16.dp).background(color, MaterialTheme.shapes.extraSmall))
                     }
                 }

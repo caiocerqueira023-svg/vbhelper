@@ -3,6 +3,7 @@ package com.github.nacabaro.vbhelper.screens.homeScreens.screens
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -134,7 +135,7 @@ fun BEHomeScreen(
                 definition = stringResource(R.string.home_vbdim_mood),
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f)
+                     .heightIn(min = 104.dp)
                     .padding(8.dp)
             )
             ItemDisplay(
@@ -143,7 +144,7 @@ fun BEHomeScreen(
                 definition = stringResource(R.string.home_vbdim_trophies),
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f)
+                    .heightIn(min = 104.dp)
                     .padding(8.dp)
             )
             val transformationCountdownInHours = activeMon.transformationCountdown / 60
@@ -156,7 +157,7 @@ fun BEHomeScreen(
                 definition = stringResource(R.string.home_vbdim_next_timer),
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f)
+                    .heightIn(min = 104.dp)
                     .padding(8.dp)
             )
         }
@@ -172,7 +173,7 @@ fun BEHomeScreen(
                 definition = stringResource(R.string.home_vbdim_total_battle_win),
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f)
+                    .heightIn(min = 104.dp)
                     .padding(8.dp)
             )
             ItemDisplay(
@@ -184,7 +185,7 @@ fun BEHomeScreen(
                 definition = stringResource(R.string.home_vbdim_current_phase_win),
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f)
+                    .heightIn(min = 104.dp)
                     .padding(8.dp)
             )
         }
@@ -213,7 +214,7 @@ fun BEHomeScreen(
                 definition = stringResource(R.string.home_be_rank),
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f)
+                    .heightIn(min = 104.dp)
                     .padding(8.dp)
             )
             val timeInHours = beData.remainingTrainingTimeInMinutes / 60
@@ -223,7 +224,7 @@ fun BEHomeScreen(
                 definition = stringResource(R.string.home_be_training_limit),
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f)
+                    .heightIn(min = 104.dp)
                     .padding(8.dp)
             )
             if (beData.itemRemainingTime != 0) {
@@ -233,7 +234,7 @@ fun BEHomeScreen(
                     definition = itemDefinition(beData.itemType),
                     modifier = Modifier
                         .weight(1f)
-                        .aspectRatio(1f)
+                        .heightIn(min = 104.dp)
                         .padding(8.dp)
                 )
             }
@@ -248,7 +249,7 @@ fun BEHomeScreen(
                 definition = stringResource(R.string.home_be_training_hp),
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f)
+                    .heightIn(min = 104.dp)
                     .padding(8.dp)
             )
             ItemDisplay(
@@ -257,7 +258,7 @@ fun BEHomeScreen(
                 definition = stringResource(R.string.home_be_training_bp),
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f)
+                    .heightIn(min = 104.dp)
                     .padding(8.dp)
             )
             ItemDisplay(
@@ -266,7 +267,7 @@ fun BEHomeScreen(
                 definition = stringResource(R.string.home_be_training_ap),
                 modifier = Modifier
                     .weight(1f)
-                    .aspectRatio(1f)
+                    .heightIn(min = 104.dp)
                     .padding(8.dp)
             )
         }

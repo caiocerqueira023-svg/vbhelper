@@ -112,6 +112,9 @@ internal fun cinematicCameraPose(
     aspectRatio: Double,
     saved: CinematicCameraPose,
     allowMotion: Boolean = true,
+    attackSide: Int? = null,
+    attackStyle: FinisherAttackStyle = FinisherAttackStyle.PROJECTILE,
+    emitterHeight: Float = 0.7f,
 ): CinematicCameraPose {
     if (sequence.phase == BattleFinisherPhase.RESTORE && sequence.phaseProgress >= 1f) return saved
     val anchor = cinematicAnchor(lead, partner, sequence.kind)
@@ -121,7 +124,11 @@ internal fun cinematicCameraPose(
     val nominalYaw = if (hypot(dx, dz) > 0.01) atan2(-dz, dx) else saved.yaw
     fun angularDistance(value: Double): Double = kotlin.math.abs(atan2(sin(value - saved.yaw), cos(value - saved.yaw)))
     // Preserve the current side of the action axis; don't spin around a thin sprite to force a side.
-    val yaw = listOf(nominalYaw, nominalYaw + PI).minBy(::angularDistance)
+    val yaw = when (attackSide) {
+        1 -> nominalYaw
+        -1 -> nominalYaw + PI
+        else -> listOf(nominalYaw, nominalYaw + PI).minBy(::angularDistance)
+    }
     val height = actorHeight.coerceAtLeast(0.5)
     val aspect = aspectRatio.coerceIn(0.15, 4.0)
     // ModelViewer uses 28mm focal length and a 24mm-high sensor. Fit against usable frame extents.
@@ -140,15 +147,29 @@ internal fun cinematicCameraPose(
     val establish = fit(sourcePoints, 0.42)
     val hero = fit(listOf(anchor), 0.53).copy(yaw = yaw + 0.12, pitch = 0.22)
     val action = fit(listOf(anchor, opponent) + if (sequence.kind == BattleFinisherKind.DUO && partner != null) listOf(partner) else emptyList(), 0.42)
-    val reaction = action.copy(targetX = anchor.x * 0.38 + opponent.x * 0.62,
-        targetZ = anchor.z * 0.38 + opponent.z * 0.62)
+    val pathLength = hypot(dx, dz).coerceAtLeast(0.01)
+    val muzzle = BattlePosition((anchor.x + dx / pathLength * height * 0.30).toFloat(),
+        (anchor.z + dz / pathLength * height * 0.30).toFloat())
+    fun tracking(progress: Float): CinematicCameraPose {
+        val position = cinematicAttackPoint(if (attackStyle == FinisherAttackStyle.MELEE) anchor else muzzle, opponent, progress)
+        val centerX = position.x * 0.45 + opponent.x * 0.55
+        val centerZ = position.z * 0.45 + opponent.z * 0.55
+        // Fit visible extents, not only centers, as the travelling side shot advances.
+        fun offset(point: BattlePosition) = kotlin.math.abs((point.x - centerX) * cos(yaw) - (point.z - centerZ) * sin(yaw))
+        val halfWidth = max(offset(position) + height * 0.55, offset(opponent) + height * 0.85)
+        val distance = max(height / (2 * tanHalfFov * 0.46), halfWidth / (tanHalfFov * aspect * 0.78)).coerceIn(2.8, 35.0)
+        return CinematicCameraPose(centerX, centerZ, height * emitterHeight, yaw, 0.25, distance)
+    }
+    val contact = tracking(1f)
+    val reaction = action.copy(targetX = anchor.x * 0.25 + opponent.x * 0.75,
+        targetZ = anchor.z * 0.25 + opponent.z * 0.75)
     if (!allowMotion) return if (sequence.phase == BattleFinisherPhase.RESTORE) saved else action
     return when (sequence.phase) {
         BattleFinisherPhase.FOCUS -> blendCamera(saved, establish, sequence.phaseProgress)
         BattleFinisherPhase.TRANSFORM -> blendCamera(establish, hero, (sequence.phaseProgress - 0.6f) / 0.4f)
         BattleFinisherPhase.REVEAL, BattleFinisherPhase.CHARGE -> hero
-        BattleFinisherPhase.RELEASE -> blendCamera(hero, action, sequence.phaseProgress / 0.18f)
-        BattleFinisherPhase.IMPACT -> blendCamera(action, reaction, (sequence.phaseProgress - 0.20f) / 0.35f)
+        BattleFinisherPhase.RELEASE -> blendCamera(hero, tracking(cinematicLaunchProgress(sequence.phaseProgress)), sequence.phaseProgress / 0.15f)
+        BattleFinisherPhase.IMPACT -> blendCamera(contact, reaction, (sequence.phaseProgress - 0.15f) / 0.60f)
         BattleFinisherPhase.AFTERMATH -> reaction
         BattleFinisherPhase.RESTORE -> blendCamera(reaction, saved, sequence.phaseProgress)
     }

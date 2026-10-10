@@ -1,378 +1,129 @@
 package com.github.nacabaro.vbhelper.battle
 
 import android.content.Context
-import retrofit2.Retrofit
-import android.widget.Toast
-import retrofit2.*
-import retrofit2.converter.gson.GsonConverterFactory
-import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.flow.first
+import android.content.ContextWrapper
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
+import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.components.FeedbackDestination
+import com.github.nacabaro.vbhelper.components.showAppFeedback
+import com.github.nacabaro.vbhelper.di.VBHelper
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import com.github.nacabaro.vbhelper.battle.BattleAuthContainer
-import com.github.nacabaro.vbhelper.R
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
+import retrofit2.Retrofit
+import retrofit2.converter.gson.GsonConverterFactory
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
-class RetrofitHelper {
-    
-    /**
-     * Creates an OkHttpClient with authentication interceptor for game endpoints.
-     * Requires a non-null, non-empty token.
-     */
-    private fun createAuthenticatedClient(token: String): OkHttpClient {
-        val loggingInterceptor = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+/** Callback compatibility for the battle UI, with lifecycle-owned, non-blocking requests. */
+class RetrofitHelper(private val ownerScope: CoroutineScope? = null) {
+    private fun scope(context: Context): CoroutineScope {
+        ownerScope?.let { return it }
+        var current = context
+        while (current is ContextWrapper) {
+            if (current is LifecycleOwner) return current.lifecycleScope
+            val base = current.baseContext
+            if (base === current) break
+            current = base
         }
-        
-        return OkHttpClient.Builder()
-            .addInterceptor(AuthInterceptor(token))
-            .addInterceptor(loggingInterceptor)
-            .build()
+        return (context.applicationContext as VBHelper).applicationScope
     }
-    
-    /**
-     * Gets the session token from AuthRepository for API calls.
-     * Falls back to nacatech token if session token is not available (backward compatibility).
-     */
-    private fun getAuthToken(context: Context): String? {
-        return try {
-            val authContainer = BattleAuthContainer(context)
-            runBlocking {
-                // Prefer session token, fall back to nacatech token for backward compatibility
-                val sessionToken = authContainer.authRepository.sessionToken.first()
-                if (!sessionToken.isNullOrEmpty()) {
-                    println("RetrofitHelper: Using sessionToken for API call")
-                    sessionToken
-                } else {
-                    // Fallback to nacatech token (slower, but works)
-                    val nacatechToken = authContainer.authRepository.authToken.first()
-                    if (!nacatechToken.isNullOrEmpty()) {
-                        println("RetrofitHelper: No sessionToken found, falling back to nacatechToken")
-                    }
-                    nacatechToken
-                }
-            }
-        } catch (e: Exception) {
-            println("RetrofitHelper: Error getting auth token: ${e.message}")
-            null
-        }
+
+    private suspend fun retrofit(token: String? = null): Retrofit = withContext(Dispatchers.IO) {
+        val client = OkHttpClient.Builder().retryOnConnectionFailure(false)
+        if (token != null) client.addInterceptor(AuthInterceptor(token))
+        Retrofit.Builder().baseUrl("http://battle.io-void.com:8080/")
+            .client(client.build()).addConverterFactory(GsonConverterFactory.create()).build()
     }
-    
-    /**
-     * Creates a Retrofit instance with authentication for game endpoints.
-     */
-    private fun createAuthenticatedRetrofit(context: Context): Retrofit? {
-        val token = getAuthToken(context)
-        if (token.isNullOrEmpty()) {
-            println("RetrofitHelper: No auth token available")
+
+    private suspend fun authenticatedRetrofit(context: Context): Retrofit? {
+        val auth = BattleAuthContainer(context.applicationContext).authRepository
+        val token = auth.sessionToken.first()?.takeIf { it.isNotBlank() }
+            ?: auth.authToken.first()?.takeIf { it.isNotBlank() }
+        if (token == null) {
+            context.showAppFeedback(R.string.ui_auth_required, destination = FeedbackDestination.BATTLES, important = true)
             return null
         }
-        
-        val client = createAuthenticatedClient(token)
-        return Retrofit.Builder()
-            .baseUrl("http://battle.io-void.com:8080/")
-            .client(client)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
+        return retrofit(token)
     }
-    
-    /**
-     * Handles HTTP error responses (401, 403, 429).
-     * For 401/403, clears authentication state to trigger re-authentication.
-     */
-    private fun handleErrorResponse(context: Context, response: Response<*>, errorMessage: String) {
-        when (response.code()) {
-            401 -> {
-                println("RetrofitHelper: Authentication failed (401) - token may be expired")
-                clearAuthAndNotify(context, "Authentication failed. Please log in again.")
-            }
-            403 -> {
-                println("RetrofitHelper: Access forbidden (403) - token may be expired or invalid")
-                // 403 could mean expired token, so clear auth state to trigger re-authentication
-                clearAuthAndNotify(context, "Session expired. Please log in again.")
-            }
-            429 -> {
-                println("RetrofitHelper: Rate limit exceeded (429)")
-                Toast.makeText(context, context.getString(R.string.ui_too_many_requests), Toast.LENGTH_SHORT).show()
-            }
-            else -> {
-                println("RetrofitHelper: API error (${response.code()}): $errorMessage")
-                Toast.makeText(context, context.getString(R.string.ui_request_failed, response.code().toString()), Toast.LENGTH_SHORT).show()
-            }
+
+    private fun request(context: Context, block: suspend () -> Unit): Job =
+        scope(context).launch(Dispatchers.Main.immediate) {
+            try { block() }
+            catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { context.showAppFeedback(R.string.app_request_recovery, important = true) }
         }
-    }
-    
-    /**
-     * Clears authentication state and shows a message.
-     * This will trigger BattlesScreen to detect the auth state change and open the login page.
-     */
-    private fun clearAuthAndNotify(context: Context, message: String) {
-        try {
-            val authContainer = BattleAuthContainer(context)
-            CoroutineScope(Dispatchers.IO).launch {
-                authContainer.authRepository.logout()
-                println("RetrofitHelper: Cleared authentication state due to expired/invalid token")
+
+    private suspend fun reportError(context: Context, code: Int) {
+        when (code) {
+            401, 403 -> {
+                BattleAuthContainer(context.applicationContext).authRepository.logout()
+                context.showAppFeedback(R.string.app_session_expired, destination = FeedbackDestination.BATTLES, important = true)
             }
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
-        } catch (e: Exception) {
-            println("RetrofitHelper: Error clearing auth state: ${e.message}")
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            429 -> context.showAppFeedback(R.string.ui_too_many_requests, important = true)
+            else -> context.showAppFeedback(R.string.app_request_recovery, important = true)
         }
     }
 
-    fun getOpponents(context: Context, stage: String, callback: (OpponentsDataModel) -> Unit) {
-        //println("RetrofitHelper: Starting API call for stage: $stage")
+    fun getOpponents(context: Context, stage: String, callback: (OpponentsDataModel) -> Unit): Job = request(context) {
+        val api = authenticatedRetrofit(context) ?: return@request
+        val response = api.create(OpponentService::class.java).getopponents(stage).awaitResponse()
+        val body = response.body()
+        if (response.isSuccessful && body != null) callback(body)
+        else reportError(context, response.code())
+    }
 
-        try {
-            // Create an authenticated Retrofit instance
-            val retrofit = createAuthenticatedRetrofit(context)
-            if (retrofit == null) {
-                println("RetrofitHelper: Cannot create authenticated Retrofit - no token available")
-                Toast.makeText(context, context.getString(R.string.ui_auth_required), Toast.LENGTH_SHORT).show()
-                return
-            }
+    fun getPVPWinner(
+        context: Context, apiStage: Int, playerID: Long, playerDigi: String, playerStage: Int,
+        critBar: Int, opponentDigi: String, opponentStage: Int, callback: (PVPDataModel) -> Unit,
+    ): Job = getPVPWinner(context, apiStage, playerID, playerDigi, playerStage, critBar, opponentDigi, opponentStage, null, callback)
 
-            // Create an ApiService instance from the Retrofit instance.
-            val service: OpponentService = retrofit.create<OpponentService>(OpponentService::class.java)
-            //println("RetrofitHelper: Service created")
+    fun getPVPWinner(
+        context: Context, apiStage: Int, playerID: Long, playerDigi: String, playerStage: Int,
+        critBar: Int, opponentDigi: String, opponentStage: Int, action: String?, callback: (PVPDataModel) -> Unit,
+    ): Job = request(context) {
+        val api = authenticatedRetrofit(context) ?: return@request
+        val response = api.create(PVPService::class.java)
+            .getwinner(apiStage, playerID, playerDigi, playerStage, critBar, opponentDigi, opponentStage, action).awaitResponse()
+        val body = response.body()
+        if (response.isSuccessful && body != null) callback(body)
+        else reportError(context, response.code())
+    }
 
-            // Call the getopponents() method of the ApiService
-            // to make an API request.
-            val call: Call<OpponentsDataModel> = service.getopponents(stage)
-            //println("RetrofitHelper: API call created, enqueueing...")
-
-            // Use the enqueue() method of the Call object to
-            // make an asynchronous API request.
-            call.enqueue(object : Callback<OpponentsDataModel> {
-                override fun onFailure(call: Call<OpponentsDataModel>, t: Throwable) {
-                    println("RetrofitHelper: API call failed: ${t.message}")
-                    t.printStackTrace()
-                    Toast.makeText(context, context.getString(R.string.ui_request_fail), Toast.LENGTH_SHORT).show()
+    fun authenticate(context: Context, token: String, callback: (AuthenticateResponse) -> Unit): Job =
+        scope(context).launch(Dispatchers.Main.immediate) {
+            try {
+                if (token.isBlank()) {
+                    callback(AuthenticateResponse(false, context.getString(R.string.ui_auth_token_empty)))
+                    return@launch
                 }
-
-                override fun onResponse(call: Call<OpponentsDataModel>, response: Response<OpponentsDataModel>) {
-                    println("RetrofitHelper: API response received - Code: ${response.code()}")
-                    println("RetrofitHelper: Response body: ${response.body()}")
-
-                    if(response.isSuccessful){
-                        //println("RetrofitHelper: Response successful, calling callback")
-                        val opponentsList: OpponentsDataModel = response.body() as OpponentsDataModel
-                        callback(opponentsList)
-                    } else {
-                        val errorBody = response.errorBody()?.string()
-                        println("RetrofitHelper: Response not successful - Error: $errorBody")
-                        handleErrorResponse(context, response, errorBody ?: "Unknown error")
-                    }
-                }
-            })
-        } catch (e: Exception) {
-            println("RetrofitHelper: Exception in getOpponents: ${e.message}")
-            e.printStackTrace()
-            Toast.makeText(context, context.getString(R.string.ui_request_failed, e.message), Toast.LENGTH_SHORT).show()
+                val response = retrofit().create(AuthService::class.java).login(AuthenticateRequest(token)).awaitResponse()
+                val body = response.body()
+                callback(if (response.isSuccessful && body != null) body else
+                    AuthenticateResponse(false, context.getString(R.string.app_auth_recovery), failureCode = response.code()))
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { callback(AuthenticateResponse(false, context.getString(R.string.app_auth_recovery))) }
         }
-    }
+}
 
-    /*
-    fun getCombatWinner(context: Context, stage: String, callback: (CombatDataModel) -> Unit) {
-
-        // Create a Retrofit instance with the base URL and
-        // a GsonConverterFactory for parsing the response.
-        val retrofit: Retrofit = Retrofit.Builder().baseUrl("http://battle.io-void.com:8080/").addConverterFactory(
-            GsonConverterFactory.create()).build()
-
-        // Create an ApiService instance from the Retrofit instance.
-        val service: CombatService = retrofit.create<CombatService>(CombatService::class.java)
-
-        // Call the getwinner() method of the ApiService
-        // to make an API request.
-        val call: Call<CombatDataModel> = service.getwinner(stage)
-
-        // Use the enqueue() method of the Call object to
-        // make an asynchronous API request.
-        call.enqueue(object : Callback<CombatDataModel> {
-            // This is an anonymous inner class that implements the Callback interface.
-
-            override fun onFailure(call: Call<CombatDataModel>, t: Throwable) {
-                // This method is called when the API request fails.
-                Toast.makeText(context, context.getString(R.string.ui_request_fail), Toast.LENGTH_SHORT).show()
-            }
-
-            override fun onResponse(call: Call<CombatDataModel>, response: Response<CombatDataModel>) {
-                // This method is called when the API response is received successfully.
-
-                if(response.isSuccessful){
-                    // If the response is successful, parse the
-                    // response body to a DataModel object.
-                    val winner: CombatDataModel = response.body() as CombatDataModel
-
-                    // Call the callback function with the DataModel
-                    // object as a parameter.
-                    callback(winner)
-                }
-            }
-        })
-    }
-
-    fun getBattleWinner(context: Context, playerDigi: String, playerStage: Int, opponentDigi: String, opponentStage: Int, callback: (BattleDataModel) -> Unit) {
-
-        // Create a Retrofit instance with the base URL and
-        // a GsonConverterFactory for parsing the response.
-        val retrofit: Retrofit = Retrofit.Builder().baseUrl("http://battle.io-void.com:8080/").addConverterFactory(
-            GsonConverterFactory.create()).build()
-
-        // Create an ApiService instance from the Retrofit instance.
-        val service: BattleService = retrofit.create<BattleService>(BattleService::class.java)
-
-        // Call the getwinner() method of the ApiService
-        // to make an API request.
-        val call: Call<BattleDataModel> = service.getwinner(playerDigi, playerStage, opponentDigi, opponentStage)
-
-        // Use the enqueue() method of the Call object to
-        // make an asynchronous API request.
-        call.enqueue(object : Callback<BattleDataModel> {
-            // This is an anonymous inner class that implements the Callback interface.
-
-            override fun onFailure(call: Call<BattleDataModel>, t: Throwable) {
-                // This method is called when the API request fails.
-                Toast.makeText(context, context.getString(R.string.ui_request_fail), Toast.LENGTH_SHORT).show()
-            }
-
-            override fun onResponse(call: Call<BattleDataModel>, response: Response<BattleDataModel>) {
-                // This method is called when the API response is received successfully.
-
-                if(response.isSuccessful){
-                    // If the response is successful, parse the
-                    // response body to a DataModel object.
-                    val winner: BattleDataModel = response.body() as BattleDataModel
-
-                    // Call the callback function with the DataModel
-                    // object as a parameter.
-                    callback(winner)
-                }
-            }
-        })
-    }
-     */
-
-    fun getPVPWinner(context: Context, apiStage: Int, playerID: Long, playerDigi: String, playerStage: Int, critBar: Int, opponentDigi: String, opponentStage: Int, callback: (PVPDataModel) -> Unit) {
-        getPVPWinner(context, apiStage, playerID, playerDigi, playerStage, critBar, opponentDigi, opponentStage, null, callback)
-    }
-
-    fun getPVPWinner(context: Context, apiStage: Int, playerID: Long, playerDigi: String, playerStage: Int, critBar: Int, opponentDigi: String, opponentStage: Int, action: String?, callback: (PVPDataModel) -> Unit) {
-
-        try {
-            // Create an authenticated Retrofit instance
-            val retrofit = createAuthenticatedRetrofit(context)
-            if (retrofit == null) {
-                println("RetrofitHelper: Cannot create authenticated Retrofit - no token available")
-                Toast.makeText(context, context.getString(R.string.ui_auth_required), Toast.LENGTH_SHORT).show()
-                return
-            }
-
-            // Create an ApiService instance from the Retrofit instance.
-            val service: PVPService = retrofit.create<PVPService>(PVPService::class.java)
-
-            // Call the getwinner() method of the ApiService
-            // to make an API request.
-            val call: Call<PVPDataModel> = service.getwinner(apiStage, playerID, playerDigi, playerStage, critBar, opponentDigi, opponentStage, action)
-
-            // Use the enqueue() method of the Call object to
-            // make an asynchronous API request.
-            call.enqueue(object : Callback<PVPDataModel> {
-                // This is an anonymous inner class that implements the Callback interface.
-
-                override fun onFailure(call: Call<PVPDataModel>, t: Throwable) {
-                    // This method is called when the API request fails.
-                    println("RetrofitHelper: PVP API call failed: ${t.message}")
-                    t.printStackTrace()
-                    Toast.makeText(context, context.getString(R.string.ui_request_fail), Toast.LENGTH_SHORT).show()
-                }
-
-                override fun onResponse(call: Call<PVPDataModel>, response: Response<PVPDataModel>) {
-                    // This method is called when the API response is received successfully.
-                    println("RetrofitHelper: PVP API response received - Code: ${response.code()}")
-
-                    if(response.isSuccessful){
-                        // If the response is successful, parse the
-                        // response body to a DataModel object.
-                        val apiResults: PVPDataModel = response.body() as PVPDataModel
-
-                        // Call the callback function with the DataModel
-                        // object as a parameter.
-                        callback(apiResults)
-                    } else {
-                        val errorBody = response.errorBody()?.string()
-                        println("RetrofitHelper: PVP API response not successful - Code: ${response.code()}, Error: $errorBody")
-                        handleErrorResponse(context, response, errorBody ?: "Unknown error")
-                    }
-                }
-            })
-        } catch (e: Exception) {
-            println("RetrofitHelper: Exception in getPVPWinner: ${e.message}")
-            e.printStackTrace()
-            Toast.makeText(context, context.getString(R.string.ui_request_failed, e.message), Toast.LENGTH_SHORT).show()
+internal suspend fun <T> Call<T>.awaitResponse(): Response<T> = suspendCancellableCoroutine { continuation ->
+    continuation.invokeOnCancellation { cancel() }
+    enqueue(object : Callback<T> {
+        override fun onResponse(call: Call<T>, response: Response<T>) {
+            if (continuation.isActive) continuation.resume(response)
         }
-    }
-
-    fun authenticate(context: Context, token: String, callback: (AuthenticateResponse) -> Unit) {
-        //println("RetrofitHelper: Starting validate API call with token: $token")
-        
-        if (token.isEmpty()) {
-            println("RetrofitHelper: ERROR - Token is empty!")
-            Toast.makeText(context, context.getString(R.string.ui_auth_token_empty), Toast.LENGTH_SHORT).show()
-            return
+        override fun onFailure(call: Call<T>, failure: Throwable) {
+            if (continuation.isActive) continuation.resumeWithException(failure)
         }
-
-        try {
-            // Add logging interceptor to see the actual HTTP request
-            val loggingInterceptor = HttpLoggingInterceptor().apply {
-                level = HttpLoggingInterceptor.Level.BODY
-            }
-            val okHttpClient = OkHttpClient.Builder()
-                .addInterceptor(loggingInterceptor)
-                .build()
-            
-            val retrofit: Retrofit = Retrofit.Builder()
-                .baseUrl("http://battle.io-void.com:8080/")
-                .client(okHttpClient)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build()
-
-            val service: AuthService = retrofit.create<AuthService>(AuthService::class.java)
-            val request = AuthenticateRequest(userToken = token)
-            // Use login endpoint instead of validate to get sessionToken
-            val call: Call<AuthenticateResponse> = service.login(request)
-
-            call.enqueue(object : Callback<AuthenticateResponse> {
-                override fun onFailure(call: Call<AuthenticateResponse>, t: Throwable) {
-                    println("RetrofitHelper: Validate API call failed: ${t.message}")
-                    t.printStackTrace()
-                    Toast.makeText(context, context.getString(R.string.ui_auth_failed, t.message), Toast.LENGTH_SHORT).show()
-                }
-
-                override fun onResponse(call: Call<AuthenticateResponse>, response: Response<AuthenticateResponse>) {
-
-                    if (response.isSuccessful) {
-                        val authResponse: AuthenticateResponse? = response.body()
-                        if (authResponse != null) {
-                            callback(authResponse)
-                        } else {
-                            println("RetrofitHelper: Validation failed: Invalid response body")
-                            Toast.makeText(context, context.getString(R.string.ui_auth_invalid_response), Toast.LENGTH_SHORT).show()
-                        }
-                    } else {
-                        val errorBody = response.errorBody()?.string()
-                        println("RetrofitHelper: Validate response not successful - Code: ${response.code()}, Error: $errorBody")
-                        Toast.makeText(context, context.getString(R.string.ui_auth_failed, response.code().toString()), Toast.LENGTH_SHORT).show()
-                    }
-                }
-            })
-        } catch (e: Exception) {
-            println("RetrofitHelper: Exception in validate: ${e.message}")
-            e.printStackTrace()
-            Toast.makeText(context, context.getString(R.string.ui_auth_failed, e.message), Toast.LENGTH_SHORT).show()
-        }
-    }
+    })
 }

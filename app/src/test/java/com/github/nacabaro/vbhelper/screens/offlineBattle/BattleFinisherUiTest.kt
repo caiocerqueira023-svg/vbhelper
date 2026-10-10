@@ -71,20 +71,18 @@ class BattleFinisherUiTest {
         }
     }
 
-    @Test fun cinematicDeckGivesItsSpaceBackToTheArenaAndRestoresNormalAllocation() {
-        val normal = calculateBattlePortraitPanels(640f)
-        val movie = calculateBattlePortraitPanels(640f, cinematic = true)
-        assertEquals(56f, movie.deckHeightDp, 0f)
-        assertTrue(movie.arenaHeightDp > normal.arenaHeightDp)
-        assertEquals(640f, movie.arenaHeightDp + movie.deckHeightDp + movie.gapHeightDp, 0.001f)
-        assertEquals(normal, calculateBattlePortraitPanels(640f, cinematic = false))
+    @Test fun finishersKeepTheArenaCommandDeckAndGapAtTheirNormalDimensions() {
+        for (height in listOf(180f, 400f, 640f, 1000f)) {
+            assertEquals(calculateBattlePortraitPanels(height, cinematic = false),
+                calculateBattlePortraitPanels(height, cinematic = true))
+        }
     }
 
     @Test fun cinematicPanelsStayWithinEvenVerySmallAvailableHeights() {
         for (height in listOf(-1f, 0f, 5f, 40f, 66f, 180f, 1000f)) {
             val panels = calculateBattlePortraitPanels(height, cinematic = true)
             assertTrue(panels.arenaHeightDp >= 0f)
-            assertTrue(panels.deckHeightDp in 0f..56f)
+            assertTrue(panels.deckHeightDp >= 0f)
             assertTrue(panels.gapHeightDp >= 0f)
             assertEquals(height.coerceAtLeast(0f), panels.arenaHeightDp + panels.deckHeightDp + panels.gapHeightDp, 0.001f)
         }

@@ -4,11 +4,11 @@ import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
+import androidx.room.withTransaction
 import com.github.cfogrady.vitalwear.protos.Character
 import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.utils.DeviceType
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -17,10 +17,9 @@ class VitalWearCharacterExporter(
     private val context: Context,
     private val database: AppDatabase
 ) {
-    fun buildCharacterProto(characterId: Long): Character = runBlocking {
-        withContext(Dispatchers.IO) {
-            EvolutionHistoryRepository(database).repairCharacter(characterId)
-        }
+    suspend fun buildCharacterProto(characterId: Long): Character = withContext(Dispatchers.IO) {
+        database.withTransaction {
+        EvolutionHistoryRepository(database).repairCharacter(characterId)
         val characterWithSprites = database.userCharacterDao().getCharacterWithSprites(characterId)
         val userCharacter = database.userCharacterDao().getCharacter(characterId)
         val card = database.cardDao().getCardByCharacterIdSync(characterId)
@@ -65,14 +64,15 @@ class VitalWearCharacterExporter(
                 }
             )
             .build()
+        }
     }
 
-    fun buildShareIntent(characterId: Long): Intent {
-        return runBlocking {
+    suspend fun buildShareIntent(characterId: Long): Intent {
+        return withContext(Dispatchers.IO) {
             val proto = buildCharacterProto(characterId)
 
-            val exportDir = File(context.cacheDir, "exports").apply { mkdirs() }
-            val exportFile = File(exportDir, "vbhelper_character_$characterId.vitalwear")
+            val exportDir = File(context.cacheDir, "exports").apply { check(isDirectory || mkdirs()) }
+            val exportFile = File.createTempFile("vbhelper_character_${characterId}_", ".vitalwear", exportDir)
             exportFile.writeBytes(proto.toByteArray())
             val exportUri = FileProvider.getUriForFile(context, "${context.packageName}.provider", exportFile)
 
@@ -86,36 +86,32 @@ class VitalWearCharacterExporter(
         }
     }
 
-    private fun resolveTrainingSeconds(characterId: Long, deviceType: DeviceType): Long {
+    private suspend fun resolveTrainingSeconds(characterId: Long, deviceType: DeviceType): Long {
         if (deviceType != DeviceType.BEDevice) {
             return 0L
         }
         return database.userCharacterDao().getBeData(characterId).valueOrNull()?.remainingTrainingTimeInMinutes?.toLong()?.times(60L) ?: 0L
     }
 
-    private fun resolveTrainedBp(characterId: Long, deviceType: DeviceType): Int {
+    private suspend fun resolveTrainedBp(characterId: Long, deviceType: DeviceType): Int {
         return if (deviceType == DeviceType.BEDevice) {
             database.userCharacterDao().getBeData(characterId).valueOrNull()?.trainingBp ?: 0
         } else 0
     }
 
-    private fun resolveTrainedHp(characterId: Long, deviceType: DeviceType): Int {
+    private suspend fun resolveTrainedHp(characterId: Long, deviceType: DeviceType): Int {
         return if (deviceType == DeviceType.BEDevice) {
             database.userCharacterDao().getBeData(characterId).valueOrNull()?.trainingHp ?: 0
         } else 0
     }
 
-    private fun resolveTrainedAp(characterId: Long, deviceType: DeviceType): Int {
+    private suspend fun resolveTrainedAp(characterId: Long, deviceType: DeviceType): Int {
         return if (deviceType == DeviceType.BEDevice) {
             database.userCharacterDao().getBeData(characterId).valueOrNull()?.trainingAp ?: 0
         } else 0
     }
 
-    private fun <T> kotlinx.coroutines.flow.Flow<T>.valueOrNull(): T? {
-        return runBlocking {
-            firstOrNull()
-        }
-    }
+    private suspend fun <T> kotlinx.coroutines.flow.Flow<T>.valueOrNull(): T? = firstOrNull()
 
     companion object {
         const val VITALWEAR_CHARACTER_MIME = "application/x-vitalwear-character"

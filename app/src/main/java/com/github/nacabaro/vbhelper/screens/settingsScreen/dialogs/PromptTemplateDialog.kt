@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -25,6 +26,8 @@ import com.github.nacabaro.vbhelper.chat.DigimonPersonaBuilder
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.VitalButton
+import com.github.nacabaro.vbhelper.components.editorDialogBounds
+import androidx.compose.foundation.layout.FlowRow
 
 @Composable
 fun PromptTemplateDialog(
@@ -34,18 +37,18 @@ fun PromptTemplateDialog(
     title: String = stringResource(R.string.ui_digimon_prompt),
     defaultTemplate: String = DigimonPersonaBuilder.DEFAULT_SYSTEM_PROMPT_TEMPLATE.trimIndent()
 ) {
-    var template by remember(currentTemplate) {
+    var template by rememberSaveable(title, currentTemplate) {
         mutableStateOf(currentTemplate ?: defaultTemplate)
     }
 
-    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(dismissOnClickOutside = false)) {
-        Card {
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(dismissOnClickOutside = false, decorFitsSystemWindows = false)) {
+        Card(modifier = Modifier.editorDialogBounds()) {
             Column(Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
                 Text(title, style = MaterialTheme.typography.titleMedium)
                 Text(
                     stringResource(R.string.ui_prompt_description),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
                     "{Tamer}, {species_name}, {matched_name}, {profile_level}, {species_profile}, {species_profile_block}, {species_level}, {species_type}, {special_moves}, {personality_type}, {personality_block}, {roleplay_voice}, {conversation_examples}, {evolution_history}",
@@ -59,12 +62,13 @@ fun PromptTemplateDialog(
                     minLines = 10,
                     modifier = Modifier.fillMaxWidth()
                 )
-                Row(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End) {
+                FlowRow(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalArrangement = Arrangement.End) {
                     TextButton(onClick = { template = defaultTemplate }) {
                         Text(stringResource(R.string.ui_restore_default))
                     }
                     TextButton(onClick = onDismiss) { Text(stringResource(R.string.ui_cancel)) }
-                    VitalButton(onClick = { onSave(template.trim().ifBlank { null }) }) { Text(stringResource(R.string.ui_save)) }
+                    VitalButton(onClick = { onSave(template.trim().ifBlank { null }) },
+                        style = com.github.nacabaro.vbhelper.components.VitalButtonStyle.PRIMARY) { Text(stringResource(R.string.ui_save)) }
                 }
             }
         }

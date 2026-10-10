@@ -6,8 +6,23 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
+import com.github.nacabaro.vbhelper.components.ChatContextPanel
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
@@ -40,12 +55,15 @@ fun ScanScreen(
     val application = LocalContext.current.applicationContext as VBHelper
     val storageRepository = remember { StorageRepository(application.container.db) }
     var nfcCharacter by remember { mutableStateOf<NfcCharacter?>(null) }
-    var feedbackMessage by remember { mutableStateOf<String?>(null) }
-    var feedbackRequiresSettings by remember { mutableStateOf(false) }
+    var feedbackMessage by rememberSaveable(characterId) { mutableStateOf<String?>(null) }
+    var feedbackRequiresSettings by rememberSaveable(characterId) { mutableStateOf(false) }
+    var prepareRetry by rememberSaveable(characterId) { mutableIntStateOf(0) }
+    val transferStatus by scanScreenController.transferStatus.collectAsState(initial = null)
 
     val context = LocalContext.current
+    val resources = LocalResources.current
 
-    LaunchedEffect(characterId) {
+    LaunchedEffect(characterId, prepareRetry) {
         withContext(Dispatchers.IO) {
             if (characterId != null && nfcCharacter == null) {
                 try {
@@ -54,7 +72,7 @@ fun ScanScreen(
                     throw cancelled
                 } catch (failure: Exception) {
                     withContext(Dispatchers.Main) {
-                        feedbackMessage = failure.message ?: "Transfer preparation failed"
+                        feedbackMessage = resources.getString(R.string.app_transfer_prepare_failed)
                         feedbackRequiresSettings = false
                     }
                 }
@@ -65,6 +83,8 @@ fun ScanScreen(
     var writingScreen by remember { mutableStateOf(false) }
     var readingScreen by remember { mutableStateOf(false) }
 
+    Column(Modifier.fillMaxSize()) {
+    Box(Modifier.weight(1f)) {
     if (writingScreen && nfcCharacter != null && characterId != null) {
         WritingScreen(
             scanScreenController = scanScreenController,
@@ -98,10 +118,10 @@ fun ScanScreen(
                 else -> {
                     {
                         if(secrets == null) {
-                            feedbackMessage = context.getString(R.string.scan_secrets_not_initialized)
+                            feedbackMessage = resources.getString(R.string.scan_secrets_not_initialized)
                             feedbackRequiresSettings = true
                         } else if(secrets?.isMissingSecrets() == true) {
-                            feedbackMessage = context.getString(R.string.scan_secrets_not_imported)
+                            feedbackMessage = resources.getString(R.string.scan_secrets_not_imported)
                             feedbackRequiresSettings = true
                         } else {
                             feedbackMessage = null
@@ -116,10 +136,10 @@ fun ScanScreen(
                 else -> {
                     {
                         if(secrets == null) {
-                            feedbackMessage = context.getString(R.string.scan_secrets_not_initialized)
+                            feedbackMessage = resources.getString(R.string.scan_secrets_not_initialized)
                             feedbackRequiresSettings = true
                         } else if(secrets?.isMissingSecrets() == true) {
-                            feedbackMessage = context.getString(R.string.scan_secrets_not_imported)
+                            feedbackMessage = resources.getString(R.string.scan_secrets_not_imported)
                             feedbackRequiresSettings = true
                         } else {
                             feedbackMessage = null
@@ -131,11 +151,22 @@ fun ScanScreen(
             },
             navController = navController,
             feedbackMessage = feedbackMessage,
-            onFeedbackAction = feedbackMessage?.takeIf { feedbackRequiresSettings }?.let {
-                { navController.navigate(NavigationItems.Settings.route) }
+            onFeedbackAction = feedbackMessage?.let {
+                if (feedbackRequiresSettings) ({ navController.navigate(NavigationItems.Settings.route) })
+                else ({ feedbackMessage = null; prepareRetry++ })
             },
+            feedbackActionLabel = if (feedbackRequiresSettings) R.string.ui_settings else R.string.app_retry,
             onDismissFeedback = { feedbackMessage = null }
         )
+    }
+    }
+    transferStatus?.let { message ->
+        ChatContextPanel(Modifier.padding(12.dp).heightIn(max = 180.dp).verticalScroll(rememberScrollState())) {
+            Text(stringResource(R.string.app_transfer_status), style = MaterialTheme.typography.titleSmall)
+            Text(message, style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+        }
+    }
     }
 }
 

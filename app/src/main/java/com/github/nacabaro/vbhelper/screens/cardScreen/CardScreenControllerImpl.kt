@@ -10,18 +10,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import com.github.nacabaro.vbhelper.species.SpeciesRepository
-import com.github.nacabaro.vbhelper.R
 
 class CardScreenControllerImpl(
     private val componentActivity: ComponentActivity,
 ) : CardScreenController {
     private val application = componentActivity.applicationContext as VBHelper
     private val database = application.container.db
-    private val speciesRepository = SpeciesRepository(
-        database = database,
-        settingsRepository = application.container.speciesSettingsRepository
-    )
+    private val speciesRepository = application.container.speciesRepository
 
     override fun renameCard(cardId: Long, newName: String, onRenamed: (String) -> Unit) {
         componentActivity.lifecycleScope.launch {
@@ -64,8 +59,8 @@ class CardScreenControllerImpl(
     override fun setCardOfficialStatus(cardId: Long, status: OfficialStatus, onComplete: (Int) -> Unit) {
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
             database.cardDao().updateOfficialStatus(cardId, status)
-            val matchedCount = if (status == OfficialStatus.OFFICIAL) {
-                speciesRepository.matchOfficialSpeciesForCard(cardId)
+            val matchedCount = if (status != OfficialStatus.UNKNOWN) {
+                speciesRepository.matchSpeciesForCard(cardId)
             } else {
                 0
             }
@@ -75,18 +70,8 @@ class CardScreenControllerImpl(
 
     override fun retrySpeciesMatch(cardId: Long, onComplete: (Int, String?) -> Unit) {
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
-            val card = database.cardDao().getCardById(cardId)
-            if (card?.officialStatus == OfficialStatus.CUSTOM) {
-                withContext(Dispatchers.Main) {
-                    onComplete(
-                        0,
-                        componentActivity.getString(R.string.ui_custom_card_species_match_unavailable)
-                    )
-                }
-                return@launch
-            }
             val result = runCatching {
-                speciesRepository.matchOfficialSpeciesForCard(cardId)
+                speciesRepository.matchSpeciesForCard(cardId)
             }
             withContext(Dispatchers.Main) {
                 onComplete(result.getOrDefault(0), result.exceptionOrNull()?.message)
