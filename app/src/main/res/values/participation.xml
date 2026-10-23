@@ -1,0 +1,15 @@
+<resources>
+    <string name="participation_inactive">Partner unavailable</string>
+    <string name="participation_inactive_hint">This Digimon is no longer available in the collection. Its records and progress are preserved.</string>
+    <string name="participation_quest_inactive">A required Digimon is unavailable. Recorded quest progress is preserved.</string>
+    <string name="participation_view_chat">View conversation</string>
+    <string name="home_app_partner_summary">Stage %1$d · Mood %2$d · Vitals %3$d · Battles %4$d won / %5$d lost</string>
+    <string name="app_setup_expanded_title">Or start without a watch</string>
+    <string name="app_setup_expanded_body">Meet Digimon in the World without a watch or card. Your first partner is waiting nearby.</string>
+    <string name="app_setup_expanded_button">Meet your first partner</string>
+    <string name="conversion_title">Assign DIM/BEM stat basis</string>
+    <string name="conversion_description">Choose the exact loaded DIM/BEM slot for this species and form. Its normal stat rules override additional app and cross-product bonuses while assigned, and it becomes the watch-transfer target. Identity, all earned growth and original game values are retained.</string>
+    <string name="conversion_empty">No loaded DIM/BEM slot matches this species and form. Import the matching card first.</string>
+    <string name="conversion_choose">Use this slot</string>
+    <string name="conversion_saved">DIM/BEM stat and watch-transfer basis saved.</string>
+</resources>

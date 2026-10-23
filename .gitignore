@@ -1,6 +1,11 @@
 
 .gradle/
 
+.kotlin/
+
+# Generated Gradle outputs; historical checked-in build/ references remain tracked.
+build/
+
 .idea/
 
 local.properties

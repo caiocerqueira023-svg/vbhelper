@@ -22,6 +22,11 @@ import com.github.nacabaro.vbhelper.navigation.NavigationItems
 import com.github.nacabaro.vbhelper.source.ItemsRepository
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.CyberEmptyState
+import com.github.nacabaro.vbhelper.components.rememberCollectionLoad
+import com.github.nacabaro.vbhelper.components.CollectionStatePanel
+import com.github.nacabaro.vbhelper.components.CollectionRefreshNotice
+import androidx.compose.foundation.layout.Column
+import com.github.nacabaro.vbhelper.components.InstrumentSpacing
 
 
 @Composable
@@ -30,17 +35,22 @@ fun MyItems(
 ) {
     val application = LocalContext.current.applicationContext as VBHelper
     val itemsRepository = remember { ItemsRepository(application.container.db) }
-    val myItems by itemsRepository.getUserItems().collectAsState(emptyList())
+    val collection = rememberCollectionLoad(itemsRepository) { itemsRepository.getUserItems() }
+    val myItems = collection.data.orEmpty()
 
-    var selectedElementIndex by remember { mutableStateOf<Int?>(null) }
+    var selectedItemId by remember { mutableStateOf<Long?>(null) }
+    val selectedItem = myItems.firstOrNull { it.id == selectedItemId }
 
+    if (collection.blocking) { CollectionStatePanel(collection); return }
     if (myItems.isEmpty()) {
         CyberEmptyState(stringResource(R.string.items_no_items))
     } else {
+        Column(Modifier.fillMaxSize()) {
+        CollectionRefreshNotice(collection)
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 104.dp),
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(16.dp),
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(InstrumentSpacing.Screen),
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -53,15 +63,16 @@ fun MyItems(
                     item = index,
                     modifier = Modifier,
                     onClick = {
-                        selectedElementIndex = myItems.indexOf(index)
+                        selectedItemId = index.id
                     }
                 )
             }
         }
+        }
 
-        if (selectedElementIndex != null) {
+        if (selectedItem != null) {
             ItemDialog(
-                item = myItems[selectedElementIndex!!],
+                item = selectedItem,
                 onClickUse = {
                     navController
                         .navigate(
@@ -69,12 +80,12 @@ fun MyItems(
                                 .ApplyItem.route
                                 .replace(
                                     "{itemId}",
-                                    myItems[selectedElementIndex!!].id.toString()
+                                    selectedItem.id.toString()
                                 )
                         )
-                    selectedElementIndex = null
+                    selectedItemId = null
                 },
-                onClickCancel = { selectedElementIndex = null }
+                onClickCancel = { selectedItemId = null }
             )
         }
     }

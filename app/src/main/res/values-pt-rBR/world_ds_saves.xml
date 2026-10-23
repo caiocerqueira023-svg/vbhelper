@@ -1,0 +1,33 @@
+<resources>
+    <string name="transfer_world_ds">Digimon World DS · EUA · Save bruto do DraStic</string>
+    <string name="transfer_unassigned">Registros sem local definido</string>
+    <string name="transfer_record_details_no_personality">Nível %1$d · Espécie nativa %2$d · Posição %3$d</string>
+    <string name="transfer_world_ds_stats">HP nativo %1$d/%2$d · MP %3$d/%4$d</string>
+    <string name="transfer_world_ds_combat">Ataque %1$d · Defesa %2$d · Espírito %3$d · Velocidade %4$d</string>
+    <string name="transfer_world_ds_aptitude">Aptidão nativa: %1$d</string>
+    <string name="transfer_world_ds_exp">Canais de EXP nativos (ordem original): %1$s</string>
+    <string name="transfer_world_ds_copy">Cópia do save %1$d</string>
+    <string name="transfer_integrity_unverified">O checksum nativo não foi verificado. As cópias preservam o save de origem; a gravação no jogo continua indisponível.</string>
+    <string name="world_ds_choose_copy">Revisar cópia do save</string>
+    <string name="world_ds_copy_explanation">A cópia válida mais recente já está selecionada; escolha outra para substituí-la nesta leitura exata. Compare os registros com seu jogo. Isso não altera o save nem valida o checksum. Um save alterado exige nova revisão.</string>
+    <string name="world_ds_copy_roster">Cópia %1$d · %2$d registros</string>
+    <string name="world_ds_copy_member">%1$s · Nível %2$d</string>
+    <string name="world_ds_use_copy">Usar cópia nesta leitura</string>
+    <string name="world_ds_copy_confirmed">A autoridade da cópia foi confirmada pelo usuário para esta revisão exata.</string>
+    <string name="world_ds_copy_failed">O save mudou ou não pôde ser lido. Feche a revisão, atualize a origem e tente novamente.</string>
+    <string name="world_ds_personality_initialization">Este jogo não tem personalidade nativa mapeada. O VBHelper inicializa uma personalidade apenas do app uma vez; o valor nativo permanece ausente.</string>
+    <string name="world_ds_personality_retained">A personalidade pertence ao app. A personalidade nativa está ausente; atualizar a origem preserva sua personalidade no app.</string>
+    <string name="transfer_save_copy_review">Há várias cópias preenchidas do save. Os registros são exibidos para revisão; nenhuma cópia atual foi selecionada.</string>
+    <string name="transfer_move_copy_divergence">As cópias do save não concordam sobre este Digimon, então a movimentação nativa descartaria uma das versões. Salve novamente no jogo ou atualize o save vinculado.</string>
+    <string name="transfer_save_copy_auto">Usando a cópia válida mais recente do save. Cópias antigas são ignoradas para movimentações; revise uma cópia para substituir.</string>
+    <string name="transfer_move_copy_older_only">Este Digimon existe apenas em uma cópia antiga do save. Salve novamente no jogo ou revise a cópia mais recente.</string>
+    <string name="transfer_issue_guest">Visitante de outro save.</string>
+    <string name="transfer_issue_lent">Emprestado para outro save.</string>
+    <string name="transfer_issue_egg">Registro de ovo nativo.</string>
+    <string name="transfer_issue_foreign">Marcado como pertencente a outro DS.</string>
+    <string name="transfer_issue_location">Referências de localização conflitantes.</string>
+    <string name="transfer_issue_name_codes">Alguns caracteres nativos do nome não têm mapeamento. Os bytes originais são preservados.</string>
+    <string name="transfer_issue_unassigned">Nenhuma referência de equipe ou fazenda foi encontrada.</string>
+    <string name="transfer_issue_save_copy">A autoridade desta cópia do save precisa de revisão.</string>
+    <string name="transfer_issue_values">Alguns valores nativos parecem incomuns para o jogo. Este registro precisa de revisão antes de mover ou enviar.</string>
+</resources>

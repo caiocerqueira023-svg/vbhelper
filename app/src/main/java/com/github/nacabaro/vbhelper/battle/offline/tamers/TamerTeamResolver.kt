@@ -13,6 +13,10 @@ data class ArenaSpecies(
     val specialMoves: List<String>,
     val vitalStats: VitalBattleProfile?,
     val description: String? = null,
+    val fallbackArtwork: Boolean = assetId?.startsWith("dim124_mon") == true,
+    val nativeArtwork: Boolean = assetId != null || cardCharacterId != null,
+    val modeFallbackArtwork: Boolean = false,
+    val isCatalogDefinition: Boolean = false,
 )
 
 data class ResolvedTamerPartner(
@@ -38,9 +42,18 @@ class TamerTeamResolver(
     val nicknames: Map<Pair<String, String>, PartnerNickname> = emptyMap(),
 ) {
     private val byId = tamers.associateBy { it.id }
-    private val bySpecies = species.groupBy { BattleSpeciesIdentity.normalize(it.name) }
+    private val bySpecies = species.groupBy { BattleSpeciesIdentity.normalize(it.name) }.mapValues { (_, candidates) ->
+        // DiM 124 is a last-resort sprite source for the same canonical form.
+        candidates.filterNot { it.fallbackArtwork }.ifEmpty { candidates }
+    }
 
     fun speciesNamed(name: String): ArenaSpecies? = bySpecies[BattleSpeciesIdentity.normalize(name)]?.firstOrNull()
+
+    fun resolveForCup(tamerId: String, stages: List<Int>): ResolvedTamerTeam? =
+        resolve(tamerId, stages)
+
+    /** Sprite source is cosmetic in cups as well as ordinary battles. */
+    fun forCups() = this
 
     private data class StageChoice(val names: List<String>, val stage: Int, val sourceUri: String,
         val components: Set<String> = emptySet(), val fusionResult: String? = null)

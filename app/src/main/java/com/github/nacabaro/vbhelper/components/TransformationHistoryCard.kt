@@ -15,6 +15,10 @@ import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.res.stringResource
+import com.github.nacabaro.vbhelper.R
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -44,6 +48,9 @@ fun TransformationHistoryCard(
         border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceStroke),
         modifier = modifier
     ) {
+        Column {
+        Text(stringResource(R.string.immersion_evolution_history), style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.padding(start = 12.dp, top = 12.dp))
         LazyRow (
             modifier = Modifier
                 .padding(8.dp)
@@ -51,6 +58,7 @@ fun TransformationHistoryCard(
             items(transformationHistory) { transformation ->
                 TransformationHistoryItem(transformation, onClickTransformation)
             }
+        }
         }
     }
 }

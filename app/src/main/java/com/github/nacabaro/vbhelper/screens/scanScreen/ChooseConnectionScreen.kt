@@ -45,10 +45,11 @@ fun ChooseConnectOption(
     onDismissFeedback: (() -> Unit)? = null,
     navController: NavController,
     @StringRes feedbackActionLabel: Int = R.string.ui_settings,
+    showHeader: Boolean = true,
 ) {
     Scaffold(
         topBar = {
-            TopBanner(
+            if (showHeader) TopBanner(
                 text = stringResource(R.string.scan_title),
                 onBackClick = {
                     navController.popBackStack()

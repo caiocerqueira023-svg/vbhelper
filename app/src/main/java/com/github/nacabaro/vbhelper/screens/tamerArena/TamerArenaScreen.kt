@@ -22,6 +22,8 @@ fun TamerArenaScreen(viewModel: TamerArenaViewModel, battleViewModel: OfflineBat
     var series by rememberSaveable { mutableStateOf<String?>(null) }
     var availableOnly by rememberSaveable { mutableStateOf(true) }
     var pickerSlot by rememberSaveable { mutableStateOf<Int?>(null) }
+    // Keep entry confirmation outside the lobby so returning from a fight does not reopen it.
+    var needsTeamConfirmation by rememberSaveable { mutableStateOf(state.currentMatch == null) }
     val match = state.currentMatch
     LaunchedEffect(Unit) { viewModel.reload() }
     LaunchedEffect(match?.id) {
@@ -32,6 +34,7 @@ fun TamerArenaScreen(viewModel: TamerArenaViewModel, battleViewModel: OfflineBat
     if (match != null) {
         OfflineTrainingBattleScreen(battleViewModel, onExit = { viewModel.closeMatch() }, modifier = modifier,
             battleTitle = stringResource(R.string.arena_vs, match.right.name),
+            arenaSession = true,
             battleSubtitle = "${match.left.members.size} × ${match.right.members.size} · ${arenaDifficultyName(match.difficulty)}",
             resultContent = { snapshot ->
                 ArenaResult(snapshot, match, battle.arenaSettlement, battle.recordingArenaResult,
@@ -50,7 +53,8 @@ fun TamerArenaScreen(viewModel: TamerArenaViewModel, battleViewModel: OfflineBat
         viewModel::setFormat, viewModel::setDifficulty, { pickerSlot = it }, viewModel::startExhibition,
         viewModel::startTournament, viewModel::resumeTournament, viewModel::showBracket, viewModel::withdrawTournament,
         viewModel::clearError), tab, { tab = it }, query, { query = it }, series, { series = it },
-        availableOnly, { availableOnly = it }, modifier)
+        availableOnly, { availableOnly = it }, modifier,
+        requireTeamConfirmation = needsTeamConfirmation, onConfirmTeam = { needsTeamConfirmation = false })
     pickerSlot?.let { slot ->
         val other = state.selectedPartnerIds.getOrNull(if (slot == 0) 1 else 0)
         val options = state.partners.filter { it.stableId != other }

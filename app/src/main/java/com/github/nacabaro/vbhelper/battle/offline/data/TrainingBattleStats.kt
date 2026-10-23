@@ -4,7 +4,7 @@ import kotlin.math.exp
 import kotlin.math.ln
 import kotlin.math.roundToInt
 
-enum class VitalStatScale { DIM, BEM, ARENA_EXTRACTED, STAGE_FALLBACK }
+enum class VitalStatScale { DIM, BEM, ARENA_EXTRACTED, STAGE_FALLBACK, APP_DIM }
 
 /** Battle-relevant values read from the card and the character stored by the bracelet. */
 data class VitalBattleProfile(
@@ -17,7 +17,8 @@ data class VitalBattleProfile(
     val trainingAp: Int = 0,
     val vitalPoints: Int = 0,
     val mood: Int = 50,
-    val sourcePhase: Int? = null
+    val sourcePhase: Int? = null,
+    val originBasisPoints: Int = 10000,
 ) {
     val hasAnyUsableBaseStats: Boolean
         get() = listOf(baseHp, baseBp, baseAp).any(::isKnownBaseStat)
@@ -127,6 +128,13 @@ data class TrainingBattleStats(
             }
             val equivalent = when (vitalStats.scale) {
                 VitalStatScale.DIM -> convertDimProfile(vitalStats, bemPhase, average)
+                // Authored APP v1: catalog DIM-range base projected normally, then bounded app training
+                // in the existing BEM-equivalent bonus units. No native-game level/EXP/stat conversion.
+                VitalStatScale.APP_DIM -> convertDimProfile(vitalStats, bemPhase, average).let { base ->
+                    val origin = vitalStats.originBasisPoints.coerceIn(9000, 11000) / 10000f
+                    BraceletStats(bp = base.bp * origin + vitalStats.trainingBp.coerceIn(0, MAX_BE_TRAINING),
+                        hp = base.hp * origin + vitalStats.trainingHp.coerceIn(0, MAX_BE_TRAINING),
+                        ap = base.ap * origin + vitalStats.trainingAp.coerceIn(0, MAX_BE_TRAINING)) }
                 VitalStatScale.BEM -> BraceletStats(
                     bp = resolveBemStat(vitalStats.baseBp, vitalStats.trainingBp, average.bp),
                     hp = resolveBemStat(vitalStats.baseHp, vitalStats.trainingHp, average.hp),

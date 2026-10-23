@@ -22,6 +22,7 @@ class DigimonScanRepository(private val db: AppDatabase, private val now: () -> 
     internal suspend fun awardBattleLocked(interactionId: String, awards: Map<Long, Int>, timestamp: Long) {
         val dao = db.digimonScanDao()
         for ((cardCharacterId, gain) in awards) {
+            if (db.participation?.snapshot()?.card(cardCharacterId)?.usable == false) continue
             val before = dao.getProgress(cardCharacterId) ?: 0
             val after = DigimonScanPolicy.afterReward(before, gain)
             dao.saveProgress(DigimonScanProgress(cardCharacterId, after, timestamp))
@@ -30,8 +31,11 @@ class DigimonScanRepository(private val db: AppDatabase, private val now: () -> 
     }
 
     suspend fun convert(cardCharacterId: Long, nickname: String? = null): ScanConversionResult = db.withTransaction {
+        if (db.participation?.snapshot()?.card(cardCharacterId)?.usable == false) return@withTransaction ScanConversionResult.Unavailable
         val species = db.characterDao().getById(cardCharacterId) ?: return@withTransaction ScanConversionResult.Unavailable
-        val card = db.cardDao().getCardById(species.cardId) ?: return@withTransaction ScanConversionResult.Unavailable
+        // Scans convert imported card slots; catalog partners recruit through encounters instead.
+        val slotCardId = species.cardId ?: return@withTransaction ScanConversionResult.Unavailable
+        val card = db.cardDao().getCardById(slotCardId) ?: return@withTransaction ScanConversionResult.Unavailable
         val timestamp = now()
         if (db.digimonScanDao().consumeCompleteScan(cardCharacterId, timestamp) != 1) return@withTransaction ScanConversionResult.NotReady
 

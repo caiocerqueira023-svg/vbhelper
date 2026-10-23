@@ -38,6 +38,7 @@ import com.github.nacabaro.vbhelper.rendering.sprite3d.ResidentFrameImage
 import com.github.nacabaro.vbhelper.rendering.sprite3d.SpriteExtrusionGlb
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.createARGBIntArray
+import com.github.nacabaro.vbhelper.species.displayFrame
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -141,6 +142,8 @@ object TrainingBattlePresentationFactory {
         val arenaManifest = OfflineArenaManifest.read(appContext, arenaManifestPath)
         val blastData = BlastEvolutionRepository.load(appContext)
         val db = (appContext as VBHelper).container.db
+        val appearances = com.github.nacabaro.vbhelper.species.SpeciesAppearanceRepository(
+            db, appContext.container.dotSpriteLibrary) { appContext.container.spritePreferenceRepository.current }
         val participantsBySide = mapOf(BattleSide.ALLIED to allies, BattleSide.OPPOSING to opponents)
         val sourceCardIds = (allies + opponents).mapNotNull { it.character?.charId ?: it.cardCharacterId }.toSet()
         val equippedTargets = (allies + opponents).flatMap {
@@ -189,6 +192,7 @@ object TrainingBattlePresentationFactory {
             val jogressConstraints = LinkedHashMap<String, Pair<List<String>, BattleAttribute?>>()
             val constraintCache = mutableMapOf<Triple<Long?, String?, String>, Pair<List<String>, BattleAttribute?>>()
             val importedPoses = mutableMapOf<Long, Map<String, ResidentFrameImage>?>()
+            val preferredPoses = mutableMapOf<String, Map<String, ResidentFrameImage>?>()
             val importedAttackArt = mutableMapOf<Long, CardAttackArt?>()
             val attacks = mutableMapOf<String, Map<String, Bitmap>>()
             val transitions = mutableMapOf<ByteArray, ByteArray>()
@@ -197,6 +201,12 @@ object TrainingBattlePresentationFactory {
                     importedPoses[cardCharacterId] = spritePosesForCharacter(db, cardCharacterId)
                 }
                 return importedPoses[cardCharacterId]
+            }
+            suspend fun posesForSpecies(name: String?): Map<String, ResidentFrameImage>? {
+                if (name.isNullOrBlank()) return null
+                val key = BattleSpeciesIdentity.normalize(name)
+                if (!preferredPoses.containsKey(key)) preferredPoses[key] = appearances.spriteFor(name)?.let(::spritePoses)
+                return preferredPoses[key]
             }
             suspend fun attackVisuals(cardCharacterId: Long?, artId: String): Map<String, Bitmap> {
                 if (cardCharacterId != null && !importedAttackArt.containsKey(cardCharacterId)) {
@@ -226,7 +236,8 @@ object TrainingBattlePresentationFactory {
                         }
                     }
                     val artId = profile.externalCharacterId ?: "storage:${profile.instanceId}"
-                    val poses = participant.spriteSet?.let(::spriteSetPoses)
+                    val poses = posesForSpecies(profile.speciesName)
+                        ?: participant.spriteSet?.let(::spriteSetPoses)
                         ?: cardCharacterId?.let { posesForCharacter(it) }
                         ?: participant.character?.let(::databasePoses)
                         ?: assetPoses(spriteManager, artId)
@@ -258,7 +269,7 @@ object TrainingBattlePresentationFactory {
                 .map { withJogressConstraints(it, jogressConstraints) }
             val preparedForms = buildPreparedForms(db, blastData, resultProfiles, fighters,
                 initialAlliedDefinitions + initialOpposingDefinitions, ::posesForCharacter, ::attackVisuals, ::transition,
-                arenaSpec?.resultSpecies.orEmpty(), spriteManager)
+                arenaSpec?.resultSpecies.orEmpty(), spriteManager, ::posesForSpecies)
             fun enrichedDefinition(definition: CombatantDefinition): CombatantDefinition {
                 val form = preparedForms.values.firstOrNull {
                     it.combatantId == definition.combatantId && definition.blastMode == BlastEvolutionSlot.FORM &&
@@ -326,6 +337,7 @@ object TrainingBattlePresentationFactory {
         transition: (ByteArray, Map<String, ResidentFrameImage>) -> ByteArray,
         pinnedResults: List<ArenaSpecies> = emptyList(),
         spriteManager: IndividualSpriteManager,
+        posesForSpecies: suspend (String?) -> Map<String, ResidentFrameImage>?,
     ): Map<String, BattleFighterPresentation> {
         val results = LinkedHashMap<String, BattleFighterPresentation>()
         val resultArt = mutableMapOf<String, BattleFighterPresentation?>()
@@ -340,7 +352,21 @@ object TrainingBattlePresentationFactory {
                     val pinned = pinnedResults.firstOrNull {
                         BattleSpeciesIdentity.normalize(it.name) == BattleSpeciesIdentity.normalize(target)
                     }
-                    if (pinned != null) {
+                    val preferred = posesForSpecies(target)
+                    if (preferred != null) {
+                        val model = SpriteExtrusionGlb.build(preferred)
+                        val special = pinned?.specialMoves?.firstOrNull() ?: profiles[normalizedTarget]?.firstOrNull()?.firstSpecialMove()
+                        val stage = pinned?.stage ?: profiles[normalizedTarget]?.firstOrNull()?.cardCharacterId
+                            ?.let { db.characterDao().getById(it)?.stage }
+                        val scale = stage?.let(::battleFighterScaleMultiplier) ?: base.visualScaleMultiplier
+                        val targetCard = pinned?.cardCharacterId ?: profiles[normalizedTarget]?.firstOrNull()?.cardCharacterId
+                        val targetAsset = pinned?.assetId
+                        val targetAttacks = if (targetCard != null || targetAsset != null)
+                            attackVisuals(targetCard, targetAsset ?: "card:$targetCard") else base.attackVisuals
+                        importedResult = BattleFighterPresentation(definition.combatantId, "normalized:$normalizedTarget", target, model,
+                            preferred.keys, "$normalizedTarget:${model.contentHashCode()}", targetAttacks, base.impactModels,
+                            scale, special, target, resolveFinisherAttackProfile(special), transition(model, preferred))
+                    } else if (pinned != null) {
                         val poses = pinned.cardCharacterId?.let { posesForCharacter(it) }
                             ?: pinned.assetId?.let { assetPoses(spriteManager, it) }
                             ?: emptyMap()
@@ -354,7 +380,7 @@ object TrainingBattlePresentationFactory {
                             battleFighterScaleMultiplier(pinned.stage), special, pinned.name,
                             resolveFinisherAttackProfile(special), transition(model, poses))
                     }
-                    for (profile in if (pinned == null) profiles[normalizedTarget].orEmpty() else emptyList()) {
+                    for (profile in if (pinned == null && preferred == null) profiles[normalizedTarget].orEmpty() else emptyList()) {
                         val poses = posesForCharacter(profile.cardCharacterId) ?: continue
                         val model = SpriteExtrusionGlb.build(poses)
                         val artId = "card:${profile.cardCharacterId}"
@@ -405,14 +431,15 @@ object TrainingBattlePresentationFactory {
         cardCharacterId: Long,
     ): Map<String, ResidentFrameImage>? {
         val source = db.spriteDao().getForCharacter(cardCharacterId) ?: return null
+        return spritePoses(source)
+    }
+
+    private fun spritePoses(source: com.github.nacabaro.vbhelper.domain.characters.Sprite): Map<String, ResidentFrameImage>? {
         if (source.width <= 0 || source.height <= 0) return null
-        return mapOf(
-            "idle" to source.spriteIdle1, "idle2" to source.spriteIdle2,
-            "walk" to source.spriteWalk1, "walk2" to source.spriteWalk2,
-            "attack" to source.spriteAttack, "guard" to source.spriteDodge,
-            "defeated" to source.spriteSleep
-        ).mapNotNull { (pose, bytes) ->
-            if (bytes.isEmpty()) null else pose to ResidentFrameImage(
+        return mapOf("idle" to 1, "idle2" to 2, "walk" to 3, "walk2" to 4,
+            "attack" to 11, "guard" to 12, "defeated" to 10).mapNotNull { (pose, number) ->
+            val bytes = source.displayFrame(number) ?: return@mapNotNull null
+            pose to ResidentFrameImage(
                 BitmapData(bytes, source.width, source.height).createARGBIntArray(), source.width, source.height)
         }.toMap().takeIf { it.isNotEmpty() }
     }
@@ -486,8 +513,8 @@ object TrainingBattlePresentationFactory {
         }.toMap()
     }
 
-    private fun assetPoses(manager: IndividualSpriteManager, characterId: String): Map<String, ResidentFrameImage> {
-        val frames = manager.getAvailableFrames(characterId)
+    private suspend fun assetPoses(manager: IndividualSpriteManager, characterId: String): Map<String, ResidentFrameImage> {
+        val frames = manager.getAvailableDisplayFrames(characterId)
         if (frames.isEmpty()) return emptyMap()
         val selected = mapOf("idle" to 1, "idle2" to 2, "walk" to 3, "walk2" to 4,
             "attack" to 11, "guard" to 12, "defeated" to 10)

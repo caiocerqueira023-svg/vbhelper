@@ -174,7 +174,7 @@ fun getLandscapeBoxModifier(): Modifier {
         Modifier
             .width(220.dp) // Slightly wider than the progress bar to accommodate padding
             .background(
-                color = Color.Gray.copy(alpha = 0.6f),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.96f),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
             )
             .padding(8.dp)
@@ -182,7 +182,7 @@ fun getLandscapeBoxModifier(): Modifier {
         Modifier
             .fillMaxWidth()
             .background(
-                color = Color.Gray.copy(alpha = 0.6f),
+                color = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.96f),
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
             )
             .padding(8.dp)
@@ -201,8 +201,10 @@ fun AnimatedDamageNumber(
     var scale by remember { mutableStateOf(1f) }
     var alpha by remember { mutableStateOf(1f) }
     var yOffset by remember { mutableStateOf(0.dp) }
+    val allowMotion = motionEnabled()
     
-    LaunchedEffect(isVisible) {
+    LaunchedEffect(isVisible, allowMotion) {
+        if (!allowMotion) { scale = 1f; alpha = 1f; yOffset = 0.dp; return@LaunchedEffect }
         if (isVisible) {
             // Start animation
             animationProgress = 0f
@@ -813,9 +815,9 @@ fun MiddleBattleView(
 
                     // Enemy HP display numbers
             Text(
-                        text = "Enemy HP: ${battleSystem.opponentHP.toInt()}/${opponentCharacter?.baseHp ?: 100}",
+                        text = stringResource(R.string.audit_enemy_hp, battleSystem.opponentHP.toInt(), opponentCharacter?.baseHp ?: 100),
                         fontSize = getLandscapeFontSize(),
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurface,
                         style = TextStyle(
                             shadow = Shadow(
                                 color = Color.Black,
@@ -1044,9 +1046,9 @@ fun MiddleBattleView(
 
                     // Player HP display numbers
                     Text(
-                        text = "HP: ${battleSystem.playerHP.toInt()}/${activeCharacter?.baseHp ?: 100}",
+                        text = stringResource(R.string.audit_player_hp, battleSystem.playerHP.toInt(), activeCharacter?.baseHp ?: 100),
                         fontSize = getLandscapeFontSize(),
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurface,
                         style = TextStyle(
                             shadow = Shadow(
                                 color = Color.Black,
@@ -1158,14 +1160,14 @@ fun MiddleBattleView(
                  enabled = battleSystem.isAttackButtonEnabled,
                  modifier = Modifier
                      .fillMaxWidth(0.5f)
-                     .height(35.dp),
+                      .heightIn(min = 48.dp),
                  colors = ButtonDefaults.buttonColors(
                      containerColor = VitalCyan,
                      disabledContainerColor = Color.Gray
                  ),
                  shape = CutCornerShape(8.dp)
              ) {
-                 Text(stringResource(R.string.ui_attack), color = Color.Black, fontSize = 12.sp)
+                  Text(stringResource(R.string.ui_attack), color = com.github.nacabaro.vbhelper.ui.theme.OnVitalAccent, style = MaterialTheme.typography.labelLarge)
              }
         }
     }
@@ -1225,9 +1227,9 @@ fun PlayerBattleView(
 
             // Health display numbers
             Text(
-                text = "HP: ${battleSystem.playerHP.toInt()}/${activeCharacter?.baseHp ?: 100}",
+                text = stringResource(R.string.audit_player_hp, battleSystem.playerHP.toInt(), activeCharacter?.baseHp ?: 100),
                         fontSize = getLandscapeFontSize(),
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurface,
                         style = TextStyle(
                             shadow = Shadow(
                                 color = Color.Black,
@@ -1412,9 +1414,9 @@ fun EnemyBattleView(
 
         // Enemy HP display numbers
         Text(
-            text = "Enemy HP: ${battleSystem.opponentHP.toInt()}/${activeCharacter?.baseHp ?: 100}",
+            text = stringResource(R.string.audit_enemy_hp, battleSystem.opponentHP.toInt(), activeCharacter?.baseHp ?: 100),
                         fontSize = getLandscapeFontSize(),
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onSurface,
                         style = TextStyle(
                             shadow = Shadow(
                                 color = Color.Black,
@@ -2053,11 +2055,13 @@ fun BattlesScreen(
                     */
                     
                     // The cardId from getCharacterInfo is already the correct card ID we need!
+                    // Catalog-defined partners have no physical card, so online
+                    // battles stay unavailable while offline training still works.
                     val cardId = characterData.cardId
                     val charaIndex = characterData.charId // This is the charaIndex from the query
-                    
+
                     // Format as "dim" + cardId + "_mon" + (charaIndex + 1)
-                    val formattedCardId = String.format("dim%03d_mon%02d", cardId, charaIndex + 1)
+                    val formattedCardId = cardId?.let { String.format("dim%03d_mon%02d", it, charaIndex + 1) }
 
                     val offlineParticipants = battleProfiles.mapNotNull { profile ->
                         characterById[profile.sourceCharacterId]?.let { character ->
@@ -2092,17 +2096,19 @@ fun BattlesScreen(
                     val activeOfflineParticipant = offlineParticipants.firstOrNull { it.character?.id == activeChar.id }
                     
                     // Create APIBattleCharacter from database character
-                    val playerCharacter = APIBattleCharacter(
-                        name = "Player Character", // We could get this from the database if needed
-                        namekey = "player_digimon", // Name key for the character (functional lookup key, not shown)
-                        charaId = formattedCardId, // Use the formatted card ID for sprite loading
-                        stage = characterData.stage,
-                        attribute = characterData.attribute.ordinal, // Convert enum to int
-                        baseHp = 1000, // Default values - API will provide correct values
-                        currentHp = 1000,
-                        baseBp = 1000.0f,
-                        baseAp = 1000.0f
-                    )
+                    val playerCharacter = formattedCardId?.let {
+                        APIBattleCharacter(
+                            name = "Player Character", // We could get this from the database if needed
+                            namekey = "player_digimon", // Name key for the character (functional lookup key, not shown)
+                            charaId = it, // Use the formatted card ID for sprite loading
+                            stage = characterData.stage,
+                            attribute = characterData.attribute.ordinal, // Convert enum to int
+                            baseHp = 1000, // Default values - API will provide correct values
+                            currentHp = 1000,
+                            baseBp = 1000.0f,
+                            baseAp = 1000.0f
+                        )
+                    }
                     
                     // Update UI state on main thread
                     withContext(Dispatchers.Main) {
@@ -2159,7 +2165,7 @@ fun BattlesScreen(
     Scaffold (
         topBar = {
             AnimatedVisibility(
-                visible = currentView != "battle-main" && currentView != "battle-results" &&
+                visible = currentView != "battle-main" && currentView != "battle-results" && currentView != "offline-setup" &&
                     currentView != "offline-battle" && currentView != "tamer-arena",
                 enter = slideInVertically(
                     animationSpec = tween(if (allowMotion) 240 else 0, easing = FastOutSlowInEasing),
@@ -2257,11 +2263,11 @@ fun BattlesScreen(
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
-                                        stringResource(R.string.ui_stage, character.stage),
+                                        com.github.nacabaro.vbhelper.screens.homeScreens.screens.shortStageName(character.stage),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = TextSecondaryOnDark
                                     )
-                                    activeCardId?.let { cardId ->
+                                    activeCardId?.takeIf { com.github.nacabaro.vbhelper.components.rememberDebugSettings().enabled }?.let { cardId ->
                                         Text(
                                             stringResource(R.string.ui_character_id, cardId),
                                             style = MaterialTheme.typography.labelMedium,
@@ -2367,9 +2373,9 @@ fun BattlesScreen(
                             }
                                         }
                                     } else {
-                                        Text(stringResource(R.string.ui_no_opponents), 
-                                             fontSize = 16.sp, 
-                                             color = Color.White,
+                                     Text(stringResource(R.string.ui_no_opponents),
+                                              fontSize = 16.sp,
+                                              color = TextPrimaryOnDark,
                                              textAlign = TextAlign.Center)
                                     }
                                      } else {
@@ -2604,7 +2610,8 @@ fun BattlesScreen(
                         }
                     }
                     
-                    val opponentDisplayName = selectedOpponent?.name ?: "???"
+                    val opponentDisplayName = selectedOpponent?.displayName?.takeIf(String::isNotBlank)
+                        ?: selectedOpponent?.name ?: stringResource(R.string.immersion_unidentified_partner)
                     val opponentMaxHp = selectedOpponent?.baseHp ?: 0
                     val opponentCurrentHp = if (playerWonResult == true) 0 else (selectedOpponent?.currentHp ?: 0)
 
@@ -2619,12 +2626,12 @@ fun BattlesScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(StatusRedDim)
+                                    .background(MaterialTheme.colorScheme.errorContainer)
                                     .padding(horizontal = 16.dp, vertical = 10.dp)
                             ) {
                                 Text(
                                     text = opponentDisplayName,
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp,
                                     modifier = Modifier.weight(1f)
@@ -2649,13 +2656,13 @@ fun BattlesScreen(
                                 }
                                 Text(
                                     text = "$opponentCurrentHp/$opponentMaxHp",
-                                    color = Color.White,
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
                                     fontSize = 11.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
                                 Text(
                                     text = " HP",
-                                    color = Color.White.copy(alpha = 0.8f),
+                                    color = MaterialTheme.colorScheme.onErrorContainer,
                                     fontSize = 11.sp
                                 )
                             }
@@ -2679,11 +2686,11 @@ fun BattlesScreen(
                             ) {
                                 Column(
                                     horizontalAlignment = Alignment.CenterHorizontally,
-                                    modifier = Modifier.padding(vertical = 32.dp, horizontal = 24.dp)
+                                    modifier = Modifier.padding(vertical = 32.dp, horizontal = 24.dp).verticalScroll(rememberScrollState())
                                 ) {
                                     if (!isWinnerLoaded) {
                                         Text(
-                                            text = "Loading results...",
+                                            text = stringResource(R.string.immersion_loading_result),
                                             fontSize = 18.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = TextSecondaryOnDark
@@ -2691,7 +2698,7 @@ fun BattlesScreen(
                                     } else {
                                         val didWin = playerWonResult == true
                                         Text(
-                                            text = if (didWin) "YOU WIN!" else "YOU LOSE...",
+                                            text = stringResource(if (didWin) R.string.arena_victory else R.string.arena_defeat),
                                             fontSize = 32.sp,
                                             fontWeight = FontWeight.Black,
                                             color = if (didWin) VitalCyan else StatusRed,
@@ -2699,10 +2706,8 @@ fun BattlesScreen(
                                         )
                                         Spacer(modifier = Modifier.height(16.dp))
                                         Text(
-                                            text = if (didWin)
-                                                "Victory against\n$opponentDisplayName!"
-                                            else
-                                                "Defeated by\n$opponentDisplayName…",
+                                            text = stringResource(if (didWin) R.string.immersion_victory_against else R.string.immersion_defeat_against,
+                                                opponentDisplayName),
                                             fontSize = 16.sp,
                                             fontWeight = FontWeight.SemiBold,
                                             color = TextPrimaryOnDark,

@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface DexDao {
+    @Query("INSERT OR IGNORE INTO Dex(id, discoveredOn) VALUES (:definitionId, :timestamp)")
+    fun recordDefinition(definitionId: Long, timestamp: Long)
     @Query(
         """
         INSERT OR IGNORE INTO Dex(id, discoveredOn)
@@ -42,7 +44,7 @@ interface DexDao {
                 SELECT 1 FROM UserCharacter uc WHERE uc.charId = c.id
             ) AS isCurrentlyAvailable
         FROM CardCharacter c
-        JOIN Sprite s ON c.spriteId = s.id
+        JOIN DisplaySprite s ON s.cardCharacterId = c.id
         LEFT JOIN dex d ON c.id = d.id
         WHERE c.cardId = :cardId
         ORDER BY c.stage, c.charaIndex, c.id
@@ -70,7 +72,7 @@ interface DexDao {
             c.attribute AS attribute,
             EXISTS(SELECT 1 FROM UserCharacter uc WHERE uc.charId = c.id) AS isCurrentlyAvailable
         FROM CardCharacter c
-        JOIN Sprite s ON c.spriteId = s.id
+        JOIN DisplaySprite s ON s.cardCharacterId = c.id
         LEFT JOIN Dex d ON c.id = d.id
         WHERE c.id = :characterId
         LIMIT 1

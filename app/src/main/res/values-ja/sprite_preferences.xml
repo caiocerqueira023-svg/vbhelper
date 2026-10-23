@@ -1,0 +1,11 @@
+<resources>
+    <string name="sprite_preference_section">デジモンのグラフィック</string>
+    <string name="sprite_preference_vb_title">VB優先</string>
+    <string name="sprite_preference_vb_description">読み込み済みのVBスプライトを優先し、なければドットスプライトを使います。</string>
+    <string name="sprite_preference_dot_title">ドット優先</string>
+    <string name="sprite_preference_dot_description">ドットスプライトを優先し、なければ読み込み済みのVBスプライトを使います。</string>
+    <string name="sprite_preference_note">外見のみの設定です。すべてのデジモンを使用でき、能力・成長・活動は変わりません。</string>
+    <string name="sprite_preference_save_failed">グラフィック設定を保存できませんでした。再試行してください。</string>
+    <string name="storage_debug_add_hint_all">読み込み済みカードとカタログのデジモン。</string>
+    <string name="storage_retained_partner_info">この個体と成長データはVBHelperに保持されています。製品固有の情報はTransferで確認できます。</string>
+</resources>

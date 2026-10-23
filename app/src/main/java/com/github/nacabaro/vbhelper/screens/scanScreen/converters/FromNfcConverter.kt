@@ -43,13 +43,13 @@ class FromNfcConverter (
     fun addCharacterUsingCard(
         nfcCharacter: NfcCharacter,
         cardId: Long
-    ): String {
+    ): NfcImportResult {
         val cardData = database
             .cardDao()
             .getCardById(cardId)
 
         if (cardData == null) {
-            return "Card not found"
+            return NfcImportResult.MissingCard
         }
         check(cardData.cardId == nfcCharacter.dimId.toInt()) { "Selected card does not match the received DIM." }
 
@@ -60,7 +60,7 @@ class FromNfcConverter (
     fun addCharacter(
         nfcCharacter: NfcCharacter,
         onMultipleCards: (List<Card>, NfcCharacter) -> Unit
-    ): String {
+    ): NfcImportResult {
         // A lost receive ACK may be retried after another export starts. Resolve the
         // exact committed import first; insertCharacter rechecks it transactionally.
         database.watchTransferDao().getImport(TransferFingerprint.of(nfcCharacter, sourceDevice))?.let { previous ->
@@ -103,11 +103,11 @@ class FromNfcConverter (
                 .getCardByCardId(nfcCharacter.dimId.toInt())
 
             if (allCards.isEmpty())
-                return "Card not found"
+                return NfcImportResult.MissingCard
 
             if (allCards.size > 1) {
                 onMultipleCards(allCards, nfcCharacter)
-                return "Multiple cards found"
+                return NfcImportResult.AmbiguousCard
             }
 
             cardData = allCards[0]
@@ -121,7 +121,7 @@ class FromNfcConverter (
     private fun insertCharacter(
         nfcCharacter: NfcCharacter,
         cardData: Card
-    ): String {
+    ): NfcImportResult {
         val characterId = database.runInTransaction(Callable {
             val fingerprint = TransferFingerprint.of(nfcCharacter, sourceDevice)
             val previous = database.watchTransferDao().getImport(fingerprint)
@@ -138,11 +138,13 @@ class FromNfcConverter (
                 database.watchTransferDao().recordImport(WatchImportReceipt(fingerprint, insertedId, inserted.individualId))
                 com.github.nacabaro.vbhelper.quests.QuestProgress(database).watchImportLocked(
                     questToken, inserted.individualId, nfcCharacter, fingerprint, System.currentTimeMillis())
+                com.github.nacabaro.vbhelper.source.WatchTransferRepository(database)
+                    .retainReceived(fingerprint, insertedId, nfcCharacter)
                 insertedId
             }
         })
         onImported(characterId)
-        return "Done reading character!"
+        return NfcImportResult.Stored(characterId)
     }
 
     private fun insertCharacterInTransaction(
@@ -183,10 +185,10 @@ class FromNfcConverter (
                 is BENfcCharacter -> DeviceType.BEDevice
                 else -> DeviceType.VBDevice
             },
-            isActive = true
+            isActive = database.participation?.snapshot()?.card(cardCharData.id)?.usable != false
         )
 
-        database
+        if (characterData.isActive) database
             .userCharacterDao()
             .clearActiveCharacter()
 
@@ -265,7 +267,7 @@ class FromNfcConverter (
                     TransferFingerprint.of(local.single()) == transfer.sourceFingerprint) {
                     "A different local copy already owns this identity. Both copies have been preserved."
                 }
-                database.userCharacterDao().deleteCharacterById(local.single().id)
+                com.github.nacabaro.vbhelper.source.WatchTransferRepository(database).complete(transfer)
             }
             check(!transfers.isPresentLocally(transfer.individualId)) { "This individual is already present in World." }
         }

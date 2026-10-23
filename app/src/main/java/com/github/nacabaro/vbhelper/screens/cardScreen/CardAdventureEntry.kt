@@ -36,7 +36,8 @@ import com.github.nacabaro.vbhelper.R
 @Composable
 fun CardAdventureEntry(
     cardAdventureEntry: CardDtos.CardAdventureWithSprites,
-    obscure: Boolean
+    obscure: Boolean,
+    missionNumber: Int = 1
 ) {
     val charaImageBitmapData = BitmapData(
         bitmap = cardAdventureEntry.characterIdleSprite,
@@ -89,7 +90,7 @@ fun CardAdventureEntry(
                 if (!obscure) {
                     DimLogo(
                         bitmap = nameImageBitmapData.imageBitmap,
-                        contentDescription = null,
+                        contentDescription = stringResource(R.string.audit_adventure_opponent, missionNumber),
                         modifier = Modifier
                             .width(nameImageBitmapData.dpWidth.coerceAtMost(188.dp)),
                         filterQuality = FilterQuality.None

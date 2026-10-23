@@ -12,7 +12,7 @@
     <string name="digimon_scan_help" formatted="false">Vença batalhas no Radar contra Digimon selvagens para coletar dados. Chegue a 100% para converter esta versão do cartão.</string>
     <string name="digimon_scan_convert">Converter para o Storage</string>
     <string name="digimon_scan_converting">Convertendo…</string>
-    <string name="digimon_scan_conversion_description">%1$s · %2$s\nUsa 100%% dos dados de scan para criar um novo indivíduo no Storage, nesta forma e com os atributos base importados.</string>
+    <string name="digimon_scan_conversion_description">%1$s · %2$s\nConsome 100%% dos dados de scan para registrar um novo Digimon nesta forma. Os parâmetros iniciais vêm do cartão selecionado.</string>
     <string name="digimon_scan_nickname">Apelido (opcional)</string>
     <string name="digimon_scan_converted">Novo Digimon adicionado ao Storage. Dados de scan consumidos.</string>
     <string name="digimon_scan_not_ready" formatted="false">O scan ainda não está completo. Vença mais batalhas selvagens no Radar para chegar a 100%.</string>
@@ -46,6 +46,7 @@
     <string name="nav_card_adventure">Aventura do card</string>
     <string name="nav_storage">Armazenamento</string>
     <string name="nav_settings">Configurações</string>
+    <string name="nav_transfer">Transferência</string>
     <string name="nav_more">Mais</string>
     <string name="nav_viewer">Visualizador</string>
     <string name="nav_card">Card</string>
@@ -59,40 +60,40 @@
     <string name="adventure_title">Aventura</string>
     <string name="adventure_empty_state">Nada para ver aqui</string>
 
-    <string name="home_title">VB Helper</string>
+    <string name="home_title">Visão geral do parceiro</string>
     <string name="home_adventure_mission_finished">
-        Um dos seus personagens terminou a missão de aventura!
+        Um parceiro concluiu uma aventura. Abra Aventuras para receber o resultado.
     </string>
 
     <string name="scan_secrets_not_initialized">
-        Os segredos ainda não foram inicializados. Tente novamente.
+        Carregando os dados de conexão do relógio. Aguarde um momento e tente novamente.
     </string>
     <string name="scan_secrets_not_imported">
-        Os segredos ainda não foram importados. Vá em Configurações e importe o APK.
+        Os dados de conexão estão ausentes. Importe-os de um APK do VB Arena nas Configurações.
     </string>
 
-    <string name="scan_title">Escanear um VB</string>
-    <string name="scan_vb_to_app">VB para o app</string>
-    <string name="scan_app_to_vb">App para o VB</string>
+    <string name="scan_title">Transferência com o relógio</string>
+    <string name="scan_vb_to_app">Receber do relógio</string>
+    <string name="scan_app_to_vb">Enviar ao relógio</string>
 
     <string name="scan_no_nfc_on_device">O dispositivo não possui NFC!</string>
     <string name="scan_tag_not_vb">A tag detectada não é do VB.</string>
-    <string name="scan_missing_secrets">"         Segredos ausentes. Vá em Configurações e importe o APK do app oficial.     "</string>
-    <string name="scan_sent_character_success">Personagem enviado com sucesso!</string>
-    <string name="scan_error_generic">Ops!</string>
-    <string name="scan_sent_dim_success">DIM enviado com sucesso!</string>
+    <string name="scan_missing_secrets">Os dados de conexão estão ausentes. Importe-os de um APK do VB Arena nas Configurações.</string>
+    <string name="scan_sent_character_success">Digimon enviado ao relógio.</string>
+    <string name="scan_error_generic">Não foi possível concluir a transferência. Confira o Storage e o relógio antes de tentar novamente.</string>
+    <string name="scan_sent_dim_success">Verificação do cartão solicitada. Siga as instruções no relógio.</string>
     <string name="scan_nfc_must_be_enabled">O NFC precisa estar ativado.</string>
 
     <string name="settings_title">Configurações</string>
 
-    <string name="settings_section_nfc">Comunicação NFC</string>
-    <string name="settings_section_dim_bem">Gerenciamento de DiM/BEm</string>
+    <string name="settings_section_nfc">Conexão com o relógio</string>
+    <string name="settings_section_dim_bem">Arquivo de cartões</string>
     <string name="settings_section_about">Sobre e créditos</string>
-    <string name="settings_section_data">Gerenciamento de dados</string>
+    <string name="settings_section_data">Backup e restauração</string>
 
-    <string name="settings_import_apk_title">Importar APK</string>
+    <string name="settings_import_apk_title">Importar dados de conexão</string>
     <string name="settings_import_apk_desc">
-        Importar segredos do APK do app oficial
+        Ler os dados de conexão de um APK do VB Arena.
     </string>
 
     <string name="settings_import_card_title">Importar card</string>
@@ -101,19 +102,19 @@
     </string>
 
     <string name="settings_credits_title">Créditos</string>
-    <string name="settings_credits_desc">Créditos</string>
+    <string name="settings_credits_desc">Colaboradores e bibliotecas de comunicação.</string>
 
-    <string name="settings_about_title">Sobre</string>
-    <string name="settings_about_desc">Sobre</string>
+    <string name="settings_about_title">Projeto e suporte</string>
+    <string name="settings_about_desc">Abrir a página de informações e suporte do projeto.</string>
 
-    <string name="settings_export_data_title">Exportar dados</string>
+    <string name="settings_export_data_title">Criar backup dos registros</string>
     <string name="settings_export_data_desc">
-        Exportar banco de dados do aplicativo
+        Salvar os registros em um arquivo .vbhelper. As preferências de conexão são separadas. O app será fechado após a exportação.
     </string>
 
-    <string name="settings_import_data_title">Importar dados</string>
+    <string name="settings_import_data_title">Restaurar backup dos registros</string>
     <string name="settings_import_data_desc">
-        Importar banco de dados do aplicativo
+        Substituir os registros locais por um backup .vbhelper. O app será fechado após a restauração.
     </string>
 
     <string name="credits_title">Créditos</string>
@@ -128,7 +129,7 @@
         Desenvolveu este aplicativo.
     </string>
     <string name="credits_lightheel_description">
-        Está desenvolvendo a parte de batalhas deste aplicativo, incluindo o servidor. Ainda em desenvolvimento.
+        Contribuições para os sistemas de batalha e o servidor.
     </string>
     <string name="credits_shvstrz_description">
         Responsável pelo design do ícone do aplicativo em SVG.
@@ -137,12 +138,12 @@
     <string name="action_place_near_reader">Aproxime o seu VB do leitor...</string>
     <string name="action_cancel">Cancelar</string>
 
-    <string name="read_character_title">Ler personagem</string>
+    <string name="read_character_title">Receber Digimon</string>
     <string name="read_character_prepare_device">Prepare seu dispositivo!</string>
     <string name="read_character_go_to_connect">Vá em conectar e, quando estiver pronto, pressione confirmar!</string>
     <string name="read_character_confirm">Confirmar</string>
 
-    <string name="reading_character_title">Lendo personagem</string>
+    <string name="reading_character_title">Recebendo Digimon</string>
 
     <string name="write_card_title">Escrevendo detalhes do cartão</string>
     <string name="write_card_icon_description">Ícone do cartão</string>
@@ -150,33 +151,33 @@
     <string name="write_card_required_card">Você vai precisar do cartão %1$s!</string>
     <string name="write_card_confirm">Confirmar</string>
 
-    <string name="write_character_title">Escrevendo personagem</string>
-    <string name="write_character_icon_description">Ícone do personagem</string>
-    <string name="write_character_success">"         Cartão instalado com sucesso!!     "</string>
+    <string name="write_character_title">Enviar Digimon</string>
+    <string name="write_character_icon_description">Retrato do parceiro</string>
+    <string name="write_character_success">Verificação do cartão solicitada. Siga as instruções no relógio antes de continuar.</string>
     <string name="write_character_wait_ready">
         Aguarde até que seu dispositivo esteja pronto e então toque em Confirmar
     </string>
     <string name="write_character_confirm">Confirmar</string>
 
     <string name="sending_card_title">Enviando cartão</string>
-    <string name="writing_character_action_title">Escrevendo personagem</string>
+    <string name="writing_character_action_title">Enviando Digimon</string>
 
     <string name="items_title">Itens</string>
     <string name="items_no_items">Nenhum item</string>
 
-    <string name="items_store_credits">%1$d créditos</string>
-    <string name="items_not_enough_credits">Créditos insuficientes</string>
+    <string name="items_store_credits">%1$d bits</string>
+    <string name="items_not_enough_credits">Bits insuficientes</string>
     <string name="items_purchase_success">Compra realizada com sucesso!</string>
 
     <string name="obtained_item_you_have">Você obteve %1$d deste item</string>
-    <string name="obtained_item_you_also_got_credits">Você também recebeu %1$d créditos</string>
+    <string name="obtained_item_you_also_got_credits">Você também recebeu %1$d bits</string>
     <string name="obtained_item_dismiss">Fechar</string>
 
-    <string name="choose_character_title">Escolher personagem</string>
+    <string name="choose_character_title">Escolher parceiro</string>
     <string name="choose_character_no_available">Nenhum Digimon pode usar este item.</string>
     <string name="choose_character_item_applied">Item aplicado!</string>
 
-    <string name="item_dialog_costs_credits">Custa %1$d créditos</string>
+    <string name="item_dialog_costs_credits">Custa %1$d bits</string>
     <string name="item_dialog_you_have_quantity">Você tem %1$d deste item</string>
     <string name="item_dialog_use">Usar item</string>
     <string name="item_dialog_purchase">Comprar</string>
@@ -185,7 +186,7 @@
     <string name="battles_online_title">Batalhas online</string>
     <string name="battles_coming_soon">Em breve</string>
 
-    <string name="cards_my_cards_title">Meus cards</string>
+    <string name="cards_my_cards_title">Arquivo de cartões</string>
     <string name="cards_import">Importar cards DiM/BEM</string>
     <string name="cards_edit">Editar cards</string>
     <string name="card_import_preparing">Preparando arquivos…</string>
@@ -203,12 +204,12 @@
     <string name="card_import_origin_issue">O card foi salvo. Defina Oficial ou Custom no card da lista.</string>
     <string name="card_origin_help">Cards oficiais permitem reconhecimento automático de espécies. Cards customizados reconhecem espécies quando todos os quadros dos sprites são idênticos aos oficiais. Você também pode escolher as espécies manualmente.</string>
 
-    <string name="card_view_discovered_characters">Personagens descobertos</string>
+    <string name="card_view_discovered_characters">Formas registradas</string>
     <string name="dex_chart_title">Dex de evolução</string>
-    <string name="dex_chart_progress">Obtidos: %1$d/%2$d</string>
+    <string name="dex_chart_progress">Registrados: %1$d/%2$d</string>
     <string name="dex_chart_fusions">Jogress</string>
     <string name="dex_chart_character">Personagem %1$d, estágio %2$s</string>
-    <string name="dex_status_currently_available">Atualmente no app</string>
+    <string name="dex_status_currently_available">Atualmente no Storage</string>
     <string name="dex_chart_fit">Ajustar mapa de evolução</string>
     <string name="dex_chart_zoom_in">Ampliar</string>
     <string name="dex_chart_zoom_out">Reduzir</string>
@@ -231,8 +232,8 @@
 
     <string name="dex_chara_icon_description">Ícone do personagem</string>
     <string name="dex_chara_name_icon_description">Nome do personagem</string>
-    <string name="dex_status_never_obtained">Nunca esteve no app</string>
-    <string name="dex_status_previously_obtained">Já esteve no app</string>
+    <string name="dex_status_never_obtained">Ainda não registrado</string>
+    <string name="dex_status_previously_obtained">Registrado no histórico de parceiros</string>
     <string name="dex_chara_unknown_name">\?\?\?\?\?\?\?\?\?\?\?\?\?\?\?\?</string>
     <string name="dex_chara_stats_unknown">HP: -, BP: -, AP: -</string>
     <string name="dex_chara_fusions_button">Jogress</string>
@@ -240,13 +241,13 @@
 
     <string name="card_adventure_missions_title">Missões de aventura</string>
 
-    <string name="card_entry_characters_obtained">%1$d de %2$d personagens obtidos</string>
+    <string name="card_entry_characters_obtained">Formas registradas: %1$d / %2$d</string>
     <string name="card_entry_edit">Editar card</string>
     <string name="card_entry_delete">Excluir card</string>
 
-    <string name="storage_my_characters_title">Meus personagens</string>
-    <string name="storage_nothing_to_see_here">Nada para ver aqui</string>
-    <string name="storage_in_adventure_toast">Este personagem está em uma aventura</string>
+    <string name="storage_my_characters_title">Parceiros no Storage</string>
+    <string name="storage_nothing_to_see_here">Ainda não há parceiros no Storage.</string>
+    <string name="storage_in_adventure_toast">Este parceiro está em uma aventura.</string>
     <string name="storage_search_label">Pesquisar no storage</string>
     <string name="storage_search_hint">Nome, atributo, estágio…</string>
     <string name="storage_clear_search">Limpar pesquisa</string>
@@ -255,6 +256,10 @@
     <string name="storage_filter_active">Ativo</string>
     <string name="storage_filter_vb">VB</string>
     <string name="storage_filter_be">BE</string>
+    <string name="storage_filter_away">Ausente</string>
+    <string name="storage_away_in_source">Ausente em %1$s</string>
+    <string name="storage_away_unknown_source">Ausente em um jogo</string>
+    <string name="storage_away_native_info">Este Digimon está no save %1$s e não foi importado para o Armazenamento do VBHelper.</string>
     <string name="storage_sort_recent">Mais recentes</string>
     <string name="storage_sort_name">Nome</string>
     <string name="storage_sort_vitals">Mais vitais</string>
@@ -270,23 +275,23 @@
     <string name="home_previous_favorite">Favorito anterior</string>
     <string name="home_favorite_position">%1$d de %2$d favoritos</string>
 
-    <string name="storage_character_image_description">Imagem do personagem</string>
+    <string name="storage_character_image_description">Retrato do parceiro</string>
     <string name="storage_send_to_watch">Enviar para o relógio</string>
-    <string name="storage_set_active">Definir como ativo</string>
+    <string name="storage_set_active">Escolher parceiro ativo</string>
     <string name="storage_send_on_adventure">Enviar para aventura</string>
-    <string name="storage_delete_character">Excluir personagem</string>
-    <string name="storage_delete_character_confirmation">Tem certeza de que deseja excluir este Digimon? Esta ação não pode ser desfeita.</string>
+    <string name="storage_delete_character">Remover dados armazenados</string>
+    <string name="storage_delete_character_confirmation">Remover os dados armazenados deste parceiro? Esta ação não pode ser desfeita.</string>
     <string name="storage_close">Fechar</string>
 
     <string name="home_vbdim_vitals">Vitais</string>
     <string name="home_vbdim_trophies">Troféus</string>
     <string name="home_vbdim_mood">Humor</string>
-    <string name="home_vbdim_next_timer">Próximo timer</string>
-    <string name="home_vbdim_total_battle_win">% vitórias totais</string>
-    <string name="home_vbdim_current_phase_win">% vitórias fase atual</string>
+    <string name="home_vbdim_next_timer">Próxima evolução</string>
+    <string name="home_vbdim_total_battle_win">Taxa de vitórias total</string>
+    <string name="home_vbdim_current_phase_win">Vitórias da forma atual</string>
     <string name="home_vbdim_special_missions">Missões especiais</string>
     <string name="home_vbdim_weekly_vitals">Vitais da Semana</string>
-    <string name="home_vbdim_level">Nível</string>
+    <string name="home_vbdim_level">Estágio</string>
     <string name="home_vbdim_attribute">Atributo</string>
     <string name="home_vbdim_days">Dias</string>
     <string name="home_be_rank">Rank</string>
@@ -308,14 +313,14 @@
     <string name="ui_attack">Atacar</string>
     <string name="ui_back">Voltar</string>
     <string name="ui_exit">Sair</string>
-    <string name="ui_active_character">Personagem ativo:</string>
+    <string name="ui_active_character">Parceiro ativo</string>
     <string name="ui_stage">Estágio: %1$d</string>
     <string name="ui_character_id">ID do personagem: %1$s</string>
     <string name="ui_available_opponents">Oponentes disponíveis:</string>
     <string name="ui_battle_opponent">Batalhar com %1$s</string>
     <string name="ui_no_opponents">Não há oponentes disponíveis para seu estágio</string>
-    <string name="ui_stage_requirement">Seu personagem precisa estar pelo menos no estágio 2</string>
-    <string name="ui_no_active_character">Nenhum personagem ativo encontrado no banco de dados</string>
+    <string name="ui_stage_requirement">Seu parceiro precisa estar no estágio Criança ou superior para este modo de batalha.</string>
+    <string name="ui_no_active_character">Escolha um parceiro ativo antes de batalhar.</string>
     <string name="ui_ongoing_match">Partida em andamento encontrada</string>
     <string name="ui_ongoing_match_description">Você tem uma partida em andamento:</string>
     <string name="ui_round">Rodada: %1$d</string>
@@ -332,7 +337,7 @@
     <string name="ui_profile">Perfil</string>
     <string name="ui_special_moves">Golpes especiais, separados por vírgulas</string>
     <string name="ui_individual_personality">Personalidade deste indivíduo</string>
-    <string name="ui_personality_type">Tipo de personalidade: %1$s</string>
+    <string name="ui_personality_type">Temperamento: %1$s</string>
     <string name="ui_personality_rules">Regras de comportamento</string>
     <string name="ui_cancel">Cancelar</string>
     <string name="ui_delete">Excluir</string>
@@ -347,14 +352,14 @@
     <string name="ui_save">Salvar</string>
     <string name="ui_add">Adicionar</string>
     <string name="ui_edit">Editar</string>
-    <string name="ui_lorebook_title">Lorebook</string>
-    <string name="ui_lorebook_description">Adicione conceitos do mundo e conhecimentos personalizados para seu Digimon usar quando termos relevantes aparecerem no chat.</string>
-    <string name="ui_lorebook_empty">Nenhuma entrada customizada no lorebook.</string>
-    <string name="lorebook_new_entry">Nova entrada de lorebook</string>
-    <string name="lorebook_edit_entry">Editar entrada de lorebook</string>
+    <string name="ui_lorebook_title">Notas de pesquisa</string>
+    <string name="ui_lorebook_description">Guarde notas pessoais sobre espécies, lugares e acontecimentos. As notas relevantes dão contexto às conversas e permanecem separadas da pesquisa publicada.</string>
+    <string name="ui_lorebook_empty">Ainda não há notas pessoais de pesquisa.</string>
+    <string name="lorebook_new_entry">Nova nota de pesquisa</string>
+    <string name="lorebook_edit_entry">Editar nota de pesquisa</string>
     <string name="lorebook_title">Título</string>
     <string name="lorebook_keys">Palavras-chave (separadas por vírgula)</string>
-    <string name="lorebook_content">Contexto fornecido ao Digimon</string>
+    <string name="lorebook_content">Conteúdo da nota</string>
     <string name="lorebook_priority">Prioridade (maior = mais relevante)</string>
     <string name="ui_species_question">Como se chama essa espécie?</string>
     <string name="ui_optional_level">Nível (opcional)</string>
@@ -374,9 +379,9 @@
     <string name="ui_tamer_name">Nome do Tamer</string>
     <string name="ui_tamer_name_help">Esse nome será usado pelos Digimon durante as conversas.</string>
     <string name="ui_save_tamer_name">Salvar nome do Tamer</string>
-    <string name="settings_section_llm_chat">Chat com Digimon (IA)</string>
-    <string name="settings_configure_llm_title">Configurar chave da API de chat</string>
-    <string name="settings_configure_llm_desc">Defina um endpoint compatível com OpenAI, a chave da API e o modelo para conversar com seu Digimon</string>
+    <string name="settings_section_llm_chat">Comunicação</string>
+    <string name="settings_configure_llm_title">Conexão DigiLine</string>
+    <string name="settings_configure_llm_desc">Escolha um serviço de comunicação e gerencie os dados de conexão.</string>
     <string name="storage_chat_with_digimon">Conversar com seu Digimon</string>
     <string name="ui_current_name">Nome atual: %1$s</string>
     <string name="ui_not_defined">não definido</string>
@@ -387,7 +392,7 @@
     <string name="ui_settings_llm_title">Configurar chave da API de chat</string>
     <string name="ui_settings_llm_description">Defina sua chave da API e o modelo do OpenRouter para conversar com seu Digimon</string>
     <string name="ui_retry_species">Tentar correspondência de espécie novamente</string>
-    <string name="ui_edit_prompt_description">Edite as instruções enviadas ao OpenRouter usando dados da espécie e dos status atuais.</string>
+    <string name="ui_edit_prompt_description">Edite as instruções técnicas enviadas ao serviço configurado. Os dados da espécie e do indivíduo são anexados separadamente.</string>
     <string name="ui_card_origin_toggle_description">Se desligado, a origem pode ser definida na lista de cards.</string>
     <string name="ui_custom_card_species_match_unavailable">A correspondência de espécie não está disponível para cards customizados.</string>
     <string name="card_entry_retry_species_match">Tentar correspondência de espécie novamente</string>
@@ -399,7 +404,7 @@
     <string name="ui_restore_default">Restaurar padrão</string>
     <string name="ui_api_key">Chave da API</string>
     <string name="ui_api_key_help">Use a chave da API emitida pelo provedor selecionado.</string>
-    <string name="ui_chat_api_settings">Configurações da API de chat</string>
+    <string name="ui_chat_api_settings">Conexão DigiLine</string>
     <string name="ui_chat_api_base_url">URL base compatível com OpenAI</string>
     <string name="ui_chat_api_base_url_help">Inclua o caminho da versão da API, por exemplo: https://openrouter.ai/api/v1/</string>
     <string name="ui_chat_api_provider">Provedor</string>
@@ -442,8 +447,8 @@
     <string name="ui_tamer_saved">Nome do Tamer salvo!</string>
     <string name="ui_dim_importing">Importando DiM…</string>
     <string name="ui_empty_file">O arquivo selecionado está vazio!</string>
-    <string name="ui_secrets_import_failed">Falha ao importar segredos. Selecione apenas o APK oficial.</string>
-    <string name="ui_secrets_imported">Segredos importados com sucesso. Agora é possível conectar aos dispositivos.</string>
+    <string name="ui_secrets_import_failed">Não foi possível importar os dados de conexão. Selecione um APK válido do VB Arena.</string>
+    <string name="ui_secrets_imported">Dados de conexão do relógio importados.</string>
     <string name="ui_settings">Configurações</string>
     <string name="ui_adventure">Aventura</string>
     <string name="ui_scan">Escanear</string>
@@ -468,7 +473,7 @@
     <string name="ui_world_tracking_failed">Não foi possível iniciar o rastreamento da localização.</string>
     <string name="ui_world_direction">Direção: %1$s (%2$d°)</string>
     <string name="ui_world_nearby_count">%1$d Digimon próximos</string>
-    <string name="ui_world_biome_label">BIOMA: %1$s</string>
+    <string name="ui_world_biome_label">Arredores: %1$s</string>
     <string name="ui_world_biome_urban">Urbano</string>
     <string name="ui_world_biome_park">Parque</string>
     <string name="ui_world_biome_water">Água</string>
@@ -517,7 +522,7 @@
     <string name="ui_world_following_title">Está te seguindo!</string>
     <string name="ui_world_following_toast">Este Digimon está te seguindo. Continue conversando enquanto anda - a confiança cai com o movimento.</string>
     <string name="ui_world_stopped_following_toast">Um Digimon parou de te seguir (confiança baixa demais).</string>
-    <string name="ui_world_spawn_dims_title">DiMs dos spawns do Mundo</string>
+    <string name="ui_world_spawn_dims_title">Cartões de dados do Radar</string>
     <string name="ui_world_spawn_dims_empty">Nenhum DiM foi carregado.</string>
     <string name="ui_world_spawn_dims_enabled">Ativado</string>
     <string name="ui_world_spawn_dims_disabled">Desativado</string>
@@ -542,7 +547,7 @@
     <string name="ui_world_compass_diagnostics">Diagnóstico da bússola</string>
     <string name="nav_chat">Conversa</string>
     <string name="nav_world">Mundo</string>
-    <string name="credits_RedEyez_description">Depurador dedicado.</string>
+    <string name="credits_RedEyez_description">Testes e garantia de qualidade.</string>
     <string name="dex_species_title">Informações da espécie</string>
     <string name="dex_species_level">Estágio: %1$s</string>
     <string name="dex_species_type">Tipo: %1$s</string>
@@ -564,11 +569,11 @@
     <string name="settings_companion_send_watch_logs_title">Enviar logs do relógio</string>
     <string name="companion_transfer_disabled_message">A transferência está desativada no momento</string>
     <string name="ui_chat_mood_title">Conversa • Humor %1$d</string>
-    <string name="widget_digimon_description">Seu Digimon ativo caminhando na tela inicial</string>
+    <string name="widget_digimon_description">Atalho para o parceiro ativo</string>
     <string name="widget_digimon_label">Digimon</string>
     <string name="settings_section_appearance">Aparência</string>
     <string name="settings_font_title">Fonte do app</string>
-    <string name="nav_digiline">Digiline</string>
+    <string name="nav_digiline">DigiLine</string>
     <string name="ui_world_radar_tab">Radar</string>
     <string name="ui_digifarm_tab">Digifarm</string>
     <string name="ui_digifarm_title">Digifarm</string>
@@ -589,7 +594,7 @@
     <string name="ui_digifarm_needs">Energia %1$d · Comida %2$d · Social %3$d · Diversão %4$d</string>
     <string name="ui_digifarm_needs_title">Necessidades</string>
     <string name="ui_digifarm_energy">Energia</string>
-    <string name="ui_digifarm_food">Comida</string>
+    <string name="ui_digifarm_food">Saciedade</string>
     <string name="ui_digifarm_social">Social</string>
     <string name="ui_digifarm_fun">Diversão</string>
     <string name="ui_digifarm_more_actions">Mais ações</string>
@@ -610,7 +615,7 @@
     <string name="ui_digifarm_pause_dialogue">Pausar diálogo autônomo</string>
     <string name="ui_digifarm_enable_dialogue">Ativar diálogo autônomo</string>
     <string name="ui_digifarm_autonomous_dialogue">Diálogo autônomo</string>
-    <string name="ui_digifarm_dialogue_unavailable">O diálogo autônomo está pausado até o provedor de chat ficar disponível.</string>
+    <string name="ui_digifarm_dialogue_unavailable">As respostas ao vivo estão indisponíveis. As atividades da Digifarm continuam.</string>
     <string name="ui_digiline_storage">Storage</string>
     <string name="ui_digiline_wild">Wild Ones</string>
     <string name="ui_digiline_farms">Digifarm</string>
@@ -655,8 +660,8 @@
     <string name="scan_supported_devices">Vital Bracelet · Vital Hero · BE</string>
     <string name="scan_direction_prompt">Escolha a direção desta transferência NFC.</string>
     <string name="scan_keep_still">Mantenha a pulseira parada até a transferência terminar.</string>
-    <string name="scan_nfc_link_ready">CONEXÃO NFC PRONTA</string>
-    <string name="scan_card_link_ready">CONEXÃO DO CARD PRONTA</string>
+    <string name="scan_nfc_link_ready">Aguardando o relógio</string>
+    <string name="scan_card_link_ready">Verificação do cartão necessária</string>
     <string name="items_available_balance">Saldo disponível</string>
     <string name="cards_empty_state">Nenhum card foi importado ainda.</string>
     <string name="card_status_official">Card oficial</string>
@@ -679,13 +684,13 @@
     <string name="ui_world_reconciling">Atualizando seu mundo. Os encontros voltam quando estiver pronto.</string>
     <string name="ui_world_updating">Atualizando o Radar…</string>
     <string name="ui_world_storage_failure">Não foi possível salvar ou atualizar o mundo. Tente novamente.</string>
-    <string name="ui_world_unsupported_rules">Este mundo usa regras mais novas. Atualize o app para continuar.</string>
+    <string name="ui_world_unsupported_rules">Estes registros de encontros exigem uma versão mais recente do app. Atualize para continuar.</string>
     <string name="ui_world_locating">Buscando sua localização atual…</string>
     <string name="ui_world_no_spawn_cards">Importe um cartão DiM ou BEM para encontrar Digimon locais.</string>
-    <string name="ui_world_spawn_cards_disabled">Ative um cartão nas configurações do Radar.</string>
+    <string name="ui_world_spawn_cards_disabled">Ative um cartão de dados nas configurações do Radar.</string>
     <string name="ui_world_populating">Buscando Digimon locais…</string>
     <string name="ui_world_population_failure">Não foi possível atualizar os encontros locais. Tente novamente.</string>
-    <string name="ui_world_empty_region">Ainda não há Digimon locais. Verifique os cartões ou atualize o Radar.</string>
+    <string name="ui_world_empty_region">Não há encontros próximos disponíveis. Confira os cartões de dados ou atualize o Radar.</string>
     <string name="ui_world_approximate_location">Localização aproximada. As distâncias usam a posição informada.</string>
     <string name="ui_world_battle_preparing_world">Preparando a batalha. A atividade do mundo está pausada.</string>
     <string name="ui_world_session_suspended">O Radar está pausado.</string>
@@ -766,10 +771,10 @@
     <string name="ui_battle_strategy_ranged">Longa distância</string>
     <string name="ui_battle_strategy_support">Suporte</string>
     <string name="ui_battle_training_end_title">Encerrar treino?</string>
-    <string name="ui_battle_training_end_message">A sessão será descartada. Nenhum item ou progresso real foi alterado.</string>
+    <string name="ui_battle_training_end_message">Encerrar o treino? Os parâmetros do parceiro e o inventário armazenados permanecem inalterados. Os suprimentos de treino são repostos para a próxima sessão.</string>
     <string name="ui_battle_training_end_confirm">Sair do treino</string>
     <string name="ui_battle_radar_exit_title">Sair da batalha?</string>
-    <string name="ui_battle_radar_exit_message">A luta será encerrada sem alterar o win rate.</string>
+    <string name="ui_battle_radar_exit_message">Sair deste encontro? Nenhuma vitória ou derrota será adicionada. Os suprimentos usados permanecem gastos; os não usados elegíveis retornam.</string>
     <string name="ui_battle_radar_exit_confirm">Sair da batalha</string>
     <string name="ui_battle_radar_transforming">Transformando o Radar em arena…</string>
     <string name="ui_battle_order_queued">Ordem recebida · será executada assim que possível.</string>
@@ -918,8 +923,8 @@
     <string name="ui_battle_blast_mode_power">Poder</string>
     <string name="ui_battle_blast_mode_form">Forma</string>
     <string name="ui_battle_loadout_blast_targets">Transformar em</string>
-    <string name="ui_battle_loadout_blast_dim_tag">DIM</string>
-    <string name="ui_battle_loadout_blast_universal_tag">Universal</string>
+    <string name="ui_battle_loadout_blast_dim_tag">Rota do cartão</string>
+    <string name="ui_battle_loadout_blast_universal_tag">Rota de treino</string>
     <string name="ui_battle_loadout_jogress_title">JOGRESS</string>
     <string name="ui_battle_loadout_jogress_hint">Fusão disparada quando este Digimon lidera o Blast em dupla e o parceiro combina. O resultado precisa estar em um dos seus DIMs.</string>
     <string name="ui_battle_loadout_jogress_none">Sem Jogress</string>
@@ -1049,4 +1054,7 @@
     <string name="ui_battle_finisher_duo">Blast em dupla</string>
     <string name="ui_battle_finisher_damage">%1$d de dano</string>
     <string name="ui_battle_finisher_no_damage">Sem dano</string>
+    <string name="home_special_mission_delete_main">O progresso atual será perdido. Remover esta missão?</string>
+    <string name="home_special_mission_delete_dismiss">Manter missão</string>
+    <string name="home_special_mission_delete_remove">Remover missão</string>
 </resources>

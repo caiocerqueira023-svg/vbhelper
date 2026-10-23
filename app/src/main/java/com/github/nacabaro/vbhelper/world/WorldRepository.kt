@@ -26,6 +26,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.combine
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -33,10 +34,12 @@ import kotlin.random.Random
 
 class WorldRepository(private val db: AppDatabase,
                       private val scanPercentagePerDefeat: () -> Int = { com.github.nacabaro.vbhelper.source.DigimonScanPolicy.NORMAL_GAIN },
-                      private val clock: () -> Long = System::currentTimeMillis) {
+                       private val clock: () -> Long = System::currentTimeMillis,
+                       private val debugEnabled: () -> Boolean = { false },
+                       private val allowAnyDistance: () -> Boolean = { false }) {
     private val spawnDao: WorldSpawnDao = db.worldSpawnDao()
     private val biomeDetector = OpenStreetMapBiomeDetector()
-    val interactions = WorldInteractionRepository(db, scanPercentagePerDefeat, clock)
+    val interactions = WorldInteractionRepository(db, scanPercentagePerDefeat, allowAnyDistance, clock)
     private val _currentBiome = MutableStateFlow(WorldBiome.NULL)
     val currentBiome = _currentBiome.asStateFlow()
 
@@ -55,8 +58,12 @@ class WorldRepository(private val db: AppDatabase,
 
     }
 
-    fun observeSpawns(): Flow<List<WorldDtos.SpawnWithDetails>> =
-        spawnDao.getActiveSpawnsWithDetails(clock())
+    fun observeSpawns(): Flow<List<WorldDtos.SpawnWithDetails>> {
+        val source = spawnDao.getActiveSpawnsWithDetails(clock())
+        return db.participation?.let { gate -> source.combine(gate.observe()) { rows, eligibility ->
+            rows.filter { eligibility.card(it.cardCharacterId).usable }
+        } } ?: source
+    }
 
     fun observePendingRecruits(): Flow<List<WorldDtos.SpawnWithDetails>> =
         spawnDao.getPendingRecruitsWithDetails()
@@ -66,6 +73,7 @@ class WorldRepository(private val db: AppDatabase,
 
     suspend fun ensureSpawns(latitude: Double, longitude: Double) {
         if (GeoPoint.fromOrNull(latitude, longitude) == null) return
+        prepareSpawns()
         val biome = resolveSpawnBiome(GeoPoint(latitude, longitude))
         ensureSpawnsForBiome(latitude, longitude, biome)
         publishSpawnBiome(biome)
@@ -74,12 +82,54 @@ class WorldRepository(private val db: AppDatabase,
     /** External input resolution is deliberately separate from the coordinator's mutation gate. */
     suspend fun resolveSpawnBiome(position: GeoPoint): WorldBiome = biomeDetector.biomeAt(position.latitude, position.longitude)
 
+    /** Resolve bundled artwork before entering the Radar coordinator's database transaction. */
+    suspend fun prepareSpawns() {
+        db.expandedCatalog?.ensureReadyDefinitions()
+    }
+
     suspend fun ensureSpawnsForBiome(latitude: Double, longitude: Double, biome: WorldBiome) {
         if (GeoPoint.fromOrNull(latitude, longitude) == null) return
         db.withTransaction {
             materializeQuestTargetsLocked(latitude, longitude)
             ensureSpawnsLocked(latitude, longitude, biome)
         }
+        runCatching { ensureFirstPartnerEncounter(latitude, longitude) }
+    }
+
+    /**
+     * Guaranteed, non-combat first meeting for any partner-less player. Spawns one
+     * eligible Child-stage partner with high starting trust so ordinary conversation
+     * leads to its recruitment quest; recorded once and never repeated.
+     */
+    suspend fun ensureFirstPartnerEncounter(latitude: Double, longitude: Double): Long? {
+        val player = GeoPoint.fromOrNull(latitude, longitude) ?: return null
+        if (db.userCharacterDao().getAllCharacterIds().isNotEmpty()) return null
+        val catalog = db.expandedCatalog ?: return null
+        if (db.firstPartnerDao().current()?.completedAt != null) return null
+        val starter = catalog.starterDefinition()
+        if (db.participation?.snapshot()?.card(starter.id)?.usable == false) return null
+        val now = clock()
+        val individualId = IndividualIdentity.generate()
+        val position = RadarWorldGeometry.offset(player, 30.0, 30.0)
+        val speciesName = db.speciesProfileDao().getByCardCharacterId(starter.id)
+            ?.let { it.speciesName?.takeIf(String::isNotBlank) ?: it.matchedName } ?: "Digimon"
+        db.withTransaction {
+            if (db.userCharacterDao().getAllCharacterIds().isNotEmpty()) return@withTransaction
+            if (db.firstPartnerDao().current() != null) return@withTransaction
+            db.digimonIndividualDao().insert(DigimonIndividual(individualId, now, speciesName = speciesName,
+                originKind = com.github.nacabaro.vbhelper.domain.device_data.IndividualOrigin.EXPANDED))
+            db.digimonIndividualDao().upsertPersonality(
+                DigimonPersonalityGenerator.generate(individualId, starter.attribute, starter.stage, now))
+            val spawnId = spawnDao.insert(WorldSpawn(cardCharacterId = starter.id, individualId = individualId,
+                latitude = position.latitude, longitude = position.longitude, spawnedAt = now,
+                expiresAt = now + 24 * 60 * 60 * 1000, mood = 85))
+            db.wildRelationshipDao().insert(WildRelationship(individualId, starter.id, speciesName,
+                trust = 85, createdAt = now, updatedAt = now))
+            db.firstPartnerDao().record(com.github.nacabaro.vbhelper.domain.species.FirstPartnerEncounter(
+                individualId = individualId, speciesId = starter.speciesId.orEmpty(), step = 1))
+            spawnId
+        }
+        return spawnDao.getByIndividualId(individualId)?.id
     }
 
     fun publishSpawnBiome(biome: WorldBiome) { _currentBiome.value = biome }
@@ -95,6 +145,7 @@ class WorldRepository(private val db: AppDatabase,
             if (db.userCharacterDao().getByIndividualIdSync(individual).isNotEmpty()) continue
             if (existing == null && spawnDao.countActive(now) >= GLOBAL_ACTIVE_CAP) break
             val character = objective.targetCardCharacterId?.let { db.characterDao().getById(it) } ?: continue
+            if (db.participation?.snapshot()?.card(character.id)?.usable == false) continue
             val random = Random(individual.hashCode())
             val distance = 30.0 + random.nextDouble() * 90.0
             val angle = random.nextDouble() * Math.PI * 2
@@ -111,12 +162,21 @@ class WorldRepository(private val db: AppDatabase,
         spawnDao.releaseFinishedQuestTargets(now + 30 * 60 * 1000L)
     }
 
-    suspend fun getDebugSpawnCharacters(): List<DebugSpawnCharacter> =
-        db.characterDao().getDebugSpawnCharacters()
+    suspend fun getDebugSpawnCharacters(): List<DebugSpawnCharacter> {
+        if (!debugEnabled()) return emptyList()
+        return db.characterDao().getDebugSpawnCharacters().takeIf { debugEnabled() }.orEmpty()
+    }
 
     /** An explicit debug selection may use any loaded card, regardless of automatic spawn settings. */
-    suspend fun spawnDebugDigimon(latitude: Double, longitude: Double, cardCharacterId: Long? = null): Long? =
-        db.withTransaction { spawnDebugDigimonLocked(latitude, longitude, cardCharacterId) }
+    suspend fun spawnDebugDigimon(latitude: Double, longitude: Double, cardCharacterId: Long? = null): Long? {
+        if (!debugEnabled()) return null
+        return db.withTransaction {
+            if (!debugEnabled()) return@withTransaction null
+            val result = spawnDebugDigimonLocked(latitude, longitude, cardCharacterId)
+            check(debugEnabled()) { "Debug access was revoked" }
+            result
+        }
+    }
 
     private suspend fun spawnDebugDigimonLocked(latitude: Double, longitude: Double, cardCharacterId: Long?): Long? {
         val player = GeoPoint.fromOrNull(latitude, longitude) ?: return null
@@ -193,7 +253,8 @@ class WorldRepository(private val db: AppDatabase,
         // Resolve the pool before evicting anything. If the user has disabled every
         // DiM, the map should preserve its current encounters rather than removing
         // them without being able to replace them.
-        val loadedCharacters = db.characterDao().getCharactersForWorldSpawns()
+        val loadedCharacters = (db.characterDao().getCharactersForWorldSpawns() + db.characterDao().getCatalogDefinitions())
+            .distinctBy { it.speciesId ?: it.id.toString() }
         if (loadedCharacters.isEmpty()) return
         val speciesNames = db.speciesProfileDao().getAll().associate { profile ->
             profile.cardCharacterId to (profile.matchedName ?: profile.speciesName)
@@ -303,7 +364,10 @@ class WorldRepository(private val db: AppDatabase,
     }
 
     suspend fun meetsRecruitmentRequirements(individualId: String): Boolean =
-        com.github.nacabaro.vbhelper.quests.QuestRepository(db).recruitmentReadyLocked(individualId)
+        db.withTransaction {
+            db.participation?.snapshot()?.individual(individualId)?.usable != false &&
+                com.github.nacabaro.vbhelper.quests.QuestRepository(db).recruitmentReadyLocked(individualId)
+        }
 
     suspend fun markPendingRecruitment(spawnId: Long) {
         db.withTransaction {
@@ -312,6 +376,7 @@ class WorldRepository(private val db: AppDatabase,
     }
 
     suspend fun markPendingRecruitment(individualId: String, interactionId: String? = null) = db.withTransaction {
+        db.participation?.snapshot()?.requireIndividual(individualId)
         releasePlayerChatForMutationLocked(individualId, interactionId)
         db.wildRelationshipDao().updateRecruitmentState(
             individualId, RecruitmentState.PENDING_RECRUITMENT.name, clock()
@@ -364,13 +429,16 @@ class WorldRepository(private val db: AppDatabase,
         }
         check(db.userCharacterDao().getByIndividualIdSync(individualId).isEmpty()) { "Already in Storage" }
         val cardCharacter = db.characterDao().getById(cardCharacterId) ?: error("Species not found")
-        val card = db.cardDao().getCardById(cardCharacter.cardId) ?: error("Card not found")
+        // Catalog definitions recruit without any physical card; imported slots keep the legacy path.
+        val card = cardCharacter.cardId?.let { db.cardDao().getCardById(it) }
+        if (cardCharacter.cardId != null && card == null) error("Card not found")
         val quest = db.questDao().forGiver(individualId).singleOrNull { it.category == com.github.nacabaro.vbhelper.quests.QuestCategory.RECRUITMENT }
             ?: error("Complete this Digimon's recruitment quest first.")
         val partnerFamily = quest.partnerDeviceType ?: quest.partnerId?.let {
             db.userCharacterDao().getByIndividualIdSync(it).singleOrNull()?.characterType
         }
-        val beProfile = card.isBEm || partnerFamily == DeviceType.BEDevice
+        val appProfile = card == null
+        val beProfile = !appProfile && (card.isBEm || partnerFamily == DeviceType.BEDevice)
 
         val userCharacter = UserCharacter(
             individualId = individualId,
@@ -387,7 +455,7 @@ class WorldRepository(private val db: AppDatabase,
             totalBattlesLost = 0,
             activityLevel = 0,
             heartRateCurrent = 0,
-            characterType = if (beProfile) DeviceType.BEDevice else DeviceType.VBDevice,
+            characterType = if (appProfile) DeviceType.APP else if (beProfile) DeviceType.BEDevice else DeviceType.VBDevice,
             isActive = false
         )
         val now = clock()
@@ -396,6 +464,7 @@ class WorldRepository(private val db: AppDatabase,
         // watch export both depend on the auxiliary VB rows being present.
         var characterId = 0L
         db.withTransaction {
+            db.participation?.snapshot()?.requireCard(cardCharacterId)
             releasePlayerChatForMutationLocked(individualId, interactionId)
             check(com.github.nacabaro.vbhelper.quests.QuestRepository(db).recruitmentReadyLocked(individualId)) { "Complete this Digimon's recruitment quest first." }
             check(db.questDao().unfinishedTargetCount(individualId) == 0) { "This Digimon is still needed by an active quest." }
@@ -413,8 +482,13 @@ class WorldRepository(private val db: AppDatabase,
                 check(db.userCharacterDao().getByIndividualIdSync(individualId).isEmpty()) { "Already in Storage" }
             }
             characterId = db.userCharacterDao().insertCharacterData(userCharacter)
+            db.openHelper.writableDatabase.execSQL(
+                "INSERT OR IGNORE INTO AppPartnerProgress(individualId, trainingHp, trainingAp, trainingBp) VALUES (?, 0, 0, 0)",
+                arrayOf<Any?>(individualId))
 
-            if (beProfile) {
+            if (appProfile) {
+                // App partners keep permanent training on the individual; no watch rows are invented.
+            } else if (beProfile) {
                 db.userCharacterDao().insertBECharacterData(com.github.nacabaro.vbhelper.domain.device_data.BECharacterData(
                     id = characterId, trainingHp = 0, trainingAp = 0, trainingBp = 0,
                     remainingTrainingTimeInMinutes = 6000, itemEffectMentalStateValue = 0,
@@ -452,19 +526,25 @@ class WorldRepository(private val db: AppDatabase,
                     missionType = SpecialMission.Type.NONE
                 )
             }
-            if (!beProfile) db.userCharacterDao().insertSpecialMissions(*missions.toTypedArray())
+            if (!beProfile && !appProfile) db.userCharacterDao().insertSpecialMissions(*missions.toTypedArray())
 
-            db.dexDao().insertCharacter(cardCharacter.charaIndex, cardCharacter.cardId, now)
+            val definitionCardId = cardCharacter.cardId
+            if (definitionCardId != null) db.dexDao().insertCharacter(cardCharacter.charaIndex, definitionCardId, now)
+            else db.dexDao().recordDefinition(cardCharacter.id, now)
             com.github.nacabaro.vbhelper.source.EvolutionHistoryRepository(db).repairCharacter(characterId)
             db.wildRelationshipDao().updateRecruitmentState(
                 individualId, RecruitmentState.RECRUITED.name, now
             )
             com.github.nacabaro.vbhelper.quests.QuestRepository(db).completeRecruitmentLocked(individualId)
+            if (db.firstPartnerDao().current()?.individualId == individualId) {
+                db.firstPartnerDao().complete(now)
+            }
         }
         characterId
     }
 
     private suspend fun validatePlayerChatMutationLocked(individualId: String, interactionId: String?) {
+        db.participation?.snapshot()?.requireIndividual(individualId)
         interactions.reconcileLocked()
         if (interactionId != null) interactions.requirePrivateChatLocked(interactionId, individualId)
         else interactions.assertUnclaimedLocked(individualId)

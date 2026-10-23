@@ -30,7 +30,15 @@ fun AnimatedSpriteImage(
         0
     }
     
-    val animationStateMachine = remember { DigimonAnimationStateMachine(characterId, context, frameOffset, animationOffset) }
+    val animationStateMachine = remember(characterId) { DigimonAnimationStateMachine(characterId, context, frameOffset, animationOffset) }
+    val application = context.applicationContext as? com.github.nacabaro.vbhelper.di.VBHelper
+    val choices by remember(application) {
+        application?.container?.db?.speciesCustomizationDao()?.observeSpriteChoices()
+            ?: kotlinx.coroutines.flow.flowOf(emptyList())
+    }.collectAsState(emptyList())
+    val mode by remember(application) {
+        application?.container?.spritePreferenceRepository?.preference ?: kotlinx.coroutines.flow.flowOf(null)
+    }.collectAsState(null)
     val coroutineScope = rememberCoroutineScope()
     
     var bitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
@@ -61,7 +69,7 @@ fun AnimatedSpriteImage(
     }
     
     // Update sprite when animation state changes
-    LaunchedEffect(animationStateMachine.currentFrameNumber) {
+    LaunchedEffect(characterId, animationStateMachine.currentFrameNumber, choices, mode) {
         val frameNumber = animationStateMachine.getCurrentFrame()
 
         bitmap = spriteManager.loadSpriteFrame(characterId, frameNumber)
@@ -79,4 +87,4 @@ fun AnimatedSpriteImage(
             contentScale = contentScale
         )
     }
-} 
+}

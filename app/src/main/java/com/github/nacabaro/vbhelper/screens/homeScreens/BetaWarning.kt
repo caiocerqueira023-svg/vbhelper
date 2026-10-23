@@ -17,6 +17,7 @@ import com.github.nacabaro.vbhelper.R
 fun BetaWarning(
     onDismissRequest: () -> Unit
 ) {
+    if (!com.github.nacabaro.vbhelper.components.rememberDebugSettings().enabled) return
     Dialog(
         onDismissRequest = onDismissRequest
     ) {

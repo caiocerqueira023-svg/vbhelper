@@ -10,7 +10,11 @@ data class SpeciesEntryDto(
     val level: String? = null,
     val type: String? = null,
     val profile: String? = null,
-    val specialMoves: List<String> = emptyList()
+    val specialMoves: List<String> = emptyList(),
+    val sourceNotes: List<String>? = null,
+    /** Stable catalog identity; card/slot coordinates are source bindings, not species IDs. */
+    val speciesId: String? = null,
+    val dotSprites: DotSpriteAssociationDto? = null
 )
 
 /** A short source dialogue set used as a style and interaction reference. */
@@ -23,7 +27,8 @@ data class SpeciesConversationEntry(
     val characterId: String = "",
     val speciesName: String = "",
     val opening: String? = null,
-    val exchanges: List<SpeciesConversationExchange> = emptyList()
+    val exchanges: List<SpeciesConversationExchange> = emptyList(),
+    val source: String? = null
 )
 
 data class SpeciesConversationDatabase(

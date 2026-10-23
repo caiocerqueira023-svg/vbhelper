@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.components.operationFailureMessage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.File
@@ -44,7 +45,7 @@ class DatabaseManagementController(
             } catch (e: Exception) {
                 Log.e("ScanScreenController", "Error exporting database $e")
                 componentActivity.runOnUiThread {
-                    Toast.makeText(componentActivity, componentActivity.getString(R.string.ui_database_export_error, e.message), Toast.LENGTH_LONG).show()
+                    Toast.makeText(componentActivity, componentActivity.operationFailureMessage(R.string.immersion_backup_failed, e.message), Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -87,7 +88,7 @@ class DatabaseManagementController(
             } catch (e: Exception) {
                 Log.e("ScanScreenController", "Error importing database $e")
                 componentActivity.runOnUiThread {
-                    Toast.makeText(componentActivity, componentActivity.getString(R.string.ui_database_import_error, e.message), Toast.LENGTH_LONG).show()
+                    Toast.makeText(componentActivity, componentActivity.operationFailureMessage(R.string.immersion_restore_failed, e.message), Toast.LENGTH_LONG).show()
                 }
             }
         }

@@ -3,7 +3,10 @@ package com.github.nacabaro.vbhelper.screens.spriteViewer
 import android.graphics.Bitmap
 import com.github.nacabaro.vbhelper.domain.characters.Sprite
 
+data class SpritePreviewPage(val sprites: List<Sprite>, val eligibleCount: Int, val totalCount: Int)
+data class SpritePreviewFrame(val spriteId: Int, val name: String, val width: Int, val height: Int, val bytes: ByteArray)
+
 interface SpriteViewerController {
-    suspend fun getAllSprites(): List<Sprite>
-    fun convertToBitmap(sprites: List<Sprite>): List<Bitmap>
+    suspend fun getPage(page: Int): SpritePreviewPage
+    suspend fun decodeFrame(frame: SpritePreviewFrame): Bitmap?
 }

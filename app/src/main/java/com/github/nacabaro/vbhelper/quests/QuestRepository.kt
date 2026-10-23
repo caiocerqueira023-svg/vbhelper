@@ -11,6 +11,7 @@ import com.github.nacabaro.vbhelper.source.CurrencyRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.withContext
 import kotlin.random.Random
 
@@ -20,13 +21,19 @@ data class QuestDialogueAction(val type: QuestActionType, val questId: String, v
 data class QuestActionResult(val questId: String, val type: QuestActionType, val message: String, val recruited: Boolean = false)
 
 class QuestRepository(private val db: AppDatabase, private val currency: CurrencyRepository? = null,
+                      private val allowAnyDistance: () -> Boolean = { false },
                       private val clock: () -> Long = System::currentTimeMillis) {
     private val dao get() = db.questDao()
     private val progress get() = QuestProgress(db)
     fun observeAll(): Flow<List<QuestWithObjectives>> = dao.observeAll()
     fun observeGiver(id: String): Flow<List<QuestWithObjectives>> = dao.observeGiver(id)
     fun observeContact(id: String): Flow<List<QuestWithObjectives>> = dao.observeContact(id)
-    fun observePartners(): Flow<List<QuestPartnerOption>> = dao.observePartners()
+    fun observePartners(): Flow<List<QuestPartnerOption>> {
+        val source = dao.observePartners()
+        return db.participation?.let { gate -> source.combine(gate.observe()) { rows, eligibility ->
+            rows.filter { eligibility.individual(it.individualId).usable }
+        } } ?: source
+    }
     fun observeTargetTasks(): Flow<List<QuestTargetTask>> = dao.observeTargetTasks()
     fun observeBattleTargets(): Flow<List<QuestBattleTargetTask>> = dao.observeBattleTargets()
 
@@ -56,6 +63,7 @@ class QuestRepository(private val db: AppDatabase, private val currency: Currenc
     }
 
     private suspend fun materializeFollowUpsLocked(giver: WildRelationship) {
+        if (db.participation?.snapshot()?.individual(giver.individualId)?.usable == false) return
         if (giver.recruitmentState == "RECRUITED") {
             closeUnmaterializedFollowUpsLocked(giver.individualId, QuestFollowUpBlock.GIVER_JOINED)
             return
@@ -92,6 +100,7 @@ class QuestRepository(private val db: AppDatabase, private val currency: Currenc
     suspend fun ensureOffers(individualId: String) = withContext(Dispatchers.IO) {
         db.withTransaction {
             val giver = db.wildRelationshipDao().get(individualId) ?: return@withTransaction
+            if (db.participation?.snapshot()?.individual(individualId)?.usable == false) return@withTransaction
             if (giver.recruitmentState == "RECRUITED") {
                 closeUnmaterializedFollowUpsLocked(individualId, QuestFollowUpBlock.GIVER_JOINED)
                 return@withTransaction
@@ -115,12 +124,17 @@ class QuestRepository(private val db: AppDatabase, private val currency: Currenc
     private suspend fun createOffer(giver: WildRelationship, recruitment: Boolean, ordinal: Int,
                                     forcedTemplateId: String? = null, parent: QuestInstance? = null): QuestInstance? {
         val species = db.characterDao().getById(giver.cardCharacterId) ?: return null
-        val active = db.userCharacterDao().getActiveCharacter().first()?.let { db.userCharacterDao().getCharacter(it.id) }
+        val eligibility = db.participation?.snapshot()
+        if (eligibility?.card(species.id)?.usable == false) return null
+        val active = db.userCharacterDao().getActiveCharacter().first()?.takeIf { eligibility?.owned(it.id)?.usable != false }
+            ?.let { db.userCharacterDao().getCharacter(it.id) }
         val seed = parent?.let { it.seed * 31 + it.chainDepth + 1 } ?: ((giver.individualId.hashCode().toLong() shl 32) xor ordinal.toLong() xor species.id)
         val random = Random(seed)
         val items = db.itemDao().questItems()
         val supplies = items.filter { it.quantity > 0 }
-        val worldCharacters = db.characterDao().getCharactersForWorldSpawns().sortedBy { it.id }
+        val worldCharacters = (db.characterDao().getCharactersForWorldSpawns() + db.characterDao().getCatalogDefinitions())
+            .distinctBy { it.speciesId ?: it.id.toString() }
+            .filter { eligibility?.card(it.id)?.usable != false }.sortedBy { it.id }
         val candidates = worldCharacters.filter { it.stage in 2..(active?.let {
             db.characterDao().getById(it.charId)?.stage?.plus(1)
         } ?: species.stage).coerceAtLeast(2) }
@@ -401,6 +415,7 @@ class QuestRepository(private val db: AppDatabase, private val currency: Currenc
             require(saved.revision == action.revision) { "Quest progress changed. Open the current quest and try again." }
             val quest = refreshAvailabilityLocked(saved)
             val safeAction = action.type in setOf(QuestActionType.STATUS, QuestActionType.DECLINE, QuestActionType.ABANDON, QuestActionType.SKIP_FOLLOW_UP)
+            require(safeAction || db.questParticipationAllowed(quest)) { "A required Digimon is unavailable. Recorded progress is preserved." }
             require(safeAction || quest.availabilityIssue == null || (action.type == QuestActionType.TURN_IN &&
                 quest.category == QuestCategory.NORMAL && quest.state == QuestState.READY)) { "Required quest data is unavailable: ${quest.availabilityIssue}. Recorded progress is preserved." }
             when (action.type) {
@@ -418,6 +433,7 @@ class QuestRepository(private val db: AppDatabase, private val currency: Currenc
                     val needsPartner = QuestSteps.needsPartner(dao.objectives(quest.id))
                     val selectedId = action.partnerId ?: quest.partnerId ?: if (needsPartner) dao.partners().firstOrNull { it.isActive }?.individualId else null
                     val partner = selectedId?.let { db.userCharacterDao().getByIndividualIdSync(it).singleOrNull() }
+                    partner?.let { db.participation?.snapshot()?.requireOwned(it.id) }
                     require(!needsPartner || partner != null) { "Select a partner in Storage before accepting." }
                     require(action.partnerId == null || partner != null) { "This selected partner is no longer in Storage." }
                     // Once bound, verified progress belongs to this permanent individual, even while on the watch.
@@ -530,6 +546,7 @@ class QuestRepository(private val db: AppDatabase, private val currency: Currenc
 
     fun recruitmentReadyLocked(individualId: String): Boolean {
         val quest = dao.forGiver(individualId).singleOrNull { it.category == QuestCategory.RECRUITMENT } ?: return false
+        if (!db.questParticipationAllowed(quest)) return false
         return quest.state == QuestState.READY && dao.objectives(quest.id).isNotEmpty() &&
             dao.objectives(quest.id).all { it.progress >= it.required } && dao.reward(quest.id) == null
     }
@@ -543,6 +560,7 @@ class QuestRepository(private val db: AppDatabase, private val currency: Currenc
     }
 
     private suspend fun claimRewardsLocked(quest: QuestInstance) {
+        check(db.questParticipationAllowed(quest)) { "A required Digimon is unavailable." }
         check(dao.recordReward(QuestRewardReceipt(quest.id, clock())) != -1L) { "Quest reward already claimed." }
         if (quest.rewardBits > 0) check(dao.addBits(quest.rewardBits) == 1) { "The wallet must be initialized before claiming rewards." }
         if (quest.rewardItemQuantity > 0) check(db.itemDao().grantQuestItem(requireNotNull(quest.rewardItemId), quest.rewardItemQuantity) == 1)
@@ -577,6 +595,7 @@ class QuestRepository(private val db: AppDatabase, private val currency: Currenc
         val partner = quest.partnerId
         val transfer = partner?.let { db.watchTransferDao().getByIndividualId(it) }
         var issue: QuestAvailabilityIssue? = if (dao.stageForCardCharacter(quest.giverCardCharacterId) == null) QuestAvailabilityIssue.GIVER_CARD_MISSING else null
+        if (issue == null && !db.questParticipationAllowed(quest)) issue = QuestAvailabilityIssue.SOURCE_MODE_INACTIVE
         if (issue == null && remaining.any { it.targetCardCharacterId != null && dao.stageForCardCharacter(it.targetCardCharacterId) == null }) issue = QuestAvailabilityIssue.TARGET_CARD_MISSING
         if (issue == null) for (target in remaining.mapNotNull { it.targetIndividualId }.distinct()) {
             if (db.userCharacterDao().getByIndividualIdSync(target).isNotEmpty() || db.watchTransferDao().getByIndividualId(target) != null ||
@@ -603,6 +622,7 @@ class QuestRepository(private val db: AppDatabase, private val currency: Currenc
     }
 
     private suspend fun refreshPartnerLocked(quest: QuestInstance, partner: UserCharacter) {
+        if (!db.questParticipationAllowed(quest)) return
         val stage = db.characterDao().getById(partner.charId)?.stage ?: return
         val loadout = com.github.nacabaro.vbhelper.battle.offline.data.GenericTechniqueLoadout.resolve(
             db.digimonTechniqueLoadoutDao().getForIndividual(partner.individualId).map { it.techniqueId })
@@ -701,11 +721,12 @@ class QuestRepository(private val db: AppDatabase, private val currency: Currenc
         db.withTransaction { dao.forPartner(id).filter { it.state == QuestState.ACTIVE }.forEach { refreshLocalLocked(it) } }
     }
 
-    fun partnerContext(): String = dao.partners().take(40).joinToString("\n") {
+    fun partnerContext(): String = dao.partners().filter { db.participation?.snapshot()?.individual(it.individualId)?.usable != false }.take(40).joinToString("\n") {
         "partnerId=${it.individualId}; name=${it.displayName}; stage=${it.stage}; device=${it.deviceType}; active=${it.isActive}"
     }
 
     private fun describeAvailability(issue: QuestAvailabilityIssue): String = when (issue) {
+        QuestAvailabilityIssue.SOURCE_MODE_INACTIVE -> "a required Digimon is unavailable; recorded progress is preserved"
         QuestAvailabilityIssue.GIVER_CARD_MISSING -> "the giver's card data is missing; recorded progress is safe but no new steps can start"
         QuestAvailabilityIssue.TARGET_CARD_MISSING -> "a required participant's card data is missing; that step cannot complete until the data is restored"
         QuestAvailabilityIssue.TARGET_JOINED -> "a required participant already joined the collection, so this quest cannot create another copy"
@@ -746,6 +767,7 @@ class QuestRepository(private val db: AppDatabase, private val currency: Currenc
             } ?: return@withTransaction null
             val partner = db.userCharacterDao().getByIndividualIdSync(partnerId).singleOrNull()
                 ?: return@withTransaction null
+            db.participation?.snapshot()?.requireOwned(partner.id)
             if (partner.isActive) return@withTransaction null
             db.userCharacterDao().setOnlyActiveCharacter(partner.id)
             dao.partners().firstOrNull { it.individualId == partnerId }?.displayName
@@ -769,6 +791,7 @@ class QuestRepository(private val db: AppDatabase, private val currency: Currenc
             ?: throw com.github.nacabaro.vbhelper.world.ecosystem.RadarCommandException(rejection = com.github.nacabaro.vbhelper.world.ecosystem.RadarRejection.UNAVAILABLE)
         val quest = dao.getQuest(objective.questId)
             ?: throw com.github.nacabaro.vbhelper.world.ecosystem.RadarCommandException(rejection = com.github.nacabaro.vbhelper.world.ecosystem.RadarRejection.UNAVAILABLE)
+        check(db.questParticipationAllowed(quest)) { "A required Digimon is unavailable." }
         val allowed = objective.type in setOf(QuestObjectiveType.MEET_TARGET, QuestObjectiveType.RECOVER_PROPERTY,
             QuestObjectiveType.DELIVER_TOKEN, QuestObjectiveType.DELIVER_ITEM)
         if (!allowed || quest.revision != expectedRevision || !fix.isFresh(clock())) {
@@ -779,7 +802,7 @@ class QuestRepository(private val db: AppDatabase, private val currency: Currenc
         if (db.worldInteractionDao().getClaim(individualId) != null) {
             throw com.github.nacabaro.vbhelper.world.ecosystem.WorldInteractionException(com.github.nacabaro.vbhelper.world.ecosystem.InteractionFailure.BUSY)
         }
-        if (!com.github.nacabaro.vbhelper.world.RadarDebugInteraction.allowAnyDistance &&
+        if (!allowAnyDistance() &&
             !com.github.nacabaro.vbhelper.world.RadarWorldGeometry.relative(fix.position,
                 com.github.nacabaro.vbhelper.world.GeoPoint(spawn.latitude, spawn.longitude)).withinInteractionRange) {
             throw com.github.nacabaro.vbhelper.world.ecosystem.RadarCommandException(rejection = com.github.nacabaro.vbhelper.world.ecosystem.RadarRejection.OUT_OF_RANGE)

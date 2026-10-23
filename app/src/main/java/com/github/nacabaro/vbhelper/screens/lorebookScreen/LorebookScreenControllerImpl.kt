@@ -6,6 +6,7 @@ import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.domain.lorebook.LorebookEntry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class LorebookScreenControllerImpl(
@@ -25,16 +26,17 @@ class LorebookScreenControllerImpl(
         onSaved: () -> Unit
     ) {
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
+            val existing = existingId?.let { id -> repository.getCustomEntries().first().firstOrNull { it.id == id } }
+            val effectivePriority = if (application.container.debugSettingsRepository.enabled) priority else existing?.priority ?: 0
             if (existingId == null) {
-                repository.addCustomEntry(title, keys, content, priority)
+                repository.addCustomEntry(title, keys, content, effectivePriority)
             } else {
-                repository.updateEntry(
-                    LorebookEntry(
-                        id = existingId,
+                if (existing == null) return@launch
+                repository.updateEntry(existing.copy(
                         title = title,
                         triggerKeys = keys,
                         content = content,
-                        priority = priority
+                        priority = effectivePriority
                     )
                 )
             }

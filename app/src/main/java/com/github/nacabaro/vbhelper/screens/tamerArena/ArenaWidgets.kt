@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -30,38 +31,107 @@ import com.github.nacabaro.vbhelper.battle.offline.core.BattleStrategy
 import com.github.nacabaro.vbhelper.battle.offline.tamers.*
 import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.components.VitalButtonStyle
+import com.github.nacabaro.vbhelper.components.motionEnabled
 import com.github.nacabaro.vbhelper.di.VBHelper
+import com.github.nacabaro.vbhelper.ui.SpritePreviewPolicy
+import com.github.nacabaro.vbhelper.species.SpeciesCustomizationRepository
+import com.github.nacabaro.vbhelper.domain.characters.Sprite
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.createARGBIntArray
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 
-private val bundledArtwork = LruCache<String, ImageBitmap>(48)
+private val bundledArtwork = object : LruCache<String, List<ImageBitmap>>(SpritePreviewPolicy.CACHE_BYTES) {
+    override fun sizeOf(key: String, value: List<ImageBitmap>): Int =
+        value.sumOf { it.asAndroidBitmap().allocationByteCount }
+}
 
 @Composable
 internal fun ArenaSprite(species: ArenaSpecies?, size: Dp = 64.dp, modifier: Modifier = Modifier) {
     val context = LocalContext.current.applicationContext
-    val image by produceState<ImageBitmap?>(null, species?.assetId, species?.cardCharacterId) {
-        val selected = species ?: return@produceState
-        value = withContext(Dispatchers.IO) {
-            runCatching {
-                if (selected.assetId != null) bundledArtwork.get(selected.assetId) ?: context.assets.open(
-                    BattleAssetPaths.characterFrame(selected.assetId, 1)).use { input ->
-                    BitmapFactory.decodeStream(input)?.asImageBitmap()?.also { bundledArtwork.put(selected.assetId, it) }
-                } else selected.cardCharacterId?.let { id ->
-                    (context as VBHelper).container.db.spriteDao().getForCharacter(id)?.let { art ->
-                        val pixels = BitmapData(art.spriteIdle1, art.width, art.height).createARGBIntArray()
-                        Bitmap.createBitmap(pixels, art.width, art.height, Bitmap.Config.ARGB_8888).asImageBitmap()
+    val allowMotion = motionEnabled()
+    val application = context as? VBHelper
+    val mode by remember(application) {
+        application?.container?.spritePreferenceRepository?.preference ?: kotlinx.coroutines.flow.flowOf(null)
+    }.collectAsState(initial = null)
+    val appearanceKey = com.github.nacabaro.vbhelper.species.SpeciesCustomizationRepository.key(species?.name.orEmpty())
+    val preferredId by remember(application, appearanceKey) {
+        application?.container?.db?.speciesCustomizationDao()?.observeSpriteId(appearanceKey)
+            ?: kotlinx.coroutines.flow.flowOf(null)
+    }.collectAsState(null)
+    val frames by key(species?.assetId, species?.cardCharacterId, preferredId, mode) {
+        produceState<List<ImageBitmap>>(emptyList()) {
+            val selected = species ?: return@produceState
+            value = withContext(Dispatchers.IO) {
+                try {
+                    val container = (context as? VBHelper)?.container
+                    // Cosmetic priority with mutual fallback; neither source limits gameplay.
+                    val resolved = container?.let {
+                        com.github.nacabaro.vbhelper.species.SpeciesAppearanceRepository(
+                            it.db, it.dotSpriteLibrary) { it.spritePreferenceRepository.current }
+                            .resolve(selected.name, selected.assetId)
                     }
+                    if (resolved?.sprite != null) arenaIdleFrames(resolved.sprite)
+                    else if (resolved?.assetId != null) loadBundledArenaArtwork(context, resolved.assetId)
+                    else if (selected.assetId != null) loadBundledArenaArtwork(context, selected.assetId)
+                    else selected.cardCharacterId?.let { id ->
+                        (context as VBHelper).container.db.spriteDao().getForCharacter(id)?.let(::arenaIdleFrames)
+                    }.orEmpty()
+                } catch (failure: Exception) {
+                    if (failure is CancellationException) throw failure
+                    emptyList()
                 }
-            }.getOrNull()
+            }
         }
     }
+    var frameIndex by remember(species?.assetId, species?.cardCharacterId, preferredId, mode) { mutableIntStateOf(0) }
+    val timing = remember(species?.assetId, species?.cardCharacterId, preferredId, mode) {
+        val identity = (mode?.name ?: "") + (preferredId?.toString() ?: species?.assetId ?: "imported:${species?.cardCharacterId}")
+        val seed = (identity.hashCode().toLong() * 1_103_515_245L + 12_345L) and 0x7fff_ffffL
+        val interval = 550L + seed % 301L
+        (seed / 997L) % interval to interval
+    }
+    LaunchedEffect(frames, allowMotion) {
+        frameIndex = 0
+        if (allowMotion && frames.size > 1) {
+            delay(timing.first)
+            while (isActive) {
+                delay(timing.second)
+                frameIndex = (frameIndex + 1) % frames.size
+            }
+        }
+    }
+    val image = frames.getOrNull(if (allowMotion) frameIndex else 0)
     Box(modifier.size(size), contentAlignment = Alignment.Center) {
         if (image != null) Image(requireNotNull(image), species?.name, Modifier.fillMaxSize(), filterQuality = FilterQuality.None)
         else Icon(Icons.Outlined.Pets, contentDescription = null, Modifier.size(size * 0.48f),
             tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
+}
+
+private fun arenaIdleFrames(art: Sprite): List<ImageBitmap> {
+    val buffers = if (art.spriteIdle1.contentEquals(art.spriteIdle2)) listOf(art.spriteIdle1)
+        else listOf(art.spriteIdle1, art.spriteIdle2)
+    return buffers.filter { SpritePreviewPolicy.validFrame(art.width, art.height, it.size) }.map { bytes ->
+        Bitmap.createBitmap(BitmapData(bytes, art.width, art.height).createARGBIntArray(),
+            art.width, art.height, Bitmap.Config.ARGB_8888).asImageBitmap()
+    }
+}
+
+private fun loadBundledArenaArtwork(context: android.content.Context, assetId: String): List<ImageBitmap> {
+    bundledArtwork.get(assetId)?.let { return it }
+    val frames = listOf(1, 2).mapNotNull { frame ->
+        runCatching {
+            context.assets.open(BattleAssetPaths.characterFrame(assetId, frame)).use { input ->
+                BitmapFactory.decodeStream(input)?.asImageBitmap()
+            }
+        }.getOrNull()
+    }
+    if (frames.isNotEmpty()) bundledArtwork.put(assetId, frames)
+    return frames
 }
 
 @Composable

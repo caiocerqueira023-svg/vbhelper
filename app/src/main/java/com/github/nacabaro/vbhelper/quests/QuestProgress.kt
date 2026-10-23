@@ -14,12 +14,14 @@ class QuestProgress(private val db: AppDatabase) {
     private val dao get() = db.questDao()
 
     fun beginSourceLocked(quest: QuestInstance, sourceId: String, producedAt: Long, now: Long): Boolean {
+        if (!db.questParticipationAllowed(quest)) return false
         if (quest.state != QuestState.ACTIVE || producedAt < QuestSteps.startsAt(quest)) return false
         dao.recordPhase(QuestPhaseReceipt(quest.id, sourceId, quest.currentPhase, now))
         return dao.phaseReceipt(quest.id, sourceId)?.phase == quest.currentPhase
     }
 
     fun creditLocked(quest: QuestInstance, objective: QuestObjective, sourceId: String, amount: Int, now: Long) {
+        if (!db.questParticipationAllowed(quest)) return
         if (quest.state != QuestState.ACTIVE || objective.phase != quest.currentPhase || amount <= 0 || objective.progress >= objective.required) return
         val credited = minOf(amount, objective.required - objective.progress)
         if (dao.recordEvidence(QuestEvidence(quest.id, objective.id, sourceId, credited, now)) == -1L) return
@@ -68,6 +70,7 @@ class QuestProgress(private val db: AppDatabase) {
     }
 
     fun captureExportLocked(token: String, individualId: String, character: NfcCharacter, now: Long) {
+        if (db.participation?.snapshot()?.individual(individualId)?.usable == false) return
         val cardId = db.watchTransferDao().get(token)?.cardId ?: dao.cardForIndividual(individualId)
         val limit = cardId?.let { db.cardDao().getCardById(it)?.stageCount }?.takeIf { it in 1..254 }?.plus(1)
         val baseline = QuestWatchBaseline(token, individualId, character.charIndex.toInt(),

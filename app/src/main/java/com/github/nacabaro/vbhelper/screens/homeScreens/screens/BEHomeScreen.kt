@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.ActiveDigimonCard
 import com.github.nacabaro.vbhelper.components.InfoStatRow
+import com.github.nacabaro.vbhelper.components.PartnerStatColumn
 import com.github.nacabaro.vbhelper.components.ItemDisplay
 import com.github.nacabaro.vbhelper.components.TransformationHistoryCard
 import com.github.nacabaro.vbhelper.components.VitalsHeaderStat
@@ -91,32 +92,7 @@ fun BEHomeScreen(
             )
             // Level / Attribute / Days readout beside the character portrait,
             // matching the reference screen's stat list.
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .aspectRatio(1f)
-                    .padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                InfoStatRow(
-                    icon = R.drawable.baseline_trophy_24,
-                    label = stringResource(R.string.home_vbdim_level),
-                    value = shortStageName(activeMon.stage),
-                    modifier = Modifier.weight(1f)
-                )
-                InfoStatRow(
-                    icon = R.drawable.baseline_mood_24,
-                    label = stringResource(R.string.home_vbdim_attribute),
-                    value = activeMon.attribute.name,
-                    modifier = Modifier.weight(1f)
-                )
-                InfoStatRow(
-                    icon = R.drawable.baseline_next_24,
-                    label = stringResource(R.string.home_vbdim_days),
-                    value = activeMon.ageInDays.toString(),
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            PartnerStatColumn(shortStageName(activeMon.stage), activeMon.attribute.name, activeMon.ageInDays.toString(), Modifier.weight(1f))
         }
         if (vitalsHistory.isNotEmpty()) {
             WeeklyVitalsChart(
@@ -131,7 +107,7 @@ fun BEHomeScreen(
         ) {
             ItemDisplay(
                 icon = R.drawable.baseline_mood_24,
-                textValue = activeMon.mood.toString(),
+                textValue = com.github.nacabaro.vbhelper.components.moodSummary(activeMon.mood),
                 definition = stringResource(R.string.home_vbdim_mood),
                 modifier = Modifier
                     .weight(1f)
@@ -282,11 +258,12 @@ private fun calculateWinPercent(won: Int, lost: Int): String {
     return String.format(LocalConfiguration.current.locales[0], "%.2f", percentage * 100) + " %"
 }
 
+@Composable
 private fun itemDefinition(itemId: Int): String = when (itemId) {
-    ItemsScreenControllerImpl.ItemTypes.PPTraining.id -> "PP Training"
-    ItemsScreenControllerImpl.ItemTypes.HPTraining.id -> "HP Training"
-    ItemsScreenControllerImpl.ItemTypes.APTraining.id -> "AP Training"
-    ItemsScreenControllerImpl.ItemTypes.BPTraining.id -> "BP Training"
-    ItemsScreenControllerImpl.ItemTypes.AllTraining.id -> "All Training"
+    ItemsScreenControllerImpl.ItemTypes.PPTraining.id -> stringResource(R.string.immersion_pp_training)
+    ItemsScreenControllerImpl.ItemTypes.HPTraining.id -> stringResource(R.string.home_be_training_hp)
+    ItemsScreenControllerImpl.ItemTypes.APTraining.id -> stringResource(R.string.home_be_training_ap)
+    ItemsScreenControllerImpl.ItemTypes.BPTraining.id -> stringResource(R.string.home_be_training_bp)
+    ItemsScreenControllerImpl.ItemTypes.AllTraining.id -> stringResource(R.string.immersion_all_training)
     else -> ""
 }

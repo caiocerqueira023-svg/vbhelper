@@ -30,13 +30,13 @@ interface AdventureDao {
             s.spriteIdle1 AS spriteIdle,
             s.width AS spriteWidth,
             s.height AS spriteHeight,
-            d.isBEm as isBemCard,
+            COALESCE(d.isBEm, 0) as isBemCard,
             a.finishesAdventure AS finishesAdventure,
             a.originalDuration AS originalTimeInMinutes
         FROM UserCharacter uc
         JOIN CardCharacter c ON uc.charId = c.id
-        JOIN Sprite s ON s.id = c.spriteId
-        JOIN Card d ON c.cardId = d.id
+        JOIN DisplaySprite s ON s.cardCharacterId = c.id
+        LEFT JOIN Card d ON c.cardId = d.id
         JOIN Adventure a ON uc.id = a.characterId
     """
     )

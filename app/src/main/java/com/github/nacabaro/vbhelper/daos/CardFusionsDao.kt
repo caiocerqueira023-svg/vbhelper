@@ -38,7 +38,7 @@ interface CardFusionsDao {
         JOIN CardCharacter source ON source.id = j.fromCharaId
         JOIN Card sourceCard ON sourceCard.id = source.cardId
         JOIN CardCharacter destination ON destination.id = j.toCharaId AND destination.cardId = source.cardId
-        JOIN Sprite s ON s.id = destination.spriteId
+        JOIN DisplaySprite s ON s.cardCharacterId = destination.id
         LEFT JOIN Dex d ON d.id = destination.id
         WHERE j.fromCharaId = :characterId OR EXISTS (
             SELECT 1 FROM CardCharacter partner WHERE partner.id = :characterId
@@ -80,7 +80,7 @@ interface CardFusionsDao {
             cf.attribute as fusionAttribute
         FROM CardFusions cf
         JOIN CardCharacter cc ON cc.id = cf.toCharaId
-        JOIN Sprite s ON s.id = cc.spriteId
+        JOIN DisplaySprite s ON s.cardCharacterId = cc.id
         LEFT JOIN Dex d ON d.id = cc.id
         WHERE cf.fromCharaId = :charaId
         ORDER BY cc.charaIndex

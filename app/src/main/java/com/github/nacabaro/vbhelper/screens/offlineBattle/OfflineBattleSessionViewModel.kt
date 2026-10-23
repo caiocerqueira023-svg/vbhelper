@@ -27,6 +27,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
+import com.github.nacabaro.vbhelper.battle.offline.data.requireBattleParticipants
+import com.github.nacabaro.vbhelper.battle.offline.tamers.requireArenaMatch
 
 data class OfflineBattleSessionState(
     val sessionId: String? = null,
@@ -86,6 +88,7 @@ class OfflineBattleSessionViewModel : ViewModel() {
     private var assetGeneration = 0L
     private var arenaSpec: ArenaMatchSpec? = null
     private var applicationContext: Context? = null
+    private var participationLease: AutoCloseable? = null
 
     fun startArena(context: Context, match: ArenaMatchSpec) {
         val previous = arenaSpec
@@ -104,7 +107,7 @@ class OfflineBattleSessionViewModel : ViewModel() {
             seed = match.configuration.randomSeed
             arenaSpec = match
             applicationContext = context.applicationContext
-            installPresentation(context.applicationContext, match.id, restarted)
+            installWarm(context.applicationContext, match.id, restarted)
             return
         }
         start(context, match.id, match.left.members, match.right.members, match.configuration.randomSeed, arenaSpec = match)
@@ -132,7 +135,21 @@ class OfflineBattleSessionViewModel : ViewModel() {
         applicationContext = context.applicationContext
         _state.value = OfflineBattleSessionState(sessionId = sessionId, loading = true, assetGeneration = ++assetGeneration)
         loadingJob = scope.launch {
+            var candidateLease: AutoCloseable? = null
+            try {
             runCatching {
+                kotlinx.coroutines.withContext(Dispatchers.IO) {
+                    val db = (context.applicationContext as VBHelper).container.db
+                    db.withTransaction {
+                        db.participation?.snapshot()?.let { gate ->
+                            if (arenaSpec != null) gate.requireArenaMatch(arenaSpec)
+                            else gate.requireBattleParticipants(allies + opponents)
+                        }
+                        candidateLease = db.participation?.battleLease()
+                    }
+                }
+                participationLease = candidateLease
+                candidateLease = null
                 TrainingBattlePresentationFactory.create(context.applicationContext, this@OfflineBattleSessionViewModel.allies,
                     this@OfflineBattleSessionViewModel.opponents, seed, this@OfflineBattleSessionViewModel.arenaManifestPath,
                     extraItems = if (this@OfflineBattleSessionViewModel.arenaManifestPath == OfflineArenaManifest.RADAR_MANIFEST_PATH) {
@@ -147,6 +164,8 @@ class OfflineBattleSessionViewModel : ViewModel() {
             }.onFailure { failure ->
                 if (failure is CancellationException) throw failure
                 if (_state.value.sessionId == sessionId) {
+                    participationLease?.close()
+                    participationLease = null
                     _state.value = OfflineBattleSessionState(
                         sessionId = sessionId,
                         error = failure.message?.takeIf(String::isNotBlank)
@@ -154,6 +173,37 @@ class OfflineBattleSessionViewModel : ViewModel() {
                     )
                 }
             }
+            } finally { candidateLease?.close() }
+        }
+    }
+
+    /** Rematches reuse the prepared assets, but selection authorization is always checked afresh. */
+    private fun installWarm(context: Context, sessionId: String, presentation: TrainingBattlePresentation) {
+        _state.value = _state.value.copy(sessionId = sessionId, loading = true, error = null)
+        loadingJob = scope.launch {
+            var candidateLease: AutoCloseable? = null
+            try {
+                kotlinx.coroutines.withContext(Dispatchers.IO) {
+                    val db = (context.applicationContext as VBHelper).container.db
+                    db.withTransaction {
+                        db.participation?.snapshot()?.let { gate ->
+                            val match = arenaSpec
+                            if (match != null) gate.requireArenaMatch(match)
+                            else gate.requireBattleParticipants(allies + opponents)
+                        }
+                        candidateLease = db.participation?.battleLease()
+                    }
+                }
+                participationLease = candidateLease
+                candidateLease = null
+                installPresentation(context, sessionId, presentation)
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (failure: Exception) {
+                participationLease?.close()
+                participationLease = null
+                _state.value = _state.value.copy(loading = false, error = failure.message)
+            }
+            finally { candidateLease?.close() }
         }
     }
 
@@ -236,7 +286,8 @@ class OfflineBattleSessionViewModel : ViewModel() {
         val context = applicationContext
         val snapshot = controller?.snapshot?.value
         if (spec != null && context != null && snapshot?.result != null) {
-            scope.launch { recordArenaOutcome(context, spec, snapshot) }
+            // Acquire settlement ownership before finishSession can release the visible battle lease.
+            scope.launch(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) { recordArenaOutcome(context, spec, snapshot) }
         }
         return outcome
     }
@@ -244,8 +295,9 @@ class OfflineBattleSessionViewModel : ViewModel() {
     private suspend fun recordArenaOutcome(context: Context, spec: ArenaMatchSpec, snapshot: BattleSnapshot) {
         if (_state.value.recordingArenaResult || _state.value.arenaSettlement != null) return
         _state.value = _state.value.copy(recordingArenaResult = true, arenaRecordError = null)
+        val app = context.applicationContext as VBHelper
+        val settlementLease = app.container.db.participation?.battleLease()
         try {
-            val app = context.applicationContext as VBHelper
             val settlement = kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) {
                 ArenaRepository(app.container.db, app.container.currencyRepository).recordTerminal(spec.id, snapshot)
             }
@@ -255,7 +307,7 @@ class OfflineBattleSessionViewModel : ViewModel() {
             if (failure is CancellationException) throw failure
             if (_state.value.sessionId == spec.id) _state.value = _state.value.copy(recordingArenaResult = false,
                 arenaRecordError = failure.message ?: "Could not save the arena result.")
-        }
+        } finally { settlementLease?.close() }
     }
 
     fun retryArenaRecord() {
@@ -297,13 +349,15 @@ class OfflineBattleSessionViewModel : ViewModel() {
             pauseReasons.retainAll(setOf("background"))
             pauseReasons += "intro"
             seed = nextSeed
-            installPresentation(context.applicationContext, "$sessionId:retry:$candidateSeed", restarted)
+            installWarm(context.applicationContext, "$sessionId:retry:$candidateSeed", restarted)
             return
         }
         start(context, "$sessionId:retry:$candidateSeed", allies, opponents, nextSeed, arenaManifestPath)
     }
 
     private fun releaseCurrentSession() {
+        participationLease?.close()
+        participationLease = null
         loadingJob?.cancel()
         loadingJob = null
         countdownJob?.cancel()

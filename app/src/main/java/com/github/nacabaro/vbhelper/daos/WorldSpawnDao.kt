@@ -88,12 +88,13 @@ interface WorldSpawnDao {
             cc.charaIndex AS charaIndex,
             cc.stage AS stage,
             cc.cardId AS cardId,
-            'dim' || printf('%03d', ca.cardId) || '_mon' || printf('%02d', cc.charaIndex + 1) AS externalCharacterId,
+            COALESCE('dim' || printf('%03d', ca.cardId) || '_mon' || printf('%02d', cc.charaIndex + 1),
+                'app_mon' || printf('%06d', cc.id)) AS externalCharacterId,
             cc.attribute AS attribute,
             cc.baseHp AS baseHp,
             cc.baseBp AS baseBp,
             cc.baseAp AS baseAp,
-            ca.isBEm AS isBemCard,
+            COALESCE(ca.isBEm, 0) AS isBemCard,
             s.spriteIdle1 AS spriteIdle,
             s.spriteIdle2 AS spriteIdle2,
             s.spriteWalk1 AS spriteWalk,
@@ -105,8 +106,8 @@ interface WorldSpawnDao {
             sp.speciesName AS speciesName
         FROM WorldSpawn ws
         JOIN CardCharacter cc ON cc.id = ws.cardCharacterId
-        JOIN Card ca ON ca.id = cc.cardId
-        JOIN Sprite s ON s.id = cc.spriteId
+        LEFT JOIN Card ca ON ca.id = cc.cardId
+        JOIN DisplaySprite s ON s.cardCharacterId = cc.id
         LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = cc.id
         WHERE (ws.expiresAt > :now OR EXISTS(SELECT 1 FROM WorldParticipationClaim WHERE spawnId = ws.id))
             AND ws.recruitmentState = 'WILD'
@@ -132,12 +133,13 @@ interface WorldSpawnDao {
             cc.charaIndex AS charaIndex,
             cc.stage AS stage,
             cc.cardId AS cardId,
-            'dim' || printf('%03d', ca.cardId) || '_mon' || printf('%02d', cc.charaIndex + 1) AS externalCharacterId,
+            COALESCE('dim' || printf('%03d', ca.cardId) || '_mon' || printf('%02d', cc.charaIndex + 1),
+                'app_mon' || printf('%06d', cc.id)) AS externalCharacterId,
             cc.attribute AS attribute,
             cc.baseHp AS baseHp,
             cc.baseBp AS baseBp,
             cc.baseAp AS baseAp,
-            ca.isBEm AS isBemCard,
+            COALESCE(ca.isBEm, 0) AS isBemCard,
             s.spriteIdle1 AS spriteIdle,
             s.spriteIdle2 AS spriteIdle2,
             s.spriteWalk1 AS spriteWalk,
@@ -149,8 +151,8 @@ interface WorldSpawnDao {
             sp.speciesName AS speciesName
         FROM WorldSpawn ws
         JOIN CardCharacter cc ON cc.id = ws.cardCharacterId
-        JOIN Card ca ON ca.id = cc.cardId
-        JOIN Sprite s ON s.id = cc.spriteId
+        LEFT JOIN Card ca ON ca.id = cc.cardId
+        JOIN DisplaySprite s ON s.cardCharacterId = cc.id
         LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = cc.id
         WHERE ws.recruitmentState = 'PENDING_RECRUITMENT'
         ORDER BY ws.spawnedAt DESC
@@ -175,12 +177,13 @@ interface WorldSpawnDao {
             cc.charaIndex AS charaIndex,
             cc.stage AS stage,
             cc.cardId AS cardId,
-            'dim' || printf('%03d', ca.cardId) || '_mon' || printf('%02d', cc.charaIndex + 1) AS externalCharacterId,
+            COALESCE('dim' || printf('%03d', ca.cardId) || '_mon' || printf('%02d', cc.charaIndex + 1),
+                'app_mon' || printf('%06d', cc.id)) AS externalCharacterId,
             cc.attribute AS attribute,
             cc.baseHp AS baseHp,
             cc.baseBp AS baseBp,
             cc.baseAp AS baseAp,
-            ca.isBEm AS isBemCard,
+            COALESCE(ca.isBEm, 0) AS isBemCard,
             s.spriteIdle1 AS spriteIdle,
             s.spriteIdle2 AS spriteIdle2,
             s.spriteWalk1 AS spriteWalk,
@@ -192,8 +195,8 @@ interface WorldSpawnDao {
             sp.speciesName AS speciesName
         FROM WorldSpawn ws
         JOIN CardCharacter cc ON cc.id = ws.cardCharacterId
-        JOIN Card ca ON ca.id = cc.cardId
-        JOIN Sprite s ON s.id = cc.spriteId
+        LEFT JOIN Card ca ON ca.id = cc.cardId
+        JOIN DisplaySprite s ON s.cardCharacterId = cc.id
         LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = cc.id
         WHERE ws.id = :spawnId
         """

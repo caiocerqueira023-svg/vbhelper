@@ -67,14 +67,18 @@ class ChatRepository(
         individualId: String,
         cardCharacterId: Long,
         userText: String,
+        replacingMessageId: Long? = null,
         questActionHandler: (suspend (com.github.nacabaro.vbhelper.quests.QuestDialogueAction) -> com.github.nacabaro.vbhelper.quests.QuestActionResult)? = null
     ): WildChatResult {
         require(userText.isNotBlank() && userText.length <= 12000)
+        val participation = captureParticipation(individualId)
         questRepository.refreshGiver(individualId)
         val (systemPrompt, speciesName) = buildWildSystemPrompt(cardCharacterId, individualId)
         val enrichedSystemPrompt = withLorebookContext(systemPrompt, userText, speciesName)
 
-        val userMessageId=chatDao.insertMessage(
+        val original = replacingMessageId?.let { chatDao.getMessagesSync(individualId) }
+        val replacementHistory = original?.let { ChatBranchPolicy.promptHistory(it, requireNotNull(replacingMessageId), userText) }
+        val userMessageId=replacingMessageId ?: chatDao.insertMessage(
             ChatMessageEntity(
                 individualId = individualId,
                 role = "user",
@@ -82,7 +86,7 @@ class ChatRepository(
                 timestamp = System.currentTimeMillis()
             )
         )
-        val source=chatDao.getMessagesSync(individualId).takeLast(20)
+        val source=(replacementHistory ?: chatDao.getMessagesSync(individualId)).takeLast(20)
         val contract="""
             Your entire message must be exactly one JSON object, with no surrounding prose, quotation marks or code fences.
             Return JSON {"lines":[{"speakerId":"$individualId","text":"your reply"}],"intent":null or
@@ -121,8 +125,10 @@ class ChatRepository(
             Return intent:null when proposing a quest action. Maximum trust unlocks a recruitment quest; it never
             means you have already joined Storage. Only the app can verify requirements or grant rewards.
         """.trimIndent()
-        val rawReply = requestCompletion(enrichedSystemPrompt, individualId, null, finalSystemInstruction=contract)
-        val questAction = if (questActionHandler == null) null else com.github.nacabaro.vbhelper.quests.QuestDialogueCodec.parse(
+        val replyContract = if (replacingMessageId == null) contract else contract +
+            "\nRegenerate existing speech only. Return intent:null and questAction:null. Do not repeat gameplay actions or promise a new battle/quest outcome. Recorded journal facts are unchanged."
+        val rawReply = requestCompletion(enrichedSystemPrompt, individualId, null, finalSystemInstruction=replyContract, historyOverride=replacementHistory)
+        val questAction = if (questActionHandler == null || replacingMessageId != null) null else com.github.nacabaro.vbhelper.quests.QuestDialogueCodec.parse(
             rawReply, individualId, database.questDao().forGiver(individualId), userMessageId,
             database.questDao().partners().map { it.individualId }.toSet())
         var questResult: com.github.nacabaro.vbhelper.quests.QuestActionResult? = null
@@ -130,13 +136,13 @@ class ChatRepository(
             val result = try { questActionHandler(questAction) } catch (failure: Exception) {
                 if (failure is kotlinx.coroutines.CancellationException) throw failure
                 com.github.nacabaro.vbhelper.quests.QuestActionResult(questAction.questId, questAction.type,
-                    "The quest action was not applied: ${failure.message.orEmpty()}")
+                    "The request action could not be confirmed. Review the request details and try again.")
             }
             questResult = result
             val instruction = "App-confirmed quest action result (authoritative): ${result.message}\n" +
                 "Current registered quests:\n${questRepository.contextForContact(individualId)}\n" +
                 "Respond naturally in your voice using only these facts. Do not emit actions or promise uncommitted rewards. Return plain text."
-            try { requestCompletion(enrichedSystemPrompt, individualId, null, finalSystemInstruction = instruction) }
+            try { requestCompletion(enrichedSystemPrompt, individualId, null, finalSystemInstruction = instruction, historyOverride=replacementHistory) }
             catch (failure: Exception) {
                 if (failure is kotlinx.coroutines.CancellationException) throw failure
                 result.message
@@ -150,28 +156,35 @@ class ChatRepository(
         // The model sometimes agrees to a fight in prose but drops the JSON
         // intent (abbreviated type, long reason, missing envelope). Recover it
         // with one grounded follow-up call instead of losing the battle.
-        val repairedIntent = if (structured?.intent == null && questAction == null &&
+        val repairedIntent = if (replacingMessageId == null && structured?.intent == null && questAction == null &&
             (BattleTalkDetector.looksLikeBattleTalk(userText) || BattleTalkDetector.looksLikeBattleTalk(cleanReply))) {
             try {
                 repairBattleIntent(enrichedSystemPrompt, individualId, userMessageId,
-                    source.map { "private:${it.id}" }.toSet(), cleanReply)
+                    source.map { "private:${it.id}" }.toSet(), cleanReply, replacementHistory)
             } catch (failure: Exception) {
                 if (failure is kotlinx.coroutines.CancellationException &&
                     failure !is kotlinx.coroutines.TimeoutCancellationException) throw failure
                 null
             }
         } else null
-        val effectiveIntent = structured?.intent ?: repairedIntent
+        val effectiveIntent = if (replacingMessageId == null) structured?.intent ?: repairedIntent else null
         val suppliedDelta=if(structured==null && cleanReply==extracted.first.trim()) extracted.second else null
-        val moodDelta=if (questAction != null) 0 else SocialEventAppraisal.resolve(WorldSocialRepository(database).profile(individualId), userText, suppliedDelta)
-        val replyId=chatDao.insertMessage(
+        val moodDelta=if (questAction != null || replacingMessageId != null) 0 else SocialEventAppraisal.resolve(WorldSocialRepository(database).profile(individualId), userText, suppliedDelta)
+        val replyMessage =
             ChatMessageEntity(
                 individualId = individualId,
                 role = "assistant",
                 content = cleanReply,
                 timestamp = System.currentTimeMillis()
             )
-        )
+        val replyId = database.withTransaction {
+            validateParticipation(participation, individualId)
+            if (original != null) {
+                check(ChatBranchPolicy.sameConversation(original, chatDao.getMessagesSync(individualId))) { "The conversation changed. Try again." }
+                chatDao.deleteAfterMessage(individualId, requireNotNull(replacingMessageId))
+            }
+            chatDao.insertMessage(replyMessage)
+        }
         return WildChatResult(cleanReply, moodDelta,if (questAction == null) effectiveIntent else null,
             source.map { it.id }+replyId,userMessageId,questResult)
     }
@@ -188,7 +201,8 @@ class ChatRepository(
         individualId: String,
         userMessageId: Long,
         evidence: Set<String>,
-        replyText: String
+        replyText: String,
+        historyOverride: List<ChatMessageEntity>? = null
     ): DialogueProposal? {
         val supporting = (evidence + "this:$individualId").joinToString()
         val contract = """
@@ -205,7 +219,7 @@ class ChatRepository(
             Previous reply: "$replyText"
         """.trimIndent()
         val raw = withTimeout(20_000) {
-            requestCompletion(enrichedSystemPrompt, individualId, null, finalSystemInstruction = contract)
+            requestCompletion(enrichedSystemPrompt, individualId, null, finalSystemInstruction = contract, historyOverride = historyOverride)
         }
         val proposal = runCatching {
             WorldDialogueCodec.parse(raw, setOf(individualId), evidence,
@@ -216,6 +230,7 @@ class ChatRepository(
     }
 
     suspend fun reactToPendingBattles(individualId: String, cardCharacterId: Long) = battleReactionMutex.withLock {
+        val participation = captureParticipation(individualId)
         for(memory in database.worldChatMemoryDao().getPendingReactions(individualId)) {
             val (persona,species)=buildWildSystemPrompt(cardCharacterId,individualId)
             val instruction=WorldBattleMemoryPrompts.reaction(memory)
@@ -223,6 +238,7 @@ class ChatRepository(
             val raw=withTimeout(20_000) { requestCompletion(prompt,individualId,null,finalSystemInstruction=instruction) }
             val reply=WorldDialogueCodec.visibleText(raw,individualId) ?: error("The battle reaction was not readable. Please retry.")
             database.withTransaction {
+                validateParticipation(participation, individualId)
                 val current=database.worldChatMemoryDao().getMemory(memory.interactionId,individualId)
                 if(current!=null && current.needsReaction && current.reactionMessageId==null) {
                     val message=chatDao.insertMessage(ChatMessageEntity(individualId=individualId,role="assistant",content=reply,timestamp=System.currentTimeMillis()))
@@ -234,6 +250,7 @@ class ChatRepository(
 
     /** Every offer gets an intro chat message carrying a jump button to the Quests tab. */
     suspend fun reactToPendingQuestOffers(individualId: String, cardCharacterId: Long): List<String> = questOfferMutex.withLock {
+        val participation = captureParticipation(individualId)
         questRepository.refreshGiver(individualId)
         val announcements = mutableListOf<String>()
         for (quest in database.questDao().forGiver(individualId).filter {
@@ -257,6 +274,7 @@ class ChatRepository(
                 null
             } ?: questOfferFallback(PromptLocalization.currentLanguageTag())
             database.withTransaction {
+                validateParticipation(participation, individualId)
                 val current = database.questDao().getQuest(quest.id)
                 if (current != null && current.state == com.github.nacabaro.vbhelper.quests.QuestState.OFFERED &&
                     current.revision == quest.revision && current.offerMessageId == null) {
@@ -296,10 +314,13 @@ class ChatRepository(
         cardCharacterId: Long,
         instruction: String
     ): String {
+        val participation = captureParticipation(individualId)
         val (systemPrompt, speciesName) = buildWildSystemPrompt(cardCharacterId, individualId)
         val enrichedSystemPrompt = withLorebookContext(systemPrompt, instruction, speciesName)
         val rawReply = requestCompletion(enrichedSystemPrompt, individualId, instruction)
         val (cleanReply, _) = MoodDirectiveParser.extract(rawReply)
+        database.withTransaction {
+        validateParticipation(participation, individualId)
         chatDao.insertMessage(
             ChatMessageEntity(
                 individualId = individualId,
@@ -308,6 +329,7 @@ class ChatRepository(
                 timestamp = System.currentTimeMillis()
             )
         )
+        }
         return cleanReply
     }
 
@@ -328,10 +350,13 @@ class ChatRepository(
 
     suspend fun sendMessage(characterId: Long, userText: String): String {
         val preludeId = database.userCharacterDao().getCharacter(characterId).individualId
+        val participation = captureParticipation(preludeId)
         questRepository.refreshPartner(preludeId)
         val (systemPrompt, individualId, speciesName) = buildSystemPromptAndIndividualId(characterId)
         val enrichedSystemPrompt = withLorebookContext(systemPrompt, userText, speciesName)
 
+        database.withTransaction {
+        validateParticipation(participation, preludeId)
         chatDao.insertMessage(
             ChatMessageEntity(
                 individualId = individualId,
@@ -340,10 +365,14 @@ class ChatRepository(
                 timestamp = System.currentTimeMillis()
             )
         )
+        }
 
         val rawReply = requestCompletion(enrichedSystemPrompt, individualId, null)
         val (cleanReply, moodDelta) = MoodDirectiveParser.extract(rawReply)
 
+        val resolvedMoodDelta = SocialEventAppraisal.resolve(WorldSocialRepository(database).profile(individualId), userText, moodDelta)
+        database.withTransaction {
+        validateParticipation(participation, individualId)
         chatDao.insertMessage(
             ChatMessageEntity(
                 individualId = individualId,
@@ -353,8 +382,6 @@ class ChatRepository(
             )
         )
 
-        val resolvedMoodDelta = SocialEventAppraisal.resolve(WorldSocialRepository(database).profile(individualId), userText, moodDelta)
-        runCatching {
             database.userCharacterDao().adjustMood(
                 characterId,
                 WildMoodAnalyzer.scaleDelta(resolvedMoodDelta)
@@ -364,17 +391,37 @@ class ChatRepository(
         return cleanReply
     }
 
+    suspend fun resendMessage(characterId: Long, messageId: Long, userText: String): String {
+        val (systemPrompt, individualId, speciesName) = buildSystemPromptAndIndividualId(characterId)
+        val participation = captureParticipation(individualId)
+        val original = chatDao.getMessagesSync(individualId)
+        val history = ChatBranchPolicy.promptHistory(original, messageId, userText)
+        val prompt = withLorebookContext(systemPrompt, userText, speciesName)
+        val (reply, moodDelta) = MoodDirectiveParser.extract(requestCompletion(prompt, individualId, null, historyOverride = history))
+        database.withTransaction {
+            validateParticipation(participation, individualId)
+            check(ChatBranchPolicy.sameConversation(original, chatDao.getMessagesSync(individualId))) { "The conversation changed. Try again." }
+            chatDao.deleteAfterMessage(individualId, messageId)
+            chatDao.insertMessage(ChatMessageEntity(individualId = individualId, role = "assistant", content = reply, timestamp = System.currentTimeMillis()))
+        }
+        return reply
+    }
+
     suspend fun triggerReaction(characterId: Long, eventDescription: String): String {
         runCatching {
             val preludeId = database.userCharacterDao().getCharacter(characterId).individualId
             questRepository.refreshPartner(preludeId)
         }
         val (systemPrompt, individualId, speciesName) = buildSystemPromptAndIndividualId(characterId)
+        val participation = captureParticipation(individualId)
         val languageTag = PromptLocalization.currentLanguageTag()
         val enrichedSystemPrompt = withLorebookContext(systemPrompt, eventDescription, speciesName)
         val instruction = PromptLocalization.reactionInstruction(languageTag, eventDescription)
         val rawReply = requestCompletion(enrichedSystemPrompt, individualId, instruction)
         val (cleanReply, moodDelta) = MoodDirectiveParser.extract(rawReply)
+        val resolvedDelta = SocialEventAppraisal.reactionDelta(WorldSocialRepository(database).profile(individualId), eventDescription)
+        database.withTransaction {
+        validateParticipation(participation, individualId)
         chatDao.insertMessage(
             ChatMessageEntity(
                 individualId = individualId,
@@ -383,8 +430,8 @@ class ChatRepository(
                 timestamp = System.currentTimeMillis()
             )
         )
-        val resolvedDelta = SocialEventAppraisal.reactionDelta(WorldSocialRepository(database).profile(individualId), eventDescription)
-        runCatching { database.userCharacterDao().adjustMood(characterId, resolvedDelta) }
+        database.userCharacterDao().adjustMood(characterId, resolvedDelta)
+        }
         return cleanReply
     }
 
@@ -392,7 +439,8 @@ class ChatRepository(
     suspend fun publicDialogueAvailable(): Boolean = !llmSettingsRepository.apiKey.first().isNullOrBlank()
 
     suspend fun generateFarmReply(characterId: Long, farmContext: String, responseContract: String? = null): String {
-        val (systemPrompt, _, speciesName) = buildSystemPromptAndIndividualId(characterId,includeBattleMemories=false)
+        val (systemPrompt, individualId, speciesName) = buildSystemPromptAndIndividualId(characterId,includeBattleMemories=false)
+        val participation = captureParticipation(individualId)
         val languageTag = PromptLocalization.currentLanguageTag()
         val instruction = when {
             languageTag.startsWith("pt", true) -> """
@@ -423,11 +471,15 @@ class ChatRepository(
         val enriched = withLorebookContext(systemPrompt, farmContext, speciesName) + "\n\n" +
             "Current audience: the Digifarm participants named in the context. Speak to them, not automatically to the Tamer. " +
             "Your response may be reserved, playful, analytical, disagreeing, or a natural ending according to your personality."
-        return requestCompletionWithoutPrivateHistory(enriched, instruction + (responseContract?.let { "\n\n$it" } ?: ""))
+        val reply = requestCompletionWithoutPrivateHistory(enriched, instruction + (responseContract?.let { "\n\n$it" } ?: ""))
+        database.withTransaction { validateParticipation(participation, individualId) }
+        return reply
     }
 
     /** Public wild personas resolved by permanent identity; never reads private history. */
     suspend fun generateRadarExchange(speakers: List<Pair<String, Long>>, context: String, contract: String): String {
+        val participation = speakers.firstOrNull()?.first?.let { captureParticipation(it) }
+        speakers.forEach { participation?.requireIndividual(it.first) }
         val personas = speakers.map { (individualId, cardId) ->
             val (prompt, species) = buildWildSystemPrompt(cardId, individualId,includeBattleMemories=false, publicAudience=true)
             "Speaker ID: $individualId\n${withLorebookContext(prompt, context, species)}\n" +
@@ -435,8 +487,10 @@ class ChatRepository(
                 "Use the supplied relationship and public memories; this may be a familiar neighbor, rival, or stranger. " +
                 "Let the actual motive change what you say, not just your greeting. Do not expose or assume private conversations."
         }
-        return requestCompletionWithoutPrivateHistory(personas.joinToString("\n\n") + "\n\n" + contract, context,
+        val reply = requestCompletionWithoutPrivateHistory(personas.joinToString("\n\n") + "\n\n" + contract, context,
             postInstruction = contract)
+        database.withTransaction { speakers.forEach { validateParticipation(participation, it.first) } }
+        return reply
     }
 
     suspend fun generateRadarRecap(facts:String):String = requestCompletionWithoutPrivateHistory(
@@ -455,6 +509,16 @@ class ChatRepository(
         val speciesName: String?
     )
 
+    private suspend fun captureParticipation(individualId: String) = database.withTransaction {
+        database.participation?.snapshot()?.also { it.requireIndividual(individualId) }
+    }
+
+    /** Called at publication, not just prompt preparation; stale model responses never change paused partners. */
+    private fun validateParticipation(snapshot: com.github.nacabaro.vbhelper.species.PartnerParticipationSnapshot?, individualId: String) {
+        snapshot?.let { database.participation?.requireCurrent(it) }
+        database.participation?.snapshot()?.requireIndividual(individualId)
+    }
+
     private suspend fun buildSystemPromptAndIndividualId(characterId: Long, includeBattleMemories: Boolean = true): PromptContext {
         val character = database.userCharacterDao().getCharacterWithSprites(characterId)
         val userCharacter = database.userCharacterDao().getCharacter(characterId)
@@ -470,7 +534,9 @@ class ChatRepository(
         val languageTag = PromptLocalization.currentLanguageTag()
         val prompt = DigimonPersonaBuilder.buildSystemPrompt(
             character = character,
-            cardName = card?.name ?: "unknown",
+            cardName = card?.name
+                ?: speciesProfile?.speciesName?.takeIf { it.isNotBlank() }
+                ?: "catalog",
             speciesProfile = speciesProfile,
             promptTemplate = promptTemplate,
             personality = personality,
@@ -486,7 +552,10 @@ class ChatRepository(
             "Recorded private exchanges with the Tamer: $turns. Express closeness from those exchanges and actual history, " +
                 "rather than assuming every partner is equally intimate. Your individuality includes your own priorities and boundaries."
         } else "This is a public conversation. Your private bond with the Tamer does not make every peer equally familiar."
-        val enriched = prompt + "\n\n" + profile.instruction(languageTag) + "\n" + relationship
+        val nativeContext = com.github.nacabaro.vbhelper.source.gameSave.IndividualContinuityRepository(database)
+            .sourceContext(userCharacter.individualId, languageTag)
+        val enriched = prompt + "\n\n" + profile.instruction(languageTag) + "\n" + relationship +
+            if (nativeContext.isEmpty()) "" else "\n\n$nativeContext"
         val partnerQuests = questRepository.contextForPartner(userCharacter.individualId)
         val withQuests = if (partnerQuests.isBlank()) enriched
             else enriched + "\n\nRegistered quests involving you (authoritative; only the app verifies progress):\n" + partnerQuests
@@ -567,7 +636,7 @@ class ChatRepository(
 
         val prompt = DigimonPersonaBuilder.buildSystemPrompt(
             character = fakeCharacter,
-            cardName = info.cardName,
+            cardName = info.cardName?.takeIf { it.isNotBlank() } ?: "catalog",
             speciesProfile = speciesProfile,
             promptTemplate = promptTemplate,
             personality = personality,
@@ -620,7 +689,8 @@ class ChatRepository(
         systemPrompt: String,
         individualId: String,
         extraUserTurn: String?,
-        finalSystemInstruction: String? = null
+        finalSystemInstruction: String? = null,
+        historyOverride: List<ChatMessageEntity>? = null
     ): String = completionMutex.withLock {
         val apiKey = llmSettingsRepository.apiKey.first() ?: throw MissingApiKeyException()
         val model = llmSettingsRepository.model.first()
@@ -631,10 +701,11 @@ class ChatRepository(
         // slides back. It is transient and never stored in chat history.
         val replyNudge = PromptLocalization.replyNudge(PromptLocalization.currentLanguageTag())
         val messages = mutableListOf(ChatMessageDto("system", systemPrompt))
-        messages += chatDao.getMessagesSync(individualId).takeLast(20)
-            .map { ChatMessageDto(it.role, it.content) }
+        messages += (historyOverride ?: chatDao.getMessagesSync(individualId)).takeLast(20)
+            .map { ChatMessageDto(if (it.role == "notice") "system" else it.role, it.content) }
         extraUserTurn?.let { messages += ChatMessageDto("user", it) }
         messages += ChatMessageDto("system", replyNudge)
+        messages += ChatMessageDto("system", com.github.nacabaro.vbhelper.chat.lorebook.ResearchSources.conversationRule(PromptLocalization.currentLanguageTag()))
         finalSystemInstruction?.let { messages+=ChatMessageDto("system",it) }
         val service = OpenRouterClient.create(baseUrl)
         repeat(2) { attempt ->
@@ -673,7 +744,8 @@ class ChatRepository(
                 ChatMessageDto("user", userTurn),
                 ChatMessageDto(
                     "system",
-                    postInstruction ?: PromptLocalization.replyNudge(PromptLocalization.currentLanguageTag())
+                    (postInstruction ?: PromptLocalization.replyNudge(PromptLocalization.currentLanguageTag())) + "\n" +
+                        com.github.nacabaro.vbhelper.chat.lorebook.ResearchSources.conversationRule(PromptLocalization.currentLanguageTag())
                 )
             ),
             temperature = llmSettingsRepository.temperature.first()

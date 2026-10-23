@@ -1,0 +1,8 @@
+<resources>
+    <string name="uniform_search_tamers">テイマーを検索</string>
+    <string name="uniform_search_techniques">技を検索</string>
+    <string name="uniform_finishers">ブラストとジョグレス</string>
+    <string name="uniform_objectives">目標と条件</string>
+    <string name="uniform_rewards">報酬</string>
+    <string name="uniform_follow_up">次のステップ</string>
+</resources>

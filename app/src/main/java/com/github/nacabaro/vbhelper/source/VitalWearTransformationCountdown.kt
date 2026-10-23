@@ -20,7 +20,10 @@ internal fun DeviceType.toTransferDeviceType(): Character.CharacterStats.Transfe
     return when (this) {
         DeviceType.BEDevice -> Character.CharacterStats.TransferDeviceType.TRANSFER_DEVICE_TYPE_BE
         DeviceType.VBDevice,
-        DeviceType.VitalWear -> Character.CharacterStats.TransferDeviceType.TRANSFER_DEVICE_TYPE_VB
+        DeviceType.VitalWear,
+        // App partners only reach a watch through an exact converted slot; the
+        // payload shape follows the target card and never invents measurements.
+        DeviceType.APP -> Character.CharacterStats.TransferDeviceType.TRANSFER_DEVICE_TYPE_VB
     }
 }
 

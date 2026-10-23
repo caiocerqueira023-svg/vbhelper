@@ -48,7 +48,7 @@ interface CardAdventureDao {
             ca.bossHp as characterHp,
             ca.steps as steps
         FROM CardCharacter cc
-        JOIN Sprite s ON cc.spriteId = s.id
+        JOIN DisplaySprite s ON s.cardCharacterId = cc.id
         JOIN CardAdventure ca ON cc.id = ca.characterId
         WHERE
             cc.cardId = :cardId

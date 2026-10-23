@@ -4,6 +4,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
+import androidx.room.ColumnInfo
 import com.github.cfogrady.vbnfc.data.NfcCharacter
 import com.github.nacabaro.vbhelper.utils.DeviceType
 import com.github.nacabaro.vbhelper.domain.card.CardCharacter
@@ -42,5 +43,7 @@ data class UserCharacter (
     var heartRateCurrent: Int,
     var characterType: DeviceType,
     var isActive: Boolean,
-    var isFavorite: Boolean = false
+    var isFavorite: Boolean = false,
+    /** Optional real device target; distinct from the partner's current app species definition. */
+    @ColumnInfo(defaultValue = "NULL") val exportCardCharacterId: Long? = null
 )

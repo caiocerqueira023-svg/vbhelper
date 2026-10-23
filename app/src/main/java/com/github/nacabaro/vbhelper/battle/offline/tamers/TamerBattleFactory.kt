@@ -13,6 +13,7 @@ data class ArenaEntrant(
     val tamerId: String?,
     val members: List<OfflineBattleParticipant>,
     val policy: TrainerAiPolicy,
+    val modeFallbackArtwork: Boolean = false,
 )
 
 data class ArenaMatchSpec(

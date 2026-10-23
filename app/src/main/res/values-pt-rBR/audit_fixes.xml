@@ -1,0 +1,28 @@
+<resources>
+    <string name="audit_previous">Anterior</string>
+    <string name="audit_next">Próxima</string>
+    <string name="audit_sprite_page">Página %1$d de %2$d</string>
+    <string name="audit_sprite_skipped">%1$d registros grandes demais ou inválidos foram excluídos da prévia.</string>
+    <string name="audit_sprite_frame">Sprite %1$d · %2$s</string>
+    <string name="audit_frame_unavailable">Quadro indisponível</string>
+    <string name="audit_select_partner">Selecionar parceiro</string>
+    <string name="audit_select_opponent">Selecionar oponente</string>
+    <string name="audit_battle_status">Estado da batalha</string>
+    <string name="audit_fighter_status">%1$s · HP %2$d/%3$d · MP %4$d/%5$d</string>
+    <string name="audit_delete_from_here">Excluir a partir daqui</string>
+    <string name="audit_resend_from_here">Gerar nova resposta a partir daqui</string>
+    <string name="audit_delete_branch">Excluir esta mensagem e as %1$d mensagens seguintes? Esta ação não pode ser desfeita.</string>
+    <string name="audit_resend_branch">Gerar uma nova resposta a esta mensagem. As %1$d mensagens seguintes só serão substituídas quando a nova resposta for recebida. Missões e resultados de batalha registrados permanecerão no diário.</string>
+    <string name="audit_new_messages">Novas mensagens</string>
+    <string name="audit_confirm_regenerate">Gerar nova resposta</string>
+    <string name="audit_loading_collection">Carregando seus registros…</string>
+    <string name="audit_loading_contacts">Carregando contatos…</string>
+    <string name="audit_contact_unavailable">Este encontro não está mais disponível. Abra o DigiLine para encontrar seus contatos salvos.</string>
+    <string name="audit_open_digiline">Abrir DigiLine</string>
+    <string name="audit_reading">%1$s · %2$d/100</string>
+    <string name="audit_trust_reading">Confiança: %1$d/100 · %2$s</string>
+    <string name="audit_adventure_opponent">Oponente da aventura %1$d</string>
+    <string name="audit_enable_note">Usar nota de pesquisa: %1$s</string>
+    <string name="audit_enemy_hp">HP do oponente: %1$d/%2$d</string>
+    <string name="audit_player_hp">HP: %1$d/%2$d</string>
+</resources>

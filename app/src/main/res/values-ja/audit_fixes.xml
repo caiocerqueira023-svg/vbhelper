@@ -1,0 +1,28 @@
+<resources>
+    <string name="audit_previous">前へ</string>
+    <string name="audit_next">次へ</string>
+    <string name="audit_sprite_page">%2$dページ中%1$dページ</string>
+    <string name="audit_sprite_skipped">大きすぎる、または無効な%1$d件のデータをプレビューから除外しました。</string>
+    <string name="audit_sprite_frame">スプライト%1$d · %2$s</string>
+    <string name="audit_frame_unavailable">フレームを表示できません</string>
+    <string name="audit_select_partner">パートナーを選択</string>
+    <string name="audit_select_opponent">相手を選択</string>
+    <string name="audit_battle_status">バトルの状態</string>
+    <string name="audit_fighter_status">%1$s · HP %2$d/%3$d · MP %4$d/%5$d</string>
+    <string name="audit_delete_from_here">ここから削除</string>
+    <string name="audit_resend_from_here">ここから返答を再生成</string>
+    <string name="audit_delete_branch">このメッセージと、その後の%1$d件を削除しますか？取り消しはできません。</string>
+    <string name="audit_resend_branch">このメッセージへの返答を再生成します。その後の%1$d件は、新しい返答が成功した場合のみ置き換えられます。記録済みのクエストとバトル結果はジャーナルに残ります。</string>
+    <string name="audit_new_messages">新しいメッセージ</string>
+    <string name="audit_confirm_regenerate">返答を再生成</string>
+    <string name="audit_loading_collection">記録を読み込み中…</string>
+    <string name="audit_loading_contacts">連絡先を読み込み中…</string>
+    <string name="audit_contact_unavailable">この遭遇は終了しました。保存済みの連絡先はDigiLineで確認できます。</string>
+    <string name="audit_open_digiline">DigiLineを開く</string>
+    <string name="audit_reading">%1$s · %2$d/100</string>
+    <string name="audit_trust_reading">信頼: %1$d/100 · %2$s</string>
+    <string name="audit_adventure_opponent">アドベンチャーの相手%1$d</string>
+    <string name="audit_enable_note">研究ノートを使用: %1$s</string>
+    <string name="audit_enemy_hp">相手のHP: %1$d/%2$d</string>
+    <string name="audit_player_hp">HP: %1$d/%2$d</string>
+</resources>

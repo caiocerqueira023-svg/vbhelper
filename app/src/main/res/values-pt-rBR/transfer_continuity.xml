@@ -1,0 +1,34 @@
+<resources>
+    <string name="transfer_provisional_short">Correspondência de origem provisória · identidade do VBHelper mantida</string>
+    <string name="transfer_snapshot_copy_only">Cópias de registros da equipe e do banco estão disponíveis. O save original permanece intacto. Fazenda e limites precisam de revisão; a gravação no jogo está indisponível.</string>
+    <string name="transfer_provisional_identity">A correspondência usa um marcador candidato provisório, limitado à fonte. O VBHelper cria sua própria identidade permanente. Correspondências futuras exigem revisão; isso não é uma identidade global verificada nem uma movimentação.</string>
+    <string name="transfer_confirm_same_individuals">Confirmo que estes registros da fonte são os mesmos indivíduos do Armazenamento mostrados nesta revisão.</string>
+    <string name="continuity_trophies">Troféus ganhos: %1$d</string>
+    <string name="native_mapping_origin_unmapped">A normalização dos atributos da origem ainda não foi mapeada. Os valores nativos são mantidos, sem substituição por atributos padrão sem relação com a origem.</string>
+    <string name="home_app_held_item">Bônus de treino</string>
+    <string name="app_item_not_applied">Não foi possível aplicar este item. Seu inventário e os dados do parceiro foram mantidos.</string>
+    <string name="pc_connect">Conectar PC local</string>
+    <string name="pc_default_label">Meu PC</string>
+    <string name="pc_pairing_hint">Execute o companheiro de saves do VBHelper no PC e cole o link de pareamento aqui. O celular e o PC devem estar na mesma rede local. Esta conexão lê apenas saves gravados.</string>
+    <string name="pc_pairing_link">Link de pareamento do companheiro</string>
+    <string name="pc_pair">Parear e descobrir saves</string>
+    <string name="pc_repair">Reconectar PC</string>
+    <string name="pc_pairing_failed">Não foi possível parear. Verifique o link, se o companheiro está aberto, a rede local e o firewall. Depois, tente novamente.</string>
+    <string name="pc_local_permission">É necessária permissão de rede local para conectar ao PC.</string>
+    <string name="pc_permission">O acesso ao PC ou o pareamento está indisponível. Reconecte o companheiro e permita o acesso à rede local se solicitado.</string>
+    <string name="transfer_locations">Locais de descoberta</string>
+    <string name="transfer_locations_hint">Pastas vinculadas e PCs pareados são verificados ao atualizar. Saves desvinculados continuam excluídos até serem vinculados novamente. O estado atual vem dos arquivos gravados, não da memória do emulador.</string>
+    <string name="transfer_stop_discovery">Parar descoberta</string>
+    <string name="transfer_stop_discovery_confirm">Parar de verificar este local? Fontes existentes, observações em cache e histórico importado serão mantidos. Para um PC, isso também remove as credenciais de pareamento do celular.</string>
+    <string name="continuity_title">Histórico permanente e mudanças no app</string>
+    <string name="continuity_scope">Estas são observações registradas e eventos do app, não uma biografia completa do jogo de origem. Valores nativos, projeções e mudanças do app permanecem separados.</string>
+    <string name="continuity_native_imported">Registro nativo adquirido</string>
+    <string name="continuity_native_refreshed">Registro nativo atualizado após revisão</string>
+    <string name="continuity_materialized">Representação APP criada</string>
+    <string name="continuity_app_form">Forma no app registrada</string>
+    <string name="continuity_device_form">Forma no dispositivo observada</string>
+    <string name="continuity_app_changes">Mudanças registradas no app</string>
+    <string name="continuity_delta">HP %1$d · AP %2$d · BP %3$d · Vitais %4$d · Vitórias %5$d · Derrotas %6$d</string>
+    <string name="continuity_baseline">Projeção do app v%1$d · Estágio %2$d · Treino HP/AP/BP %3$d/%4$d/%5$d · Vitais %6$d</string>
+    <string name="continuity_adopted">O estado existente do app foi adotado como referência. Mudanças anteriores são desconhecidas.</string>
+</resources>

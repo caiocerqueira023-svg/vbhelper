@@ -20,13 +20,18 @@ interface AppContainer {
     val db: AppDatabase
     val dataStoreSecretsRepository: DataStoreSecretsRepository
     val currencyRepository: CurrencyRepository
+    val debugSettingsRepository: com.github.nacabaro.vbhelper.source.DebugSettingsRepository
+    val spritePreferenceRepository: com.github.nacabaro.vbhelper.source.SpritePreferenceRepository
     val questRepository: com.github.nacabaro.vbhelper.quests.QuestRepository
-        get() = com.github.nacabaro.vbhelper.quests.QuestRepository(db, currencyRepository)
+        get() = com.github.nacabaro.vbhelper.quests.QuestRepository(db, currencyRepository,
+            allowAnyDistance = { debugSettingsRepository.allowAnyDistance })
     val validatedCardManager: ValidatedCardManager
     val companionLogService: CompanionLogService
     val llmSettingsRepository: LlmSettingsRepository
     val speciesSettingsRepository: SpeciesSettingsRepository
     val speciesRepository: com.github.nacabaro.vbhelper.species.SpeciesRepository
+    val dotSpriteLibrary: com.github.nacabaro.vbhelper.species.BundledDotSpriteLibrary?
+        get() = null
     val chatRepository: ChatRepository
     val reactionRepository: ReactionRepository
     val diaryService: DigimonDiaryService

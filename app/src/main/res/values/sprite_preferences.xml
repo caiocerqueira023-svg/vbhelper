@@ -1,0 +1,11 @@
+<resources>
+    <string name="sprite_preference_section">Digimon graphics</string>
+    <string name="sprite_preference_vb_title">VB first</string>
+    <string name="sprite_preference_vb_description">Use loaded VB sprites, with Dot sprites when VB artwork is unavailable.</string>
+    <string name="sprite_preference_dot_title">Dot first</string>
+    <string name="sprite_preference_dot_description">Use Dot sprites, with loaded VB sprites when Dot artwork is unavailable.</string>
+    <string name="sprite_preference_note">Appearance only. Every Digimon stays usable; stats, progress and activities are unchanged.</string>
+    <string name="sprite_preference_save_failed">Could not save the graphics preference. Try again.</string>
+    <string name="storage_debug_add_hint_all">Loaded card and catalog Digimon.</string>
+    <string name="storage_retained_partner_info">This individual and its progress are retained in VBHelper. Product-specific information is available in Transfer.</string>
+</resources>

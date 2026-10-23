@@ -37,6 +37,7 @@ fun LorebookEntryDialog(
     onDismiss: () -> Unit,
     onSave: (String, List<String>, String, Int) -> Unit
 ) {
+    val debugEnabled = com.github.nacabaro.vbhelper.components.rememberDebugSettings().enabled
     var title by rememberSaveable(entry?.id) { mutableStateOf(entry?.title.orEmpty()) }
     var keys by rememberSaveable(entry?.id) { mutableStateOf(entry?.triggerKeys?.joinToString(", ").orEmpty()) }
     var content by rememberSaveable(entry?.id) { mutableStateOf(entry?.content.orEmpty()) }
@@ -82,7 +83,7 @@ fun LorebookEntryDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
+                if (debugEnabled) OutlinedTextField(
                     value = priority,
                     onValueChange = { priority = it.filter(Char::isDigit) },
                     label = { Text(stringResource(R.string.lorebook_priority)) },
@@ -106,7 +107,7 @@ fun LorebookEntryDialog(
                                 title.trim(),
                                 keys.split(",").map(String::trim).filter(String::isNotEmpty),
                                 content.trim(),
-                                priority.toIntOrNull() ?: 0
+                                if (debugEnabled) priority.toIntOrNull() ?: 0 else entry?.priority ?: 0
                             )
                         }
                     ) {

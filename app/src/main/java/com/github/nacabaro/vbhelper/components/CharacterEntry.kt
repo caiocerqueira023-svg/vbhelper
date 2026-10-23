@@ -5,6 +5,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -76,6 +82,7 @@ import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
 import com.github.nacabaro.vbhelper.ui.theme.TextMutedOnDark
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
+import com.github.nacabaro.vbhelper.ui.theme.InactiveOutline
 import com.github.nacabaro.vbhelper.utils.getObscuredBitmap
 import androidx.compose.ui.res.stringResource
 import kotlin.math.abs
@@ -107,11 +114,14 @@ fun CharacterEntry(
     entryPadding: Dp = 8.dp,
     fitSpriteToBounds: Boolean = false,
     selected: Boolean = false,
-    iconDescription: String? = "Icon",
+    iconDescription: String? = null,
+    unavailable: Boolean = false,
     onClick: () -> Unit = {  }
 ) {
     val effectiveShape = if (vitalPoints != null) RectangleShape else shape
     val motionEnabled = motionEnabled()
+    val inactiveDescription = stringResource(R.string.participation_inactive)
+    val signalColor = if (unavailable) InactiveOutline else VitalCyan
     var hasEntered by remember(animationKey) { mutableStateOf(false) }
     LaunchedEffect(animationKey, motionEnabled) { hasEntered = true }
     val entranceAlpha by animateFloatAsState(
@@ -128,10 +138,10 @@ fun CharacterEntry(
         offsetMillis to intervalMillis
     }
 
-    LaunchedEffect(animationKey, idleFrame2?.bitmap, motionEnabled) {
+    LaunchedEffect(animationKey, idleFrame2?.bitmap, motionEnabled, unavailable) {
         // Keep a stable but unique phase for each Digimon, so a grid does not animate in lockstep.
         animationFrame = if (animationTiming.first * 2L >= animationTiming.second) 1 else 0
-        if (idleFrame2 != null && motionEnabled) {
+        if (idleFrame2 != null && motionEnabled && !unavailable) {
             delay(animationTiming.first)
             while (true) {
                 delay(animationTiming.second)
@@ -181,9 +191,15 @@ fun CharacterEntry(
         modifier = modifier
             .aspectRatio(1f)
             .padding(entryPadding)
-            .cyberFrame(active = vitalPoints != null || selected)
+            .cyberFrame(active = vitalPoints != null || selected, inactive = unavailable)
             .then(swipeModifier)
+            .semantics(mergeDescendants = true) {
+                iconDescription?.let { contentDescription = it }
+                this.selected = selected
+                if (unavailable) stateDescription = inactiveDescription
+            }
             .combinedClickable(
+                role = Role.Button,
                 enabled = !disabled,
                 onClick = onClick,
                 onLongClick = onLongClick,
@@ -195,7 +211,8 @@ fun CharacterEntry(
                 scaleY = 0.96f + entranceAlpha * 0.04f
             ),
         colors = cardColors,
-        border = androidx.compose.foundation.BorderStroke(1.dp, if (selected) VitalCyan else SurfaceStroke)
+        border = androidx.compose.foundation.BorderStroke(1.dp,
+            if (unavailable) InactiveOutline else if (selected) VitalCyan else SurfaceStroke)
     ) {
         Box(
             contentAlignment = Alignment.Center,
@@ -216,7 +233,7 @@ fun CharacterEntry(
                     modifier = Modifier
                         .fillMaxSize(0.86f)
                         .align(Alignment.Center),
-                    color = VitalCyan,
+                    color = signalColor,
                     trackColor = SurfaceStroke,
                     strokeWidth = 4.dp
                 )
@@ -270,11 +287,11 @@ fun CharacterEntry(
                 }
                 Image(
                     bitmap = imageBitmap,
-                    contentDescription = iconDescription,
+                    contentDescription = null,
                     filterQuality = FilterQuality.None,
                     colorFilter = when {
                         obscure -> ColorFilter.tint(color = MaterialTheme.colorScheme.secondary)
-                        grayscale -> ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
+                        grayscale || unavailable -> ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
                         else -> null
                     },
                     modifier = if (fitSpriteToBounds) {
@@ -291,7 +308,7 @@ fun CharacterEntry(
 
                     Image(
                         bitmap = iconBitmap,
-                        contentDescription = "Card icon",
+                        contentDescription = null,
                         filterQuality = FilterQuality.None,
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
@@ -310,9 +327,14 @@ fun ItemDisplay(
     textValue: String,
     modifier: Modifier = Modifier,
     definition: String = "",
+    detailText: String? = null,
 ) {
+    var detailsExpanded by remember(detailText) { mutableStateOf(false) }
+    val actionLabel = stringResource(if (detailsExpanded) R.string.immersion_hide_details else R.string.immersion_details)
+    val panelModifier = if (detailText == null) modifier else modifier.clickable(role = Role.Button,
+        onClickLabel = actionLabel, onClick = { detailsExpanded = !detailsExpanded })
     Card(
-        modifier = modifier,
+        modifier = panelModifier,
         shape = MaterialTheme.shapes.medium,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
@@ -348,12 +370,14 @@ fun ItemDisplay(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimaryOnDark,
-                maxLines = 1,
+                maxLines = 2,
                 modifier = Modifier.padding(top = 4.dp)
             )
+            if (detailsExpanded && detailText != null) Text(detailText, style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (definition.isNotBlank()) {
                 Text(
-                    text = definition,
+                    text = if (detailText == null) definition else "$definition · $actionLabel",
                     textAlign = TextAlign.Center,
                     style = MaterialTheme.typography.labelSmall,
                     color = TextMutedOnDark,

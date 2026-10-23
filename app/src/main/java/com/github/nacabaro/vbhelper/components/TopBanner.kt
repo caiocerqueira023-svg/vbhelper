@@ -2,6 +2,8 @@ package com.github.nacabaro.vbhelper.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -16,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -46,6 +49,9 @@ fun TopBanner(
     onImportClick: (() -> Unit)? = null,
     importEnabled: Boolean = true,
     onScanDataClick: (() -> Unit)? = null,
+    subtitle: String? = null,
+    trailingAction: (@Composable () -> Unit)? = null,
+    onTransferClick: (() -> Unit)? = null,
 ) {
     Box(
         modifier = modifier
@@ -58,22 +64,27 @@ fun TopBanner(
                 )
             )
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 14.dp)
+             .padding(horizontal = 12.dp, vertical = 8.dp)
     ) {
+        Column(modifier = Modifier.align(Alignment.Center).padding(horizontal = 48.dp),
+            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(
-            text = text.uppercase(),
+            text = text,
             textAlign = TextAlign.Center,
-            maxLines = 1,
+            maxLines = 2,
             overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.ExtraBold,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onBackground,
-            letterSpacing = 1.sp,
+            letterSpacing = 0.sp,
             modifier = Modifier
-                .align(Alignment.Center)
                 .semantics { heading() }
-                .padding(horizontal = 48.dp)
         )
+        subtitle?.takeIf(String::isNotBlank)?.let {
+            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
+        }
+        }
 
         if (onGearClick != null) {
             TopBannerIconChip(
@@ -96,9 +107,15 @@ fun TopBanner(
                 onClick = onModifyClick,
                 modifier = Modifier.align(Alignment.CenterEnd)
             )
+        } else if (trailingAction != null) {
+            Box(Modifier.align(Alignment.CenterEnd)) { trailingAction() }
         }
 
-        if (onScanDataClick != null) {
+        if (onTransferClick != null) {
+            TopBannerIconChip(icon = R.drawable.baseline_file_upload_24,
+                contentDescription = stringResource(R.string.nav_transfer), onClick = onTransferClick,
+                modifier = Modifier.align(Alignment.CenterStart), accent = true)
+        } else if (onScanDataClick != null) {
             TopBannerIconChip(
                 icon = R.drawable.baseline_data_24,
                 contentDescription = stringResource(R.string.digimon_scan_title),
@@ -130,6 +147,16 @@ fun TopBanner(
                 onClick = onBackClick,
                 modifier = Modifier.align(Alignment.CenterStart)
             )
+        }
+    }
+}
+
+/** Extra header actions inherit the favorite screens' chip geometry instead of a second toolbar style. */
+@Composable
+fun TopBannerAction(icon: ImageVector, description: String, onClick: () -> Unit, enabled: Boolean = true) {
+    Box(Modifier.size(48.dp).clip(CutCornerShape(8.dp)).background(SurfaceHighlightPurple).padding(1.dp)) {
+        IconButton(onClick, enabled = enabled, modifier = Modifier.fillMaxSize()) {
+            Icon(icon, description, tint = MaterialTheme.colorScheme.onSurface.let { if (enabled) it else it.copy(alpha = .38f) })
         }
     }
 }

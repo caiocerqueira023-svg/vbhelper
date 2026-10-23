@@ -27,7 +27,8 @@ import kotlinx.coroutines.flow.first
 internal fun WorldInteractionOverlay(
     id:String,db:AppDatabase,snapshot:EcosystemSnapshot,onClose:()->Unit,
     onJoinBattle:(Long,String?,Long?)->Unit,
-    hasOwnedPartner:Boolean=false,onDefend:()->Unit={},onOpenConversation:()->Unit={}
+    hasOwnedPartner:Boolean=false,onDefend:()->Unit={},onOpenConversation:()->Unit={},
+    allowAnyDistance:Boolean=false
 ) {
     val event by remember(id) { db.worldInteractionDao().observeInteraction(id) }.collectAsState(null)
     val messages by remember(id) { db.worldInteractionDao().observeMessages(id) }.collectAsState(emptyList())
@@ -60,7 +61,7 @@ internal fun WorldInteractionOverlay(
     }
     val wilds=participants.filter { it.role==InteractionRole.WILD }
     val joinable=current!=null && !current.state.terminal && snapshot.status==EcosystemStatus.READY &&
-        snapshot.playerFix?.isFresh(snapshot.observedAt)==true && (com.github.nacabaro.vbhelper.world.RadarDebugInteraction.allowAnyDistance || wilds.all { p ->
+        snapshot.playerFix?.isFresh(snapshot.observedAt)==true && (allowAnyDistance || wilds.all { p ->
             snapshot.individuals.firstOrNull { it.individualId==p.individualId }?.let { actor ->
                 com.github.nacabaro.vbhelper.world.RadarWorldGeometry.relative(snapshot.playerFix.position,actor.position).withinInteractionRange
             }==true
@@ -68,7 +69,8 @@ internal fun WorldInteractionOverlay(
     val battleState=npc?.let { runCatching {
         Gson().fromJson(it.snapshotJson,NpcBattleSummary::class.java).also { summary -> summary.alliedMembers.size;summary.opposingMembers.size }
     }.getOrNull() }
-    val names=wilds.associate { p -> p.individualId to (messages.lastOrNull { it.speakerId==p.individualId }?.speakerName ?: p.individualId.takeLast(6)) }
+    val unidentified = stringResource(R.string.immersion_unidentified_partner)
+    val names=wilds.associate { p -> p.individualId to (messages.lastOrNull { it.speakerId==p.individualId }?.speakerName ?: unidentified) }
     Surface(color=SurfaceDeepPurple,contentColor=TextPrimaryOnDark,shape=MaterialTheme.shapes.medium,modifier=Modifier.fillMaxWidth()) {
         Column(Modifier.fillMaxWidth().padding(16.dp),verticalArrangement=Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth()) {
@@ -101,7 +103,7 @@ internal fun WorldInteractionOverlay(
                     modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(stringResource(R.string.ui_world_side_with,names[p.individualId].orEmpty())) } }
                 owned.forEach { (characterId,name) -> Row(Modifier.fillMaxWidth()) {
                     RadioButton(selected=secondOwned==characterId,onClick={secondOwned=characterId})
-                    Text(name.ifBlank { "#$characterId" },modifier=Modifier.padding(top=12.dp))
+                    Text(name.ifBlank { unidentified },modifier=Modifier.padding(top=12.dp))
                 } }
                 VitalButton(onClick={previewBoth=true;previewAlly=null;previewVisible=true},enabled=joinable && secondOwned!=null,
                     modifier=Modifier.fillMaxWidth().heightIn(min=48.dp)) { Text(stringResource(R.string.ui_world_challenge_both)) }

@@ -31,10 +31,10 @@ fun DexCharaDetailsDialog(currentChara: CharacterDtos.CardCharaProgress, obscure
     val application = LocalContext.current.applicationContext as VBHelper
     val database = application.container.db
     val repository = remember { DexRepository(database) }
-    val speciesRepository = remember { SpeciesRepository(database, application.container.speciesSettingsRepository) }
+    val speciesRepository = application.container.speciesRepository
     val scope = rememberCoroutineScope()
     var showJogress by remember(currentChara.id) { mutableStateOf(false) }
-    var showSpeciesPicker by remember(currentChara.id) { mutableStateOf(false) }
+    var showSpeciesPicker by rememberSaveable(currentChara.id) { mutableStateOf(false) }
     var speciesNames by remember { mutableStateOf<List<String>>(emptyList()) }
     var speciesNamesLoading by remember(currentChara.id) { mutableStateOf(false) }
     var isCustomCard by remember(currentChara.id) { mutableStateOf(false) }
@@ -102,7 +102,7 @@ fun DexCharaDetailsDialog(currentChara: CharacterDtos.CardCharaProgress, obscure
         onDismiss = { showSpeciesPicker = false }, onSpeciesSelected = { selectedName ->
             showSpeciesPicker = false
             scope.launch(Dispatchers.IO) {
-                speciesRepository.saveManualProfile(currentChara.id, selectedName, null, null, null, emptyList())
+                speciesRepository.identifySpecies(currentChara.id, selectedName)
             }
         })
 }

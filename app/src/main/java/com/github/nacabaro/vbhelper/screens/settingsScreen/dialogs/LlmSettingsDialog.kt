@@ -49,6 +49,7 @@ fun LlmSettingsDialog(
     currentBaseUrl: String,
     currentProvider: ChatApiProvider,
     savedProviderSettings: Map<ChatApiProvider, LlmProviderSettings>,
+    debugEnabled: Boolean = false,
     onDismiss: () -> Unit,
     onSave: (provider: ChatApiProvider, apiKey: String, model: String, baseUrl: String, temperature: Double) -> Unit
 ) {
@@ -97,7 +98,7 @@ fun LlmSettingsDialog(
 
                 Spacer2()
 
-                OutlinedTextField(
+                if (debugEnabled || selectedProvider.baseUrl == null) OutlinedTextField(
                     value = baseUrl,
                     onValueChange = {
                         baseUrl = it
@@ -138,7 +139,7 @@ fun LlmSettingsDialog(
 
                 Spacer2()
 
-                OutlinedTextField(
+                if (debugEnabled || selectedProvider.suggestedModel == null) OutlinedTextField(
                     value = model,
                     onValueChange = { model = it },
                     label = { Text(stringResource(R.string.ui_model)) },
@@ -148,7 +149,7 @@ fun LlmSettingsDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                selectedProvider.suggestedModel?.let { suggestedModel ->
+                selectedProvider.suggestedModel?.takeIf { debugEnabled }?.let { suggestedModel ->
                     TextButton(
                         onClick = { model = suggestedModel },
                         modifier = Modifier.fillMaxWidth()
@@ -159,7 +160,7 @@ fun LlmSettingsDialog(
 
                 Spacer2()
 
-                OutlinedTextField(
+                if (debugEnabled) OutlinedTextField(
                     value = temperature,
                     onValueChange = { temperature = it },
                     label = { Text(stringResource(R.string.ui_roleplay_temperature)) },
@@ -212,7 +213,7 @@ fun LlmSettingsDialog(
             onDismissRequest = { showProviderPicker = false },
             title = { Text(stringResource(R.string.ui_chat_api_provider)) },
             text = {
-                Column {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
                     ChatApiProvider.entries.forEach { provider ->
                         TextButton(
                             onClick = {

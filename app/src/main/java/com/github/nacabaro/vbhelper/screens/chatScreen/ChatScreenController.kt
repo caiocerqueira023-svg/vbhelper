@@ -26,5 +26,6 @@ interface ChatScreenController {
 data class SpeciesContext(
     val cardCharacterId: Long,
     val cardName: String,
-    val existingProfile: SpeciesProfile?
+    val existingProfile: SpeciesProfile?,
+    val nickname: String? = null
 )

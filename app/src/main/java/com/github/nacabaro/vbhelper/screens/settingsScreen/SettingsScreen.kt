@@ -37,6 +37,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.LabeledSwitchRow
+import com.github.nacabaro.vbhelper.components.VitalSectionBar
+import com.github.nacabaro.vbhelper.components.cyberFrame
+import androidx.compose.foundation.background
+import androidx.compose.foundation.selection.selectable
 import com.github.nacabaro.vbhelper.components.BackgroundMusicControlPanel
 import com.github.nacabaro.vbhelper.audio.AppMusicController
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
@@ -91,9 +96,12 @@ fun SettingsScreen(
     val currentFont by settingsScreenController.currentFont.collectAsState()
     val currentTheme by settingsScreenController.currentTheme.collectAsState()
     val cardImports by settingsScreenController.cardImportState.collectAsState()
-    val debugInstantScan by settingsScreenController.debugInstantScan.collectAsState()
+    val debugSettings by settingsScreenController.debugSettings.collectAsState()
+    val spritePreference by settingsScreenController.spritePreference.collectAsState()
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showFontDialog by remember { mutableStateOf(false) }
+    var showRestoreConfirmation by remember { mutableStateOf(false) }
+    var showSpeciesLibrary by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -141,7 +149,7 @@ fun SettingsScreen(
             ) {
                 showFontDialog = true
             }
-            SettingsSection(title = "Audio")
+            SettingsSection(title = stringResource(R.string.immersion_audio))
             BackgroundMusicControlPanel(
                 musicController = musicController,
                 modifier = Modifier
@@ -149,14 +157,14 @@ fun SettingsScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
-            SettingsSection(title = stringResource(R.string.settings_section_llm_chat))
+            SettingsSection(title = stringResource(R.string.immersion_tamer_preferences))
             SettingsEntry(
                 title = stringResource(R.string.ui_language),
                 description = when (currentLanguage) {
                     "en" -> "English"
                     "pt-BR" -> "Português (Brasil)"
                     "ja" -> "日本語"
-                    else -> "Idioma do sistema"
+                    else -> stringResource(R.string.immersion_system_language)
                 }
             ) {
                 showLanguageDialog = true
@@ -179,23 +187,12 @@ fun SettingsScreen(
             ) {
                 settingsScreenController.saveTamerName(tamerName)
             }
+            SettingsSection(title = stringResource(R.string.settings_section_llm_chat))
             SettingsEntry(
                 title = stringResource(R.string.settings_configure_llm_title),
                 description = stringResource(R.string.settings_configure_llm_desc)
             ) {
                 settingsScreenController.onClickConfigureLlm()
-            }
-            SettingsEntry(
-                title = stringResource(R.string.ui_personality_prompt),
-                description = stringResource(R.string.ui_edit_prompt_description)
-            ) {
-                settingsScreenController.onClickConfigurePromptTemplate()
-            }
-            SettingsEntry(
-                title = stringResource(R.string.ui_wild_digimon_prompt),
-                description = stringResource(R.string.ui_wild_digimon_prompt_desc)
-            ) {
-                settingsScreenController.onClickConfigureWildPromptTemplate()
             }
             SettingsEntry(
                 title = stringResource(R.string.ui_lorebook_title),
@@ -205,29 +202,44 @@ fun SettingsScreen(
             }
 
             SettingsSection(title = stringResource(R.string.ui_species_section))
-            Row(
-                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth().padding(16.dp)
-            ) {
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(R.string.ui_ask_card_origin))
-                    Text(
-                        stringResource(R.string.ui_card_origin_toggle_description),
-                        fontSize = 12.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-                Switch(
-                    checked = promptOriginAtImport,
-                    onCheckedChange = settingsScreenController::setPromptOriginAtImportTime
-                )
+            SettingsEntry(title = stringResource(R.string.species_library), description = stringResource(R.string.species_library_hint)) {
+                showSpeciesLibrary = true
             }
+            LabeledSwitchRow(stringResource(R.string.ui_ask_card_origin), promptOriginAtImport,
+                settingsScreenController::setPromptOriginAtImportTime, Modifier.padding(horizontal = 16.dp),
+                description = stringResource(R.string.ui_card_origin_toggle_description))
 
-            if (settingsScreenController.debugToolsEnabled) {
-                SettingsSection(title = stringResource(R.string.settings_section_debug))
+            SettingsSection(title = stringResource(R.string.sprite_preference_section))
+            Text(stringResource(R.string.sprite_preference_note), style = MaterialTheme.typography.bodySmall,
+                color = TextSecondaryOnDark, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+            SpritePreferenceOption(
+                title = stringResource(R.string.sprite_preference_vb_title),
+                description = stringResource(R.string.sprite_preference_vb_description),
+                selected = spritePreference == com.github.nacabaro.vbhelper.species.SpritePreference.VB_FIRST,
+                onSelect = { settingsScreenController.setSpritePreference(com.github.nacabaro.vbhelper.species.SpritePreference.VB_FIRST) })
+            SpritePreferenceOption(
+                title = stringResource(R.string.sprite_preference_dot_title),
+                description = stringResource(R.string.sprite_preference_dot_description),
+                selected = spritePreference == com.github.nacabaro.vbhelper.species.SpritePreference.DOT_FIRST,
+                onSelect = { settingsScreenController.setSpritePreference(com.github.nacabaro.vbhelper.species.SpritePreference.DOT_FIRST) })
+
+            SettingsSection(title = stringResource(R.string.settings_section_debug))
+            Row(Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                .semantics(mergeDescendants = true) {}
+                .toggleable(value = debugSettings.enabled, role = Role.Switch,
+                    onValueChange = settingsScreenController::setDebugEnabled)
+                .padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f).padding(end = 12.dp)) {
+                    Text(stringResource(R.string.immersion_debug_title), style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(R.string.immersion_debug_description), style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondaryOnDark)
+                }
+                Switch(checked = debugSettings.enabled, onCheckedChange = null)
+            }
+            if (debugSettings.enabled) {
                 Row(Modifier.fillMaxWidth().heightIn(min = 48.dp)
                     .semantics(mergeDescendants = true) {}
-                    .toggleable(value = debugInstantScan, role = Role.Switch,
+                    .toggleable(value = debugSettings.instantScan, role = Role.Switch,
                         onValueChange = settingsScreenController::setDebugInstantScan)
                     .padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f).padding(end = 12.dp)) {
@@ -236,7 +248,19 @@ fun SettingsScreen(
                         Text(stringResource(R.string.settings_debug_instant_scan_description),
                             style = MaterialTheme.typography.bodySmall, color = TextSecondaryOnDark)
                     }
-                    Switch(checked = debugInstantScan, onCheckedChange = null)
+                    Switch(checked = debugSettings.instantScan, onCheckedChange = null)
+                }
+                SettingsEntry(title = stringResource(R.string.ui_personality_prompt),
+                    description = stringResource(R.string.ui_edit_prompt_description)) {
+                    settingsScreenController.onClickConfigurePromptTemplate()
+                }
+                SettingsEntry(title = stringResource(R.string.ui_wild_digimon_prompt),
+                    description = stringResource(R.string.ui_wild_digimon_prompt_desc)) {
+                    settingsScreenController.onClickConfigureWildPromptTemplate()
+                }
+                SettingsEntry(title = stringResource(R.string.immersion_debug_viewer),
+                    description = stringResource(R.string.immersion_debug_viewer_description)) {
+                    navController.navigate(NavigationItems.Viewer.route)
                 }
             }
 
@@ -269,11 +293,25 @@ fun SettingsScreen(
                 title = stringResource(R.string.settings_import_data_title),
                 description = stringResource(R.string.settings_import_data_desc)
             ) {
-                settingsScreenController.onClickImportDatabase()
+                showRestoreConfirmation = true
             }
         }
     }
 
+    if (showSpeciesLibrary) com.github.nacabaro.vbhelper.components.SpeciesPickerDialog(
+        speciesNames = emptyList(), onDismiss = { showSpeciesLibrary = false }, onSpeciesSelected = {},
+        editOnSelect = true, title = stringResource(R.string.species_library))
+
+    if (showRestoreConfirmation) AlertDialog(
+        onDismissRequest = { showRestoreConfirmation = false },
+        title = { Text(stringResource(R.string.settings_import_data_title)) },
+        text = { Text(stringResource(R.string.immersion_restore_confirmation)) },
+        confirmButton = { TextButton(onClick = {
+            showRestoreConfirmation = false
+            settingsScreenController.onClickImportDatabase()
+        }) { Text(stringResource(R.string.immersion_choose_backup)) } },
+        dismissButton = { TextButton(onClick = { showRestoreConfirmation = false }) { Text(stringResource(R.string.ui_cancel)) } }
+    )
     if (showLlmDialog) {
         LlmSettingsDialog(
             currentApiKey = currentApiKey,
@@ -281,6 +319,7 @@ fun SettingsScreen(
             currentTemperature = currentTemperature,
             currentBaseUrl = currentBaseUrl,
             currentProvider = currentProvider,
+            debugEnabled = debugSettings.enabled,
             savedProviderSettings = savedProviderSettings,
             onDismiss = { settingsScreenController.dismissLlmDialog() },
             onSave = { provider, apiKey, model, baseUrl, temperature ->
@@ -295,7 +334,7 @@ fun SettingsScreen(
         )
     }
 
-    if (showPromptTemplateDialog) {
+    if (showPromptTemplateDialog && debugSettings.enabled) {
         PromptTemplateDialog(
             currentTemplate = currentSystemPromptTemplate,
             onDismiss = { settingsScreenController.dismissPromptTemplateDialog() },
@@ -303,7 +342,7 @@ fun SettingsScreen(
         )
     }
 
-    if (showWildPromptTemplateDialog) {
+    if (showWildPromptTemplateDialog && debugSettings.enabled) {
         PromptTemplateDialog(
             currentTemplate = currentWildSystemPromptTemplate,
             onDismiss = { settingsScreenController.dismissWildPromptTemplateDialog() },
@@ -329,24 +368,21 @@ fun SettingsScreen(
             onDismissRequest = { showFontDialog = false },
             title = { Text(stringResource(R.string.settings_font_title)) },
             text = {
-                Column {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
                     AppFont.entries.forEach { appFont ->
                         Row(
                             verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable {
+                                .selectable(selected = currentFont == appFont, role = Role.RadioButton, onClick = {
                                     settingsScreenController.setAppFont(appFont)
                                     showFontDialog = false
-                                }
+                                })
                                 .padding(vertical = 6.dp)
                         ) {
                             RadioButton(
                                 selected = appFont == currentFont,
-                                onClick = {
-                                    settingsScreenController.setAppFont(appFont)
-                                    showFontDialog = false
-                                }
+                                onClick = null
                             )
                             Text(
                                 text = appFont.displayName,
@@ -381,14 +417,17 @@ fun SettingsEntry(
         modifier = Modifier
             .fillMaxWidth()
             .then(interactionModifier)
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .cyberFrame()
             .heightIn(min = 64.dp)
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleMedium,
                 color = TextPrimaryOnDark
             )
             Text(
@@ -406,25 +445,33 @@ fun SettingsEntry(
             )
         }
     }
-    HorizontalDivider(
-        modifier = Modifier.padding(horizontal = 16.dp),
-        color = SurfaceStroke.copy(alpha = 0.45f)
-    )
 }
 
 @Composable
 fun SettingsSection(
     title: String
 ) {
-    Box(
+    VitalSectionBar(title, Modifier.padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 8.dp))
+}
+
+@Composable
+private fun SpritePreferenceOption(title: String, description: String, selected: Boolean, onSelect: () -> Unit) {
+    Row(
         modifier = Modifier
-            .padding(start = 16.dp, end = 16.dp, top = 20.dp, bottom = 5.dp)
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .cyberFrame()
+            .heightIn(min = 64.dp)
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onSelect)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = title,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary
-        )
+        RadioButton(selected = selected, onClick = null)
+        Column(Modifier.weight(1f).padding(start = 12.dp)) {
+            Text(title, style = MaterialTheme.typography.titleMedium, color = TextPrimaryOnDark)
+            Text(description, style = MaterialTheme.typography.bodySmall, color = TextSecondaryOnDark,
+                modifier = Modifier.padding(top = 3.dp))
+        }
     }
 }

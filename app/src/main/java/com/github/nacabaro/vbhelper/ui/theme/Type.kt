@@ -6,8 +6,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// Bolder, high-contrast type scale to match the chunky "game console" feel
-// of the reference UI (big numbers, heavy titles, small caps-ish labels).
+// Compact instrument hierarchy; display roles remain available for live combat and vital readings.
 fun appTypography(fontFamily: FontFamily) = Typography(
     displayLarge = TextStyle(
         fontFamily = fontFamily,
@@ -26,11 +25,11 @@ fun appTypography(fontFamily: FontFamily) = Typography(
         letterSpacing = 0.sp
     ),
     headlineMedium = TextStyle(fontFamily = fontFamily, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 30.sp),
-    headlineSmall = TextStyle(fontFamily = fontFamily, fontWeight = FontWeight.Bold, fontSize = 20.sp, lineHeight = 26.sp),
+    headlineSmall = TextStyle(fontFamily = fontFamily, fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 26.sp),
     titleLarge = TextStyle(
         fontFamily = fontFamily,
         fontWeight = FontWeight.Bold,
-        fontSize = 22.sp,
+        fontSize = 20.sp,
         lineHeight = 26.sp,
         letterSpacing = 0.sp
     ),
@@ -57,7 +56,7 @@ fun appTypography(fontFamily: FontFamily) = Typography(
     ),
     bodyMedium = TextStyle(
         fontFamily = fontFamily,
-        fontWeight = FontWeight.Medium,
+        fontWeight = FontWeight.Normal,
         fontSize = 14.sp,
         lineHeight = 20.sp,
         letterSpacing = 0.25.sp

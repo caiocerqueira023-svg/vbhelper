@@ -11,6 +11,10 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 import kotlin.random.Random
+import androidx.room.withTransaction
+import com.github.nacabaro.vbhelper.components.showAppFeedback
+import com.github.nacabaro.vbhelper.species.PartnerUnavailableException
+import com.github.nacabaro.vbhelper.R
 
 class AdventureScreenControllerImpl(
     private val componentActivity: ComponentActivity,
@@ -21,6 +25,9 @@ class AdventureScreenControllerImpl(
     override fun sendCharacterToAdventure(characterId: Long, timeInMinutes: Long) {
         val finishesAdventureAt = timeInMinutes * 60
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+            database.withTransaction {
+            database.participation?.snapshot()?.requireOwned(characterId)
             val characterData = database
                 .userCharacterDao()
                 .getCharacter(characterId)
@@ -34,6 +41,7 @@ class AdventureScreenControllerImpl(
             database
                 .adventureDao()
                 .insertNewAdventure(characterId, timeInMinutes, finishesAdventureAt)
+            }
 
             runCatching {
                 application.container.chatRepository.triggerReaction(
@@ -44,6 +52,9 @@ class AdventureScreenControllerImpl(
                     )
                 )
             }.onFailure { /* A aventura não deve falhar por indisponibilidade do LLM. */ }
+            } catch (_: PartnerUnavailableException) {
+                componentActivity.runOnUiThread { componentActivity.showAppFeedback(R.string.participation_inactive_hint) }
+            }
         }
     }
 
@@ -52,6 +63,14 @@ class AdventureScreenControllerImpl(
         onResult: (ItemDtos.PurchasedItem, Int) -> Unit
     ) {
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
+            application.container.currencyRepository.initializeWallet()
+            try {
+            val reward = database.withTransaction {
+            database.participation?.reconcileLocked()
+            database.participation?.snapshot()?.requireOwned(characterId)
+            if (database.adventureDao().getAdventureCharacters().first().none {
+                it.id == characterId && it.finishesAdventure <= java.time.Instant.now().epochSecond
+            }) return@withTransaction null
             database
                 .adventureDao()
                 .deleteAdventure(characterId)
@@ -59,6 +78,9 @@ class AdventureScreenControllerImpl(
             val generatedCurrency = generateRandomCurrency()
 
             val generatedItem = generateItem(characterId)
+            generatedItem to generatedCurrency
+            }
+            val (generatedItem, generatedCurrency) = reward ?: return@launch
 
             runCatching {
                 application.container.chatRepository.triggerReaction(
@@ -72,6 +94,9 @@ class AdventureScreenControllerImpl(
             }.onFailure { /* A recompensa continua válida mesmo sem resposta do LLM. */ }
 
             onResult(generatedItem, generatedCurrency)
+            } catch (_: PartnerUnavailableException) {
+                componentActivity.runOnUiThread { componentActivity.showAppFeedback(R.string.participation_inactive_hint) }
+            }
         }
     }
 

@@ -18,6 +18,9 @@ import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import com.github.nacabaro.vbhelper.components.showAppFeedback
+import com.github.nacabaro.vbhelper.species.PartnerUnavailableException
+import com.github.nacabaro.vbhelper.R
 
 class ItemsScreenControllerImpl (
     private val context: ComponentActivity,
@@ -50,8 +53,10 @@ class ItemsScreenControllerImpl (
 
     override fun applyItem(itemId: Long, characterId: Long, onCompletion: () -> Unit) {
         context.lifecycleScope.launch {
+            try {
             val itemName = withContext(Dispatchers.IO) {
                 database.withTransaction {
+                database.participation?.snapshot()?.requireOwned(characterId)
                 val item = getItem(itemId)
                 check(item.quantity > 0) { "This item is no longer available." }
                 val characterData = database.userCharacterDao().getCharacter(characterId)
@@ -84,6 +89,12 @@ class ItemsScreenControllerImpl (
                         .userCharacterDao()
                         .updateBECharacterData(beCharacterData)
 
+                } else if (item.itemIcon in 1..5 && characterData.characterType == DeviceType.APP) {
+                    val state = requireNotNull(database.appPartnerStateDao().state(characterData.individualId))
+                    database.appPartnerStateDao().update(state.copy(itemType = item.itemIcon, itemMultiplier = 3, itemRemainingTime = item.itemLength))
+                } else if (item.itemIcon == ItemTypes.LimitTimer.id && characterData.characterType == DeviceType.APP) {
+                    val state = requireNotNull(database.appPartnerStateDao().state(characterData.individualId))
+                    database.appPartnerStateDao().update(state.copy(remainingTrainingTimeInMinutes = (state.remainingTrainingTimeInMinutes + item.itemLength).coerceIn(0, 6000)))
                 } else if (item.itemIcon == ItemTypes.EvoTimer.id) {
                     characterData.transformationCountdown += item.itemLength
                     if (characterData.transformationCountdown < 0) {
@@ -127,11 +138,10 @@ class ItemsScreenControllerImpl (
                         .updateCharacter(characterData)
 
                 } else if (item.itemIcon in ItemTypes.Step8k.id  .. ItemTypes.Win4.id &&
-                    characterData.characterType == DeviceType.VBDevice &&
-                    vbCharacterData != null
+                    (characterData.characterType == DeviceType.APP || characterData.characterType == DeviceType.VBDevice && vbCharacterData != null)
                 ) {
                     applySpecialMission(item.itemIcon, item.itemLength, characterId)
-                }
+                } else error("This item is not applicable to this partner")
 
                 check(consumeItem(item.id) == 1) {
                     "This item is no longer available."
@@ -156,6 +166,9 @@ class ItemsScreenControllerImpl (
                     Timber.e(it, "Falha ao gerar reação ao uso do item")
                 }
             }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: PartnerUnavailableException) { context.showAppFeedback(R.string.participation_inactive_hint) }
+            catch (_: Exception) { context.showAppFeedback(R.string.app_item_not_applied) }
         }
     }
 
@@ -202,7 +215,7 @@ class ItemsScreenControllerImpl (
             .getSpecialMissions(characterId)
             .first()
 
-        var newSpecialMission = availableSpecialMissions[specialMissionSlot]
+        var newSpecialMission = requireNotNull(availableSpecialMissions.firstOrNull { it.watchId == specialMissionSlot })
         newSpecialMission = SpecialMissions(
             id = newSpecialMission.id,
             characterId = newSpecialMission.characterId,

@@ -47,6 +47,12 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.VitalTabs
+import com.github.nacabaro.vbhelper.components.cyberFrame
+import androidx.compose.ui.graphics.RectangleShape
+import com.github.nacabaro.vbhelper.components.rememberCollectionLoad
+import com.github.nacabaro.vbhelper.components.CollectionStatePanel
+import com.github.nacabaro.vbhelper.components.CollectionRefreshNotice
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.dtos.DigilineFarmThread
 import com.github.nacabaro.vbhelper.dtos.DigilineStorageThread
@@ -65,37 +71,20 @@ import com.github.nacabaro.vbhelper.utils.getBitmap
 fun DigilineScreen(navController: NavController) {
     val app = LocalContext.current.applicationContext as VBHelper
     val repository = app.container.digifarmRepository
-    val storage by repository.observeStorageThreads().collectAsState(emptyList())
-    val wild by repository.observeWildThreads().collectAsState(emptyList())
-    val farms by repository.observeFarmThreads().collectAsState(emptyList())
+    val storageLoad = rememberCollectionLoad(repository to "stored") { repository.observeStorageThreads() }
+    val wildLoad = rememberCollectionLoad(repository to "wild") { repository.observeWildThreads() }
+    val farmsLoad = rememberCollectionLoad(repository to "farms") { repository.observeFarmThreads() }
+    val storage = storageLoad.data.orEmpty()
+    val wild = wildLoad.data.orEmpty()
+    val farms = farmsLoad.data.orEmpty()
     var tab by rememberSaveable { mutableIntStateOf(0) }
 
     Scaffold(
         topBar = {
             Column {
                 TopBanner(text = stringResource(R.string.nav_digiline))
-                PrimaryTabRow(
-                    selectedTabIndex = tab,
-                    containerColor = MaterialTheme.colorScheme.background,
-                    indicator = {},
-                    divider = {}
-                ) {
-                    DigilineTab(
-                        selected = tab == 0,
-                        onClick = { tab = 0 },
-                        label = stringResource(R.string.ui_digiline_storage)
-                    )
-                    DigilineTab(
-                        selected = tab == 1,
-                        onClick = { tab = 1 },
-                        label = stringResource(R.string.ui_digiline_wild)
-                    )
-                    DigilineTab(
-                        selected = tab == 2,
-                        onClick = { tab = 2 },
-                        label = stringResource(R.string.ui_digiline_farms)
-                    )
-                }
+                VitalTabs(tab, listOf(stringResource(R.string.ui_digiline_storage), stringResource(R.string.ui_digiline_wild),
+                    stringResource(R.string.ui_digiline_farms)), { tab = it })
             }
         },
         contentWindowInsets = WindowInsets.statusBars
@@ -105,6 +94,9 @@ fun DigilineScreen(navController: NavController) {
                 .fillMaxSize()
                 .padding(top = padding.calculateTopPadding())
         ) {
+            val activeLoad = when (tab) { 0 -> storageLoad; 1 -> wildLoad; else -> farmsLoad }
+            if (!CollectionStatePanel(activeLoad)) Column(Modifier.fillMaxSize()) {
+            CollectionRefreshNotice(activeLoad)
             when (tab) {
                 0 -> ThreadList(storage, stringResource(R.string.ui_digiline_empty_storage)) { thread ->
                     navController.navigate(NavigationItems.Chat.route.replace("{characterId}", thread.characterId.toString()))
@@ -120,6 +112,7 @@ fun DigilineScreen(navController: NavController) {
                     navController.navigate(NavigationItems.FarmGroup.route.replace("{farmId}", thread.farmId))
                 }
             }
+            }
         }
     }
 }
@@ -130,32 +123,6 @@ fun trackQuestTarget(navController: NavController, individualId: String) {
     }
     navController.getBackStackEntry(NavigationItems.World.route).savedStateHandle["radar-quest-target"] = individualId
     navController.popBackStack(NavigationItems.World.route, false)
-}
-
-@Composable
-private fun DigilineTab(
-    selected: Boolean,
-    onClick: () -> Unit,
-    label: String
-) {
-    val indicatorColor = VitalCyan
-    Tab(
-        selected = selected,
-        onClick = onClick,
-        selectedContentColor = VitalCyan,
-        unselectedContentColor = TextSecondaryOnDark,
-        modifier = Modifier.drawBehind {
-            if (selected) {
-                drawLine(
-                    color = indicatorColor,
-                    start = Offset(12.dp.toPx(), size.height - 2.dp.toPx()),
-                    end = Offset(size.width - 12.dp.toPx(), size.height - 2.dp.toPx()),
-                    strokeWidth = 3.dp.toPx()
-                )
-            }
-        },
-        text = { Text(label, style = MaterialTheme.typography.labelLarge) }
-    )
 }
 
 @Composable
@@ -174,8 +141,10 @@ private fun WildThreadList(items: List<DigilineWildThread>, empty: String, onCli
     LazyColumn(Modifier.fillMaxSize()) {
         items(items, key = { it.individualId }) { item ->
             ThreadRow(item.speciesName ?: "Digimon",
-                item.lastMessage ?: stringResource(R.string.ui_digiline_trust, item.trust),
-                item.unreadCount, null, 0, 0) { onClick(item) }
+                 item.lastMessage,
+                item.unreadCount, null, 0, 0,
+                reading = stringResource(R.string.audit_trust_reading, item.trust,
+                    com.github.nacabaro.vbhelper.components.rapportSummary(item.trust))) { onClick(item) }
         }
     }
 }
@@ -209,18 +178,19 @@ private fun ThreadRow(
     sprite: ByteArray?,
     width: Int,
     height: Int,
+    reading: String? = null,
     onClick: () -> Unit
 ) {
     val image = remember(sprite, width, height) {
         sprite?.let { runCatching { BitmapData(it, width, height).getBitmap().asImageBitmap() }.getOrNull() }
     }
     Surface(
-        color = SurfaceDeepPurple.copy(alpha = 0.36f),
-        shape = CutCornerShape(8.dp),
-        border = BorderStroke(1.dp, SurfaceStroke.copy(alpha = 0.72f)),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = RectangleShape,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 12.dp, vertical = 4.dp)
+            .cyberFrame(active = unread > 0)
             .clickable(onClick = onClick)
     ) {
         Row(
@@ -255,6 +225,7 @@ private fun ThreadRow(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
+                reading?.let { Text(it, style = MaterialTheme.typography.labelMedium, color = VitalCyan) }
                 preview?.takeIf { it.isNotBlank() }?.let {
                     Text(
                         it,

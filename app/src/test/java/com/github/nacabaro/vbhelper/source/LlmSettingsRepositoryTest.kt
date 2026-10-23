@@ -15,6 +15,27 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class LlmSettingsRepositoryTest {
+    @Test fun `raw prompt saves are denied after debug access is revoked`() = runBlocking {
+        var enabled = true
+        val repository = LlmSettingsRepository(FakeDataStore(), debugEnabled = { enabled })
+        repository.setSystemPromptTemplate("Saved companion preferences")
+        repository.setWildSystemPromptTemplate("Saved encounter preferences")
+        enabled = false
+        repository.setSystemPromptTemplate("Late callback must not save")
+        repository.setWildSystemPromptTemplate(null)
+        assertEquals("Saved companion preferences", repository.systemPromptTemplate.first())
+        assertEquals("Saved encounter preferences", repository.wildSystemPromptTemplate.first())
+    }
+
+    @Test fun `normal connection setup remains available while raw prompt edits are denied`() = runBlocking {
+        val repository = LlmSettingsRepository(FakeDataStore())
+        repository.setSystemPromptTemplate("Not authorized")
+        repository.setWildSystemPromptTemplate("Not authorized")
+        repository.saveProviderSettings(ChatApiProvider.CUSTOM, "connection-key", "local-model", "https://example.invalid/v1/")
+        assertEquals(null, repository.systemPromptTemplate.first())
+        assertEquals(null, repository.wildSystemPromptTemplate.first())
+        assertEquals("connection-key", repository.apiKey.first())
+    }
     @Test
     fun `openrouter defaults to the recommended free roleplay model`() = runBlocking {
         val repository = LlmSettingsRepository(FakeDataStore())

@@ -39,6 +39,7 @@ import com.github.nacabaro.vbhelper.ui.theme.AppTheme
 import com.github.nacabaro.vbhelper.source.AppThemeSettings
 import com.github.nacabaro.vbhelper.source.isMissingSecrets
 import com.github.nacabaro.vbhelper.components.showAppFeedback
+import androidx.room.withTransaction
 
 class SettingsScreenControllerImpl(
     private val context: ComponentActivity,
@@ -51,14 +52,23 @@ class SettingsScreenControllerImpl(
     private val secretsImporter: SecretsImporter = ApkSecretsImporter()
     private val application = context.applicationContext as VBHelper
     private val languagePreferences = context.getSharedPreferences("app_preferences", 0)
-    private val debugScanSettings = com.github.nacabaro.vbhelper.source.DebugScanSettings(context)
-    val debugToolsEnabled = debugScanSettings.isAvailable
-    private val _debugInstantScan = MutableStateFlow(debugScanSettings.instantScan)
-    val debugInstantScan: StateFlow<Boolean> = _debugInstantScan.asStateFlow()
-
-    fun setDebugInstantScan(enabled: Boolean) {
-        debugScanSettings.instantScan = enabled
-        _debugInstantScan.value = debugScanSettings.instantScan
+    private val debugSettingsRepository = application.container.debugSettingsRepository
+    val debugSettings = debugSettingsRepository.state
+    fun setDebugEnabled(enabled: Boolean) = debugSettingsRepository.setEnabled(enabled)
+    fun setDebugInstantScan(enabled: Boolean) = debugSettingsRepository.setInstantScan(enabled)
+    private val spritePreferences = application.container.spritePreferenceRepository
+    val spritePreference = spritePreferences.preference
+    fun setSpritePreference(preference: com.github.nacabaro.vbhelper.species.SpritePreference) {
+        context.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                application.container.db.withTransaction {
+                    application.container.db.expandedCatalog?.synchronizeArtwork(preference)
+                    spritePreferences.setPreference(preference)
+                }
+            }
+            catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { context.showAppFeedback(R.string.sprite_preference_save_failed, important = true) }
+        }
     }
     private val secretsRepository: SecretsRepository = application.container.dataStoreSecretsRepository
     private val cardImports = ViewModelProvider(context, viewModelFactory {
@@ -87,9 +97,9 @@ class SettingsScreenControllerImpl(
 
     private val _showLlmDialog = MutableStateFlow(restoredDialogs?.getBoolean("llm") ?: false)
     val showLlmDialog: StateFlow<Boolean> = _showLlmDialog
-    private val _showPromptTemplateDialog = MutableStateFlow(restoredDialogs?.getBoolean("prompt") ?: false)
+    private val _showPromptTemplateDialog = MutableStateFlow(debugSettingsRepository.enabled && restoredDialogs?.getBoolean("prompt") == true)
     val showPromptTemplateDialog: StateFlow<Boolean> = _showPromptTemplateDialog
-    private val _showWildPromptTemplateDialog = MutableStateFlow(restoredDialogs?.getBoolean("wild_prompt") ?: false)
+    private val _showWildPromptTemplateDialog = MutableStateFlow(debugSettingsRepository.enabled && restoredDialogs?.getBoolean("wild_prompt") == true)
     val showWildPromptTemplateDialog: StateFlow<Boolean> = _showWildPromptTemplateDialog
     private val _currentLanguage = MutableStateFlow(
         languagePreferences.getString("language_tag", null)
@@ -111,6 +121,14 @@ class SettingsScreenControllerImpl(
     }
 
     init {
+        context.lifecycleScope.launch {
+            debugSettings.collect { settings ->
+                if (!settings.enabled) {
+                    _showPromptTemplateDialog.value = false
+                    _showWildPromptTemplateDialog.value = false
+                }
+            }
+        }
         context.savedStateRegistry.registerSavedStateProvider("vbhelper.settings_dialogs") {
             android.os.Bundle().apply {
                 putBoolean("llm", _showLlmDialog.value)
@@ -163,7 +181,7 @@ class SettingsScreenControllerImpl(
     }
 
     override fun onClickOpenDirectory() {
-        filePickerLauncher.launch("My application data.vbhelper")
+        filePickerLauncher.launch("Partner records.vbhelper")
     }
 
     override fun onClickImportDatabase() {
@@ -211,7 +229,9 @@ class SettingsScreenControllerImpl(
                 apiKey = apiKey,
                 model = model,
                 baseUrl = baseUrl,
-                temperature = temperature
+                temperature = if (debugSettingsRepository.enabled) temperature
+                    else llmSettingsRepository.providerSettings.first()[provider]?.temperature
+                        ?: com.github.nacabaro.vbhelper.source.DEFAULT_ROLEPLAY_TEMPERATURE
             )
 
             context.runOnUiThread {
@@ -222,7 +242,7 @@ class SettingsScreenControllerImpl(
     }
 
     fun onClickConfigurePromptTemplate() {
-        _showPromptTemplateDialog.value = true
+        if (debugSettingsRepository.enabled) _showPromptTemplateDialog.value = true
     }
 
     fun dismissPromptTemplateDialog() {
@@ -230,6 +250,7 @@ class SettingsScreenControllerImpl(
     }
 
     fun savePromptTemplate(template: String?) {
+        if (!debugSettingsRepository.enabled) return
         context.lifecycleScope.launch(Dispatchers.IO) {
             llmSettingsRepository.setSystemPromptTemplate(template)
             context.runOnUiThread { dismissPromptTemplateDialog() }
@@ -237,7 +258,7 @@ class SettingsScreenControllerImpl(
     }
 
     fun onClickConfigureWildPromptTemplate() {
-        _showWildPromptTemplateDialog.value = true
+        if (debugSettingsRepository.enabled) _showWildPromptTemplateDialog.value = true
     }
 
     fun dismissWildPromptTemplateDialog() {
@@ -245,6 +266,7 @@ class SettingsScreenControllerImpl(
     }
 
     fun saveWildPromptTemplate(template: String?) {
+        if (!debugSettingsRepository.enabled) return
         context.lifecycleScope.launch(Dispatchers.IO) {
             llmSettingsRepository.setWildSystemPromptTemplate(template)
             context.runOnUiThread { dismissWildPromptTemplateDialog() }

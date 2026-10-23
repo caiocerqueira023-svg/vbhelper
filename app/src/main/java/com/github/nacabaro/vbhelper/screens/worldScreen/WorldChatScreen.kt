@@ -49,6 +49,7 @@ import com.github.nacabaro.vbhelper.components.ChatMessageBubble
 import com.github.nacabaro.vbhelper.components.ChatStatusPanel
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.components.VitalButton
+import com.github.nacabaro.vbhelper.components.ChatMessageActionsDialog
 import com.github.nacabaro.vbhelper.components.showAppFeedback
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
 
@@ -85,6 +86,7 @@ fun WorldChatScreen(
     var selectedMessage by remember { mutableStateOf<com.github.nacabaro.vbhelper.domain.chat.ChatMessageEntity?>(null) }
     var eventDialog by remember { mutableStateOf<WildChatEvent?>(null) }
     val listState = rememberLazyListState()
+    val allowMotion = com.github.nacabaro.vbhelper.components.motionEnabled()
     var followingBottom by remember { mutableStateOf(true) }
     LaunchedEffect(listState) {
         snapshotFlow { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index==listState.layoutInfo.totalItemsCount-1 }
@@ -138,7 +140,9 @@ fun WorldChatScreen(
     }
 
     LaunchedEffect(visibleMessages.size) {
-        if (followingBottom && visibleMessages.isNotEmpty()) listState.animateScrollToItem(visibleMessages.size - 1)
+        if (followingBottom && visibleMessages.isNotEmpty()) {
+            if (allowMotion) listState.animateScrollToItem(visibleMessages.lastIndex) else listState.scrollToItem(visibleMessages.lastIndex)
+        }
     }
 
     Scaffold(
@@ -162,7 +166,8 @@ fun WorldChatScreen(
             mood?.takeIf { !WindowInsets.isImeVisible }?.let { moodValue ->
                 ChatStatusPanel(
                     label = stringResource(R.string.ui_world_mood_label, moodValue),
-                    value = moodValue
+                    value = moodValue,
+                    summary = com.github.nacabaro.vbhelper.components.rapportSummary(moodValue)
                 )
             }
 
@@ -191,7 +196,8 @@ fun WorldChatScreen(
                         androidx.compose.foundation.layout.Column {
                             ChatMessageBubble(
                                 text = visibleText,
-                                isUser = message.role == "user",
+                                 isUser = message.role == "user",
+                                 authorLabel = if (message.role == "notice") stringResource(R.string.immersion_record_notice) else null,
                                 onLongClick = { selectedMessage = message.copy(content=visibleText) }
                             )
                             if (offerQuestId != null) {
@@ -205,61 +211,21 @@ fun WorldChatScreen(
             }
 
             selectedMessage?.let { message ->
-                AlertDialog(
-                    onDismissRequest = { selectedMessage = null },
-                    title = { Text(stringResource(R.string.ui_message_actions)) },
-                    text = {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            VitalButton(
-                                onClick = {
-                                    val clipboard = context.getSystemService(ClipboardManager::class.java)
-                                    clipboard?.setPrimaryClip(ClipData.newPlainText("Digimon message", message.content))
-                                    selectedMessage = null
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) { Text(stringResource(R.string.ui_copy)) }
-                            if (message.role == "user") {
-                                VitalButton(
-                                    enabled = !sending,
-                                    onClick = {
-                                        sending = true
-                                        selectedMessage = null
-                                        controller.resendMessage(
-                                            individualId,
-                                            cardCharacterId,
-                                            message.id,
-                                            message.content,
-                                            conversationId=conversationId
-                                        ) { result ->
-                                            sending = false
-                                            result.onSuccess { event ->
-                                                if (event !is WildChatEvent.None) eventDialog = event
-                                            }
-                                            result.onFailure { error = resources.getString(R.string.app_chat_failed) }
-                                        }
-                                    },
-                                    modifier = Modifier.fillMaxWidth()
-                                ) { Text(stringResource(R.string.ui_resend)) }
-                            }
-                            VitalButton(
-                                onClick = {
-                                    controller.deleteFromMessage(individualId, message.id)
-                                    selectedMessage = null
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) { Text(stringResource(R.string.ui_delete)) }
+                ChatMessageActionsDialog(message.content, visibleMessages.count { it.id > message.id }, message.role == "user", sending,
+                    onDismiss = { selectedMessage = null }, onCopy = {
+                        context.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(ClipData.newPlainText("Digimon message", message.content))
+                        selectedMessage = null
+                    }, onRegenerate = {
+                        sending = true; error = null; selectedMessage = null
+                        controller.resendMessage(individualId, cardCharacterId, message.id, message.content, conversationId) { result ->
+                            sending = false
+                            result.onSuccess { event -> if (event !is WildChatEvent.None) eventDialog = event }
+                            result.onFailure { error = resources.getString(R.string.app_chat_failed) }
                         }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { selectedMessage = null }) {
-                            Text(stringResource(R.string.ui_cancel))
-                        }
-                    },
-                    confirmButton = {}
-                )
+                    }, onDelete = {
+                        controller.deleteFromMessage(individualId, message.id)
+                        selectedMessage = null
+                    })
             }
 
             ChatComposer(

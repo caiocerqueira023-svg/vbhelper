@@ -65,15 +65,22 @@ private fun TechStaticPattern(modifier: Modifier = Modifier) {
 private fun TechRotatingRings(modifier: Modifier = Modifier) {
     val strokeColor = SurfaceStroke
     val accentColor = VitalCyan
-    val allowMotion = motionEnabled()
-    val ringRotation = if (allowMotion) {
+    val ringRotation = if (motionEnabled()) {
         rememberInfiniteTransition(label = "backgroundRings").animateFloat(
             initialValue = 0f,
             targetValue = 360f,
             animationSpec = infiniteRepeatable(tween(24_000, easing = LinearEasing)),
             label = "ringRotation"
-        ).value
-    } else 0f
+        )
+    } else null
+    val innerRotation = if (motionEnabled()) {
+        rememberInfiniteTransition(label = "innerBackgroundRing").animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(tween(18_000, easing = LinearEasing)),
+            label = "innerRingRotation"
+        )
+    } else null
 
     Canvas(modifier) {
         // Partial rings create a restrained "device mechanism" motif without
@@ -82,7 +89,7 @@ private fun TechRotatingRings(modifier: Modifier = Modifier) {
         val faintCyan = accentColor.copy(alpha = 0.035f)
         val center = Offset(size.width * 0.92f, size.height * 0.72f)
         val stroke = Stroke(width = 14.dp.toPx())
-        rotate(ringRotation, center) {
+        rotate(ringRotation?.value ?: 0f, center) {
             drawArc(
                 subtle,
                 195f,
@@ -92,6 +99,8 @@ private fun TechRotatingRings(modifier: Modifier = Modifier) {
                 androidx.compose.ui.geometry.Size(size.width * .84f, size.width * .84f),
                 style = stroke
             )
+        }
+        rotate(innerRotation?.value ?: 0f, center) {
             drawArc(
                 faintCyan,
                 205f,

@@ -10,8 +10,8 @@ object DigimonScanPolicy {
     const val CONVERSION_PERCENTAGE = 100
     const val NORMAL_GAIN = 20
 
-    fun perDefeat(debugBuild: Boolean, instantScan: Boolean): Int =
-        if (debugBuild && instantScan) CONVERSION_PERCENTAGE else NORMAL_GAIN
+    fun perDefeat(debugEnabled: Boolean, instantScan: Boolean): Int =
+        if (debugEnabled && instantScan) CONVERSION_PERCENTAGE else NORMAL_GAIN
 
     fun awards(origin: InteractionOrigin, outcome: BattleOutcome, friendly: Boolean,
                participants: List<WorldInteractionParticipant>, percentagePerDefeat: Int = NORMAL_GAIN): Map<Long, Int> {

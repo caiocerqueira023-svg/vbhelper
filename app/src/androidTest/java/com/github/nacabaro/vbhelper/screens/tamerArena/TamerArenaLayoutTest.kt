@@ -1,6 +1,7 @@
 package com.github.nacabaro.vbhelper.screens.tamerArena
 
 import android.graphics.Bitmap
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
@@ -8,9 +9,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.*
-import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.test.platform.app.InstrumentationRegistry
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.battle.offline.core.BattleSpeciesIdentity
@@ -26,7 +29,7 @@ import org.junit.Test
 import java.io.File
 
 class TamerArenaLayoutTest {
-    @get:Rule val compose = createComposeRule()
+    @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
 
     private fun fixture(format: Int = 1): TamerArenaState = runBlocking {
@@ -44,6 +47,7 @@ class TamerArenaLayoutTest {
 
     @Test fun searchBriefingAndBackKeepThePrimaryActionClearInEveryTheme() {
         val state = mutableStateOf(fixture())
+        assertTrue("The challenge fixture must have a ready player team", state.value.teamReady)
         val theme = mutableStateOf(AppTheme.VB_HELPER)
         var tab by mutableIntStateOf(0)
         var query by mutableStateOf("")
@@ -57,7 +61,13 @@ class TamerArenaLayoutTest {
         }
         compose.onNodeWithTag("tamer-arena-search").performTextInput("Takato")
         compose.onNodeWithTag("tamer-row-takato").performScrollTo().performClick()
-        compose.onNodeWithTag("tamer-arena-challenge").assertIsDisplayed().performClick()
+        compose.onNodeWithTag("tamer-arena-challenge").assertIsDisplayed().assertIsEnabled()
+        compose.waitUntil(timeoutMillis = 5_000) {
+            ViewCompat.getRootWindowInsets(compose.activity.window.decorView)
+                ?.isVisible(WindowInsetsCompat.Type.ime()) == false
+        }
+        capture("search-challenge-ready")
+        compose.onNodeWithTag("tamer-arena-challenge").performClick()
         compose.runOnIdle { assertEquals(1, challenges) }
         for (palette in AppTheme.entries) {
             compose.runOnIdle { theme.value = palette }

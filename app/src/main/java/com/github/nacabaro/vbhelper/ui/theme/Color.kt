@@ -3,6 +3,7 @@ package com.github.nacabaro.vbhelper.ui.theme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.material3.MaterialTheme
 
 // Existing UI token names remain source-compatible while resolving from the selected
 // palette. Read them in composition and capture the result for drawing/event callbacks.
@@ -13,6 +14,11 @@ val SurfaceDeepPurple: Color @Composable @ReadOnlyComposable get() = LocalAppPal
 val SurfaceElevatedPurple: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.surfaceElevated
 val SurfaceHighlightPurple: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.surfaceHighlight
 val SurfaceStroke: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.stroke
+val InactiveOutline: Color @Composable @ReadOnlyComposable get() {
+    val outline = MaterialTheme.colorScheme.outline
+    val gray = outline.red * 0.2126f + outline.green * 0.7152f + outline.blue * 0.0722f
+    return Color(gray, gray, gray, outline.alpha)
+}
 val VitalPurple: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.primary
 val VitalPurpleBright: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.primaryBright
 val VitalPurpleDim: Color @Composable @ReadOnlyComposable get() = LocalAppPalette.current.primaryDim

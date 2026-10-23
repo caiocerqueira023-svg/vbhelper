@@ -93,7 +93,7 @@ interface DigifarmDao {
         JOIN UserCharacter uc ON uc.individualId = fr.individualId
         JOIN DigimonIndividual di ON di.individualId = fr.individualId
         JOIN CardCharacter cc ON cc.id = uc.charId
-        JOIN Sprite s ON s.id = cc.spriteId
+        JOIN DisplaySprite s ON s.cardCharacterId = cc.id
         LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = cc.id
         WHERE fr.farmId = :farmId
         ORDER BY fr.positionY, fr.positionX
@@ -174,7 +174,7 @@ interface DigifarmDao {
         FROM UserCharacter uc
         JOIN DigimonIndividual di ON di.individualId = uc.individualId
         JOIN CardCharacter cc ON cc.id = uc.charId
-        JOIN Sprite s ON s.id = cc.spriteId
+        JOIN DisplaySprite s ON s.cardCharacterId = cc.id
         LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = cc.id
         WHERE EXISTS(SELECT 1 FROM ChatMessageEntity cm WHERE cm.individualId = uc.individualId AND cm.role IN ('user','assistant'))
         ORDER BY COALESCE(lastTimestamp, 0) DESC

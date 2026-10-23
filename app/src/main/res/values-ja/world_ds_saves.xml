@@ -1,0 +1,33 @@
+<resources>
+    <string name="transfer_world_ds">Digimon World DS · 米国版 · DraSticの生セーブ</string>
+    <string name="transfer_unassigned">所属先が未確定のレコード</string>
+    <string name="transfer_record_details_no_personality">レベル %1$d · 元の種族 %2$d · 位置 %3$d</string>
+    <string name="transfer_world_ds_stats">元のHP %1$d/%2$d · MP %3$d/%4$d</string>
+    <string name="transfer_world_ds_combat">攻撃 %1$d · 防御 %2$d · 精神 %3$d · 素早さ %4$d</string>
+    <string name="transfer_world_ds_aptitude">元の適性：%1$d</string>
+    <string name="transfer_world_ds_exp">元の経験値チャンネル（元の順序）：%1$s</string>
+    <string name="transfer_world_ds_copy">セーブのコピー %1$d</string>
+    <string name="transfer_integrity_unverified">元のチェックサムは未検証です。スナップショットのコピーは元のセーブを保持します。ゲームへの書き込みは未対応です。</string>
+    <string name="world_ds_choose_copy">セーブのコピーを確認</string>
+    <string name="world_ds_copy_explanation">最新の有効なコピーが選択されています。今回の読み取りで別のコピーを使う場合のみ変更してください。ゲーム内の個体と比較してください。セーブの変更やチェックサムの検証は行いません。セーブが変わると再確認が必要です。</string>
+    <string name="world_ds_copy_roster">コピー %1$d · %2$d レコード</string>
+    <string name="world_ds_copy_member">%1$s · レベル %2$d</string>
+    <string name="world_ds_use_copy">今回の読み取りに使用</string>
+    <string name="world_ds_copy_confirmed">この読み取りリビジョンのコピーがユーザーにより確認されました。</string>
+    <string name="world_ds_copy_failed">セーブが変わったか、読み取れませんでした。閉じて元のセーブを更新し、再試行してください。</string>
+    <string name="world_ds_personality_initialization">このゲームに対応する元の性格はありません。VBHelperはアプリ専用の性格を一度だけ設定し、元の性格は未設定のまま保持します。</string>
+    <string name="world_ds_personality_retained">性格はアプリ専用です。元の性格は未設定で、セーブの更新でもアプリの性格は維持されます。</string>
+    <string name="transfer_save_copy_review">複数の保存済みコピーが見つかりました。各レコードを確認用に表示します。現在のコピーは選択していません。</string>
+    <string name="transfer_move_copy_divergence">セーブのコピー間でこのデジモンの内容が一致していないため、ネイティブ移動では一方のバージョンが失われます。ゲーム内で保存し直すか、リンク済みセーブを更新してください。</string>
+    <string name="transfer_save_copy_auto">最新の有効なセーブコピーを使用しています。古いコピーは移動では無視されます。確認からコピーを選択できます。</string>
+    <string name="transfer_move_copy_older_only">このデジモンは古いセーブコピーにのみ存在します。ゲーム内で保存し直すか、新しいコピーを確認してください。</string>
+    <string name="transfer_issue_guest">別のセーブからのゲストです。</string>
+    <string name="transfer_issue_lent">別のセーブに貸し出し中です。</string>
+    <string name="transfer_issue_egg">元のタマゴのレコードです。</string>
+    <string name="transfer_issue_foreign">別のDSに属する印があります。</string>
+    <string name="transfer_issue_location">所属先の参照が競合しています。</string>
+    <string name="transfer_issue_name_codes">未対応の名前文字があります。元のバイト列は保持されています。</string>
+    <string name="transfer_issue_unassigned">パーティやファームへの所属先の参照がありません。</string>
+    <string name="transfer_issue_save_copy">このセーブコピーの優先関係の確認が必要です。</string>
+    <string name="transfer_issue_values">ネイティブ値がゲームの通常範囲と異なります。移動・送信の前にこのレコードの確認が必要です。</string>
+</resources>

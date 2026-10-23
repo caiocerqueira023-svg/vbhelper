@@ -1,0 +1,2358 @@
+{
+  "speciesRevision": "eeaaf16685cf7515453ac307606e7e272cddfa18",
+  "spriteRevision": "5d1a43a97762765a6be13852cfc21be647ff8287",
+  "sources": [
+    {
+      "id": "dmc-sprites",
+      "url": "https://raw.githubusercontent.com/tero0x/dmc-sprites/5d1a43a97762765a6be13852cfc21be647ff8287/sprites.json",
+      "revision": "5d1a43a97762765a6be13852cfc21be647ff8287",
+      "credits": "Bandai and the credited DMC / Pendulum Color community artists"
+    },
+    {
+      "id": "digitama-hatchery",
+      "url": "https://humulos.com/digimon/",
+      "revision": "sha256:6218f863c159759b75ec7f96036d69fb6b145dc9727ddb43748a0feed6f4f95c",
+      "capturedAt": "2026-10-14T23:25:14.905883+00:00",
+      "credits": "Bandai; humulos and the Digitama Hatchery community; Wikimon"
+    },
+    {
+      "id": "wikimon",
+      "url": "https://wikimon.net/Category:V-Pet_Sprites",
+      "revision": "sha256:2e2d851bed131f2e69baaa0ad168970674059c9db2dcdd9c2fa809ac0f9517f7",
+      "capturedAt": "2026-10-14T23:34:23.138406+00:00",
+      "credits": "Bandai; Wikimon contributors. Uploader names are source credits, not artist claims."
+    }
+  ],
+  "documentedAliases": 465,
+  "setsByProvider": {
+    "dmc-sprites": 2437,
+    "digitama-hatchery": 741,
+    "wikimon": 190
+  },
+  "catalogSpecies": 1662,
+  "readyDigimon": 1211,
+  "bundledSets": 3368,
+  "uniqueFrames": 27419,
+  "packBytes": 12995584,
+  "missingDot": [
+    {
+      "id": "digimon.aegiochusmonblue",
+      "name": "Aegiochusmon(Blue)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.aegiochusmondark",
+      "name": "Aegiochusmon(Dark)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.aegiochusmongreen",
+      "name": "Aegiochusmon(Green)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.aegiochusmonholy",
+      "name": "Aegiochusmon(Holy)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.aequcedramon",
+      "name": "Aequcedramon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.agumonblack2006animeversion",
+      "name": "Agumon (Black) (2006 Anime Version)",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.agumonburstmode",
+      "name": "Agumon(Burst Mode)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.agumonyukinokizuna",
+      "name": "Agumon -Yuki no Kizuna-",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.aircraftcarrierwhamon",
+      "name": "Aircraft Carrier Whamon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.akatorimon",
+      "name": "Akatorimon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.amon",
+      "name": "Amon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.anheinuwashou",
+      "name": "AnheiNüwashou",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.anomalocarimonxantibody",
+      "name": "Anomalocarimon (X-Antibody)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.apollomondarknessmode",
+      "name": "Apollomon Darkness Mode",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.arkadimonbaby",
+      "name": "Arkadimon Baby",
+      "level": "Baby II"
+    },
+    {
+      "id": "digimon.arkadimonsuperultimate",
+      "name": "Arkadimon Super Ultimate",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.arkhaiangemon",
+      "name": "Arkhai Angemon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.assaultmon",
+      "name": "Assaultmon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.atamadekachimon",
+      "name": "Atamadekachimon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.avengekidmon",
+      "name": "Avenge Kidmon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.baalmonxantibody",
+      "name": "Baalmon (X-Antibody)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.bacomon",
+      "name": "Bacomon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.bagramonarchangelform",
+      "name": "Bagramon (Archangel Form)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.ballibastemon",
+      "name": "Balli Bastemon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.ballistamonmc",
+      "name": "Ballistamon MC",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.ballistamonsr",
+      "name": "Ballistamon SR",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.batterimon",
+      "name": "Batterimon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.battlearmamenttrailmon",
+      "name": "Battle Armament Trailmon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.beelzebumonrevolmon",
+      "name": "Beelzebumon (Revolmon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.beelzebumonstarmons",
+      "name": "Beelzebumon (Starmons)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.belphemonsleepmode",
+      "name": "Belphemon(Sleep Mode)",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.berserktitamon",
+      "name": "Berserk Titamon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.besobombmon",
+      "name": "Beso Bombmon",
+      "level": "(?)"
+    },
+    {
+      "id": "digimon.biocoatlmon",
+      "name": "Bio Coatlmon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.biodarkdramon",
+      "name": "Bio Darkdramon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.biolotusmon",
+      "name": "Bio Lotusmon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.biospinomon",
+      "name": "Bio Spinomon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.biostegomon",
+      "name": "Bio Stegomon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.biothunderbirmon",
+      "name": "Bio Thunderbirmon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.bishopchessmonblack",
+      "name": "Bishop Chessmon (Black)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.bishopchessmonwhite",
+      "name": "Bishop Chessmon (White)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.blackseraphimondw3",
+      "name": "Black Seraphimon (DW3)",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.blackshoutmonx7",
+      "name": "Black Shoutmon X7",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.blacktailmonuver",
+      "name": "Black Tailmon Uver.",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.blackwargreymongerosionmode",
+      "name": "Black War Greymon: \"G\" Erosion Mode",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.blikmon",
+      "name": "Blikmon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.blucomon",
+      "name": "Blucomon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.bokomon",
+      "name": "Bokomon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.bombermon",
+      "name": "Bombermon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.bombernanimon",
+      "name": "Bomber Nanimon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.bosamon",
+      "name": "Bosamon",
+      "level": "Baby II"
+    },
+    {
+      "id": "digimon.bumon",
+      "name": "Būmon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.burgamon",
+      "name": "Burgamon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.burgamonadult",
+      "name": "Burgamon Adult",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.cannonbeemonaircraftcarrier",
+      "name": "Cannonbeemon (Aircraft Carrier)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.cardmonc1",
+      "name": "Cardmon C1",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.cardmonc2",
+      "name": "Cardmon C2",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.cardmonr1",
+      "name": "Cardmon R1",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.cardmonr2",
+      "name": "Cardmon R2",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.cardmons1",
+      "name": "Cardmon S1",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.cardmons2",
+      "name": "Cardmon S2",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.cardmonu1",
+      "name": "Cardmon U1",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.cardmonu2",
+      "name": "Cardmon U2",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.chamelemon",
+      "name": "Chamelemon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.chaosgreymon",
+      "name": "Chaos Greymon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.chaosgrimmon",
+      "name": "Chaos Grimmon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.chaoslord",
+      "name": "Chaos Lord",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.chaosmonvaldurarm",
+      "name": "Chaosmon(Valdur Arm)",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.chaospiemon",
+      "name": "Chaos Piemon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.cheergalmon",
+      "name": "Cheer Galmon",
+      "level": "Armor"
+    },
+    {
+      "id": "digimon.cherubimonvicexantibody",
+      "name": "Cherubimon (Vice) (X-Antibody)",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.chibicksword",
+      "name": "Chibick Sword",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.chibikiwimon",
+      "name": "Chibi Kiwimon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.chokimon",
+      "name": "Chokimon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.chronomondestroymoderobot",
+      "name": "Chronomon: Destroy Mode (Robot)",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.citramon",
+      "name": "Citramon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.copymon",
+      "name": "Copymon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.craniummonenbarrmon",
+      "name": "Craniummon + Enbarrmon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.cutemon",
+      "name": "Cutemon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.cyberdramon2010",
+      "name": "Cyberdramon (2010 Anime Version)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.dalphomon",
+      "name": "Dalphomon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.danmon",
+      "name": "Danmon",
+      "level": "(?)"
+    },
+    {
+      "id": "digimon.darkknightmonblastmon",
+      "name": "Dark Knightmon (Blastmon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.darkknightmonduskmon",
+      "name": "Dark Knightmon (Duskmon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.darkknightmongulfmon",
+      "name": "Dark Knightmon (Gulfmon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.darkknightmonlilithmon",
+      "name": "Dark Knightmon (Lilithmon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.darknessbagramondarkknightmon",
+      "name": "Darkness Bagramon (Dark Knightmon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.darkvolumon",
+      "name": "Dark Volumon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.daxiongmaoshou",
+      "name": "Daxiongmaoshou",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.daxuerenshou",
+      "name": "Daxuerenshou",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.deadlytuwarmon",
+      "name": "Deadly Tuwarmon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.deadlytuwarmonhellmode",
+      "name": "Deadly Tuwarmon Hell Mode",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.deathairdramon",
+      "name": "Death Airdramon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.deathdevimon",
+      "name": "Death Devimon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.deathmeramoncmondigimonversion",
+      "name": "Death Meramon (C'mon Digimon Version)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.deathmetalgreymon",
+      "name": "Death Metal Greymon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.deathmoncmondigimonversion",
+      "name": "Deathmon (C'mon Digimon Version)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.deathtyranomon",
+      "name": "Death Tyranomon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.deckerdramonfloatmode",
+      "name": "Deckerdramon Float Mode",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.demonsuperultimate",
+      "name": "Demon Super Ultimate",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.dobermonxantibody",
+      "name": "Dobermon (X-Antibody)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.dondokomon",
+      "name": "Dondokomon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.donshoutmon",
+      "name": "Don Shoutmon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.dorbickmondarknessmodedragonarmy",
+      "name": "Dorbickmon Darkness Mode (Dragon Army)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.dorbickmondarknessmodeflarelizamon",
+      "name": "Dorbickmon Darkness Mode (Flare Lizamon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.dorbickmondarknessmodehuanglongmon",
+      "name": "Dorbickmon Darkness Mode (Huanglongmon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.dorulumonstarmons",
+      "name": "Dorulumon (Starmons)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.dotagumon",
+      "name": "Dot Agumon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.dotfalcomon",
+      "name": "Dot Falcomon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.dotgaomon",
+      "name": "Dot Gaomon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.dotkamemon",
+      "name": "Dot Kamemon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.dotkudamon",
+      "name": "Dot Kudamon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.dotlalamon",
+      "name": "Dot Lalamon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.dotmiragegaogamon",
+      "name": "Dot Mirage Gaogamon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.dotshinegreymon",
+      "name": "Dot Shine Greymon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.dracomoncyberdramon",
+      "name": "Dracomon (Cyberdramon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.duftmonleopardmode",
+      "name": "Duftmon(Leopard Mode)",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.earthdramon",
+      "name": "Earthdramon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.ebiburgamon",
+      "name": "Ebi Burgamon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.eosmonadult",
+      "name": "Eosmon (Adult)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.eosmonperfect",
+      "name": "Eosmon (Perfect)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.espimon",
+      "name": "Espimon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.etemonchaos",
+      "name": "Etemon Chaos",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.exmaquinamon",
+      "name": "Ex Maquinamon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.exogrimmon",
+      "name": "Exo Grimmon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.eyesmonscattermode",
+      "name": "Eyesmon(Scatter Mode)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.falcomon2006",
+      "name": "Falcomon (2006)",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.flamon",
+      "name": "Flamon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.flawizarmon",
+      "name": "Fla Wizarmon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.footmon",
+      "name": "Footmon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.forgebeemon",
+      "name": "Forgebeemon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.frimon",
+      "name": "Frimon",
+      "level": "Baby II"
+    },
+    {
+      "id": "digimon.fujitsumon",
+      "name": "Fujitsumon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.fumamon",
+      "name": "Fumamon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.fuxishou",
+      "name": "Fuxishou",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.gaagamon",
+      "name": "Gaagamon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.gabumonyujonokizuna",
+      "name": "Gabumon -Yujo no Kizuna-",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.gaiamon",
+      "name": "Gaiamon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.gallantmonchaosmode",
+      "name": "Gallantmon Chaos Mode",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.ganimonxantibody",
+      "name": "Ganimon (X-Antibody)",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.ganvivormon",
+      "name": "Ganvivormon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.gattaiancientvolcamon",
+      "name": "Gattai Ancient Volcamon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.gattaililithmon",
+      "name": "Gattai Lilithmon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.gcutemon",
+      "name": "G-Cutemon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.gemmon",
+      "name": "Gemmon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.generamon",
+      "name": "Generamon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.gesomonxantibody",
+      "name": "Gesomon (X-Antibody)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.gigabreakdramon",
+      "name": "Giga Breakdramon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.giganticnumemon",
+      "name": "Gigantic Numemon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.giganticpumpmon",
+      "name": "Gigantic Pumpmon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.gigawarumonzaemon",
+      "name": "Giga Waru Monzaemon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.ginkakumonpromote",
+      "name": "Ginkakumon Promote",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.gizmonat",
+      "name": "Gizmon(AT)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.gizmonxt",
+      "name": "Gizmon(XT)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.goddramon",
+      "name": "Goddramon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.goldnumemonultimate",
+      "name": "Gold Numemon (Ultimate)",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.golemjijikamemon",
+      "name": "Golem Jiji Kamemon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.golemonps",
+      "name": "Golemon (PS)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.goromon",
+      "name": "Goromon",
+      "level": "Baby II"
+    },
+    {
+      "id": "digimon.grademonvice",
+      "name": "Grademon (Vice)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.grandgeneramon",
+      "name": "Grand Generamon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.grandiskuwagamonhoneymode",
+      "name": "Grandis Kuwagamon Honey Mode",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.gravimondarknessmode",
+      "name": "Gravimon Darkness Mode",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.greatkingsukamon",
+      "name": "Great King Sukamon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.greymonash",
+      "name": "Greymon (Ash)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.greymonbluexantibody",
+      "name": "Greymon (Blue) (X-Antibody)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.greymongerosionmode",
+      "name": "Greymon: \"G\" Erosion Mode",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.greymono",
+      "name": "Greymon O",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.greymonorange",
+      "name": "Greymon (Orange)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.greymonskullknightmon",
+      "name": "Greymon (Skull Knightmon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.grimmon",
+      "name": "Grimmon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.guidemon",
+      "name": "Guidemon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.guumon",
+      "name": "Guumon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.gyukimon",
+      "name": "Gyukimon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.hermmon",
+      "name": "Hermmon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.heshouwushou",
+      "name": "Heshouwushou",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.himugendramon",
+      "name": "Hi Mugendramon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.hivisionmonitamon",
+      "name": "Hi-Vision Monitamon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.holyangemonpriestmode",
+      "name": "Holy Angemon(Priest Mode)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.holydigitamamon",
+      "name": "Holy Digitamamon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.hopmon",
+      "name": "Hopmon",
+      "level": "Baby II"
+    },
+    {
+      "id": "digimon.hoverespimon",
+      "name": "Hover Espimon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.huanglongmonruinmode",
+      "name": "Huanglongmon(Ruin Mode)",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.hubmon",
+      "name": "Hubmon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.huntermon",
+      "name": "Huntermon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.hustlenanimon",
+      "name": "Hustle Nanimon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.icedevimondaipenmonenhancementabsorbent",
+      "name": "Ice Devimon Daipenmon Enhancement Absorbent",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.icedevimonenhancementabsorbent",
+      "name": "Ice Devimon Enhancement Absorbent",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.iguneetmon",
+      "name": "Iguneetmon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.jijishoutmon",
+      "name": "Jiji Shoutmon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.jikotyumon",
+      "name": "Jiko Tyumon",
+      "level": "Armor"
+    },
+    {
+      "id": "digimon.jinsihoushou",
+      "name": "Jinsihoushou",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.junglemojyamon",
+      "name": "Jungle Mojyamon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.justimonaccelarm",
+      "name": "Justimon(Accel Arm)",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.justimoncriticalarm",
+      "name": "Justimon(Critical Arm)",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.jyureimonchristmastree",
+      "name": "Jyureimon (Christmas Tree)",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.kaminarimon",
+      "name": "Kaminarimon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.kandoushichaundamon",
+      "name": "Kandoushichaundamon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.kinghangyomon",
+      "name": "King Hangyomon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.kitakitsunemon",
+      "name": "Kita Kitsunemon",
+      "level": "Armor"
+    },
+    {
+      "id": "digimon.knightmonwiseswordmode",
+      "name": "Knightmon Wise Sword Mode",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.kodokugumonbaby",
+      "name": "Kodokugumon Baby",
+      "level": "Baby II"
+    },
+    {
+      "id": "digimon.kodokugumonchild",
+      "name": "Kodokugumon Child",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.kohagurumon",
+      "name": "Kohagurumon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.komondomon",
+      "name": "Komondomon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.kudamon2006",
+      "name": "Kudamon (2006 Anime Version)",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.kuileishou",
+      "name": "Kuileishou",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.kuimulangshou",
+      "name": "Kuimulangshou",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.kuzuhamonmikomode",
+      "name": "Kuzuhamon: Miko Mode",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.kyubimonsilver",
+      "name": "Kyubimon (Silver)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.kyukanchoumon",
+      "name": "Kyukanchoumon",
+      "level": "Armor"
+    },
+    {
+      "id": "digimon.landramon",
+      "name": "Landramon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.liskmon",
+      "name": "Liskmon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.loujingoushou",
+      "name": "Loujin'goushou",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.lowemon",
+      "name": "Löwemon",
+      "level": "Hybrid"
+    },
+    {
+      "id": "digimon.luminamonnenever",
+      "name": "Luminamon (Nene Ver.)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.luxmon",
+      "name": "Luxmon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.lykamon",
+      "name": "Lykamon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.machleomon",
+      "name": "Mach Leomon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.madleomonarmedmode",
+      "name": "Mad Leomon(Armed Mode)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.madleomonfinalmode",
+      "name": "Mad Leomon (Final Mode)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.madleomonorochimode",
+      "name": "Mad Leomon (Orochi Mode)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.madomon",
+      "name": "Madomon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.magnamonxantibody",
+      "name": "Magnamon (X-Antibody)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.magneticdramon",
+      "name": "Magneticdramon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.mailbirdramongolemon",
+      "name": "Mail Birdramon (Golemon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.majuulilithmon",
+      "name": "Majuu Lilithmon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.maneuvermon",
+      "name": "Maneuvermon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.maquinamon",
+      "name": "Maquinamon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.marinchimairamon",
+      "name": "Marin Chimairamon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.master",
+      "name": "Master",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.mastervdramon",
+      "name": "Master V-dramon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.matadrmon",
+      "name": "Matadrmon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.megablackshoutmonx7",
+      "name": "Mega Black Shoutmon X7",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.megadarkknightmon",
+      "name": "Mega Dark Knightmon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.megadarknessbagramon",
+      "name": "Mega Darkness Bagramon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.megadeckergreymon",
+      "name": "Mega Decker Greymon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.megagrankuwagamon",
+      "name": "Mega Gran Kuwagamon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.megamusoknightmon",
+      "name": "Mega Muso Knightmon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.meicoomonsunnamedbabyform",
+      "name": "Meicoomon's Unnamed Baby Form",
+      "level": "Baby II"
+    },
+    {
+      "id": "digimon.meicoomonsunnamedchildform",
+      "name": "Meicoomon's Unnamed Child Form",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.meicrackmon",
+      "name": "Meicrackmon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.meicrackmonviciousmode",
+      "name": "Meicrackmon(Vicious Mode)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.mervamonwidehivisionsword",
+      "name": "Mervamon Wide Hi-Vision Sword",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.metalgarurumongerosionmode",
+      "name": "Metal Garurumon: \"G\" Erosion Mode",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.metalgarurumonred",
+      "name": "Metal Garurumon (Red)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.metalgreymoncyberlauncher",
+      "name": "Metal Greymon (Cyber Launcher)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.metalgreymongerosionmode",
+      "name": "Metal Greymon: \"G\" Erosion Mode",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.metalgreymonvirusgerosionmode",
+      "name": "Metal Greymon (Virus): \"G\" Erosion Mode",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.metamormon",
+      "name": "Metamormon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.metatromon",
+      "name": "Metatromon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.minidekachimon",
+      "name": "Minidekachimon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.minotaurmonadult",
+      "name": "Minotaurmon Adult",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.mirrorballmon",
+      "name": "Mirror Ballmon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.missimon",
+      "name": "Missimon",
+      "level": "Baby II"
+    },
+    {
+      "id": "digimon.mockingbirdmon",
+      "name": "Mockingbirdmon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.monitamon",
+      "name": "Monitamon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.montanachan",
+      "name": "Montana-chan",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.mugendramonmfs3mode",
+      "name": "Mugendramon: MFS-3 Mode",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.mulemon",
+      "name": "Mulemon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.mushuppedmachleomon",
+      "name": "Mush-Upped Mach Leomon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.musoknightmon",
+      "name": "Muso Knightmon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.namakemon",
+      "name": "Namakemon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.navimon",
+      "name": "Navimon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.necromon",
+      "name": "Necromon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.negamonevolvedform",
+      "name": "Negamon (Evolved Form)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.neovamdemondarknessmodemetalgreymon",
+      "name": "Neo Vamdemon Darkness Mode (Metal Greymon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.neovamdemondarknessmodeshoutmon",
+      "name": "Neo Vamdemon Darkness Mode (Shoutmon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.neovamdemondarknessmodevampirearmy",
+      "name": "Neo Vamdemon Darkness Mode (Vampire Army)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.nikkorimon",
+      "name": "Nikkorimon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.niseagumonhakase",
+      "name": "Nise Agumon Hakase",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.nutufushou",
+      "name": "Nutufushou",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.nuwashou",
+      "name": "Nüwashou",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.nyabootmon",
+      "name": "Nyabootmon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.oblivimon",
+      "name": "Oblivimon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.ochimusyamon",
+      "name": "Ochi Musyamon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.ohakadamon",
+      "name": "Ohakadamon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.okunimon",
+      "name": "Okunimon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.omegaarmamonburstmode",
+      "name": "Omega Armamon Burst Mode",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.omegamongfusionmode",
+      "name": "Omegamon: \"G\" Fusion Mode",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.omegamonshuangwu",
+      "name": "Omegamon Shuang Wu",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.paamon",
+      "name": "Paamon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.palapandashou",
+      "name": "PalaPandashou",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.panbachimon",
+      "name": "Panbachimon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.panimon",
+      "name": "Panimon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.parallelmon",
+      "name": "Parallelmon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.pawngaossmon",
+      "name": "Pawn Gaossmon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.pawnshoutmon",
+      "name": "Pawn Shoutmon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.phelesmon",
+      "name": "Phelesmon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.pickmonsslingshot",
+      "name": "Pickmons Slingshot",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.plutodumon",
+      "name": "Plutodumon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.plutomonfusion",
+      "name": "Plutomon (Fusion)",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.pokomon",
+      "name": "Pokomon",
+      "level": "Baby II"
+    },
+    {
+      "id": "digimon.polarbearmon",
+      "name": "Polar Bearmon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.potamon",
+      "name": "Potamon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.proganomon",
+      "name": "Proganomon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.protogizmon",
+      "name": "Proto Gizmon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.pucchiemongreen",
+      "name": "Pucchiemon (Green)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.punchnarabimon",
+      "name": "Punch Narabimon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.puwamon",
+      "name": "Puwamon",
+      "level": "Baby I"
+    },
+    {
+      "id": "digimon.pyontomon",
+      "name": "Pyontomon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.pyramidimon",
+      "name": "Pyramidimon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.ragnalordmon",
+      "name": "Ragna Lordmon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.rampagegreymon",
+      "name": "Rampage Greymon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.rapidmonperfect",
+      "name": "Rapidmon Perfect",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.rareraremon",
+      "name": "Rare Raremon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.rarestarsword",
+      "name": "Rare Star Sword",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.redvdramon",
+      "name": "Red V-dramon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.regulumon",
+      "name": "Regulumon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.reptilimon",
+      "name": "Reptilimon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.reverseweddinmon",
+      "name": "Reverse Weddinmon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.rookchessmonwhite",
+      "name": "Rook Chessmon (White)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.rubeusdramon",
+      "name": "Rubeusdramon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.runnermon",
+      "name": "Runnermon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.rurimon",
+      "name": "Rurimon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.sakuradamon",
+      "name": "Sakuradamon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.sakutekimonitamon",
+      "name": "Sakuteki Monitamon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.sakuyamonmikomode",
+      "name": "Sakuyamon(Miko Mode)",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.santaagumon",
+      "name": "Santa Agumon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.scudmissimon",
+      "name": "Scud Missimon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.sethmonwildmode",
+      "name": "Sethmon Wild Mode",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.shademon",
+      "name": "Shademon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.shademonharukover",
+      "name": "Shademon (Haruko Ver.)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.shademonnenever",
+      "name": "Shademon (Nene Ver.)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.shamamon",
+      "name": "Shamamon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.shonitamon",
+      "name": "Shonitamon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.shortmon",
+      "name": "Shortmon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.shoucutemon",
+      "name": "ShouCutemon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.shoujishou",
+      "name": "Shoujishou",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.shoutmonb",
+      "name": "Shoutmon B",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.shoutmonblack",
+      "name": "Shoutmon (Black)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.shoutmonblue",
+      "name": "Shoutmon (Blue)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.shoutmondorulucannon",
+      "name": "Shoutmon (Dorulu Cannon)",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.shoutmonjetsparrow",
+      "name": "Shoutmon (Jet Sparrow)",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.shoutmonsh",
+      "name": "Shoutmon SH",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.shoutmonstarsword",
+      "name": "Shoutmon (Star Sword)",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.shoutmonx10",
+      "name": "Shoutmon X10",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.shoutmonx2incompletex4",
+      "name": "Shoutmon X2 (Incomplete X4)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.shoutmonx2plusm",
+      "name": "Shoutmon X2 Plus M",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.shoutmonx5skullgreymon",
+      "name": "Shoutmon X5 (Skull Greymon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.shoutmonx6",
+      "name": "Shoutmon X6",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.shoutmonyellow",
+      "name": "Shoutmon (Yellow)",
+      "level": "None"
+    },
+    {
+      "id": "digimon.sistermonblancawake",
+      "name": "Sistermon Blanc (Awake)",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.sistermonblancawakened",
+      "name": "Sistermon Blanc (Awakened)",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.sistermoncielawakened",
+      "name": "Sistermon Ciel (Awakened)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.sistermonnoirawake",
+      "name": "Sistermon Noir (Awake)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.sistermonnoirawakened",
+      "name": "Sistermon Noir (Awakened)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.skullgreymongerosionmode",
+      "name": "Skull Greymon: \"G\" Erosion Mode",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.skullknightmonarrowmode",
+      "name": "Skull Knightmon(Arrow Mode)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.skullknightmonbigaxemode",
+      "name": "Skull Knightmon(Big Axe Mode)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.skullknightmonblue",
+      "name": "Skull Knightmon (Blue)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.skullknightmonbr",
+      "name": "Skull Knightmon BR",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.skullknightmoncavaliermode",
+      "name": "Skull Knightmon(Cavalier Mode)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.skullknightmonnaginatamode",
+      "name": "Skull Knightmon(Naginata Mode)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.skullknightmonred",
+      "name": "Skull Knightmon (Red)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.skullknightmonwhite",
+      "name": "Skull Knightmon (White)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.sleipmonburstmode",
+      "name": "Sleipmon(Burst Mode)",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.soundbirdmon",
+      "name": "Soundbirdmon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.sparrowmonab",
+      "name": "Sparrowmon AB",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.splashmondarknessmodedrippins",
+      "name": "Splashmon Darkness Mode (Drippins)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.staraxe",
+      "name": "Star Axe",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.starmonxantibody",
+      "name": "Starmon (X-Antibody)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.stingmon",
+      "name": "Stingmon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.stingmonblack",
+      "name": "Stingmon (Black)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.strabimon",
+      "name": "Strabimon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.styracomon",
+      "name": "Styracomon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.suannishou",
+      "name": "Suannishou",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.sunamon",
+      "name": "Sunamon",
+      "level": "Baby I"
+    },
+    {
+      "id": "digimon.superdarkknightmon",
+      "name": "Super Dark Knightmon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.tailmonchild",
+      "name": "Tailmon (Child)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.talapandashou",
+      "name": "TalaPandashou",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.taomonsilver",
+      "name": "Taomon (Silver)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.technodramon",
+      "name": "Technodramon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.torikaraballmon",
+      "name": "Torikara Ballmon",
+      "level": "Baby I"
+    },
+    {
+      "id": "digimon.trailmonangler",
+      "name": "Trailmon Angler",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.trailmonbattleform",
+      "name": "Trailmon Battle Form",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.trailmonbuffalo",
+      "name": "Trailmon Buffalo",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.trailmonc89",
+      "name": "Trailmon C-89",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.trailmonfranken",
+      "name": "Trailmon Franken",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.trailmonkettle",
+      "name": "Trailmon Kettle",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.trailmonmole",
+      "name": "Trailmon Mole",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.trailmonofdarkness",
+      "name": "Trailmon of Darkness",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.trailmonraccoondog",
+      "name": "Trailmon Raccoon Dog",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.trailmonworm",
+      "name": "Trailmon Worm",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.turbomon",
+      "name": "Turbomon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.tyutyumon",
+      "name": "Tyutyumon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.ultimatebrachimon",
+      "name": "Ultimate Brachimon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.umon",
+      "name": "Umon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.unnameddigimon1legendaryskies",
+      "name": "Unnamed Digimon 1 (Legendary Skies)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.unnameddigimon2legendaryskies",
+      "name": "Unnamed Digimon 2 (Legendary Skies)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.unnamedtrailmon1next",
+      "name": "Unnamed Trailmon 1 (Next)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.unnamedtrailmon2next",
+      "name": "Unnamed Trailmon 2 (Next)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.unnamedtrailmon3next",
+      "name": "Unnamed Trailmon 3 (Next)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.urashimamon",
+      "name": "Urashimamon",
+      "level": "Armor"
+    },
+    {
+      "id": "digimon.vademonxantibody",
+      "name": "Vademon (X-Antibody)",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.vdramonblack",
+      "name": "V-dramon (Black)",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.venomvamdemonundead",
+      "name": "Venom Vamdemon Undead",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.vespamon",
+      "name": "Vespamon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.vipmon",
+      "name": "Vipmon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.volcamon",
+      "name": "Volcamon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.voltobautamonfusion",
+      "name": "Voltobautamon (Fusion)",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.vortexdramon",
+      "name": "Vortexdramon",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.wargreymongerosionmode",
+      "name": "War Greymon: \"G\" Erosion Mode",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.weddinmon",
+      "name": "Weddinmon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.weregarurumonsagittariusmode",
+      "name": "Were Garurumon: Sagittarius Mode",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.whamonperfect",
+      "name": "Whamon Perfect",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.whitelopmon",
+      "name": "White Lopmon",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.woodwoodymon",
+      "name": "Woodwoodymon",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xinyuehushou",
+      "name": "Xinyuehushou",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xrosuparresterdramonastamon",
+      "name": "Xros Up Arresterdramon (Astamon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xrosuparresterdramonblossomon",
+      "name": "Xros Up Arresterdramon (Blossomon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xrosuparresterdramondobermon",
+      "name": "Xros Up Arresterdramon (Dobermon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xrosuparresterdramongigabreakdramon",
+      "name": "Xros Up Arresterdramon (Giga Breakdramon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xrosuparresterdramonmetaltyranomon",
+      "name": "Xros Up Arresterdramon (Metal Tyranomon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xrosuparresterdramonorgemon",
+      "name": "Xros Up Arresterdramon (Orgemon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xrosuparresterdramonsagomon",
+      "name": "Xros Up Arresterdramon (Sagomon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xrosuparresterdramonsparrowmon",
+      "name": "Xros Up Arresterdramon (Sparrowmon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xrosupastamoncerberumon",
+      "name": "Xros Up Astamon (Cerberumon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xrosupastamontriceramon",
+      "name": "Xros Up Astamon (Triceramon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xrosupballistamonrevolmon",
+      "name": "Xros Up Ballistamon (Revolmon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xrosupdorulumonpawnchessmonwhite",
+      "name": "Xros Up Dorulumon (Pawn Chessmon (White))",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xrosupgumdramonkotemon",
+      "name": "Xros Up Gumdramon (Kotemon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xrosupmervamonbeelzebumon",
+      "name": "Xros Up Mervamon (Beelzebumon)",
+      "level": "Ultimate"
+    },
+    {
+      "id": "digimon.xrosupomegashoutmondorulumon",
+      "name": "Xros Up Omega Shoutmon (Dorulumon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xrosupopossummoncandmon",
+      "name": "Xros Up Opossummon (Candmon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xrosupshoutmonchibikamemon",
+      "name": "Xros Up Shoutmon (Chibi Kamemon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xrosupshoutmonpinochimon",
+      "name": "Xros Up Shoutmon (Pinochimon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xrosupsubmarimonplesiomon",
+      "name": "Xros Up Submarimon (Plesiomon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.xrosuptuwarmonsuperstarmon",
+      "name": "Xros Up Tuwarmon (Superstarmon)",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.yakiimon",
+      "name": "Yakiimon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.yarmon",
+      "name": "Yarmon",
+      "level": "Baby II"
+    },
+    {
+      "id": "digimon.yatagaramon",
+      "name": "Yatagaramon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.yoyomon",
+      "name": "Yo!Yo!mon",
+      "level": "Adult"
+    },
+    {
+      "id": "digimon.yukiagumon2006animeversion",
+      "name": "Yuki Agumon (2006 Anime Version)",
+      "level": "Child"
+    },
+    {
+      "id": "digimon.zanmetsumon",
+      "name": "Zanmetsumon",
+      "level": "Perfect"
+    },
+    {
+      "id": "digimon.zhilongshou",
+      "name": "Zhilongshou",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.zhuhuanshou",
+      "name": "Zhuhuanshou",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.zihuohoushou",
+      "name": "Zihuohoushou",
+      "level": "Unknown"
+    },
+    {
+      "id": "digimon.zombiemon",
+      "name": "Zombiemon",
+      "level": "Unknown"
+    }
+  ],
+  "excludedReferences": [
+    {
+      "name": "D-Reaper ADR-03",
+      "kind": "OTHER"
+    },
+    {
+      "name": "D-Reaper ADR-05",
+      "kind": "OTHER"
+    },
+    {
+      "name": "Garuru Metal",
+      "kind": "COLLABORATION"
+    },
+    {
+      "name": "Grey Wars",
+      "kind": "COLLABORATION"
+    },
+    {
+      "name": "Medal",
+      "kind": "OBJECT"
+    },
+    {
+      "name": "Metabee",
+      "kind": "COLLABORATION"
+    },
+    {
+      "name": "Metabee (Head and Body)",
+      "kind": "COMPONENT"
+    },
+    {
+      "name": "Omega Knight",
+      "kind": "COLLABORATION"
+    },
+    {
+      "name": "Rokusho",
+      "kind": "COLLABORATION"
+    },
+    {
+      "name": "Rokusho (Head and Body)",
+      "kind": "COMPONENT"
+    },
+    {
+      "name": "Tinpet",
+      "kind": "COLLABORATION"
+    },
+    {
+      "name": "Weathered Medal",
+      "kind": "OBJECT"
+    }
+  ],
+  "rejectedSets": [
+    {
+      "species": "Angewomon (X-Antibody)",
+      "spriteName": "Angewomon (X Antibody)",
+      "author": "tortoisehel",
+      "reason": "Invalid PNG: Expected 48x48 PNG, got (48, 720)"
+    },
+    {
+      "species": "Burpmon",
+      "spriteName": "Burpmon",
+      "author": "phrogmentado",
+      "reason": "Invalid PNG: Expected 72x48 PNG, got (48, 48)"
+    },
+    {
+      "species": "Burpmon",
+      "spriteName": "Burpmon",
+      "author": "Ray",
+      "reason": "Invalid PNG: Expected 48x48 PNG, got (72, 48)"
+    },
+    {
+      "species": "Chimairamon",
+      "spriteName": "Kimeramon",
+      "author": "tortoisehel",
+      "reason": "Invalid PNG: Expected 48x48 PNG, got (48, 96)"
+    },
+    {
+      "species": "Depthmon",
+      "spriteName": "Depthmon",
+      "author": "Shiver",
+      "reason": "\"There is no item named 'dmc-sprites-5d1a43a97762765a6be13852cfc21be647ff8287/images/Shiver/depthmon/a_depthmon_idle_1.png' in the archive\""
+    },
+    {
+      "species": "Garurumon",
+      "spriteName": "Garurumon",
+      "author": "tortoisehel",
+      "reason": "Invalid PNG: Expected 48x48 PNG, got (48, 720)"
+    },
+    {
+      "species": "Mikemon",
+      "spriteName": "Mikemon",
+      "author": "Dante",
+      "reason": "\"There is no item named 'dmc-sprites-5d1a43a97762765a6be13852cfc21be647ff8287/images/Dante/mikemon/300.png' in the archive\""
+    },
+    {
+      "species": "Tylomon",
+      "spriteName": "Tylomon",
+      "author": "Shiver",
+      "reason": "\"There is no item named 'dmc-sprites-5d1a43a97762765a6be13852cfc21be647ff8287/images/Shiver/tylomon/a_tylomon_idle_1.png' in the archive\""
+    },
+    {
+      "species": "V-dramon",
+      "spriteName": "Veedramon",
+      "author": "tortoisehel",
+      "reason": "Invalid PNG: Expected 48x48 PNG, got (48, 720)"
+    },
+    {
+      "species": "Yanmamon",
+      "spriteName": "Yanmamon",
+      "author": "tortoisehel",
+      "reason": "Invalid PNG: Expected 48x48 PNG, got (48, 720)"
+    }
+  ],
+  "supplementRejected": [
+    {
+      "name": "Arachnemon",
+      "url": "https://humulos.com/digimon/images/dot/d3c/archne.gif",
+      "reason": "<urlopen error _ssl.c:1011: The handshake operation timed out>"
+    },
+    {
+      "name": "Hi Andromon",
+      "url": "https://humulos.com/digimon/images/dot/dmc/hiandro.gif",
+      "reason": "The read operation timed out"
+    }
+  ]
+}

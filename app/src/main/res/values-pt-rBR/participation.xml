@@ -1,0 +1,15 @@
+<resources>
+    <string name="participation_inactive">Parceiro indisponível</string>
+    <string name="participation_inactive_hint">Este Digimon não está mais disponível na coleção. Seus registros e progresso são preservados.</string>
+    <string name="participation_quest_inactive">Um Digimon necessário está indisponível. O progresso da missão é preservado.</string>
+    <string name="participation_view_chat">Ver conversa</string>
+    <string name="home_app_partner_summary">Estágio %1$d · Humor %2$d · Vitais %3$d · Batalhas %4$d vencidas / %5$d perdidas</string>
+    <string name="app_setup_expanded_title">Ou comece sem relógio</string>
+    <string name="app_setup_expanded_body">Conheça Digimon no Mundo sem relógio ou cartão. Seu primeiro parceiro espera por você por perto.</string>
+    <string name="app_setup_expanded_button">Conhecer seu primeiro parceiro</string>
+    <string name="conversion_title">Atribuir base de atributos DIM/BEM</string>
+    <string name="conversion_description">Escolha o slot exato do DIM/BEM carregado para esta espécie e forma. Suas regras normais de atributos substituem os bônus extras do app e de outros produtos enquanto estiver associado, além de definir o destino para o relógio. Identidade, todo o crescimento e os valores originais dos jogos são mantidos.</string>
+    <string name="conversion_empty">Nenhum slot carregado corresponde a esta espécie e forma. Importe o card correspondente primeiro.</string>
+    <string name="conversion_choose">Usar este slot</string>
+    <string name="conversion_saved">Base de atributos DIM/BEM e destino do relógio salvos.</string>
+</resources>

@@ -9,6 +9,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -45,6 +47,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceElevatedPurple
@@ -53,19 +56,21 @@ import com.github.nacabaro.vbhelper.ui.theme.TextMutedOnDark
 import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.StatusRed
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
+import com.github.nacabaro.vbhelper.ui.theme.InactiveOutline
 
 /** Quiet technical frame for panels that need to communicate state or selection. */
 @Composable
-fun Modifier.cyberFrame(active: Boolean = false): Modifier {
-    val color = if (active) VitalCyan else SurfaceStroke
+fun Modifier.cyberFrame(active: Boolean = false, inactive: Boolean = false): Modifier {
+    val highlighted = active && !inactive
+    val color = if (inactive) InactiveOutline else if (highlighted) VitalCyan else SurfaceStroke
     return drawBehind {
-        val alpha = if (active) 0.82f else 0.52f
+        val alpha = if (inactive) 1f else if (highlighted) 0.72f else 0.42f
         val stroke = 1.dp.toPx()
-        val corner = 11.dp.toPx()
+        val corner = 8.dp.toPx()
         val w = size.width
         val h = size.height
         drawRect(color.copy(alpha = alpha), style = androidx.compose.ui.graphics.drawscope.Stroke(stroke))
-        if (active) {
+        if (highlighted) {
             drawRect(
                 color.copy(alpha = 0.06f),
                 topLeft = Offset(stroke, stroke),
@@ -77,7 +82,7 @@ fun Modifier.cyberFrame(active: Boolean = false): Modifier {
             Offset(w, 0f) to Offset(w - corner, 0f), Offset(w, 0f) to Offset(w, corner),
             Offset(0f, h) to Offset(corner, h), Offset(0f, h) to Offset(0f, h - corner),
             Offset(w, h) to Offset(w - corner, h), Offset(w, h) to Offset(w, h - corner)
-        ).forEach { (from, to) -> drawLine(color.copy(alpha = alpha), from, to, strokeWidth = 2.dp.toPx()) }
+        ).forEach { (from, to) -> drawLine(color.copy(alpha = alpha), from, to, strokeWidth = 1.5.dp.toPx()) }
     }
 }
 
@@ -92,8 +97,12 @@ fun CyberEmptyState(
     onSecondaryAction: (() -> Unit)? = null,
 ) {
     Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+    val scrollModifier =
+        if (constraints.maxHeight == Constraints.Infinity) Modifier
+        else Modifier.verticalScroll(rememberScrollState())
     Column(
-        modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(32.dp),
+        modifier = Modifier.fillMaxWidth().then(scrollModifier).padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -138,6 +147,7 @@ fun CyberEmptyState(
             }
         }
     }
+    }
 }
 
 }
@@ -179,7 +189,7 @@ fun VitalSectionHeader(
     ) {
         Text(
             text = title,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).semantics { heading() },
             style = MaterialTheme.typography.titleMedium,
             color = TextPrimaryOnDark
         )
@@ -220,14 +230,14 @@ fun VitalButton(
 ) {
     if (style == VitalButtonStyle.PRIMARY) {
         Button(
-            onClick = onClick, modifier = modifier, enabled = enabled, shape = shape,
+            onClick = onClick, modifier = modifier.heightIn(min = 48.dp), enabled = enabled, shape = shape,
             colors = ButtonDefaults.buttonColors(), contentPadding = contentPadding, content = content,
         )
         return
     }
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier,
+        modifier = modifier.heightIn(min = 48.dp),
         enabled = enabled,
         shape = shape,
         border = BorderStroke(1.dp, (if (style == VitalButtonStyle.DESTRUCTIVE) StatusRed else borderColor).let {
@@ -259,6 +269,5 @@ fun cyberPulseAlpha(): Float {
 /** Honors Android's system-wide animator setting for nonessential decorative motion. */
 @Composable
 fun motionEnabled(): Boolean {
-    LocalContext.current
-    return remember { ValueAnimator.areAnimatorsEnabled() }
+    return LocalMotionEnabled.current
 }

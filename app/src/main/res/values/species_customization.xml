@@ -1,0 +1,23 @@
+<resources>
+    <string name="species_add">Add Digimon</string>
+    <string name="species_edit">Edit Digimon</string>
+    <string name="species_template_note">Save your own species information in your catalog. Hold a species in the list to edit its information.</string>
+    <string name="species_moves_hint">One move per line, or separate moves with commas.</string>
+    <string name="species_sprite_title">Species sprite</string>
+    <string name="species_sprite_hint">Choose one sprite set to display for every Digimon assigned to this species.</string>
+    <string name="species_choose_sprite">Choose sprite</string>
+    <string name="species_original_sprites">Use original sprites</string>
+    <string name="species_matching_sprites">Assigned to this species</string>
+    <string name="species_all_sprites">All loaded sprites</string>
+    <string name="species_search_sprites">Search sprites</string>
+    <string name="species_sprite_details">%1$s · slot %2$d · sprite %3$d</string>
+    <string name="species_sprite_identifier">Sprite %1$d</string>
+    <string name="species_no_sprites">No loaded sprites match. Try all sprites or a different search.</string>
+    <string name="species_load_more">Load more sprites</string>
+    <string name="species_save_failed">Could not save. Check that the name is unique, each move is short, and the selected sprite is still loaded, then try again.</string>
+    <string name="species_library">Species and sprites</string>
+    <string name="species_library_hint">Add or edit species information and choose a shared appearance.</string>
+    <string name="species_copy_note">This creates your own separate entry. The original stays in your catalog unchanged.</string>
+    <string name="species_copy_name_hint">Choose a different name so the original stays in your catalog.</string>
+
+</resources>

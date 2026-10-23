@@ -119,7 +119,8 @@ object CharacterDtos {
     }
 
     data class CardCharacterInfo(
-        val cardId: Long,
+        /** Null for catalog definitions, which are not on any physical card. */
+        val cardId: Long?,
         val charId: Int,
         val stage: Int,
         val attribute: NfcCharacter.Attribute,
@@ -456,7 +457,7 @@ object CharacterDtos {
         val spriteIdle2: ByteArray,
         val spriteWidth: Int,
         val spriteHeight: Int,
-        val cardName: String
+        val cardName: String?
     ) {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true

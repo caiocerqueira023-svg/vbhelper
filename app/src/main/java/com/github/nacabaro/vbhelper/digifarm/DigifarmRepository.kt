@@ -30,7 +30,10 @@ class DigifarmRepository(private val db: AppDatabase) {
 
     suspend fun socialProfile(id: String) = DigimonSocialProfile.forIndividual(id,
         db.digimonIndividualDao().getPersonality(id)?.personalityType ?: DigimonPersonalityType.FRIENDLY)
-    suspend fun residentStates(farmId: String) = dao.getResidentEntities(farmId)
+    suspend fun residentStates(farmId: String) = db.withTransaction {
+        val eligibility = db.participation?.snapshot()
+        dao.getResidentEntities(farmId).filter { eligibility?.individual(it.individualId)?.usable != false }
+    }
     suspend fun relationships(id: String) = dao.relationships(id)
 
     fun observeFarms(): Flow<List<Farm>> = dao.observeFarms()
@@ -42,7 +45,10 @@ class DigifarmRepository(private val db: AppDatabase) {
     fun observeStorageThreads() = dao.observeStorageThreads()
     fun observeFarmThreads() = dao.observeFarmThreads()
     fun observeWildThreads() = db.wildRelationshipDao().observeUnlocked()
-    suspend fun residentsSnapshot(farmId: String) = observeResidents(farmId).first()
+    suspend fun residentsSnapshot(farmId: String) = db.withTransaction {
+        val eligibility = db.participation?.snapshot()
+        observeResidents(farmId).first().filter { eligibility?.individual(it.individualId)?.usable != false }
+    }
     suspend fun messagesSnapshot(farmId: String, limit: Int = 8) = observeMessages(farmId, limit).first().asReversed()
     suspend fun recipientIds(messageId: String) = dao.recipientIds(messageId)
     suspend fun getFarm(farmId: String) = dao.getFarm(farmId)
@@ -64,6 +70,7 @@ class DigifarmRepository(private val db: AppDatabase) {
         val farm = dao.getFarm(farmId) ?: error("Digifarm not found")
         check(dao.residentCount(farmId) < farm.capacity) { "This Digifarm is full" }
         val character = db.userCharacterDao().getCharacter(characterId)
+        db.participation?.snapshot()?.requireOwned(characterId)
         if (db.digimonIndividualDao().getPersonality(character.individualId) == null) {
             com.github.nacabaro.vbhelper.source.StorageRepository(db).getOrCreatePersonality(characterId)
         }
@@ -92,6 +99,7 @@ class DigifarmRepository(private val db: AppDatabase) {
      * farm occupancy change.
      */
     suspend fun transferResident(individualId: String, targetFarmId: String) = db.withTransaction {
+        db.participation?.snapshot()?.requireIndividual(individualId)
         val resident = dao.getResident(individualId) ?: error("Resident not found")
         if (resident.farmId == targetFarmId) return@withTransaction
         val target = dao.getFarm(targetFarmId) ?: error("Digifarm not found")
@@ -128,24 +136,18 @@ class DigifarmRepository(private val db: AppDatabase) {
      * [simulateStep]; this describes it without fabricating conversations.
      * Returns null when there is nothing worth announcing.
      */
-    suspend fun summarizeReturn(farmId: String, now: Long = System.currentTimeMillis()): String? {
+    suspend fun summarizeReturn(farmId: String, now: Long = System.currentTimeMillis()): FarmReturnSummary? {
         val farm = dao.getFarm(farmId) ?: return null
         val elapsed = (now - farm.lastSimulatedAt).coerceAtLeast(0)
         if (elapsed < 60_000L) return null
-        val clampedHours = (elapsed / 3_600_000L).coerceAtMost(8L)
         val residents = dao.getResidentEntities(farmId)
         if (residents.isEmpty()) return null
         val rested = residents.count { it.activity == "REST" }
-        return if (clampedHours <= 0) {
-            "While you were away (${elapsed / 60_000L} min), residents kept exploring. No conversations were invented."
-        } else {
-            "After about $clampedHours h away, ${residents.size} residents kept living locally" +
-                (if (rested > 0) " ($rested resting)" else "") +
-                ". No conversations were invented while you were gone."
-        }
+        return FarmReturnSummary(elapsed / 60_000L, residents.size, rested)
     }
 
     suspend fun setActivity(individualId: String, farmId: String, activity: String) = db.withTransaction {
+        db.participation?.snapshot()?.requireIndividual(individualId)
         require(activity in setOf("PLAY", "TRAIN", "EAT", "REST"))
         val resident = dao.getResident(individualId)?.takeIf { it.farmId == farmId } ?: return@withTransaction
         val now = System.currentTimeMillis()
@@ -161,6 +163,8 @@ class DigifarmRepository(private val db: AppDatabase) {
 
     /** Both NPCs have chosen this activity locally; physical availability is revalidated at commit. */
     suspend fun beginSharedActivity(farmId: String, firstId: String, secondId: String, activity: String): Boolean = db.withTransaction {
+        val eligibility = db.participation?.snapshot()
+        if (eligibility?.individual(firstId)?.usable == false || eligibility?.individual(secondId)?.usable == false) return@withTransaction false
         require(activity in setOf("PLAY", "TRAIN") && firstId != secondId)
         val first = dao.getResident(firstId)?.takeIf { it.farmId == farmId } ?: return@withTransaction false
         val second = dao.getResident(secondId)?.takeIf { it.farmId == farmId } ?: return@withTransaction false
@@ -175,9 +179,10 @@ class DigifarmRepository(private val db: AppDatabase) {
     }
 
     /** Nudges a resident toward a point (approach before talking, §8). */
-    suspend fun steerToward(farmId: String, individualId: String, x: Float, y: Float) {
-        val resident = dao.getResidentEntities(farmId).firstOrNull { it.individualId == individualId } ?: return
-        if (!FarmBehaviorPolicy.available(resident, socialProfile(individualId), System.currentTimeMillis())) return
+    suspend fun steerToward(farmId: String, individualId: String, x: Float, y: Float) = db.withTransaction {
+        if (db.participation?.snapshot()?.individual(individualId)?.usable == false) return@withTransaction
+        val resident = dao.getResidentEntities(farmId).firstOrNull { it.individualId == individualId } ?: return@withTransaction
+        if (!FarmBehaviorPolicy.available(resident, socialProfile(individualId), System.currentTimeMillis())) return@withTransaction
         val safe = DigifarmGround.clamp(MapPoint(x, y))
         dao.updateResident(
             resident.copy(
@@ -206,12 +211,19 @@ class DigifarmRepository(private val db: AppDatabase) {
         dao.setAutonomousDialogue(farmId, enabled)
 
     suspend fun simulateStep(farmId: String, now: Long = System.currentTimeMillis()) = db.withTransaction {
+        db.participation?.reconcileLocked()
         val farm = dao.getFarm(farmId) ?: return@withTransaction
         val residents = dao.getResidentEntities(farmId)
+        val eligibility = db.participation?.snapshot()
+        val usable = residents.filter { eligibility?.individual(it.individualId)?.usable != false }
         val reservedPositions = residents.associate { resident ->
             resident.individualId to DigifarmGround.clamp(MapPoint(resident.positionX, resident.positionY))
         }.toMutableMap()
         residents.forEachIndexed { index, resident ->
+            if (eligibility?.individual(resident.individualId)?.usable == false) {
+                dao.updateResident(ParticipationClock.pause(resident, now, alreadyPaused = true))
+                return@forEachIndexed
+            }
             val profile = socialProfile(resident.individualId)
             val needs = FarmBehaviorPolicy.advanceNeeds(resident, now)
             // Offline state is accounted for below; position only advances by
@@ -221,9 +233,9 @@ class DigifarmRepository(private val db: AppDatabase) {
             var nextActivity = FarmBehaviorPolicy.activity(needs, profile, now, farm.randomSeed)
             val relationships = if (nextActivity == "SOCIALIZE") dao.relationships(resident.individualId).associateBy { it.otherId } else emptyMap()
             val socialPartner = if (nextActivity == "SOCIALIZE") {
-                residents.firstOrNull { it.individualId == resident.socialTargetId &&
+                usable.firstOrNull { it.individualId == resident.socialTargetId &&
                     it.activity !in listOf("REST", "EAT") && it.energy >= 25 && it.satiety >= 25 }
-                    ?: FarmBehaviorPolicy.partner(resident,residents,profile,relationships,farm.randomSeed,now)
+                    ?: FarmBehaviorPolicy.partner(resident,usable,profile,relationships,farm.randomSeed,now)
             } else null
             if (nextActivity == "SOCIALIZE" && socialPartner == null) nextActivity = "EXPLORE"
             val moving = nextActivity in DigifarmGround.movingActivities
@@ -286,6 +298,9 @@ class DigifarmRepository(private val db: AppDatabase) {
         sessionId: String? = null,
         publicationAllowed: (() -> Boolean)? = null
     ): FarmMessage = db.withTransaction {
+        val eligibility = db.participation?.snapshot()
+        authorIndividualId?.let { eligibility?.requireIndividual(it) }
+        recipientIds.forEach { eligibility?.requireIndividual(it) }
         if (publicationAllowed?.invoke() == false) throw kotlinx.coroutines.CancellationException("Conversation surface is no longer active")
         val clean = body.trim().take(600)
         require(clean.isNotEmpty())
@@ -314,6 +329,8 @@ class DigifarmRepository(private val db: AppDatabase) {
     suspend fun markRead(farmId: String, sequence: Long) = dao.upsertReadState(FarmReadState(farmId, sequence))
 
     suspend fun recordInteraction(firstId: String, secondId: String, firstDelta: Int = 1, secondDelta: Int = 1) = db.withTransaction {
+        val eligibility = db.participation?.snapshot()
+        if (eligibility?.individual(firstId)?.usable == false || eligibility?.individual(secondId)?.usable == false) return@withTransaction
         if (firstId == secondId) return@withTransaction
         val now = System.currentTimeMillis()
         dao.applySocialInteraction(firstId, secondId, firstDelta.coerceIn(-3, 3), now)
@@ -325,7 +342,9 @@ class DigifarmRepository(private val db: AppDatabase) {
         otherId: String,
         eventId: String,
         summary: String
-    ) {
+    ) = db.withTransaction {
+        val eligibility = db.participation?.snapshot()
+        if (eligibility?.individual(observerId)?.usable == false || eligibility?.individual(otherId)?.usable == false) return@withTransaction
         dao.insertMemory(
             FarmMemory(
                 observerId = observerId,

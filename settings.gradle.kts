@@ -28,3 +28,6 @@ rootProject.name = "VBHelper"
 include(":app")
 include(":vb-nfc-reader")
 include(":vb-dim-reader")
+include(":game-save-core")
+include(":companion-protocol")
+include(":pc-save-companion")

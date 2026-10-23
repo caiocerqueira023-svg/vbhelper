@@ -11,6 +11,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
 import kotlin.random.Random
+import com.github.nacabaro.vbhelper.battle.offline.data.requireBattleParticipants
 
 /** Safe arena settlement writes records/brackets/wallet only, never owned Digimon or item stock. */
 class ArenaRepository(private val db: AppDatabase, private val currency: CurrencyRepository) {
@@ -35,13 +36,19 @@ class ArenaRepository(private val db: AppDatabase, private val currency: Currenc
         val row = ArenaMatchEntity(spec.id, spec.tournamentId, requireNotNull(spec.right.tamerId), spec.left.members.size,
             spec.left.members.maxOf { it.stage }, spec.difficulty.name, gson.toJson(spec), null, 0, 0, 0,
             System.currentTimeMillis(), null)
-        db.arenaDao().insertMatch(row)
-        decodeMatch(requireNotNull(db.arenaDao().match(spec.id)))
+        db.withTransaction {
+            db.participation?.snapshot()?.requireArenaMatch(spec)
+            db.arenaDao().insertMatch(row)
+            decodeMatch(requireNotNull(db.arenaDao().match(spec.id)))
+        }
     }
 
     suspend fun registerTournament(run: ArenaTournament) = withContext(Dispatchers.IO) {
         require(run.entrants.count { it.id == PLAYER_ID } == 1 && run.championId == null)
-        check(db.arenaDao().insertRun(ArenaRunEntity(run.id, gson.toJson(run), 0, System.currentTimeMillis())) != -1L)
+        db.withTransaction {
+            db.participation?.snapshot()?.requireBattleParticipants(run.entrants.flatMap { it.members })
+            check(db.arenaDao().insertRun(ArenaRunEntity(run.id, gson.toJson(run), 0, System.currentTimeMillis())) != -1L)
+        }
     }
 
     private suspend fun mutateRun(id: String, transform: (ArenaTournament) -> ArenaTournament): ArenaTournament = db.withTransaction {
@@ -87,6 +94,7 @@ class ArenaRepository(private val db: AppDatabase, private val currency: Currenc
             val spec = decodeMatch(row)
             if (row.completedAt != null) return@withTransaction ArenaSettlement(BattleOutcome.valueOf(requireNotNull(row.outcome)), row.rewardBits,
                 spec.tiebreakRound > 0 && result.outcome == BattleOutcome.DRAW)
+            db.participation?.snapshot()?.requireArenaMatch(spec)
             require(snapshot.rulesetVersion == spec.configuration.rulesetVersion && result.elapsedMillis == snapshot.elapsedMillis) {
                 "Arena result does not match the registered match setup"
             }
@@ -145,6 +153,8 @@ class ArenaRepository(private val db: AppDatabase, private val currency: Currenc
             currentCoroutineContext().ensureActive()
             var run = decodeRun(requireNotNull(db.arenaDao().run(runId)))
             if (run.withdrawn || run.championId != null) return@withContext null
+            val eligibility = db.participation?.snapshot()
+            eligibility?.requireBattleParticipants(run.entrants.flatMap { it.members })
             require(run.canonRevision == TamerCanonicalPartners.REVISION) { "The tournament partner history needs to be refreshed." }
             val round = run.matches.maxOf { it.round }
             val pending = run.matches.filter { it.round == round && it.winnerId == null }
@@ -159,6 +169,8 @@ class ArenaRepository(private val db: AppDatabase, private val currency: Currenc
                     else -> leftWinsTiebreak(snapshot, match.seed)
                 }
                 run = mutateRun(runId) { latest ->
+                    eligibility?.let { db.participation?.requireCurrent(it) }
+                    db.participation?.snapshot()?.requireBattleParticipants(latest.entrants.flatMap { it.members })
                     val recorded = latest.matches.single { it.id == match.id }
                     if (recorded.winnerId != null || latest.withdrawn) latest else latest.finish(match.id,
                         if (leftWon) match.leftId else match.rightId, snapshot.result?.outcome?.name ?: "DRAW")
@@ -182,8 +194,16 @@ class ArenaRepository(private val db: AppDatabase, private val currency: Currenc
                 }
                 return@withContext registerMatch(original)
             }
-            run = mutateRun(runId) { it.advanceRound() }
-            db.withTransaction { grantTrophyLocked(run, System.currentTimeMillis()) }
+            run = mutateRun(runId) {
+                eligibility?.let { previous -> db.participation?.requireCurrent(previous) }
+                db.participation?.snapshot()?.requireBattleParticipants(it.entrants.flatMap { entry -> entry.members })
+                it.advanceRound()
+            }
+            db.withTransaction {
+                eligibility?.let { db.participation?.requireCurrent(it) }
+                db.participation?.snapshot()?.requireBattleParticipants(run.entrants.flatMap { it.members })
+                grantTrophyLocked(run, System.currentTimeMillis())
+            }
         }
         @Suppress("UNREACHABLE_CODE") null
     }

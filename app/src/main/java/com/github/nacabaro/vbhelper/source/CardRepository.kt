@@ -12,4 +12,9 @@ class CardRepository (
             .cardDao()
             .getCardIconByCharaId(charaId = charaId)
     }
+
+    /** Catalog definitions carry their own artwork instead of a card logo. */
+    fun getDefinitionIconByCharaId(charaId: Long): Flow<CardDtos.CardIcon?> {
+        return db.characterDao().getDefinitionIconByCharaId(charaId)
+    }
 }

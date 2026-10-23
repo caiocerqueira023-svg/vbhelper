@@ -8,6 +8,7 @@ import com.github.cfogrady.vbnfc.data.NfcCharacter
 import com.github.cfogrady.vbnfc.vb.VBNfcCharacter
 import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.database.IndividualIntegrity
+import com.github.nacabaro.vbhelper.database.PreservingMigrationFactory
 import com.github.nacabaro.vbhelper.domain.device_data.UserCharacter
 import com.github.nacabaro.vbhelper.domain.device_data.VBCharacterData
 import com.github.nacabaro.vbhelper.domain.identity.IndividualIdentity
@@ -15,6 +16,7 @@ import com.github.nacabaro.vbhelper.domain.identity.TransferFingerprint
 import com.github.nacabaro.vbhelper.domain.identity.WatchTransfer
 import com.github.nacabaro.vbhelper.domain.digifarm.WildRelationship
 import com.github.nacabaro.vbhelper.screens.scanScreen.converters.FromNfcConverter
+import com.github.nacabaro.vbhelper.screens.scanScreen.converters.NfcImportResult
 import com.github.nacabaro.vbhelper.screens.scanScreen.converters.ToNfcConverter
 import com.github.nacabaro.vbhelper.source.EvolutionHistoryRepository
 import com.github.nacabaro.vbhelper.source.WatchTransferRepository
@@ -60,7 +62,24 @@ class IndividualPersistenceTest {
             AppDatabase.MIGRATION_36_37,
             AppDatabase.MIGRATION_37_38,
             AppDatabase.MIGRATION_38_39,
+            AppDatabase.MIGRATION_39_40,
+            AppDatabase.MIGRATION_40_41,
+            AppDatabase.MIGRATION_41_42,
+            AppDatabase.MIGRATION_42_43,
+            AppDatabase.MIGRATION_43_44,
+            AppDatabase.MIGRATION_44_45,
+            AppDatabase.MIGRATION_45_46,
+            AppDatabase.MIGRATION_46_47,
+            AppDatabase.MIGRATION_47_48,
+            AppDatabase.MIGRATION_48_49,
+            AppDatabase.MIGRATION_49_50,
+            AppDatabase.MIGRATION_50_51,
+            AppDatabase.MIGRATION_51_52,
+            AppDatabase.MIGRATION_52_53,
+            AppDatabase.MIGRATION_53_54,
+            AppDatabase.MIGRATION_54_55,
         )
+        .openHelperFactory(PreservingMigrationFactory())
         .addCallback(IndividualIntegrity.callback).build()
 
     @Before fun setup() {
@@ -246,6 +265,30 @@ class IndividualPersistenceTest {
     private fun receive(character: NfcCharacter, watch: String = "watch-A") =
         FromNfcConverter(db, watch).addCharacter(character) { _, _ -> error("Unexpected ambiguous DIM") }
 
+    @Test fun missingSelectedCardCannotReportASavedImportOrCreateAReceipt() = runBlocking {
+        val key = store()
+        val wire = ToNfcConverter(db).characterToNfc(key)
+        val result = FromNfcConverter(db).addCharacterUsingCard(wire, 404)
+        assertEquals(NfcImportResult.MissingCard, result)
+        assertFalse(result.saved)
+        assertNotNull(db.userCharacterDao().getCharacterSync(key))
+        assertEquals(0, count("WatchImportReceipt"))
+    }
+
+    @Test fun ambiguousCardRequestsSelectionWithoutAcknowledgingOrDuplicatingThePartner() = runBlocking {
+        val key = store()
+        val wire = ToNfcConverter(db).characterToNfc(key)
+        wire.appReserved2 = Array(3) { 0u }
+        seed("Card", mapOf("id" to 2, "cardId" to 27, "name" to "Other variant", "officialStatus" to "UNKNOWN"))
+        var choices = 0
+        val result = FromNfcConverter(db).addCharacter(wire) { cards, _ -> choices = cards.size }
+        assertEquals(NfcImportResult.AmbiguousCard, result)
+        assertFalse(result.saved)
+        assertEquals(2, choices)
+        assertEquals(1, count("UserCharacter"))
+        assertEquals(0, count("WatchImportReceipt"))
+    }
+
     private fun count(table: String): Int = db.openHelper.writableDatabase.query("SELECT count(*) FROM `$table`").use {
         it.moveToFirst(); it.getInt(0)
     }
@@ -346,7 +389,7 @@ class IndividualPersistenceTest {
             WatchTransferRepository(db).complete(receipt)
             assertNull(db.userCharacterDao().getCharacterSync(key))
             db.close(); db = open()
-            assertEquals("Done reading character!", receive(wire))
+            assertTrue(receive(wire) is NfcImportResult.Stored)
             val returned = db.userCharacterDao().getByIndividualIdSync(individual).single()
             assertEquals(before.copy(id = returned.id, isActive = true), returned)
             key = returned.id
@@ -377,6 +420,40 @@ class IndividualPersistenceTest {
         assertNotNull(db.userCharacterDao().getCharacterSync(key))
         assertEquals(receipt, db.watchTransferDao().get(receipt.token))
         WatchTransferRepository(db).prepare(receipt) // Retry uses the same token.
+    }
+
+    @Test fun exportRetainsFullDeviceStateAfterRepresentationDeletionReturnAndReopen() {
+        val key = store()
+        val (wire, receipt) = prepare(key)
+        val retained = requireNotNull(db.watchTransferDao().snapshot(receipt.token))
+        val state = com.google.gson.JsonParser.parseString(retained.stateJson).asJsonObject
+        assertEquals(1, retained.version)
+        assertEquals(individual, retained.individualId)
+        assertTrue(state.getAsJsonObject("tables").getAsJsonArray("VBCharacterData").size() > 0)
+        assertTrue(state.getAsJsonObject("tables").getAsJsonArray("TransformationHistory").size() > 0)
+        WatchTransferRepository(db).complete(receipt)
+        assertNull(db.userCharacterDao().getCharacterSync(key))
+        assertEquals(retained, db.watchTransferDao().snapshot(receipt.token))
+        receive(wire)
+        assertNull(db.watchTransferDao().get(receipt.token))
+        val fingerprint = TransferFingerprint.of(wire, "watch-A")
+        val received = requireNotNull(db.watchTransferDao().snapshot("receive:$fingerprint"))
+        assertNotNull(received.nativeJson)
+        assertEquals(individual, received.individualId)
+        db.close(); db = open()
+        assertEquals(retained, db.watchTransferDao().snapshot(receipt.token))
+        assertEquals(individual, db.userCharacterDao().getByIndividualIdSync(individual).single().individualId)
+    }
+
+    @Test fun staleAuxiliaryDeviceStateCannotBeDeletedByAnOldPreparedExport() {
+        val key = store()
+        val (_, receipt) = prepare(key)
+        val retained = db.watchTransferDao().snapshot(receipt.token)
+        db.openHelper.writableDatabase.execSQL("UPDATE VBCharacterData SET generation=generation+1 WHERE id=?", arrayOf(key))
+        fails { WatchTransferRepository(db).complete(receipt) }
+        assertNotNull(db.userCharacterDao().getCharacterSync(key))
+        assertEquals(retained, db.watchTransferDao().snapshot(receipt.token))
+        assertEquals(receipt, db.watchTransferDao().get(receipt.token))
     }
 
     @Test fun repeatedReceiveAfterLostAcknowledgementIsIdempotent() {

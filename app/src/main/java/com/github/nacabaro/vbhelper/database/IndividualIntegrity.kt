@@ -8,6 +8,7 @@ object IndividualIntegrity {
     val callback = object : RoomDatabase.Callback() {
         override fun onOpen(db: SupportSQLiteDatabase) {
             install(db)
+            TransferContinuitySchema.install(db)
             WorldInteractionIntegrity.install(db)
             WorldInteractionIntegrity.recoverOnOpen(db)
         }

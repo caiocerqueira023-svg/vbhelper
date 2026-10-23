@@ -16,6 +16,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,7 +41,8 @@ data class DigimonInfoEditResult(
     val level: String?,
     val type: String?,
     val profile: String?,
-    val specialMoves: List<String>
+    val specialMoves: List<String>,
+    val editSpeciesProfile: Boolean = false
 )
 
 @Composable
@@ -52,6 +54,11 @@ fun DigimonInfoEditDialog(
     onDismiss: () -> Unit,
     onSave: (DigimonInfoEditResult) -> Unit
 ) {
+    val debugSettings = com.github.nacabaro.vbhelper.components.rememberDebugSettings()
+    val openedWithDebug = remember { debugSettings.enabled }
+    LaunchedEffect(debugSettings.enabled) {
+        if (openedWithDebug && !debugSettings.enabled) onDismiss()
+    }
     var editedNickname by rememberSaveable(cardName) { mutableStateOf(nickname.orEmpty()) }
     var speciesName by rememberSaveable(cardName) { mutableStateOf(profile?.speciesName.orEmpty()) }
     var level by rememberSaveable(cardName) { mutableStateOf(profile?.level.orEmpty()) }
@@ -81,6 +88,9 @@ fun DigimonInfoEditDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(Modifier.height(8.dp))
+                if (debugSettings.enabled) {
+                Text(stringResource(R.string.ui_card_fields_note, cardName), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
                 OutlinedTextField(
                     value = speciesName,
                     onValueChange = { speciesName = it },
@@ -118,6 +128,12 @@ fun DigimonInfoEditDialog(
                     label = { Text(stringResource(R.string.ui_special_moves)) },
                     modifier = Modifier.fillMaxWidth()
                 )
+                } else {
+                    Text(profile?.speciesName?.takeIf(String::isNotBlank) ?: stringResource(R.string.immersion_unidentified_partner),
+                        style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(R.string.immersion_nickname_note), style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 if (personality != null) {
                     Spacer(Modifier.height(12.dp))
                     Text(stringResource(R.string.ui_individual_personality), style = MaterialTheme.typography.titleSmall)
@@ -137,6 +153,9 @@ fun DigimonInfoEditDialog(
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Spacer(Modifier.height(6.dp))
+                            Text(personality.personalityType.observation(PromptLocalization.currentLanguageTag()),
+                                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            if (debugSettings.enabled) {
                             Text(
                                 stringResource(R.string.ui_personality_rules),
                                 style = MaterialTheme.typography.labelMedium
@@ -146,6 +165,7 @@ fun DigimonInfoEditDialog(
                                 personality.personalityType.promptInstruction(languageTag),
                                 style = MaterialTheme.typography.bodySmall
                             )
+                            }
                         }
                     }
                 }
@@ -157,7 +177,7 @@ fun DigimonInfoEditDialog(
                     TextButton(onClick = onDismiss) { Text(stringResource(R.string.ui_cancel)) }
                     VitalButton(
                         style = com.github.nacabaro.vbhelper.components.VitalButtonStyle.PRIMARY,
-                        enabled = speciesName.isNotBlank(),
+                        enabled = speciesName.isNotBlank() || editedNickname.trim() != nickname.orEmpty(),
                         onClick = {
                             onSave(
                                 DigimonInfoEditResult(
@@ -168,7 +188,12 @@ fun DigimonInfoEditDialog(
                                     profile = description.trim().ifBlank { null },
                                     specialMoves = specialMoves.split(",")
                                         .map(String::trim)
-                                        .filter(String::isNotEmpty)
+                                        .filter(String::isNotEmpty),
+                                    editSpeciesProfile = debugSettings.enabled && (
+                                        speciesName.trim() != profile?.speciesName.orEmpty() ||
+                                        level.trim() != profile?.level.orEmpty() || type.trim() != profile?.type.orEmpty() ||
+                                        description.trim() != profile?.profileDescription.orEmpty() ||
+                                        specialMoves.split(",").map(String::trim).filter(String::isNotEmpty) != profile?.specialMoves.orEmpty())
                                 )
                             )
                         }

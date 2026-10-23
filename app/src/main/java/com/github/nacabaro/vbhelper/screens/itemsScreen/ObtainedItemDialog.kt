@@ -21,6 +21,9 @@ import com.github.nacabaro.vbhelper.dtos.ItemDtos
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.VitalButton
+import com.github.nacabaro.vbhelper.components.editorDialogBounds
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 
 @Composable
 fun ObtainedItemDialog(
@@ -31,14 +34,15 @@ fun ObtainedItemDialog(
     Dialog(
         onDismissRequest = onClickDismiss
     ) {
-        Card {
+        Card(modifier = Modifier.editorDialogBounds()) {
             Column(
                 modifier = Modifier
                     .padding(16.dp)
             ) {
                 Column (
                     modifier = Modifier
-                        .padding(16.dp)
+                        .padding(0.dp)
+                        .verticalScroll(rememberScrollState())
                 ) {
                     Row {
                         Box(modifier = Modifier) {
@@ -63,7 +67,7 @@ fun ObtainedItemDialog(
                                 .padding(16.dp)
                         ) {
                             Text(
-                                fontSize = MaterialTheme.typography.titleLarge.fontSize,
+                                style = MaterialTheme.typography.titleMedium,
                                 text = obtainedItem.itemName,
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -72,8 +76,7 @@ fun ObtainedItemDialog(
                     }
                     Text(
                         textAlign = TextAlign.Center,
-                        fontSize = MaterialTheme.typography.bodyMedium.fontSize,
-                        fontFamily = MaterialTheme.typography.bodyMedium.fontFamily,
+                        style = MaterialTheme.typography.bodyMedium,
                         text = obtainedItem.itemDescription,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -82,8 +85,7 @@ fun ObtainedItemDialog(
                     )
                     Text(
                         textAlign = TextAlign.Center,
-                        fontSize = MaterialTheme.typography.bodySmall.fontSize,
-                        fontFamily = MaterialTheme.typography.bodySmall.fontFamily,
+                        style = MaterialTheme.typography.bodySmall,
                         text = stringResource(
                             R.string.obtained_item_you_have,
                             obtainedItem.itemAmount
@@ -94,8 +96,7 @@ fun ObtainedItemDialog(
                     )
                     Text(
                         textAlign = TextAlign.Center,
-                        fontSize = MaterialTheme.typography.bodySmall.fontSize,
-                        fontFamily = MaterialTheme.typography.bodySmall.fontFamily,
+                        style = MaterialTheme.typography.bodySmall,
                         text = stringResource(
                             R.string.obtained_item_you_also_got_credits,
                             obtainedCurrency

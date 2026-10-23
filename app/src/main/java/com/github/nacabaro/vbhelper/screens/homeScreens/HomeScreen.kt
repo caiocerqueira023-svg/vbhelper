@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 import com.github.nacabaro.vbhelper.components.showAppFeedback
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,6 +76,8 @@ fun HomeScreen(
 ) {
     val context = LocalContext.current
     val application = context.applicationContext as VBHelper
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var choosingExpanded by remember { mutableStateOf(false) }
 
     val storageRepository = remember { StorageRepository(application.container.db) }
     val cardRepository = remember { CardRepository(application.container.db) }
@@ -89,7 +92,8 @@ fun HomeScreen(
         catch (_: Exception) { collectionFailed = true }
     }
     val allCharacters = collection.orEmpty()
-    val activeMon = allCharacters.firstOrNull { it.active }
+    val participation = com.github.nacabaro.vbhelper.components.rememberPartnerParticipation()
+    val activeMon = allCharacters.firstOrNull { it.active && participation?.owned(it.id)?.usable != false }
     val cards by produceState(homeScreenController.cachedHomeCards, dexRepository, reload) {
         try { dexRepository.getAllDims().collect { homeScreenController.cachedHomeCards = it; value = it } }
         catch (cancelled: CancellationException) { throw cancelled }
@@ -99,9 +103,9 @@ fun HomeScreen(
     val connectionReady = secrets?.let { !it.isMissingSecrets() }
     val preferences = remember { application.getSharedPreferences("app_preferences", 0) }
     var setupDismissed by rememberSaveable { mutableStateOf(preferences.getBoolean("home_setup_dismissed", false)) }
-    val favoriteCharacters = remember(allCharacters) {
+    val favoriteCharacters = remember(allCharacters, participation) {
         allCharacters
-            .filter { it.isFavorite && !it.isInAdventure }
+            .filter { it.isFavorite && !it.isInAdventure && participation?.owned(it.id)?.usable != false }
             .sortedBy { it.id }
     }
     val favoriteIndex = favoriteCharacters.indexOfFirst { it.id == activeMon?.id }
@@ -122,7 +126,8 @@ fun HomeScreen(
             storageScreenController.setActive(
                 characterId = nextCharacter.id,
                 announce = false,
-                onCompletion = { favoriteSwitchInFlight = false }
+                onCompletion = { favoriteSwitchInFlight = false },
+                onRejected = { favoriteSwitchInFlight = false }
             )
         }
     }
@@ -153,8 +158,15 @@ fun HomeScreen(
                 storageRepository.getCharacterVbData(partner.id) else flowOf(null)
             val be: Flow<BECharacterData?> = if (partner.characterType == DeviceType.BEDevice)
                 storageRepository.getCharacterBeData(partner.id) else flowOf(null)
-            combine(vb, be, cardRepository.getCardIconByCharaId(partner.charId)) {
-                    vbData, beData, icon -> HomePartnerDetails(partner.id, partner.charId, vbData, beData, icon)
+            val app: Flow<com.github.nacabaro.vbhelper.daos.AppHomeStats?> = if (partner.characterType == DeviceType.APP)
+                application.container.db.appPartnerStateDao().home(partner.id) else flowOf(null)
+            val icon: kotlinx.coroutines.flow.Flow<com.github.nacabaro.vbhelper.dtos.CardDtos.CardIcon?> =
+                if (partner.characterType == DeviceType.APP)
+                    app.flatMapLatest { data -> data?.assignedDefinitionId?.let(cardRepository::getCardIconByCharaId)
+                        ?: cardRepository.getDefinitionIconByCharaId(partner.charId) }
+                else cardRepository.getCardIconByCharaId(partner.charId)
+            combine(vb, be, icon, app) {
+                    vbData, beData, iconData, appData -> HomePartnerDetails(partner.id, partner.charId, vbData, beData, iconData, appData)
             }.collect { homeScreenController.cachedPartnerDetails = it; value = it; profileLoading = false }
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { value = null }
@@ -164,6 +176,7 @@ fun HomeScreen(
     val cardIconData = currentDetails?.icon
     val vbData = currentDetails?.vbData
     val beData = currentDetails?.beData
+    val appData = currentDetails?.appData
 
     val speciesProfile by (
         activeMon
@@ -181,7 +194,7 @@ fun HomeScreen(
 
     val vbSpecialMissions by (
         activeMon
-            ?.takeIf { it.characterType == DeviceType.VBDevice }
+            ?.takeIf { it.characterType == DeviceType.VBDevice || it.characterType == DeviceType.APP }
             ?.let { chara ->
                 storageRepository.getSpecialMissions(chara.id)
             }
@@ -217,8 +230,8 @@ fun HomeScreen(
         topBar = {
             TopBanner(
                 text = stringResource(R.string.home_title),
-                onScanClick = {
-                    navController.navigate(NavigationItems.Scan.route)
+                onTransferClick = {
+                    navController.navigate(com.github.nacabaro.vbhelper.navigation.TransferNavigation.route())
                 },
                 onGearClick = {
                     navController.navigate(NavigationItems.Settings.route)
@@ -227,19 +240,35 @@ fun HomeScreen(
         }
     ) { contentPadding ->
         val state = homeReadiness(collection?.size, cards?.size, connectionReady, activeMon != null,
-            cardIconData != null && (beData != null || vbData != null))
+            cardIconData != null && (beData != null || vbData != null || activeMon?.characterType == DeviceType.APP && appData != null))
         val contentModifier = Modifier.fillMaxSize().padding(contentPadding)
-        val onRead = { navController.navigate(NavigationItems.Scan.route) }
+        val onRead = { navController.navigate(com.github.nacabaro.vbhelper.navigation.TransferNavigation.route(
+            com.github.nacabaro.vbhelper.navigation.TransferSection.DEVICES)) }
         if (collectionFailed || (activeMon == null && cardsFailed)) {
             CyberEmptyState(stringResource(R.string.app_load_failed), contentModifier,
                 actionLabel = stringResource(R.string.app_retry), onAction = { reload++ })
-        } else if (state == HomeReadiness.LOADING || profileLoading) {
+        } else if (state == HomeReadiness.LOADING || profileLoading || choosingExpanded) {
             HomeLoadingPanel(activeMon != null, contentModifier)
         } else if (state == HomeReadiness.SETUP && !setupDismissed) {
             HomeSetupPanel(cardsReady = !cards.isNullOrEmpty(), connectionReady = connectionReady == true,
                 onImportCards = onImportCards, onImportConnection = onImportConnection, onRead = onRead,
                 onSkip = { setupDismissed = true; preferences.edit().putBoolean("home_setup_dismissed", true).apply() },
                 importingConnection = importingConnection,
+                onChooseExpanded = {
+                    choosingExpanded = true
+                    scope.launch {
+                        try {
+                            withContext(Dispatchers.IO) {
+                                application.container.db.expandedCatalog?.ensureReadyDefinitions()
+                            }
+                            setupDismissed = true
+                            preferences.edit().putBoolean("home_setup_dismissed", true).apply()
+                            navController.navigate(NavigationItems.World.route)
+                        } catch (cancelled: CancellationException) { throw cancelled }
+                        catch (_: Exception) { context.showAppFeedback(R.string.app_load_failed, important = true) }
+                        finally { choosingExpanded = false }
+                    }
+                },
                 modifier = contentModifier)
         } else if (state == HomeReadiness.CHOOSE_PARTNER) {
             CyberEmptyState(stringResource(R.string.app_home_no_partner_body), contentModifier,
@@ -267,7 +296,36 @@ fun HomeScreen(
                     height = cardIconData!!.cardIconHeight
                 )
 
-                if (activeMon!!.isBemCard && beData != null) {
+                if (activeMon!!.characterType == DeviceType.APP) {
+                    VBDiMHomeScreen(
+                         activeMon = appData?.let { activeMon!!.copy(stage = it.stage, attribute = it.attribute, isBemCard = it.assignedBem) } ?: activeMon!!,
+                        vbData = null,
+                        appData = appData,
+                        specialMissions = vbSpecialMissions,
+                        homeScreenController = homeScreenController,
+                        onClickCollect = { item, currency -> collectedItem = item; collectedCurrency = currency },
+                        transformationHistory = transformationHistory,
+                        nickname = activeMon!!.nickname,
+                        speciesName = speciesProfile?.speciesName
+                            ?.takeIf { it.isNotBlank() }
+                            ?: speciesProfile?.matchedName?.takeIf { it.isNotBlank() },
+                        contentPadding = PaddingValues(0.dp),
+                        cardIcon = cardIcon,
+                        speechBubbleText = latestReaction?.content,
+                        onClickCharacter = { navController.navigate(NavigationItems.Chat.route.replace("{characterId}", activeMon!!.id.toString())) },
+                        onLongClickCharacter = { detailsCharacterId = activeMon!!.charId },
+                        onFavoriteSwipe = cycleFavorite,
+                        favoriteTransitionDirection = favoriteTransitionDirection,
+                        favoriteIndex = favoriteIndex,
+                        favoriteCount = favoriteCharacters.size,
+                        vitalsHistory = vitalsHistory,
+                        onClickTransformation = {
+                            if (it.stageId != activeMon!!.charId && it.stage <= activeMon!!.stage) {
+                                selectedTransformationId = it.id
+                            }
+                        }
+                    )
+                } else if (activeMon!!.isBemCard && beData != null) {
                     BEBEmHomeScreen(
                         activeMon = activeMon!!,
                         beData = beData!!,
@@ -443,4 +501,5 @@ internal data class HomePartnerDetails(
     val vbData: VBCharacterData?,
     val beData: BECharacterData?,
     val icon: CardDtos.CardIcon?,
+    val appData: com.github.nacabaro.vbhelper.daos.AppHomeStats? = null,
 )

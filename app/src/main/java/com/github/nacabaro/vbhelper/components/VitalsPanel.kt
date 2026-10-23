@@ -54,12 +54,10 @@ fun VitalsHeaderStat(
     modifier: Modifier = Modifier,
     icon: Int = R.drawable.baseline_vitals_24
 ) {
-    val pulseAlpha = cyberPulseAlpha()
     Card(
         modifier = modifier.fillMaxWidth().cyberFrame(active = true),
         shape = RectangleShape,
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-        border = androidx.compose.foundation.BorderStroke(1.dp, SurfaceStroke)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -74,27 +72,27 @@ fun VitalsHeaderStat(
             ) {
                 Icon(
                     painter = painterResource(icon),
-                    contentDescription = label,
+                    contentDescription = null,
                     tint = VitalCyan,
                     modifier = Modifier.size(26.dp)
                 )
             }
             Column(modifier = Modifier.padding(start = 14.dp)) {
                 Text(
-                    text = label.uppercase(),
-                    color = TextMutedOnDark,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 12.sp,
-                    letterSpacing = 1.sp,
-                    maxLines = 1,
+                    text = label,
+                    color = TextPrimaryOnDark,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
+                Text(stringResource(R.string.immersion_vital_points), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
                         text = "%,d".format(current),
                         color = VitalCyan,
-                        fontWeight = FontWeight.Black,
-                        fontSize = 28.sp
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.displaySmall
                     )
                     Text(
                         text = " / %,d".format(max),
@@ -118,7 +116,6 @@ fun VitalsHeaderStat(
                             .fillMaxWidth(ratio)
                             .height(8.dp)
                             .clip(RoundedCornerShape(50))
-                            .graphicsLayer(alpha = pulseAlpha)
                             .background(
                                 Brush.horizontalGradient(listOf(VitalCyanDim, VitalCyan))
                             )
@@ -153,7 +150,7 @@ fun InfoStatRow(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 8.dp)
+                .padding(horizontal = 8.dp, vertical = 6.dp)
         ) {
             Icon(
                 painter = painterResource(icon),
@@ -168,10 +165,10 @@ fun InfoStatRow(
             ) {
                 Text(
                     text = label,
-                    color = TextPrimaryOnDark,
+                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
@@ -179,7 +176,7 @@ fun InfoStatRow(
                     color = valueColor,
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
-                    maxLines = 1,
+                    maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
             }
@@ -240,7 +237,7 @@ fun WeeklyVitalsChart(
                         Text(
                             text = "%,d".format(entry.vitalPoints),
                             color = TextMutedOnDark,
-                            fontSize = 9.sp,
+                            style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
                             maxLines = 1
                         )
@@ -267,7 +264,7 @@ fun WeeklyVitalsChart(
                         Text(
                             text = "%d/%d".format(entry.month, entry.day),
                             color = TextMutedOnDark,
-                            fontSize = 9.sp,
+                            style = MaterialTheme.typography.labelSmall,
                             modifier = Modifier.padding(top = 4.dp)
                         )
                     }

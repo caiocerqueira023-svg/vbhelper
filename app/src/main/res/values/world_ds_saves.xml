@@ -1,0 +1,33 @@
+<resources>
+    <string name="transfer_world_ds">Digimon World DS · USA · DraStic raw save</string>
+    <string name="transfer_unassigned">Unassigned records</string>
+    <string name="transfer_record_details_no_personality">Level %1$d · Native species %2$d · Position %3$d</string>
+    <string name="transfer_world_ds_stats">Native HP %1$d/%2$d · MP %3$d/%4$d</string>
+    <string name="transfer_world_ds_combat">Attack %1$d · Defense %2$d · Spirit %3$d · Speed %4$d</string>
+    <string name="transfer_world_ds_aptitude">Native aptitude: %1$d</string>
+    <string name="transfer_world_ds_exp">Native EXP channels (original order): %1$s</string>
+    <string name="transfer_world_ds_copy">Save copy %1$d</string>
+    <string name="transfer_integrity_unverified">The native checksum is not verified. Snapshot copies preserve the source; game writing remains unavailable.</string>
+    <string name="world_ds_choose_copy">Review save copy</string>
+    <string name="world_ds_copy_explanation">The newest valid copy is preselected; choose another to override it for this exact read. Compare the rosters with your game. This does not change the save or verify its checksum. A changed save requires a new review.</string>
+    <string name="world_ds_copy_roster">Copy %1$d · %2$d records</string>
+    <string name="world_ds_copy_member">%1$s · Level %2$d</string>
+    <string name="world_ds_use_copy">Use this copy for this read</string>
+    <string name="world_ds_copy_confirmed">Save-copy authority was user-confirmed for this exact revision.</string>
+    <string name="world_ds_copy_failed">The save changed or could not be read. Close this review, refresh the source and try again.</string>
+    <string name="world_ds_personality_initialization">This game has no mapped native personality. VBHelper initializes an app-only personality once; native personality stays absent.</string>
+    <string name="world_ds_personality_retained">Personality belongs to the app. Native personality is absent; source refresh preserves your app personality.</string>
+    <string name="transfer_save_copy_review">Multiple populated save copies were found. Their records are shown for review; no current copy has been selected.</string>
+    <string name="transfer_move_copy_divergence">The save\'s copies disagree about this Digimon, so a native move would discard one version. Save again in the game or refresh the linked save.</string>
+    <string name="transfer_save_copy_auto">Using the newest valid save copy. Older copies are ignored for moves; review a copy to override.</string>
+    <string name="transfer_move_copy_older_only">This Digimon exists only in an older save copy. Save again in the game or review the newer copy.</string>
+    <string name="transfer_issue_guest">Guest from another save.</string>
+    <string name="transfer_issue_lent">Lent to another save.</string>
+    <string name="transfer_issue_egg">Native egg record.</string>
+    <string name="transfer_issue_foreign">Marked as belonging to another DS.</string>
+    <string name="transfer_issue_location">Conflicting location references.</string>
+    <string name="transfer_issue_name_codes">Some native name characters are unmapped. Exact original bytes are retained.</string>
+    <string name="transfer_issue_unassigned">No party or farm location reference was found.</string>
+    <string name="transfer_issue_save_copy">Save-copy authority needs review.</string>
+    <string name="transfer_issue_values">Some native values look unusual for the game. This record needs review before moving or sending.</string>
+</resources>

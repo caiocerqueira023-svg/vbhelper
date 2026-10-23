@@ -15,8 +15,8 @@ object WorldDtos {
         val interacted: Boolean,
         val charaIndex: Int,
         val stage: Int,
-        /** Local Card primary key, used for database navigation. */
-        val cardId: Long,
+        /** Local Card primary key, used for database navigation. Null for catalog definitions. */
+        val cardId: Long?,
         /** Bundled art identity derived from the card's actual DiM/BEM number. */
         val externalCharacterId: String,
         val attribute: NfcCharacter.Attribute,

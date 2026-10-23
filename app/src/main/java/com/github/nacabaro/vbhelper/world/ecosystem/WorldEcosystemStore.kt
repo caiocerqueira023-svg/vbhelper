@@ -38,11 +38,15 @@ class RoomWorldEcosystemStore(private val db: AppDatabase, private val interacti
     override suspend fun loadSession() = db.worldEcosystemDao().getSession()
     override suspend fun saveSession(session: WorldEcosystemSession) = db.worldEcosystemDao().saveSession(session)
     override suspend fun recordInput(input: WorldEcosystemInput) = db.worldEcosystemDao().recordInput(input)
-    override suspend fun saveMovement(actors: List<WorldSpawn>) {
-        actors.forEach { actor -> db.worldSpawnDao().checkpointMovement(actor.individualId, actor.latitude, actor.longitude,
+    override suspend fun saveMovement(actors: List<WorldSpawn>) = db.withTransaction {
+        val eligibility = db.participation?.snapshot()
+        actors.filter { eligibility?.card(it.cardCharacterId)?.usable != false }.forEach { actor -> db.worldSpawnDao().checkpointMovement(actor.individualId, actor.latitude, actor.longitude,
             actor.wanderTargetLatitude, actor.wanderTargetLongitude, actor.movementState, actor.movementTick, actor.nextDecisionTick) }
     }
-    override suspend fun loadSpawns(now: Long) = db.worldSpawnDao().getActiveSpawnsSync(now)
+    override suspend fun loadSpawns(now: Long): List<WorldSpawn> {
+        val eligibility = db.participation?.snapshot()
+        return db.worldSpawnDao().getActiveSpawnsSync(now).filter { eligibility?.card(it.cardCharacterId)?.usable != false }
+    }
     override suspend fun loadPopulation(now: Long) = db.withTransaction {
         WorldInteractionRepository(db) { now }.reconcileLocked()
         db.worldSpawnDao().deleteExpired(now)
@@ -57,7 +61,7 @@ class RoomWorldEcosystemStore(private val db: AppDatabase, private val interacti
                 (state.alliedMembers+state.opposingMembers).associateBy { it.combatantId.substringAfter(':') }
             }.getOrDefault(emptyMap()) } ?: emptyMap()
         ) }
-        val actors = db.worldSpawnDao().getActiveSpawnsSync(now)
+        val actors = loadSpawns(now)
         val personalities = actors.mapNotNull { actor -> db.digimonIndividualDao().getPersonality(actor.individualId)?.let { actor.individualId to it.personalityType } }.toMap()
         val tick = db.worldEcosystemDao().getSession()?.tickIndex ?: 0
         val trailing = dao.trailingPublicSpeech((tick - 8).coerceAtLeast(0)).map { EcosystemUtterance(it.speakerId,it.body,it.tick) }

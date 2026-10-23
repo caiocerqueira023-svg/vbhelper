@@ -46,7 +46,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
@@ -63,6 +65,9 @@ import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.CharacterEntry
 import com.github.nacabaro.vbhelper.components.CyberEmptyState
+import com.github.nacabaro.vbhelper.components.rememberCollectionLoad
+import com.github.nacabaro.vbhelper.components.CollectionStatePanel
+import com.github.nacabaro.vbhelper.components.CollectionRefreshNotice
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.components.motionEnabled
 import com.github.nacabaro.vbhelper.components.VitalButton
@@ -71,11 +76,15 @@ import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
 import com.github.nacabaro.vbhelper.screens.adventureScreen.AdventureScreenControllerImpl
 import com.github.nacabaro.vbhelper.source.StorageRepository
+import com.github.nacabaro.vbhelper.source.gameSave.AwayNativeRecord
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.DeviceType
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
 
@@ -87,7 +96,16 @@ fun StorageScreen(
 ) {
     val application = LocalContext.current.applicationContext as VBHelper
     val storageRepository = remember { StorageRepository(application.container.db) }
-    val characterList by storageRepository.getAllCharacters().collectAsState(initial = emptyList())
+    val collection = rememberCollectionLoad(storageRepository) { storageRepository.getAllCharacters() }
+    val characterList = collection.data.orEmpty()
+    val nativeArchives by application.container.gameImportAcquisition.archives.collectAsState(initial = emptyList())
+    val awayRepository = remember(application) { application.container.storageAway }
+    val awayCharacters by remember(awayRepository) { awayRepository.observeAwayCharacters() }
+        .collectAsState(initial = emptyList())
+    val linkedSources by application.container.linkedGameSaves.sources.collectAsState(initial = emptyList())
+    val awayCharacterIds = remember(awayCharacters) { awayCharacters.map { it.characterId }.toSet() }
+    val awaySourceIds = remember(awayCharacters) { awayCharacters.associate { it.characterId to it.sourceId } }
+    val sourceLabels = remember(linkedSources) { linkedSources.associate { it.source.sourceId to it.source.label } }
     val farmAssignments by application.container.digifarmRepository.observeAssignments()
         .collectAsState(initial = emptyList())
     val farmByCharacter = remember(farmAssignments) { farmAssignments.associate { it.characterId to it.farmName } }
@@ -100,11 +118,53 @@ fun StorageScreen(
     }
 
     var selectedCharacter by rememberSaveable { mutableStateOf<Long?>(null) }
+    var selectedNativeSnapshot by rememberSaveable { mutableStateOf<Long?>(null) }
+    var selectedAwayRecord by remember { mutableStateOf<AwayNativeRecord?>(null) }
+    val participation = com.github.nacabaro.vbhelper.components.rememberPartnerParticipation()
+    val scope = rememberCoroutineScope()
+    val debugSettings = com.github.nacabaro.vbhelper.components.rememberDebugSettings()
+    var showDebugAdd by rememberSaveable { mutableStateOf(false) }
+    var debugCandidates by remember { mutableStateOf<List<com.github.nacabaro.vbhelper.dtos.DebugSpawnCharacter>?>(null) }
+    var debugCandidatesFailed by remember { mutableStateOf(false) }
+    var debugPickerAttempt by remember { mutableIntStateOf(0) }
+    var debugAddInProgress by remember { mutableStateOf(false) }
+    LaunchedEffect(showDebugAdd, debugPickerAttempt, debugSettings.enabled) {
+        if (!showDebugAdd || !debugSettings.enabled) return@LaunchedEffect
+        debugCandidates = null
+        debugCandidatesFailed = false
+        try {
+            val repository = com.github.nacabaro.vbhelper.source.DebugStorageRepository(
+                application.container.db,
+                debugEnabled = { application.container.debugSettingsRepository.enabled })
+            debugCandidates = withContext(Dispatchers.IO) { repository.candidates() }
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { debugCandidatesFailed = true }
+    }
     var showScanCollection by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableStateOf(StorageFilter.ALL) }
     var sort by rememberSaveable { mutableStateOf(StorageSort.RECENT) }
     var sortMenuExpanded by remember { mutableStateOf(false) }
+    val awayNative by produceState<List<AwayNativeRecord>>(emptyList(), filter) {
+        if (filter != StorageFilter.AWAY) return@produceState
+        awayRepository.nativeRecords.collect { value = it }
+    }
+    val visibleNativeArchives = nativeArchives.filter { archive ->
+        archive.characterId == null && filter == StorageFilter.ALL &&
+            (query.isBlank() || listOfNotNull(archive.nickname, archive.record?.storedName, archive.snapshot.sourceLabel)
+                .any { it.contains(query.trim(), ignoreCase = true) })
+    }
+    val visibleAwayNative = remember(awayNative, query, filter, sort) {
+        if (filter != StorageFilter.AWAY) emptyList()
+        else awayNative
+            .filter { record ->
+                query.isBlank() || listOf(record.name, record.sourceLabel, record.gameId)
+                    .any { it.contains(query.trim(), ignoreCase = true) }
+            }
+            .let { records ->
+                if (sort == StorageSort.NAME) records.sortedBy { it.name.lowercase() } else records
+            }
+    }
     val gridState = rememberLazyGridState()
     val allowMotion = motionEnabled()
     var toolbarVisible by rememberSaveable { mutableStateOf(true) }
@@ -142,16 +202,19 @@ fun StorageScreen(
         lastScrollPosition = 0
     }
 
-    val visibleCharacters = remember(characterList, query, filter, sort, fallbackName) {
+    val visibleCharacters = remember(characterList, query, filter, sort, fallbackName, awayCharacterIds) {
         val normalizedQuery = query.trim().lowercase()
         characterList.asSequence()
             .filter { character ->
-                when (filter) {
+                val away = character.id in awayCharacterIds
+                if (filter == StorageFilter.AWAY) away
+                else !away && when (filter) {
                     StorageFilter.ALL -> true
                     StorageFilter.FAVORITES -> character.isFavorite
                     StorageFilter.ACTIVE -> character.active
                     StorageFilter.VB -> character.characterType == DeviceType.VBDevice
                     StorageFilter.BE -> character.characterType == DeviceType.BEDevice
+                    StorageFilter.AWAY -> false
                 }
             }
             .filter { character ->
@@ -246,7 +309,7 @@ fun StorageScreen(
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Text(
-                            text = stringResource(R.string.storage_result_count, visibleCharacters.size),
+                            text = stringResource(R.string.storage_result_count, visibleCharacters.size + visibleNativeArchives.size + visibleAwayNative.size),
                             style = MaterialTheme.typography.labelLarge,
                             color = VitalCyan
                         )
@@ -277,14 +340,29 @@ fun StorageScreen(
                             }
                         }
                     }
+                    if (debugSettings.enabled) {
+                        Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            VitalButton(onClick = { showDebugAdd = true }, modifier = Modifier.fillMaxWidth()) {
+                                Text(stringResource(R.string.storage_debug_add_button))
+                            }
+                            Text(
+                                stringResource(R.string.storage_debug_add_hint_all),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
                 }
             }
 
+            CollectionRefreshNotice(collection, Modifier.padding(horizontal = 12.dp))
             when {
-                characterList.isEmpty() -> {
-                    CyberEmptyState(message = stringResource(R.string.storage_nothing_to_see_here))
+                collection.blocking -> CollectionStatePanel(collection, Modifier.weight(1f))
+                characterList.isEmpty() && nativeArchives.isEmpty() -> {
+                    CyberEmptyState(message = stringResource(if (nativeArchives.isNotEmpty())
+                        R.string.storage_native_archive_empty_playable else R.string.storage_nothing_to_see_here))
                 }
-                visibleCharacters.isEmpty() -> {
+                visibleCharacters.isEmpty() && visibleNativeArchives.isEmpty() && visibleAwayNative.isEmpty() -> {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
@@ -310,13 +388,62 @@ fun StorageScreen(
                         state = gridState,
                         modifier = Modifier.weight(1f)
                     ) {
+                        items(visibleAwayNative, key = { "away:${it.sourceId}:${it.recordKey}" }, contentType = { "away-native-character" }) { record ->
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 4.dp, vertical = 4.dp)
+                            ) {
+                                Box(Modifier.fillMaxWidth()) {
+                                    com.github.nacabaro.vbhelper.screens.transferScreen.AwayNativeRecordTile(record) {
+                                        selectedAwayRecord = record
+                                    }
+                                }
+                                Text(
+                                    text = record.name,
+                                    style = MaterialTheme.typography.labelMedium,
+                                    color = TextPrimaryOnDark,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { selectedAwayRecord = record }
+                                        .padding(horizontal = 4.dp, vertical = 2.dp)
+                                )
+                                Text(
+                                    text = stringResource(R.string.storage_away_in_source, record.sourceLabel),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = VitalCyan,
+                                    textAlign = TextAlign.Center,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                        items(visibleNativeArchives, key = { "native:${it.snapshot.individualId}" }, contentType = { "native-storage-character" }) { archive ->
+                            Box(Modifier.fillMaxWidth().padding(4.dp)) {
+                                com.github.nacabaro.vbhelper.screens.transferScreen.NativeArchiveStorageTile(archive) {
+                                    selectedNativeSnapshot = archive.snapshot.id
+                                }
+                            }
+                        }
                         items(
                             items = visibleCharacters,
                             key = { it.id },
                             contentType = { "storage-character" }
                         ) { character ->
+                            val usable = participation?.owned(character.id)?.usable != false
                             val openCharacter = {
-                                if (!character.isInAdventure) {
+                                if (character.id in awayCharacterIds) {
+                                    Toast.makeText(
+                                        application,
+                                        application.getString(R.string.transfer_send_away),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                } else if (!character.isInAdventure) {
                                     selectedCharacter = character.id
                                 } else {
                                     Toast.makeText(
@@ -347,9 +474,12 @@ fun StorageScreen(
                                         ),
                                         animationKey = character.id,
                                         vitalPoints = character.vitalPoints,
+                                        iconDescription = character.displayName(fallbackName),
+                                        selected = character.active,
+                                        unavailable = !usable,
                                         shape = RectangleShape,
                                         onClick = openCharacter,
-                                        cardColors = if (character.active) {
+                                        cardColors = if (character.active && usable) {
                                             CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary)
                                         } else {
                                             CardDefaults.cardColors(
@@ -362,7 +492,7 @@ fun StorageScreen(
                                         Icon(
                                             imageVector = Icons.Filled.Star,
                                             contentDescription = stringResource(R.string.storage_favorite_indicator),
-                                            tint = VitalCyan.copy(alpha = 0.58f),
+                                            tint = (if (usable) VitalCyan else com.github.nacabaro.vbhelper.ui.theme.InactiveOutline).copy(alpha = 0.58f),
                                             modifier = Modifier
                                                 .align(Alignment.TopEnd)
                                                 .padding(14.dp)
@@ -386,6 +516,20 @@ fun StorageScreen(
                                     Text(
                                         text = stringResource(R.string.storage_in_digifarm, farmName),
                                         style = MaterialTheme.typography.labelSmall,
+                                        color = if (usable) VitalCyan else com.github.nacabaro.vbhelper.ui.theme.InactiveOutline,
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
+                                    )
+                                }
+                                if (character.id in awayCharacterIds) {
+                                    val sourceLabel = awaySourceIds[character.id]?.let(sourceLabels::get)
+                                    Text(
+                                        text = if (sourceLabel != null)
+                                            stringResource(R.string.storage_away_in_source, sourceLabel)
+                                        else stringResource(R.string.storage_away_unknown_source),
+                                        style = MaterialTheme.typography.labelSmall,
                                         color = VitalCyan,
                                         textAlign = TextAlign.Center,
                                         maxLines = 1,
@@ -402,6 +546,19 @@ fun StorageScreen(
 
         if (showScanCollection) StorageScanCollectionDialog(application.container.db,
             onClose = { showScanCollection = false })
+        nativeArchives.firstOrNull { it.snapshot.id == selectedNativeSnapshot }?.let { archive ->
+            com.github.nacabaro.vbhelper.screens.transferScreen.NativeArchiveStorageInformation(archive, onMoveToGame = {
+                selectedNativeSnapshot = null
+                navController.navigate(com.github.nacabaro.vbhelper.navigation.TransferNavigation.route(
+                    com.github.nacabaro.vbhelper.navigation.TransferSection.SEND,
+                    individualId = archive.snapshot.individualId))
+            }, onDismiss = { selectedNativeSnapshot = null })
+        }
+
+        selectedAwayRecord?.let { record ->
+            com.github.nacabaro.vbhelper.screens.transferScreen.AwayNativeRecordInformation(
+                record, onDismiss = { selectedAwayRecord = null })
+        }
 
         selectedCharacter?.let { characterId ->
             StorageDialog(
@@ -422,10 +579,10 @@ fun StorageScreen(
                         }
                     )
                 },
-                onSendToBracelet = {
-                    navController.navigate(
-                        NavigationItems.Scan.route.replace("{characterId}", characterId.toString())
-                    )
+                onTransferOptions = {
+                    selectedCharacter = null
+                    navController.navigate(com.github.nacabaro.vbhelper.navigation.TransferNavigation.route(
+                        com.github.nacabaro.vbhelper.navigation.TransferSection.SEND, characterId))
                 },
                 onClickSendToAdventure = { time ->
                     adventureScreenController.sendCharacterToAdventure(
@@ -454,6 +611,44 @@ fun StorageScreen(
                     )
                 }
             )
+        }
+
+        if (showDebugAdd && debugSettings.enabled) {
+            com.github.nacabaro.vbhelper.screens.worldScreen.DebugSpawnPickerDialog(
+                characters = debugCandidates,
+                failed = debugCandidatesFailed,
+                enabled = !debugAddInProgress,
+                onRetry = { debugPickerAttempt++ },
+                onSelect = { id ->
+                    if (debugAddInProgress) return@DebugSpawnPickerDialog
+                    debugAddInProgress = true
+                    scope.launch(Dispatchers.IO) {
+                        try {
+                            val repository = com.github.nacabaro.vbhelper.source.DebugStorageRepository(
+                                application.container.db,
+                                debugEnabled = { application.container.debugSettingsRepository.enabled })
+                            repository.addToStorage(id)
+                            withContext(Dispatchers.Main) {
+                                android.widget.Toast.makeText(
+                                    application,
+                                    application.getString(R.string.storage_debug_add_success),
+                                    android.widget.Toast.LENGTH_SHORT).show()
+                                showDebugAdd = false
+                            }
+                        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                        catch (_: Exception) {
+                            withContext(Dispatchers.Main) {
+                                android.widget.Toast.makeText(
+                                    application,
+                                    application.getString(R.string.storage_debug_add_failure),
+                                    android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        } finally {
+                            debugAddInProgress = false
+                        }
+                    }
+                },
+                onDismiss = { showDebugAdd = false })
         }
     }
 }

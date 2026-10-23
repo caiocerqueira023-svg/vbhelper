@@ -1,0 +1,13 @@
+<resources>
+    <string name="dot_assigned_tab">Assigned</string>
+    <string name="dot_loaded_tab">Loaded</string>
+    <string name="dot_bundled_tab">Dot sprites</string>
+    <string name="dot_matching">This species</string>
+    <string name="dot_all">All Digimon</string>
+    <string name="dot_offline_hint">Included with the app. Artist and device credits are shown for each set. Your choice applies when you save the species.</string>
+    <string name="dot_no_matching">No confirmed Dot set for this species yet. Browse all Digimon to choose artwork, or use the loaded sprites.</string>
+    <string name="dot_no_results">No Dot sets match this search. Try a species, artist, or device name.</string>
+    <string name="dot_selection_failed">Could not load this sprite set. Select it again to retry, or choose another set.</string>
+    <string name="dot_credits_title">Dot sprite library</string>
+    <string name="dot_credits_description">Digimon / Pendulum Color sprite database, curated by tero0x, plus newer Color-device Dot animations from the Digitama Hatchery (humulos) and Wikimon Color V-Pet sprites. Original device and community artwork credits are shown with each set in Species and sprites.</string>
+</resources>

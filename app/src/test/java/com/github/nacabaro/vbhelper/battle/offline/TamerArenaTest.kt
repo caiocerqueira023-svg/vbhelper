@@ -168,4 +168,17 @@ class TamerArenaTest {
         assertEquals(4, next.matches.count { it.round == 0 && it.winnerId != null })
         assertEquals(next, next.advanceRound())
     }
+
+    @Test fun legacyArtworkFlagsCannotExcludeAPartnerFromCups() {
+        val player = TamerBattleFactory.freeze(
+            OfflineBattleParticipant(null, "dim012_mon03", "Agumon", 1, 1, stage = 5, individualId = "stored-1"))
+        val foe = OfflineBattleParticipant(null, "dim012_mon04", "Greymon", 1, 1, stage = 5,
+            battleInstanceId = "tamer:masaru:0", speciesName = "Greymon")
+        val exhibition = ArenaMatchSpec("fixture-exhibition", ArenaEntrant("player", "You", null, listOf(player), TrainerAiPolicy()),
+            ArenaEntrant("masaru", "Masaru", "masaru", listOf(foe), TrainerAiPolicy(), modeFallbackArtwork = true),
+            ArenaDifficulty.NORMAL, BattleConfiguration(strictFinisherEligibility = true, itemCooldownMillis = 5_000))
+        TamerBattleFactory.validate(exhibition)
+        val cup = exhibition.copy(tournamentId = "cup-1")
+        TamerBattleFactory.validate(cup)
+    }
 }

@@ -43,6 +43,7 @@ class StorageRepository (
 
     suspend fun getOrCreatePersonality(characterId: Long): DigimonPersonalityTraits {
         val character = db.userCharacterDao().getCharacter(characterId)
+        preservedImportedPersonality(character.individualId)?.let { return it }
         db.digimonIndividualDao().getPersonality(character.individualId)
             ?.takeIf { it.isCurrentSystem }
             ?.let { return it }
@@ -62,6 +63,7 @@ class StorageRepository (
         attribute: com.github.cfogrady.vbnfc.data.NfcCharacter.Attribute?,
         stage: Int
     ): DigimonPersonalityTraits {
+        preservedImportedPersonality(individualId)?.let { return it }
         db.digimonIndividualDao().getPersonality(individualId)
             ?.takeIf { it.isCurrentSystem }
             ?.let { return it }
@@ -72,6 +74,25 @@ class StorageRepository (
         )
         db.digimonIndividualDao().upsertPersonality(generated)
         return db.digimonIndividualDao().getPersonality(individualId) ?: generated
+    }
+
+    private suspend fun preservedImportedPersonality(individualId: String): DigimonPersonalityTraits? {
+        val current = db.digimonIndividualDao().getPersonality(individualId)
+        if (current != null && current.systemVersion >= com.github.nacabaro.vbhelper.domain.personality.CURRENT_PERSONALITY_SYSTEM_VERSION) return current
+        if (db.digimonIndividualDao().getIndividual(individualId)?.originKind != com.github.nacabaro.vbhelper.domain.device_data.IndividualOrigin.IMPORTED) return null
+        val preserved = current ?: db.nativeMaterializationDao().latestSnapshotId(individualId)?.let { snapshotId ->
+            db.nativeMaterializationDao().snapshot(snapshotId)?.let { snapshot ->
+                val reviewed = snapshot.reviewAuditJson?.let { raw -> runCatching {
+                    com.google.gson.Gson().fromJson(raw, com.github.nacabaro.vbhelper.source.gameSave.NativeRefreshAudit::class.java).afterAppValues
+                }.getOrNull() }
+                DigimonPersonalityTraits(individualId, com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityType.valueOf(
+                    reviewed?.personality ?: snapshot.mappedPersonality), reviewed?.personalityUpdatedAt ?: snapshot.importedAt)
+            }
+        } ?: return null
+        // A rules upgrade must not randomize a verified import or an explicit later app edit.
+        val upgraded = preserved.copy(systemVersion = com.github.nacabaro.vbhelper.domain.personality.CURRENT_PERSONALITY_SYSTEM_VERSION)
+        db.digimonIndividualDao().upsertPersonality(upgraded)
+        return upgraded
     }
 
     suspend fun ensureAllPersonalities() {
@@ -86,10 +107,6 @@ class StorageRepository (
 
     suspend fun updateNickname(characterId: Long, nickname: String?) {
         db.digimonIndividualDao().updateNicknameForCharacter(characterId, nickname)
-    }
-
-    fun deleteCharacter(id: Long) {
-        return db.userCharacterDao().deleteCharacterById(id)
     }
 
     fun getAdventureCharacters(): Flow<List<CharacterDtos.AdventureCharacterWithSprites>> {

@@ -1,0 +1,34 @@
+<resources>
+    <string name="transfer_provisional_short">リンク元の照合は暫定 · VBHelperの個体識別は保持</string>
+    <string name="transfer_snapshot_copy_only">パーティとバンクのスナップショットをコピーできます。元のゲームセーブは保持されます。ファームと境界のレコードは要確認で、ゲームへの書き込みは利用できません。</string>
+    <string name="transfer_provisional_identity">照合はリンク元に限定した暫定候補マーカーを使用します。VBHelperは独自の永続個体IDを作成します。以降の照合には確認が必要です。ゲーム全体で検証済みの識別や移動ではありません。</string>
+    <string name="transfer_confirm_same_individuals">これらのリンク元レコードが、確認画面に表示されたストレージの個体と同一であることを確認します。</string>
+    <string name="continuity_trophies">獲得トロフィー：%1$d</string>
+    <string name="native_mapping_origin_unmapped">出自の能力値の正規化は未対応です。関係のない初期値に置き換えず、ネイティブ値を保持します。</string>
+    <string name="home_app_held_item">トレーニング効果</string>
+    <string name="app_item_not_applied">このアイテムを適用できませんでした。所持品とパートナーのデータは保持されています。</string>
+    <string name="pc_connect">ローカルPCに接続</string>
+    <string name="pc_default_label">自分のPC</string>
+    <string name="pc_pairing_hint">PCでVBHelperのセーブコンパニオンを実行し、表示されたペアリングリンクを貼り付けてください。スマートフォンとPCは同じローカルネットワークに接続してください。保存済みファイルのみ読み取ります。</string>
+    <string name="pc_pairing_link">コンパニオンのペアリングリンク</string>
+    <string name="pc_pair">ペアリングしてセーブを検索</string>
+    <string name="pc_repair">PCに再接続</string>
+    <string name="pc_pairing_failed">ペアリングできませんでした。リンク、コンパニオンの起動、ローカルネットワーク、ファイアウォールを確認して再試行してください。</string>
+    <string name="pc_local_permission">PCへの接続にはローカルネットワーク権限が必要です。</string>
+    <string name="pc_permission">PCアクセスまたはペアリングを利用できません。再接続し、必要な場合はローカルネットワークアクセスを許可してください。</string>
+    <string name="transfer_locations">検索する場所</string>
+    <string name="transfer_locations_hint">更新時にリンクしたフォルダとペアリング済みPCを検索します。リンク解除したセーブは再リンクするまで除外されます。現在の状態は保存済みファイルであり、エミュレータの実行メモリではありません。</string>
+    <string name="transfer_stop_discovery">検索を停止</string>
+    <string name="transfer_stop_discovery_confirm">この場所の検索を停止しますか？既存のリンク元、キャッシュした観測、取り込み履歴は保持されます。PCの場合はスマートフォンのペアリング認証情報も削除します。</string>
+    <string name="continuity_title">永続履歴とアプリの変更</string>
+    <string name="continuity_scope">記録された観測とアプリのイベントであり、元のゲームでの完全な経歴ではありません。ネイティブ値、アプリ用の投影、アプリの変更は別々に保持されます。</string>
+    <string name="continuity_native_imported">ネイティブスナップショットを取得</string>
+    <string name="continuity_native_refreshed">確認後にネイティブスナップショットを更新</string>
+    <string name="continuity_materialized">APP表現を作成</string>
+    <string name="continuity_app_form">アプリの形態を記録</string>
+    <string name="continuity_device_form">デバイスの形態を観測</string>
+    <string name="continuity_app_changes">記録されたアプリの変更</string>
+    <string name="continuity_delta">HP %1$d · AP %2$d · BP %3$d · バイタル %4$d · 勝利 %5$d · 敗北 %6$d</string>
+    <string name="continuity_baseline">アプリ投影 v%1$d · 段階 %2$d · 訓練HP/AP/BP %3$d/%4$d/%5$d · バイタル %6$d</string>
+    <string name="continuity_adopted">既存のアプリ状態を基準として採用しました。それ以前の変更は不明です。</string>
+</resources>

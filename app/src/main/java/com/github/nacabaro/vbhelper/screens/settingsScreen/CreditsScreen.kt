@@ -3,6 +3,9 @@ package com.github.nacabaro.vbhelper.screens.settingsScreen
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -29,7 +32,7 @@ fun CreditsScreen(
     ) { contentPadding ->
         Column (
             modifier = Modifier
-                .padding(top = contentPadding.calculateTopPadding())
+                .padding(contentPadding).verticalScroll(rememberScrollState()).padding(bottom = 24.dp)
         ) {
             SettingsSection(stringResource(R.string.credits_section_reverse_engineering))
             SettingsEntry(title = "cyanic", description = stringResource(R.string.credits_cyanic_description))
@@ -40,6 +43,8 @@ fun CreditsScreen(
             SettingsEntry(title = "shvstrz", description = stringResource(R.string.credits_shvstrz_description))
 
             SettingsEntry(title = "redeyez", description = stringResource(R.string.credits_RedEyez_description))
+            SettingsSection(stringResource(R.string.dot_credits_title))
+            SettingsEntry(title = "tero0x · Digimon / Pendulum Color", description = stringResource(R.string.dot_credits_description))
         }
     }
 }

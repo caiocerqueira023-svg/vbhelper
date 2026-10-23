@@ -77,12 +77,13 @@ class ScanScreenControllerImpl(
                     // Commit the entire import before the watch is told to remove its copy.
                     tagCommunicator.receiveCharacter { character ->
                         val converter = FromNfcConverter(componentActivity, tagCommunicator.deviceKey)
-                        resultMessage = selectedImportCardId?.let { converter.addCharacterUsingCard(character, it) }
+                        val result = selectedImportCardId?.let { converter.addCharacterUsingCard(character, it) }
                             ?: converter.addCharacter(character) { cards, nfcCharacter ->
                                 lastScannedCharacter = nfcCharacter
                                 componentActivity.runOnUiThread { onMultipleCards(cards) }
                             }
-                        saved = resultMessage == "Done reading character!"
+                        saved = result.saved
+                        resultMessage = importMessage(result)
                         saved
                     }
                     if (saved) {
@@ -296,8 +297,15 @@ class ScanScreenControllerImpl(
         val nfcConverter = FromNfcConverter(
             componentActivity = componentActivity
         )
-        return nfcConverter.addCharacter(nfcCharacter, onMultipleCards)
+        return importMessage(nfcConverter.addCharacter(nfcCharacter, onMultipleCards))
     }
+
+    private fun importMessage(result: com.github.nacabaro.vbhelper.screens.scanScreen.converters.NfcImportResult): String =
+        componentActivity.getString(when (result) {
+            is com.github.nacabaro.vbhelper.screens.scanScreen.converters.NfcImportResult.Stored -> R.string.immersion_transfer_received
+            com.github.nacabaro.vbhelper.screens.scanScreen.converters.NfcImportResult.MissingCard -> R.string.immersion_transfer_missing_card
+            com.github.nacabaro.vbhelper.screens.scanScreen.converters.NfcImportResult.AmbiguousCard -> R.string.immersion_transfer_choose_card
+        })
 
     override suspend fun characterToNfc(characterId: Long): NfcCharacter = withContext(Dispatchers.IO) {
         database.withTransaction {

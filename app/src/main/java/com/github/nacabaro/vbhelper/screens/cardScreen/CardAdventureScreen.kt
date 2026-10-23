@@ -60,7 +60,8 @@ fun CardAdventureScreen(
                 itemsIndexed(cardAdventureMissions) { index, mission ->
                     CardAdventureEntry(
                         cardAdventureEntry = mission,
-                        obscure = index > currentCardAdventure - 1
+                        obscure = index > currentCardAdventure - 1,
+                        missionNumber = index + 1
                     )
                 }
             }

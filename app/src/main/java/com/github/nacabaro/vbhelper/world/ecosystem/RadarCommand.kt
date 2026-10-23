@@ -28,7 +28,7 @@ fun <T> RadarCommandResult<T>.getOrThrow(): T = when (this) {
 }
 
 /** Shared UI/commit eligibility. The coordinator additionally verifies the submitting lease. */
-fun EcosystemSnapshot.commandRejection(command: RadarCommand, now: Long): RadarRejection? {
+fun EcosystemSnapshot.commandRejection(command: RadarCommand, now: Long, allowAnyDistance: Boolean = false): RadarRejection? {
     val expectedStatus = if (command.kind == RadarCommandKind.BATTLE_COMMIT) EcosystemStatus.FROZEN else EcosystemStatus.READY
     if (status != expectedStatus || issue != null || session == null) return RadarRejection.NOT_READY
     if (command.stamp != commandStamp) return RadarRejection.STALE_SNAPSHOT
@@ -36,7 +36,7 @@ fun EcosystemSnapshot.commandRejection(command: RadarCommand, now: Long): RadarR
     if (command.kind in setOf(RadarCommandKind.ENCOUNTER, RadarCommandKind.BATTLE_RESERVATION, RadarCommandKind.QUEST_INTERACTION)) {
         val individual = individuals.firstOrNull { it.individualId == command.individualId } ?: return RadarRejection.UNAVAILABLE
         if (individual.individualId in claimedIndividuals) return RadarRejection.CLAIMED
-        if (!com.github.nacabaro.vbhelper.world.RadarDebugInteraction.allowAnyDistance &&
+        if (!allowAnyDistance &&
             !RadarWorldGeometry.relative(playerFix!!.position, individual.position).withinInteractionRange) return RadarRejection.OUT_OF_RANGE
     }
     if(command.kind==RadarCommandKind.EVENT_PARTICIPATION || command.kind==RadarCommandKind.EVENT_RESERVATION) {
@@ -44,7 +44,7 @@ fun EcosystemSnapshot.commandRejection(command: RadarCommand, now: Long): RadarR
         if(event.state.terminal || event.participantIds.isEmpty())return RadarRejection.UNAVAILABLE
         event.participantIds.forEach { id ->
             val actor=individuals.firstOrNull { it.individualId==id } ?: return RadarRejection.UNAVAILABLE
-            if(!com.github.nacabaro.vbhelper.world.RadarDebugInteraction.allowAnyDistance &&
+            if(!allowAnyDistance &&
                 !RadarWorldGeometry.relative(playerFix!!.position,actor.position).withinInteractionRange) return RadarRejection.OUT_OF_RANGE
         }
     }

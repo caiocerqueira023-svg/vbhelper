@@ -14,14 +14,9 @@ class ChatScreenControllerImpl(
     private val componentActivity: ComponentActivity
 ) : ChatScreenController {
     private val application = componentActivity.applicationContext as VBHelper
-    private val chatRepository = ChatRepository(
-        database = application.container.db,
-        llmSettingsRepository = application.container.llmSettingsRepository,
-        lorebookRepository = application.container.lorebookRepository,
-        speciesRepository = application.container.speciesRepository
-    )
+    private val chatRepository = application.container.chatRepository
     private val database = application.container.db
-    private val speciesRepository = SpeciesRepository(database, application.container.speciesSettingsRepository)
+    private val speciesRepository = application.container.speciesRepository
 
     override fun getHistory(characterId: Long): Flow<List<ChatMessageEntity>> =
         chatRepository.getHistory(characterId)
@@ -51,9 +46,7 @@ class ChatScreenControllerImpl(
     ) {
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
             val result = runCatching {
-                val individualId = database.userCharacterDao().getCharacter(characterId).individualId
-                database.chatDao().deleteFromMessage(individualId, messageId)
-                chatRepository.sendMessage(characterId, text)
+                chatRepository.resendMessage(characterId, messageId, text)
             }
             componentActivity.runOnUiThread { onResult(result) }
         }
@@ -70,8 +63,9 @@ class ChatScreenControllerImpl(
             val userCharacter = database.userCharacterDao().getCharacter(characterId)
             val card = database.cardDao().getCardByCharacterIdSync(characterId)
             val profile = speciesRepository.getProfileForCharacter(userCharacter.charId)
+            val nickname = database.digimonIndividualDao().getIndividual(userCharacter.individualId)?.nickname
             componentActivity.runOnUiThread {
-                onResult(SpeciesContext(userCharacter.charId, card?.name.orEmpty(), profile))
+                onResult(SpeciesContext(userCharacter.charId, card?.name.orEmpty(), profile, nickname))
             }
         }
     }
@@ -85,6 +79,7 @@ class ChatScreenControllerImpl(
         specialMoves: List<String>,
         onSaved: () -> Unit
     ) {
+        if (!application.container.debugSettingsRepository.enabled) return
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
             speciesRepository.saveManualProfile(cardCharacterId, name, level, type, profile, specialMoves)
             componentActivity.runOnUiThread(onSaved)

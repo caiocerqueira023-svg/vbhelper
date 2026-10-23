@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.screens.digilineScreen.battleItemLabel
+import com.github.nacabaro.vbhelper.components.CyberPanel
 
 @Composable
 fun QuestBattleItems() {
@@ -29,9 +30,11 @@ fun QuestBattleItems() {
         item { Text(stringResource(R.string.quest_battle_items_hint), color = MaterialTheme.colorScheme.onSurfaceVariant) }
         if (stock.none { it.quantity > 0 }) item { Text(stringResource(R.string.quest_stock_empty)) }
         items(stock.filter { it.quantity > 0 }, key = { it.itemId }) { item ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(battleItemLabel(item.itemId), style = MaterialTheme.typography.titleMedium)
-                Text(stringResource(R.string.quest_stock_quantity, item.quantity))
+            CyberPanel(Modifier.fillMaxWidth()) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(battleItemLabel(item.itemId), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(R.string.quest_stock_quantity, item.quantity), color = MaterialTheme.colorScheme.secondary)
+                }
             }
         }
     }

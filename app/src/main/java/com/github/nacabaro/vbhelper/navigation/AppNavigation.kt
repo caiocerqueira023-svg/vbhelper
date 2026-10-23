@@ -39,6 +39,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -71,6 +72,7 @@ import com.github.nacabaro.vbhelper.screens.settingsScreen.SettingsScreen
 import com.github.nacabaro.vbhelper.screens.spriteViewer.SpriteViewer
 import com.github.nacabaro.vbhelper.screens.homeScreens.HomeScreenControllerImpl
 import com.github.nacabaro.vbhelper.screens.storageScreen.StorageScreen
+import com.github.nacabaro.vbhelper.screens.transferScreen.TransferScreen
 import com.github.nacabaro.vbhelper.screens.offlineBattle.TechniqueLoadoutScreen
 import com.github.nacabaro.vbhelper.screens.itemsScreen.ChooseCharacterScreen
 import com.github.nacabaro.vbhelper.screens.itemsScreen.ItemsScreenControllerImpl
@@ -185,7 +187,7 @@ fun AppNavigation(
     BoxWithConstraints {
         val expandedNavigation = maxWidth >= 840.dp
         Scaffold(
-            // The shell owns system bars/cutouts; editable screens own the IME.
+            // Reserve system bars here and the remaining IME once in the content root.
             contentWindowInsets = WindowInsets.safeDrawing.exclude(WindowInsets.ime),
             snackbarHost = { SnackbarHost(snackbar, Modifier.imePadding()) },
             bottomBar = {
@@ -217,6 +219,7 @@ fun AppNavigation(
                     .fillMaxSize()
                     .padding(contentPadding)
                     .consumeWindowInsets(contentPadding)
+                    .imePadding()
             ) {
                 if (expandedNavigation) {
                     AnimatedVisibility(
@@ -340,6 +343,17 @@ fun AppNavigation(
                     adventureScreenController = applicationNavigationHandlers.adventureScreenController,
                     storageScreenController = applicationNavigationHandlers.storageScreenController
                 )
+            }
+            composable(TransferNavigation.PATTERN, arguments = listOf(
+                androidx.navigation.navArgument("section") { defaultValue = "saves" },
+                androidx.navigation.navArgument("characterId") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = null },
+                androidx.navigation.navArgument("individualId") { type = androidx.navigation.NavType.StringType; nullable = true; defaultValue = null },
+            )) { entry ->
+                com.github.nacabaro.vbhelper.screens.transferScreen.TransferHubScreen(navController,
+                    applicationNavigationHandlers.scanScreenController,
+                    TransferNavigation.section(entry.arguments?.getString("section")),
+                    TransferNavigation.character(entry.arguments?.getString("characterId")),
+                    TransferNavigation.individual(entry.arguments?.getString("individualId")))
             }
             composable(NavigationItems.TechniqueLoadout.route) { entry ->
                 entry.arguments?.getString("characterId")?.toLongOrNull()?.let { characterId ->

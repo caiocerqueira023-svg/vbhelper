@@ -13,6 +13,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.github.nacabaro.vbhelper.components.VitalButton
+import com.github.nacabaro.vbhelper.components.editorDialogBounds
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import com.github.nacabaro.vbhelper.R
 
 @Composable
@@ -23,17 +26,18 @@ fun DeleteSpecialMissionDialog(
     Dialog(
         onDismissRequest = onClickDismiss
     ) {
-        Card {
+        Card(modifier = Modifier.editorDialogBounds()) {
             Column(
                 modifier = Modifier
                     .padding(16.dp)
+                    .verticalScroll(rememberScrollState())
             ) {
                 Text(
                     text = stringResource(R.string.home_special_mission_delete_main),
                     textAlign = TextAlign.Center
                 )
                 Spacer(modifier = Modifier.padding(8.dp))
-                Row {
+                androidx.compose.foundation.layout.FlowRow {
                     VitalButton(
                         onClick = onClickDismiss,
                         modifier = Modifier

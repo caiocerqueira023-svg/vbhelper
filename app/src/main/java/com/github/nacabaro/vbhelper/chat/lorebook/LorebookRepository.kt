@@ -10,7 +10,9 @@ import java.util.Locale
 data class LorebookMatch(
     val title: String,
     val content: String,
-    val priority: Int
+    val priority: Int,
+    val authority: LoreAuthority = LoreAuthority.PERSONAL_NOTE,
+    val reference: ResearchReference? = null
 )
 
 class LorebookRepository(
@@ -33,7 +35,8 @@ class LorebookRepository(
 
         DigimonWorldLore.entries(languageTag).forEach { entry ->
             if (matchesKeys(scanText, entry.keys)) {
-                matches += LorebookMatch(entry.title, entry.content, entry.priority)
+                matches += LorebookMatch(entry.title, entry.content, entry.priority,
+                    entry.reference?.authority ?: LoreAuthority.APP_OPERATION, entry.reference)
             }
         }
         lorebookEntryDao.getAllEnabled().forEach { entry ->
@@ -55,25 +58,27 @@ class LorebookRepository(
                     matches += LorebookMatch(
                         title = species.name,
                         content = formatSpeciesContent(species, languageTag),
-                        priority = SPECIES_PRIORITY
+                        priority = SPECIES_PRIORITY,
+                        authority = LoreAuthority.SPECIES_REFERENCE,
+                        reference = ResearchSources.catalog
                     )
                 }
             }
-        return applyBudget(matches.distinctBy { it.title.lowercase(Locale.ROOT) }
-            .sortedByDescending { it.priority })
+        return applyBudget(matches.distinctBy { it.authority to it.title.lowercase(Locale.ROOT) }
+            .sortedWith(compareBy<LorebookMatch> { it.authority.order }.thenByDescending { it.priority }), languageTag)
     }
 
     fun formatContextBlock(matches: List<LorebookMatch>, languageTag: String): String? {
         if (matches.isEmpty()) return null
         val header = when {
             languageTag.startsWith("pt", ignoreCase = true) ->
-                "Conhecimento vivo para esta conversa (deixe-o colorir a resposta quando for relevante; ele fica nos bastidores como experiência vivida):"
+                "Referências desta conversa: pesquisa e notas não são lembranças pessoais. Preserve a autoria, o contexto regional e as incertezas; use apenas o que for relevante:"
             languageTag.startsWith("ja", ignoreCase = true) ->
-                "この会話のための生きた知識（関わる場合だけ返答に滲ませ、舞台裏の生きた背景として保つこと）:"
+                "会話の参考資料。研究と個人ノートは個人の記憶ではありません。出典、地域、不確実性を保ち、関連する内容だけを使います："
             else ->
-                "Living knowledge for this conversation (let it color the reply when relevant; keep it offstage as lived background):"
+                "Conversation references: research and notes are not personal memories. Preserve authorship, regional scope, and uncertainty; use only what is relevant:"
         }
-        return "$header\n${matches.joinToString("\n") { "- ${it.title}: ${it.content}" }}"
+        return "$header\n${matches.joinToString("\n") { serialized(it, languageTag) }}"
     }
 
     fun getCustomEntries(): Flow<List<LorebookEntry>> = lorebookEntryDao.getAll()
@@ -88,16 +93,46 @@ class LorebookRepository(
 
     suspend fun deleteEntry(entry: LorebookEntry) = lorebookEntryDao.delete(entry)
 
-    private fun applyBudget(matches: List<LorebookMatch>): List<LorebookMatch> {
+    private fun applyBudget(matches: List<LorebookMatch>, languageTag: String): List<LorebookMatch> {
         val result = mutableListOf<LorebookMatch>()
         var totalChars = 0
         for (match in matches) {
             if (result.size >= MAX_ENTRIES) break
-            if (totalChars + match.content.length > MAX_TOTAL_CHARS && result.isNotEmpty()) break
-            result += match
-            totalChars += match.content.length
+            var line = serialized(match, languageTag)
+            var cost = line.length
+            if (totalChars + cost > MAX_TOTAL_CHARS) {
+                // Bound every entry, including the first: keep the serialized
+                // source scope and leading qualifications, truncate the tail.
+                val available = MAX_TOTAL_CHARS - totalChars
+                if (available < 120) continue
+                val overflow = cost - available
+                val truncated = match.content.dropLast(overflow + 1).trimEnd() + "…"
+                if (truncated.length < 40) continue
+                val bounded = match.copy(content = truncated)
+                line = serialized(bounded, languageTag)
+                cost = line.length
+                if (totalChars + cost > MAX_TOTAL_CHARS) continue
+                result += bounded
+                totalChars += cost
+            } else {
+                result += match
+                totalChars += cost
+            }
         }
         return result
+    }
+
+    private fun serialized(match: LorebookMatch, languageTag: String): String {
+        val kind = when (match.authority) {
+            LoreAuthority.GENERAL_RESEARCH -> label(languageTag, "Pesquisa publicada", "公表研究", "Published research")
+            LoreAuthority.SPECIES_REFERENCE -> label(languageTag, "Referência de espécie", "種族資料", "Species reference")
+            LoreAuthority.SETTING_OBSERVATION -> label(languageTag, "Observação de contexto específico", "特定の文脈の観測", "Scoped observation")
+            LoreAuthority.APP_OPERATION -> label(languageTag, "Registro operacional", "運用記録", "Operational record")
+            LoreAuthority.PERSONAL_NOTE -> label(languageTag, "Nota pessoal", "個人ノート", "Personal note")
+            LoreAuthority.PUBLICATION_HISTORY -> label(languageTag, "Registro de dispositivo e publicação", "端末と公表の記録", "Device/publication record")
+        }
+        val source = match.reference?.let { " · ${it.title} · ${it.scope}" }.orEmpty()
+        return "- [$kind$source] ${match.title}: ${match.content}"
     }
 
     private fun matchesKeys(text: String, keys: List<String>, caseSensitive: Boolean = false): Boolean =
@@ -121,8 +156,9 @@ class LorebookRepository(
         val parts = mutableListOf<String>()
         species.level?.takeIf { it.isNotBlank() }?.let { parts += "$level: $it" }
         species.type?.takeIf { it.isNotBlank() }?.let { parts += "$type: $it" }
-        species.profile?.takeIf { it.isNotBlank() }?.let { parts += it }
-        if (species.specialMoves.isNotEmpty()) parts += "$moves: ${species.specialMoves.joinToString()}"
+        species.profile?.let(com.github.nacabaro.vbhelper.species.ResearchText::description)?.takeIf(String::isNotBlank)?.let { parts += it }
+        val cleanMoves = com.github.nacabaro.vbhelper.species.ResearchText.moves(species.specialMoves)
+        if (cleanMoves.isNotEmpty()) parts += "$moves: ${cleanMoves.joinToString()}"
         return if (parts.isEmpty()) species.name else "${species.name} — ${parts.joinToString(" | ")}"
     }
 

@@ -30,7 +30,8 @@ Loading, empty, read failure/retry, conversion failure, and successful removal o
 - Rows reuse imported pixel portraits and name art, with canonical species name
   or fallback, card name, percentage, and cyan progress. Local character sprite
   and profile joins preserve imported-card identity. Partial entries remain
-  visible; only 100% entries enable Convert.
+  visible; only 100% entries enable Convert. Button readiness remains percentage-based;
+  the conversion transaction separately revalidates current-mode eligibility.
 - The collection uses a medium cut-corner tonal Material Card on
   `surfaceContainerHigh`, capped at 480dp/92% width and 88% window height.
   The `LazyColumn` scrolls rows; operation feedback and Close sit outside it.
@@ -42,12 +43,14 @@ Loading, empty, read failure/retry, conversion failure, and successful removal o
   through that emission until completion. Conversion feedback remains available
   after the final row disappears.
 - English, Brazilian Portuguese, and Japanese strings are supplied. The extension
-  introduces no schema change, new raster assets, or global design-token changes.
+  originally introduced no schema change, new raster assets, or global design-token
+  changes; the participation follow-up below uses additive schema 43.
 
-## Finish disposition and evidence
+## Original scan-collection finish disposition and evidence
 
-Source finish review returned **ship**, with no material introduced bugs. This is
-a source-level disposition, **not visual or Android runtime approval**.
+The original scan-collection source finish review returned **ship**, with no
+material introduced bugs. This is a source-level disposition, **not visual or
+Android runtime approval**.
 
 The implementation pass supplied the following successful checks; this documenter
 pass records them without rerunning them:
@@ -88,3 +91,56 @@ unverified visual measurement is canonized by this finish pass.
 
 See `TESTING.md` for the exact current commands, historical verification records,
 and the distinction between host SQLite, JVM, compiled Android, and native evidence.
+
+## Source-mode participation follow-up (milestone 3 step 2)
+
+- The database-owned `PartnerParticipationGate` shared through `DefaultAppContainer`
+  guards scan conversion and partner gameplay. Live current-form binding precedes
+  the individual acquisition/last-known species snapshot; aliases/catalog IDs share
+  loaded access, and unidentified imported slots retain VB support.
+- Startup mode/DB reconciliation preserves the collection and records, clearing
+  only ineligible active partners. Rejected activation retains a valid selection.
+  Storage badges inactive partners, selectors exclude them, `StorageDialog` keeps
+  history while disabling gameplay, and `ChatScreen` disables sending while inactive.
+- Item use, activation and watch export cannot bypass eligibility; watch import
+  retains source measurements without unavailable autoactivation. Farm/Adventure
+  pause intervals survive restart through `ParticipationPause` and **42 → 43**;
+  Adventure deadlines rebase at resume. Foreground battles and separate pending
+  settlements hold mode-switch leases. The **41 → 42** nullable `DEFAULT NULL`
+  correction preserves compatibility through the migration chain; no destructive reset.
+- This is an enforcement increment, not completed card-independent play.
+  Card-independent representation, full-catalog encounters, first-partner onboarding,
+  source-mode default art, real external-game/VPet adapters, permanent universal
+  evolution and compatible non-VB-to-watch conversion remain implementation work.
+- Supplied checkpoint: **125 targeted JVM passes, zero failures/skips**, **four
+  actual Python sqlite3 passes in <0.1s**, debug assembly and integrity Android-test
+  compilation. The final small recruitment-guard signature change and added native
+  regression are still recompiling at handoff; no new final result is recorded.
+  `PartnerParticipationPersistenceTest` has **seven compile-only cases**.
+- All six material source-review findings have fixes recorded; the final narrow
+  recruitment verdict is pending. The original scan-collection **ship** disposition
+  does not approve this follow-up. No new lint/full-suite result or native approval
+  is claimed. Material/branding are inherited, with no new rasters or global tokens.
+
+## Appended participation native acceptance boundary
+
+### Current presentation update
+
+Unavailable Storage partners now use grayscale sprites and neutral gray frames,
+vitals rings and favorite markers instead of visible availability messages. Their
+cards still open details/history; gameplay remains gated, and TalkBack receives
+the inactive state description. Detail portraits use the same grayscale state.
+VB-only saved normalization and Expanded Dot defaults remain separate. Native
+captures for this update still require a connected device.
+
+No ADB device is connected; no new screenshots, TalkBack or large-font acceptance
+is recorded. On-device acceptance must cover mode/card-change reconciliation,
+inactive badges and excluded selectors, readable history with gameplay/sending
+disabled, successful eligible full-scan conversion and unavailable-mode rejection
+without consuming a scan, and rejected activation preserving a valid selection.
+Execute the seven Room persistence cases, chain upgrades and restart/resume
+pauses; verify stale
+quest/recruitment requests, fresh/frozen Arena and pending-bracket eligibility,
+watch-round-trip individual mapping, separate battle/settlement leases and watch
+import/export gating. Inspect inherited palettes and EN/PT-BR/JA with large text,
+TalkBack and native Back/IME/focus behavior. See `TESTING.md` for the exact boundary.

@@ -1,0 +1,13 @@
+<resources>
+    <string name="dot_assigned_tab">関連付け済み</string>
+    <string name="dot_loaded_tab">読み込み済み</string>
+    <string name="dot_bundled_tab">ドット画像</string>
+    <string name="dot_matching">この種族</string>
+    <string name="dot_all">すべてのデジモン</string>
+    <string name="dot_offline_hint">アプリに同梱されています。各セットに作者とデバイスの情報を表示します。種族を保存すると選択が反映されます。</string>
+    <string name="dot_no_matching">この種族に対応するドット画像はまだ確認されていません。すべてのデジモンから画像を選ぶか、読み込み済みの画像を使用してください。</string>
+    <string name="dot_no_results">検索に一致するドット画像がありません。種族、作者、デバイスの名前で検索してください。</string>
+    <string name="dot_selection_failed">この画像セットを読み込めませんでした。もう一度選択するか、別のセットを選んでください。</string>
+    <string name="dot_credits_title">ドット画像ライブラリ</string>
+    <string name="dot_credits_description">tero0xのDigimon / Pendulum Colorデータベースに加え、Digitama Hatchery（humulos）とWikimonのColor系V-Petドット画像を追加しています。デバイス原画とコミュニティ作品の作者情報は「種族と画像」の各セットに表示します。</string>
+</resources>

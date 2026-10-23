@@ -29,11 +29,24 @@ interface CharacterDao {
             sprite.spriteIdle1 AS spriteIdle, sprite.width AS spriteWidth, sprite.height AS spriteHeight
         FROM CardCharacter character
         JOIN Card card ON card.id = character.cardId
-        JOIN Sprite sprite ON sprite.id = character.spriteId
+        JOIN DisplaySprite sprite ON sprite.cardCharacterId = character.id
         LEFT JOIN SpeciesProfile profile ON profile.cardCharacterId = character.id
         ORDER BY card.name COLLATE NOCASE, character.charaIndex, character.id
     """)
     suspend fun getDebugSpawnCharacters(): List<DebugSpawnCharacter>
+
+    /** Catalog Dot definitions for Expanded-mode debug add-to-storage. */
+    @Query("""
+        SELECT character.id, 0 AS charaIndex, 'Catalog' AS cardName,
+            COALESCE(NULLIF(profile.speciesName, ''), NULLIF(profile.matchedName, ''), character.speciesId) AS speciesName,
+            sprite.spriteIdle1 AS spriteIdle, sprite.width AS spriteWidth, sprite.height AS spriteHeight
+        FROM CardCharacter character
+        JOIN DisplaySprite sprite ON sprite.cardCharacterId = character.id
+        LEFT JOIN SpeciesProfile profile ON profile.cardCharacterId = character.id
+        WHERE character.catalogSpeciesId IS NOT NULL
+        ORDER BY speciesName COLLATE NOCASE, character.id
+    """)
+    suspend fun getDebugCatalogCharacters(): List<DebugSpawnCharacter>
 
     @Query(
         """
@@ -48,6 +61,10 @@ interface CharacterDao {
     @Query("SELECT * FROM CardCharacter WHERE id = :id")
     suspend fun getById(id: Long): CardCharacter?
 
+    /** App-managed catalog definitions; never imported DIM/BEM rows. */
+    @Query("SELECT * FROM CardCharacter WHERE catalogSpeciesId IS NOT NULL ORDER BY id")
+    suspend fun getCatalogDefinitions(): List<CardCharacter>
+
     @Query(
         """
         SELECT
@@ -57,15 +74,26 @@ interface CharacterDao {
             s.spriteIdle2 as spriteIdle2,
             s.width as spriteWidth,
             s.height as spriteHeight,
-            c.name as cardName
+            COALESCE(c.name, '') as cardName
         FROM CardCharacter cc
-        JOIN Sprite s ON s.id = cc.spriteId
-        JOIN Card c ON c.id = cc.cardId
+        JOIN DisplaySprite s ON s.cardCharacterId = cc.id
+        LEFT JOIN Card c ON c.id = cc.cardId
         WHERE cc.id = :cardCharacterId
         LIMIT 1
         """
     )
     suspend fun getWildCharacterInfo(cardCharacterId: Long): CharacterDtos.WildCharacterInfo?
+
+    @Query("""
+        SELECT
+            s.spriteIdle1 as cardIcon,
+            s.width as cardIconWidth,
+            s.height as cardIconHeight
+        FROM DisplaySprite s
+        WHERE s.cardCharacterId = :charaId
+        LIMIT 1
+    """)
+    fun getDefinitionIconByCharaId(charaId: Long): Flow<com.github.nacabaro.vbhelper.dtos.CardDtos.CardIcon?>
 
     @Insert
     suspend fun insertCharacter(vararg characterData: CardCharacter)
@@ -78,16 +106,16 @@ interface CharacterDao {
 
     @Query(
         """
-        SELECT 
+        SELECT
             d.cardId as cardId,
             c.charaIndex as charId,
             c.stage as stage,
             c.attribute as attribute,
-            cp.currentStage as currentStage
+            COALESCE(cp.currentStage, 0) as currentStage
         FROM CardCharacter c
         JOIN UserCharacter uc ON c.id = uc.charId
-        JOIN Card d ON c.cardId = d.id
-        JOIN CardProgress cp ON d.id = cp.cardId
+        LEFT JOIN Card d ON d.id = c.cardId
+        LEFT JOIN CardProgress cp ON d.id = cp.cardId
         WHERE c.id = :charId
     """
     )
@@ -145,7 +173,7 @@ interface CharacterDao {
         FROM
             PossibleTransformations pt
         JOIN CardCharacter c on pt.toCharaId = c.id
-        JOIN Sprite s ON s.id = c.spriteId
+        JOIN DisplaySprite s ON s.cardCharacterId = c.id
         LEFT JOIN Dex d ON d.id = pt.toCharaId
         WHERE
             pt.charaId = :characterId

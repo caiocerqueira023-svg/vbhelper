@@ -70,9 +70,17 @@ fun ChatContextPanel(
 fun ChatStatusPanel(
     label: String,
     value: Int,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    summary: String? = null
 ) {
     ChatContextPanel(modifier = modifier) {
+        if (summary != null) {
+            Text(
+                text = summary,
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextPrimaryOnDark
+            )
+        }
         Text(
             text = label,
             style = MaterialTheme.typography.labelMedium,
@@ -131,7 +139,7 @@ fun ChatMessageBubble(
     }
     val outlineColor = if (isUser) VitalCyan.copy(alpha = 0.72f) else SurfaceStroke
     val messageModifier = if (onLongClick != null) {
-        modifier.combinedClickable(onClick = {}, onLongClick = onLongClick)
+        modifier.combinedClickable(onClick = {}, onLongClickLabel = stringResource(R.string.ui_message_actions), onLongClick = onLongClick)
     } else {
         modifier
     }

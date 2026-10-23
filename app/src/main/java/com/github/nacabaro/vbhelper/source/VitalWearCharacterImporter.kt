@@ -43,7 +43,8 @@ class VitalWearCharacterImporter(
             message = "Character slot $slotId was not found on card ${importedCard.name}."
         )
 
-        database.userCharacterDao().clearActiveCharacter()
+        val usable = database.participation?.snapshot()?.card(cardCharacter.id)?.usable != false
+        if (usable) database.userCharacterDao().clearActiveCharacter()
 
         val totalBattles = character.characterStats.totalBattles
         val totalWins = character.characterStats.totalWins.coerceAtMost(totalBattles)
@@ -66,7 +67,7 @@ class VitalWearCharacterImporter(
                 activityLevel = 0,
                 heartRateCurrent = 0,
                 characterType = DeviceType.BEDevice,
-                isActive = true
+                isActive = usable
             )
         )
 

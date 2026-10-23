@@ -2,7 +2,7 @@ package com.github.nacabaro.vbhelper.domain.device_data
 
 /** Reconstructs a lineage using the imported card's actual evolution graph. */
 object EvolutionHistoryRepair {
-    data class Species(val id: Long, val cardId: Long, val charaIndex: Int, val stage: Int)
+    data class Species(val id: Long, val cardId: Long?, val charaIndex: Int, val stage: Int)
     data class Route(val fromId: Long, val toId: Long)
     data class Entry(val speciesId: Long, val date: Long)
     data class Result(val entries: List<Entry>, val complete: Boolean)

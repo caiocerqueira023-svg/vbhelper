@@ -2,6 +2,11 @@ package com.github.nacabaro.vbhelper.screens.offlineBattle
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,11 +44,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.github.nacabaro.vbhelper.R
@@ -71,6 +78,14 @@ import com.github.nacabaro.vbhelper.ui.theme.OnVitalAccent
 import com.github.nacabaro.vbhelper.ui.theme.LocalAppPalette
 import com.github.nacabaro.vbhelper.ui.theme.TextSignalHint
 import com.github.nacabaro.vbhelper.ui.theme.VitalPurpleBright
+import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.VitalButton
+import com.github.nacabaro.vbhelper.components.VitalButtonStyle
+import com.github.nacabaro.vbhelper.components.VitalSearchField
+import com.github.nacabaro.vbhelper.components.cyberFrame
+import com.github.nacabaro.vbhelper.components.VitalSectionBar
+import com.github.nacabaro.vbhelper.components.VitalTabs
+import com.github.nacabaro.vbhelper.components.InstrumentSpacing
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -97,6 +112,7 @@ fun TechniqueLoadoutScreen(
     var selectedIds by remember(characterId) { mutableStateOf(GenericTechniqueCatalog.defaultTechniqueIds) }
     var selectedSlot by remember(characterId) { mutableIntStateOf(0) }
     var query by remember { mutableStateOf("") }
+    var section by rememberSaveable(characterId) { mutableIntStateOf(0) }
     var family by remember { mutableStateOf<GenericTechniqueFamily?>(null) }
     var loading by remember(characterId) { mutableStateOf(true) }
     var saving by remember(characterId) { mutableStateOf(false) }
@@ -179,29 +195,20 @@ fun TechniqueLoadoutScreen(
     }
 
     Scaffold(
-        modifier = modifier.fillMaxSize(),
-        containerColor = DeepPurpleBgAlt,
+        modifier = modifier.fillMaxSize().imePadding(),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            Surface(color = SurfaceElevatedPurple, shadowElevation = 4.dp) {
-                Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.ui_battle_back), tint = VitalCyan)
-                    }
-                    Column {
-                        Text(stringResource(R.string.ui_battle_loadout_title), color = TextPrimaryOnDark, fontWeight = FontWeight.Bold)
-                        Text(characterName, color = TextSecondaryOnDark, style = MaterialTheme.typography.labelMedium)
-                    }
-                }
+            Column {
+            TopBanner(stringResource(R.string.app_techniques), onBackClick = onBack, subtitle = characterName)
+            VitalTabs(section, listOf(stringResource(R.string.app_techniques), stringResource(R.string.uniform_finishers)), { section = it })
             }
         },
         bottomBar = {
             Surface(color = SurfaceElevatedPurple, border = BorderStroke(1.dp, SurfaceStroke)) {
-                Button(
+                VitalButton(
+                    style = VitalButtonStyle.PRIMARY,
                     onClick = {
-                        val identity = individualId ?: return@Button
+                        val identity = individualId ?: return@VitalButton
                         saving = true
                         errorRes = null
                         val mode = blastMode.takeIf(BlastEvolutionSlot::isValid) ?: BlastEvolutionSlot.NONE
@@ -221,10 +228,7 @@ fun TechniqueLoadoutScreen(
                         }
                     },
                     enabled = !loading && !saving && individualId != null,
-                    shape = CutCornerShape(topStart = 10.dp, bottomEnd = 10.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = VitalCyan,
-                        contentColor = if (LocalAppPalette.current.isDark) DeepPurpleBgAlt else OnVitalAccent),
-                    modifier = Modifier.fillMaxWidth().padding(12.dp).height(52.dp)
+                    modifier = Modifier.fillMaxWidth().padding(12.dp).heightIn(min = 52.dp)
                 ) {
                     if (saving) CircularProgressIndicator(modifier = Modifier.height(22.dp), strokeWidth = 2.dp)
                     else {
@@ -243,10 +247,21 @@ fun TechniqueLoadoutScreen(
             return@Scaffold
         }
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(12.dp),
+            modifier = Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding),
+            contentPadding = PaddingValues(InstrumentSpacing.Screen),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
+            if (section == 1) {
+                item {
+                    BlastSlotSection(blastMode, {
+                        blastMode = it
+                        if (it != BlastEvolutionSlot.FORM) blastTarget = null
+                    }, dimFormTargets, universalForms.map { it.target }.distinct(), blastTarget, { blastTarget = it })
+                }
+                item { JogressSlotSection(jogressOptions, jogressResult, { jogressResult = it }) }
+                errorRes?.let { error -> item { Text(stringResource(error), color = MaterialTheme.colorScheme.error) } }
+                return@LazyColumn
+            }
             item {
                 Text(
                     stringResource(R.string.ui_battle_loadout_hint),
@@ -267,10 +282,9 @@ fun TechniqueLoadoutScreen(
                 val special = GenericTechniqueCatalog.battleDefinitions
                     .single { it.techniqueId == GenericTechniqueCatalog.specialTechniqueId }
                 Surface(
-                    color = VitalPurpleBright.copy(alpha = 0.12f),
-                    border = BorderStroke(1.dp, VitalPurpleBright),
-                    shape = CutCornerShape(7.dp),
-                    modifier = Modifier.fillMaxWidth()
+                    color = SurfaceElevatedPurple,
+                    shape = RectangleShape,
+                    modifier = Modifier.fillMaxWidth().cyberFrame()
                 ) {
                     Column(Modifier.padding(12.dp)) {
                         Text(stringResource(R.string.ui_battle_loadout_fixed_special), color = VitalPurpleBright, style = MaterialTheme.typography.labelSmall)
@@ -282,35 +296,7 @@ fun TechniqueLoadoutScreen(
                 }
             }
             item {
-                BlastSlotSection(
-                    mode = blastMode,
-                    onModeChange = {
-                        blastMode = it
-                        if (it != BlastEvolutionSlot.FORM) blastTarget = null
-                    },
-                    dimTargets = dimFormTargets,
-                    universalTargets = universalForms.map { it.target }.distinct(),
-                    selectedTarget = blastTarget,
-                    onTargetChange = { blastTarget = it }
-                )
-            }
-            item {
-                JogressSlotSection(
-                    options = jogressOptions,
-                    selectedResult = jogressResult,
-                    onResultChange = { jogressResult = it }
-                )
-            }
-            item {
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    singleLine = true,
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-                    label = { Text(stringResource(R.string.ui_battle_loadout_search)) },
-                    shape = CutCornerShape(7.dp),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                VitalSearchField(query, { query = it }, stringResource(R.string.uniform_search_techniques))
             }
             item {
                 Row(
@@ -357,15 +343,14 @@ private fun BlastSlotSection(
     onTargetChange: (String?) -> Unit
 ) {
     Surface(
-        color = VitalPurpleBright.copy(alpha = 0.12f),
-        border = BorderStroke(1.dp, VitalPurpleBright),
-        shape = CutCornerShape(7.dp),
-        modifier = Modifier.fillMaxWidth()
+        color = SurfaceElevatedPurple,
+        shape = RectangleShape,
+        modifier = Modifier.fillMaxWidth().cyberFrame()
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.ui_battle_loadout_blast_title), color = VitalPurpleBright, style = MaterialTheme.typography.labelSmall)
             Text(stringResource(R.string.ui_battle_loadout_blast_hint), color = TextSecondaryOnDark, style = MaterialTheme.typography.bodySmall)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 BlastModeChip(BlastEvolutionSlot.NONE, stringResource(R.string.ui_battle_blast_mode_none), mode, onModeChange)
                 BlastModeChip(BlastEvolutionSlot.POWER, stringResource(R.string.ui_battle_blast_mode_power), mode, onModeChange)
                 BlastModeChip(BlastEvolutionSlot.FORM, stringResource(R.string.ui_battle_blast_mode_form), mode, onModeChange)
@@ -384,7 +369,8 @@ private fun BlastSlotSection(
                         color = if (selected) VitalCyan.copy(alpha = 0.12f) else SurfaceElevatedPurple,
                         border = BorderStroke(1.dp, if (selected) VitalCyan else SurfaceStroke),
                         shape = CutCornerShape(6.dp),
-                        modifier = Modifier.fillMaxWidth().clickable { onTargetChange(if (selected) null else target) }
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                            .selectable(selected, role = Role.RadioButton, onClick = { onTargetChange(if (selected) null else target) })
                     ) {
                         Row(Modifier.padding(horizontal = 12.dp, vertical = 9.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(target, color = TextPrimaryOnDark, fontWeight = FontWeight.SemiBold)
@@ -423,10 +409,9 @@ private fun JogressSlotSection(
     onResultChange: (String?) -> Unit
 ) {
     Surface(
-        color = VitalPurpleBright.copy(alpha = 0.12f),
-        border = BorderStroke(1.dp, VitalPurpleBright),
-        shape = CutCornerShape(7.dp),
-        modifier = Modifier.fillMaxWidth()
+        color = SurfaceElevatedPurple,
+        shape = RectangleShape,
+        modifier = Modifier.fillMaxWidth().cyberFrame()
     ) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.ui_battle_loadout_jogress_title), color = VitalPurpleBright, style = MaterialTheme.typography.labelSmall)
@@ -459,8 +444,8 @@ private fun JogressRow(title: String, subtitle: String?, selected: Boolean, onCl
     Surface(
         color = if (selected) VitalCyan.copy(alpha = 0.12f) else SurfaceElevatedPurple,
         border = BorderStroke(1.dp, if (selected) VitalCyan else SurfaceStroke),
-        shape = CutCornerShape(6.dp),
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
+        shape = RectangleShape,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).selectable(selected, role = Role.RadioButton, onClick = onClick)
     ) {
         Column(Modifier.padding(horizontal = 12.dp, vertical = 9.dp)) {
             Text(title, color = TextPrimaryOnDark, fontWeight = FontWeight.SemiBold)
@@ -479,8 +464,8 @@ private fun EquippedTechniqueSlot(
     Surface(
         color = if (selected) VitalCyan.copy(alpha = 0.12f) else SurfaceElevatedPurple,
         border = BorderStroke(1.dp, if (selected) VitalCyan else SurfaceStroke),
-        shape = CutCornerShape(topStart = 8.dp, bottomEnd = 8.dp),
-        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick)
+        shape = RectangleShape,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).selectable(selected, role = Role.RadioButton, onClick = onClick)
     ) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Text("0${slot + 1}", color = if (selected) VitalCyan else TextSecondaryOnDark, fontWeight = FontWeight.Bold)
@@ -506,8 +491,8 @@ private fun TechniqueCatalogRow(
     Surface(
         color = if (selected) VitalCyan.copy(alpha = 0.1f) else SurfaceElevatedPurple,
         border = BorderStroke(1.dp, if (selected) VitalCyan else SurfaceStroke),
-        shape = CutCornerShape(6.dp),
-        modifier = Modifier.fillMaxWidth().clickable(enabled = enabled, onClick = onClick)
+        shape = RectangleShape,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).selectable(selected, enabled = enabled, role = Role.RadioButton, onClick = onClick)
     ) {
         Column(Modifier.padding(12.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {

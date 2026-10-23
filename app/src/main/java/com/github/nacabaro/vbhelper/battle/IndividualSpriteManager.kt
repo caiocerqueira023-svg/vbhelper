@@ -3,9 +3,20 @@ package com.github.nacabaro.vbhelper.battle
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import com.github.nacabaro.vbhelper.di.VBHelper
+import com.github.nacabaro.vbhelper.species.AssetSpeciesNames
+import com.github.nacabaro.vbhelper.species.SpeciesAppearanceRepository
+import com.github.nacabaro.vbhelper.species.displayBitmap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.withContext
 
 class IndividualSpriteManager(private val context: Context) {
-    private val spriteCache = mutableMapOf<String, Bitmap>()
+    private val spriteCache = java.util.concurrent.ConcurrentHashMap<String, Bitmap>()
+    private val app get() = context.applicationContext as? VBHelper
+    private val appearances by lazy { app?.container?.let { container ->
+        SpeciesAppearanceRepository(container.db, container.dotSpriteLibrary) { container.spritePreferenceRepository.current }
+    } }
     
     /**
      * Load a specific sprite frame for a character
@@ -13,33 +24,36 @@ class IndividualSpriteManager(private val context: Context) {
      * @param frameNumber The frame number (1-12)
      * @return Bitmap of the sprite frame, or null if not found
      */
-    fun loadSpriteFrame(characterId: String, frameNumber: Int): Bitmap? {
-        val cacheKey = "${characterId}_frame_${frameNumber}"
-        
-        // Check cache first
-        if (spriteCache.containsKey(cacheKey)) {
-            return spriteCache[cacheKey]
-        }
-        
+    suspend fun loadSpriteFrame(characterId: String, frameNumber: Int): Bitmap? = withContext(Dispatchers.IO) {
         try {
+            val name = AssetSpeciesNames.nameFor(context, characterId)
+            val preferred = name?.let { appearances?.resolve(it, characterId)?.sprite }
+            val cacheKey = "${characterId}_${app?.container?.spritePreferenceRepository?.current}_sprite_${preferred?.id}_frame_${frameNumber}"
+            spriteCache[cacheKey]?.let { return@withContext it }
+            if (preferred != null) {
+                val bitmap = preferred.displayBitmap(frameNumber) ?: return@withContext null
+                spriteCache[cacheKey] = bitmap
+                return@withContext bitmap
+            }
             val assetPath = BattleAssetPaths.characterFrame(characterId, frameNumber)
             val bitmap = context.assets.open(assetPath).use { input ->
                 BitmapFactory.decodeStream(input)
             }
             if (bitmap == null) {
                 println("Failed to decode sprite asset: $assetPath")
-                return null
+                return@withContext null
             }
             
             // Cache the result
             spriteCache[cacheKey] = bitmap
             
-            return bitmap
+            return@withContext bitmap
             
         } catch (e: Exception) {
+            if (e is CancellationException) throw e
             println("Error loading sprite frame: ${e.message}")
             e.printStackTrace()
-            return null
+            return@withContext null
         }
     }
     
@@ -58,6 +72,12 @@ class IndividualSpriteManager(private val context: Context) {
                 ?.get(1)
                 ?.toIntOrNull()
         }.sorted()
+    }
+
+    suspend fun getAvailableDisplayFrames(characterId: String): List<Int> = withContext(Dispatchers.IO) {
+        val name = AssetSpeciesNames.nameFor(context, characterId)
+        val preferred = name?.let { appearances?.resolve(it, characterId)?.sprite }
+        if (preferred != null) (1..12).toList() else getAvailableFrames(characterId)
     }
     
     /**

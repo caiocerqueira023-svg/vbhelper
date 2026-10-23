@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -17,6 +20,8 @@ import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -32,11 +37,18 @@ import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.components.CyberEmptyState
 import com.github.nacabaro.vbhelper.components.CyberPanel
+import com.github.nacabaro.vbhelper.components.rememberCollectionLoad
+import com.github.nacabaro.vbhelper.components.CollectionStatePanel
+import com.github.nacabaro.vbhelper.components.CollectionRefreshNotice
 import com.github.nacabaro.vbhelper.domain.lorebook.LorebookEntry
 import com.github.nacabaro.vbhelper.ui.theme.OnVitalPrimary
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
@@ -49,9 +61,11 @@ fun LorebookScreen(
     navController: NavController,
     controller: LorebookScreenControllerImpl
 ) {
-    val entries by controller.getEntries().collectAsState(initial = emptyList())
+    val collection = rememberCollectionLoad(controller) { controller.getEntries() }
+    val entries = collection.data.orEmpty()
     var editingEntry by remember { mutableStateOf<LorebookEntry?>(null) }
     var showAddDialog by remember { mutableStateOf(false) }
+    var deletingEntry by remember { mutableStateOf<LorebookEntry?>(null) }
 
     Scaffold(
         topBar = {
@@ -75,29 +89,36 @@ fun LorebookScreen(
             }
         }
     ) { contentPadding ->
-        Column(
+        LazyColumn(
             Modifier
                 .padding(contentPadding)
                 .fillMaxSize()
-                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = stringResource(R.string.ui_lorebook_description),
-                style = MaterialTheme.typography.bodyMedium,
-                color = TextSecondaryOnDark,
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-            if (entries.isEmpty()) {
-                CyberEmptyState(
-                    message = stringResource(R.string.ui_lorebook_empty),
-                    modifier = Modifier.weight(1f)
+            item {
+                Text(
+                    text = stringResource(R.string.ui_lorebook_description),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondaryOnDark,
+                    modifier = Modifier.padding(bottom = 4.dp)
                 )
+            }
+            item {
+                com.github.nacabaro.vbhelper.components.ResearchLibrary(Modifier.padding(bottom = 4.dp))
+            }
+            item { CollectionRefreshNotice(collection) }
+            if (collection.blocking) item { CollectionStatePanel(collection, Modifier.fillMaxWidth().heightIn(min = 160.dp)) }
+            else if (entries.isEmpty()) {
+                item {
+                    CyberEmptyState(
+                        message = stringResource(R.string.ui_lorebook_empty),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
             } else {
-                LazyColumn(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
                     items(entries, key = { it.id }) { entry ->
+                        val noteLabel = stringResource(R.string.audit_enable_note, entry.title)
                         CyberPanel(
                             modifier = Modifier.fillMaxWidth(),
                             active = entry.enabled
@@ -109,7 +130,7 @@ fun LorebookScreen(
                                 Column(Modifier.weight(1f)) {
                                     Text(
                                         entry.title,
-                                        style = MaterialTheme.typography.titleSmall,
+                                        style = MaterialTheme.typography.titleMedium,
                                         color = TextPrimaryOnDark
                                     )
                                     Text(
@@ -120,28 +141,29 @@ fun LorebookScreen(
                                 }
                                 Switch(
                                     checked = entry.enabled,
-                                    onCheckedChange = { controller.setEnabled(entry, it) }
+                                    onCheckedChange = { controller.setEnabled(entry, it) },
+                                    modifier = Modifier.semantics { contentDescription = noteLabel }
                                 )
-                                IconButton(onClick = { editingEntry = entry }) {
-                                    Icon(
-                                        Icons.Default.Edit,
-                                        contentDescription = stringResource(R.string.ui_edit)
-                                    )
-                                }
-                                IconButton(onClick = { controller.deleteEntry(entry) }) {
-                                    Icon(
-                                        Icons.Default.Delete,
-                                        contentDescription = stringResource(R.string.ui_delete)
-                                    )
-                                }
+                            }
+                            Text(entry.content, style = MaterialTheme.typography.bodyMedium, color = TextSecondaryOnDark,
+                                maxLines = 3, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                TextButton(onClick = { editingEntry = entry }) { Text(stringResource(R.string.ui_edit)) }
+                                TextButton(onClick = { deletingEntry = entry }) { Text(stringResource(R.string.ui_delete), color = MaterialTheme.colorScheme.error) }
                             }
                         }
                     }
                 }
             }
         }
-    }
 
+    deletingEntry?.let { entry -> AlertDialog(
+        onDismissRequest = { deletingEntry = null },
+        title = { Text(stringResource(R.string.immersion_delete_note, entry.title)) },
+        text = { Text(stringResource(R.string.immersion_delete_note_description)) },
+        confirmButton = { TextButton(onClick = { controller.deleteEntry(entry); deletingEntry = null }) { Text(stringResource(R.string.ui_delete)) } },
+        dismissButton = { TextButton(onClick = { deletingEntry = null }) { Text(stringResource(R.string.ui_cancel)) } }
+    ) }
     if (showAddDialog) {
         LorebookEntryDialog(
             entry = null,

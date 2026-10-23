@@ -63,7 +63,10 @@ class DexSpeciesProfileLayoutTest {
             compose.onNodeWithText("Rookie").assertExists()
             compose.onNodeWithText("Beast Man").assertExists()
             compose.onNodeWithText("Elec Rush\nPetit Thunder").assertExists()
-            compose.onNodeWithText(profile.profileDescription!!).performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText("Profile text used to verify the reading layout.", substring = true)
+                .performScrollTo().assertIsDisplayed()
+            compose.onNodeWithText("Long descriptions should wrap naturally beneath the Profile heading while the actions remain reachable.",
+                substring = true).assertIsDisplayed()
             capture("${theme.preferenceValue}-profile")
         }
     }
@@ -96,6 +99,13 @@ class DexSpeciesProfileLayoutTest {
         compose.onNodeWithText("Elec Rush\nPetit Thunder").assertDoesNotExist()
         compose.onNodeWithText(context.getString(R.string.ui_profile)).assertDoesNotExist()
         compose.onNodeWithText(context.getString(R.string.dex_chara_close_button)).assertIsDisplayed()
+    }
+
+    @Test fun speciesDetailsOfferASharedSpriteChoiceWithoutAnEditor() {
+        val character = fixtureCharacter()
+        compose.setContent { ProfileCard(character, profile, AppTheme.VB_HELPER) }
+        compose.onNodeWithText(context.getString(R.string.species_sprite_title)).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText(context.getString(R.string.species_choose_sprite)).performScrollTo().assertIsDisplayed().assertHasClickAction()
     }
 
     @Composable

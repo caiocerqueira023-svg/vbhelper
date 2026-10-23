@@ -38,7 +38,7 @@ interface DigimonScanDao {
         FROM DigimonScanReward reward
         JOIN CardCharacter character ON character.id = reward.cardCharacterId
         JOIN Card card ON card.id = character.cardId
-        JOIN Sprite sprite ON sprite.id = character.spriteId
+        JOIN DisplaySprite sprite ON sprite.cardCharacterId = character.id
         LEFT JOIN SpeciesProfile profile ON profile.cardCharacterId = character.id
         WHERE reward.interactionId = :interactionId
         ORDER BY reward.cardCharacterId
@@ -58,7 +58,7 @@ interface DigimonScanDao {
         FROM DigimonScanProgress progress
         JOIN CardCharacter character ON character.id = progress.cardCharacterId
         JOIN Card card ON card.id = character.cardId
-        JOIN Sprite sprite ON sprite.id = character.spriteId
+        JOIN DisplaySprite sprite ON sprite.cardCharacterId = character.id
         LEFT JOIN Dex dex ON dex.id = character.id
         LEFT JOIN SpeciesProfile profile ON profile.cardCharacterId = character.id
         WHERE progress.percentage > 0

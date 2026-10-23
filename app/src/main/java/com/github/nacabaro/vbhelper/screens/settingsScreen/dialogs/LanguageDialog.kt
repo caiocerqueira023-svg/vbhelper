@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -27,7 +30,7 @@ fun LanguageDialog(
     onDismiss: () -> Unit
 ) {
     val languages = listOf(
-        LanguageOption("system", "Idioma do sistema"),
+        LanguageOption("system", stringResource(R.string.immersion_system_language)),
         LanguageOption("en", "English"),
         LanguageOption("pt-BR", "Português (Brasil)"),
         LanguageOption("ja", "日本語")
@@ -43,11 +46,14 @@ fun LanguageDialog(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .fillMaxWidth()
+                            .heightIn(min = 48.dp)
+                            .selectable(selected = selectedLanguage == language.tag, role = Role.RadioButton,
+                                onClick = { onLanguageSelected(language.tag) })
                             .padding(vertical = 2.dp)
                     ) {
                         RadioButton(
                             selected = selectedLanguage == language.tag,
-                            onClick = { onLanguageSelected(language.tag) }
+                            onClick = null
                         )
                         Text(language.label)
                     }

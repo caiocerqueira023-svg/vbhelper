@@ -24,6 +24,28 @@ interface DigimonIndividualDao {
     @Query("SELECT * FROM DigimonIndividual WHERE individualId = :individualId")
     suspend fun getIndividual(individualId: String): DigimonIndividual?
 
+    /** Idempotent: only fills a missing species reference and never overwrites a real one. */
+    @Query("""
+        UPDATE DigimonIndividual
+        SET speciesName = :speciesName
+        WHERE individualId = :individualId AND (speciesName IS NULL OR speciesName = '')
+    """)
+    suspend fun backfillSpeciesName(individualId: String, speciesName: String)
+
+    @Query("""
+        UPDATE DigimonIndividual
+        SET originCardCharacterId = :cardCharacterId
+        WHERE individualId = :individualId AND originCardCharacterId IS NULL
+    """)
+    suspend fun backfillOriginCardCharacter(individualId: String, cardCharacterId: Long)
+
+    /** Writes a species observed from a game return, including a DS evolution. */
+    @Query("UPDATE DigimonIndividual SET speciesName = :speciesName WHERE individualId = :individualId")
+    suspend fun updateSpeciesName(individualId: String, speciesName: String)
+
+    @Query("SELECT individualId FROM DigimonIndividual WHERE speciesName IS NULL OR speciesName = ''")
+    suspend fun individualIdsMissingSpecies(): List<String>
+
     @Query("UPDATE DigimonIndividual SET lastDiaryEntryAt = :timestamp WHERE individualId = :individualId")
     suspend fun updateLastDiaryEntry(individualId: String, timestamp: Long)
 

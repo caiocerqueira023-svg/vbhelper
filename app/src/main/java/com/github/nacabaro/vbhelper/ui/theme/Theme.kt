@@ -14,6 +14,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
+import com.github.nacabaro.vbhelper.components.LocalMotionEnabled
+import com.github.nacabaro.vbhelper.components.rememberMotionPreference
 
 @Composable
 @Suppress("DEPRECATION")
@@ -46,6 +48,7 @@ fun VBHelperTheme(
         }
     }
     CompositionLocalProvider(
+        LocalMotionEnabled provides rememberMotionPreference(),
         LocalAppPalette provides palette,
         LocalAppTheme provides appTheme,
         LocalMinimumInteractiveComponentSize provides 48.dp,

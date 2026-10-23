@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.RectF
 import android.content.pm.ApplicationInfo
 import androidx.activity.compose.BackHandler
+import androidx.compose.ui.semantics.*
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -201,10 +202,11 @@ fun OfflineTrainingBattleScreen(
     battleTitle: String? = null,
     resultContent: (@Composable (BattleSnapshot) -> Unit)? = null,
     battleSubtitle: String? = null,
+    arenaSession: Boolean = false,
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
-    val debugToolsEnabled = (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
+    val debugToolsEnabled = com.github.nacabaro.vbhelper.components.rememberDebugSettings().enabled
     val lifecycleOwner = LocalLifecycleOwner.current
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
     val state by viewModel.state.collectAsState()
@@ -223,6 +225,7 @@ fun OfflineTrainingBattleScreen(
     var commandFeedback by remember(state.sessionId) { mutableStateOf<String?>(null) }
     var feedbackRevision by remember { mutableIntStateOf(0) }
     var showBattleDebug by rememberSaveable(state.sessionId) { mutableStateOf(false) }
+    LaunchedEffect(debugToolsEnabled) { if (!debugToolsEnabled) showBattleDebug = false }
     var showExitDialog by rememberSaveable(state.sessionId) { mutableStateOf(false) }
     var sceneView by remember { mutableStateOf<OfflineBattleSceneView?>(null) }
     var rendererError by remember { mutableStateOf<String?>(null) }
@@ -448,7 +451,7 @@ fun OfflineTrainingBattleScreen(
             ) + fadeOut(tween(if (allowMotion) 160 else 0))
         ) {
             Row(
-                Modifier.fillMaxWidth().height(48.dp),
+                Modifier.fillMaxWidth().heightIn(min = 48.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
@@ -501,7 +504,9 @@ fun OfflineTrainingBattleScreen(
         }
 
         val arenaContent: @Composable (Modifier) -> Unit = { arenaModifier ->
-            Box(arenaModifier
+            Box(arenaModifier.accessibleBattle(allies, opponents, selectedAlly, selectedOpponent,
+                !finisherActive && snapshot?.result == null,
+                onSelectAlly = { selectedAllyId = it }, onSelectOpponent = { selectedOpponentId = it })
                 .border(2.dp, SurfaceStroke, MaterialTheme.shapes.medium)
                 .clip(MaterialTheme.shapes.medium)
                 .background(DeepPurpleBgAlt)
@@ -598,12 +603,12 @@ fun OfflineTrainingBattleScreen(
                 blastOverlay?.takeIf { current.finisher == null }?.let { ov ->
                     val fighter = state.fighters[ov.window.combatantId]
                     val specialName = fighter?.specialDisplayName
-                        ?: battleTechniqueName(ov.window.techniqueId, ov.window.techniqueId)
+                        ?: battleTechniqueName(ov.window.techniqueId, stringResource(R.string.immersion_special_move))
                     val form = current.alliedMembers.find { it.combatantId == ov.window.combatantId }?.blastFormSpecies
                     BlastTimingOverlay(
                         specialName = specialName,
                         attackerName = form?.let { "→ $it" }
-                            ?: (fighter?.displayName ?: ov.window.combatantId.substringAfter(':')),
+                            ?: (fighter?.displayName ?: stringResource(R.string.immersion_unidentified_partner)),
                         windowKey = ov.window.key,
                         executing = ov.executing,
                         inputEnabled = lifecycleState.isAtLeast(Lifecycle.State.RESUMED) && !manualPause && !showExitDialog &&
@@ -645,7 +650,8 @@ fun OfflineTrainingBattleScreen(
                 Surface(Modifier.align(Alignment.BottomCenter).padding(8.dp), color = BattleErrorSurface.copy(alpha = 0xF0 / 255f),
                     shape = CutCornerShape(6.dp), border = BorderStroke(1.dp, BattleErrorOutline)) {
                     Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(error, color = TextPrimaryOnDark, style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(R.string.immersion_battle_unavailable), color = TextPrimaryOnDark, style = MaterialTheme.typography.bodySmall)
+                        com.github.nacabaro.vbhelper.components.DebugDetails(error)
                         OutlinedButton(
                             onClick = {
                                 if (state.error != null) viewModel.retry(context)
@@ -688,7 +694,7 @@ fun OfflineTrainingBattleScreen(
                     val fixedHeight = if (wideBattleLayout) 68.dp else 92.dp
                     val commandHeight = ((maxHeight - fixedHeight) / 3).coerceIn(48.dp, 84.dp)
                     Column(
-                        Modifier.fillMaxSize().padding(horizontal = 4.dp, vertical = 2.dp),
+                        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 4.dp, vertical = 2.dp),
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         BattleCommandDeckHeader(
@@ -729,9 +735,10 @@ fun OfflineTrainingBattleScreen(
                         )
                         if (!wideBattleLayout) {
                             Text(
-                                text = commandFeedback ?: current?.let { eventSummary(it, state.fighters) }
+                                text = commandFeedback ?: current?.let { eventSummary(it, state.fighters, arena = arenaSession) }
                                     ?: if (state.loading) stringResource(R.string.ui_battle_preparing_arena) else stringResource(R.string.ui_battle_deck_hint),
-                                modifier = Modifier.fillMaxWidth().heightIn(min = 18.dp, max = 18.dp)
+                                 modifier = Modifier.fillMaxWidth().heightIn(min = 18.dp)
+                                     .semantics { liveRegion = LiveRegionMode.Polite }
                                     .padding(horizontal = 3.dp),
                                 color = TextSecondaryOnDark,
                                 style = MaterialTheme.typography.labelSmall,
@@ -842,7 +849,7 @@ fun OfflineTrainingBattleScreen(
             onDismissRequest = { showStrategyMenu = false },
             title = { Text(stringResource(R.string.ui_battle_training_strategy_title, selectedAlly.displayName)) },
             text = {
-                Column {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
                     BattleStrategy.entries.forEach { strategy ->
                         DropdownMenuItem(
                             text = { Text(strategyLabel(strategy)) },
@@ -889,7 +896,7 @@ fun OfflineTrainingBattleScreen(
         AlertDialog(
             onDismissRequest = ::cancelExit,
             title = { Text(stringResource(R.string.ui_battle_training_end_title)) },
-            text = { Text(stringResource(R.string.ui_battle_training_end_message)) },
+            text = { Text(stringResource(if (arenaSession) R.string.immersion_arena_exit else R.string.ui_battle_training_end_message)) },
             confirmButton = {
                 Button(
                     onClick = {
@@ -1147,7 +1154,7 @@ fun WorldRadarBattleContent(
                 .aspectRatio(1f)
                 .border(2.dp, SurfaceStroke, MaterialTheme.shapes.medium)
                 .clip(MaterialTheme.shapes.medium)
-                .testTag("world-radar-battle-viewport"),
+                    .testTag("world-radar-battle-viewport"),
             transitionSpec = {
                 (fadeIn(tween(if (allowMotion) 380 else 0)) + scaleIn(tween(if (allowMotion) 380 else 0), initialScale = 0.98f)) togetherWith
                     (fadeOut(tween(if (allowMotion) 260 else 0)) + scaleOut(tween(if (allowMotion) 260 else 0), targetScale = 1.02f))
@@ -1159,6 +1166,9 @@ fun WorldRadarBattleContent(
                     .fillMaxSize()
                     .clip(MaterialTheme.shapes.medium)
                     .background(if (showBattle) DeepPurpleBgAlt else SpaceBlack)
+                    .then(if (showBattle) Modifier.accessibleBattle(allies, opponents, selectedAlly, selectedOpponent,
+                        !finisherActive && snapshot?.result == null,
+                        onSelectAlly = { selectedAllyId = it }, onSelectOpponent = { selectedOpponentId = it }) else Modifier)
                     .padding(2.dp)
             ) {
                 if (showBattle) {
@@ -1221,12 +1231,12 @@ fun WorldRadarBattleContent(
                         blastOverlay?.takeIf { current.finisher == null }?.let { ov ->
                             val fighter = state.fighters[ov.window.combatantId]
                             val specialName = fighter?.specialDisplayName
-                                ?: battleTechniqueName(ov.window.techniqueId, ov.window.techniqueId)
+                                ?: battleTechniqueName(ov.window.techniqueId, stringResource(R.string.immersion_special_move))
                             val form = snapshot?.alliedMembers?.find { it.combatantId == ov.window.combatantId }?.blastFormSpecies
                             BlastTimingOverlay(
                                 specialName = specialName,
                                 attackerName = form?.let { "→ $it" }
-                                    ?: (fighter?.displayName ?: ov.window.combatantId.substringAfter(':')),
+                                    ?: (fighter?.displayName ?: stringResource(R.string.immersion_unidentified_partner)),
                                 windowKey = ov.window.key,
                                 executing = ov.executing,
                                 inputEnabled = battleActive && lifecycleState.isAtLeast(Lifecycle.State.RESUMED) &&
@@ -1277,7 +1287,8 @@ fun WorldRadarBattleContent(
                             border = BorderStroke(1.dp, BattleErrorOutline)
                         ) {
                             Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                Text(error, color = TextPrimaryOnDark, style = MaterialTheme.typography.bodySmall)
+                                Text(stringResource(R.string.immersion_battle_unavailable), color = TextPrimaryOnDark, style = MaterialTheme.typography.bodySmall)
+                                com.github.nacabaro.vbhelper.components.DebugDetails(error)
                                 OutlinedButton(onClick = {
                                     if (state.error != null) viewModel.retry(context, preserveEncounter = true) else sceneView?.retryScene()
                                 }) { Text(stringResource(R.string.ui_battle_training_retry)) }
@@ -1366,7 +1377,7 @@ fun WorldRadarBattleContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = commandFeedback ?: snapshot?.let { eventSummary(it, state.fighters) }
+                            text = commandFeedback ?: snapshot?.let { eventSummary(it, state.fighters, radar = true) }
                                 ?: resources.getString(R.string.ui_battle_preparing),
                             color = TextSecondaryOnDark,
                             style = MaterialTheme.typography.labelSmall,
@@ -1389,7 +1400,7 @@ fun WorldRadarBattleContent(
             onDismissRequest = { showStrategyMenu = false },
             title = { Text(stringResource(R.string.ui_battle_training_strategy_title, selectedAlly.displayName)) },
             text = {
-                Column {
+                Column(Modifier.verticalScroll(rememberScrollState())) {
                     BattleStrategy.entries.forEach { strategy ->
                         DropdownMenuItem(
                             text = { Text(strategyLabel(strategy)) },
@@ -1425,7 +1436,8 @@ fun WorldRadarBattleContent(
                 issue(selectedAlly?.combatantId ?: return@ItemsDialog, TrainerAction.UseItem(item.itemId, target))
                 closeMenu()
             },
-            onDismiss = ::closeMenu
+            onDismiss = ::closeMenu,
+            usesInventory = true
         )
         null -> Unit
     }
@@ -1799,6 +1811,12 @@ private fun EnemySceneHealthBar(
 ) {
     Surface(
         modifier = Modifier.offset(x, y).size(width = 66.dp, height = 9.dp)
+            .semantics {
+                contentDescription = fighter.displayName
+                stateDescription = "${fighter.health}/${fighter.maxHealth} HP"
+                progressBarRangeInfo = ProgressBarRangeInfo(fighter.health.toFloat(), 0f..fighter.maxHealth.coerceAtLeast(1).toFloat())
+                this.selected = selected
+            }
             .testTag("offline-battle-enemy-health-bar"),
         color = BattleBackdrop.copy(alpha = 0xE8 / 255f),
         shape = CutCornerShape(2.dp),
@@ -1820,6 +1838,7 @@ private fun EnemySceneHealthBar(
 private fun PartnerArenaHud(fighter: CombatantSnapshot, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
+            .semantics(mergeDescendants = true) { contentDescription = fighter.displayName }
             .width(184.dp)
             .padding(horizontal = 7.dp, vertical = 5.dp)
             .testTag("offline-battle-player-hud"),
@@ -1836,7 +1855,7 @@ private fun PartnerArenaHud(fighter: CombatantSnapshot, modifier: Modifier = Mod
 @Composable
 private fun ArenaHudBar(label: String, value: Int, maximum: Int, color: Color) {
     Row(
-        Modifier.fillMaxWidth().height(16.dp),
+        Modifier.fillMaxWidth().heightIn(min = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
@@ -1880,7 +1899,7 @@ private fun BattleCommandDeckHeader(
     onToggleTacticalPause: () -> Unit
 ) {
     Row(
-        Modifier.fillMaxWidth().height(48.dp).testTag("offline-battle-command-header"),
+        Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("offline-battle-command-header"),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
@@ -2123,7 +2142,7 @@ private fun BlastTimingOverlay(
                 Button(
                     onClick = { stop() },
                     enabled = inputEnabled,
-                    modifier = Modifier.fillMaxWidth(0.7f).height(52.dp).testTag("offline-battle-blast-confirm"),
+                    modifier = Modifier.fillMaxWidth(0.7f).heightIn(min = 52.dp).testTag("offline-battle-blast-confirm"),
                     shape = CutCornerShape(6.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = com.github.nacabaro.vbhelper.ui.theme.BlastControl,
                         contentColor = com.github.nacabaro.vbhelper.ui.theme.OnBlastControl)
@@ -2301,7 +2320,7 @@ private fun orderFailureText(resources: android.content.res.Resources, update: O
         OrderFailure.STATUS_INTERRUPTED -> R.string.ui_battle_order_err_status_interrupted
         else -> null
     }
-    return res?.let { resources.getString(it) } ?: update.reason.orEmpty()
+    return res?.let { resources.getString(it) } ?: resources.getString(R.string.immersion_order_failed)
 }
 
 @Composable
@@ -2319,20 +2338,20 @@ private fun RowScope.CommandButton(
 ) {
     if (primary) {
         Button(onClick = onClick, enabled = enabled,
-            modifier = Modifier.weight(1f).height(height).testTag("offline-battle-command-slot"),
+            modifier = Modifier.weight(1f).heightIn(min = height).testTag("offline-battle-command-slot"),
             contentPadding = PaddingValues(horizontal = 3.dp, vertical = 2.dp),
             shape = CutCornerShape(6.dp), colors = ButtonDefaults.buttonColors(
                 containerColor = VitalPurpleBright, contentColor = OnVitalPrimary
             )) {
-            Text(label, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            Text(label, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis,
                 style = MaterialTheme.typography.labelSmall)
         }
     } else {
         OutlinedButton(onClick = onClick, enabled = enabled,
-            modifier = Modifier.weight(1f).height(height).testTag("offline-battle-command-slot"),
+            modifier = Modifier.weight(1f).heightIn(min = height).testTag("offline-battle-command-slot"),
             contentPadding = PaddingValues(horizontal = 3.dp, vertical = 2.dp),
             shape = CutCornerShape(6.dp), border = BorderStroke(1.dp, SurfaceStroke)) {
-            Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelSmall)
+            Text(label, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.labelSmall)
         }
     }
 }
@@ -2401,11 +2420,13 @@ private fun ItemsDialog(
     onUseItem: (BattleItemDefinition, String) -> Unit,
     onDismiss: () -> Unit,
     catalog: List<BattleItemDefinition> = TrainingBattleFactory.trainingItems + com.github.nacabaro.vbhelper.quests.QuestBattleInventory.catalog,
+    usesInventory: Boolean = false,
 ) {
     val remaining = snapshot?.trainingItems.orEmpty().associateBy { it.itemId }
     val definitions = catalog.filter { it.itemId in remaining }
     TacticalDialogFrame(title = stringResource(R.string.ui_battle_training_items_title), onDismiss = onDismiss) {
-        Text(stringResource(R.string.ui_battle_items_restart_note, if (tacticalPauseEnabled) stringResource(R.string.ui_battle_tactical_pause_short_on) else stringResource(R.string.ui_battle_tactical_pause_short_off)), color = VitalCyan,
+        Text(if (usesInventory) stringResource(R.string.quest_battle_items_hint)
+            else stringResource(R.string.ui_battle_items_restart_note, if (tacticalPauseEnabled) stringResource(R.string.ui_battle_tactical_pause_short_on) else stringResource(R.string.ui_battle_tactical_pause_short_off)), color = VitalCyan,
             style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(bottom = 5.dp))
         definitions.forEach { item ->
             val itemState = remaining[item.itemId]
@@ -2499,12 +2520,14 @@ private fun BattleResultPanel(
 }
 
 @Composable
-private fun eventSummary(snapshot: BattleSnapshot, fighters: Map<String, BattleFighterPresentation>): String {
+private fun eventSummary(snapshot: BattleSnapshot, fighters: Map<String, BattleFighterPresentation>, radar: Boolean = false, arena: Boolean = false): String {
     val event = snapshot.recentEvents.lastOrNull() ?: return stringResource(R.string.ui_battle_feed_idle)
-    fun name(id: String) = fighters[id]?.displayName ?: id.substringAfter(':')
+    val unidentified = stringResource(R.string.immersion_unidentified_partner)
+    val unknownMove = stringResource(R.string.immersion_special_move)
+    fun name(id: String) = fighters[id]?.displayName ?: unidentified
     fun specialName(combatantId: String, techniqueId: String) = fighters[combatantId]?.specialDisplayName
         ?: TrainingBattleFactory.techniques.firstOrNull { it.techniqueId == techniqueId }?.displayName
-        ?: techniqueId
+        ?: unknownMove
     return when (event) {
         is BattleEvent.TechniqueHit, is BattleEvent.TechniqueMissed,
         is BattleEvent.ProjectileMissed, is BattleEvent.ProjectileLaunched,
@@ -2523,15 +2546,27 @@ private fun eventSummary(snapshot: BattleSnapshot, fighters: Map<String, BattleF
         is BattleEvent.CombatantDefeated -> stringResource(R.string.ui_battle_feed_defeated, name(event.combatantId))
         is BattleEvent.OrderChanged -> {
             val update = event.update
-            val reason = if (update.status == OrderStatus.FAILED) orderFailureText(LocalResources.current, update)
-            else update.reason ?: stringResource(R.string.ui_battle_feed_order_fallback)
-            stringResource(R.string.ui_battle_feed_order, update.status.name.lowercase(), reason)
+            if (update.status == OrderStatus.FAILED) orderFailureText(LocalResources.current, update)
+            else stringResource(when (update.status) {
+                OrderStatus.QUEUED -> R.string.immersion_order_received
+                OrderStatus.EXECUTING -> R.string.immersion_order_executing
+                OrderStatus.COMPLETED -> R.string.immersion_order_completed
+                OrderStatus.CANCELLED, OrderStatus.EXPIRED -> R.string.immersion_order_ended
+                OrderStatus.FAILED -> R.string.immersion_order_failed
+            })
         }
-        is BattleEvent.StatusApplied -> stringResource(R.string.ui_battle_feed_status, event.statusId)
+        is BattleEvent.StatusApplied -> stringResource(R.string.ui_battle_feed_status,
+            battleStatusLabel(event.statusId, stringResource(R.string.immersion_status_effect)))
         is BattleEvent.StateChanged, is BattleEvent.TargetChanged -> stringResource(R.string.ui_battle_feed_reposition)
         is BattleEvent.CounterTriggered -> stringResource(R.string.ui_battle_feed_counter, name(event.combatantId))
         is BattleEvent.PositioningReplanned -> stringResource(R.string.ui_battle_feed_seeking, name(event.combatantId))
-        is BattleEvent.BattleEnded -> trainingOutcomeText(event.result.outcome)
+        is BattleEvent.BattleEnded -> if (radar) radarOutcomeText(event.result.outcome)
+            else if (arena) stringResource(when (event.result.outcome) {
+                BattleOutcome.ALLIED_VICTORY -> R.string.arena_victory
+                BattleOutcome.OPPOSING_VICTORY -> R.string.arena_defeat
+                BattleOutcome.DRAW -> R.string.arena_draw
+                BattleOutcome.ABANDONED -> R.string.arena_abandoned
+            }) else trainingOutcomeText(event.result.outcome)
     }
 }
 

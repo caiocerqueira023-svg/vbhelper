@@ -16,6 +16,25 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class DigimonPersonaBuilderTest {
+    @Test fun `a new individual receives research knowledge without an invented previous life`() {
+        val prompt = DigimonPersonaBuilder.buildSystemPrompt(character("Agumon"), "Card", speciesProfile("Agumon"),
+            languageTag = "en", individualId = "new-scan")
+        assertTrue(prompt.contains("not personal memories"))
+        assertFalse(prompt.contains("remembered smells"))
+        assertFalse(prompt.contains("internal code"))
+        assertFalse(PromptLocalization.defaultWildSystemPrompt("en").contains("dreamlike layer"))
+    }
+
+    @Test fun `legacy species records keep physical limits while production artifacts stay out of persona context`() {
+        val profile = speciesProfile("Gyukimon").copy(profileDescription =
+            "Its bells only ring when it attacks. It moves quietly. This Digimon won a Digimon design contest.",
+            specialMoves = listOf("Bell Strike[N 1]", "[N 2]"))
+        val prompt = DigimonPersonaBuilder.buildSystemPrompt(character("Gyukimon"), "Card", profile,
+            languageTag = "en", individualId = "individual")
+        assertTrue(prompt.contains("Its bells only ring when it attacks"))
+        assertFalse(prompt.contains("design contest"))
+        assertFalse(prompt.contains("[N 1]"))
+    }
     @Test
     fun `default prompt injects stable individual voice and source examples once`() {
         val voice = DigimonRoleplayVoice.create(

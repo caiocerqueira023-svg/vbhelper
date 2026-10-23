@@ -319,7 +319,7 @@ class WorldInteractionPersistenceTest {
 
     @Test fun claimedWildCannotBeRecruitedOrMovedToPendingByAnotherPlayerPath() = runBlocking {
         prepare()
-        val world = WorldRepository(db) { now }
+        val world = WorldRepository(db, clock = { now })
         assertTrue(world.recruitSpawn(1).isFailure)
         assertTrue(world.recruitIndividual("wild-a").isFailure)
         assertTrue(runCatching { world.markPendingRecruitment("wild-a") }.isFailure)
@@ -396,7 +396,7 @@ class WorldInteractionPersistenceTest {
     }
 
     @Test fun trustGrowsFastBelow75AndSlowlyAboveIt() = runBlocking {
-        val world = WorldRepository(db) { now }
+        val world = WorldRepository(db, clock = { now })
         db.wildRelationshipDao().updateTrust("wild-a", 50, now)
         assertEquals(54, world.applyWildMoodDelta("wild-a", 2))
         db.wildRelationshipDao().updateTrust("wild-a", 80, now)
@@ -408,7 +408,7 @@ class WorldInteractionPersistenceTest {
     @Test fun privateReplyCannotChangeTrustAfterItsClaimExpires() = runBlocking {
         val chat = repository.beginPrivateChat("chat", "wild-a")!!
         now += WorldInteractionPolicy.MAX_CHAT_MILLIS + 1
-        val world = WorldRepository(db) { now }
+        val world = WorldRepository(db, clock = { now })
         assertTrue(runCatching { world.applyWildMoodDelta("wild-a", 20, chat.id) }.isFailure)
         assertEquals(82, db.wildRelationshipDao().get("wild-a")!!.trust)
         repository.reconcile()

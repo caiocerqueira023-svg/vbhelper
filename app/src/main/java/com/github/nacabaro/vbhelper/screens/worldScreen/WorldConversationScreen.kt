@@ -62,7 +62,8 @@ fun WorldConversationScreen(navController: NavController, interactionId: String)
     var returning by remember { mutableStateOf(false) }
     val list=rememberLazyListState()
     var previousCount by remember(interactionId) { mutableIntStateOf(0) }
-    val canParticipate=resumed && worldConversationCanParticipate(event,snapshot)
+    val debugSettings = rememberDebugSettings()
+    val canParticipate=resumed && worldConversationCanParticipate(event,snapshot,debugSettings.allowAnyDistance)
 
     fun returnToRadar(id: String) {
         if(returning) return

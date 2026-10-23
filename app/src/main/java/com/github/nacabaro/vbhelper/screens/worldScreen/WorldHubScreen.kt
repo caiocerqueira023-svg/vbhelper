@@ -21,6 +21,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavBackStackEntry
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.screens.digifarmScreen.DigifarmScreen
+import com.github.nacabaro.vbhelper.components.VitalTabs
 import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 
@@ -66,56 +67,5 @@ internal fun WorldSectionTabs(
     selectedTab: Int,
     onTabSelected: (Int) -> Unit
 ) {
-    val indicatorColor = VitalCyan
-    PrimaryTabRow(
-        selectedTabIndex = selectedTab,
-        containerColor = MaterialTheme.colorScheme.background,
-        indicator = {},
-        divider = {}
-    ) {
-        Tab(
-            selected = selectedTab == 0,
-            onClick = { onTabSelected(0) },
-            selectedContentColor = VitalCyan,
-            unselectedContentColor = TextSecondaryOnDark,
-            modifier = Modifier.drawBehind {
-                if (selectedTab == 0) {
-                    drawLine(
-                        color = indicatorColor,
-                        start = Offset(12.dp.toPx(), size.height - 2.dp.toPx()),
-                        end = Offset(size.width - 12.dp.toPx(), size.height - 2.dp.toPx()),
-                        strokeWidth = 3.dp.toPx()
-                    )
-                }
-            },
-            text = {
-                Text(
-                    text = stringResource(R.string.ui_world_radar_tab),
-                    style = MaterialTheme.typography.labelLarge
-                )
-            }
-        )
-        Tab(
-            selected = selectedTab == 1,
-            onClick = { onTabSelected(1) },
-            selectedContentColor = VitalCyan,
-            unselectedContentColor = TextSecondaryOnDark,
-            modifier = Modifier.drawBehind {
-                if (selectedTab == 1) {
-                    drawLine(
-                        color = indicatorColor,
-                        start = Offset(12.dp.toPx(), size.height - 2.dp.toPx()),
-                        end = Offset(size.width - 12.dp.toPx(), size.height - 2.dp.toPx()),
-                        strokeWidth = 3.dp.toPx()
-                    )
-                }
-            },
-            text = {
-                Text(
-                    text = stringResource(R.string.ui_digifarm_tab),
-                    style = MaterialTheme.typography.labelLarge
-                )
-            }
-        )
-    }
+    VitalTabs(selectedTab, listOf(stringResource(R.string.ui_world_radar_tab), stringResource(R.string.ui_digifarm_tab)), onTabSelected)
 }

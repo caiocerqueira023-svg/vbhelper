@@ -39,6 +39,9 @@ import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
+import com.github.nacabaro.vbhelper.components.CyberPanel
+import com.github.nacabaro.vbhelper.components.VitalButton
+import com.github.nacabaro.vbhelper.components.VitalButtonStyle
 
 data class OfflineBattleSpriteSet(
     val idle: ByteArray,
@@ -93,6 +96,7 @@ data class OfflineBattleParticipant(
     val visualStage: Int? = null,
     val statSourceScale: BattleStatSourceScale = when (vitalStats?.scale) {
         VitalStatScale.DIM -> BattleStatSourceScale.CARD_DIM
+        VitalStatScale.APP_DIM -> BattleStatSourceScale.APP_AUTHORED
         VitalStatScale.BEM -> BattleStatSourceScale.CARD_BEM
         VitalStatScale.ARENA_EXTRACTED -> BattleStatSourceScale.ARENA_EXTRACTED
         VitalStatScale.STAGE_FALLBACK -> BattleStatSourceScale.STAGE_FALLBACK
@@ -132,10 +136,14 @@ fun offlineBattleParticipant(
     /** Duo Jogress slot: result species chosen by this individual as fusion lead. */
     jogressResultSpecies: String? = null,
     /** Raw species name for universal-table matching; null degrades Jogress to dual-strike. */
-    speciesName: String? = null
+    speciesName: String? = null,
+    originBasisPoints: Int = 10000,
 ): OfflineBattleParticipant {
     val profile = VitalBattleProfile(
-        scale = if (character.isBemCard) VitalStatScale.BEM else VitalStatScale.DIM,
+        scale = when { sourceScale == BattleStatSourceScale.CARD_BEM -> VitalStatScale.BEM
+            sourceScale == BattleStatSourceScale.CARD_DIM -> VitalStatScale.DIM
+            character.characterType == com.github.nacabaro.vbhelper.utils.DeviceType.APP -> VitalStatScale.APP_DIM
+            character.isBemCard -> VitalStatScale.BEM; else -> VitalStatScale.DIM },
         baseHp = maxHp,
         baseBp = baseBp,
         baseAp = attackPower,
@@ -143,7 +151,8 @@ fun offlineBattleParticipant(
         trainingBp = trainingBp,
         trainingAp = trainingAp,
         vitalPoints = character.vitalPoints,
-        mood = character.mood
+        mood = character.mood,
+        originBasisPoints = originBasisPoints,
     ).takeIf { it.hasAnyUsableBaseStats }
     return OfflineBattleParticipant(
         character = character,
@@ -166,6 +175,7 @@ fun offlineBattleParticipant(
         speciesName = speciesName,
         statSourceScale = sourceScale ?: when (profile?.scale) {
             VitalStatScale.DIM -> BattleStatSourceScale.CARD_DIM
+            VitalStatScale.APP_DIM -> BattleStatSourceScale.APP_AUTHORED
             VitalStatScale.BEM -> BattleStatSourceScale.CARD_BEM
             VitalStatScale.ARENA_EXTRACTED -> BattleStatSourceScale.ARENA_EXTRACTED
             VitalStatScale.STAGE_FALLBACK -> BattleStatSourceScale.STAGE_FALLBACK
@@ -198,7 +208,7 @@ fun offlineBattleParticipant(
         else -> 1850
     }
     return offlineBattleParticipant(
-        character = character,
+        character = character.copy(stage = profile.stage, attribute = profile.attribute, isBemCard = profile.isBemCard),
         maxHp = profile.baseHp.takeIf { VitalBattleProfile.isKnownBaseStat(it) } ?: defaultHp,
         attackPower = profile.baseAp.takeIf { VitalBattleProfile.isKnownBaseStat(it) } ?: defaultAttack,
         baseBp = profile.baseBp,
@@ -214,7 +224,8 @@ fun offlineBattleParticipant(
         blastMode = profile.blastMode,
         blastTargetSpecies = profile.blastTargetSpecies,
         jogressResultSpecies = profile.jogressResultSpecies,
-        speciesName = character.speciesName
+        speciesName = character.speciesName,
+        originBasisPoints = profile.originBasisPoints,
     ).copy(displayName = profile.displayName)
 }
 
@@ -271,28 +282,17 @@ fun OfflineBattleEntryPanel(
     onStartBattle: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Card(
-        modifier = modifier,
-        shape = CutCornerShape(9.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh.copy(alpha = 0.96f)
-        ),
-        border = BorderStroke(1.dp, SurfaceStroke)
-    ) {
-        Column(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(5.dp)
-        ) {
+    CyberPanel(modifier = modifier, contentPadding = androidx.compose.foundation.layout.PaddingValues(16.dp)) {
             Text(
                 text = stringResource(R.string.ui_battle_entry_title),
                 color = TextPrimaryOnDark,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold
             )
             Text(
                 text = stringResource(R.string.ui_battle_entry_subtitle),
                 color = TextSecondaryOnDark,
-                fontSize = 12.sp
+                style = MaterialTheme.typography.bodyMedium
             )
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(
@@ -303,25 +303,21 @@ fun OfflineBattleEntryPanel(
                     },
                     modifier = Modifier.weight(1f),
                     color = VitalCyan,
-                    fontSize = 11.sp,
+                    style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1
                 )
                 Text(
                     text = if (isLoading) stringResource(R.string.ui_battle_entry_loading_short) else stringResource(R.string.ui_battle_entry_opponents, opponents.size),
                     color = TextSecondaryOnDark,
-                    fontSize = 11.sp
+                    style = MaterialTheme.typography.labelMedium
                 )
             }
-            Button(
+            VitalButton(
+                style = VitalButtonStyle.PRIMARY,
                 onClick = onStartBattle,
                 enabled = !isLoading && player != null && opponents.isNotEmpty(),
                 modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
-                shape = CutCornerShape(7.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                )
             ) {
                 Text(stringResource(R.string.ui_battle_entry_configure), fontWeight = FontWeight.Bold)
             }
@@ -332,12 +328,11 @@ fun OfflineBattleEntryPanel(
                     opponents.isEmpty() -> stringResource(R.string.ui_battle_entry_status_no_foes)
                     else -> stringResource(R.string.ui_battle_entry_status_ready)
                 },
-                modifier = Modifier.height(16.dp),
+                modifier = Modifier,
                 color = TextSecondaryOnDark,
-                fontSize = 11.sp,
-                maxLines = 1
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 2
             )
-        }
     }
 }
 

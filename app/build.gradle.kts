@@ -82,6 +82,8 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(project(":vb-nfc-reader"))
     implementation(project(":vb-dim-reader"))
+    implementation(project(":game-save-core"))
+    implementation(project(":companion-protocol"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.room.ktx)

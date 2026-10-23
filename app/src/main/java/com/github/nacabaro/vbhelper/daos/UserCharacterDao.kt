@@ -30,6 +30,9 @@ interface UserCharacterDao {
     @Query("SELECT * FROM UserCharacter WHERE individualId = :individualId")
     fun getByIndividualIdSync(individualId: String): List<UserCharacter>
 
+    @Query("SELECT * FROM UserCharacter WHERE individualId = :individualId")
+    suspend fun getByIndividualId(individualId: String): List<UserCharacter>
+
     @Insert
     fun insertCharacterData(characterData: UserCharacter): Long
 
@@ -64,7 +67,7 @@ interface UserCharacterDao {
             t.transformationDate AS transformationDate
         FROM TransformationHistory t 
         JOIN CardCharacter c ON c.id = t.stageId
-        JOIN Sprite s ON s.id = c.spriteId
+        JOIN DisplaySprite s ON s.cardCharacterId = c.id
         WHERE monId = :monId
         ORDER BY t.id ASC
     """
@@ -102,15 +105,15 @@ interface UserCharacterDao {
             c.nameSprite as nameSprite,
             c.nameWidth as nameSpriteWidth,
             c.nameHeight as nameSpriteHeight,
-            d.isBEm as isBemCard,
+            COALESCE(d.isBEm, 0) as isBemCard,
             di.nickname AS nickname,
             COALESCE(sp.speciesName, sp.matchedName) AS speciesName,
             a.characterId = uc.id as isInAdventure,
             uc.isActive as active
         FROM UserCharacter uc
         JOIN CardCharacter c ON uc.charId = c.id
-        JOIN Card d ON  d.id = c.cardId
-        JOIN Sprite s ON s.id = c.spriteId
+        LEFT JOIN Card d ON d.id = c.cardId
+        JOIN DisplaySprite s ON s.cardCharacterId = c.id
         LEFT JOIN Adventure a ON a.characterId = uc.id
         LEFT JOIN DigimonIndividual di ON di.individualId = uc.individualId
         LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = c.id
@@ -123,31 +126,39 @@ interface UserCharacterDao {
         SELECT
             uc.id AS sourceCharacterId,
             uc.individualId AS individualId,
-            'dim' || printf('%03d', ca.cardId) || '_mon' || printf('%02d', c.charaIndex + 1) AS externalCharacterId,
+            CASE WHEN assigned.id IS NOT NULL THEN 'dim' || printf('%03d',assignedCard.cardId) || '_mon' || printf('%02d',assigned.charaIndex+1)
+                WHEN ca.id IS NOT NULL THEN 'dim' || printf('%03d',ca.cardId) || '_mon' || printf('%02d',c.charaIndex+1)
+                ELSE 'app_mon' || printf('%06d',c.id) END AS externalCharacterId,
             COALESCE(NULLIF(di.nickname, ''), NULLIF(sp.speciesName, ''), NULLIF(sp.matchedName, ''), 'Stored Digimon #' || uc.id) AS displayName,
-            c.stage AS stage,
-            c.attribute AS attribute,
+            COALESCE(assigned.stage,c.stage) AS stage,
+            COALESCE(assigned.attribute,c.attribute) AS attribute,
             p.personalityType AS personalityType,
-            c.baseHp AS baseHp,
-            c.baseBp AS baseBp,
-            c.baseAp AS baseAp,
-            COALESCE(be.trainingHp, 0) AS trainingHp,
-            COALESCE(be.trainingBp, 0) AS trainingBp,
-            COALESCE(be.trainingAp, 0) AS trainingAp,
+            COALESCE(assigned.baseHp,c.baseHp) AS baseHp,
+            COALESCE(assigned.baseBp,c.baseBp) AS baseBp,
+            COALESCE(assigned.baseAp,c.baseAp) AS baseAp,
+            CASE WHEN assigned.id IS NOT NULL THEN 0 WHEN uc.characterType='APP' THEN COALESCE(app.trainingHp,0) ELSE COALESCE(be.trainingHp,0) END AS trainingHp,
+            CASE WHEN assigned.id IS NOT NULL THEN 0 WHEN uc.characterType='APP' THEN COALESCE(app.trainingBp,0) ELSE COALESCE(be.trainingBp,0) END AS trainingBp,
+            CASE WHEN assigned.id IS NOT NULL THEN 0 WHEN uc.characterType='APP' THEN COALESCE(app.trainingAp,0) ELSE COALESCE(be.trainingAp,0) END AS trainingAp,
             uc.vitalPoints AS vitalPoints,
             uc.mood AS mood,
-            ca.isBEm AS isBemCard,
+            COALESCE(assignedCard.isBEm,ca.isBEm,0) AS isBemCard,
             sp.specialMoves AS specialMovesJson,
             di.blastMode AS blastMode,
             di.blastTargetSpecies AS blastTargetSpecies,
-            di.jogressResultSpecies AS jogressResultSpecies
+            di.jogressResultSpecies AS jogressResultSpecies,
+            uc.characterType='APP' AS isAppPartner,
+            assigned.id IS NOT NULL AS usesAssignedDim,
+            CASE WHEN assigned.id IS NULL AND uc.characterType='APP' THEN COALESCE(app.originBasisPoints,10000) ELSE 10000 END AS originBasisPoints
         FROM UserCharacter uc
         JOIN CardCharacter c ON c.id = uc.charId
-        JOIN Card ca ON ca.id = c.cardId
+        LEFT JOIN Card ca ON ca.id = c.cardId
         LEFT JOIN DigimonIndividual di ON di.individualId = uc.individualId
         LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = c.id
         LEFT JOIN DigimonPersonalityTraits p ON p.individualId = uc.individualId
         LEFT JOIN BECharacterData be ON be.id = uc.id
+        LEFT JOIN AppPartnerProgress app ON app.individualId = uc.individualId
+        LEFT JOIN CardCharacter assigned ON uc.characterType='APP' AND assigned.id=uc.exportCardCharacterId AND assigned.cardId IS NOT NULL AND assigned.speciesId=c.speciesId
+        LEFT JOIN Card assignedCard ON assignedCard.id=assigned.cardId
         """
     )
     suspend fun getAllBattleParticipantProfiles(): List<BattleParticipantProfile>
@@ -179,15 +190,15 @@ interface UserCharacterDao {
             c.nameSprite as nameSprite,
             c.nameWidth as nameSpriteWidth,
             c.nameHeight as nameSpriteHeight,
-            d.isBEm as isBemCard,
+            COALESCE(d.isBEm, 0) as isBemCard,
             di.nickname AS nickname,
             COALESCE(sp.speciesName, sp.matchedName) AS speciesName,
             a.characterId = uc.id as isInAdventure,
             uc.isActive as active
         FROM UserCharacter uc
         JOIN CardCharacter c ON uc.charId = c.id
-        JOIN Card d ON c.cardId = d.id
-        JOIN Sprite s ON s.id = c.spriteId
+        LEFT JOIN Card d ON d.id = c.cardId
+        JOIN DisplaySprite s ON s.cardCharacterId = c.id
         LEFT JOIN Adventure a ON a.characterId = uc.id
         LEFT JOIN DigimonIndividual di ON di.individualId = uc.individualId
         LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = c.id
@@ -238,15 +249,15 @@ interface UserCharacterDao {
             c.nameSprite as nameSprite,
             c.nameWidth as nameSpriteWidth,
             c.nameHeight as nameSpriteHeight,
-            d.isBEm as isBemCard,
+            COALESCE(d.isBEm, 0) as isBemCard,
             di.nickname AS nickname,
             COALESCE(sp.speciesName, sp.matchedName) AS speciesName,
-            a.characterId as isInAdventure,
+            a.characterId = uc.id as isInAdventure,
             uc.isActive as active
         FROM UserCharacter uc
         JOIN CardCharacter c ON uc.charId = c.id
-        JOIN Card d ON c.cardId = d.id
-        JOIN Sprite s ON s.id = c.spriteId
+        LEFT JOIN Card d ON d.id = c.cardId
+        JOIN DisplaySprite s ON s.cardCharacterId = c.id
         LEFT JOIN Adventure a ON a.characterId = uc.id
         LEFT JOIN DigimonIndividual di ON di.individualId = uc.individualId
         LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = c.id
@@ -273,6 +284,9 @@ interface UserCharacterDao {
 
     @Query("UPDATE UserCharacter SET isFavorite = :isFavorite WHERE id = :id")
     fun setFavorite(id: Long, isFavorite: Boolean)
+
+    @Query("UPDATE UserCharacter SET exportCardCharacterId = :targetId WHERE id = :id")
+    suspend fun setExportTarget(id: Long, targetId: Long?)
 
     @Query("UPDATE UserCharacter SET charId = :stageId, vitalPoints = 0 WHERE id = :characterId")
     fun degenerateCharacter(characterId: Long, stageId: Long)
@@ -345,15 +359,15 @@ interface UserCharacterDao {
             c.nameSprite as nameSprite,
             c.nameWidth as nameSpriteWidth,
             c.nameHeight as nameSpriteHeight,
-            d.isBEm as isBemCard,
+            COALESCE(d.isBEm, 0) as isBemCard,
             di.nickname AS nickname,
             COALESCE(sp.speciesName, sp.matchedName) AS speciesName,
             a.characterId = uc.id as isInAdventure,
             uc.isActive as active
         FROM UserCharacter uc
         JOIN CardCharacter c ON uc.charId = c.id
-        JOIN Card d ON  d.id = c.cardId
-        JOIN Sprite s ON s.id = c.spriteId
+        LEFT JOIN Card d ON d.id = c.cardId
+        JOIN DisplaySprite s ON s.cardCharacterId = c.id
         LEFT JOIN Adventure a ON a.characterId = uc.id
         LEFT JOIN DigimonIndividual di ON di.individualId = uc.individualId
         LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = c.id
@@ -377,15 +391,15 @@ interface UserCharacterDao {
             c.nameSprite as nameSprite,
             c.nameWidth as nameSpriteWidth,
             c.nameHeight as nameSpriteHeight,
-            d.isBEm as isBemCard,
+            COALESCE(d.isBEm, 0) as isBemCard,
             di.nickname AS nickname,
             COALESCE(sp.speciesName, sp.matchedName) AS speciesName,
             a.characterId = uc.id as isInAdventure,
             uc.isActive as active
         FROM UserCharacter uc
         JOIN CardCharacter c ON uc.charId = c.id
-        JOIN Card d ON  d.id = c.cardId
-        JOIN Sprite s ON s.id = c.spriteId
+        LEFT JOIN Card d ON d.id = c.cardId
+        JOIN DisplaySprite s ON s.cardCharacterId = c.id
         LEFT JOIN Adventure a ON a.characterId = uc.id
         LEFT JOIN DigimonIndividual di ON di.individualId = uc.individualId
         LEFT JOIN SpeciesProfile sp ON sp.cardCharacterId = c.id
@@ -408,7 +422,7 @@ interface UserCharacterDao {
             s.height AS height
         FROM UserCharacter uc
         JOIN CardCharacter c ON uc.charId = c.id
-        JOIN Sprite s ON s.id = c.spriteId
+        JOIN DisplaySprite s ON s.cardCharacterId = c.id
         WHERE uc.isActive = 1
         LIMIT 1
         """

@@ -9,7 +9,17 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface SpeciesProfileDao {
     @Upsert
-    suspend fun upsert(profile: SpeciesProfile)
+    suspend fun upsertNormalized(profile: SpeciesProfile)
+
+    @Upsert
+    suspend fun upsertNormalized(profiles: List<SpeciesProfile>)
+
+    suspend fun upsert(profile: SpeciesProfile) = upsertNormalized(profile.copy(appearanceKey =
+        com.github.nacabaro.vbhelper.battle.offline.core.BattleSpeciesIdentity.normalize(
+            profile.speciesName?.takeIf(String::isNotBlank) ?: profile.matchedName.orEmpty())))
+
+    @Query("SELECT * FROM SpeciesProfile WHERE appearanceKey = :key")
+    suspend fun getByAppearanceKey(key: String): List<SpeciesProfile>
 
     @Query("SELECT * FROM SpeciesProfile WHERE cardCharacterId = :cardCharacterId")
     suspend fun getByCardCharacterId(cardCharacterId: Long): SpeciesProfile?
@@ -27,6 +37,18 @@ interface SpeciesProfileDao {
      */
     @Query("SELECT DISTINCT COALESCE(NULLIF(speciesName, ''), NULLIF(matchedName, '')) FROM SpeciesProfile")
     suspend fun getPresentSpeciesNames(): List<String?>
+
+    /**
+     * Species names whose card is currently imported. This is the loaded-species
+     * source of truth for VB-mode eligibility, independent of any individual.
+     */
+    @Query("""
+        SELECT DISTINCT COALESCE(NULLIF(sp.speciesName, ''), NULLIF(sp.matchedName, '')) FROM SpeciesProfile sp
+        JOIN CardCharacter cc ON cc.id = sp.cardCharacterId
+        JOIN Card c ON c.id = cc.cardId
+        WHERE COALESCE(NULLIF(sp.speciesName, ''), NULLIF(sp.matchedName, '')) IS NOT NULL
+    """)
+    suspend fun getLoadedSpeciesNames(): List<String?>
 
     @Query("""
         SELECT sp.* FROM SpeciesProfile sp

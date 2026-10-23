@@ -27,6 +27,9 @@ import com.github.nacabaro.vbhelper.dtos.ItemDtos
 import com.github.nacabaro.vbhelper.ui.theme.VBHelperTheme
 import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.components.CyberPanel
+import com.github.nacabaro.vbhelper.components.editorDialogBounds
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import com.github.nacabaro.vbhelper.ui.theme.TextPrimaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
@@ -49,9 +52,11 @@ fun ItemDialog(
     ) {
         CyberPanel(
             modifier = Modifier
+                .editorDialogBounds()
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
+            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -101,14 +106,16 @@ fun ItemDialog(
                 )
             }
 
-            Row(
+            }
+            androidx.compose.foundation.layout.FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
             ) {
                 if (onClickUse != null) {
                     VitalButton(
                         onClick = onClickUse,
-                        modifier = Modifier.weight(1f)
+                        style = com.github.nacabaro.vbhelper.components.VitalButtonStyle.PRIMARY,
+                        modifier = Modifier
                     ) {
                         Text(stringResource(R.string.item_dialog_use))
                     }
@@ -117,7 +124,8 @@ fun ItemDialog(
                 if (onClickPurchase != null) {
                     VitalButton(
                         onClick = onClickPurchase,
-                        modifier = Modifier.weight(1f)
+                        style = com.github.nacabaro.vbhelper.components.VitalButtonStyle.PRIMARY,
+                        modifier = Modifier
                     ) {
                         Text(stringResource(R.string.item_dialog_purchase))
                     }
@@ -125,7 +133,7 @@ fun ItemDialog(
 
                 VitalButton(
                     onClick = onClickCancel,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
                 ) {
                     Text(stringResource(R.string.item_dialog_cancel))
                 }

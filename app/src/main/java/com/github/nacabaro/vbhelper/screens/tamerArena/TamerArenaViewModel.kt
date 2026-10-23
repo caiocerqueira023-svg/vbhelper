@@ -35,6 +35,7 @@ data class TamerArenaState(
     val runs: List<ArenaTournament> = emptyList(),
     val records: List<ArenaTamerRecord> = emptyList(),
     val recentMatches: List<ArenaMatchEntity> = emptyList(),
+    val errorDetails: String? = null,
 ) {
     val selectedPartners: List<OfflineBattleParticipant>
         get() = selectedPartnerIds.take(format).mapNotNull { id -> partners.firstOrNull { it.stableId == id } }
@@ -52,6 +53,12 @@ class TamerArenaViewModel(private val app: VBHelper) : ViewModel() {
 
     init {
         reload()
+        scope.launch {
+            combine(app.container.spritePreferenceRepository.preference, app.container.db.invalidationTracker.createFlow(
+                "Card", "CardCharacter", "UserCharacter", "SpeciesProfile", "SpeciesCatalogEntry",
+                "SpeciesSpriteChoice", "SpeciesDefaultSprite", "AppSourceState")) { _, _ -> Unit }
+                .collect { if (_state.value.currentMatch == null) reload() }
+        }
         scope.launch { repository.runs.collect { rows ->
             val decoded = rows.mapNotNull { runCatching { repository.decodeRun(it) }.getOrNull() }
             _state.value = _state.value.copy(runs = decoded)
@@ -61,8 +68,9 @@ class TamerArenaViewModel(private val app: VBHelper) : ViewModel() {
     }
 
     fun reload() {
-        if (_state.value.busy || loadingJob?.isActive == true) return
-        _state.value = _state.value.copy(loading = true, error = null)
+        if (_state.value.busy) return
+        loadingJob?.cancel()
+        _state.value = _state.value.copy(loading = true, error = null, errorDetails = null)
         loadingJob = scope.launch {
             try {
                 val loaded = withContext(Dispatchers.IO) {
@@ -70,11 +78,14 @@ class TamerArenaViewModel(private val app: VBHelper) : ViewModel() {
                     val nicknames = runCatching {
                         app.assets.open(TamerNicknames.ASSET_PATH).bufferedReader().use { TamerNicknames.parse(it.readText()) }
                     }.getOrDefault(emptyMap())
-                    val resolver = TamerTeamResolver(tamers, ArenaSpeciesIndex.load(app, app.container.db), nicknames)
                     val db = app.container.db
+                    db.expandedCatalog?.ensureReadyDefinitions()
+                    val eligibility = db.participation?.snapshot()
+                    val resolver = TamerTeamResolver(tamers, ArenaSpeciesIndex.load(app, db), nicknames)
                     val characters = db.userCharacterDao().getAllCharacters().first().associateBy { it.id }
                     val loadouts = db.digimonTechniqueLoadoutDao().getAll().groupBy { it.individualId }
-                    val partners = db.userCharacterDao().getAllBattleParticipantProfiles().mapNotNull { profile ->
+                    val partners = db.userCharacterDao().getAllBattleParticipantProfiles()
+                        .filter { eligibility?.owned(it.sourceCharacterId)?.usable != false }.mapNotNull { profile ->
                         characters[profile.sourceCharacterId]?.let { character ->
                             offlineBattleParticipant(character, profile).copy(techniqueIds = GenericTechniqueLoadout.resolve(
                                 loadouts[profile.individualId].orEmpty().sortedBy { it.slot }.map { it.techniqueId }))
@@ -89,7 +100,7 @@ class TamerArenaViewModel(private val app: VBHelper) : ViewModel() {
                     selectedPartnerIds = selected)
             } catch (failure: Exception) {
                 if (failure is CancellationException) throw failure
-                _state.value = _state.value.copy(loading = false, error = failure.message ?: app.getString(R.string.arena_load_failed))
+                _state.value = _state.value.copy(loading = false, error = app.getString(R.string.arena_load_failed), errorDetails = failure.message)
             }
         }
     }
@@ -103,7 +114,7 @@ class TamerArenaViewModel(private val app: VBHelper) : ViewModel() {
         if (slot < ids.size) ids[slot] = id else ids.add(id)
         if (ids.distinct().size == ids.size) _state.value = _state.value.copy(selectedPartnerIds = ids)
     }
-    fun clearError() { _state.value = _state.value.copy(error = null) }
+    fun clearError() { _state.value = _state.value.copy(error = null, errorDetails = null) }
 
     private fun configuration(seed: Long): BattleConfiguration {
         val arena = OfflineArenaManifest.read(app)
@@ -145,15 +156,16 @@ class TamerArenaViewModel(private val app: VBHelper) : ViewModel() {
         val resolver = current.resolver ?: return
         action {
             val candidates = resolver.tamers.filter { series == null || it.series == series }
-                .mapNotNull { resolver.resolve(it.id, current.stages) }
+                .mapNotNull { resolver.resolveForCup(it.id, current.stages) }
             require(size in setOf(8, 16) && candidates.size >= size - 1) { app.getString(R.string.arena_not_enough_tamers) }
             val seed = System.nanoTime()
             val selected = candidates.shuffled(kotlin.random.Random(seed)).take(size - 1)
-            val entries = listOf(player(current)) + selected.map { opponent(it, resolver, current.difficulty) }
+            val cupResolver = resolver.forCups()
+            val entries = listOf(player(current)) + selected.map { opponent(it, cupResolver, current.difficulty) }
             val id = UUID.randomUUID().toString()
             val tournament = ArenaTournament.create(id, entries, current.format, current.difficulty.name, seed,
                 series ?: app.getString(R.string.arena_all_series)).copy(configuration = configuration(seed),
-                resultSpecies = resultArt(entries, resolver))
+                resultSpecies = resultArt(entries, cupResolver))
             repository.registerTournament(tournament)
             _state.value = _state.value.copy(activeRunId = id)
             val match = repository.nextPlayerMatch(id)
@@ -166,24 +178,25 @@ class TamerArenaViewModel(private val app: VBHelper) : ViewModel() {
         val resolver = _state.value.resolver ?: return
         action {
             _state.value = _state.value.copy(activeRunId = id)
-            repository.refreshLegacyTournament(id, resolver)
+            repository.refreshLegacyTournament(id, resolver.forCups())
             val next = repository.nextPlayerMatch(id)
             _state.value = _state.value.copy(currentMatch = next)
         }
     }
 
     fun showBracket(id: String?) { _state.value = _state.value.copy(activeRunId = id, selectedTamerId = null) }
-    fun closeMatch() { _state.value = _state.value.copy(currentMatch = null) }
+    fun closeMatch() { _state.value = _state.value.copy(currentMatch = null); reload() }
     fun withdrawTournament(id: String) { if (!_state.value.busy) action { repository.withdraw(id) } }
 
     private fun action(block: suspend () -> Unit) {
-        _state.value = _state.value.copy(busy = true, error = null)
+        _state.value = _state.value.copy(busy = true, error = null, errorDetails = null)
         scope.launch {
             try { block() } catch (failure: Exception) {
                 if (failure is CancellationException) throw failure
-                _state.value = _state.value.copy(error = if (failure is CanonicalTeamUnavailable)
+                _state.value = _state.value.copy(error = if (failure is com.github.nacabaro.vbhelper.species.PartnerUnavailableException)
+                    app.getString(R.string.participation_inactive_hint) else if (failure is CanonicalTeamUnavailable)
                     app.getString(R.string.arena_canonical_art_missing, failure.tamerName)
-                    else failure.message ?: app.getString(R.string.arena_operation_failed))
+                    else app.getString(R.string.arena_operation_failed), errorDetails = failure.message)
             } finally { _state.value = _state.value.copy(busy = false) }
         }
     }

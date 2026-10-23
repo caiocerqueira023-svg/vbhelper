@@ -107,6 +107,8 @@ fun ActiveDigimonCard(
             animationKey = character.id,
             speechBubbleText = speechBubbleText,
             vitalPoints = character.vitalPoints,
+            iconDescription = character.nickname?.takeIf(String::isNotBlank) ?: character.speciesName
+                ?: stringResource(R.string.widget_digimon_label),
             onClick = onClick,
             onLongClick = onLongClick,
             longClickLabel = detailsLabel,

@@ -53,7 +53,11 @@ internal fun ArenaResult(snapshot: BattleSnapshot, match: ArenaMatchSpec, settle
             if (settlement?.tiebreak == true) Text(stringResource(R.string.arena_tiebreak_resolution), style = MaterialTheme.typography.bodySmall)
             if (champion) Text(stringResource(R.string.arena_trophy_awarded), style = MaterialTheme.typography.bodyMedium)
             Text(stringResource(R.string.arena_safe_short), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            error?.let { Text(it, color = MaterialTheme.colorScheme.error); TextButton(onClick = onRetryRecord) { Text(stringResource(R.string.app_retry)) } }
+            error?.let {
+                Text(stringResource(R.string.ui_world_battle_record_failed), color = MaterialTheme.colorScheme.error)
+                com.github.nacabaro.vbhelper.components.DebugDetails(it)
+                TextButton(onClick = onRetryRecord) { Text(stringResource(R.string.app_retry)) }
+            }
         }
         Spacer(Modifier.height(8.dp))
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())

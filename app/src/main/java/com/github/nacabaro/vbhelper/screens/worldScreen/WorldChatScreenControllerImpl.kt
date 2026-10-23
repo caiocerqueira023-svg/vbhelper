@@ -75,7 +75,7 @@ class WorldChatScreenControllerImpl(
                         com.github.nacabaro.vbhelper.R.string.ui_world_recruited_toast else com.github.nacabaro.vbhelper.R.string.quest_feedback_completed
                 })
                 application.container.db.chatDao().insertMessage(ChatMessageEntity(individualId = individualId,
-                    role = "assistant", content = feedback, timestamp = System.currentTimeMillis()))
+                    role = "notice", content = feedback, timestamp = System.currentTimeMillis()))
                 // Presentation is optional and happens after the gameplay mutation has committed.
                 componentActivity.lifecycleScope.launch(Dispatchers.IO) {
                     try {
@@ -114,13 +114,14 @@ class WorldChatScreenControllerImpl(
         cardCharacterId: Long,
         text: String,
         conversationId: String? = null,
+        replacingMessageId: Long? = null,
         onResult: (Result<WildChatEvent>) -> Unit
     ) {
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
             val requestId = conversationId ?: "private-chat:${java.util.UUID.randomUUID()}"
             val result = runCatching {
                 try {
-                    sendClaimedMessage(requestId, individualId, cardCharacterId, text,conversationId!=null)
+                    sendClaimedMessage(requestId, individualId, cardCharacterId, text,conversationId!=null, replacingMessageId)
                 } finally {
                     if(conversationId==null) withContext(NonCancellable) { worldRepository.interactions.finishPrivateChat(requestId, individualId) }
                 }
@@ -137,14 +138,15 @@ class WorldChatScreenControllerImpl(
         }
     }
 
-    private suspend fun sendClaimedMessage(requestId: String, individualId: String, cardCharacterId: Long, text: String,existingConversation:Boolean): WildChatEvent {
+    private suspend fun sendClaimedMessage(requestId: String, individualId: String, cardCharacterId: Long, text: String,existingConversation:Boolean, replacingMessageId: Long? = null): WildChatEvent {
         val chat = if(existingConversation) {
             worldRepository.interactions.renewPrivateChat(requestId,individualId)
             application.container.db.worldInteractionDao().getInteraction(requestId)
         } else worldRepository.interactions.beginPrivateChat(requestId, individualId)
-        val chatResult = chatRepository.sendMessageForWildEncounter(individualId, cardCharacterId, text) { action ->
+        val chatResult = chatRepository.sendMessageForWildEncounter(individualId, cardCharacterId, text, replacingMessageId) { action ->
             applyQuestAction(individualId, action, chat?.id)
         }
+        if (replacingMessageId != null) return WildChatEvent.None
         if (chatResult.questResult?.recruited == true) return WildChatEvent.Recruited(chatResult.reply)
         val delta = if (chatResult.questResult != null) 0 else WildMoodAnalyzer.resolveDelta(text, chatResult.reply, chatResult.moodDelta)
         val newMood = worldRepository.applyWildMoodDelta(individualId, delta, chat?.id) ?: return WildChatEvent.None
@@ -200,15 +202,6 @@ class WorldChatScreenControllerImpl(
         conversationId: String? = null,
         onResult: (Result<WildChatEvent>) -> Unit
     ) {
-        componentActivity.lifecycleScope.launch(Dispatchers.IO) {
-            val deletion = runCatching {
-                chatRepository.deleteFromMessageForIndividual(individualId, messageId)
-            }
-            if (deletion.isFailure) {
-                componentActivity.runOnUiThread { onResult(Result.failure(deletion.exceptionOrNull()!!)) }
-                return@launch
-            }
-            sendMessage(individualId, cardCharacterId, text,conversationId,onResult)
-        }
+        sendMessage(individualId, cardCharacterId, text, conversationId, replacingMessageId = messageId, onResult = onResult)
     }
 }

@@ -1,0 +1,23 @@
+<resources>
+    <string name="species_add">デジモンを追加</string>
+    <string name="species_edit">デジモンを編集</string>
+    <string name="species_template_note">自分の種族情報をカタログに保存できます。リストの種族を長押しすると情報を編集できます。</string>
+    <string name="species_moves_hint">技は1行に1つ、またはカンマで区切って入力してください。</string>
+    <string name="species_sprite_title">種族のスプライト</string>
+    <string name="species_sprite_hint">この種族のすべてのデジモンに表示するスプライトセットを選びます。</string>
+    <string name="species_choose_sprite">スプライトを選ぶ</string>
+    <string name="species_original_sprites">元のスプライトを使う</string>
+    <string name="species_matching_sprites">この種族に割り当て済み</string>
+    <string name="species_all_sprites">読み込み済みのすべて</string>
+    <string name="species_search_sprites">スプライトを検索</string>
+    <string name="species_sprite_details">%1$s・スロット%2$d・スプライト%3$d</string>
+    <string name="species_sprite_identifier">スプライト%1$d</string>
+    <string name="species_no_sprites">一致するスプライトがありません。すべてのスプライト、または別の検索を試してください。</string>
+    <string name="species_load_more">さらに読み込む</string>
+    <string name="species_save_failed">保存できませんでした。名前が重複していないこと、技の名前が短いこと、選んだスプライトが読み込み済みであることを確認して再試行してください。</string>
+    <string name="species_library">種族とスプライト</string>
+    <string name="species_library_hint">種族情報の追加や編集、共通の外見の選択ができます。</string>
+
+    <string name="species_copy_note">独自の新しいエントリーを作成します。元の種族はカタログにそのまま残ります。</string>
+    <string name="species_copy_name_hint">元の種族を残すため、別の名前を選んでください。</string>
+</resources>

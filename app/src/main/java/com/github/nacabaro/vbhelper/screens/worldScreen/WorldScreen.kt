@@ -1,7 +1,6 @@
 package com.github.nacabaro.vbhelper.screens.worldScreen
 
 import android.Manifest
-import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.location.Location
 import android.widget.Toast
@@ -252,9 +251,16 @@ fun RadarScreen(
     var debugSpawnCharacters by remember { mutableStateOf<List<DebugSpawnCharacter>?>(null) }
     var debugSpawnPickerFailed by remember { mutableStateOf(false) }
     var debugSpawnPickerAttempt by remember { mutableIntStateOf(0) }
-    var debugAnyDistance by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(debugAnyDistance) {
-        com.github.nacabaro.vbhelper.world.RadarDebugInteraction.allowAnyDistance = debugAnyDistance
+    val debugSettingsRepository = app.container.debugSettingsRepository
+    val debugSettings by debugSettingsRepository.state.collectAsState()
+    LaunchedEffect(debugSettings.enabled) {
+        if (!debugSettings.enabled) {
+            showDebugSpawnPicker = false
+            debugSpawnCharacters = null
+        }
+    }
+    DisposableEffect(debugSettingsRepository) {
+        onDispose { debugSettingsRepository.setAnyDistance(false) }
     }
     var battleSpawnId by rememberSaveable { mutableStateOf<Long?>(null) }
     var battleCharacterId by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -307,15 +313,13 @@ fun RadarScreen(
         onFullScreenBattleChanged(battleActive)
     }
     val explorationActive = radarResumed && !battleActive && pendingBattleEventId == null && worldSnapshot.status != EcosystemStatus.FROZEN
-    val compass = rememberWorldCompass(location, enabled = explorationActive)
+    val compass = rememberWorldCompass(location, enabled = explorationActive, diagnosticsEnabled = debugSettings.enabled)
     val heading = compass.heading ?: 0f // Uncalibrated map is explicitly north-up.
     var frozenRadarHeading by remember { mutableFloatStateOf(0f) }
     SideEffect {
         if (explorationActive) frozenRadarHeading = heading
     }
     val radarHeading = if (explorationActive) heading else frozenRadarHeading
-    val isDebuggableBuild = (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
-    var showCompassDiagnostics by remember { mutableStateOf(false) }
     val spawns by app.container.worldRepository.observeSpawns().collectAsState(initial = emptyList())
     val questTasks by app.container.questRepository.observeTargetTasks().collectAsState(initial = emptyList())
     val questTrials by app.container.questRepository.observeBattleTargets().collectAsState(initial = emptyList())
@@ -336,8 +340,8 @@ fun RadarScreen(
     val worldSpawnCards = worldSpawnCardsState.orEmpty()
     val currentBiome by app.container.worldRepository.currentBiome.collectAsState()
     val scope = rememberCoroutineScope()
-    LaunchedEffect(showDebugSpawnPicker, debugSpawnPickerAttempt) {
-        if (!showDebugSpawnPicker || !isDebuggableBuild) return@LaunchedEffect
+    LaunchedEffect(showDebugSpawnPicker, debugSpawnPickerAttempt, debugSettings.enabled) {
+        if (!showDebugSpawnPicker || !debugSettings.enabled) return@LaunchedEffect
         debugSpawnCharacters = null
         debugSpawnPickerFailed = false
         try {
@@ -468,7 +472,10 @@ fun RadarScreen(
         populationRefreshFailed = false
         populationRefreshJob = scope.launch {
             try {
-                val biome = withContext(Dispatchers.IO) { app.container.worldRepository.resolveSpawnBiome(fix.position) }
+                val biome = withContext(Dispatchers.IO) {
+                    app.container.worldRepository.prepareSpawns()
+                    app.container.worldRepository.resolveSpawnBiome(fix.position)
+                }
                 val current = ecosystem.snapshot.value
                 if (current.leaseEpoch != epoch) return@launch
                 val ticket = current.commandStamp ?: return@launch
@@ -787,7 +794,7 @@ fun RadarScreen(
     val settingsMutationsEnabled = radarResumed && worldSnapshot.status == EcosystemStatus.READY && pendingBattleEventId == null
 
     fun spawnDebugDigimon(cardCharacterId: Long? = null) {
-        if (!isDebuggableBuild || !regionMutationsEnabled || debugSpawnInProgress) return
+        if (!debugSettingsRepository.enabled || !regionMutationsEnabled || debugSpawnInProgress) return
         debugSpawnInProgress = true
         scope.launch {
             try {
@@ -815,7 +822,7 @@ fun RadarScreen(
             (attemptedWildAttacks[it.id] ?: 0)<3 } ?: return@LaunchedEffect
         val attacker=spawns.firstOrNull { it.individualId in attack.participantIds } ?: return@LaunchedEffect
         val position=worldSnapshot.individuals.firstOrNull { it.individualId==attacker.individualId }?.position ?: return@LaunchedEffect
-        if(!com.github.nacabaro.vbhelper.world.RadarDebugInteraction.allowAnyDistance &&
+        if(!debugSettingsRepository.allowAnyDistance &&
             worldSnapshot.playerFix?.let { RadarWorldGeometry.relative(it.position,position).withinInteractionRange }!=true) return@LaunchedEffect
         attemptedWildAttacks[attack.id]=(attemptedWildAttacks[attack.id] ?: 0)+1
         if(attack.publicReason?.startsWith("WILD_ATTACK:")==true) context.showAppFeedback(R.string.ui_world_wild_attack)
@@ -964,7 +971,9 @@ fun RadarScreen(
                                     val event=worldSnapshot.publicInteractionFor(projection.individualId)
                                     if(event!=null)openInteraction(event) else { selectedEncounterId=projection.individualId;selectedEncounterName=asset?.speciesName }
                                 },onLongClick={ asset?.let { spawn -> scope.launch {
-                                    selectedSpecies=withContext(Dispatchers.IO) { DexRepository(app.container.db).getCharactersByCardId(spawn.cardId).first().firstOrNull { it.id==spawn.cardCharacterId } }
+                                     selectedSpecies=withContext(Dispatchers.IO) { val dex = DexRepository(app.container.db)
+                                         spawn.cardId?.let { dex.getCharactersByCardId(it).first().firstOrNull { c -> c.id==spawn.cardCharacterId } }
+                                             ?: dex.getCharacterProgress(spawn.cardCharacterId).first() }
                                  } } }).semantics { contentDescription=asset?.speciesName ?: "Digimon" }
                           )
                         val activity=worldSnapshot.publicInteractionFor(projection.individualId)
@@ -1203,12 +1212,14 @@ fun RadarScreen(
                                         onLongClick = {
                                             if (!battleActive) {
                                                 scope.launch {
-                                                    selectedSpecies = withContext(Dispatchers.IO) {
-                                                        DexRepository(app.container.db)
-                                                            .getCharactersByCardId(spawn.cardId)
-                                                            .first()
-                                                            .firstOrNull { it.id == spawn.cardCharacterId }
-                                                    }
+                                                     selectedSpecies = withContext(Dispatchers.IO) {
+                                                         val dex = DexRepository(app.container.db)
+                                                         spawn.cardId?.let { cardId ->
+                                                             dex.getCharactersByCardId(cardId)
+                                                                 .first()
+                                                                 .firstOrNull { it.id == spawn.cardCharacterId }
+                                                         } ?: dex.getCharacterProgress(spawn.cardCharacterId).first()
+                                                     }
                                                 }
                                             }
                                         }
@@ -1268,6 +1279,7 @@ fun RadarScreen(
                 radarControls = {
             observedInteractionId?.let { id ->
                 WorldInteractionOverlay(id,app.container.db,worldSnapshot,onClose={observedInteractionId=null},hasOwnedPartner=activeOwned!=null,
+                    allowAnyDistance=debugSettings.allowAnyDistance,
                     onOpenConversation={openConversation(id)},
                     onDefend={
                         val attack=worldSnapshot.interactions.firstOrNull { it.id==id }
@@ -1294,8 +1306,8 @@ fun RadarScreen(
             }
             if(firstPersonFailed) Text(stringResource(R.string.ui_world_fp_failure),color=MaterialTheme.colorScheme.error,modifier=Modifier.padding(top=8.dp))
             Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
-                Text(stringResource(R.string.ui_world_show_labels),modifier=Modifier.weight(1f))
-                Switch(checked=showEntityLabels,onCheckedChange={showEntityLabels=it})
+                com.github.nacabaro.vbhelper.components.LabeledSwitchRow(stringResource(R.string.ui_world_show_labels),
+                    showEntityLabels, { showEntityLabels = it })
             }
             if(firstPersonEnabled) {
                 Text(stringResource(R.string.ui_world_vertical_look),style=MaterialTheme.typography.bodySmall)
@@ -1321,7 +1333,7 @@ fun RadarScreen(
                 )
                 VitalButton(onClick = { zoom = (zoom * 1.5f).coerceAtMost(4f) }) { Text("+") }
             }
-            if (isDebuggableBuild) {
+            if (debugSettings.enabled) {
                 DebugSpawnButton(
                     onRandomSpawn = { spawnDebugDigimon() },
                     onChooseSpawn = { showDebugSpawnPicker = true },
@@ -1335,8 +1347,8 @@ fun RadarScreen(
                 Text(stringResource(R.string.ui_world_debug_picker_hint), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
                 Row(Modifier.fillMaxWidth(),verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.ui_world_debug_any_distance),modifier = Modifier.weight(1f))
-                    Switch(checked = debugAnyDistance,onCheckedChange = { debugAnyDistance = it })
+                    com.github.nacabaro.vbhelper.components.LabeledSwitchRow(stringResource(R.string.ui_world_debug_any_distance),
+                        debugSettings.allowAnyDistance, debugSettingsRepository::setAnyDistance)
                 }
             }
             if (pendingRecruits.isNotEmpty()) {
@@ -1376,7 +1388,8 @@ fun RadarScreen(
         selectedEncounterId?.let { individualId ->
             val spawn = spawns.firstOrNull { it.individualId == individualId }
             val blocker = if (displayedCommandStamp == null) RadarRejection.NOT_READY else
-                worldSnapshot.commandRejection(RadarCommand(displayedCommandStamp, RadarCommandKind.ENCOUNTER, individualId), worldSnapshot.observedAt)
+                worldSnapshot.commandRejection(RadarCommand(displayedCommandStamp, RadarCommandKind.ENCOUNTER, individualId), worldSnapshot.observedAt,
+                    allowAnyDistance = debugSettings.allowAnyDistance)
             WorldEncounterActionSheet(
                 spawn = spawn,
                 displayName = spawn?.speciesName ?: selectedEncounterName,
@@ -1417,7 +1430,7 @@ fun RadarScreen(
                                         val quest = app.container.questRepository.interactTargetLocked(individualId,
                                             task.objectiveId, task.revision, command.playerFix)
                                         app.container.db.chatDao().insertMessage(com.github.nacabaro.vbhelper.domain.chat.ChatMessageEntity(
-                                            individualId = quest.giverId, role = "assistant",
+                                            individualId = quest.giverId, role = "notice",
                                             content = resources.getString(R.string.quest_feedback_target_progress,
                                                 task.targetName ?: resources.getString(R.string.ui_world_wild_digimon)),
                                             timestamp = System.currentTimeMillis()))
@@ -1452,7 +1465,7 @@ fun RadarScreen(
         }
     }
 
-    if (showDebugSpawnPicker && isDebuggableBuild) {
+    if (showDebugSpawnPicker && debugSettings.enabled) {
         DebugSpawnPickerDialog(
             characters = debugSpawnCharacters,
             failed = debugSpawnPickerFailed,
@@ -1610,14 +1623,15 @@ private fun WorldEncounterActionSheet(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                OutlinedButton(
+                VitalButton(
                     onClick = onChat,
                     enabled = !preparingBattle && blockedReason == null && spawn != null,
                     modifier = Modifier.weight(1f).heightIn(min = 52.dp)
                 ) {
                     Text(stringResource(R.string.ui_world_encounter_chat))
                 }
-                Button(
+                VitalButton(
+                    style = com.github.nacabaro.vbhelper.components.VitalButtonStyle.PRIMARY,
                     onClick = onBattle,
                     enabled = !preparingBattle && blockedReason == null && spawn != null,
                     modifier = Modifier.weight(1f).heightIn(min = 52.dp)
@@ -1754,6 +1768,7 @@ private fun WorldSpawnDimRow(
             checked = card.worldSpawnsEnabled,
             enabled = enabled,
             onCheckedChange = onCheckedChange,
+            modifier = Modifier.semantics { contentDescription = card.name },
             colors = SwitchDefaults.colors(
                 checkedThumbColor = SurfaceDeepPurple,
                 checkedTrackColor = VitalCyan,
@@ -1771,7 +1786,10 @@ private fun WorldDimSpeciesDialog(
     onDismiss: () -> Unit
 ) {
     var idleFrame by remember { mutableIntStateOf(0) }
-    LaunchedEffect(Unit) {
+    val animateSprites = com.github.nacabaro.vbhelper.components.motionEnabled()
+    LaunchedEffect(animateSprites) {
+        idleFrame = 0
+        if (!animateSprites) return@LaunchedEffect
         while (true) {
             kotlinx.coroutines.delay(700L)
             idleFrame = 1 - idleFrame

@@ -39,6 +39,7 @@ fun HomeSetupPanel(
     onSkip: () -> Unit,
     modifier: Modifier = Modifier,
     importingConnection: Boolean = false,
+    onChooseExpanded: (() -> Unit)? = null,
 ) {
     Column(modifier.fillMaxSize().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally) {
@@ -70,6 +71,16 @@ fun HomeSetupPanel(
             VitalButton(onClick = action, enabled = !importingConnection, style = VitalButtonStyle.PRIMARY,
                 modifier = Modifier.fillMaxWidth().testTag("home-setup-primary")) {
                 Text(stringResource(if (importingConnection) R.string.app_connection_importing else label))
+            }
+            if (onChooseExpanded != null) {
+                Text(stringResource(R.string.app_setup_expanded_title),
+                    style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.app_setup_expanded_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                VitalButton(onClick = onChooseExpanded, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(R.string.app_setup_expanded_button))
+                }
             }
             TextButton(onClick = onSkip, modifier = Modifier.fillMaxWidth().testTag("home-setup-skip")) { Text(stringResource(R.string.app_setup_skip)) }
         }

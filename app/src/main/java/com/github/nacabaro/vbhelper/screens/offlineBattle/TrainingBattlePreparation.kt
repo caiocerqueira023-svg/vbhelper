@@ -24,6 +24,11 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -45,6 +50,10 @@ import androidx.compose.ui.unit.sp
 import com.github.nacabaro.vbhelper.battle.BattleAssetPaths
 import com.github.nacabaro.vbhelper.battle.decodeBattleAsset
 import com.github.nacabaro.vbhelper.components.CharacterEntry
+import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.VitalButton
+import com.github.nacabaro.vbhelper.components.VitalButtonStyle
+import com.github.nacabaro.vbhelper.components.cyberFrame
 import com.github.nacabaro.vbhelper.screens.OfflineBattleParticipant
 import com.github.nacabaro.vbhelper.screens.storageScreen.StorageCharacterPickerDialog
 import com.github.nacabaro.vbhelper.screens.storageScreen.StorageCharacterPickerOption
@@ -92,10 +101,18 @@ fun TrainingBattlePreparation(
     onStart: (List<OfflineBattleParticipant>, List<OfflineBattleParticipant>) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    BackHandler(onBack = onBack)
     var formatId by rememberSaveable { mutableStateOf(TrainingFormat.ONE_V_ONE.id) }
     val format = TrainingFormat.entries.first { it.id == formatId }
-    val partnerOptions = availablePartners.distinctBy { it.stableId }
-    val opponentOptions = availableOpponents.distinctBy { it.stableId }
+    val participation = com.github.nacabaro.vbhelper.components.rememberPartnerParticipation()
+    fun usable(participant: OfflineBattleParticipant): Boolean = participation?.let { snapshot ->
+        val owned = participant.character?.id ?: participant.sourceCharacterId
+        val card = participant.character?.charId ?: participant.cardCharacterId
+        when { owned != null -> snapshot.owned(owned).usable; card != null -> snapshot.card(card).usable
+            else -> snapshot.species(participant.speciesName ?: participant.displayName).usable }
+    } ?: true
+    val partnerOptions = availablePartners.filter(::usable).distinctBy { it.stableId }
+    val opponentOptions = availableOpponents.filter(::usable).distinctBy { it.stableId }
     var allyOneId by rememberSaveable(activePartner?.stableId) { mutableStateOf(activePartner?.stableId) }
     var allyTwoId by rememberSaveable(activePartner?.stableId) {
         mutableStateOf(partnerOptions.firstOrNull { it.stableId != activePartner?.stableId }?.stableId)
@@ -125,22 +142,22 @@ fun TrainingBattlePreparation(
         }
     }
 
+    Column(modifier.fillMaxSize()) {
+    TopBanner(stringResource(R.string.ui_battle_training_title), onBackClick = onBack)
     Column(
-        modifier = modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(stringResource(R.string.ui_battle_training_title), style = MaterialTheme.typography.headlineSmall,
-                color = TextPrimaryOnDark, fontWeight = FontWeight.Bold)
             Text(stringResource(R.string.ui_battle_prep_subtitle),
                 style = MaterialTheme.typography.bodyMedium, color = TextSecondaryOnDark,
                 maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
 
         Surface(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().cyberFrame(),
             color = SurfaceElevatedPurple,
-            shape = CutCornerShape(9.dp),
+            shape = RectangleShape,
             border = BorderStroke(1.dp, SurfaceStroke)
         ) {
             Column(Modifier.padding(horizontal = 12.dp, vertical = 9.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -151,7 +168,8 @@ fun TrainingBattlePreparation(
                         val isSelected = option == format
                         Button(
                             onClick = { formatId = option.id },
-                            modifier = Modifier.weight(1f).height(46.dp),
+                            modifier = Modifier.weight(1f).heightIn(min = 48.dp)
+                                .semantics { selected = isSelected },
                             shape = CutCornerShape(6.dp),
                             border = if (isSelected) null else BorderStroke(1.dp, SurfaceStroke),
                             colors = ButtonDefaults.buttonColors(
@@ -159,7 +177,7 @@ fun TrainingBattlePreparation(
                                 contentColor = if (isSelected) OnVitalPrimary else TextPrimaryOnDark
                             )
                         ) {
-                            Text(option.label, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                            Text(option.label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
@@ -195,9 +213,9 @@ fun TrainingBattlePreparation(
                 )
             }
             Surface(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().cyberFrame(),
                 color = DeepPurpleBgAlt,
-                shape = CutCornerShape(7.dp),
+                shape = RectangleShape,
                 border = BorderStroke(1.dp, SurfaceStroke)
             ) {
                 Column(Modifier.padding(horizontal = 12.dp, vertical = 9.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -229,25 +247,22 @@ fun TrainingBattlePreparation(
             allActiveParticipants.map { it.stableId }.distinct().size == allActiveParticipants.size
 
         Row(horizontalArrangement = Arrangement.spacedBy(9.dp)) {
-            OutlinedButton(
+            VitalButton(
                 onClick = onBack,
-                modifier = Modifier.weight(0.8f).height(52.dp),
+                modifier = Modifier.weight(0.8f).heightIn(min = 52.dp),
                 shape = CutCornerShape(7.dp),
-                border = BorderStroke(1.dp, SurfaceStroke)
             ) { Text(stringResource(R.string.ui_battle_back), color = TextPrimaryOnDark) }
-            Button(
+            VitalButton(
+                style = VitalButtonStyle.PRIMARY,
                 onClick = {
                     onStart(selectedAllies, selectedOpponents)
                 },
                 enabled = canStart,
-                modifier = Modifier.weight(1.2f).height(52.dp),
+                modifier = Modifier.weight(1.2f).heightIn(min = 52.dp),
                 shape = CutCornerShape(7.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = VitalPurpleBright,
-                    contentColor = OnVitalPrimary
-                )
             ) { Text(stringResource(R.string.ui_battle_prep_enter), fontWeight = FontWeight.Bold, maxLines = 1) }
         }
+    }
     }
 
     val pickerSlot = BattleTeamSlot.entries.firstOrNull { it.key == pickerSlotKey }
@@ -317,7 +332,7 @@ private fun TeamSlotButton(
 ) {
     OutlinedButton(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().height(70.dp).testTag(slot.tag),
+        modifier = Modifier.fillMaxWidth().heightIn(min = 70.dp).testTag(slot.tag),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 7.dp),
         shape = CutCornerShape(7.dp),
         border = BorderStroke(1.dp, if (participant != null) VitalCyan else SurfaceStroke)
@@ -394,15 +409,17 @@ private fun ParticipantPickerTile(
 private fun AssetParticipantPreview(participant: OfflineBattleParticipant) {
     val context = LocalContext.current
     val assetId = participant.assetCharacterId ?: participant.externalCharacterId
-    val bitmap = androidx.compose.runtime.remember(assetId) {
-        assetId?.let { context.decodeBattleAsset(BattleAssetPaths.characterFrame(it, 1)) }
+    val manager = androidx.compose.runtime.remember(context) { com.github.nacabaro.vbhelper.battle.IndividualSpriteManager(context) }
+    val bitmap by androidx.compose.runtime.produceState<android.graphics.Bitmap?>(null, assetId) {
+        value = assetId?.let { manager.loadSpriteFrame(it, 1) }
     }
+    val displayedBitmap = bitmap
     Box(
         Modifier.fillMaxWidth().height(112.dp).background(DeepPurpleBgAlt, CutCornerShape(6.dp)),
         contentAlignment = Alignment.Center
     ) {
-        if (bitmap != null) {
-            Image(bitmap.asImageBitmap(), contentDescription = participant.displayName,
+        if (displayedBitmap != null) {
+            Image(displayedBitmap.asImageBitmap(), contentDescription = participant.displayName,
                 contentScale = ContentScale.Fit, modifier = Modifier.fillMaxSize().padding(5.dp))
         } else {
             Text(participant.displayName.take(1).uppercase(), color = VitalCyan,

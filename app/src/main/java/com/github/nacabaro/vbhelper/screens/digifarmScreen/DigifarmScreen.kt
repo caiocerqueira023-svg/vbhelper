@@ -48,6 +48,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -74,6 +75,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.TopBanner
+import com.github.nacabaro.vbhelper.components.operationFailureMessage
 import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.digifarm.social.FarmConversationOrchestrator
@@ -119,13 +121,23 @@ fun DigifarmScreen(
     val app = context.applicationContext as VBHelper
     val repository = app.container.digifarmRepository
     val scope = rememberCoroutineScope()
-    val farms by repository.observeFarms().collectAsState(emptyList())
+    val farmsLoad = com.github.nacabaro.vbhelper.components.rememberCollectionLoad(repository) { repository.observeFarms() }
+    val farms = farmsLoad.data.orEmpty()
     var selectedFarmId by remember { mutableStateOf<String?>(null) }
     val selectedFarm = farms.firstOrNull { it.id == selectedFarmId } ?: farms.firstOrNull()
     LaunchedEffect(farms, selectedFarmId) {
         if (selectedFarmId == null && farms.isNotEmpty()) selectedFarmId = farms.first().id
     }
 
+    if (farmsLoad.blocking) {
+        Scaffold(topBar = { Column {
+            TopBanner(text = stringResource(R.string.ui_digifarm_title))
+            WorldSectionTabs(selectedWorldTab, onWorldTabSelected)
+        } }, contentWindowInsets = WindowInsets.statusBars) { padding ->
+            com.github.nacabaro.vbhelper.components.CollectionStatePanel(farmsLoad, Modifier.padding(padding))
+        }
+        return
+    }
     if (selectedFarm == null) {
         EmptyFarmState(onCreate = { name ->
             scope.launch(Dispatchers.IO) {
@@ -140,6 +152,7 @@ fun DigifarmScreen(
         navController = navController,
         farm = selectedFarm,
         farms = farms,
+        farmLoad = farmsLoad,
         onSelectFarm = { selectedFarmId = it },
         onCreateFarm = { name ->
             scope.launch(Dispatchers.IO) {
@@ -216,6 +229,7 @@ private fun FarmWorld(
     navController: NavController,
     farm: Farm,
     farms: List<Farm>,
+    farmLoad: com.github.nacabaro.vbhelper.components.CollectionLoad<Farm>,
     onSelectFarm: (String) -> Unit,
     onCreateFarm: (String) -> Unit,
     selectedWorldTab: Int,
@@ -254,7 +268,7 @@ private fun FarmWorld(
     var sceneView by remember { mutableStateOf<Digifarm3dSceneView?>(null) }
     var sceneIssue by remember(farm.id) { mutableStateOf<String?>(null) }
     var dialogueIssue by remember { mutableStateOf<String?>(null) }
-    var offlineSummary by remember(farm.id) { mutableStateOf<String?>(null) }
+    var offlineSummary by remember(farm.id) { mutableStateOf<com.github.nacabaro.vbhelper.digifarm.FarmReturnSummary?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Single detailed session per app (§13): map and group share the coordinator.
@@ -275,7 +289,7 @@ private fun FarmWorld(
             while (true) {
                 delay(20_000L)
                 val result = runCatching { withContext(Dispatchers.IO) { orchestrator.maybeGenerateAutonomous(farm.id) } }
-                dialogueIssue = result.exceptionOrNull()?.message
+                dialogueIssue = if (result.isFailure) result.exceptionOrNull()?.message ?: "Dialogue request failed" else null
                 if (result.isFailure) break
             }
         }
@@ -317,6 +331,7 @@ private fun FarmWorld(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            com.github.nacabaro.vbhelper.components.CollectionRefreshNotice(farmLoad)
             // Canonical island positions shared by the Filament residents,
             // the invisible tap targets and the speech bubbles.
             val worldPositions = remember(residents) {
@@ -450,13 +465,7 @@ private fun FarmWorld(
                                     color = MaterialTheme.colorScheme.onErrorContainer,
                                     style = MaterialTheme.typography.labelSmall
                                 )
-                                Text(
-                                    it,
-                                    color = MaterialTheme.colorScheme.onErrorContainer,
-                                    style = MaterialTheme.typography.labelSmall,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis
-                                )
+                                com.github.nacabaro.vbhelper.components.DebugDetails(it)
                             }
                         }
                     }
@@ -482,6 +491,7 @@ private fun FarmWorld(
                                     head.second.roundToInt()
                                 )
                             }.size(tapW, tapH)
+                                .semantics { contentDescription = resident.displayName }
                                 .clickable(onClickLabel = stringResource(R.string.ui_digifarm_open_settings)) {
                                     selectedResident = resident
                                 }
@@ -563,10 +573,11 @@ private fun FarmWorld(
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.error
                         )
+                        com.github.nacabaro.vbhelper.components.DebugDetails(it)
                     }
                     offlineSummary?.let {
                         Text(
-                            it,
+                            stringResource(R.string.immersion_farm_return_summary, it.minutesSinceUpdate, it.residentCount, it.recordedResting),
                             style = MaterialTheme.typography.labelSmall,
                             color = TextSecondaryOnDark,
                             maxLines = 4,
@@ -650,7 +661,7 @@ private fun FarmWorld(
                         val result = runCatching { repository.addResident(farm.id, characterId) }
                         withContext(Dispatchers.Main) {
                             result.exceptionOrNull()?.let {
-                                Toast.makeText(context, it.message, Toast.LENGTH_LONG).show()
+                                snackbarHostState.showSnackbar(context.operationFailureMessage(R.string.immersion_farm_action_failed, it.message))
                             }
                             if (result.isSuccess) showAdd = false
                             isAddingResident = false
@@ -727,8 +738,7 @@ private fun FarmWorld(
                                 resources.getString(farmActivityLabelRes(activity))
                             )
                         } else {
-                            result.exceptionOrNull()?.localizedMessage?.takeIf(String::isNotBlank)
-                                ?: resources.getString(R.string.ui_digifarm_activity_failed)
+                            context.operationFailureMessage(R.string.ui_digifarm_activity_failed, result.exceptionOrNull()?.message)
                         }
                         snackbarHostState.showSnackbar(message)
                     }
@@ -749,7 +759,9 @@ private fun FarmWorld(
                 scope.launch(Dispatchers.IO) {
                     val result = runCatching { repository.transferResident(resident.individualId, targetId) }
                     withContext(Dispatchers.Main) {
-                        result.exceptionOrNull()?.let { Toast.makeText(context, it.message, Toast.LENGTH_LONG).show() }
+                        result.exceptionOrNull()?.let {
+                            snackbarHostState.showSnackbar(context.operationFailureMessage(R.string.immersion_farm_action_failed, it.message))
+                        }
                         showTransfer = null
                     }
                 }
@@ -798,6 +810,7 @@ private fun FarmSettingsSheet(
     onOpenResidents: () -> Unit,
     onArchive: () -> Unit
 ) {
+    val dialogueLabel = stringResource(R.string.ui_digifarm_autonomous_dialogue)
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = SurfaceDeepPurple,
@@ -842,9 +855,9 @@ private fun FarmSettingsSheet(
                                 else SurfaceElevatedPurple.copy(alpha = 0.6f)
                             )
                             .cyberFrame()
-                            .clickable(role = Role.RadioButton) {
+                            .selectable(selected, role = Role.RadioButton, onClick = {
                                 if (!selected) onSelectFarm(item.id)
-                            }
+                            })
                             .padding(start = 12.dp, end = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -858,7 +871,7 @@ private fun FarmSettingsSheet(
                         )
                         RadioButton(
                             selected = selected,
-                            onClick = { if (!selected) onSelectFarm(item.id) },
+                            onClick = null,
                             colors = RadioButtonDefaults.colors(
                                 selectedColor = VitalCyan,
                                 unselectedColor = SurfaceStroke
@@ -887,6 +900,7 @@ private fun FarmSettingsSheet(
                 Switch(
                     checked = farm.autonomousDialogueEnabled,
                     onCheckedChange = { onToggleDialogue() },
+                    modifier = Modifier.semantics { contentDescription = dialogueLabel },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = SurfaceDeepPurple,
                         checkedTrackColor = VitalCyan,
@@ -923,31 +937,13 @@ private fun FarmSettingsActionRow(
     highlighted: Boolean = false,
     destructive: Boolean = false
 ) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = 52.dp)
-            .background(
-                when {
-                    destructive -> MaterialTheme.colorScheme.error.copy(alpha = 0.1f)
-                    highlighted -> VitalCyan.copy(alpha = 0.12f)
-                    else -> SurfaceElevatedPurple.copy(alpha = 0.6f)
-                }
-            )
-            .cyberFrame()
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 14.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Text(
-            text,
-            style = MaterialTheme.typography.labelLarge,
-            color = when {
-                destructive -> MaterialTheme.colorScheme.error
-                highlighted -> VitalCyan
-                else -> TextPrimaryOnDark
-            }
-        )
+    VitalButton(onClick = onClick, modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp),
+        style = when {
+            destructive -> com.github.nacabaro.vbhelper.components.VitalButtonStyle.DESTRUCTIVE
+            highlighted -> com.github.nacabaro.vbhelper.components.VitalButtonStyle.PRIMARY
+            else -> com.github.nacabaro.vbhelper.components.VitalButtonStyle.SECONDARY
+        }) {
+        Text(text, style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -998,16 +994,16 @@ private fun ResidentDialog(
                     .padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Text(
-                    stringResource(R.string.ui_digifarm_needs_title),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = TextSecondaryOnDark
-                )
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FarmNeedMetric(stringResource(R.string.ui_digifarm_energy), resident.energy, Modifier.weight(1f))
-                    FarmNeedMetric(stringResource(R.string.ui_digifarm_food), resident.satiety, Modifier.weight(1f))
-                    FarmNeedMetric(stringResource(R.string.ui_digifarm_social), resident.social, Modifier.weight(1f))
-                    FarmNeedMetric(stringResource(R.string.ui_digifarm_fun), resident.funLevel, Modifier.weight(1f))
+                com.github.nacabaro.vbhelper.components.ConditionSummaryPanel(
+                    com.github.nacabaro.vbhelper.components.careSummary(resident.energy, resident.satiety, resident.social, resident.funLevel)
+                ) {
+                    listOf(R.string.ui_digifarm_energy to resident.energy, R.string.ui_digifarm_food to resident.satiety,
+                        R.string.ui_digifarm_social to resident.social, R.string.ui_digifarm_fun to resident.funLevel).forEach { (label, value) ->
+                        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                            Text(stringResource(label), Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                            Text("$value/100", style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
                 }
             }
             Text(

@@ -27,20 +27,65 @@ class ToNfcConverter(
     suspend fun characterToNfc(
         characterId: Long
     ): NfcCharacter = database.withTransaction {
+        database.participation?.snapshot()?.requireOwned(characterId)
         EvolutionHistoryRepository(database).repairCharacter(characterId)
 
         val userCharacter = database
             .userCharacterDao()
             .getCharacter(characterId)
+        val sourceCharacter = database.characterDao().getById(userCharacter.charId)
+        // Catalog-defined partners have no physical slot of their own; the outgoing
+        // payload uses the exact converted DIM/BEM slot recorded by conversion.
+        val exportTarget = if (sourceCharacter?.cardId == null) {
+            val targetId = requireNotNull(userCharacter.exportCardCharacterId) {
+                "Convert this partner to a loaded DIM/BEM slot before sending it to a watch."
+            }
+            val target = requireNotNull(database.characterDao().getById(targetId)) {
+                "Converted slot is no longer available."
+            }
+            require(target.cardId != null && target.catalogSpeciesId == null) {
+                "The converted slot must be an exact loaded DIM/BEM entry."
+            }
+            require(exportSpeciesMatches(sourceCharacter, target)) {
+                "The converted slot must be the exact same species and form."
+            }
+            target
+        } else null
+        val effectiveCharacter = exportTarget ?: requireNotNull(sourceCharacter)
+        val effectiveCard = effectiveCharacter.cardId?.let { database.cardDao().getCardById(it) }
+        val characterInfo = if (exportTarget != null && effectiveCard != null) {
+            val progress = database.cardProgressDao().getCardProgressSync(effectiveCard.id) ?: 0
+            CharacterDtos.CardCharacterInfo(
+                cardId = effectiveCard.cardId.toLong(),
+                charId = effectiveCharacter.charaIndex,
+                stage = effectiveCharacter.stage,
+                attribute = effectiveCharacter.attribute,
+                currentStage = progress
+            )
+        } else {
+            database.characterDao().getCharacterInfo(userCharacter.charId)
+        }
 
-        val characterInfo = database
-            .characterDao()
-            .getCharacterInfo(userCharacter.charId)
-
-        if (userCharacter.characterType == DeviceType.BEDevice)
-            nfcToBENfc(characterId, characterInfo, userCharacter)
+        if (userCharacter.characterType == DeviceType.BEDevice ||
+            userCharacter.characterType == DeviceType.APP && effectiveCard?.isBEm == true)
+            nfcToBENfc(characterId, characterInfo, userCharacter, exportTarget)
         else
-            nfcToVBNfc(characterId, characterInfo, userCharacter)
+            nfcToVBNfc(characterId, characterInfo, userCharacter, exportTarget)
+    }
+
+    private suspend fun exportSpeciesMatches(
+        source: com.github.nacabaro.vbhelper.domain.card.CardCharacter?,
+        target: com.github.nacabaro.vbhelper.domain.card.CardCharacter
+    ): Boolean {
+        if (source?.speciesId != null) {
+            if (target.speciesId != null) return target.speciesId == source.speciesId
+        }
+        suspend fun profileName(id: Long) = database.speciesProfileDao().getByCardCharacterId(id)
+            ?.let { it.speciesName?.takeIf(String::isNotBlank) ?: it.matchedName }
+        val left = source?.let { profileName(it.id) } ?: return false
+        val right = profileName(target.id) ?: return false
+        return com.github.nacabaro.vbhelper.battle.offline.core.BattleSpeciesIdentity.normalize(left) ==
+            com.github.nacabaro.vbhelper.battle.offline.core.BattleSpeciesIdentity.normalize(right)
     }
 
 
@@ -48,19 +93,20 @@ class ToNfcConverter(
     private suspend fun nfcToVBNfc(
         characterId: Long,
         characterInfo: CharacterDtos.CardCharacterInfo,
-        userCharacter: UserCharacter
+        userCharacter: UserCharacter,
+        exportTarget: com.github.nacabaro.vbhelper.domain.card.CardCharacter? = null
     ): VBNfcCharacter {
         val vbData = database
             .userCharacterDao()
-            .getVbData(characterId)
-            .first()
+            .getVbDataOrNull(characterId)
+            ?: com.github.nacabaro.vbhelper.domain.device_data.VBCharacterData(characterId, generation = 0, totalTrophies = 0)
 
-        val paddedTransformationArray = generateTransformationHistory(characterId, 9)
+        val paddedTransformationArray = generateTransformationHistory(characterId, 9, exportTarget)
 
         val watchSpecialMissions = generateSpecialMissionsArray(characterId)
 
         val nfcData = VBNfcCharacter(
-            dimId = characterInfo.cardId.toUShort(),
+            dimId = requireNotNull(characterInfo.cardId) { "Converted export requires a loaded card." }.toUShort(),
             charIndex = characterInfo.charId.toUShort(),
             stage = characterInfo.stage.toByte(),
             attribute = characterInfo.attribute,
@@ -68,7 +114,8 @@ class ToNfcConverter(
             nextAdventureMissionStage = characterInfo.currentStage.toByte(),
             mood = userCharacter.mood.toByte(),
             vitalPoints = userCharacter.vitalPoints.toUShort(),
-            transformationCountdownInMinutes = userCharacter.transformationCountdown.toUShort(),
+            transformationCountdownInMinutes = (if (exportTarget != null)
+                userCharacter.transformationCountdown.coerceAtLeast(1) else userCharacter.transformationCountdown).toUShort(),
             injuryStatus = userCharacter.injuryStatus,
             trophies = userCharacter.trophies.toUShort(),
             currentPhaseBattlesWon = userCharacter.currentPhaseBattlesWon.toUShort(),
@@ -80,7 +127,7 @@ class ToNfcConverter(
             transformationHistory = paddedTransformationArray,
             vitalHistory = generateVitalsHistoryArray(characterId),
             // ScanScreenController attaches a one-time transfer token before sending.
-            appReserved2 = generateUShortAppReserved(userCharacter),
+            appReserved2 = generateUShortAppReserved(userCharacter, exportTarget),
             generation = vbData.generation.toUShort(),
             totalTrophies = vbData.totalTrophies.toUShort(),
             specialMissions = watchSpecialMissions.toTypedArray()
@@ -91,12 +138,17 @@ class ToNfcConverter(
 
 
     private suspend fun generateUShortAppReserved(
-        userCharacter: UserCharacter
+        userCharacter: UserCharacter,
+        exportTarget: com.github.nacabaro.vbhelper.domain.card.CardCharacter? = null
     ): Array<UShort> {
-        val cardData = database
-            .cardDao()
-            .getCardByCharacterId(userCharacter.id)
-            .first()
+        val cardData = if (exportTarget != null) {
+            database.cardDao().getCardById(requireNotNull(exportTarget.cardId))
+        } else {
+            database
+                .cardDao()
+                .getCardByCharacterId(userCharacter.id)
+                .first()
+        } ?: error("Card not found for export")
 
         val appReserved = Array<UShort>(3) {
             0u
@@ -170,17 +222,27 @@ class ToNfcConverter(
     private suspend fun nfcToBENfc(
         characterId: Long,
         characterInfo: CharacterDtos.CardCharacterInfo,
-        userCharacter: UserCharacter
+        userCharacter: UserCharacter,
+        exportTarget: com.github.nacabaro.vbhelper.domain.card.CardCharacter? = null
     ): BENfcCharacter {
-        val beData = database
-            .userCharacterDao()
-            .getBeData(characterId)
-            .first()
+        // A DIM association suppresses APP/cross-product bonuses. Their permanent
+        // progress stays in AppPartnerProgress; only native BE training belongs here.
+        val beData = (if (userCharacter.characterType != DeviceType.APP)
+            database.userCharacterDao().getBeDataOrNull(characterId) else null)
+            ?: com.github.nacabaro.vbhelper.domain.device_data.BECharacterData(
+                id = characterId, trainingHp = 0, trainingAp = 0,
+                trainingBp = 0, remainingTrainingTimeInMinutes = 0,
+                itemEffectMentalStateValue = 0, itemEffectMentalStateMinutesRemaining = 0,
+                itemEffectActivityLevelValue = 0, itemEffectActivityLevelMinutesRemaining = 0,
+                itemEffectVitalPointsChangeValue = 0, itemEffectVitalPointsChangeMinutesRemaining = 0,
+                abilityRarity = NfcCharacter.AbilityRarity.None, abilityType = 0, abilityBranch = 0,
+                abilityReset = 0, rank = 0, itemType = 0, itemMultiplier = 0, itemRemainingTime = 0,
+                otp0 = "", otp1 = "", minorVersion = 0, majorVersion = 0)
 
-        val paddedTransformationArray = generateTransformationHistory(characterId)
+        val paddedTransformationArray = generateTransformationHistory(characterId, 8, exportTarget)
 
         val nfcData = BENfcCharacter(
-            dimId = characterInfo.cardId.toUShort(),
+            dimId = requireNotNull(characterInfo.cardId) { "Converted export requires a loaded card." }.toUShort(),
             charIndex = characterInfo.charId.toUShort(),
             stage = characterInfo.stage.toByte(),
             attribute = characterInfo.attribute,
@@ -234,10 +296,17 @@ class ToNfcConverter(
 
     private suspend fun generateTransformationHistory(
         characterId: Long,
-        length: Int = 8
+        length: Int = 8,
+        exportTarget: com.github.nacabaro.vbhelper.domain.card.CardCharacter? = null
     ): Array<NfcCharacter.Transformation> {
-        val history = database.userCharacterDao().getTransformationHistory(characterId).first()
-            .map { NfcEvolutionHistory.transformation(it.monIndex, it.transformationDate) }
+        // A converted export carries the target slot as its watch lineage; the app
+        // keeps the full catalog history separately and never rewrites it.
+        val history = if (exportTarget != null) {
+            listOf(NfcEvolutionHistory.transformation(exportTarget.charaIndex, System.currentTimeMillis()))
+        } else {
+            database.userCharacterDao().getTransformationHistory(characterId).first()
+                .map { NfcEvolutionHistory.transformation(it.monIndex, it.transformationDate) }
+        }
         return NfcEvolutionHistory.pad(history, length)
     }
 }

@@ -22,7 +22,18 @@ class VitalWearCharacterExporter(
         EvolutionHistoryRepository(database).repairCharacter(characterId)
         val characterWithSprites = database.userCharacterDao().getCharacterWithSprites(characterId)
         val userCharacter = database.userCharacterDao().getCharacter(characterId)
-        val card = database.cardDao().getCardByCharacterIdSync(characterId)
+        val sourceCharacter = database.characterDao().getById(userCharacter.charId)
+        // Catalog-defined partners share through their exact converted slot.
+        val exportTarget = if (sourceCharacter?.cardId == null) {
+            val targetId = requireNotNull(userCharacter.exportCardCharacterId) {
+                "Convert this partner to a loaded DIM/BEM slot before sharing it."
+            }
+            requireNotNull(database.characterDao().getById(targetId)) {
+                "Converted slot is no longer available."
+            }.also { require(it.cardId != null) { "Converted slot is no longer available." } }
+        } else null
+        val exportCharacter = exportTarget ?: requireNotNull(sourceCharacter)
+        val card = database.cardDao().getCardById(requireNotNull(exportCharacter.cardId))
             ?: error("Card not found for character $characterId")
         val cardProgress = database.cardProgressDao().getCardProgressSync(card.id) ?: 0
         Character.newBuilder()
@@ -30,7 +41,7 @@ class VitalWearCharacterExporter(
             .setCardName(card.name)
             .setCharacterStats(
                 Character.CharacterStats.newBuilder()
-                    .setSlotId(database.userCharacterDao().getCharacterInfo(characterId).charaIndex)
+                    .setSlotId(exportCharacter.charaIndex)
                     .setVitals(characterWithSprites.vitalPoints)
                     .setTrainingTimeRemainingInSeconds(resolveTrainingSeconds(characterId, userCharacter.characterType))
                     .setTimeUntilNextTransformation(characterWithSprites.transformationCountdown.toLong() * 60L)
@@ -55,7 +66,18 @@ class VitalWearCharacterExporter(
             )
             .putMaxAdventureCompletedByCard(card.name, (cardProgress - 1).coerceAtLeast(0))
             .addAllTransformationHistory(
-                database.userCharacterDao().getTransformationHistoryForExport(characterId).map {
+                (if (exportTarget != null) {
+                    listOf(
+                        com.github.nacabaro.vbhelper.dtos.CharacterDtos.TransformationHistoryExport(
+                            stageId = exportTarget.id,
+                            monIndex = exportTarget.charaIndex,
+                            cardName = card.name,
+                            transformationDate = System.currentTimeMillis()
+                        )
+                    )
+                } else {
+                    database.userCharacterDao().getTransformationHistoryForExport(characterId)
+                }).map {
                     Character.TransformationEvent.newBuilder()
                         .setCardName(it.cardName)
                         .setPhase(0)

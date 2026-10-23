@@ -6,9 +6,16 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.github.nacabaro.vbhelper.domain.identity.WatchTransfer
 import com.github.nacabaro.vbhelper.domain.identity.WatchImportReceipt
+import com.github.nacabaro.vbhelper.domain.identity.WatchRepresentationSnapshot
 
 @Dao
 interface WatchTransferDao {
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    fun retainSnapshot(snapshot: WatchRepresentationSnapshot): Long
+
+    @Query("SELECT * FROM WatchRepresentationSnapshot WHERE transferToken=:token")
+    fun snapshot(token: String): WatchRepresentationSnapshot?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun record(transfer: WatchTransfer)
 

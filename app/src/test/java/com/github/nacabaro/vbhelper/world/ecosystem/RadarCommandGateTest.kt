@@ -238,6 +238,34 @@ class RadarCommandGateTest {
         world.release("radar")
     }
 
+    @Test fun `revoking a distance override rejects an already prepared encounter ticket`() = runTest {
+        var bypass = true
+        val store = Store()
+        val world = WorldEcosystemCoordinator(store, backgroundScope, { testScheduler.currentTime }, { 42L },
+            allowAnyDistance = { bypass })
+        world.acquire("radar")
+        world.acceptPlayerFix("radar", world.snapshot.value.leaseEpoch, WorldPlayerFix(GeoPoint(0.0, 0.002), 0))
+        val ticket = RadarCommand(world.snapshot.value.commandStamp!!, RadarCommandKind.ENCOUNTER, "wild")
+        assertNull(world.snapshot.value.commandRejection(ticket, 0, allowAnyDistance = true))
+        bypass = false
+        val result = world.executeCommand("radar", ticket) { store.effects++ }
+        assertEquals(RadarRejection.OUT_OF_RANGE, (result as RadarCommandResult.Rejected).reason)
+        assertEquals(0, store.effects)
+        world.release("radar")
+    }
+
+    @Test fun `a distance override never bypasses stale location or individual claims`() {
+        val session = WorldEcosystemSession(seed = 42, lastCheckpointAt = 0)
+        val actor = EcosystemIndividual("wild", 1, GeoPoint(1.0, 1.0), GeoPoint(1.0, 1.0), null,
+            com.github.nacabaro.vbhelper.domain.world.WorldMovementState.HOME, 25.0, null, 0)
+        val frame = EcosystemSnapshot(status = EcosystemStatus.READY, session = session, individuals = listOf(actor),
+            playerFix = WorldPlayerFix(GeoPoint(0.0, 0.0), 0))
+        val ticket = RadarCommand(frame.commandStamp!!, RadarCommandKind.ENCOUNTER, "wild")
+        assertEquals(RadarRejection.STALE_LOCATION, frame.commandRejection(ticket, 30_001, allowAnyDistance = true))
+        assertEquals(RadarRejection.CLAIMED, frame.copy(claimedIndividuals = setOf("wild"))
+            .commandRejection(ticket, 0, allowAnyDistance = true))
+    }
+
     @Test fun `event joining rejects a missing original participant rather than checking only those still loaded`() {
         val session=WorldEcosystemSession(seed=42,lastCheckpointAt=0)
         val actor=EcosystemIndividual("a",1,GeoPoint(0.0,0.0),GeoPoint(0.0,0.0),null,

@@ -164,6 +164,33 @@ enum class DigimonPersonalityType(
         else -> englishInstruction
     }
 
+    /** Describes an observed disposition; model instructions remain a separate, internal vocabulary. */
+    fun observation(languageTag: String = "en"): String {
+        val descriptions = when (this) {
+            ADORING -> Triple("Often shows affection through small, thoughtful gestures.", "Costuma demonstrar carinho em pequenos gestos de atenção.", "小さな気遣いで親しみを示すことが多い。")
+            DEVOTED -> Triple("Tends to keep promises and stay close to trusted companions.", "Costuma cumprir promessas e permanecer ao lado de companheiros de confiança.", "約束を守り、信頼する仲間を支える傾向がある。")
+            TOLERANT -> Triple("Usually approaches differences with patience and a calm manner.", "Geralmente lida com diferenças com paciência e tranquilidade.", "違いを穏やかに受け止め、辛抱強く接することが多い。")
+            OVERPROTECTIVE -> Triple("Pays close attention to the wellbeing of nearby companions.", "Presta muita atenção ao bem-estar dos companheiros próximos.", "身近な仲間の様子や安全をよく気にかける。")
+            ZEALOUS -> Triple("Shows strong commitment to the people and goals that matter.", "Demonstra grande dedicação às pessoas e aos objetivos importantes.", "大切な相手や目標に強い熱意を示す。")
+            BRAVE -> Triple("Often faces difficult situations with determination.", "Costuma enfrentar situações difíceis com determinação.", "困難な場面でも意志を持って立ち向かうことが多い。")
+            RECKLESS -> Triple("May act quickly before fully considering the consequences.", "Às vezes age depressa, antes de avaliar todas as consequências.", "結果を十分に考える前に行動することがある。")
+            DARING -> Triple("Enjoys new challenges and exploring unfamiliar possibilities.", "Gosta de novos desafios e de explorar possibilidades desconhecidas.", "新しい挑戦や未知の可能性を楽しむ。")
+            ENLIGHTENED -> Triple("Often takes a thoughtful, measured view of events.", "Costuma observar os acontecimentos com reflexão e serenidade.", "出来事を落ち着いて考え、広い視点で見ることが多い。")
+            SLY -> Triple("Often communicates indirectly and keeps some intentions private.", "Costuma se comunicar de forma indireta e reservar algumas intenções.", "遠回しな表現を使い、考えの一部を胸に留めることが多い。")
+            ASTUTE -> Triple("Notices details and makes precise observations.", "Percebe detalhes e faz observações precisas.", "細かな点に気づき、的確に状況を捉える。")
+            STRATEGIC -> Triple("Usually considers options and timing before committing.", "Geralmente considera as opções e o momento antes de decidir.", "決断の前に選択肢やタイミングを考えることが多い。")
+            OPPORTUNISTIC -> Triple("Quickly adapts when a useful opportunity appears.", "Adapta-se rapidamente quando surge uma oportunidade útil.", "好機に気づくと素早く状況に合わせる。")
+            FRIENDLY -> Triple("Usually approaches others with warmth and willingness to cooperate.", "Geralmente se aproxima dos outros com simpatia e disposição para cooperar.", "温かく接し、協力しようとすることが多い。")
+            SOCIABLE -> Triple("Enjoys conversation and spending time with others.", "Gosta de conversar e de passar tempo com os outros.", "会話や仲間と過ごす時間を楽しむ。")
+            COMPASSIONATE -> Triple("Often notices when someone needs comfort or practical help.", "Costuma perceber quando alguém precisa de conforto ou ajuda prática.", "慰めや具体的な助けが必要な相手によく気づく。")
+        }
+        return when {
+            languageTag.startsWith("pt", true) -> descriptions.second
+            languageTag.startsWith("ja", true) -> descriptions.third
+            else -> descriptions.first
+        }
+    }
+
     private fun japaneseBehaviorInstruction(): String = when (this) {
         ADORING -> "テイマーや大切な仲人に自然で深い優しさを示す。過度な執着には流されず、その場に合った誠実な感情を表現する。"
         DEVOTED -> "約束を守り、最後まで支援と信頼を示す。危害や非現実的な要求には従わず、自分自身の判断を保つ。"

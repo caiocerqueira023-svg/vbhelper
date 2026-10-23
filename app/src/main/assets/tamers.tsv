@@ -190,6 +190,15 @@ ryo-survive|Tominaga Ryo|Ryo Tominaga|Digimon Survive|Kunemon|||shuuji|CONTROL|c
 shuuji|Kayama Shuuji|Shuuji Kayama|Digimon Survive|Lopmon|||ryo-survive|GUARD|adapted|Kayama_Shuuji
 kaito|Shinonome Kaito|Kaito Shinonome|Digimon Survive|Dracumon|||miu|RUSH|canon|Shinonome_Kaito
 miu|Shinonome Miu|Miu Shinonome|Digimon Survive|Shakomon|||kaito|RANGED|canon|Shinonome_Miu
+nc-player|Player||Digimon New Century|Mochimon|||nc-satoru|BALANCED|canon|Player_(New_Century)
+nc-satoru|Sakamoto Satoru||Digimon New Century|Agumon|||nc-player|RUSH|canon|Sakamoto_Satoru
+nc-youko|Aragaki Youko||Digimon New Century|Lunamon|||nc-alice|RANGED|canon|Aragaki_Youko
+nc-wuhai|Wu Hai||Digimon New Century|Lopmon|||nc-sanae|GUARD|canon|Wu_Hai
+nc-alice|Yazawa Alice||Digimon New Century|Lalamon|||nc-youko|SUPPORT|canon|Yazawa_Alice
+nc-ai|Kanzaki Ai||Digimon New Century|Tinkermon|||nc-kaoru|RANGED|canon|Kanzaki_Ai
+nc-kaoru|Hyuuga Kaoru||Digimon New Century|Monodramon|||nc-katsuhiro|RUSH|canon|Hyuuga_Kaoru
+nc-sanae|Tokumori Sanae||Digimon New Century|Plotmon|||nc-ai|SUPPORT|canon|Tokumori_Sanae
+nc-katsuhiro|Tokumori Katsuhiro||Digimon New Century|Kotemon|||nc-wuhai|GUARD|canon|Tokumori_Katsuhiro
 inori|Misono Inori|Inori Misono|Digimon Time Stranger|Aegiomon|||asuna|SUPPORT|canon|Misono_Inori
 asuna|Shiroki Asuna|Asuna Shiroki|Digimon Time Stranger|Black Tailmon|||inori|CONTROL|adapted|Shiroki_Asuna
 dan|Yuki Dan|Dan Yuki|Digimon Time Stranger|Patamon|Gomamon|OWNED||BALANCED|adapted|Yuki_Dan

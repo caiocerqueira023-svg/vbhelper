@@ -16,6 +16,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import com.github.nacabaro.vbhelper.R
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -32,6 +39,8 @@ fun BackgroundMusicControlPanel(
     modifier: Modifier = Modifier
 ) {
     val settings by musicController.settings.collectAsState()
+    val musicLabel = stringResource(R.string.immersion_music)
+    val volumeLabel = stringResource(R.string.immersion_volume)
 
     Card(
         modifier = modifier,
@@ -42,29 +51,30 @@ fun BackgroundMusicControlPanel(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
+                    .toggleable(settings.enabled, role = Role.Switch, onValueChange = musicController::setEnabled),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Background music",
+                        text = musicLabel,
                         color = TextPrimaryOnDark,
                         fontSize = 17.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
-                        text = if (settings.enabled) "Music is playing across the app" else "Music is off",
+                        text = stringResource(if (settings.enabled) R.string.immersion_music_enabled else R.string.immersion_music_disabled),
                         color = TextSecondaryOnDark,
                         fontSize = 12.sp
                     )
                 }
                 Switch(
                     checked = settings.enabled,
-                    onCheckedChange = musicController::setEnabled
+                    onCheckedChange = null
                 )
             }
             Text(
-                text = "Volume ${((settings.volume * 100f).roundToInt())}%",
+                text = stringResource(R.string.immersion_volume_percentage, (settings.volume * 100f).roundToInt()),
                 color = VitalCyan,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.SemiBold,
@@ -74,7 +84,7 @@ fun BackgroundMusicControlPanel(
                 value = settings.volume,
                 onValueChange = musicController::setVolume,
                 valueRange = 0f..1f,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth().semantics { contentDescription = volumeLabel }
             )
         }
     }

@@ -150,7 +150,7 @@ sealed class NavigationItems(
 
     object WorldRecruits : NavigationItems(
         "WorldRecruits",
-        R.drawable.baseline_catching_pokemon_24,
+        R.drawable.baseline_capture_24,
         R.string.nav_world
     )
 

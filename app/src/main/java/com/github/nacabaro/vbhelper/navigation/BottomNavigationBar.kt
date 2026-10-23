@@ -33,8 +33,10 @@ internal val primaryDestinations = listOf(NavigationItems.Home, NavigationItems.
 private val overflowDestinations = listOf(NavigationItems.Digiline, NavigationItems.Quests, NavigationItems.Items,
     NavigationItems.Battles, NavigationItems.Settings)
 
-private fun topLevelRoute(route: String?): String? = when {
+private fun topLevelRoute(route: String?, previousRoute: String? = null): String? = when {
     route == null -> null
+    route.startsWith("Transfer?") || route.startsWith("Scan/") -> topLevelRoute(previousRoute) ?: NavigationItems.Home.route
+    route.startsWith("Chat/") -> topLevelRoute(previousRoute) ?: NavigationItems.Storage.route
     route.startsWith("Card/") || route.startsWith("CardAdventure/") -> NavigationItems.Dex.route
     route.startsWith("TechniqueLoadout/") || route == NavigationItems.Adventure.route -> NavigationItems.Storage.route
     route.startsWith("WorldChat/") || route.startsWith("WorldConversation/") || route == NavigationItems.WorldRecruits.route -> NavigationItems.World.route
@@ -48,7 +50,7 @@ private fun topLevelRoute(route: String?): String? = when {
 @OptIn(ExperimentalMaterial3Api::class)
 fun BottomNavigationBar(navController: NavController) {
     val entry = navController.currentBackStackEntryAsState().value
-    val route = topLevelRoute(entry?.destination?.route)
+    val route = topLevelRoute(entry?.destination?.route, navController.previousBackStackEntry?.destination?.route)
     var showMore by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth().navigationBarsPadding()
         .background(Brush.verticalGradient(listOf(MaterialTheme.colorScheme.background, MaterialTheme.colorScheme.surface)))) {

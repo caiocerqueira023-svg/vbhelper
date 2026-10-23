@@ -60,6 +60,17 @@ class CustomDimSpeciesPersistenceTest {
 
     @After fun teardown() { db.close() }
 
+    @Test fun normalSpeciesIdentificationCannotUseTheRawOverrideEditor() = runBlocking {
+        val imported = CardImportController(db, repo).importParsedCardWithResult(card(), "custom.bin")
+        val character = db.characterDao().getCharactersForCard(imported.cardId).single { it.charaIndex == 2 }
+        val before = repo.getProfileForCharacter(character.id)
+        repo.saveManualProfile(character.id, "Invented reference", "Wrong level", null, "Unverified override", emptyList())
+        assertEquals(before, repo.getProfileForCharacter(character.id))
+        assertFalse(repo.identifySpecies(character.id, "Not in the catalog"))
+        assertTrue(repo.identifySpecies(character.id, "Zubamon"))
+        assertEquals("Zubamon", repo.getProfileForCharacter(character.id)?.speciesName)
+    }
+
     private fun rawFrame(id: String, frame: Int): SpriteData.Sprite {
         val bitmap = context.assets.open(BattleAssetPaths.characterFrame(id, frame)).use { BitmapFactory.decodeStream(it)!! }
         val native = try {

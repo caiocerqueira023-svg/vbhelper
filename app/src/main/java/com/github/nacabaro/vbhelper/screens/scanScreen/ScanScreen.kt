@@ -48,13 +48,16 @@ fun ScanScreen(
     navController: NavController,
     characterId: Long?,
     scanScreenController: ScanScreenController,
-    launchedFromHomeScreen: Boolean
+    launchedFromHomeScreen: Boolean,
+    embedded: Boolean = false,
+    onOperationActiveChange: (Boolean) -> Unit = {},
+    onFinished: (() -> Unit)? = null,
 ) {
     val secrets by scanScreenController.secretsFlow.collectAsState(null)
 
     val application = LocalContext.current.applicationContext as VBHelper
     val storageRepository = remember { StorageRepository(application.container.db) }
-    var nfcCharacter by remember { mutableStateOf<NfcCharacter?>(null) }
+    var nfcCharacter by remember(characterId) { mutableStateOf<NfcCharacter?>(null) }
     var feedbackMessage by rememberSaveable(characterId) { mutableStateOf<String?>(null) }
     var feedbackRequiresSettings by rememberSaveable(characterId) { mutableStateOf(false) }
     var prepareRetry by rememberSaveable(characterId) { mutableIntStateOf(0) }
@@ -82,6 +85,10 @@ fun ScanScreen(
 
     var writingScreen by remember { mutableStateOf(false) }
     var readingScreen by remember { mutableStateOf(false) }
+    val operationCallback = androidx.compose.runtime.rememberUpdatedState(onOperationActiveChange)
+    LaunchedEffect(writingScreen, readingScreen) { operationCallback.value(writingScreen || readingScreen) }
+    androidx.compose.runtime.DisposableEffect(Unit) { onDispose { operationCallback.value(false) } }
+    fun finish() { if (onFinished != null) onFinished() else navController.navigate(NavigationItems.Home.route) }
 
     Column(Modifier.fillMaxSize()) {
     Box(Modifier.weight(1f)) {
@@ -92,11 +99,11 @@ fun ScanScreen(
             characterId = characterId,
             onComplete = {
                 writingScreen = false
-                navController.navigate(NavigationItems.Home.route)
+                finish()
             },
             onCancel = {
                 writingScreen = false
-                navController.navigate(NavigationItems.Home.route)
+                finish()
             }
         )
     } else if (readingScreen) {
@@ -104,11 +111,11 @@ fun ScanScreen(
             scanScreenController = scanScreenController,
             onCancel = {
                 readingScreen = false
-                navController.navigate(NavigationItems.Home.route)
+                finish()
             },
             onComplete = {
                 readingScreen = false
-                navController.navigate(NavigationItems.Home.route)
+                finish()
             }
         )
     } else {
@@ -132,7 +139,7 @@ fun ScanScreen(
                 }
             },
             onClickWrite = when {
-                nfcCharacter == null -> null
+                nfcCharacter == null || characterId == null -> null
                 else -> {
                     {
                         if(secrets == null) {
@@ -150,6 +157,7 @@ fun ScanScreen(
                 }
             },
             navController = navController,
+            showHeader = !embedded,
             feedbackMessage = feedbackMessage,
             onFeedbackAction = feedbackMessage?.let {
                 if (feedbackRequiresSettings) ({ navController.navigate(NavigationItems.Settings.route) })

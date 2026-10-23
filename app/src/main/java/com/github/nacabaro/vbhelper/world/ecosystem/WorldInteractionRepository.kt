@@ -16,8 +16,9 @@ import kotlinx.coroutines.flow.first
  * work is permitted inside these transactions; commands revalidate after external work.
  */
 class WorldInteractionRepository(private val db: AppDatabase,
-                                 private val scanPercentagePerDefeat: () -> Int = { DigimonScanPolicy.NORMAL_GAIN },
-                                 private val now: () -> Long = System::currentTimeMillis) {
+                                  private val scanPercentagePerDefeat: () -> Int = { DigimonScanPolicy.NORMAL_GAIN },
+                                  private val allowAnyDistance: () -> Boolean = { false },
+                                  private val now: () -> Long = System::currentTimeMillis) {
     private val dao = db.worldInteractionDao()
 
     suspend fun reservePlayerBattle(
@@ -52,6 +53,8 @@ class WorldInteractionRepository(private val db: AppDatabase,
             event.origin == InteractionOrigin.AUTONOMOUS || event.type != InteractionType.BATTLE) return@withTransaction false
         validateFix(fix)
         val participants = dao.getParticipants(id)
+        val eligibility = db.participation?.snapshot()
+        if (participants.any { eligibility?.individual(it.individualId)?.usable == false }) fail(InteractionFailure.UNAVAILABLE)
         if(activeOwnedCharacterId!=null) {
             if(participants.none { it.role==InteractionRole.OWNED && it.ownedCharacterId==activeOwnedCharacterId } ||
                 db.userCharacterDao().getCharacterSync(activeOwnedCharacterId)?.isActive!=true) fail(InteractionFailure.UNAVAILABLE)
@@ -78,6 +81,7 @@ class WorldInteractionRepository(private val db: AppDatabase,
 
     /** Per-request claim; a remote contact without a live spawn retains its existing 1:1 API. */
     suspend fun beginPrivateChat(id: String, individualId: String): WorldInteraction? = db.withTransaction {
+        if (db.participation?.snapshot()?.individual(individualId)?.usable == false) fail(InteractionFailure.UNAVAILABLE)
         reconcileLocked()
         WorldChatMemoryRepository(db,now).adoptAvailablePlayerConversation(individualId)
         val spawn = db.worldSpawnDao().getByIndividualId(individualId) ?: return@withTransaction null
@@ -288,9 +292,12 @@ class WorldInteractionRepository(private val db: AppDatabase,
 
     internal suspend fun reconcileLocked() {
         val timestamp = now()
+        val eligibility = db.participation?.snapshot()
         val checkpoint = db.worldEcosystemDao().getSession()
         dao.getOpenInteractions().forEach { event ->
-            if (event.rulesVersion != WorldEcosystemClock.RULES_VERSION) {
+            if (eligibility != null && dao.getParticipants(event.id).any { !eligibility.individual(it.individualId).usable }) {
+                closeLocked(event, InteractionState.CANCELLED, "SOURCE_MODE_INACTIVE")
+            } else if (event.rulesVersion != WorldEcosystemClock.RULES_VERSION) {
                 closeLocked(event, InteractionState.CANCELLED, "UNSUPPORTED_RULES")
             } else if (event.expiresAt <= timestamp && event.origin != InteractionOrigin.AUTONOMOUS) {
                 if (event.origin == InteractionOrigin.JOINED_PLAYER && event.state == InteractionState.RESERVED) restoreParentLocked(event)
@@ -339,12 +346,15 @@ class WorldInteractionRepository(private val db: AppDatabase,
     private suspend fun eligibleSpawn(id: Long): WorldSpawn {
         val details = db.worldSpawnDao().getSpawnById(id) ?: fail(InteractionFailure.UNAVAILABLE)
         val spawn = db.worldSpawnDao().getByIndividualId(details.individualId) ?: fail(InteractionFailure.UNAVAILABLE)
+        if (db.participation?.snapshot()?.card(spawn.cardCharacterId)?.usable == false) fail(InteractionFailure.UNAVAILABLE)
         if (spawn.expiresAt <= now() || spawn.recruitmentState != RecruitmentState.WILD) fail(InteractionFailure.UNAVAILABLE)
         assertUnclaimedLocked(spawn.individualId)
         return spawn
     }
 
     internal suspend fun insertLocked(event: WorldInteraction, participants: List<WorldInteractionParticipant>) {
+        val eligibility = db.participation?.snapshot()
+        if (participants.any { eligibility?.individual(it.individualId)?.usable == false }) fail(InteractionFailure.UNAVAILABLE)
         if (dao.getInteraction(event.id) != null) fail(InteractionFailure.UNAVAILABLE)
         require(participants.map { it.individualId }.distinct().size == participants.size)
         participants.filter { it.role == InteractionRole.WILD }.forEach { assertUnclaimedLocked(it.individualId) }
@@ -378,7 +388,7 @@ class WorldInteractionRepository(private val db: AppDatabase,
 
     private fun validateFix(fix: WorldPlayerFix) { if (!fix.isFresh(now())) fail(InteractionFailure.STALE_LOCATION) }
     private fun validateDistance(fix: WorldPlayerFix, spawn: WorldSpawn) {
-        if (com.github.nacabaro.vbhelper.world.RadarDebugInteraction.allowAnyDistance) return
+        if (allowAnyDistance()) return
         val position = com.github.nacabaro.vbhelper.world.GeoPoint.fromOrNull(spawn.latitude, spawn.longitude) ?: fail(InteractionFailure.UNAVAILABLE)
         if (!RadarWorldGeometry.relative(fix.position, position).withinInteractionRange) fail(InteractionFailure.UNAVAILABLE)
     }

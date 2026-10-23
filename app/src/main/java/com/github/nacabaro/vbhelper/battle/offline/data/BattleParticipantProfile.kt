@@ -32,7 +32,10 @@ data class BattleParticipantProfile(
     /** Target species for a FORM Blast. */
     val blastTargetSpecies: String? = null,
     /** Duo Jogress slot: result species chosen by this individual as fusion lead. */
-    val jogressResultSpecies: String? = null
+    val jogressResultSpecies: String? = null,
+    val isAppPartner: Boolean = false,
+    val usesAssignedDim: Boolean = false,
+    val originBasisPoints: Int = 10000,
 ) {
     /** Stable across side changes and battle sessions; consumed by the RNG phase. */
     val stableRngKey: String
@@ -46,12 +49,13 @@ data class BattleParticipantProfile(
     }.getOrNull()
 
     val statSourceScale: BattleStatSourceScale
-        get() = if (isBemCard) BattleStatSourceScale.CARD_BEM else BattleStatSourceScale.CARD_DIM
+        get() = when { isAppPartner && !usesAssignedDim -> BattleStatSourceScale.APP_AUTHORED; isBemCard -> BattleStatSourceScale.CARD_BEM; else -> BattleStatSourceScale.CARD_DIM }
 }
 
 enum class BattleStatSourceScale {
     CARD_DIM,
     CARD_BEM,
     ARENA_EXTRACTED,
-    STAGE_FALLBACK
+    STAGE_FALLBACK,
+    APP_AUTHORED
 }

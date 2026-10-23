@@ -1,15 +1,15 @@
 package com.github.nacabaro.vbhelper.screens.digilineScreen
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -20,9 +20,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.github.nacabaro.vbhelper.R
+import com.github.nacabaro.vbhelper.components.CyberPanel
 import com.github.nacabaro.vbhelper.components.VitalButton
+import com.github.nacabaro.vbhelper.components.VitalButtonStyle
+import com.github.nacabaro.vbhelper.components.VitalSectionBar
+import com.github.nacabaro.vbhelper.components.VitalTabs
 import com.github.nacabaro.vbhelper.quests.*
 
 @Composable
@@ -45,12 +50,11 @@ fun QuestJournal(
             else it.quest.state in listOf(QuestState.OFFERED, QuestState.ACTIVE, QuestState.READY) || pendingFollowUp(it.quest)) &&
                 (category == null || it.quest.category.name == category))
     }
-    LazyColumn(modifier, contentPadding = PaddingValues(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    LazyColumn(modifier, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = !history, onClick = { history = false }, label = { Text(stringResource(R.string.quest_current)) })
-                FilterChip(selected = history, onClick = { history = true }, label = { Text(stringResource(R.string.quest_history)) })
-            }
+            VitalTabs(if (history) 1 else 0,
+                listOf(stringResource(R.string.quest_current), stringResource(R.string.quest_history)),
+                { history = it == 1 })
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(selected = category == QuestCategory.NORMAL.name,
                     onClick = { category = if (category == QuestCategory.NORMAL.name) null else QuestCategory.NORMAL.name },
@@ -71,7 +75,6 @@ fun QuestJournal(
                 category = next?.category?.name
                 if ((onAction == null || (actorId != null && actorId != details.quest.giverId)) && next != null) onOpen?.invoke(next)
             }
-            HorizontalDivider(Modifier.padding(top = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
         }
     }
 }
@@ -83,8 +86,8 @@ private fun QuestEntry(details: QuestWithObjectives, busy: Boolean,
                        onConfigurePartner: ((QuestInstance) -> Unit)?, nextQuest: QuestInstance?, onShowNext: () -> Unit) {
     val quest = details.quest
     val current = QuestSteps.current(quest, details.objectives)
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(questTitle(quest.templateId), style = MaterialTheme.typography.titleMedium)
+    CyberPanel(Modifier.fillMaxWidth(), contentPadding = PaddingValues(12.dp)) {
+        Text(questTitle(quest.templateId), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
         if (quest.parentQuestId != null || quest.followUpTemplateId != null) {
             Text(stringResource(R.string.quest_chain_part, quest.chainDepth + 1),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -93,6 +96,7 @@ private fun QuestEntry(details: QuestWithObjectives, busy: Boolean,
             color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
         quest.partnerName?.let { Text(stringResource(R.string.quest_bound_partner, it),
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        if (details.objectives.isNotEmpty()) VitalSectionBar(stringResource(R.string.uniform_objectives))
         details.objectives.groupBy { it.phase }.toSortedMap().forEach { (phase, objectives) ->
             if (details.objectives.any { it.phase > 0 }) {
                 val state = when {
@@ -145,6 +149,7 @@ private fun QuestEntry(details: QuestWithObjectives, busy: Boolean,
             (actorId == null || actorId == quest.giverId) && current.any { it.techniqueId != null }) {
             TextButton(onClick = { onConfigurePartner(quest) }, enabled = !busy) { Text(stringResource(R.string.quest_configure_techniques)) }
         }
+        VitalSectionBar(stringResource(R.string.uniform_rewards))
         if (quest.category == QuestCategory.RECRUITMENT) {
             Text(stringResource(R.string.quest_join_reward, quest.giverName), style = MaterialTheme.typography.bodyMedium)
         } else {
@@ -165,7 +170,7 @@ private fun QuestEntry(details: QuestWithObjectives, busy: Boolean,
                 else -> null
             }
             primary?.let { action ->
-                VitalButton(onClick = { onAction(quest, action) }, enabled = !busy && (quest.availabilityIssue == null ||
+                VitalButton(style = VitalButtonStyle.PRIMARY, onClick = { onAction(quest, action) }, enabled = !busy && (quest.availabilityIssue == null ||
                     action == QuestActionType.STATUS || (action == QuestActionType.TURN_IN && quest.category == QuestCategory.NORMAL && quest.state == QuestState.READY)), modifier = Modifier.fillMaxWidth()) {
                     Text(questActionLabel(action))
                 }
@@ -175,7 +180,10 @@ private fun QuestEntry(details: QuestWithObjectives, busy: Boolean,
                 QuestState.ACTIVE, QuestState.READY -> QuestActionType.ABANDON
                 else -> null
             }
-            secondary?.let { action -> TextButton(onClick = { onAction(quest, action) }, enabled = !busy) { Text(questActionLabel(action)) } }
+            secondary?.let { action -> TextButton(onClick = { onAction(quest, action) }, enabled = !busy) {
+                Text(questActionLabel(action), color = if (action == QuestActionType.ABANDON)
+                    MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary)
+            } }
         } else if (onOpen != null && (quest.state != QuestState.COMPLETED || pendingFollowUp(quest))) {
             VitalButton(onClick = { onOpen(quest) }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.quest_open_contact)) }
         }
@@ -185,6 +193,7 @@ private fun QuestEntry(details: QuestWithObjectives, busy: Boolean,
             }
         }
         quest.followUpTemplateId?.let { nextId ->
+            VitalSectionBar(stringResource(R.string.uniform_follow_up))
             Text(stringResource(R.string.quest_follow_up_plan, questTitle(nextId)), style = MaterialTheme.typography.bodyMedium)
             when {
                 nextQuest != null -> TextButton(onClick = onShowNext, enabled = !busy) { Text(stringResource(R.string.quest_show_next)) }
@@ -208,8 +217,9 @@ private fun QuestEntry(details: QuestWithObjectives, busy: Boolean,
             }
         }
         val template = QuestTemplates.get(quest.templateId)
-        Text(stringResource(R.string.quest_inspiration, template.sourceQuest), style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (com.github.nacabaro.vbhelper.components.rememberDebugSettings().enabled)
+            Text(stringResource(R.string.quest_inspiration, template.sourceQuest), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -355,4 +365,5 @@ private fun availabilityLabel(issue: QuestAvailabilityIssue): String = stringRes
     QuestAvailabilityIssue.PARTNER_MISSING -> R.string.quest_unavailable_partner
     QuestAvailabilityIssue.WATCH_CARD_MISSING -> R.string.quest_unavailable_watch_card
     QuestAvailabilityIssue.WATCH_AREAS_EXHAUSTED -> R.string.quest_unavailable_watch_areas
+    QuestAvailabilityIssue.SOURCE_MODE_INACTIVE -> R.string.participation_quest_inactive
 })

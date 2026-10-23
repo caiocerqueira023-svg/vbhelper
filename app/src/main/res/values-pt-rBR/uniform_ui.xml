@@ -1,0 +1,8 @@
+<resources>
+    <string name="uniform_search_tamers">Buscar Tamers</string>
+    <string name="uniform_search_techniques">Buscar técnicas</string>
+    <string name="uniform_finishers">Blast e Jogress</string>
+    <string name="uniform_objectives">Objetivos e condições</string>
+    <string name="uniform_rewards">Recompensas</string>
+    <string name="uniform_follow_up">Próximos passos</string>
+</resources>

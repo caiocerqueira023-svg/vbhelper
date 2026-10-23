@@ -36,6 +36,10 @@ import kotlinx.coroutines.launch
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.CyberEmptyState
 import com.github.nacabaro.vbhelper.components.CyberPanel
+import com.github.nacabaro.vbhelper.components.rememberCollectionLoad
+import com.github.nacabaro.vbhelper.components.CollectionStatePanel
+import com.github.nacabaro.vbhelper.components.CollectionRefreshNotice
+import com.github.nacabaro.vbhelper.components.InstrumentSpacing
 import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
 import com.github.nacabaro.vbhelper.ui.theme.VitalCyan
 
@@ -45,24 +49,28 @@ fun ItemsStore(
 ) {
     val application = LocalContext.current.applicationContext as VBHelper
     val itemsRepository = remember { ItemsRepository(application.container.db) }
-    val myItems by itemsRepository.getAllItems().collectAsState(emptyList())
+    val collection = rememberCollectionLoad(itemsRepository) { itemsRepository.getAllItems() }
+    val myItems = collection.data.orEmpty()
 
-    var selectedElementIndex by remember { mutableStateOf<Int?>(null) }
+    var selectedItemId by remember { mutableStateOf<Long?>(null) }
+    val selectedItem = myItems.firstOrNull { it.id == selectedItemId }
 
     val currencyRepository = application.container.currencyRepository
     val currentCurrency = currencyRepository.currencyValue.collectAsState(0)
 
     val scope = rememberCoroutineScope()
 
+    if (collection.blocking) { CollectionStatePanel(collection); return }
     if (myItems.isEmpty()) {
         CyberEmptyState(stringResource(R.string.items_no_items))
     } else {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 16.dp),
+                .padding(horizontal = InstrumentSpacing.Screen),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            CollectionRefreshNotice(collection)
             CyberPanel(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -97,7 +105,7 @@ fun ItemsStore(
                         item = index,
                         modifier = Modifier,
                         onClick = {
-                            selectedElementIndex = myItems.indexOf(index)
+                            selectedItemId = index.id
                         }
                     )
                 }
@@ -106,9 +114,9 @@ fun ItemsStore(
     }
 
 
-    if (selectedElementIndex != null) {
+    if (selectedItem != null) {
         ItemDialog(
-            item = myItems[selectedElementIndex!!],
+            item = selectedItem,
             onClickPurchase = {
                 scope.launch {
                     Toast.makeText(
@@ -116,7 +124,7 @@ fun ItemsStore(
                         application.getString(
                             purchaseItem(
                                 application.container.db,
-                                myItems[selectedElementIndex!!],
+                                selectedItem,
                                 currencyRepository
                             )
                         ),
@@ -124,7 +132,7 @@ fun ItemsStore(
                     ).show()
                 }
             },
-            onClickCancel = { selectedElementIndex = null }
+            onClickCancel = { selectedItemId = null }
         )
     }
 }

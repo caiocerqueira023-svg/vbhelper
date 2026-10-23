@@ -1,0 +1,13 @@
+<resources>
+    <string name="dot_assigned_tab">Associados</string>
+    <string name="dot_loaded_tab">Carregados</string>
+    <string name="dot_bundled_tab">Sprites Dot</string>
+    <string name="dot_matching">Esta espécie</string>
+    <string name="dot_all">Todos os Digimon</string>
+    <string name="dot_offline_hint">Incluídos no aplicativo. Cada conjunto mostra os créditos do artista e do dispositivo. A escolha é aplicada ao salvar a espécie.</string>
+    <string name="dot_no_matching">Ainda não há um conjunto Dot confirmado para esta espécie. Veja todos os Digimon para escolher uma aparência ou use os sprites carregados.</string>
+    <string name="dot_no_results">Nenhum conjunto Dot corresponde à busca. Tente o nome de uma espécie, artista ou dispositivo.</string>
+    <string name="dot_selection_failed">Não foi possível carregar este conjunto. Selecione novamente para tentar outra vez ou escolha outro conjunto.</string>
+    <string name="dot_credits_title">Biblioteca de sprites Dot</string>
+    <string name="dot_credits_description">Banco de sprites Digimon / Pendulum Color, organizado por tero0x, além de novas animações Dot de dispositivos Color do Digitama Hatchery (humulos) e sprites Color V-Pet da Wikimon. Os créditos das artes de dispositivos e da comunidade aparecem em cada conjunto em Espécies e sprites.</string>
+</resources>

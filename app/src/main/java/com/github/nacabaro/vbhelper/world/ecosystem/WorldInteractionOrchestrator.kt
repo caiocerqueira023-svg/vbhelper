@@ -19,7 +19,8 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.flow.first
 
 /** Public conversation and renderer-free combat owner. Every external reply is a revisioned input. */
-class WorldInteractionOrchestrator(private val db: AppDatabase, private val chat: ChatRepository) {
+class WorldInteractionOrchestrator(private val db: AppDatabase, private val chat: ChatRepository,
+                                   private val allowAnyDistance: () -> Boolean = { false }) {
     private val gson = Gson()
     private val dao = db.worldInteractionDao()
     private val npcDialogue = NpcDialogueService(chat) { id -> db.digimonIndividualDao().getPersonality(id)?.personalityType }
@@ -348,6 +349,8 @@ class WorldInteractionOrchestrator(private val db: AppDatabase, private val chat
         val event=dao.getInteraction(id) ?: return@withTransaction false
         if(event.revision!=revision || event.type!=InteractionType.CHAT || event.state !in listOf(InteractionState.ACTIVE,InteractionState.PLAYER_CONTROLLED)) return@withTransaction false
         val participants=dao.getParticipants(id).associateBy { it.individualId }
+        val eligibility = db.participation?.snapshot()
+        if (participants.keys.any { eligibility?.individual(it)?.usable == false }) return@withTransaction false
         if(exchange.source !in listOf(DialogueTextSource.MODEL,DialogueTextSource.AUTHORED) ||
             exchange.lines.isEmpty() || exchange.lines.map { it.speakerId }.distinct().size != exchange.lines.size ||
             exchange.lines.any { it.speakerId !in participants || it.text.isBlank() || it.text.length>500 }) return@withTransaction false
@@ -594,7 +597,7 @@ class WorldInteractionOrchestrator(private val db: AppDatabase, private val chat
         dao.getParticipants(event.id).filter { it.role==InteractionRole.WILD }.forEach { p ->
             val spawn=db.worldSpawnDao().getByIndividualId(p.individualId) ?: throw WorldInteractionException(InteractionFailure.UNAVAILABLE)
             if(dao.getClaim(p.individualId)?.interactionId!=event.id ||
-                (!com.github.nacabaro.vbhelper.world.RadarDebugInteraction.allowAnyDistance &&
+                (!allowAnyDistance() &&
                 !RadarWorldGeometry.relative(fix.position,GeoPoint(spawn.latitude,spawn.longitude)).withinInteractionRange))
                 throw WorldInteractionException(InteractionFailure.UNAVAILABLE)
         }

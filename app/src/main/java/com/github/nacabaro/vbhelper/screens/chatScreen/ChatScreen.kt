@@ -24,6 +24,7 @@ import com.github.nacabaro.vbhelper.components.ChatStatusPanel
 import com.github.nacabaro.vbhelper.components.TopBanner
 import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.screens.chatScreen.dialogs.SpeciesManualEditDialog
+import kotlinx.coroutines.launch
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
@@ -32,21 +33,32 @@ fun ChatScreen(
     chatScreenController: ChatScreenController,
     characterId: Long
 ) {
+    val debugSettings = com.github.nacabaro.vbhelper.components.rememberDebugSettings()
+    val participation = com.github.nacabaro.vbhelper.components.rememberPartnerParticipation()
+    val usable = participation?.owned(characterId)?.usable != false
     var speciesContext by remember { mutableStateOf<SpeciesContext?>(null) }
     var showManualDialog by rememberSaveable(characterId) { mutableStateOf(false) }
     var speciesGateResolved by rememberSaveable(characterId) { mutableStateOf(false) }
-    val conversationTitle = speciesContext?.existingProfile?.speciesName?.takeIf { it.isNotBlank() }
+    val conversationTitle = speciesContext?.nickname?.takeIf(String::isNotBlank)
+        ?: speciesContext?.existingProfile?.speciesName?.takeIf { it.isNotBlank() }
         ?: speciesContext?.cardName?.takeIf { it.isNotBlank() }
         ?: stringResource(R.string.nav_chat)
 
     LaunchedEffect(characterId) {
         chatScreenController.getSpeciesContext(characterId) { context ->
             speciesContext = context
-            if (context.existingProfile == null && !speciesGateResolved) showManualDialog = true else speciesGateResolved = true
+            if (debugSettings.enabled && context.existingProfile == null && !speciesGateResolved) showManualDialog = true
+            else speciesGateResolved = true
+        }
+    }
+    LaunchedEffect(debugSettings.enabled, speciesContext) {
+        if (!debugSettings.enabled && speciesContext != null) {
+            showManualDialog = false
+            speciesGateResolved = true
         }
     }
 
-    if (showManualDialog) {
+    if (showManualDialog && debugSettings.enabled) {
         speciesContext?.let { context ->
             SpeciesManualEditDialog(
                 cardName = context.cardName,
@@ -113,9 +125,12 @@ fun ChatScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            if (!usable) Text(stringResource(R.string.participation_inactive_hint),
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (!WindowInsets.isImeVisible) ChatStatusPanel(
                 label = stringResource(R.string.ui_chat_mood_title, mood),
-                value = mood
+                value = mood,
+                summary = com.github.nacabaro.vbhelper.components.moodSummary(mood)
             )
 
             ChatHistoryPanel(
@@ -139,6 +154,7 @@ fun ChatScreen(
                         ChatMessageBubble(
                             text = message.content,
                             isUser = message.role == "user",
+                            authorLabel = if (message.role == "notice") stringResource(R.string.immersion_record_notice) else null,
                             onLongClick = { selectedMessage = message }
                         )
                     }
@@ -164,7 +180,7 @@ fun ChatScreen(
                             ) { Text(stringResource(R.string.ui_copy)) }
                             if (message.role == "user") {
                                 VitalButton(
-                                    enabled = !sending,
+                                    enabled = !sending && usable,
                                     onClick = {
                                         sending = true
                                         selectedMessage = null
@@ -200,6 +216,7 @@ fun ChatScreen(
                 placeholder = stringResource(R.string.ui_chat_placeholder),
                 sendLabel = stringResource(R.string.ui_send),
                 sending = sending,
+                enabled = usable,
                 errorMessage = error,
                 errorActionLabel = stringResource(R.string.ui_settings),
                 onErrorAction = { navController.navigate(com.github.nacabaro.vbhelper.navigation.NavigationItems.Settings.route) },

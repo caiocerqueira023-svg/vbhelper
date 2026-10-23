@@ -1,7 +1,6 @@
 package com.github.nacabaro.vbhelper.screens.worldScreen
 
 import android.content.Context
-import android.content.pm.ApplicationInfo
 import android.hardware.GeomagneticField
 import android.hardware.Sensor
 import android.hardware.SensorEvent
@@ -37,12 +36,14 @@ internal data class CompassReading(
 @Composable
 internal fun rememberWorldCompass(
     location: Location?,
-    enabled: Boolean = true
+    enabled: Boolean = true,
+    diagnosticsEnabled: Boolean = false
 ): CompassReading {
     val context = LocalContext.current
     val view = LocalView.current
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val currentLocation by rememberUpdatedState(location)
+    val debug by rememberUpdatedState(diagnosticsEnabled)
     var reading by remember { mutableStateOf(CompassReading()) }
 
     DisposableEffect(context, view, lifecycle, enabled) {
@@ -52,7 +53,6 @@ internal fun rememberWorldCompass(
         }
         val manager = context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         val handler = Handler(Looper.getMainLooper())
-        val debug = context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
         val fieldSensor = manager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
         val rotationSensor = manager.getDefaultSensor(Sensor.TYPE_ROTATION_VECTOR)
         val rotationMatrix = FloatArray(9)
@@ -111,7 +111,7 @@ internal fun rememberWorldCompass(
                 poseFresh -> CompassStatus.CALIBRATE
                 else -> CompassStatus.WAITING
             }
-            if (timestamp - lastDiagnosticTime >= 500_000_000L) {
+            if (debug && timestamp - lastDiagnosticTime >= 500_000_000L) {
                 lastDiagnosticTime = timestamp
                 diagnostic = "Compass C3 #$events: $status, magnetic=$magnetic, " +
                     "output=$heading, accuracy=$fieldAccuracy, " +

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.imePadding
@@ -68,6 +69,7 @@ fun FarmGroupScreen(navController: NavController, farmId: String) {
     val messagesDesc by repository.observeMessages(farmId).collectAsState(emptyList())
     val messages = messagesDesc.asReversed()
     val messageListState = rememberLazyListState()
+    val allowMotion = com.github.nacabaro.vbhelper.components.motionEnabled()
     var previousMessageCount by remember(farmId) { mutableStateOf(0) }
     val orchestrator = app.container.farmConversationOrchestrator
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -87,7 +89,7 @@ fun FarmGroupScreen(navController: NavController, farmId: String) {
         } else {
             val lastVisibleIndex = messageListState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: -1
             if (lastVisibleIndex >= previousMessageCount - 1) {
-                messageListState.animateScrollToItem(messages.lastIndex)
+                if (allowMotion) messageListState.animateScrollToItem(messages.lastIndex) else messageListState.scrollToItem(messages.lastIndex)
             }
         }
         previousMessageCount = messages.size

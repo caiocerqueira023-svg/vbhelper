@@ -3,11 +3,20 @@ package com.github.nacabaro.vbhelper.source
 import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.domain.card.Card
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
 
 class ScanRepository(
     val database: AppDatabase
 ) {
-    fun getCardDetails(characterId: Long): Flow<Card> {
-        return database.cardDao().getCardByCharacterId(characterId)
+    /** Converted partners show their exact target card; everyone else keeps the legacy path. */
+    fun getCardDetails(characterId: Long): Flow<Card> = flow {
+        val userCharacter = database.userCharacterDao().getCharacter(characterId)
+        val targetId = userCharacter.exportCardCharacterId
+        val targetCard = targetId
+            ?.let { database.characterDao().getById(it) }
+            ?.cardId?.let { database.cardDao().getCardById(it) }
+        if (targetCard != null) emit(targetCard)
+        else emitAll(database.cardDao().getCardByCharacterId(characterId))
     }
 }

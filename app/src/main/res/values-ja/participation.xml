@@ -1,0 +1,15 @@
+<resources>
+    <string name="participation_inactive">パートナーを利用できません</string>
+    <string name="participation_inactive_hint">このデジモンは現在コレクションで利用できません。記録と成長データは保持されます。</string>
+    <string name="participation_quest_inactive">必要なデジモンを利用できません。クエストの進行状況は保持されます。</string>
+    <string name="participation_view_chat">会話を見る</string>
+    <string name="home_app_partner_summary">ステージ %1$d · 機嫌 %2$d · バイタル %3$d · バトル %4$d 勝 / %5$d 敗</string>
+    <string name="app_setup_expanded_title">ウォッチなしではじめる</string>
+    <string name="app_setup_expanded_body">ウォッチやカードがなくてもワールドでデジモンと出会えます。最初のパートナーが近くで待っています。</string>
+    <string name="app_setup_expanded_button">最初のパートナーに会う</string>
+    <string name="conversion_title">DIM/BEM能力値の基準を割り当て</string>
+    <string name="conversion_description">同じ種族・形態の読み込み済みDIM/BEMスロットを選択してください。関連付け中はカード本来の能力値ルールを使い、アプリや他製品の追加ボーナスを抑制します。ウォッチ転送先にもなります。個体識別、すべての成長、元のゲームの値は保持されます。</string>
+    <string name="conversion_empty">この種族・形態に一致するスロットがありません。先に対応するカードをインポートしてください。</string>
+    <string name="conversion_choose">このスロットを使う</string>
+    <string name="conversion_saved">DIM/BEM能力値の基準とウォッチ転送先を保存しました。</string>
+</resources>

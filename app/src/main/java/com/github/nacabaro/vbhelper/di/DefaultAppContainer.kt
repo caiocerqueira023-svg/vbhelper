@@ -93,18 +93,89 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
                 AppDatabase.MIGRATION_36_37,
                 AppDatabase.MIGRATION_37_38,
                 AppDatabase.MIGRATION_38_39,
-                AppDatabase.MIGRATION_39_40
+                AppDatabase.MIGRATION_39_40,
+                AppDatabase.MIGRATION_40_41,
+                AppDatabase.MIGRATION_41_42,
+                AppDatabase.MIGRATION_42_43,
+                AppDatabase.MIGRATION_43_44,
+                AppDatabase.MIGRATION_44_45,
+                AppDatabase.MIGRATION_45_46,
+                AppDatabase.MIGRATION_46_47,
+                AppDatabase.MIGRATION_47_48,
+                AppDatabase.MIGRATION_48_49,
+                AppDatabase.MIGRATION_49_50,
+                AppDatabase.MIGRATION_50_51,
+                AppDatabase.MIGRATION_51_52,
+                AppDatabase.MIGRATION_52_53,
+                AppDatabase.MIGRATION_53_54,
+                AppDatabase.MIGRATION_54_55,
             )
             // Missing migrations must preserve the database, never erase individuals/chats.
+            .openHelperFactory(com.github.nacabaro.vbhelper.database.PreservingMigrationFactory())
             .addCallback(com.github.nacabaro.vbhelper.database.IndividualIntegrity.callback)
             .createFromAsset("items.db")
-            .build()
+            .build().also { database ->
+                database.expandedCatalog = com.github.nacabaro.vbhelper.species.ExpandedCatalogRepository(database,
+                    { dotSpriteLibrary }, { spritePreferenceRepository.current })
+                database.participation = com.github.nacabaro.vbhelper.species.PartnerParticipationGate(database,
+                    { dotSpriteLibrary.catalogBlocking() })
+            }
     }
 
     override val dataStoreSecretsRepository = DataStoreSecretsRepository(context.secretsStore)
 
     override val currencyRepository by lazy { CurrencyRepository(context.currencyStore, db) }
-    override val questRepository by lazy { com.github.nacabaro.vbhelper.quests.QuestRepository(db, currencyRepository) }
+    override val debugSettingsRepository = com.github.nacabaro.vbhelper.source.DebugSettingsRepository(context)
+    override val spritePreferenceRepository = com.github.nacabaro.vbhelper.source.SpritePreferenceRepository(context)
+    val localSaveDocuments by lazy { com.github.nacabaro.vbhelper.source.gameSave.AndroidSaveDocuments(context) }
+    val localCompanion by lazy { com.github.nacabaro.vbhelper.source.gameSave.LocalCompanionClient(db) }
+    val saveLocations by lazy { com.github.nacabaro.vbhelper.source.gameSave.SaveLocationRepository(db, localSaveDocuments, localCompanion) }
+    val linkedGameSaves: com.github.nacabaro.vbhelper.source.gameSave.LinkedGameSaveRepository by lazy {
+        com.github.nacabaro.vbhelper.source.gameSave.LinkedGameSaveRepository(db,
+            com.github.nacabaro.vbhelper.source.gameSave.LinkedSaveDocuments(localSaveDocuments, localCompanion),
+            beforeRefresh = { saveLocations.rescanAll { linkedGameSaves.link(it, discovered = true) } },
+            beforeUnlink = { saveLocations.exclude(it) }, explicitLink = { saveLocations.include(it) },
+            allowDiscovered = { !db.transferContinuityDao().isExcluded(it) },
+            afterRefresh = { view -> latestSaveReconciler.reconcile(view) })
+    }
+    val saveImportPreviews by lazy {
+        com.github.nacabaro.vbhelper.source.gameSave.SaveImportPreviewRepository(db, linkedGameSaves)
+    }
+    val gameImportAcquisition by lazy {
+        com.github.nacabaro.vbhelper.source.gameSave.GameImportAcquisitionRepository(db, linkedGameSaves, saveImportPreviews)
+    }
+    val nativeMaterialization by lazy {
+        com.github.nacabaro.vbhelper.source.gameSave.NativeMaterializationRepository(db, gameImportAcquisition,
+            { dotSpriteLibrary.catalog() }, { requireNotNull(db.expandedCatalog).definitionFor(it) },
+            com.github.nacabaro.vbhelper.source.gameSave.WorldDsSpeciesTable.load(context))
+    }
+    val latestSaveReconciler by lazy {
+        com.github.nacabaro.vbhelper.source.gameSave.AutomaticSaveReconciler(db, nativeMaterialization)
+    }
+    val individualContinuity by lazy { com.github.nacabaro.vbhelper.source.gameSave.IndividualContinuityRepository(db) }
+    val destinationPreviews by lazy { com.github.nacabaro.vbhelper.source.gameSave.DestinationPreviewRepository(db, linkedGameSaves) }
+    val nativeSpeciesPresentation by lazy {
+        com.github.nacabaro.vbhelper.source.gameSave.NativeSpeciesPresentationRepository(db, dotSpriteLibrary,
+            com.github.nacabaro.vbhelper.source.gameSave.WorldDsSpeciesTable.load(context))
+    }
+    val storageAway by lazy {
+        com.github.nacabaro.vbhelper.source.gameSave.StorageAwayRepository(db, linkedGameSaves, nativeSpeciesPresentation)
+    }
+    val experimentalGameMoves by lazy {
+        com.github.nacabaro.vbhelper.source.gameSave.ExperimentalWorldDsMoveRepository(db, linkedGameSaves,
+            com.github.nacabaro.vbhelper.source.gameSave.AndroidSaveDocumentWrite(context),
+            java.io.File(context.filesDir, "experimental-game-moves"), nativeMaterialization,
+            nativeSpeciesPresentation)
+    }
+    val experimentalGameSends by lazy {
+        com.github.nacabaro.vbhelper.source.gameSave.ExperimentalWorldDsSendRepository(db, linkedGameSaves,
+            com.github.nacabaro.vbhelper.source.gameSave.AndroidSaveDocumentWrite(context),
+            java.io.File(context.filesDir, "experimental-game-sends"),
+            com.github.nacabaro.vbhelper.source.gameSave.WorldDsSpeciesTable.load(context),
+            { dotSpriteLibrary.catalog() })
+    }
+    override val questRepository by lazy { com.github.nacabaro.vbhelper.quests.QuestRepository(db, currencyRepository,
+        allowAnyDistance = { debugSettingsRepository.allowAnyDistance }) }
 
     override val validatedCardManager by lazy {
         ValidatedCardManager(db.validatedCardDao())
@@ -112,9 +183,14 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
 
     override val companionLogService = CompanionLogService()
 
-    override val llmSettingsRepository = LlmSettingsRepository(context.llmSettingsStore)
+    override val llmSettingsRepository = LlmSettingsRepository(context.llmSettingsStore,
+        debugEnabled = { debugSettingsRepository.enabled })
 
     override val speciesSettingsRepository = SpeciesSettingsRepository(context.speciesSettingsStore)
+
+    override val dotSpriteLibrary by lazy {
+        com.github.nacabaro.vbhelper.species.BundledDotSpriteLibrary(context, db)
+    }
 
     override val speciesRepository: com.github.nacabaro.vbhelper.species.SpeciesRepository by lazy {
         com.github.nacabaro.vbhelper.species.SpeciesRepository(
@@ -130,7 +206,9 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
                     context.assets.open("species_chat_examples.json").bufferedReader().use { it.readText() }
                 }.getOrNull()
             },
-            spriteMatcher = com.github.nacabaro.vbhelper.species.bundledOfficialSpriteMatcher(context.assets)
+            spriteMatcher = com.github.nacabaro.vbhelper.species.bundledOfficialSpriteMatcher(context.assets),
+            debugEnabled = { debugSettingsRepository.enabled },
+            canonicalCatalogLoader = { dotSpriteLibrary.catalog() }
         )
     }
 
@@ -144,16 +222,20 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
     override val chatRepository by lazy {
         ChatRepository(db, llmSettingsRepository, lorebookRepository, speciesRepository, questRepository = questRepository)
     }
-    private val debugScanSettings by lazy { com.github.nacabaro.vbhelper.source.DebugScanSettings(context) }
-    override val worldRepository by lazy { WorldRepository(db, scanPercentagePerDefeat = { debugScanSettings.percentagePerDefeat }) }
+    override val worldRepository by lazy { WorldRepository(db,
+        scanPercentagePerDefeat = { debugSettingsRepository.state.value.percentagePerDefeat },
+        debugEnabled = { debugSettingsRepository.enabled },
+        allowAnyDistance = { debugSettingsRepository.allowAnyDistance }) }
     override val digifarmRepository by lazy { DigifarmRepository(db) }
     override val farmConversationOrchestrator by lazy { digifarmRepository.conversationOwner(chatRepository) }
     override val farmSessionCoordinator by lazy { FarmSessionCoordinator(digifarmRepository).also {
         it.onSuspend = { farmId -> farmConversationOrchestrator.suspendFarm(farmId) }
     } }
-    override val worldInteractionOrchestrator by lazy { com.github.nacabaro.vbhelper.world.ecosystem.WorldInteractionOrchestrator(db,chatRepository) }
+    override val worldInteractionOrchestrator by lazy { com.github.nacabaro.vbhelper.world.ecosystem.WorldInteractionOrchestrator(db,chatRepository,
+        allowAnyDistance = { debugSettingsRepository.allowAnyDistance }) }
     override val worldEcosystemCoordinator by lazy {
-        WorldEcosystemCoordinator(RoomWorldEcosystemStore(db,interactions=worldInteractionOrchestrator)).also { coordinator ->
+        WorldEcosystemCoordinator(RoomWorldEcosystemStore(db,interactions=worldInteractionOrchestrator),
+            allowAnyDistance = { debugSettingsRepository.allowAnyDistance }).also { coordinator ->
             worldInteractionOrchestrator.commitInput={ action -> coordinator.commitExternalInput(action) }
         }
     }

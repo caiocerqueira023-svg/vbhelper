@@ -29,6 +29,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.TextButton
@@ -57,6 +60,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.delay
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
 import com.github.nacabaro.vbhelper.components.motionEnabled
@@ -74,7 +79,7 @@ fun StorageDialog(
     characterId: Long,
     onDismissRequest: () -> Unit,
     onClickDelete: () -> Unit,
-    onSendToBracelet: () -> Unit,
+    onTransferOptions: () -> Unit,
     onClickSetActive: () -> Unit,
     onClickSendToAdventure: (time: Long) -> Unit,
     onToggleFavorite: (Boolean) -> Unit,
@@ -95,14 +100,16 @@ fun StorageDialog(
     var personality by remember { mutableStateOf<DigimonPersonalityTraits?>(null) }
     var showDeleteConfirmation by rememberSaveable(characterId) { mutableStateOf(false) }
     var loadFailed by remember(characterId) { mutableStateOf(false) }
+    var lifetimeId by remember(characterId) { mutableStateOf<String?>(null) }
     var reload by remember(characterId) { mutableIntStateOf(0) }
     val maxHeight = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.height.toDp() * 0.88f }
     var idleFrame by remember { mutableIntStateOf(0) }
     var isFavorite by remember { mutableStateOf(false) }
     val motionEnabled = motionEnabled()
-    val speciesRepository = remember {
-        SpeciesRepository(application.container.db, application.container.speciesSettingsRepository)
-    }
+    val speciesRepository = application.container.speciesRepository
+    val participation = com.github.nacabaro.vbhelper.components.rememberPartnerParticipation()
+    val usable = participation?.owned(characterId)?.usable != false
+    val inactiveDescription = stringResource(R.string.participation_inactive)
 
     LaunchedEffect(characterId, reload) {
         loadFailed = false
@@ -165,7 +172,10 @@ fun StorageDialog(
         )
     ) {
         Card(
-            shape = MaterialTheme.shapes.medium
+            shape = MaterialTheme.shapes.medium,
+            modifier = Modifier.semantics { if (!usable) stateDescription = inactiveDescription },
+            border = if (!usable) androidx.compose.foundation.BorderStroke(1.dp,
+                com.github.nacabaro.vbhelper.ui.theme.InactiveOutline) else null
         ) {
             Column (
                 modifier = Modifier
@@ -201,6 +211,8 @@ fun StorageDialog(
                             bitmap = imageBitmap,
                             contentDescription = stringResource(R.string.storage_character_image_description),
                             filterQuality = FilterQuality.None,
+                            colorFilter = if (!usable) androidx.compose.ui.graphics.ColorFilter.colorMatrix(
+                                androidx.compose.ui.graphics.ColorMatrix().apply { setToSaturation(0f) }) else null,
                             modifier = Modifier
                                 .size(dpSize)
                         )
@@ -224,27 +236,33 @@ fun StorageDialog(
                         }
                     }
                 }
+                character.value?.let { partner ->
+                    Text(nickname.takeIf(String::isNotBlank) ?: speciesProfile?.speciesName
+                        ?: stringResource(R.string.immersion_unidentified_partner), style = MaterialTheme.typography.titleMedium)
+                    Text(listOfNotNull(speciesProfile?.speciesName?.takeIf { it != nickname }, cardName.takeIf(String::isNotBlank)).joinToString(" · "),
+                        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("${stringResource(R.string.immersion_vital_points)}: ${partner.vitalPoints}",
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 Row(
-                    horizontalArrangement = Arrangement.Center,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxWidth().height(IntrinsicSize.Min)
                 ) {
                     VitalButton(
                         style = VitalButtonStyle.PRIMARY,
-                        enabled = character.value != null,
-                        onClick = onSendToBracelet,
+                        enabled = character.value != null && usable,
+                        onClick = onTransferOptions,
                         modifier = Modifier
-                            .weight(1f)
+                            .weight(1f).fillMaxHeight()
                     ) {
-                        Text(text = stringResource(R.string.storage_send_to_watch))
+                        Text(text = stringResource(R.string.transfer_open_options))
                     }
-                    Spacer(
-                        modifier = Modifier
-                            .padding(4.dp)
-                    )
                     VitalButton(
-                        enabled = character.value != null,
+                        enabled = character.value != null && usable,
                         onClick = onClickSetActive,
+                        modifier = Modifier
+                            .weight(1f).fillMaxHeight()
                     ) {
                         Text(text = stringResource(R.string.storage_set_active))
                     }
@@ -255,15 +273,22 @@ fun StorageDialog(
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
-                    Text(text = stringResource(R.string.storage_chat_with_digimon))
+                    Text(text = stringResource(if (usable) R.string.storage_chat_with_digimon else R.string.participation_view_chat))
                 }
                 VitalButton(
-                    enabled = character.value != null,
+                    enabled = character.value != null && usable,
                     onClick = onClickTechniques,
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text(stringResource(R.string.app_techniques))
                 }
+                VitalButton(enabled = character.value != null, onClick = {
+                    coroutineScope.launch {
+                        try { lifetimeId = withContext(Dispatchers.IO) { application.container.db.userCharacterDao().getCharacter(characterId).individualId } }
+                        catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+                        catch (_: Exception) { loadFailed = true }
+                    }
+                }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.continuity_title)) }
                 VitalButton(
                     onClick = {
                         isFavorite = !isFavorite
@@ -286,7 +311,7 @@ fun StorageDialog(
                     )
                 }
                 VitalButton(
-                    enabled = character.value != null,
+                    enabled = character.value != null && usable,
                     onClick = {
                         onSendToAdventureClicked = true
                     },
@@ -332,7 +357,7 @@ fun StorageDialog(
             onSave = { result ->
                 coroutineScope.launch {
                     storageRepository.updateNickname(characterId, result.nickname)
-                    speciesRepository.saveManualProfile(
+                    if (result.editSpeciesProfile && application.container.debugSettingsRepository.enabled) speciesRepository.saveManualProfile(
                         cardCharacterId = character.value!!.charId,
                         name = result.speciesName,
                         level = result.level,
@@ -348,6 +373,7 @@ fun StorageDialog(
         )
     }
 
+    lifetimeId?.let { id -> IndividualContinuityDialog(id, application.container.individualContinuity, onDismiss = { lifetimeId = null }) }
     if (showDeleteConfirmation) {
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },

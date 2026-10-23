@@ -19,7 +19,8 @@ data class LlmProviderSettings(
 )
 
 class LlmSettingsRepository(
-    private val dataStore: DataStore<Preferences>
+    private val dataStore: DataStore<Preferences>,
+    private val debugEnabled: () -> Boolean = { false }
 ) {
     private companion object {
         const val DEFAULT_CHAT_COMPLETIONS_BASE_URL = "https://openrouter.ai/api/v1/"
@@ -106,14 +107,18 @@ class LlmSettingsRepository(
     }
 
     suspend fun setSystemPromptTemplate(template: String?) {
+        if (!debugEnabled()) return
         dataStore.edit { preferences ->
+            if (!debugEnabled()) return@edit
             if (template.isNullOrBlank()) preferences.remove(SYSTEM_PROMPT_TEMPLATE)
             else preferences[SYSTEM_PROMPT_TEMPLATE] = template
         }
     }
 
     suspend fun setWildSystemPromptTemplate(template: String?) {
+        if (!debugEnabled()) return
         dataStore.edit { preferences ->
+            if (!debugEnabled()) return@edit
             if (template.isNullOrBlank()) preferences.remove(WILD_SYSTEM_PROMPT_TEMPLATE)
             else preferences[WILD_SYSTEM_PROMPT_TEMPLATE] = template
         }

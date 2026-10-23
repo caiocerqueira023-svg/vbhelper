@@ -26,7 +26,7 @@ internal fun ArenaCups(state: TamerArenaState, actions: ArenaUiActions, series: 
     var size by rememberSaveable { mutableIntStateOf(8) }
     val ready = remember(state.resolver, state.stages, state.format, series) {
         if (state.teamReady) state.resolver?.tamers.orEmpty().count {
-            (series == null || it.series == series) && state.resolver?.resolve(it.id, state.stages) != null
+            (series == null || it.series == series) && state.resolver?.resolveForCup(it.id, state.stages) != null
         } else 0
     }
     LazyColumn(modifier.fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {

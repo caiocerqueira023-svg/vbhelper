@@ -76,6 +76,7 @@ import kotlin.math.abs
 
 internal enum class StorageFilter(@StringRes val label: Int) {
     ALL(R.string.storage_filter_all),
+    AWAY(R.string.storage_filter_away),
     FAVORITES(R.string.storage_filter_favorites),
     ACTIVE(R.string.storage_filter_active),
     VB(R.string.storage_filter_vb),
@@ -126,6 +127,7 @@ fun StorageCharacterPickerScreen(
     onSupplementalSelected: (String) -> Unit = {}
 ) {
     val fallbackName = stringResource(R.string.widget_digimon_label)
+    val participation = com.github.nacabaro.vbhelper.components.rememberPartnerParticipation()
     var query by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableStateOf(StorageFilter.ALL) }
     var sort by rememberSaveable { mutableStateOf(StorageSort.RECENT) }
@@ -163,9 +165,10 @@ fun StorageCharacterPickerScreen(
         lastScrollPosition = 0
     }
 
-    val visibleCharacters = remember(characters, query, filter, sort, fallbackName) {
+    val visibleCharacters = remember(characters, query, filter, sort, fallbackName, participation) {
         val normalizedQuery = query.trim().lowercase()
         characters.asSequence()
+            .filter { participation?.owned(it.id)?.usable != false }
             .filter { character ->
                 when (filter) {
                     StorageFilter.ALL -> true
@@ -173,6 +176,7 @@ fun StorageCharacterPickerScreen(
                     StorageFilter.ACTIVE -> character.active
                     StorageFilter.VB -> character.characterType == DeviceType.VBDevice
                     StorageFilter.BE -> character.characterType == DeviceType.BEDevice
+                    StorageFilter.AWAY -> false
                 }
             }
             .filter { character ->
@@ -206,6 +210,7 @@ fun StorageCharacterPickerScreen(
                     StorageFilter.ACTIVE -> option.isActive
                     StorageFilter.VB -> option.deviceType == DeviceType.VBDevice
                     StorageFilter.BE -> option.deviceType == DeviceType.BEDevice
+                    StorageFilter.AWAY -> false
                 }
             }
             .filter { option ->
@@ -268,7 +273,7 @@ fun StorageCharacterPickerScreen(
                             .horizontalScroll(rememberScrollState())
                             .padding(horizontal = 12.dp)
                     ) {
-                        StorageFilter.entries.forEach { option ->
+                        StorageFilter.entries.filter { it != StorageFilter.AWAY }.forEach { option ->
                             FilterChip(
                                 selected = filter == option,
                                 onClick = { filter = option },
@@ -384,6 +389,8 @@ fun StorageCharacterPickerScreen(
                                         ),
                                         animationKey = character.id,
                                         vitalPoints = character.vitalPoints,
+                                        iconDescription = character.displayName(fallbackName),
+                                        selected = character.active,
                                         shape = RectangleShape,
                                         onClick = selectCharacter,
                                         cardColors = if (character.active) {

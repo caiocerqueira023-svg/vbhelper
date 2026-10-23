@@ -3,7 +3,8 @@ package com.github.nacabaro.vbhelper.utils
 enum class DeviceType {
     VBDevice, // Bandai Vital Bracelet
     BEDevice, // Bandai BE Bracelet
-    VitalWear // WearOS VitalWear app
+    VitalWear, // WearOS VitalWear app
+    APP // Source-independent app partner; no invented bracelet measurements.
 }
 
 fun detectDeviceType(deviceName: String): DeviceType = when {

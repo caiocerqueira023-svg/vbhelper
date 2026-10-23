@@ -1,0 +1,22 @@
+<resources>
+    <string name="species_add">Adicionar Digimon</string>
+    <string name="species_edit">Editar Digimon</string>
+    <string name="species_template_note">Salve informações próprias de espécies no seu catálogo. Segure uma espécie na lista para editar suas informações.</string>
+    <string name="species_moves_hint">Um golpe por linha ou golpes separados por vírgulas.</string>
+    <string name="species_sprite_title">Sprite da espécie</string>
+    <string name="species_sprite_hint">Escolha um conjunto de sprites para exibir em todos os Digimon associados a esta espécie.</string>
+    <string name="species_choose_sprite">Escolher sprite</string>
+    <string name="species_original_sprites">Usar sprites originais</string>
+    <string name="species_matching_sprites">Associados à espécie</string>
+    <string name="species_all_sprites">Todos os sprites carregados</string>
+    <string name="species_search_sprites">Buscar sprites</string>
+    <string name="species_sprite_details">%1$s · posição %2$d · sprite %3$d</string>
+    <string name="species_sprite_identifier">Sprite %1$d</string>
+    <string name="species_no_sprites">Nenhum sprite corresponde à busca. Tente todos os sprites ou outra busca.</string>
+    <string name="species_load_more">Carregar mais sprites</string>
+    <string name="species_save_failed">Não foi possível salvar. Confira se o nome é único, os golpes são curtos e o sprite escolhido continua carregado. Depois tente novamente.</string>
+    <string name="species_library">Espécies e sprites</string>    <string name="species_library_hint">Adicione ou edite informações de espécies e escolha uma aparência compartilhada.</string>
+
+    <string name="species_copy_note">Isso cria uma entrada própria e separada. O original permanece no seu catálogo sem alterações.</string>
+    <string name="species_copy_name_hint">Escolha um nome diferente para manter o original no seu catálogo.</string>
+</resources>

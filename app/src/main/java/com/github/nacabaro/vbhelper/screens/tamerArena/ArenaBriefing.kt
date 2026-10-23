@@ -20,12 +20,15 @@ import com.github.nacabaro.vbhelper.battle.offline.core.TechniqueDefinition
 import com.github.nacabaro.vbhelper.battle.offline.core.TechniqueKind
 import com.github.nacabaro.vbhelper.battle.offline.tamers.*
 import com.github.nacabaro.vbhelper.components.CyberPanel
+import com.github.nacabaro.vbhelper.components.VitalTabs
+import com.github.nacabaro.vbhelper.components.rememberDebugSettings
 
 @OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 internal fun ArenaBriefing(state: TamerArenaState, tamer: TamerDefinition, resolver: TamerTeamResolver,
     onChallenge: () -> Unit, onConfigure: () -> Unit, onReload: () -> Unit,
     wide: Boolean, modifier: Modifier = Modifier) {
+    val debugEnabled = rememberDebugSettings().enabled
     val team = remember(tamer.id, state.stages, state.format, state.teamReady, resolver) {
         if (state.teamReady) resolver.resolve(tamer.id, state.stages) else null
     }
@@ -65,14 +68,17 @@ internal fun ArenaBriefing(state: TamerArenaState, tamer: TamerDefinition, resol
                                 Text(if (member.nickname != null) "${member.species.name} · ${arenaStageName(member.species.stage)}"
                                     else arenaStageName(member.species.stage), style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                Text(when (member.origin) {
-                                    ArenaPartnerOrigin.OWNED -> stringResource(R.string.arena_owned_partner)
-                                    ArenaPartnerOrigin.ASSOCIATED -> stringResource(R.string.arena_associated_partner)
-                                    ArenaPartnerOrigin.GUEST -> stringResource(R.string.arena_guest_partner,
-                                        resolver.tamers.firstOrNull { it.id == member.ownerId }?.name ?: member.ownerId)
-                                }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                if (member.scaled) ArenaBadge(stringResource(R.string.arena_scaled_tier, arenaStageName(member.battleStage)))
-                                if (member.componentPartnerIds.size > 1) ArenaBadge(stringResource(R.string.arena_combined_partner), highlighted = true)
+                                if (debugEnabled) {
+                                    Text(when (member.origin) {
+                                        ArenaPartnerOrigin.OWNED -> stringResource(if (tamer.series.contains("Frontier", true))
+                                            R.string.immersion_spirit_form else R.string.arena_owned_partner)
+                                        ArenaPartnerOrigin.ASSOCIATED -> stringResource(R.string.arena_associated_partner)
+                                        ArenaPartnerOrigin.GUEST -> stringResource(R.string.arena_guest_partner,
+                                            resolver.tamers.firstOrNull { it.id == member.ownerId }?.name ?: member.ownerId)
+                                    }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    if (member.scaled) ArenaBadge(stringResource(R.string.arena_scaled_tier, arenaStageName(member.battleStage)))
+                                    if (member.componentPartnerIds.size > 1) ArenaBadge(stringResource(R.string.arena_combined_partner), highlighted = true)
+                                }
                             }
                         }
                     }
@@ -97,10 +103,7 @@ internal fun ArenaBriefing(state: TamerArenaState, tamer: TamerDefinition, resol
             if (participants.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     ArenaHeading(stringResource(R.string.arena_loadout))
-                    if (participants.size == 2) PrimaryTabRow(selectedTabIndex = selected, containerColor = MaterialTheme.colorScheme.background.copy(alpha = 0f)) {
-                        participants.forEachIndexed { index, participant -> Tab(selected == index, onClick = { inspected = index },
-                            text = { Text(participant.displayName, style = MaterialTheme.typography.labelLarge) }, modifier = Modifier.heightIn(min = 48.dp)) }
-                    }
+                    if (participants.size == 2) VitalTabs(selected, participants.map { it.displayName }, { inspected = it })
                     val participant = participants[selected]
                     val stats = participant.trainingStats()
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -117,7 +120,8 @@ internal fun ArenaBriefing(state: TamerArenaState, tamer: TamerDefinition, resol
                         ArenaFinisher(Icons.Outlined.AutoAwesome, stringResource(R.string.arena_blast_label),
                             participant.blastTargetSpecies ?: stringResource(R.string.arena_power_blast))
                         participant.jogressResultSpecies?.let {
-                            ArenaFinisher(Icons.Outlined.MergeType, stringResource(R.string.arena_jogress_label), it)
+                            ArenaFinisher(Icons.Outlined.MergeType, stringResource(
+                                if (tamer.id in setOf("taiki", "kiriha")) R.string.immersion_digixros else R.string.arena_jogress_label), it)
                         }
                     }
                 }

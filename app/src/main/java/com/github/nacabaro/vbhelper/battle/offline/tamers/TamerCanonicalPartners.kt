@@ -212,6 +212,15 @@ object TamerCanonicalPartners {
         manabu|Moosemon|Pafumon|||Moosemon|||Akasaka_Manabu
         yume|Tinkermon|||Tinkermon||||Ikuhara_Yume
         hitomi|Cutemon|Pabumon|Pyocomon|Cutemon||||Shinomiya_Hitomi
+        nc-player|Mochimon|||Mochimon;Hackmon|Bao Hackmon|Savior Hackmon|Jesmon|Player_(New_Century)
+        nc-satoru|Agumon||Koromon|Agumon|Greymon|Metal Greymon|War Greymon|Agumon_(New_Century)
+        nc-youko|Lunamon|||Lunamon|Lekismon|Crescemon|Dianamon|Lunamon_(New_Century)
+        nc-wuhai|Lopmon|||Lopmon|Turuiemon|Andiramon (Deva)|Cherubimon (Virtue)|Lopmon_(New_Century)
+        nc-alice|Lalamon|||Lalamon|Sunflowmon|Lilamon|Lotusmon|Lalamon_(New_Century)
+        nc-ai|Tinkermon||Nyaromon|Tinkermon|Fairimon|Shutumon|Jet Silphymon|Tinkermon_(New_Century)
+        nc-kaoru|Monodramon|||Monodramon|Strikedramon|Cyberdramon|Justimon(Blitz Arm)|Monodramon_(New_Century)
+        nc-sanae|Plotmon|||Plotmon|Tailmon|Angewomon|Ofanimon|Plotmon_(New_Century)
+        nc-katsuhiro|Kotemon|||Kotemon|Gladimon|Knightmon|Duftmon|Kotemon_(New_Century)
     """.trimIndent()
 
     val histories: Map<Pair<String, String>, CanonicalPartnerHistory> = historyRows.lines().associate { line ->

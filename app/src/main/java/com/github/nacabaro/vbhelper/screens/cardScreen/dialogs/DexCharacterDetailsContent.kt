@@ -41,6 +41,7 @@ import com.github.nacabaro.vbhelper.utils.BitmapData
 import com.github.nacabaro.vbhelper.utils.getBitmap
 import com.github.nacabaro.vbhelper.utils.getObscuredBitmap
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun DexCharacterDetailsContent(
@@ -103,17 +104,32 @@ internal fun DexCharacterDetailsContent(
                         DexSpeciesFact(stringResource(R.string.ui_type), it)
                     }
                     DexSpeciesFact(stringResource(R.string.dex_profile_attribute), character.attribute.toString())
-                    profile?.specialMoves?.filter { it.isNotBlank() }?.takeIf { it.isNotEmpty() }?.let {
+                    profile?.specialMoves?.let(com.github.nacabaro.vbhelper.species.ResearchText::moves)?.takeIf { it.isNotEmpty() }?.let {
                         DexSpeciesFact(stringResource(R.string.dex_profile_special_moves), it.joinToString("\n"))
                     }
                     DexSpeciesFact(stringResource(R.string.dex_profile_stage), stageLabel(character.stage))
                 }
-                profile?.profileDescription?.takeIf { it.isNotBlank() }?.let { description ->
+                profile?.profileDescription?.let {
+                    if (profile.source == com.github.nacabaro.vbhelper.domain.species.SpeciesSource.MANUAL) it.trim()
+                    else com.github.nacabaro.vbhelper.species.ResearchText.description(it)
+                }?.takeIf(String::isNotBlank)?.let { description ->
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         DexProfileSectionHeader(stringResource(R.string.ui_profile))
                         Text(description, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
+                profile?.let { record ->
+                    Text(stringResource(if (record.source == com.github.nacabaro.vbhelper.domain.species.SpeciesSource.MANUAL)
+                        R.string.immersion_tamer_reference else R.string.immersion_catalog_reference),
+                        style = MaterialTheme.typography.bodySmall, color = TextSecondaryOnDark)
+                    com.github.nacabaro.vbhelper.components.DebugDetails(
+                        "Source: ${record.source}\nCatalog match: ${record.matchedName.orEmpty()}\n" +
+                            com.github.nacabaro.vbhelper.species.SpeciesRepository.SPECIES_DB_URL + "\n" +
+                            record.profileDescription?.let(com.github.nacabaro.vbhelper.species.ResearchText::productionNotes).orEmpty().joinToString("\n"))
+                }
+                com.github.nacabaro.vbhelper.components.ResearchLibrary()
+                (profile?.speciesName?.takeIf { it.isNotBlank() }
+                    ?: profile?.matchedName?.takeIf { it.isNotBlank() })?.let { DexSpeciesAppearanceSection(it) }
             }
 
             if (obscure) Text(stringResource(R.string.dex_chara_stats_unknown))
@@ -163,9 +179,52 @@ internal fun DexCharacterDetailsContent(
     }
 }
 
+/** Shared appearance lives beside the species facts so it is reachable without opening an editor. */
 @Composable
-private fun DexSpeciesFact(label: String, value: String) {
-    Column {
+private fun DexSpeciesAppearanceSection(speciesName: String) {
+    val app = androidx.compose.ui.platform.LocalContext.current.applicationContext as? com.github.nacabaro.vbhelper.di.VBHelper
+        ?: return
+    val key = remember(speciesName) { com.github.nacabaro.vbhelper.species.SpeciesCustomizationRepository.key(speciesName) }
+    val dao = remember(app) { app.container.db.speciesCustomizationDao() }
+    val chosen by dao.observeSpriteId(key).collectAsState(null)
+    var showPicker by remember(key) { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    fun refreshWidget() { com.github.nacabaro.vbhelper.widget.DigimonWidgetProvider.notifyActiveCharacterChanged(app) }
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        DexProfileSectionHeader(stringResource(R.string.species_sprite_title))
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            com.github.nacabaro.vbhelper.components.LoadedSpritePortrait(chosen, Modifier.size(64.dp))
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(stringResource(R.string.species_sprite_hint), style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondaryOnDark)
+                TextButton(onClick = { showPicker = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(stringResource(R.string.species_choose_sprite))
+                }
+            }
+        }
+        if (chosen != null) TextButton(onClick = {
+            scope.launch {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { dao.clearSpriteChoice(key) }
+                refreshWidget()
+            }
+        }) { Text(stringResource(R.string.species_original_sprites)) }
+    }
+    if (showPicker) com.github.nacabaro.vbhelper.components.SpeciesSpritePickerDialog(key, chosen,
+        onDismiss = { showPicker = false }, onSelected = { spriteId ->
+            showPicker = false
+            scope.launch {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                    if (spriteId == null) dao.clearSpriteChoice(key)
+                    else dao.upsertSpriteChoice(com.github.nacabaro.vbhelper.domain.species.SpeciesSpriteChoice(key, spriteId))
+                }
+                refreshWidget()
+            }
+        })
+}
+
+@Composable
+private fun DexSpeciesFact(label: String, value: String) {    Column {
         Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}
             .padding(vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.Top) {

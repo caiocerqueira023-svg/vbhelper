@@ -1,5 +1,1701 @@
 # Regression checks
 
+## Game-grounded identification and unified emulator footers (schema 55)
+
+- Reader recognition is grounded in the matching decompilation
+  (`ReGame-Labs/dwds_decomp`, pinned `91efd17c4c05ce106ce0f973155149d23d9de519`) instead
+  of single-snapshot header or value shapes. The user's previously failing save was
+  finally obtained (raw 65,536-byte DraStic USA save copied off the phone): its two
+  copies are internally consistent, and the actual trip was the `lastId < 0x100000`
+  cap — the file's lastId is 0xACA7BA4F. It was never a `DSDIGI` problem: neither that
+  file nor GameFAQs save 21365 carries the signature (bytes at +0x10 are zero).
+  `takeNextId` starts ids at a per-save random base (0xACA7BA00 and 0x37720000 observed,
+  both 256-aligned) with the handout count in the low bytes, so the cap was removed.
+  `identifiesSaveBlock` now accepts a signature-bearing block when
+  `lastId in 1 until 0xFFFFFF00` (`ID_RESERVED`), or without a signature when the
+  allocator is sane, at least one record slot carries a live id (0 and -1 are the
+  game's empty slots, `addDigimon` / `func_0209ff28` semantics), and at least one piece
+  of the game's own bookkeeping names a live record: party 0x20C, farm residents and
+  each farm's last-visitor reference (0x3E40 stride 0x6C, +0x44/+0x64), Digimon items
+  (0x43D8 stride 0x0C, +0x04) or unk443C. Species/level/stat/EXP deviations still only
+  flag records, and a block with every record released and no signature is not claimed
+  (indistinguishable from unrelated bytes).
+- Real-save verification (temporary harness, since deleted): the user's save read
+  through `SaveReaderRegistry` yields 4 records — 2 copies × 2 (identities
+  `save-local:2896673353` and `save-local:2896673359`, i.e. 0xACA7BA49/0xACA7BA4F) with
+  `SAVE_BLOCK_SELECTION_REQUIRED`, exactly a real both-copies-populated card; GameFAQs
+  save 21365 copy A (bare 0x7DC0 region) yields 31 records with party anchors and no
+  ambiguity notice.
+- New tests: random-prefix id sequences with bookkeeping references read like real
+  saves (incl. a counter crossing a byte boundary); a plausible allocator without
+  matching game bookkeeping (references absent, or only dangling ones) is rejected;
+  deterministic unstructured noise at a structured size is rejected; the dangling-party
+  fixture now keeps a valid anchor plus a realistic dangling reference. Existing tests
+  unchanged: signed fixture and zeroed-header fixture are both recognized; `lastId=0`,
+  `lastId=0xFFFFFF00` and a cleared record table are rejected; the research inspector's
+  signature-only fixture (`lastId=0`) still fails registry identification.
+- Container families: canonical 64 KiB image (the two card copies at 0 and 0x7E00);
+  bare **0x7DC0** save region (`SAVE_SIZE`,
+  the actual per-copy region the game writes to the card); images behind up to 0x400 bytes
+  of wrapper slack, probed at 4-byte steps (a 0x20-byte export-header case is tested);
+  anything else is `INVALID_CONTAINER`. Both emulator footers share one 40-byte trailer
+  (24 metadata + 16-byte cookie; dsv-tool pinned `b669a8448f6ec192c0bf17c5268a8fa6aff6f5d3`):
+  the padded-size field at footer+4 slices the payload for DeSmuME and DraStic alike, and
+  DeSmuME's 82-byte snip notice is cosmetic. A damaged notice with a valid cookie is now
+  readable (payload revision and blocks identical), a binary-only trailer is accepted, and
+  cookie files with version≠0, padded overflow or written>padded stay `INVALID_CONTAINER`.
+  A notice with no cookie remains a malformed-DSV failure, never a silent raw fallback.
+- `SaveDiscoveryPolicy` lists both size families (`SAVE_BYTES..SAVE_BYTES+slack+footer`
+  and `FILE_BYTES..FILE_BYTES+slack+footer`) under any name; `.sav`/`.dsv` extensions only
+  widen entries whose size is unknown.
+- Card-copy geometry corrected from real-save evidence: the copies are not two 32 KiB
+  sectors. `allocSaveBuffer` rounds `SAVE_SIZE` up to the card's `0x100` page, so one copy
+  occupies **0x7E00** and the second sits directly behind the first. A publicly available
+  converted save (GameFAQs save 21365) places its newer copy's money/food/playtime/
+  last-id/party/records exactly at +0x7E00, with nothing at +0x8000. `WorldDsSaveReader`
+  probes `0`/`COPY_STRIDE` and `WorldDsPartyEdits` derives its bases the same way; reader,
+  party-edit and inspector fixtures moved to the real stride.
+- Consolidated offline verification passed after the identification fix: **128 core
+  tests**, **306 filtered app JVM tests**, **11 companion tests**, debug assembly, integrity
+  Android-test Kotlin compilation and companion `distZip`, zero failures. Deliverable:
+  `app/build/outputs/apk/debug/app-debug.apk` (233,676,976 bytes, 2026-10-18 12:49). Both
+  real saves read correctly through the app path (see above); no phone/emulator run was
+  performed, so in-game load acceptance of edited/sent saves and re-linking the user's save
+  on the device remain the open acceptance checks.
+
+## Card-copy display collapse and species-mapping continuity
+
+- A DS card carries the same save twice, so every Digimon appeared twice in the save's
+  Digimon list and roster counts. Lists now collapse per native identity and container:
+  the chosen copy's active record wins, then a review record, then the first copy; records
+  without a card copy or native identity pass through untouched. Applied in
+  `TransferWorkspaceScreen` (grid), `TransferScreen` (roster, source-card counts) and the
+  import selection (`onPreviewImport` prunes selections to visibly shown keys). The raw
+  source comparison dialog stays uncollapsed on purpose. New JVM test
+  `screens.transferScreen.SaveCopyCollapseTest` (6 tests). The reader still reports both
+  copies; the copy-review authority flow is unchanged.
+- A reviewed species mapping names the species of one native identity, not of one revision.
+  `commitRefresh` now carries a `USER_CONFIRMED` mapping from the previous snapshot to the
+  refreshed snapshot when the incoming native species is unchanged (evolution still
+  requires a fresh review): `NativeMappingContinuity.carried`, wired after
+  `archive.insertSnapshot`. Without this, any refresh silently dropped the mapping, which
+  `presentationMappings` only returns for a binding's latest snapshot — losing save-list
+  sprites and archive materialization hints. New JVM test
+  `source.gameSave.NativeMappingContinuityTest` (3 tests) and androidTest coverage
+  `GameImportAcquisitionTest.aReviewedSpeciesMappingCarriesAcrossRefreshUnlessTheSpeciesChanged`.
+- Newly acquired Digimon are now identified instantly from the game's own data:
+  `source.gameSave.WorldDsSpeciesTable` ships the USA ROM's species name table
+  (426 entries, extracted by `tools/extract_world_ds_species.py` from a ROM whose SHA1
+  matches the decompilation's recorded hash; the asset carries ROM SHA1, table addresses
+  and the decompilation revision, no ROM bytes). `NativeSpeciesResolution.tableIdentity`
+  resolves native ids for the exact game/profile/codec only — a reviewed mapping still
+  wins, and unused slots, eggs, pods and names the catalog cannot resolve exactly stay
+  unidentified. Save lists and archive tiles show sprites immediately, and the
+  species-review dialog is prefilled with a note that the game's own data names the
+  species (saving still records the review). New JVM tests
+  `source.gameSave.WorldDsSpeciesTableTest` (3 tests) and `NativeSpeciesResolutionTest`
+  table cases (335 of 426 ids identify through the shipped catalog). Previously mapped
+  individuals keep their sprites, now across refreshes too.
+- Verification command extended with `--tests "*screens.transferScreen.*"`; consolidated
+  offline verification passed with **128 core / 321 filtered app JVM / 11 companion** tests,
+  zero failures, debug assembly, integrity Android-test Kotlin compilation and companion
+  `distZip`. Deliverable: `app/build/outputs/apk/debug/app-debug.apk` (233,697,090 bytes,
+  2026-10-18 17:22).
+
+## Dual-copy native moves and sends (card copies written together)
+
+- The user's current save has **two populated copies**; the old any-multi-copy
+  `COPY_AUTHORITY` refusals blocked every real move even after the copy review. Byte
+  analysis shows the copies agree across both record windows, the party tables and the
+  0x208 id high-water mark; they differ only in headers/counters (+0x1C is a small
+  sequence number and is never touched). The new policy writes the same logical edit to
+  **every populated copy at once** and refuses divergence: `WorldDsPartyEdits` operates
+  per block (bases = reader `imageBase` + `(saveBlock-1)*0x7E00`), validates each block's
+  party/ownership/item references, expects per-block party-position shifts, and checks
+  byte conservation over the union of both copies' windows. The writer accepts
+  `AMBIGUOUS_SAVE_BLOCK` on raw reads (it proves consistency itself), and the move
+  blocker is equally review-agnostic — ambiguity describes the copy layout, never the
+  record's content, so a copy review is not required before moving. Divergence (missing
+  counterpart, differing record bytes, non-party container) reports
+  `WorldDsMoveBlocker.COPY_DIVERGENCE` with a new string in all three locales; the send
+  blocker dropped its copy check entirely.
+- Game-side storage records move too: `WorldDsMoveRecordPolicy` accepts an unreferenced
+  live record (`UNASSIGNED` container, `UNASSIGNED_LOCATION` among its issues) besides an
+  ordinary party member; ambiguity is ignored on both shapes, and usable-Digimon counting
+  dedupes record identities across copies so the raw two-records-per-copy read can never
+  pretend the sole party member is two members. `WorldDsPartyEdits` clears just that
+  record's slot in every populated copy (no party rewrite, no position shifts), and the
+  per-chosen-block guard requires one usable Digimon to remain (party moves additionally
+  keep the party non-empty). Divergent copies, item/special-selection references, farm
+  residents and duplicate party references are still refused. Live ownership flags at
+  +0x108 — guest (2), lent (4), locked (8), egg (0x10), cross-DS (0x20) — are refused for
+  both removal and return, while every other bit, including the unmodeled **0x40** on the
+  real save's ordinary stored Poyomon, travels verbatim: removal and insertion copy the
+  exact 384 bytes and never clear or add bits. The real save's unreferenced slot-1 record
+  (`save-local:0xACA7BA4F`, Poyomon, unk108=0x40; its +0x104=0x10 is the game's own
+  `createFarm` bookkeeping and is never touched, no party/farm/item/0x443C reference in
+  either copy) was byte-verified and the simulated removal changes exactly 270 bytes, all
+  inside the two record windows.
+- The send gate now takes exact bytes and identity as sufficient
+  (`WorldDsSendPolicy.nativeReturnable`): records stored from the game's storage side
+  (`UNASSIGNED` + `UNASSIGNED_LOCATION`, formerly "no native record") are returnable
+  again, and the send screen's subtitle ordering was fixed so a missing retained record
+  reports `transfer_send_no_native` instead of "receiving is not available yet". The
+  workspace archive dialog's **Move to game** and the send screen use the same policy.
+- `ExperimentalWorldDsMoveRepository.acquire` compares record content
+  (`nativeRecordBase64`/identity/container/position) instead of full data-class
+  equality, so post-review records no longer fail against raw re-reads.
+  `ExperimentalWorldDsSendRepository.commit` accepts one inserted record per copy
+  (deterministic lowest block) and stores the snapshot record ambiguity-free, so a sent
+  individual can be sent again later.
+- Auto-materialization provenance: `saveMapping` takes an authority (`USER_CONFIRMED`
+  default / `GAME_TABLE`), `materialize` accepts both, and moves record `GAME_TABLE`
+  when the canonical id came from the game's species table
+  (`NativeSpeciesPresentationRepository.sources` returns species + provenance);
+  startup `materializeRetainedMappings` still upgrades only `USER_CONFIRMED`.
+- Storage→game is reachable without materialization: the Storage tab's archive dialog
+  has **Move to game** (navigates to the send screen with the archive `individualId`;
+  the Transfer route gained an `individualId` argument), and the transfer workspace's
+  storage archive dialog wires the same flow through the hub. The send screen resolves
+  a partner (characterId) or a raw archive (individualId).
+- The move dialog's fallback (when no blocker object is supplied, e.g. archives) mirrors
+  the same review-agnostic shapes, so **Move to game** stays enabled for raw ambiguous
+  records too.
+- New tests: core `WorldDsPartyEditsTest` (20 tests, incl. dual-copy and storage
+  removal, an unmodeled-status-bit verbatim round trip and live-flag refusals), app JVM
+  `source.gameSave.WorldDsMoveCopyPolicyTest` (11 tests, incl. `WorldDsMoveRecordPolicy`
+  and duplicate-identity counting) and `WorldDsSendPolicyTest` (5 tests), androidTest
+  `ExperimentalWorldDsMoveTest` review-then-move, all-copies-written and divergence
+  cases. Consolidated offline verification passed with **137 core / 337 filtered app
+  JVM / 11 companion** tests, zero failures, debug assembly, integrity Android-test
+  Kotlin compilation and companion `distZip`. Deliverable:
+  `app/build/outputs/apk/debug/app-debug.apk` (233,764,178 bytes, 2026-10-19 08:27).
+- Real-save rehearsal (temporary JVM test against the current private save, not committed):
+  the raw dual-copy read decodes 4 records (2 identities x 2 copies), the profile matches,
+  the sole party member is correctly refused, the stored record is
+  removable/consistent/usable, removal changes exactly 270 bytes inside the two record
+  windows and re-reads without the record, and the exact 384-byte return inserts into the
+  party in both copies with its identity preserved and only `AMBIGUOUS_SAVE_BLOCK` on the
+  readback. This exercises the save-reading standard's rule 4 (writes re-derive from exact
+  source bytes and verify independently) end to end on real bytes.
+- Write-access recovery: `AndroidSaveDocumentWrite.canWrite` accepts a persisted
+  read+write grant on the document URI or the granted tree URI, folder linking persists
+  the transfer (write-capable) grant instead of a read-only one, and the workspace info
+  dialog shows a **Grant write access** action in all three locales when `WRITE_ACCESS`
+  blocks a move, so a save linked before write access was requested can be recovered by
+  opening it once more.
+  Open acceptance checks unchanged: in-game load of an edited save on the device and
+  re-linking after the game itself saves again; the last-usable-member guard keeps the
+  user's current one-party-member save from moving that member (sending a storage
+  Digimon back first gives the party a second member).
+
+## World DS retained-record send and native insertion (schema 55)
+
+- `WorldDsPartyEdits.insertRetainedRecord` is the first native insert writer: it binds to
+  a fresh destination revision, refuses a second authoritative save copy, an already
+  taken native identity, a full party or record table, and any record slot that is not
+  completely zeroed (a zero ID with nonzero tail bytes is not reusable). It appends the
+  identity to the destination party table, raises `lastId` only when the identity exceeds
+  it (ID high-water-mark hypothesis, not yet observed in-game; removing the last member
+  does not lower it), and re-decodes the candidate requiring every byte outside the party
+  table window and the chosen slot to be unchanged. `restoreResearchInsertion` recreates
+  the original bytes exactly. Appended order follows the insertion, not the record's
+  former party position. Five new core tests cover return-into-own-save slot reuse,
+  second-copy high-water raise, non-zero-tail slot and identity refusals, full party and
+  full table refusals, malformed records and stale revisions; the full core suite passed
+  with **120 tests**. Structural party cap is 10 by table size; the game-side limit is
+  unverified.
+- Schema **54→55** adds `GameEndpointPresence` (individual ⇒ source/document/identity/
+  operation, FK cascade). Only a completed, readback-verified send records presence;
+  copies of a save in other locations never mark presence. Presence hides the archive row
+  and blocks materialize/re-import (`isAway`), and is cleared only by a move back whose
+  acquire matches the presence's source or document. The move-back acquire that previously
+  refused any away individual now accepts the matching return.
+- `ExperimentalWorldDsSendRepository` journals every send in the generalized
+  `ExperimentalEditJournal` (PREPARED → BACKED_UP → WRITING → DESTINATION_VERIFIED →
+  ACKNOWLEDGED, plus ABORTED/RECOVERY_REQUIRED) with the pre-write original retained
+  as the durable backup. Blockers: missing/review/stale snapshot, copy authority, write
+  access, format, already away, identity taken. Every send re-reads the destination after
+  writing and requires the revision, container and inserted record to match before
+  committing the archive snapshot, provisional binding, container retention and presence
+  in one transaction. Recovery/retry rebuilds the candidate from the retained record and
+  only finalizes when the destination already shows exactly that candidate; unreadable or
+  different destinations stay recovery-required. No acquisition receipt is created at
+  send time (departure, not acquisition); the destination refresh later reviews the
+  record normally, and the snapshot trigger emits the usual native-import event.
+- Transfer → Send now resolves the stored individual, shows the retained-record and away
+  state, enables the World DS destination only when a retained record exists and a save
+  is writable/reviewable, offers a per-save choose dialog, and reports completion,
+  identity-taken, source-changed and recovery outcomes. Backups for sends appear in the
+  move backup export screen alongside moves, and opening a workspace runs send recovery
+  next to move recovery.
+- Consolidated offline verification passed: **120 core tests**, filtered app JVM tests,
+  **11 companion tests**, debug assembly, integrity Android-test Kotlin compilation and
+  companion `distZip`, zero failures. Room generated schema 55 and its DDL matches the
+  hand-written migration. Deliverable: `app/build/outputs/apk/debug/app-debug.apk`.
+- In-game acceptance of a sent save is **not validated**; the `lastId` high-water-mark
+  behavior, the true game-side party cap and load acceptance of an inserted record remain
+  unverified hypotheses. Production move/send capability flags stay experimental/false
+  and no phone/emulator run was performed.
+
+## Save-reading standard: any game state, any name, any folder (schema 55)
+
+- `game-save-core/SAVE_READING_STANDARD.md` is now the binding contract for every current
+  and future Digimon game reader: reads are content-led (name/folder/size never decide
+  support), container families are unwrapped instead of length-matched, hard failures are
+  reserved for unrecognizable structure, gameplay-state anomalies become review issues,
+  write safety stays independent of read tolerance, revisions hash the exact source
+  container including wrappers, and every `SaveReadFailure`/`RecordIssue` maps to a
+  distinct user-visible reason.
+- Structural changes enforcing the standard: `GameSaveReader.acceptsLength` now defaults
+  fail-open (`length <= maxInputBytes`), the registry probes candidates in registration
+  order (broad readers first, specific last) and surfaces the most specific failure when
+  nothing decodes, and `SaveDiscoveryPolicy` lists any name with an exact known container
+  size while `.sav`/`.dsv` extensions only widen unknown-size entries.
+- `WorldDsSaveReader` no longer demands one raw 64 KiB file: it unwraps raw, 0x7C-prefixed
+  `.dsv`-family (exact size only; the 0x7C inference is unverified and must pass full
+  structural validation), DeSmuME footer-annotated, and header+footer combined containers,
+  probing the two bounded offsets when both fit. `contentRevision` still hashes the whole
+  source container.
+- Gameplay tolerance: species/level/aptitude/HP/MP/combat-stat/EXP values outside the
+  observed snapshot now flag `IMPLAUSIBLE_VALUES` (record moves to review) instead of
+  rejecting the file; missing name terminators are tolerated (up to nine codes decode,
+  unknown glyphs stay explicit); dangling party/farm references leave the record listed as
+  unassigned; only blank/shapeless files (`UNRECOGNIZED_LAYOUT`) and wrong container
+  families (`INVALID_CONTAINER`) still fail. Move/send blockers and the core writers are
+  unchanged: review-flagged records remain visible but cannot be moved or sent, and every
+  write still re-verifies exact bytes under a fresh revision.
+- The rejection class behind the user's post-progress save (exact-size or
+  value-range gates rejecting a save that was previously readable) is addressed by
+  construction: those gates are gone or converted to review issues. The specific
+  user file was never obtained, so its exact tripping check is inferred, not proven;
+  re-linking it on a device remains the acceptance check. `INVALID_CONTAINER` and
+  `UNRECOGNIZED_LAYOUT` gained their own EN/PT-BR/JA strings so any future rejection
+  names its cause instead of one generic message.
+- Core suite is now **122 tests**, including container unwrap tests (header, footer,
+  combined, via-registry dispatch), tolerance tests (species 900, level 500, max HP 0,
+  EXP 100000, dangling party reference, unterminated name) and the updated
+  discovery-policy test.
+- Consolidated offline verification passed: **122 core tests**, filtered app JVM tests,
+  **11 companion tests**, debug assembly, integrity Android-test Kotlin compilation and
+  companion `distZip`, zero failures. Deliverable: `app/build/outputs/apk/debug/app-debug.apk`
+  (238,034,557 bytes, 2026-10-18 10:33). No phone/emulator run was performed.
+
+## DS-first work and the superseding origin-list specification (2026-10-17)
+
+- Time Stranger transfer development is paused by user request. Actual DS moves begin
+  with the World DS / first Story adapter. DigimonNDSRomEditor is pinned at
+  `cc3ff499edfd86e382e724d1da7f155b6b830e5f` as the requested Dawn/Dusk ROM-format
+  reference; its ROM offsets are not treated as World DS persisted-save offsets.
+- `WorldDsPartyEdits` adds in-memory structural party removal and exact return. It
+  retains all 384 native bytes, changes only the party-reference table and removed
+  record, compacts surviving party positions and verifies unchanged surviving records.
+  Return is revision-bound and must recreate the original bytes exactly. Six new tests
+  pass, covering either copy, edge/middle removal, stale files, last usable party
+  member, ambiguity, farm/guest/duplicate references and item/special references. The
+  full core suite passed. This is not general insertion or game-load acceptance;
+  native integrity remains unverified and production move capabilities stay false.
+- An initial PKForge-inspired cover-grid prototype was built and installed. Galaxy
+  A34 portrait captures show game entries, World DS roster selection and Storage
+  browsing without an app crash. The app JVM suite and debug assembly passed. Library
+  grouping tests make decoded game identity override filename hints and keep other
+  games from becoming World DS by filename. The current source adds save-count plurals
+  and checkbox state semantics. Landscape/large-font acceptance is not claimed: one
+  capture caught rotation and the later device capture showed the sleeping display.
+  The original device font scale (1.1) and rotation (0) were restored.
+- **The latest user instruction supersedes the cover-grid prototype:** a single origin
+  list including Vital Bracelet and every supported origin; actual DS launcher icons;
+  automatic species matching and ordinary app sprites; tap individual -> information ->
+  one-action actual Move to Storage, preserving nickname and progress, with no routine
+  preview/mapping/materialization sequence. Storage can send to any supported game
+  supporting the species, independently of origin. These are now recorded in the plan,
+  Product, Design and the surface brief; the final UX/native move is not yet implemented.
+
+## Transfer entry: bottom-bar removal, hub-only routing and empty-state crash fix (window)
+
+- The bottom bar no longer carries a Transfer tab: primary destinations are Home,
+  Storage, Dex and World, and the overflow sheet lists DigiLine, Quests, Items, Battle
+  and Settings. Everything transfer-related lives behind the Home top-left button, which
+  opens the Transfer hub (its Game-saves section embeds the former Transfer screen and
+  its bracelet card opens the original Vital Bracelet transfer). The bare `Transfer`
+  route was the old tab's crash (destination not found, since only the parameterized
+  `Transfer?section=...` route is registered); the top-level resolver now maps
+  `Transfer?...` and `Scan/...` back to the previous top-level destination or Home.
+- Second, unrelated crash when opening the hub: `CyberEmptyState` put a
+  `Column(verticalScroll(...))` inside itself, and the hub's empty state renders as a
+  `LazyColumn` item — lazy items are measured with infinite maximum height, so the
+  scrollable node threw `IllegalStateException: Vertically scrollable component was
+  measured with an infinity maximum height constraints`. The component now applies its
+  internal scroll only when measured with a bounded height (`BoxWithConstraints`
+  guard), which also protects the other empty-state call sites that sit in lazy items.
+- On-device verification (SM-A346M, debug build installed over wireless adb, 2026-10-17):
+  Home top-left button opens the hub with the "No linked saves yet" empty state and
+  buttons (link file/folder, refresh, connect local PC) and the bracelet card; the
+  bottom bar shows Home/Storage/Dex/World/More; More opens the expected sheet without
+  Transfer; the Dex tab opens the card archive; the crash log stayed empty through the
+  whole pass. `:app:compileDebugKotlin` and `:app:testIntegrityCheckUnitTest` passed.
+
+## Experimental inactive-tail reactivation candidate (schema 53)
+
+- Corpus analysis of all seven authorized slots shows the roster block is stably
+  partitioned: a contiguous active prefix, then a contiguous tail of fully intact
+  inactive records (species, level, name, identity hash and chain fields preserved; the
+  stored roster index continues the bank numbering), then ~970 zeroed slots. The forward
+  chain runs through the tail in slot order and terminates on a zero-hash, zero-pointer
+  final record. See the format notes for the full evidence.
+- `TimeStrangerEdits.activateInactiveIndividual` (`TimeStrangerWrite.kt`) flips exactly
+  the stored flag of the first inactive bank record with an intact identity, so the
+  candidate's active prefix is contiguous — the shape the game itself writes — and
+  refuses active, party-boundary, identityless, mid-tail, farm and unknown targets. It
+  re-decodes the candidate, requires every byte outside the 4-byte flag word to match and
+  requires the re-read to show the same record as active with unchanged stored fields.
+  `--edit-activate <save-file> <output-dir> <inactive:N>` is the desktop-only builder
+  with the same output-directory, no-source-write and aggregate-only-output contract.
+- Desk verification on a copy of the authorized slot-0004 save: `diff_bytes=1
+  diff_outside_window=0`, `reread_active=true`; independent tooling confirms exactly one
+  changed byte (the flag word, 00->01) with the chain, roster indexes and every other
+  record untouched. Two new core cases bring core to **106 tests**; in-game acceptance
+  of the candidate is pending user action. No capability flag changed, and the
+  transformation is an experiment, not observed game output.
+
+## Rung-2 rename writer: game-equivalent candidate on controlled evidence (schema 53)
+
+- Controlled `name-test` Before/After samples established the game's own rename
+  semantics: the record's name window is overwritten from the name offset with the new
+  UTF-8 bytes plus one terminator and the remaining window bytes stay untouched, so
+  stale tail residue from previously longer names survives ("Gritaria" -> "Kuzuhamon"
+  leaves the older trailing "a"); names resolve only up to the first terminator. Seven
+  further copies of the old name in a history-looking structure near 0x226480 were not
+  rewritten by the game. Digest searches found no stored MD5/SHA-1/SHA-256/CRC32/Adler32
+  or per-block CRC tied to the rename; the only other changed bytes were playtime digits,
+  the save timestamp and a small live-state tail at 0xfded0/0xfe1a4/0xfe1ac.
+- Core `TimeStrangerEdits.renameIndividual` (`TimeStrangerWrite.kt`) is the first field
+  writer: it resolves one active party/bank record from a fresh observation, validates
+  the new name (1..31 UTF-8 bytes, no terminator, no control characters), refuses farm
+  and review-boundary records, mirrors the game's overwrite-plus-terminator semantics,
+  and then re-decodes its own candidate — every byte outside the window must match the
+  source and the re-read observation must show the new name, so a mistake throws instead
+  of producing a document.
+- `--edit-rename <save-file> <output-dir> <party:N|bank:N> <name-file>` is the desktop
+  candidate builder: selector resolution from the fresh observation, refusal of output
+  locations inside the source folder, exact name bytes read from a file (never passed on
+  the command line), candidate written only into the provided directory, and aggregate
+  output only (`edit=rename ... diff_bytes=... diff_outside_window=0`,
+  `writes_to_source=false`). No capability flag changed.
+- Desk verification against the game's own rename: applying the extracted 9-byte name to
+  the `Before.bin` copy (party:1) produced a candidate that differs from the game's
+  `After.bin` only in volatile fields (playtime, timestamp, the live-state runs above) —
+  the 10-byte name difference of the raw Before→After comparison vanished entirely. The
+  stale `Gritaria` history copies stayed untouched in both files, and SHA-256 checks
+  confirm the evidence copies and the real save were never modified.
+- In-game acceptance passed (2026-10-16, user-reported): a desk-built slot-0000 candidate
+  (party-position 1 rename, exactly 8 changed bytes in one window run, nothing outside it)
+  was swapped into the save folder by the user and the retail game loaded it normally with
+  the new name displayed. The tool never writes to savedata; acceptance covers the rename
+  scope only (no claim for other fields, sidecars or the live-state tail).
+- Five new core cases cover window-only change with re-read equality, game-equivalent
+  tail residue, the longest fitting name, invalid names/sizes/terminators/targets and
+  the farm plus review-boundary refusals. Consolidated offline verification passed:
+  **104 core tests**, filtered app JVM tests, **11 companion tests**, **22 SQLite
+  checks**, zero failures; debug assembly, integrity Android-test compilation and
+  companion ZIP rebuild succeeded. Schema stays **53**.
+
+## Writer-ladder groundwork: commit journal and byte-preserving rehearsal (schema 53)
+
+- Core `TransferCommit.kt` encodes the section 11 commitment order before any writer
+  exists: `TransferCommitPlan` binds one source revision to candidate hashes and
+  affected-document descriptions; `TransferJournalRecord` advances strictly
+  PREPARED → BACKED_UP → CANDIDATE_READY → WRITTEN → VERIFIED → ACKNOWLEDGED, with
+  RECOVERY_REQUIRED reachable only before verification and a mandatory backup revision
+  before candidate readiness. Source-representation release is allowed only after
+  ACKNOWLEDGED. The rung-1 builder (`bytePreservingRewrite`) is the only intent and
+  rejects bytes that no longer match the planned revision.
+- `TransferRecovery.decide` resumes only an unwritten destination (destination revision
+  still equals the source), completes verification for an already-written candidate and
+  otherwise demands manual reconciliation; a destination that changed after this
+  operation wrote it is never overwritten blindly. Because a rung-1 candidate equals its
+  source, the source check deliberately precedes the candidate check (resuming the no-op
+  write is the conservative outcome).
+- New `--write-rehearsal <save-file> <output-dir>` CLI command rehearses the pipeline on
+  copies: verifies a written backup hash, rechecks the source immediately before the
+  "write", refuses an output directory inside the source folder, writes candidate copies
+  only into the provided directory, then verifies readback hash and full re-parse
+  equivalence before acknowledging. Formats with a container codec must first re-encode
+  their decoded bytes byte-identically (rung 1) and report `codec_roundtrip=verified`;
+  raw formats report `not-applicable`. Output stays hash-free and aggregate-only and
+  reports `writes_to_source=false`. Any failed check stops at RECOVERY_REQUIRED with a
+  machine-readable reason.
+- The internal deterministic `TimeStrangerContainer` (AES-ECB, decode and encode) is the
+  first adapter's rung-1 codec: the real authorized `0001.bin` decoded and re-encoded
+  byte-identically, so the rehearsal completed `codec_roundtrip=verified` through the
+  full journal to ACKNOWLEDGED. It edits no fields; every capability flag still reads
+  false.
+- Twelve new core cases cover revision binding, illegal/terminal transitions, mandatory
+  backup ordering, release gating, the recovery matrix (resume / verify / manual /
+  unreadable / acknowledged rejection), the codec round-trip and the rehearsal happy
+  path plus output-location guard. No writer capability is enabled: every production
+  `canExecute`, source-remove and insert flag still reads false.
+- Both real authorized saves rehearsed successfully: the encrypted Time Stranger
+  `0001.bin` and the DraStic World DS `.sav` each verified backup, preflight source
+  unchanged, readback and re-parse equivalence, and journal completion to ACKNOWLEDGED
+  with two output copies in provided temp directories only. Neither game save was
+  modified.
+- Consolidated offline verification passed: **99 core tests**, **301 filtered app JVM
+  tests**, **11 companion tests**, **22 SQLite checks**, zero failures. Debug assembly,
+  integrity Android-test compilation and companion ZIP rebuild succeeded. Schema stays
+  **53**; no migration was added. Phone runtime acceptance remains deferred.
+- APK: `app/build/outputs/apk/debug/app-debug.apk`.
+
+## Batch destination planning (plan 4.4, schema 53)
+
+- Core `DestinationPreviewPlanner.batch` evaluates 1–16 selected origins against one
+  destination observation. Each item is the same `DestinationPreview` as the single
+  flow, sorted display order follows the selection, and the batch fingerprint hashes
+  sorted per-item fingerprints so the same partner set never rebuilds spuriously.
+  `canExecute` stays false for the batch and for every item; `commonBlockers` is the
+  intersection shown as shared restrictions.
+- Two selected origins may not share an individual or a native anchor
+  (`IllegalArgumentException`). Two different individuals whose identity evidence
+  (native or candidate key) collides get `BATCH_IDENTITY_CONFLICT` on exactly those
+  items — it never merges, replaces or silently drops a partner.
+- `DestinationPreviewRepository.prepareBatch` reads the destination exactly once,
+  reloads every origin before and after that read and throws
+  `DestinationOriginChangedException` if any anchor or its recorded progress changed
+  mid-read. `isCurrent` compares the batch fingerprint; duplicate snapshot ids and
+  oversized selections are rejected before any write-capable path could exist.
+- The destination dialog adds an optional **Include other partners** checklist
+  (capped at the planner bound), a batch summary, shared restrictions and a per-partner
+  block with name, format verdict, progress status/counts and item-only blockers. The
+  single-partner layout is unchanged, including the fields table. EN/PT-BR/JA strings
+  added; the desktop probe remains single-origin and non-executable.
+- Four new core cases cover duplicate/anchor/oversize rejection, shared-candidate
+  flagging, order-insensitive fingerprint binding and per-item restriction isolation.
+  Three new app cases cover the single destination read, mid-read origin change,
+  recorded-progress invalidation and rejection of duplicates/oversized batches.
+- Consolidated offline verification passed: **87 core tests**, **301 filtered app JVM
+  tests**, **11 companion tests**, **22 SQLite checks**, zero failures. Debug assembly,
+  integrity Android-test compilation and companion ZIP rebuild succeeded. Schema stays
+  **53**; no migration was added. Phone runtime/visual acceptance remains deferred.
+- APK: `app/build/outputs/apk/debug/app-debug.apk`.
+
+## Progress-aware destination review (schema 53)
+
+- The core `DestinationPreview` now carries a `DestinationProgressAssessment`.
+  It reports one of four statuses — progress context unavailable, no recorded
+  changes, recorded app changes without a validated mapping, or unresolved
+  native changes — plus the pending-native-review count, destination records
+  whose native bytes changed under the same identity evidence, and whether a
+  retained native baseline matches the destination format.
+- Recorded changes stay in the app's own semantic units (`training.*`, `vitals`,
+  `battles.*`, `trophies`). Reading the preview sums synchronized pending
+  progress plus unsynchronized app deltas without advancing receipts, revising
+  the journey account or writing any row. Raw EXP channels remain in native
+  comparisons; nothing converts between units.
+- Anchors are the newest retained native snapshots per individual (bounded at
+  16) with original-document and native-progress retention flags. When no
+  retained baseline matches the destination game/profile/codec, the report adds
+  `NATIVE_ANCHOR_UNAVAILABLE`; no other game's anchor is presented as this
+  destination's original.
+- New blockers — context unavailable, missing anchor, unresolved native queue,
+  changed destination record, missing mapping — join the preview fingerprint
+  together with account revision, latest app delta id, latest native snapshot
+  id, recorded vector, sorted pending ids and anchor list. Any later app growth
+  or native review invalidates `isCurrent`/re-preparation. `canExecute` remains
+  false; `PROGRESSION` is reported unmapped while recorded changes exist.
+- The destination dialog renders the progress assessment as its own section and
+  excludes those five blockers from the generic blocker list to avoid duplicate
+  copy. EN/PT-BR/JA strings added.
+- Six new core cases cover unavailable context, retained anchor with an empty
+  ledger, unmapped recorded units, native queue/destination-difference
+  precedence, fingerprint binding (including order-insensitive pending ids) and
+  foreign-game anchors.
+- Consolidated offline verification passed: **83 core tests**, **298 filtered
+  app JVM tests**, **11 companion tests**, **22 SQLite checks**, zero failures.
+  Debug assembly, integrity Android-test compilation and companion ZIP rebuild
+  succeeded. Schema stays **53**; no migration was added.
+- The desktop `--preview-destination` probe intentionally runs without app
+  progress context, so its summaries report `PROGRESS_CONTEXT_UNAVAILABLE` for
+  eligible records and stay non-executable; the phone flow supplies the real
+  context. Phone runtime/visual acceptance remains deferred.
+- APK: `app/build/outputs/apk/debug/app-debug.apk`.
+
+## Unified Home transfer hub and native change review (schema 53)
+
+- Home's upper-left action now opens the same Transfer hub as the primary navigation
+  destination. Shared tabs cover **Game saves**, **Storage transfers** and **Devices**.
+  Partner-context routes validate IDs/section keys and preserve the legacy Scan route.
+  Storage's archive and outgoing-transfer shortcuts lead to the hub; actual archive,
+  reviewed mapping/APP creation, destination preview and watch-conversion actions are
+  hosted there. Settings/application configuration remains ordinary setup, not individual transfer.
+- Devices offers an available outgoing-partner chooser plus receive-only mode, uses
+  the existing compatible-bracelet conversion and NFC implementations, and stays in
+  the hub on completion/cancel with transfer status retained. Tab/partner controls are
+  disabled while a read/write is active. NFC payload state is keyed by partner context
+  so an old prepared record cannot be reused after selection/availability changes.
+- Added core `NativeProgressReview` version 1 and an archive review dialog/repository.
+  It compares native records and keeps permanent parameter/EXP-channel differences,
+  temporary HP/MP, name/personality edits, location, form/history, identity and unknown
+  bytes distinct. Time Stranger raw offsets use record-relative offsets including the
+  +4 name base; World DS keeps all eight EXP channels separate.
+- Review is not a converter: `canNormalize` stays false; no pending rows, semantic
+  accounts, progress receipts or game/app values are changed by viewing it. Raw bytes
+  outside mapped fields, unexplained differences, missing data and incompatible codecs
+  remain unresolved. UI shows up to 32 owner-scoped pending native changes and total
+  pending count, without calling an empty native queue proof of zero app progression.
+- Seven new core cases cover native EXP, temporary state, rename-only changes, location,
+  form/identity, unavailable/unsupported data and identical records without normalization.
+  Two new app JVM cases cover hub/partner routes and invalid arguments. A new real
+  SQLite test exercises the exact production pending-review query for owner isolation,
+  descending 32-row bounds and zero mutation/receipt generation.
+- Consolidated offline verification passed: **77 core tests**, **298 filtered app JVM
+  tests**, **11 companion tests**, zero failures/skips. **22 SQLite checks** passed.
+  Debug assembly, integrity Android-test Kotlin compilation and companion ZIP rebuild
+  succeeded. Schema stays **53**, with no new database migration.
+- The authorized controlled rename pair was inspected read-only using the new review:
+  **39 conservative unique pairs**, **38 NO_CHANGE**, **1 PERSONAL_EDIT**, **0 changed
+  native measures**, **0 normalization-enabled reports**. Aggregate output contains no
+  private names, candidate IDs or native record bytes. Native files were not modified.
+- Phone runtime/visual/TalkBack and actual NFC acceptance remain deferred. The new
+  navigation is source/build verified, not claimed as device-tested. Native semantic
+  conversion policies, game writers and real cross-game returns remain unvalidated.
+- APK: `app/build/outputs/apk/debug/app-debug.apk`.
+
+Verification command:
+
+```powershell
+.\gradlew.bat :game-save-core:test :app:testIntegrityCheckUnitTest --tests "*source.gameSave.*" --tests "*navigation.*" --tests "*species.*" --tests "*battle.offline.*" --tests "*NativeSourceContextTest" --tests "*DigimonPersonaBuilderTest" :app:assembleDebug :app:compileIntegrityCheckAndroidTestKotlin :pc-save-companion:test :pc-save-companion:distZip --offline --console=plain --max-workers=1 "-Pkotlin.daemon.jvmargs=-Xmx4g"
+```
+
+## World DS provisional party import, copy authority and shared Home (schema 53)
+
+This checkpoint supersedes the earlier schema-52 World DS read-only-acquisition boundary.
+
+- Registered a provisional World DS PARTY-only snapshot policy with source-local ID
+  matching. Independent documents with the same local ID are not automatically merged.
+  Exact acquisition receipts prevent retry clones; later same-source records use the
+  existing identity-confirmed refresh workflow. Farm/unassigned/guest/lent/egg/conflicting
+  and other review-only records remain blocked; source insertion/removal stay false.
+- Added persistent reviewed copy/revision fields to linked saves and a localized
+  **Review save copy** UI. Only the selected copy becomes eligible, and existing record
+  issues remain intact. All other copies remain inspectable/review-only. Fresh reads,
+  preview preparation and commit recheck authority; changed revisions expire the choice.
+  This is reviewed authority, not a verified native checksum or sequence rule.
+- Native personality is now nullable in `NativeGameSnapshot`. World DS stores NULL
+  plus unchanged native JSON and initializes an app-only trait once from its app UUID.
+  Refresh never maps absent native personality onto app edits or regenerates traits.
+  Preview/archive/refresh copy distinguishes app personality from missing native data.
+- World DS now passes the existing exact-ID reviewed canonical mapping/materialization
+  policy. It reuses permanent identity, personality, first-materialization receipts,
+  participation/mode/artwork gates and shared DIM Home. Native level range 1..99 feeds
+  the existing authored/versioned bounded origin influence; this is app starting-value
+  policy, not conversion of the native eight-channel EXP vector or proof of equivalence.
+- Schema **52→53** preserves native rows, source metadata, canonical mappings, original
+  container chunks/bindings, lifetime events/triggers and the autoincrement sequence.
+  FK cascades are disabled before the upgrade transaction via the preserving helper,
+  and enforcement is restored on open. Migration fixture chains now reach schema 53.
+- Desktop checks passed: **70 core tests**, **296 filtered app JVM tests**, **11 companion
+  tests**, zero failures/skips. **21 real SQLite checks** passed, including the new native
+  nullable-personality upgrade with child-row preservation, trigger restoration and
+  an intentionally advanced ID sequence. Debug assembly, integrity Android-test Kotlin
+  compilation, companion `installDist` and `distZip` succeeded offline.
+- New core tests exercise copy eligibility, stale-revision/profile refusal and choice
+  changes without clearing other issues. The new policy test covers deterministic
+  app-only traits and source-local identity scope. Android tests for World DS acquisition,
+  retry/refresh/personality preservation, independent saves and shared APP materialization
+  **compile but have not run on a phone**; physical runtime/UI acceptance remains deferred.
+- The exact supplied World DS file was probed read-only with the shared registry/planner:
+  **1 eligible main record**, **preview can commit**, **identity review required**, source
+  remove/insert both false. No private names, IDs or native bytes are printed or committed.
+- Deliverable: `app/build/outputs/apk/debug/app-debug.apk`. Flow: link/refresh the `.sav`,
+  review copy if needed, select eligible party records, import snapshots, then Storage →
+  Game archives → reviewed species/form → Create APP representation → choose partner.
+
+SQLite verification:
+
+```powershell
+py -3 -B -m unittest tools.test_participation_schema tools.test_transfer_continuity tools.test_world_ds_acquisition_schema
+```
+
+## Phone-local World DS USA/DraStic raw reader (schema 52)
+
+- User supplied an existing, newly created phone-played DraStic save in the private
+  `StorySave` evidence folder. It is **65536 bytes**, with one populated save copy at the
+  start of the image and an erased remainder (no second copy). The file has **no DSDIGI signature**, so
+  the earlier signature-research probe correctly failed and is not the phone reader's
+  recognition rule. No private source bytes, names or local IDs entered repository fixtures.
+- Registered `WorldDsSaveReader`, profile `world-ds-usa-drastic-raw-v1`, game
+  `digimon_world_ds_nds`, codec 1. The exact supplied file reads through the same
+  `SaveReaderRegistry` used by Android: **1 active party candidate**, **0 review**,
+  **0 bank/farm/unassigned**. Native field ranges, local-ID counter and membership
+  references are structurally consistent. Native checksum/global identity remain
+  unverified, with explicit notices and all acquisition/write capabilities disabled.
+- Phone Transfer now labels this game/profile, decodes supported stored-name glyphs,
+  and shows native level/species/position, HP/MP, attack/defense/spirit/speed, aptitude
+  and eight separate EXP channels. A newly linked file opens its roster after refresh.
+  View-only sources offer browsing without import-selection/actions. Multiple populated
+  copies remain distinct review records; no authoritative current block is invented.
+- Local/folder/companion discovery recognizes 64 KiB `.sav` files by arbitrary names,
+  then validates content. The Android SAF file picker already provides persisted grants,
+  bounded reads, cached observations and refresh/relink. No PC is required for local use.
+- Shared observations now preserve optional native personality/scalar EXP/talent/bond
+  and a separate native parameter object. Legacy Time Stranger JSON remains readable.
+  Reviewed acquisition still requires a non-null mapped native personality under its
+  compiled policy. Schema stays **52**; source JSON gains no destructive migration.
+- **9 new core regressions** cover the observed signature-free shape, exact native data,
+  absent fields, both copy positions, multiple-copy ambiguity, farm/unassigned states,
+  malformed structures, unknown glyph preservation, native-parameter comparison/fingerprint,
+  `.sav` discovery and the final record/independent party order. Fixtures are synthetic.
+  **2 new app JVM tests** verify native-parameter/null JSON round-trip and legacy JSON.
+- Verification passed: **67 core tests**, **295 filtered app JVM tests**, **11 companion
+  tests**, zero failures/skips; `:app:assembleDebug`, integrity Android-test Kotlin
+  compilation and companion distributions succeeded. The first consolidated build
+  exceeded the 120-second tool window; resuming with a longer timeout completed.
+  No phone/emulator instrumentation was run. Android runtime/visual acceptance remains
+  separate from the actual-file shared-reader probe and compile checks.
+- APK: `app/build/outputs/apk/debug/app-debug.apk`. Phone flow: install/update, open
+  Transfer → Link save file, select DraStic's regular `.sav` from an accessible folder
+  (for example Documents), then refresh after a normal persisted game save.
+
+## Digimon World DS desktop structural research increment (schema 52)
+
+- Located and pinned published USA (`ADNE`) save-structure evidence in ReGame Labs'
+  `dwds_decomp` at `91efd17c4c05ce106ce0f973155149d23d9de519` (MIT). Inspected the
+  DeSmuME container description at `06c64b02666a4ac5246aad95fc8e9ab9e69e5a53`.
+  The independent parser uses format facts; no decompiled/emulator source or game
+  binaries are vendored. Sources and offsets: `game-save-core/WORLD_DS_RESEARCH.md`.
+- Added opt-in `WorldDsResearchInspector` for raw backup candidates and validated
+  DeSmuME version-0 containers. It finds complete 0x7DC0 `DSDIGI` candidates, keeps
+  all candidate blocks separate and reads up to 40 exact 0x180-byte individual records.
+  No active block, actual region, checksum, ownership or global identity is inferred.
+- Research records retain native stats, aptitude/level, encoded name units, eight
+  separate native EXP counters and exact native bytes. There is no fabricated native
+  personality, Unicode name, scalar EXP conversion or automatic Bank classification.
+  Party/farm references, duplicate IDs, conflicting locations, dangling references,
+  guests, lent records, eggs and other-DS flags remain explicit research evidence.
+  Farm transfer remains outside scope.
+- Inputs are bounded to 8 MiB plus a DSV footer, with at most 32 candidate blocks.
+  Recognized damaged DSV footers do not fall back to raw scanning; no$GBA wrappers
+  are unsupported. Original-container and unwrapped-payload revisions stay separate.
+  Both inspectors use the extracted bounded stream helper, which clears scratch bytes.
+- Added `--inspect-world-ds <file>` to the core CLI and packaged PC companion. This
+  standalone mode exits offline, creates no companion/pairing state, modifies no
+  source and prints aggregate counts/status only. It cannot be mixed with server or
+  capture options. The production registry/discovery remains unchanged: no World DS
+  roster/import/progress/writer capability has been enabled.
+- **13 new core tests** cover native facts/exact-byte preservation, raw/DSV equivalence,
+  separate container revision, multiple unselected blocks, membership/identity conflicts,
+  guest/lent/egg flags, malformed/truncated/oversized inputs, candidate limits, unsupported
+  wrappers, aggregate privacy and exclusion from the production reader registry.
+  **3 new companion tests** exercise the actual Main entry point, source preservation,
+  option isolation and invalid input without creating server state.
+- Consolidated offline verification passed: **58 core tests**, **293 filtered app JVM
+  tests**, **11 companion tests**, zero failures/skips. Debug APK assembly and integrity
+  Android-test Kotlin compilation passed. Companion `installDist` and `distZip` rebuilt.
+  Schema stays **52**. No phone/emulator tests or actual World DS game-save validation
+  occurred; an authorized existing save with region/emulator metadata remains necessary.
+
+Verification command:
+
+```powershell
+.\gradlew.bat :game-save-core:test :pc-save-companion:test :pc-save-companion:installDist :pc-save-companion:distZip :app:testIntegrityCheckUnitTest --tests "*source.gameSave.*" --tests "*species.*" --tests "*battle.offline.*" --tests "*NativeSourceContextTest" --tests "*DigimonPersonaBuilderTest" :app:assembleDebug :app:compileIntegrityCheckAndroidTestKotlin --offline --console=plain --max-workers=1 "-Pkotlin.daemon.jvmargs=-Xmx4g"
+```
+
+## Phone-independent destination evaluation and preview (schema 52)
+
+- User clarified that farm Digimon do not need transfer support. Farm rows remain
+  inspection-only, outside transfer scope and not a blocker for party/bank work.
+- Added core destination planner version 1, fresh-read Android repository and Storage
+  Game archives destination chooser with Party/Bank placement. Reports distinguish
+  same-format native return from unavailable cross-format conversion, flag provisional
+  identity and possible prior records, and show field-level unvalidated/unmapped data.
+  Capacity and version/DLC constraints remain unvalidated. No writer or execution action.
+- Fingerprints bind individual/native anchor, exact record facts, destination key,
+  revision/profile/codec, placement, capability and restrictions. Preparation rechecks
+  the latest local native snapshot after the destination read; World/watch-away and
+  superseded snapshots cannot be loaded as local origins. Re-read rebuilds the report;
+  cached-source changes/failures are visibly flagged. Drafts are ephemeral, not receipts.
+- Ten new core tests cover same-format/cross-format gates, insertion-capability refusal,
+  farm exclusion, candidate collisions/review rows, opaque/missing identity, missing native
+  data, fingerprint invalidation and aggregate-only desktop probing. Four new app JVM
+  tests cover fresh reads, changed source/native anchors, concurrent native refresh and
+  unavailable destinations without cached fallback.
+- Consolidated offline checks passed: **45 core tests**, **293 filtered app JVM tests**
+  and **8 companion tests**, zero failures/skips. App filters: `*source.gameSave.*`,
+  `*species.*`, `*battle.offline.*`, `*NativeSourceContextTest`, `*DigimonPersonaBuilderTest`.
+  Debug assembly, integrity Android-test Kotlin compilation and companion ZIP rebuild
+  succeeded. Schema remains **52**; no database migration was needed.
+  The **20 Python SQLite preservation/continuity checks** also passed after the build.
+- The actual desktop inspector `--preview-destination` read two authorized existing
+  slots without mutation: **41 eligible main records**, **5 excluded farm records**,
+  **37 origin records with possible destination matches**, **0 executable previews**.
+  All 41 report missing writer/insertion support and provisional identity review.
+  No names, native candidate values or bytes appear in the aggregate report or fixtures.
+- No physical phone or emulator tests were run, per request. Native layout/TalkBack,
+  SAF/Keystore/LAN acceptance and real game-loaded writers/returns remain separate work.
+
+Verification command:
+
+```powershell
+.\gradlew.bat :game-save-core:test :app:testIntegrityCheckUnitTest --tests "*source.gameSave.*" --tests "*species.*" --tests "*battle.offline.*" --tests "*NativeSourceContextTest" --tests "*DigimonPersonaBuilderTest" :app:assembleDebug :app:compileIntegrityCheckAndroidTestKotlin :pc-save-companion:test :pc-save-companion:distZip --offline --console=plain --max-workers=1 "-Pkotlin.daemon.jvmargs=-Xmx4g"
+```
+
+## Provisional Time Stranger snapshot-copy checkpoint (schema 52)
+
+This checkpoint supersedes earlier view-only/empty-production-registry statements below;
+those sections retain historical verification receipts.
+
+- Eleven authorized snapshots (seven slots, two backups and the controlled rename pair)
+  were inspected read-only. Occupied main-array candidates were unique per snapshot;
+  correlations include form/personality/progression and party/bank-position changes.
+  These are corpus observations, not controlled proof of global native identity or
+  chronological movement history. Farm/main candidate collisions remain unresolved.
+- The production Time Stranger policy now permits provisional PARTY/BANK snapshot
+  copies. Planner version 2 limits provisional duplicate scope to eligible active,
+  issue-free rows; conservative comparison remains unchanged. Reference preview:
+  **41 eligible main records**, commit available with identity review, **5 farm rows
+  blocked**, source remove/insert both false. Boundary/tail rows remain review-only.
+- Schema **51→52** persists draft identity-review requirements and binding confidence;
+  legacy bindings default to **PROVISIONAL**. Copies receive app UUIDs and receipts.
+  Cross-slot candidate lookup flags possible prior copies, and refreshing provisional
+  bindings requires explicit identity-continuity confirmation recorded in the audit.
+- Latest verification passed: **35 core JVM tests**, **289 filtered app JVM tests**,
+  **20 Python SQLite tests**, and **8 companion tests**; no failures or skips.
+  Debug assembly and integrity Android-test Kotlin compilation passed. Companion
+  distribution was rebuilt. Android instrumentation tests compiled but were not run:
+  no device was connected.
+- Artifacts: `app/build/outputs/apk/debug/app-debug.apk` and
+  `pc-save-companion/build/distributions/pc-save-companion.zip`.
+  Native game writes, actual cross-game returns, farm acquisition and phone/LAN runtime
+  acceptance remain unverified. Synthetic round-trip tests are core-invariant evidence.
+
+## Actual controlled Time Stranger rename pair
+
+- User supplied private `name-test/Before.bin` and `name-test/After.bin` copies and
+  described one known party-member rename. Both were inspected read-only with the
+  shared reader; private save bytes and native identity values were not copied into
+  repository fixtures or printed in the report.
+- Exactly one old-name record and one new-name record were found, both at **party
+  position 1**, **level 86**, and the same record location. The tracked nonzero
+  candidate identity was unchanged and occurred **once in each complete decoded
+  observation**, including review rows.
+- Native species, personality, level, EXP, talent, bond and previous-species values
+  were unchanged. Both 336-byte native records differed only at record-relative
+  offsets **0x04..0x0D**, inside the name buffer **0x04..0x23**. This supports stored-name
+  decoding and rename stability for the candidate in this controlled case; it is
+  not a species/form change or progression event.
+- Whole-roster comparison: 39 conservative candidate pairs, 4 ambiguous candidates,
+  no candidate additions/removals, 2 missing-identity records per observation; exactly
+  1 changed stored name and 0 species/personality/location/progression changes.
+  Active/review counts remain 41/6 in both copies.
+- Added an independently generated synthetic regression for rename-only native byte
+  changes, unchanged identity/species/progress and no implicit acquisition capability.
+  `:game-save-core:test` passed offline: **33 cases**, zero failures/errors/skips.
+- Controlled rename evidence is now recorded. Party reorder, bank/farm movement,
+  personality, evolution/de-evolution, duplicate-species, compaction and restored
+  branch cases still need their own game-written samples before a general identity
+  or writer policy can be enabled. The production verified-profile gate is unchanged.
+
+## Controlled game-written evidence collection (PC companion)
+
+- Added offline `--capture` and `--compare-captures` modes to collect the remaining
+  Time Stranger verification evidence. A capture requires one explicitly authorized
+  source folder and normal slot filename; it reads/decodes the document, detects
+  changed attributes, and preserves an exact encrypted copy under private state.
+  No source file, native identity field or ownership marker is modified.
+- Capture labels/manifests are immutable. Traversal, symlink sample files, overwritten
+  labels and private-state paths inside the active save root are rejected. Manifests
+  and reports contain revisions/counts and decoder metadata, not roster names, account
+  directory paths or native candidate IDs. Native capture binaries remain private.
+- Reports separate normal active-candidate matching from research-only persistence
+  across farm/review rows. They include collisions, missing identity evidence,
+  changed names/personality/species/positions/progression, raw-record changes and
+  regressions. Expected-action flags are advisory user-labelled evidence;
+  `establishesNativeIdentity` always remains false.
+- Original document hash/size are verified on reanalysis. Reader upgrades are flagged
+  without rewriting manifests, allowing captured evidence to survive decoder fixes.
+  A changed game identity or tampered native bytes still rejects the sample.
+- `:pc-save-companion:test :pc-save-companion:installDist :pc-save-companion:distZip`
+  passed offline: **8 tests**, zero failures/errors/skips (6 controlled-evidence,
+  2 TLS/server/token-rotation cases). Coverage includes direct packaged Main command
+  capture/comparison on an encrypted synthetic layout fixture, returning offline
+  without starting a server or creating pairing credentials.
+- Companion distribution rebuilt at
+  `pc-save-companion/build/distributions/pc-save-companion.zip`.
+  Commands and controlled action checklist are in `pc-save-companion/README.md`.
+- No private reference save was copied into this repository or used to fabricate
+  controlled game changes. Actual game-written before/after samples and their known
+  in-game changes are still required to verify native identity/progress policies.
+
+## Consolidated universal intermediary, shared Home and LAN companion (schema 51)
+
+- **Home parity:** removed the separate reduced `AppHomeScreen`. APP/card-independent
+  partners render the shared DIM Home composition with the same vitals header,
+  interactive portrait, stage/attribute/days, qualitative mood, trophies/countdown,
+  battle records, history, favorites, chat/detail actions and mission list. App-owned
+  training/rank/item parameters use `AppPartnerProgress`, not fabricated VB/BE rows.
+  Schema 51 fills missing APP state/mission slots while preserving existing values.
+  APP items now persist their own effects; unsupported use rolls back inventory
+  consumption. App wins/vitals update applicable app missions from actual changes.
+- **Stat basis:** exact DIM/BEM assignment selects that loaded slot's stage/attribute/
+  base HP/BP/AP and unit scale in battle/Home projections. Clearing it restores the
+  origin/app basis. Source-native records and progress are independent of that choice.
+  Declared source level ranges can supply a bounded, authored v2 origin influence
+  (+/-10% before app training); it is frozen from the origin snapshot, stored per
+  individual and bypassed by assigned-DIM stats. This numeric bound is an implementation
+  policy, not a user-confirmed native conversion formula. Missing origin normalization
+  keeps the record archived instead of substituting unrelated default stats.
+- **Universal progression:** fixed-point semantic vectors, per-representation native
+  anchors and deduplicated observation receipts distinguish actual gains from entry,
+  projection, rounding and configuration. App training, vitals/battle changes and
+  lifetime trophy gains are recorded independently. Conversion transactions can
+  suppress projected changes; observing an unchanged older representation does not
+  absorb gains earned elsewhere. Unclassified native changes remain explicitly pending.
+  Internal game-progress inputs require a versioned adapter; no real-game progress
+  normalizer/writer is enabled by these generic APIs.
+- Synthetic A -> Storage/B -> C -> A cases exercise exact original-native-record
+  return with no progress despite lossy intermediate scales, one-time actual gains,
+  pending per-destination deltas, read-back rebasing and stale/regression rejection.
+  These are **core invariants, not proof of game-loaded A/B/C transfers**.
+- **Native preservation:** production local/PC transports can capture exact source
+  document bytes on acquisition/reviewed refresh. Revision-checked content is stored
+  once in <=64 KiB chunks and linked to snapshots, preserving unknown document bytes
+  without oversized CursorWindow BLOB rows. This is not a claim that all sidecars,
+  writer counts/checksums or native return context have been established.
+- **Continuity:** permanent native/app/device-form events survive representation
+  deletion. Frozen app projection baselines distinguish authored starting values from
+  adopted existing state. App deltas are source-tagged observations, not native EXP or
+  physical measurements. Imported/manual personality survives rules upgrades; recovery
+  from a missing trait prefers the last reviewed app choice over random regeneration.
+  Chat app/native contexts are separately labelled and do not invent source biographies.
+- **LAN companion:** new shared `companion-protocol` and Windows/JVM
+  `pc-save-companion` modules provide pinned-TLS, token-authenticated, read-only access
+  to explicitly authorized save roots. Discovery is bounded and excludes backups/
+  symlink files. File reads detect changed attributes, and the shared decoder recognizes
+  actual content on the phone. Pairing tokens are encrypted by Android Keystore;
+  missing restored keys require re-pairing, not collection reset. Token rotation
+  preserves the peer/source identities and revokes old links after server restart.
+- **Location lifecycle:** saved tree/PC locations rescan on refresh; per-location
+  failure keeps cached sources and does not block already-linked local reads. Explicit
+  unlink exclusions win overlapping discovery and are cleared by explicit relinking.
+  Stopping discovery retains source/provenance rows; forgetting a PC removes its local
+  credentials. Compact navigation is five targets (Home/Storage/Transfer/World/More),
+  with Dex reachable through More and existing routes retained.
+- Shared codec contracts now accept opaque native identity keys and content-based
+  recognition for equal-length formats. This tests format neutrality without claiming
+  an unverified Digimon World DS reader. User confirmed local-network access, World DS
+  as the next target, and reference counts of 6 party/35 bank/5 farm.
+- Consolidated verification:
+  - App filtered JVM suites: **289 passed**, no failures/skips (game-save, species,
+    offline battle, native-source context and persona builder filters).
+  - `game-save-core`: **32 passed**; `companion-protocol`: **4 passed**;
+    `pc-save-companion`: **2 passed**. **327 JVM cases total**, zero failures/skips.
+  - Companion tests use a real loopback HTTPS server/self-signed identity and verify
+    pin rejection, bad-token rejection, write rejection, bounded discovery/read,
+    original file-byte preservation, identity persistence and token rotation.
+  - `py -3 -B -m unittest tools.test_participation_schema tools.test_transfer_continuity`
+    covers old/new schema preservation, independent lifetime history, delta dedup,
+    configuration/projection suppression, mission progression, exact DIM stat overrides
+    and retained native values: **19 passed**, including lifetime trophy gains across
+    phase-counter resets without duplicate awards. Run against the final exported
+    schema after KSP; a concurrent run during schema regeneration is not a valid receipt.
+  - `:app:assembleDebug`, `:app:compileIntegrityCheckAndroidTestKotlin`,
+    `:pc-save-companion:installDist` and `:pc-save-companion:distZip` succeeded offline;
+    schema `51.json` is exported. A fixture-only Compose import was corrected during
+    integration; production compilation and final native-test compilation passed.
+  - New Room checks for container chunk round-trip, lifetime/personality preservation,
+    observation namespaces/dedup, projection guards and app-own-anchor accounting,
+    plus a shared APP Home layout case, **compile but have not run on Android**.
+    No device is connected. Android Keystore/LAN/permission/UI and game acceptance
+    are not inferred from desktop or compilation results.
+  - The updated reader again inspected the authorized `0001.bin` read-only: 41 active
+    candidates (6 party/35 bank), 1 bank-boundary and 5 farm review records. No names,
+    native candidate IDs or save bytes were printed or committed as private fixtures.
+- Deliverables: `app/build/outputs/apk/debug/app-debug.apk` and
+  `pc-save-companion/build/distributions/pc-save-companion.zip`.
+  PC startup/pairing/revocation: `pc-save-companion/README.md`.
+- Remaining external gates: controlled Time Stranger identity/movement/progression
+  saves; concrete World DS region/emulator/fixture; per-title growth/skill/equipment
+  mappings and tested writers; actual game-load/recovery tests; Android device and
+  phone-to-PC native acceptance. The production acquisition profile registry remains
+  empty and the PC service has no game-write endpoint. Neither real-game moves nor
+  a real A/B/C return journey are claimed complete.
+
+## Reviewed species mapping and identity-preserving APP materialization (schema 50)
+
+- Storage Game archives now offers exact canonical species/form selection for an
+  already acquired native snapshot. `NativeCanonicalMapping` records the native
+  species ID, canonical target, `USER_CONFIRMED` authority and review time for that
+  exact snapshot. This is a local reviewed reference, not a verified title-wide
+  numeric crosswalk. Names, aliases and nicknames are never accepted as canonical
+  IDs by the producer; non-Digimon references are rejected. Missing artwork does not
+  prevent retaining the reviewed mapping and archived native data.
+- `NativeMaterializationRepository` requires the latest acquired snapshot, its
+  unchanged reviewed mapping, an enabled verified source profile/identity scheme,
+  validated selected artwork and live current-mode eligibility. Away World/watch
+  presence blocks creation. Artwork is prepared before the ownership transaction;
+  mode revision (including A -> B -> A), snapshot and mapping are rechecked afterward.
+- The new APP-factory path preserves the permanent individual, imported/manual
+  personality, nickname, creation time and native records. It creates a card-independent
+  APP representation with ordinary app starting values, initial app-representation
+  history and Dex registration. Native game level/EXP are not used as stage/VP.
+  An explicit optional choice can copy the stored source name to an absent app
+  nickname; existing app nicknames are protected. No new permanent identity or
+  generated personality is created, and the active-partner selection is not taken over.
+- Additive 49 -> 50 introduces mapping and one-time `NativeMaterializationReceipt`
+  tables. The receipt keeps the original snapshot/canonical/definition/character
+  references and projection version after representation export/deletion, so a retry
+  cannot recreate a partner or reset progress. Subsequent restore/return behavior is
+  a separate lifecycle operation, not replay of first materialization.
+- Source archive details remain accessible alongside the resulting APP representation.
+  World/watch-away individuals are excluded from the local archive list. Readiness
+  follows live mode and imported-card changes. The picker is metadata-only, lazily
+  lists canonical entries, retains unavailable records and uses EN/PT-BR/JA copy.
+- Selected-asset installation in `ExpandedCatalogRepository.definitionFor` and the
+  starter fallback was moved before their definition-creation transaction. Shared
+  definition IDs, original card rows, sprite defaults and mode artwork policy remain
+  the existing implementation; no whole-catalog asset preparation is added by this flow.
+- End-of-work verification:
+  - Filtered app JVM suites (`source.gameSave.*`, `species.*`): **82 passed**, zero
+    failures/skips, including four new exact-ID/form/kind/missing-art mapping cases.
+  - Existing `:game-save-core:test`: **25 cases remain green/up-to-date**.
+  - `py -3 -B -m unittest tools.test_participation_schema`: **11 passed**, including
+    exported-schema 49 -> 50 comparison, complete old-table preservation, snapshot
+    foreign keys and one-time receipt retention/replay rejection after UserCharacter deletion.
+  - `:app:assembleDebug` and `:app:compileIntegrityCheckAndroidTestKotlin`: passed
+    offline after correcting a fixture attribute from String to the SDK enum. Final
+    rebuild after live-card-readiness invalidation also passed; `50.json` is exported
+    and existing migration fixtures now include 49 -> 50.
+  - Nine new real-Room cases **compile only**: preserved identity/personality/native
+    values; mapping without artwork; mode eligibility; deletion/retry protection;
+    explicit source-name choice; mode ABA invalidation; changed mapping invalidation;
+    disabled-profile rejection; and watch-away rejection/archive filtering. No ADB
+    device is connected to execute them or capture native/large-font/TalkBack evidence.
+- This does not enable Time Stranger acquisition: the production verified import
+  profile registry is still empty pending controlled ownership/identity verification.
+  Official numeric crosswalks, source-stat/gameplay conversion and game writers remain
+  separate work. The local mapping choice cannot bypass those gates.
+- Debug APK: `app/build/outputs/apk/debug/app-debug.apk`.
+
+## Reviewed native refresh and conflict resolution (schema 49)
+
+- Added core three-way name/personality review between the archived native baseline,
+  incoming native record and current app values. App nicknames remain distinct from
+  stored game names. Source-only personality changes can be recommended; divergent
+  app/source edits require explicit keep-app/use-source choices. Keeping app values
+  leaves personality metadata untouched instead of regenerating traits.
+- `prepareRefresh` requires the same verified adapter policy as acquisition, performs
+  a fresh read, checks the revision/selection and resolves every selected record to
+  exactly one existing binding. Mixed new, already processed or ambiguous selections
+  must be reviewed separately. Bindings, latest native snapshots and app fields are
+  loaded in bounded batches; candidate hashes are not promoted to global identities.
+- `commitRefresh` rereads the source and rebuilds the review inside the transaction.
+  Changes to the source revision, baseline snapshot or reviewed app name/personality
+  invalidate confirmation. Resolved choices update only the explicitly selected app
+  fields; the same permanent individual receives a new immutable native snapshot and
+  per-item receipt. Prior native records, conversations, milestones, history, canonical
+  bindings and gameplay stats remain separate. No source save is modified.
+- Exact repeated refresh confirmation returns its existing receipt without reapplying
+  personality or name changes, including after a subsequent app edit. The native
+  snapshot stores a separate review audit with baseline ID, review fingerprint,
+  source instance, choices and before/after app values. Additive **48 -> 49** adds
+  nullable `reviewAuditJson` without altering source-native record JSON or older rows.
+- The eligible import flow now offers Review existing individuals when a verified
+  binding is encountered. The review shows baseline/incoming records and localized
+  keep-app/use-source choices. Stale reviews require preparation again. Storage
+  archives now display the current app nickname/personality alongside source facts.
+- Focused end-of-work verification:
+  - `:game-save-core:test`: **25 passed**, including five new merge/conflict cases.
+  - `:app:testIntegrityCheckUnitTest --tests "com.github.nacabaro.vbhelper.source.gameSave.*"`:
+    **6 passed**. Combined JVM coverage for these focused suites: **31 passing cases**.
+  - `py -3 -B -m unittest tools.test_participation_schema`: **10 passed**, including
+    exported-schema 48 -> 49 comparison, complete old-column preservation, null
+    audit defaults and separate append-only native/audit snapshot storage.
+  - `:app:assembleDebug` and `:app:compileIntegrityCheckAndroidTestKotlin`: passed
+    offline; `49.json` exported and migration fixtures advanced through 49.
+  - Five new real-Room refresh cases compile within the **13-case acquisition class**:
+    source-only refresh retaining identity and prior native data; explicit conflict
+    choices preserving app history/progress; app edits invalidating confirmation;
+    idempotent refresh not reapplying personality after later edits; source changes
+    rejecting the operation. **Native cases were not executed**: no device is connected.
+- EN/PT-BR/JA copy is provided. Native captures, TalkBack/font-scale and actual-device
+  timing remain unverified. The production verified-profile registry is still empty:
+  Time Stranger acquisition/refresh remains disabled pending controlled occupancy and
+  identity evidence. Canonical species mapping, playable representation materialization,
+  gameplay conversion and game writers are not enabled by this increment.
+- Debug APK: `app/build/outputs/apk/debug/app-debug.apk`.
+
+## Phase D native archival acquisition producer (schema 48)
+
+- Added a transactional `GameImportAcquisitionRepository` for snapshot-copy
+  acquisition into an inactive native archive. A compiled verified profile must
+  match the exact game/format/codec and provide an explicit native identity scheme
+  and personality-number map. Saved previews, UI actions and Debug cannot register
+  or override that evidence. The production verified-profile list is currently
+  **empty**: Time Stranger still has no acquisition capability.
+- Eligible commits reread the source, check the original revision/profile/document,
+  recompute the selection/restrictions/fingerprint, and compare decoded native data
+  with the reviewed records. One Room transaction creates permanent `IMPORTED`
+  individuals, mapped personality traits, source-scoped native bindings, immutable
+  native snapshots and per-item receipts. Unknown personality mappings are rejected,
+  not randomized. Stored source names remain native names rather than guessed app
+  nicknames; unknown canonical species remain unset.
+- Exact receipt retries return existing individuals. Additional selections from the
+  same revision remain possible. Existing native bindings are checked in a bounded
+  batch, including the original document after unlink/reselection; a later observed
+  representation requires reviewed refresh instead of a new individual or automatic
+  overwrite. Native refresh application/conflict resolution is **not implemented**.
+- Additive 47 -> 48 introduces `ExternalIndividualBinding` and `NativeGameSnapshot`.
+  Native uniqueness is scoped to source/game/profile/verified identity scheme.
+  Bindings and snapshots retain permanent-individual references after source unlink;
+  they are not globally unique constraints on an unverified native hash.
+- New Storage Game archives panel exposes these source-labelled native representations
+  with neutral gray placeholders and inactive accessibility state. No `UserCharacter`,
+  fake watch/DIM rows, source-stat-to-VP conversion, evolution events, discoveries,
+  gameplay activation or source removal is performed. Canonical gameplay materialization
+  remains separate work. Existing watch routes and collection views are preserved.
+- Preview commits are available only for a fresh eligible review and a registered
+  verified profile. Saved historical reviews have no commit action. Commit errors
+  distinguish stale source/selection and identity-review requirements; System Back
+  cancels the dialog's coroutine, with Room protecting atomic acquisition.
+- End-of-work verification:
+  - `:app:testIntegrityCheckUnitTest --tests "com.github.nacabaro.vbhelper.source.gameSave.*"`:
+    **6 passed**, zero failures/errors/skips (profile match, explicit personality map,
+    missing verification metadata, unknown personality, zero identity, production gate).
+  - Existing `:game-save-core:test` **20 cases remain green/up-to-date**.
+  - `py -3 -B -m unittest tools.test_participation_schema`: **9 passed**, including
+    exported-schema comparison for 48, preservation, scoped identity uniqueness,
+    native-snapshot foreign keys and permanent-reference retention constraints.
+  - `:app:assembleDebug` and `:app:compileIntegrityCheckAndroidTestKotlin`: passed
+    offline; schema `48.json` exported and migration fixtures advanced through 48.
+  - Eight new real-Room acquisition cases **compile only**: native/personality
+    preservation without gameplay/watch rows and unlink survival; retries/additional
+    selection; same-document unlink/reselection; concurrent confirmation; stale input;
+    production profile rejection; whole-batch rollback; and bound-identity refresh
+    rejection preserving app name/personality. No device is connected to execute them.
+- This implements the guarded producer/UI, not validation of real-game acquisition.
+  Time Stranger owned counts, identity continuity and numeric species mapping remain
+  unverified. Controlled samples and native execution are still required before a
+  production profile can be registered. Source writing/managed moves remain disabled.
+- Debug APK: `app/build/outputs/apk/debug/app-debug.apk`. Archive/commit UI captures,
+  accessibility/font-scale and phone performance acceptance remain pending.
+
+## Phase D foundation: revision-bound import review and native snapshots (schema 47)
+
+- Transfer roster rows now support selecting up to 128 records for a snapshot-copy
+  review. Preparation performs its own fresh bounded source read; a changed content
+  revision invalidates the old selection instead of applying its offsets to a new
+  roster. Failed fresh reads never substitute cached content for that required read.
+  Selection is scoped to source plus revision. No acquisition or game write is run.
+- Shared `SnapshotImportPlanner` preserves native names, numeric species, personality,
+  raw progression, locations and restrictions. Format capability, ownership/identity
+  research, review-only records, duplicate candidates (including tails/farm collisions)
+  and missing native snapshots block proposed acquisition. Missing species mapping
+  alone does not discard a confirmed-owned record: eventual archival acquisition must
+  keep it source-labelled and inactive. This is planning, not a completed archival
+  Storage producer.
+- Time Stranger records now retain the exact decoded 0x150/0x158-byte record as
+  Base64 in app-private observation/review data. This preserves unknown record fields;
+  it is not a full export context or proof of lossless native return. The reader adds
+  an explicit identity-research notice, with import/write/remove capabilities disabled.
+- Additive **46 -> 47** creates `SaveImportDraft`, per-record `SaveImportDraftItem`
+  and `GameImportItemReceipt`. Saved review items retain native bytes and decoded
+  values independently of linked-source deletion. Draft fingerprints bind source
+  revision/profile/codec/planner version, selection and current receipt/restriction
+  outcomes; repeated identical reviews reuse the original draft atomically.
+- Successful-import receipts are constrained per source/revision/profile/codec/record
+  and require a real permanent individual. The preview path never inserts these
+  receipts, individuals, personalities, UserCharacter rows, discoveries or history.
+  The schema/DAO and planner receipt handling are implemented; an acquisition commit
+  producer, permanent native-identity bindings, inactive Storage representation and
+  reviewed-refresh/conflict commit remain later Phase D work.
+- Saved import reviews can be reopened from Transfer, including after unlinking the
+  source. Historical reviews are explicitly labelled as historical and cannot serve
+  as refreshed acquisition confirmations. Preview/restriction copy is EN/PT-BR/JA;
+  Time Stranger personality names resolve by the explicit native number, not enum order.
+- Verification at the end of implementation:
+  - `:game-save-core:test`: **20 tests passed**, zero failures/errors/skips (7 planner,
+    7 decoder, 6 identity-evidence comparison). Decoder tests also assert native record
+    snapshot lengths; planner tests exercise blocked research cases, receipt-scoped
+    retries/additional selection and revision/profile/selection fingerprints.
+  - `py -3 -B -m unittest tools.test_participation_schema`: **8 passed**. The new
+    real-SQLite 46 -> 47 case compares tables/indexes/FKs with exported Room schema,
+    preserves collection data, rejects duplicate/orphan receipts, permits additional
+    selected items, and retains review/native data and receipts after source unlink.
+  - `:app:assembleDebug` and `:app:compileIntegrityCheckAndroidTestKotlin`: passed
+    offline; `47.json` exported and existing migration fixtures advanced through 47.
+  - Three new native Room cases compile: idempotent review/native-data preservation
+    and unlink survival without acquisition; changed-revision rejection; fresh-read
+    failure refusing cached preparation. **Not executed**: no ADB device is connected.
+  - The updated reader again opened the authorized reference read-only, yielding
+    6 party/35 bank active candidates plus 1 bank-boundary/5 farm review records.
+- Debug APK: `app/build/outputs/apk/debug/app-debug.apk`. Native UI, large-font,
+  TalkBack and phone performance acceptance remain pending. Phase D is partial:
+  this delivers previews/provenance/receipt foundations, not the complete import release.
+
+## Linked-save source review and Phase C comparison tooling (2026-10-15)
+
+- Reviewed the linked-save domain, Room migration/DAO, SAF transport, refresh
+  repository, decoder and Transfer UI by reading source before running any checks.
+  The source pass found incomplete native migration chains, queued duplicate
+  refreshes, missing automatic-refresh progress, null-context document detection,
+  ignored persistent-grant failures and inaccurate/raw UI status messages.
+- Fixed those paths: three concurrent reads at most, per-source overlap
+  deduplication and observable busy state, lifecycle-cancelled automatic refresh,
+  same-document relink preserving source ID/label/cache, and provider queries with
+  cancellation signals and time bounds. Failed reads retain the latest good roster.
+  Folder selection is explicitly a bounded discovery action, not a continuously
+  linked/rescanned folder location. Local PC connectivity remains unimplemented.
+- Transfer now distinguishes initial loading/errors/cached content, renders roster
+  rows lazily, and provides read-only comparison between compatible cached sources.
+  Status, recovery, containers, records and comparison text use EN/PT-BR/JA resources;
+  internal format/error codes and document URIs are not user-facing failure text.
+- `IdentityEvidenceComparison` compares candidate evidence across observations with
+  the same game/profile/codec version. It records possible name/species/personality/
+  location/progression differences without assigning permanent identities. Repeated
+  candidates (including collisions with review-only tails/farm rows), zero candidates
+  and review-only records cannot produce identity pairs. Neither comparisons nor
+  roster browsing acquire partners or merge sources. CLI comparison prints aggregate
+  counts only. Fixed exclusion of complete records ending exactly at a region bound.
+- End-of-implementation verification:
+  - `:game-save-core:test`: **13 tests passed**, no failures/errors/skips (7 decoder,
+    6 comparison cases).
+  - `py -3 -B -m unittest tools.test_participation_schema`: **7 passed**, including
+    real-SQLite 45 -> 46 table/index/FK validation, collection/view preservation,
+    duplicate document rejection and isolated observation cascade on unlink.
+  - `:app:assembleDebug` and `:app:compileIntegrityCheckAndroidTestKotlin`: passed
+    offline; final rebuild after timeout-feedback fixes also passed.
+  - Updated five existing Android migration fixture chains through 46. Added five
+    real-Room linked-source tests for cache retention/no acquisitions, overlap busy
+    state, unlink-during-read, cancellation and same-document access repair. These
+    Android cases are **compiled, not executed**; `adb devices` lists no device.
+- Authorized local sample inspection used only read streams, with no private
+  fixtures copied into the repository and no roster names/candidate IDs printed:
+  - `0001.bin`: **41 active candidates** (6 party, 35 bank), **6 review records**
+    (1 bank boundary, 5 farm). These are decoder observations, not confirmed ownership.
+  - Existing `0001.bin` backup -> reference: 35 possible pairs, 4 ambiguous
+    candidates; 7 stored-name/species changes, 1 personality change, 2 location
+    changes and 25 progression changes among possible pairs.
+  - Reference -> `0002.bin`: 35 possible pairs, 4 ambiguous candidates; 8
+    stored-name/species changes, 1 personality change, 2 location changes and 28
+    progression changes. Slot order is not asserted to be chronological.
+- Phase C's reader/comparison tools are implemented, but acceptance still requires
+  in-game party/bank/farm counts and controlled rename/reorder/evolution/branch
+  samples. Native hash stability, source lineage, numeric species mapping and farm
+  occupancy are unverified. Snapshot imports, save writing and moves remain disabled.
+- APK: `app/build/outputs/apk/debug/app-debug.apk`. No new native captures,
+  TalkBack/large-font or phone performance acceptance is claimed.
+
+## Multi-game Transfer, phase A/B slice: linked saves and read-only Time Stranger decoding (schema 46)
+
+- New `game-save-core` JVM module holds the shared, UI- and database-free contracts:
+  `GameSaveReader`, `SaveReaderRegistry` (bounded reads, oversized-input rejection),
+  and an independently implemented read-only Time Stranger layout reader. Main saves
+  must be exactly 3,098,176 bytes; inactive bank-boundary/tail rows, unverified farm
+  records, and duplicate/zero identity candidates are retained for review, never merged
+  or counted as owned. Numeric game IDs are preserved; stored names are never promoted
+  into species mappings. Current capability is view-only.
+- New Room schema **45 → 46** (`LinkedGameSaveSchema`, preserving factory untouched):
+  `LinkedGameSave` plus latest-good `LinkedSaveObservation`. Failed refreshes record
+  source health without erasing the last good snapshot; unlinking never deletes
+  imported individuals or provenance (no import path exists yet).
+- New Transfer tab (bottom nav, alongside the existing Vital Bracelet Scan flow):
+  link a save file or folder via Storage Access Framework with persisted grants and
+  bounded discovery, refresh on open/resume plus manual refresh, per-source roster
+  grouped by party/bank/farm with review states, rename/unlink, and explicit
+  view-only capability text. Browsing never creates partners, personalities, or
+  discoveries. No Storage import, save writing, or cross-game conversion yet.
+- Verification:
+  - `:game-save-core:test` — **6 passes** (identity-field decoding without save
+    mutation, boundary/tail exclusion, duplicate retention, farm-offset handling,
+    container rejection, discovery filtering).
+  - `py -3 -B -m unittest tools.test_build_dot_sprites tools.test_hatchery_sprites tools.test_participation_schema` — **27 passes**.
+  - `:app:testIntegrityCheckUnitTest` (species, tamerArena, battle.offline filters) — part of
+    **279 total cases, zero failures/errors/skips** across 33 suites (incl. game-save-core).
+  - `:app:assembleDebug` and `:app:compileIntegrityCheckAndroidTestKotlin` succeeded;
+    schema `46.json` exported. Debug APK: `app/build/outputs/apk/debug/app-debug.apk`.
+  - Native Android cases remain compile-only; no connected ADB device is available.
+- One online fetch was needed for the new module's Kotlin compiler artifacts; all
+  verification above reran offline afterward.
+
+## Species copy semantics and Dex sprite control (October 2026, verified)
+
+- Long-pressing a catalog (JSON) species now opens the template prefilled but
+  saves a **separate user-owned copy**: same-name saves are rejected, the
+  original stays listed, and existing profiles keep their assignment. Only
+  entries the user created are renamed/updated in place (with their profiles).
+- The sprite chooser is now reachable directly from the Dex species details
+  ("Species sprite" section beside the facts), without opening any editor.
+  Base-species appearance is stored as a choice row only, never as a catalog
+  override. Added PT/JA translations for the concurrent `game_mode_*` strings.
+- **App unit suite: 787 cases, zero failures, three existing private-fixture
+  skips** (784 executed) via `:app:testIntegrityCheckUnitTest`.
+  Debug/integrity/Android-test APKs assembled; Android-test Kotlin compiled.
+- **Lint: zero errors, 282 warnings, seven hints**, baseline unexpanded.
+- **Device (Samsung SM-A346M, `.integritycheck` app): 14/14 passed** —
+  eight `SpeciesCustomizationPersistenceTest` (copy rejection, copy creation
+  with untouched original/profiles, owned-entry rename with profile move,
+  plus the five pre-existing appearance/migration/browse cases),
+  two `SpeciesCatalogUiTest` (blank template; long-press → copy note, blocked
+  same-name save, save enabled after renaming), and four
+  `DexSpeciesProfileLayoutTest` (including the new sprite-section case).
+  The copy test initially used the wrong fixture ID and the Dex case needed a
+  scroll; both were corrected without relaxing production behavior.
+- Only integrity packages were installed on the device; the regular
+  `app-debug.apk` was rebuilt but not installed over the production app.
+
+## Dot matching, mode isolation and loading repair (schema 45)
+
+- Combined three pinned sources: DMC archive, **746 Humulos Digitama Hatchery Color-device animations**
+  (6 rosters, September 2026 capture) and **212 Wikimon Color V-Pet animations** (September 2026 uploads).
+  Current pack: **1,211 ready Digimon**, **3,368 sets**, **27,419 frames**, **12,995,584 bytes**;
+  all 1,662 catalog identities remain. Ten malformed upstream sets remain excluded;
+  source revisions, roster snapshots, name-pair evidence and per-set provider/author/device credits are pinned.
+  Newly covered examples: **Koemon (Monmon)**, **Red Vegimon (RedVegiemon)**, **Azhdarmon**, **Zeke Greymon (ZeigGreymon)**.
+- Broader documented name matching: full Wikimon English regional table (744 pairs) accepted only for
+  unambiguous known identities; color qualifiers (Red/Black/...) and X-Antibody spellings match without
+  collapsing forms; Kumamon/Mercurymon stage evidence disambiguates Bearmon/Chackmon and Mercurymon/Mercuremon.
+- **44 → 45** updates the view so Expanded ignores saved VB normalization and uses
+  Dot defaults. Asset-backed portraits, Arena previews/fighters/result forms and saved matches follow
+  the same mode policy. Saved VB choices persist and resume in VB mode.
+- Arena follows the mode with other-mode fallback: mode-matching teams first, fallback teams last with an
+  exhibition-only badge; fallback teams allow exhibitions but cannot enter or resume cups.
+- Preparation batches archive reads and database writes, skips installed artwork,
+  caches immutable frames, and runs outside Radar mutation transactions. Arena
+  indexing no longer reads all image BLOBs just to check renderability.
+- Unavailable Storage portraits are grayscale with gray frames/rings, with no
+  visible availability message; history access and TalkBack state remain.
+- Verification completed:
+  - **27 host checks passed** with `py -3 -B -m unittest tools.test_build_dot_sprites tools.test_hatchery_sprites tools.test_participation_schema`.
+  - Targeted JVM: species/catalog/artwork plus Arena/Tamer suites passed; full filtered batch
+    **271 cases, zero failures/errors/skips** across 32 suites.
+  - `:app:assembleDebug` and `:app:compileIntegrityCheckAndroidTestKotlin` succeeded.
+    Schema `45.json` exported with identity `cb9bcefb7d8bc6bad3d599a47d31990a`.
+- APK: `app/build/outputs/apk/debug/app-debug.apk`. Native tests remain
+  compile-only; `adb devices -l` reports no connected device. Actual phone loading
+  times, native screenshots and TalkBack behavior have not been measured.
+
+## Schema-44 launch migration repair
+
+- Reproduced a 43 → 44 validation defect with the real migration SQL:
+  `CREATE VIEW DisplaySprite AS ...` differed from Room's expected
+  `CREATE VIEW \`DisplaySprite\` AS ...`. The earlier host test skipped view
+  creation, hiding this mismatch. The migration now uses Room's exact SQL.
+- The strengthened host regression installs the real runtime triggers, preserves
+  partners, profiles, chat, evolution history, appearance choices and pause
+  records through the rebuild, compares the stored view SQL and new table/foreign
+  key definitions against schema 44, queries the view, and checks that foreign
+  keys and duplicate-individual guards are enforced afterward.
+- Native migration fixtures now use the production preserving open-helper
+  factory and register the full migration chain through 44. The existing
+  41 → 45 case also checks Storage rows, chat, evolution history, view access and
+  foreign-key enforcement after upgrade and reopen.
+- The strengthened host checks passed in the final batch above. Android runtime
+  execution still requires a connected device; host SQLite checks and compilation
+  alone do not establish it.
+
+## Expanded mode, milestone 3 step 3: card-independent partners and conversion (schema 44; source/JVM/host scope)
+
+- Shared catalog definitions (`CardCharacter.cardId` optional, no synthetic DIM),
+  `UserCharacter.exportCardCharacterId`, `APP` device type with no invented watch
+  measurements, full-catalog expanded encounters and quest targets, guided
+  first-partner meeting, mode-based artwork defaults, exact-slot bracelet
+  conversion with app identity preserved, and expanded onboarding from Home setup.
+- Verification (minimal, per scope):
+  - `:app:testIntegrityCheckUnitTest` for the `species`, `quests`, `digifarm`,
+    `source` and `domain` packages — **256 cases, zero failures or errors, three
+    pre-existing private-fixture skips**.
+  - `py -3 -B -m unittest tools.test_participation_schema` — **five earlier host
+    sqlite3 checks passed**, but omitted view creation and runtime triggers; the
+    stronger regression above supersedes that migration evidence.
+  - `:app:assembleDebug` and `:app:compileIntegrityCheckAndroidTestKotlin` —
+    succeeded; schema `44.json` generated.
+  - Native Android cases remain **compile-only**; no connected ADB device is
+    available. No lint or full-suite claim. Historical entries below retain their
+    original results and do not establish this increment's acceptance.
+- Scripted first-partner onboarding, app-training integration and native
+  card-free gameplay/conversion acceptance also remain pending; see
+  `EXPANDED_MODE_IMPLEMENTATION.md`.
+
+## Expanded mode, milestone 3 step 2: participation enforcement (schema 43; source/JVM/host scope)
+
+- The database-owned `PartnerParticipationGate` is registered in
+  `DefaultAppContainer` and shared by repository instances. Participation resolves
+  the live current form before the acquisition/last-known `speciesName` snapshot;
+  that snapshot is not a permanent current form. Canonical aliases/catalog IDs
+  share loaded access, and unidentified imported slots retain VB access.
+- Startup mode/DB invalidation reconciliation retains the collection and records,
+  clears only ineligible active partners, and preserves a valid active choice when
+  another activation is rejected. Storage badges inactive partners; selectors omit
+  them; Storage details allow history while disabling gameplay, and chat sending
+  is disabled while inactive.
+- World/scan/recruitment, eligible quest selections and progress/rewards, live
+  fresh/frozen Arena teams and pending brackets, items, activation and watch export
+  are gated. Trusted captured mode revisions reach actual quest/recruitment
+  transactions. Permanent individual mapping survives replacement Storage IDs
+  after a watch round-trip; separate battle/settlement leases block mode switching.
+- Farm needs include valid time before the first pause, then freeze. Room
+  **42 → 43** adds persistent `ParticipationPause` records for Farm/Adventure pauses
+  over restart; Adventure deadlines rebase at resume. Watch import stores source
+  measurements without autoactivating an unavailable partner. The **41 → 42** SQL
+  explicitly uses nullable `DEFAULT NULL` to match annotated entity defaults during
+  chain migration. No destructive reset; current schema export:
+  `app/schemas/com.github.nacabaro.vbhelper.database.AppDatabase/43.json`.
+
+### Final verification
+
+- **125 targeted JVM tests passed, zero failures or skips**, covering species,
+  quests, Digifarm and `GameModeRepository`.
+- `py -3 -B -m unittest tools.test_participation_schema` — **four actual Python
+  sqlite3 checks passed in <0.1s**: migration, record preservation, nullable defaults
+  and remaining Adventure time. These are host checks, not Android Room execution.
+- The final affected-package unit run, `:app:assembleDebug` and
+  `:app:compileIntegrityCheckAndroidTestKotlin` succeeded after the recruitment
+  transaction guard and its regression were added (**36-second incremental batch**).
+  Debug APK:
+  `app/build/outputs/apk/debug/app-debug.apk`.
+- `PartnerParticipationPersistenceTest` has **seven compile-only cases**; none
+  have executed on Android. No connected ADB device is available.
+- **Source review disposition: ship**, limited to the six reported material findings;
+  the final recruitment verdict confirms all six resolved. This is not native approval.
+- There is **no new lint or full-suite claim**. Historical entries below retain
+  their original verification results and do not establish this increment's acceptance.
+
+The original source-independent partner milestone is still incomplete:
+card-independent `UserCharacter` representation, full-catalog encounters,
+first-partner onboarding, source-mode default artwork, real external-game/VPet
+adapters, permanent universal evolution and compatible non-VB-to-watch conversion
+remain implementation work. See `EXPANDED_MODE_IMPLEMENTATION.md`.
+
+### Native acceptance boundary
+
+- Execute the seven persistence cases and real **41 → 42 → 43** Room upgrades,
+  validating defaults, preserved records and paused Farm/Adventure state after reopen.
+- Exercise live mode/card invalidations, current-form versus old-snapshot resolution,
+  alias/ID eligibility and unidentified VB imports. Inspect inactive badges,
+  excluded selectors, rejected activation retaining a valid selection, disabled
+  gameplay/chat sending and accessible conversation history.
+- Verify stale model replies cannot mutate quests or recruit after a mode revision;
+  ineligible quest givers/partners/unmet targets and paused progress/rewards stay gated.
+- Exercise fresh/frozen teams, pending brackets, watch-round-trip replacement IDs
+  and both foreground-battle and pending-settlement mode-switch leases.
+- Verify pre-pause Farm time, frozen needs and remaining Adventure time across
+  restart/resume; items, activation and export stay gated, while watch import retains
+  source measurements without unavailable autoactivation.
+- Inspect current native layouts across the inherited palettes and EN/PT-BR/JA,
+  including large fonts and TalkBack. **No new native screenshots, TalkBack or
+  large-font acceptance** are recorded; earlier native results are historical.
+
+## Expanded mode, milestone 3 step 1: species-binding migration (source scope)
+
+- Added Room **41 → 42** (`SpeciesBindingSchema`): additive `speciesName`,
+  `originKind`, `originCardCharacterId` columns on `DigimonIndividual`, with a
+  migration-time backfill from the current card slot. `SpeciesBindingRepository`
+  performs an idempotent startup backfill and canonical resolution. `IndividualOrigin`
+  validates origins. No existing partner, chat, relationship or history is altered.
+- Verification executed:
+  - `:app:testIntegrityCheckUnitTest --tests "...IndividualOriginTest"` — passed.
+  - `:app:compileIntegrityCheckAndroidTestKotlin` — passed, including the new
+    `SpeciesBindingMigrationTest`, which reconstructs the exported version-41 schema
+    and opens it through the registered 41 → 42 migration.
+  - `:app:assembleDebug` — succeeded; schema `42.json` generated.
+- **Not executed**: `SpeciesBindingMigrationTest` requires a connected device;
+  `adb devices` reported none. The migration SQL and column defaults are verified by
+  compilation and schema export only until it runs on hardware. No data-reset is
+  required by this change, but existing installs must be upgraded through the
+  migration rather than reinstalled.
+
+## Expanded mode, milestone 2: game mode and shared availability policy (source/JVM scope)
+
+- Added `GameMode` + `GameModeRepository` (persisted, defaults to Vital Bracelet),
+  the pure `SpeciesEligibility` rule, and `SpeciesAvailabilityIndex` joining the
+  bundled canonical catalog with species present on imported cards through the new
+  `SpeciesProfileDao.getLoadedSpeciesNames` query. `SpeciesRepository.availabilityIndex()`
+  builds the index from real data. Settings now exposes the two modes.
+- Verification executed:
+  - `:app:testIntegrityCheckUnitTest --tests "...species.*" --tests "...source.*"` —
+    passed. Nine new JVM cases cover VB eligibility by loaded species regardless of
+    origin, rejection when no card provides a species, expanded-mode Dot-art and
+    Digimon-only requirements, alias/unknown-species/blank-input resolution, and
+    mode persistence/default/fallback.
+  - `:app:assembleDebug` — succeeded.
+- No schema change and no data reset. Individual-level enforcement across owned
+  partners, spawns, quests and teams, the first-encounter flow, and the Room
+  migration that binds partners to canonical species are the next milestone; see
+  `EXPANDED_MODE_IMPLEMENTATION.md`. Native UI/behavioural acceptance still
+  requires a connected device.
+
+## Expanded mode, milestone 1: catalog and bundled Dot library (source/pixel scope)
+
+- Added a pinned, generated canonical reference catalog
+  (`app/src/main/assets/species_catalog.json`): **1,662** identities, **824**
+  Digimon with confirmed Dot artwork, **1,891** validated alternative sets, and a
+  **9,525,674-byte** pack of **20,493** unique native pixel buffers
+  (`app/src/main/assets/dot_sprites.zip`). Generation is reproducible from pinned
+  revisions recorded in the manifest and builder.
+- Verification executed for this milestone:
+  - `py -3 -B -m unittest tools.test_build_dot_sprites` — **10 passes** (alias/form
+    identity, stage/Hi-res rejection, deterministic preferred set, stable reserved
+    IDs, RGB565+green-chroma conversion incl. visible-green and malformed PNG,
+    source-path traversal rejection).
+  - `py -3 -B tools/build_dot_sprites.py --check` — offline artifact check passed
+    over all 20,493 frames with pack and per-frame hashes.
+  - `:app:testIntegrityCheckUnitTest --tests "...species.*"` — passed, including
+    the new canonical-catalog checks and a shipped-asset check that reads the real
+    manifest and pack hash, resolves aliases, prefers original device art, and
+    keeps non-Digimon references non-ready.
+  - `:app:assembleDebug` — succeeded.
+- New Android persistence checks (`BundledDotSpritePersistenceTest`) were compiled
+  but **not executed**: `adb devices` reported no connected device. Native
+  execution, the new-tab screenshots, enlarged-font and TalkBack review remain
+  pending. Compilation is not visual acceptance.
+- **Source review only for UI**: the finish review returned disposition
+  **fix** with the following addressed — canonical identity used for matching after
+  a rename, canonical-name/alias search, filtered-empty vs catalog-empty messaging,
+  pagination cancellation scoped to the current request, and installed Dot
+  provenance shown in the Loaded list. Native re-capture is still owed once a
+  device is available.
+- Eight malformed upstream sets (mismatched declared vs actual dimensions, one
+  missing source file) were rejected; see `tools/dot_sprite_coverage.json`.
+- No database schema change: this milestone needs no migration and no data reset.
+  Mode switching, source-independent partners, the first recruitment encounter and
+  compatible watch conversion are **not** part of this milestone; see
+  `EXPANDED_MODE_IMPLEMENTATION.md`.
+
+## Build repair and species/sprite regression verification (October 2026)
+
+- Reproduced and fixed both reported Kotlin compilation failures: migration bind
+  arguments now explicitly use `Array<Any?>`, and the asynchronous preparation
+  preview takes a local Bitmap snapshot before the non-null branch.
+- Final root `test` task passed. App report: **753 cases, zero failures, three
+  existing private-fixture skips** (750 executed). Four new JVM checks exercise
+  the twelve-pose ordering and missing/malformed/invalid-dimension fallback.
+  DIM/NFC reader test tasks passed through the root task (up-to-date receipts).
+- Debug, isolated integrity app and Android-test APKs assembled successfully.
+  Room/KSP generated schema `app/schemas/com.github.nacabaro.vbhelper.database.AppDatabase/41.json`.
+  The Sprite view reader uses `RewriteQueriesToDropUnusedColumns` for its projection.
+- `lintDebug` passed: **zero errors, 272 warnings, seven hints**, existing baseline
+  unexpanded. The warning count is not a clean-lint claim.
+- Verified **32 distinct Android checks** on the connected Samsung SM-A346M in
+  the separate `.integritycheck` application: seven new
+  `SpeciesCustomizationPersistenceTest`, two new `SpeciesCatalogUiTest`, five
+  `CustomDimSpeciesPersistenceTest`, two `AuditReadinessTest`, one
+  `ConditionDetailsTest`, eight `UiRefinementsTest`, three
+  `DexSpeciesProfileLayoutTest`, and four `TamerArenaLayoutTest` cases.
+- Real Room checks passed for cross-DiM/alias appearance, unchanged original art
+  and stats, catalog/choice persistence after reopening, rename/reset, atomic
+  rejection of missing artwork, preferred-source deletion fallback, and matched
+  versus all-loaded/unassigned browsing. The migration test reconstructs the
+  exported version-40 schema and opens it through the registered **40→41**
+  migration; Room validated the new tables/view and retained the legacy profile.
+- Native UI checks verified Add → blank template and species long-press →
+  prefilled template with a reachable Save. The first batch passed 31/32; the
+  remaining selector accidentally matched both search input and list row. It now
+  selects the native Button role, and both catalog UI cases passed in the focused
+  rerun. No production behavior was relaxed for that test correction.
+- Tests installed only the integrity app/test packages. The rebuilt regular APK
+  is `app/build/outputs/apk/debug/app-debug.apk`; this pass did not install it over
+  the regular app. Full TalkBack traversal, watch/server interactions, every
+  rendering surface and tablet/foldable visual acceptance were not exercised.
+
+```powershell
+.\gradlew.bat :app:assembleDebug :app:testIntegrityCheckUnitTest :app:compileIntegrityCheckAndroidTestKotlin --offline --console=plain --max-workers=1 "-Pkotlin.daemon.jvmargs=-Xmx4g"
+.\gradlew.bat test :app:assembleDebug :app:assembleIntegrityCheck :app:assembleIntegrityCheckAndroidTest --offline --console=plain --max-workers=1 "-Pkotlin.daemon.jvmargs=-Xmx4g"
+.\gradlew.bat :app:lintDebug --offline --console=plain --max-workers=1 --no-daemon "-Dorg.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8"
+adb -s <serial> shell am instrument --user 0 -w -e class "com.github.nacabaro.vbhelper.SpeciesCustomizationPersistenceTest,com.github.nacabaro.vbhelper.CustomDimSpeciesPersistenceTest,com.github.nacabaro.vbhelper.ui.SpeciesCatalogUiTest,com.github.nacabaro.vbhelper.ui.AuditReadinessTest,com.github.nacabaro.vbhelper.ui.ConditionDetailsTest,com.github.nacabaro.vbhelper.ui.UiRefinementsTest,com.github.nacabaro.vbhelper.screens.cardScreen.DexSpeciesProfileLayoutTest,com.github.nacabaro.vbhelper.screens.tamerArena.TamerArenaLayoutTest" com.github.nacabaro.vbhelper.integritycheck.test/androidx.test.runner.AndroidJUnitRunner
+# After rebuilding/reinstalling the test APK with the corrected selector:
+adb -s <serial> shell am instrument --user 0 -w -e class "com.github.nacabaro.vbhelper.ui.SpeciesCatalogUiTest" com.github.nacabaro.vbhelper.integritycheck.test/androidx.test.runner.AndroidJUnitRunner
+```
+
+## User species templates, shared sprite appearance and visual setup (source change)
+
+- Added an Add button beside species search, blank/prefilled information templates,
+  long-press editing, and ordinary Settings → Species and sprites access. Templates
+  persist names, level/type, profile text, moves and an optional shared sprite choice.
+- The sprite chooser browses assigned-species or all loaded alternatives, including
+  unassigned Sprite rows, with metadata-only 24-row pages, search and raw source
+  previews. Save validates identity uniqueness, input bounds and selected artwork,
+  then updates local catalog/profile/appearance records transactionally.
+- Added Room schema **41** and registered **40→41** migration: local catalog and
+  sprite-choice tables, canonical appearance keys on SpeciesProfile, and the
+  `DisplaySprite` view. The view changes presentation reads rather than original
+  Sprite/CardCharacter assignments; missing secondary poses use the chosen idle.
+- Display reads now share this projection across Home/Storage, history, Dex/routes,
+  scan previews, Adventure, Farm/World and widget data. Asset-backed images, Arena
+  portraits, battle base forms and finisher forms also resolve the preference.
+  Recognition/re-import comparisons explicitly read original art. A saved choice
+  refreshes the widget using its existing generation-safe invalidation hook.
+- Inner background arc rotation is now 18 seconds versus the outer 24 seconds.
+  The Arena setup shows animated partner portraits, stages and actual battle stats,
+  with native format/difficulty choices, context and pinned confirmation.
+- **Source review only**, per the request to skip testing. No unit/instrumentation
+  tests, compilation, Room migration execution, schema-export generation, lint,
+  device screenshots or installation were run for this change. Earlier successful
+  reports below predate this work and do not establish current runtime acceptance.
+
+## Arena sprite motion, rotating background and Debug-only partner tags (source change)
+
+- Arena list/detail portraits alternate bundled idle frames 1/2 or imported
+  idle buffers. Decoding remains off the UI thread; bundled frame pairs use a
+  byte-sized 4MiB cache, and imported frames use the existing preview buffer
+  validation. Cadence is staggered per artwork identity. Missing second frames
+  remain usable as a static portrait.
+- Restored the background partial rings' original 24-second rotation, reading
+  animated state inside the isolated Canvas draw block. Both sprite animation
+  and background rotation follow the shared foreground/motion preference.
+- Partner-origin labels (documented, associated, guest and spirit form),
+  combined-partner badges and stat-scaling badges now require the live master
+  Debug setting in the Arena briefing.
+- Source review only. Tests, builds, device checks and installation were skipped
+  as requested; previous results below do not validate these changes.
+
+## Arena entry team confirmation (source change)
+
+- Entering Tamer Arena first opens the existing header-accessible team editor.
+  The player can confirm/change partners, format and difficulty, then choose
+  "Use this setup" to proceed. Back from the initial confirmation exits the Arena;
+  Back from a later header-opened edit returns to the current browsing surface.
+- Confirmation state is saved by `TamerArenaScreen`, outside the conditional
+  lobby/battle composition, so returning from a fight does not reopen entry setup.
+- Source change only; tests, builds and installation skipped as requested.
+
+## Tamer browsing, compact Home mood and chat keyboard layout (source change)
+
+- Kept the Tamer chooser as one flat scrolling list. Removed the pinned chosen
+  partner summary, moved team setup to the header, and collapsed filters/reload
+  behind a labeled filter button while keeping search visible. Changed searches
+  and filters start at the first result; returning from a briefing retains the
+  existing list position. First-load/error states reuse `CollectionStatePanel`.
+- Removed the numeric mood score from both VB and BE Home cards; the displayed
+  value is now only the localized qualitative mood summary.
+- Set MainActivity's keyboard mode to `adjustResize` and moved remaining IME
+  space ownership to the app content root, where it is consumed before nested
+  chat screens lay out their history and composer. This addresses the supplied
+  screenshot's composer/keyboard gap without removing the chat draft or controls.
+- Source review only. Tests, builds, device checks and installation were skipped
+  as requested; earlier results below do not validate these new changes.
+
+## DiM 124 Tamer Arena fallback (source change)
+
+- Arena artwork selection now prefers other available sprites for the same
+  canonical species/form. DiM 124 remains eligible only when no alternative
+  exists, for both bundled assets and imported cards, including masked BEM IDs.
+- Shared Arena species lookup applies the preference to team members, previews
+  and Blast/Jogress result forms.
+- Tests/builds were not run for this follow-up, as requested. The verified native
+  and build results below belong to the preceding visual-uniformity pass.
+
+## Cross-screen visual uniformity (October 2026 native follow-up)
+
+- Extracted shared instrument-style tabs, search fields, framed section bars,
+  header actions and spacing in `InstrumentUi.kt` / `TopBanner.kt`. Migrated
+  Items, DigiLine, World, Arena navigation, Settings, quests and battle/loadout
+  setup to that vocabulary. The binding references remain Home, Storage,
+  species-information cards and the rich Tamer briefing, including its emojis.
+- Inspected current native VB Lab / English captures on the Samsung SM-A346M:
+  Home, populated Storage, Items, Settings, DigiLine, battle entry/preparation,
+  Tamer roster/briefing/loadout details, technique and Blast/Jogress tabs, quests,
+  and the Agumon species-information dialog. The final comparison caught the
+  quest journal's remaining ungrouped layout; its framed objectives/rewards and
+  reachable action area were confirmed after the final update.
+- Final app unit suite: **749 cases, zero failures, three existing private-fixture
+  skips**. Debug, integrity app and Android-test APK assembly succeeded.
+- Final `lintDebug`: **zero errors, 268 warnings, seven hints**, with the existing
+  baseline unexpanded. This is not a clean-lint claim.
+- Verified **18 distinct Android checks** in the isolated `.integritycheck` app:
+  two `AuditReadinessTest`, one `ConditionDetailsTest`, eight `UiRefinementsTest`,
+  three `DexSpeciesProfileLayoutTest`, and four `TamerArenaLayoutTest` cases.
+  They cover loading/retry, visible trust, selected/labeled navigation, restored
+  inputs, short windows, 1.3x/2x text, species privacy/footer/profile order,
+  and Arena search, challenge, team editing, two-partner briefing and cups.
+  Species/Arena fixtures exercise all four palettes; this does not establish a
+  visual review of every screen/palette/font combination.
+- The first native batch passed 16 cases and exposed two test assumptions:
+  exact raw profile whitespace and a challenge tap racing Android IME dismissal.
+  Narrative assertions now check both complete sentences, and the Arena test
+  checks team readiness/button enablement and waits for the system IME to close
+  before the physical tap. Both corrected cases passed; the final focused run
+  confirmed the profile case and all four Arena cases (**five passes**).
+- Installed the final regular debug APK with `adb install -r`, retaining app data.
+  Wireless ADB was recovered after a disconnect; a timed-out integrity APK
+  installation completed successfully on retry before instrumentation execution.
+- Current manual captures are under
+  `C:\Users\julye\AppData\Local\Temp\opencode\uniform-*.png`, including
+  `uniform-final-quests.png`, `uniform-final-quests-rewards.png` and
+  `uniform-final-species.png`. Native fixture captures remain in the integrity
+  app's external-files `dex-profile-layout` and `tamer-arena-polish` directories.
+- Full TalkBack speech traversal, predictive Back, physical watch/server flows,
+  inspector crash reproduction, launcher/widget performance and tablet/foldable
+  acceptance remain outside these executed checks.
+
+```powershell
+.\gradlew.bat :app:assembleDebug :app:testIntegrityCheckUnitTest :app:assembleIntegrityCheck :app:assembleIntegrityCheckAndroidTest --offline --console=plain --max-workers=1 "-Pkotlin.daemon.jvmargs=-Xmx4g"
+.\gradlew.bat :app:lintDebug --offline --console=plain --max-workers=1 --no-daemon "-Dorg.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8"
+# After installing the integrity app and test APK; use the connected device serial:
+adb -s <serial> shell am instrument --user 0 -w -e class "com.github.nacabaro.vbhelper.ui.AuditReadinessTest,com.github.nacabaro.vbhelper.ui.ConditionDetailsTest,com.github.nacabaro.vbhelper.ui.UiRefinementsTest,com.github.nacabaro.vbhelper.screens.cardScreen.DexSpeciesProfileLayoutTest,com.github.nacabaro.vbhelper.screens.tamerArena.TamerArenaLayoutTest" com.github.nacabaro.vbhelper.integritycheck.test/androidx.test.runner.AndroidJUnitRunner
+```
+
+## All-screen audit recommendations (October 2026 follow-up)
+
+- Implemented F01–F16 using Impeccable's optimize, harden, colorize, native adapt,
+  clarify, animate and polish playbooks. Home/Storage identity, four palettes,
+  configurable fonts, imported pixel art and recorded gameplay facts are preserved.
+- Final app unit run: **749 cases, zero failures, three existing private-fixture
+  skips**. The 18 new executed cases cover sprite allocation/buffer boundaries,
+  stale asynchronous publication, and conversation-branch revision checks.
+- `AuditReadinessTest` adds two Android UI regressions for delayed-first-snapshot
+  loading and failure → retry → usable records. Android tests compiled and their
+  APK assembled; they were **not executed** because ADB reported no connected device.
+- Debug and unsigned release APK assembly completed:
+  `app/build/outputs/apk/debug/app-debug.apk` and
+  `app/build/outputs/apk/release/app-release-unsigned.apk`.
+- Final `lintDebug` passed: **0 errors, 266 warnings, 7 hints** with the existing
+  baseline unexpanded. The warning total is not a clean-lint claim.
+- Deterministic sRGB checks for repaired online-battle pairs passed the 4.5:1
+  normal-text threshold in every palette: Attack **12.58 / 8.44 / 6.47 / 6.74:1**;
+  result headers **8.85 / 9.84 / 14.21 / 13.11:1** (Helper / Lab / Arena / Digimon.net).
+- Verification was deferred until implementation finished. The final batch exposed
+  one Int/Long comparison error, which was fixed, then a Kotlin compiler memory
+  failure on the large Radar method. Serial compilation with a temporary 4GB
+  Kotlin heap succeeded. Debug lint required a separate single-use 4GB Gradle
+  process after earlier analysis timeouts. These were command-line overrides;
+  project-wide Gradle/JVM settings were not changed.
+- At this technical-pass checkpoint, native acceptance remained pending: current screenshots, TalkBack selection and
+  health, keyboard/large-font/short-window layouts, predictive Back, real-collection
+  inspector reproduction, and launcher/widget performance. Historical captures
+  do not validate the new implementation. The original 11/20 audit score is a
+  historical pre-implementation source snapshot, not a fresh acceptance score.
+  The subsequent connected-device visual/Android results are recorded above.
+
+Successful verification tasks (completed across the final batch and its
+tooling-recovery runs): `:app:testIntegrityCheckUnitTest`, `:app:assembleDebug`,
+`:app:assembleRelease`, `:app:assembleIntegrityCheckAndroidTest`, `:app:lintDebug`.
+
+```powershell
+# Serial compiler invocation used by the final unit/build batch:
+.\gradlew.bat :app:testIntegrityCheckUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease :app:assembleIntegrityCheckAndroidTest --offline --console=plain --max-workers=1 "-Pkotlin.daemon.jvmargs=-Xmx4g"
+# The APK tasks completed in this follow-up invocation; lint analysis timed out:
+.\gradlew.bat :app:assembleDebug :app:assembleRelease :app:assembleIntegrityCheckAndroidTest :app:lintDebug --offline --console=plain --max-workers=1 "-Pkotlin.daemon.jvmargs=-Xmx4g"
+# Final successful lint invocation:
+.\gradlew.bat :app:lintDebug --offline --console=plain --max-workers=1 --no-daemon "-Dorg.gradle.jvmargs=-Xmx4g -Dfile.encoding=UTF-8"
+```
+
+## In-world companion overhaul (October 2026, source scope)
+
+- Full app unit suite: **731 cases, zero failures, three existing private-fixture
+  skips**. New coverage: `DebugSettingsRepositoryTest` (legacy preferences, master
+  opt-in, revocation, restart), `RadarCommandGateTest` revocation/stale-location
+  cases, `LlmSettingsRepositoryTest` prompt-guard cases, `DiagnosticTextTest`,
+  `PartnerConditionTest`, `ResearchTextTest`, `LorebookContextTest`,
+  `DigimonPersonaBuilderTest` memory/source cases, plus Android-test additions for
+  debug-spawn denial, typed NFC outcomes, and species-override denial (compile-only
+  until device execution).
+- `test`, Android-test compilation, `lintDebug` (no errors; baseline unexpanded),
+  `assembleDebug` (`app-debug.apk`) and `assembleRelease`
+  (`app-release-unsigned.apk`, unsigned: no signing config) verified offline.
+- Independent source review disposition **fix**; all six findings resolved (see the
+  in-world-companion surface brief). No connected device or emulator exists: native
+  visual/runtime acceptance (screenshots, TalkBack, motion, radio) is deferred.
+
 ## Character-specific tamer histories and genuine-gap stat scaling
 
 - Audited all 223 roster entries against their character/partner histories.
@@ -551,8 +2247,10 @@ test coverage do not establish physical hit-testing or visual approval.
   consumes **100%** into a fresh, inactive Storage individual with the matching VB/BE
   profile: **VB countdown 1; BE countdown 0**. Conversion and Close actions stay
   pinned outside scrolling content. UI strings cover English, Portuguese, and Japanese.
-- The persisted Settings debug switch awards **100 percentage points per eligible
-  defeat** only in a debuggable application; release ignores the saved switch.
+- The persisted master Settings Debug switch (default off, available in every build)
+  gates testing overrides: enabling it plus the subordinate instant-scan option awards
+  **100 percentage points per eligible defeat**. Legacy one-win scan preferences never
+  enable the master switch on their own, and distance overrides are session-only.
 - Schema **32** is generated, with the additive **31→32** migration registered.
 
 ### Recorded verification
@@ -583,9 +2281,10 @@ py -3 -B scripts/test-digimon-scan-db.py
 
 ### Deferred native acceptance
 
-- Complete end-to-end wild victories with normal rewards and the persisted debug
+- Complete end-to-end wild victories with normal rewards and the master Debug
   switch off/on; verify eligibility exclusions, local-entry isolation, the cap,
-  exactly-once committed feedback, and release ignoring the debug preference.
+  exactly-once committed feedback, and that legacy instant-scan values alone grant
+  no override.
 - Convert, restart, and inspect nickname and inactive Storage state; check VB/BE
   export profiles/countdowns and conversion while the farm is full.
 - Inspect English/Portuguese/Japanese UI at large fonts and with reduced motion;

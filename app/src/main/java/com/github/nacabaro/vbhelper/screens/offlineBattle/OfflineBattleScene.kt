@@ -71,6 +71,7 @@ fun OfflineBattleScene(
             FrameLayout(context).also { host ->
                 runCatching { OfflineBattleSceneView(context, backgroundColor, appTheme) }
                     .onSuccess { scene ->
+                        scene.importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO
                         onCreated()
                         host.addView(scene, FrameLayout.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT,

@@ -29,7 +29,8 @@ class WorldEcosystemCoordinator(
     private val store: WorldEcosystemStore,
     private val externalScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.IO),
     private val now: () -> Long = System::currentTimeMillis,
-    private val newSeed: () -> Long = { Random.nextLong() }
+    private val newSeed: () -> Long = { Random.nextLong() },
+    private val allowAnyDistance: () -> Boolean = { false }
 ) {
     private val mutex = Mutex()
     private val leases = mutableSetOf<String>()
@@ -190,14 +191,14 @@ class WorldEcosystemCoordinator(
         owner: String, command: RadarCommand, action: suspend (RadarCommandContext) -> T
     ): RadarCommandResult<T> = mutex.withLock {
         if (owner !in leases) return@withLock RadarCommandResult.Rejected(RadarRejection.INACTIVE)
-        _snapshot.value.commandRejection(command, now())?.let { return@withLock RadarCommandResult.Rejected(it) }
+        _snapshot.value.commandRejection(command, now(), allowAnyDistance())?.let { return@withLock RadarCommandResult.Rejected(it) }
         val previous = memory()
         publishLocked(EcosystemStatus.UPDATING)
         try {
             val result: RadarCommandResult<T> = store.transaction {
                 refreshPopulationLocked() // Recheck expiry, claims, deletion and coordinates inside the transaction.
                 val current = currentSnapshot(if (command.kind == RadarCommandKind.BATTLE_COMMIT) EcosystemStatus.FROZEN else EcosystemStatus.READY)
-                val rejection = current.commandRejection(command, now())
+                val rejection = current.commandRejection(command, now(), allowAnyDistance())
                 if (rejection != null) {
                     if (session != previous.session) persistLocked()
                     RadarCommandResult.Rejected(rejection)

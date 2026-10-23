@@ -16,10 +16,18 @@ fun SpriteImage(
 ) {
     val context = LocalContext.current
     val spriteManager = remember { IndividualSpriteManager(context) }
+    val application = context.applicationContext as? com.github.nacabaro.vbhelper.di.VBHelper
+    val choices by remember(application) {
+        application?.container?.db?.speciesCustomizationDao()?.observeSpriteChoices()
+            ?: kotlinx.coroutines.flow.flowOf(emptyList())
+    }.collectAsState(emptyList())
+    val mode by remember(application) {
+        application?.container?.spritePreferenceRepository?.preference ?: kotlinx.coroutines.flow.flowOf(null)
+    }.collectAsState(null)
     
     var bitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
     
-    LaunchedEffect(characterId, frameNumber) {
+    LaunchedEffect(characterId, frameNumber, choices, mode) {
         println("Loading sprite frame: $frameNumber for character: $characterId")
         bitmap = spriteManager.loadSpriteFrame(characterId, frameNumber)
         if (bitmap == null) {

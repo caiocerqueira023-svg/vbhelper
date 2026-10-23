@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.ActiveDigimonCard
 import com.github.nacabaro.vbhelper.components.InfoStatRow
+import com.github.nacabaro.vbhelper.components.PartnerStatColumn
 import com.github.nacabaro.vbhelper.components.ItemDisplay
 import com.github.nacabaro.vbhelper.components.SpecialMissionsEntry
 import com.github.nacabaro.vbhelper.components.TransformationHistoryCard
@@ -46,7 +47,7 @@ import com.github.nacabaro.vbhelper.screens.homeScreens.dialogs.DeleteSpecialMis
 fun VBDiMHomeScreen(
     activeMon: CharacterDtos.CharacterWithSprites,
     cardIcon: BitmapData,
-    vbData: VBCharacterData,
+    vbData: VBCharacterData?,
     specialMissions: List<SpecialMissions>,
     homeScreenController: HomeScreenControllerImpl,
     transformationHistory: List<CharacterDtos.TransformationHistory>,
@@ -62,7 +63,8 @@ fun VBDiMHomeScreen(
     favoriteIndex: Int = -1,
     favoriteCount: Int = 0,
     onClickTransformation: (CharacterDtos.TransformationHistory) -> Unit = {},
-    vitalsHistory: List<VitalsHistory> = emptyList()
+    vitalsHistory: List<VitalsHistory> = emptyList(),
+    appData: com.github.nacabaro.vbhelper.daos.AppHomeStats? = null,
 ) {
     var selectedSpecialMissionId by remember { mutableStateOf<Long>(-1) }
 
@@ -103,32 +105,7 @@ fun VBDiMHomeScreen(
             )
             // Level / Attribute / Days readout beside the character
             // portrait, matching the reference screen's stat list.
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .aspectRatio(1f)
-                    .padding(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                InfoStatRow(
-                    icon = R.drawable.baseline_trophy_24,
-                    label = stringResource(R.string.home_vbdim_level),
-                    value = shortStageName(activeMon.stage),
-                    modifier = Modifier.weight(1f)
-                )
-                InfoStatRow(
-                    icon = R.drawable.baseline_mood_24,
-                    label = stringResource(R.string.home_vbdim_attribute),
-                    value = activeMon.attribute.name,
-                    modifier = Modifier.weight(1f)
-                )
-                InfoStatRow(
-                    icon = R.drawable.baseline_next_24,
-                    label = stringResource(R.string.home_vbdim_days),
-                    value = activeMon.ageInDays.toString(),
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            PartnerStatColumn(shortStageName(activeMon.stage), activeMon.attribute.name, activeMon.ageInDays.toString(), Modifier.weight(1f))
         }
         if (vitalsHistory.isNotEmpty()) {
             WeeklyVitalsChart(
@@ -143,7 +120,7 @@ fun VBDiMHomeScreen(
         ) {
             ItemDisplay(
                 icon = R.drawable.baseline_mood_24,
-                textValue = activeMon.mood.toString(),
+                textValue = com.github.nacabaro.vbhelper.components.moodSummary(activeMon.mood),
                 definition = stringResource(R.string.home_vbdim_mood),
                 modifier = Modifier
                     .weight(1f)
@@ -179,7 +156,7 @@ fun VBDiMHomeScreen(
             ItemDisplay(
                 icon = R.drawable.baseline_swords_24,
                 textValue = when {
-                    activeMon.totalBattlesLost == 0 -> "0.00 %"
+                    activeMon.totalBattlesWon + activeMon.totalBattlesLost == 0 -> "0.00 %"
                     else -> {
                         val battleWinPercentage =
                             activeMon.totalBattlesWon.toFloat() / (activeMon.totalBattlesWon + activeMon.totalBattlesLost).toFloat()
@@ -216,6 +193,25 @@ fun VBDiMHomeScreen(
                     .heightIn(min = 104.dp)
                     .padding(8.dp)
             )
+        }
+        appData?.let { state ->
+            Row(Modifier.fillMaxWidth()) {
+                ItemDisplay(R.drawable.baseline_health_24, "+${state.trainingHp}",
+                    definition = stringResource(R.string.home_be_training_hp), modifier = Modifier.weight(1f).heightIn(min = 104.dp).padding(8.dp))
+                ItemDisplay(R.drawable.baseline_agility_24, "+${state.trainingBp}",
+                    definition = stringResource(R.string.home_be_training_bp), modifier = Modifier.weight(1f).heightIn(min = 104.dp).padding(8.dp))
+                ItemDisplay(R.drawable.baseline_attack_24, "+${state.trainingAp}",
+                    definition = stringResource(R.string.home_be_training_ap), modifier = Modifier.weight(1f).heightIn(min = 104.dp).padding(8.dp))
+            }
+            Row(Modifier.fillMaxWidth()) {
+                ItemDisplay(R.drawable.baseline_rank_24, state.progress.rank.toString(), definition = stringResource(R.string.home_be_rank),
+                    modifier = Modifier.weight(1f).heightIn(min = 104.dp).padding(8.dp))
+                ItemDisplay(R.drawable.baseline_timer_24, "${state.progress.remainingTrainingTimeInMinutes / 60} h", definition = stringResource(R.string.home_be_training_limit),
+                    modifier = Modifier.weight(1f).heightIn(min = 104.dp).padding(8.dp))
+                if (state.progress.itemRemainingTime > 0) ItemDisplay(com.github.nacabaro.vbhelper.screens.itemsScreen.getIconResource(state.progress.itemType),
+                    "${state.progress.itemRemainingTime} m", definition = stringResource(R.string.home_app_held_item),
+                    modifier = Modifier.weight(1f).heightIn(min = 104.dp).padding(8.dp))
+            }
         }
         Row(
             modifier = Modifier

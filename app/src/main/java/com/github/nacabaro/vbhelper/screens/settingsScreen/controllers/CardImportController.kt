@@ -210,7 +210,7 @@ class CardImportController(
 
             domainCharacters.add(
                 ImportedCharacter(CardCharacter(
-                    cardId = 0,
+                    cardId = null,
                     spriteId = 0,
                     charaIndex = index,
                     nameSprite = card.spriteData.sprites[spriteCounter].pixelData,
@@ -242,8 +242,8 @@ class CardImportController(
         val existing = database.characterDao().getCharactersForCard(cardId).sortedBy { it.charaIndex }
         if (existing.size != incoming.size) return false
         for ((stored, source) in existing.zip(incoming)) {
-            if (stored.copy(id = 0, cardId = 0, spriteId = 0) != source.character) return false
-            val sprite = database.spriteDao().getForCharacter(stored.id) ?: return false
+            if (stored.copy(id = 0, cardId = null, spriteId = 0, speciesId = null, catalogSpeciesId = null) != source.character) return false
+            val sprite = database.spriteDao().getOriginalForCharacter(stored.id) ?: return false
             if (sprite.copy(id = 0) != source.sprite) return false
         }
         return true

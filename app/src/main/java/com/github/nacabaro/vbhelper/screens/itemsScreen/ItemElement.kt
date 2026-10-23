@@ -10,6 +10,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.background
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -36,19 +39,20 @@ fun ItemElement(
     CyberPanel(
         onClick = onClick,
         modifier = modifier
-            .aspectRatio(0.9f),
-        contentPadding = PaddingValues(10.dp)
+            .fillMaxWidth(),
+        contentPadding = PaddingValues(12.dp)
     ) {
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f)
+                .height(80.dp)
+                .background(MaterialTheme.colorScheme.surfaceContainerLowest, RectangleShape)
         ) {
             Icon(
                 painter = painterResource(id = getIconResource(item.itemIcon)),
                 contentDescription = null,
                 modifier = Modifier
-                    .size(72.dp)
+                    .size(56.dp)
                     .align(Alignment.Center)
                     .padding(10.dp),
                 tint = VitalCyan
@@ -58,7 +62,7 @@ fun ItemElement(
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.surfaceTint,
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(32.dp)
                     .align(Alignment.TopStart)
                     .padding(8.dp)
             )
@@ -68,8 +72,9 @@ fun ItemElement(
             modifier = Modifier.fillMaxWidth(),
             style = MaterialTheme.typography.labelLarge,
             color = TextPrimaryOnDark,
-            fontWeight = FontWeight.Bold,
-            maxLines = 1,
+            fontWeight = FontWeight.SemiBold,
+            minLines = 3,
+            maxLines = 3,
             overflow = TextOverflow.Ellipsis
         )
         Row(
@@ -78,7 +83,7 @@ fun ItemElement(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "${item.price} CR",
+                text = androidx.compose.ui.res.stringResource(com.github.nacabaro.vbhelper.R.string.items_store_credits, item.price),
                 style = MaterialTheme.typography.labelSmall,
                 color = VitalCyan
             )

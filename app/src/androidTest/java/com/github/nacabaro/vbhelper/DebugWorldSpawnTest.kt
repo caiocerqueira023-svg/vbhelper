@@ -19,13 +19,15 @@ import org.junit.runner.RunWith
 class DebugWorldSpawnTest {
     private lateinit var db: AppDatabase
     private lateinit var repository: WorldRepository
+    private var debugEnabled = true
 
     @Before fun setup() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         check(context.packageName.endsWith(".integritycheck"))
         db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java)
             .addCallback(IndividualIntegrity.callback).build()
-        repository = WorldRepository(db, clock = { 123_000L })
+        debugEnabled = true
+        repository = WorldRepository(db, clock = { 123_000L }, debugEnabled = { debugEnabled })
         seed("Card", mapOf("id" to 1, "name" to "Enabled card", "worldSpawnsEnabled" to 1))
         seed("Card", mapOf("id" to 2, "name" to "Disabled card", "worldSpawnsEnabled" to 0))
         seed("Sprite", mapOf("id" to 1))
@@ -35,6 +37,22 @@ class DebugWorldSpawnTest {
     }
 
     @After fun cleanup() { db.close() }
+
+    @Test fun disabledDebugRejectsDirectCallsWithoutCreatingOrEvictingRecords() = runBlocking {
+        debugEnabled = false
+        assertTrue(repository.getDebugSpawnCharacters().isEmpty())
+        assertNull(repository.spawnDebugDigimon(-23.55, -46.63, cardCharacterId = 200))
+        assertEquals(0, count("WorldSpawn"))
+        assertEquals(0, count("DigimonIndividual"))
+        assertEquals(0, count("WildRelationship"))
+    }
+
+    @Test fun repositoryWithoutExplicitDebugAuthorizationIsFailClosed() = runBlocking {
+        val normal = WorldRepository(db, clock = { 123_000L })
+        assertTrue(normal.getDebugSpawnCharacters().isEmpty())
+        assertNull(normal.spawnDebugDigimon(-23.55, -46.63))
+        assertEquals(0, count("DigimonIndividual"))
+    }
 
     @Test fun pickerIncludesUndiscoveredCharactersFromDisabledCards() = runBlocking {
         val choices = repository.getDebugSpawnCharacters()

@@ -33,6 +33,9 @@ import kotlinx.coroutines.delay
 import java.time.Instant
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.CyberEmptyState
+import com.github.nacabaro.vbhelper.components.rememberCollectionLoad
+import com.github.nacabaro.vbhelper.components.CollectionStatePanel
+import com.github.nacabaro.vbhelper.components.CollectionRefreshNotice
 
 @Composable
 fun AdventureScreen(
@@ -42,7 +45,8 @@ fun AdventureScreen(
     val application = LocalContext.current.applicationContext as VBHelper
     val database = application.container.db
     val storageRepository = remember { StorageRepository(database) }
-    val characterList by storageRepository.getAdventureCharacters().collectAsState(emptyList())
+    val collection = rememberCollectionLoad(storageRepository) { storageRepository.getAdventureCharacters() }
+    val characterList = collection.data.orEmpty()
 
     var obtainedItem by remember {
         mutableStateOf<ItemDtos.PurchasedItem?>(null)
@@ -76,7 +80,8 @@ fun AdventureScreen(
             )
         }
     ) { contentPadding ->
-        if (characterList.isEmpty()) {
+        if (collection.blocking) CollectionStatePanel(collection, Modifier.padding(contentPadding))
+        else if (characterList.isEmpty()) {
             CyberEmptyState(
                 message = stringResource(R.string.adventure_empty_state),
                 modifier = Modifier.padding(contentPadding)
@@ -91,6 +96,7 @@ fun AdventureScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                item { CollectionRefreshNotice(collection) }
                 items(
                     items = characterList,
                     key = { it.id },

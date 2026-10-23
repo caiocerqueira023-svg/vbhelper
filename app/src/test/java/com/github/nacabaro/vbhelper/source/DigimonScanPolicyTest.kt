@@ -52,7 +52,7 @@ class DigimonScanPolicyTest {
         assertEquals(100, DigimonScanPolicy.afterReward(0, Int.MAX_VALUE))
     }
 
-    @Test fun instantScanOnlyChangesTheRateInDebugBuilds() {
+    @Test fun instantScanOnlyChangesTheRateWhenTheMasterDebugSwitchIsEnabled() {
         assertEquals(20, DigimonScanPolicy.perDefeat(false, false))
         assertEquals(20, DigimonScanPolicy.perDefeat(false, true))
         assertEquals(20, DigimonScanPolicy.perDefeat(true, false))

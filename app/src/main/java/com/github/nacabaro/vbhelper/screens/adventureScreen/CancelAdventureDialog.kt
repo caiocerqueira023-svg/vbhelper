@@ -22,6 +22,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.Alignment
 import com.github.nacabaro.vbhelper.components.CyberPanel
+import com.github.nacabaro.vbhelper.components.editorDialogBounds
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.ui.theme.DeepPurpleBgAlt
 import com.github.nacabaro.vbhelper.ui.theme.StatusRed
@@ -45,7 +48,8 @@ fun CancelAdventureDialog(
     Dialog(
         onDismissRequest = onDismissRequest
     ) {
-        CyberPanel(modifier = Modifier.fillMaxWidth()) {
+        CyberPanel(modifier = Modifier.editorDialogBounds().fillMaxWidth()) {
+            Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -77,19 +81,20 @@ fun CancelAdventureDialog(
                     )
                 }
             }
-            Row(
+            }
+            androidx.compose.foundation.layout.FlowRow(
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 VitalButton(
                     onClick = onDismissRequest,
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
                 ) {
                     Text(text = stringResource(R.string.adventure_keep))
                 }
                 VitalButton(
                     onClick = onClickConfirm,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier,
                     borderColor = StatusRed,
                     contentColor = StatusRed
                 ) {

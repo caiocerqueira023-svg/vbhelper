@@ -35,7 +35,10 @@ class EvolutionHistoryRepository(private val db: AppDatabase) {
     private fun repairInTransaction(characterId: Long, graphs: MutableMap<Long, Graph>): Pair<Boolean, Boolean>? {
         val dao = db.evolutionHistoryDao()
         val current = dao.getCurrentSpecies(characterId) ?: return null
-        val graph = graphs.getOrPut(current.cardId) { Graph(dao.getSpecies(current.cardId), dao.getRoutes(current.cardId)) }
+        // Catalog definitions have no imported evolution graph; their single-form
+        // history is written at creation and never needs repair.
+        val cardId = current.cardId ?: return null
+        val graph = graphs.getOrPut(cardId) { Graph(dao.getSpecies(cardId), dao.getRoutes(cardId)) }
         val history = dao.getHistory(characterId)
         val result = EvolutionHistoryRepair.repair(current, graph.species, graph.routes, history, System.currentTimeMillis())
         val changed = history != result.entries
