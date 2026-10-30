@@ -194,7 +194,11 @@ fun RadarScreen(
     firstPersonPreferred: Boolean = false,
     onViewPreferenceChanged: (Boolean) -> Unit = {},
     labelsPreferred: Boolean = false,
-    onLabelsPreferenceChanged: (Boolean) -> Unit = {}
+    onLabelsPreferenceChanged: (Boolean) -> Unit = {},
+    /** Banner label: the legacy World tab keeps "World", the Radar place passes `nav_radar`. */
+    @androidx.annotation.StringRes titleRes: Int = R.string.nav_world,
+    /** The Radar place owns the header alone; the legacy World route still shows Radar|Digifarm. */
+    showSectionTabs: Boolean = true
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
@@ -884,10 +888,10 @@ fun RadarScreen(
             ) {
                 Column {
                     TopBanner(text = when {
-                        compass.heading != null -> "${stringResource(R.string.nav_world)} • ${cardinalDirection(heading)}"
-                        else -> stringResource(R.string.nav_world)
+                        compass.heading != null -> "${stringResource(titleRes)} • ${cardinalDirection(heading)}"
+                        else -> stringResource(titleRes)
                     }, onGearClick = { showWorldSpawnSettings = true })
-                    WorldSectionTabs(
+                    if (showSectionTabs) WorldSectionTabs(
                         selectedTab = selectedWorldTab,
                         onTabSelected = onWorldTabSelected
                     )

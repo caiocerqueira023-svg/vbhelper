@@ -56,6 +56,7 @@ import com.github.nacabaro.vbhelper.source.gameSave.AndroidSaveDocuments
 import com.github.nacabaro.vbhelper.source.gameSave.LinkedSaveView
 import com.github.nacabaro.vbhelper.source.gameSave.NdsLauncherIconRepository
 import com.github.nacabaro.vbhelper.source.gameSave.OpenGameSaveDocument
+import com.github.nacabaro.vbhelper.source.gameSave.TransferGameCapabilities
 import com.github.nacabaro.vbhelper.gamesave.TimeStrangerSaveReader
 import com.github.nacabaro.vbhelper.gamesave.WorldDsSaveReader
 import java.util.Date
@@ -495,7 +496,7 @@ private fun TransferSourceCard(
                 Text(stringResource(
                     if (expanded) R.string.transfer_hide_roster else R.string.transfer_roster))
             }
-            if (observation.gameId == WorldDsSaveReader.GAME_ID &&
+            if (TransferGameCapabilities.isNdsStory(observation) &&
                 observation.records.mapNotNull { it.nativeParameters?.saveBlock }.distinct().size > 1) {
                 TextButton(onClick = onReviewCopy, enabled = !busy) { Text(stringResource(R.string.world_ds_choose_copy)) }
             }

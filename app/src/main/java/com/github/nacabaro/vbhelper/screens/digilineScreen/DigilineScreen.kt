@@ -58,6 +58,7 @@ import com.github.nacabaro.vbhelper.dtos.DigilineFarmThread
 import com.github.nacabaro.vbhelper.dtos.DigilineStorageThread
 import com.github.nacabaro.vbhelper.dtos.DigilineWildThread
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
+import com.github.nacabaro.vbhelper.navigation.deliverToRadar
 import com.github.nacabaro.vbhelper.ui.theme.OnVitalAccent
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceDeepPurple
 import com.github.nacabaro.vbhelper.ui.theme.SurfaceStroke
@@ -118,11 +119,8 @@ fun DigilineScreen(navController: NavController) {
 }
 
 fun trackQuestTarget(navController: NavController, individualId: String) {
-    if (runCatching { navController.getBackStackEntry(NavigationItems.World.route) }.getOrNull() == null) {
-        navController.navigate(NavigationItems.World.route)
-    }
-    navController.getBackStackEntry(NavigationItems.World.route).savedStateHandle["radar-quest-target"] = individualId
-    navController.popBackStack(NavigationItems.World.route, false)
+    // Radar place first, legacy World route second, and a push when neither is on the stack.
+    navController.deliverToRadar("radar-quest-target", individualId)
 }
 
 @Composable

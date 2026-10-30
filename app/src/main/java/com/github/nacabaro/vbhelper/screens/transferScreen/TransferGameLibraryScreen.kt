@@ -36,6 +36,7 @@ import com.github.nacabaro.vbhelper.source.gameSave.AndroidSaveDocuments
 import com.github.nacabaro.vbhelper.source.gameSave.ImportSourceChangedException
 import com.github.nacabaro.vbhelper.source.gameSave.LinkedSaveView
 import com.github.nacabaro.vbhelper.source.gameSave.NdsLauncherIconRepository
+import com.github.nacabaro.vbhelper.source.gameSave.TransferGameCapabilities
 import com.github.nacabaro.vbhelper.source.gameSave.OpenGameSaveDocument
 import com.github.nacabaro.vbhelper.source.gameSave.WorldDsSendBlocker
 import com.github.nacabaro.vbhelper.source.gameSave.WorldDsSendRecoveryRequired
@@ -103,7 +104,7 @@ internal fun TransferGameLibraryScreen(onOpenGame: (TransferGame) -> Unit, onSto
         onOpenGame(game)
     }
     val groups = sources.orEmpty().groupBy { TransferGameCatalog.identify(it.observation?.gameId, it.source.displayName) }
-    val games = TransferGame.entries.filter { it == TransferGame.WORLD_DS || groups[it].orEmpty().isNotEmpty() }
+    val games = TransferGame.entries.filter { TransferGameCapabilities.readsNdsStory(it) || groups[it].orEmpty().isNotEmpty() }
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -208,7 +209,7 @@ internal fun TransferSendScreen(characterId: Long?, archiveIndividualId: String?
         val record = retained ?: return@produceState
         if (away != null) return@produceState
         value = sources.orEmpty()
-            .filter { TransferGameCatalog.identify(it.observation?.gameId, it.source.displayName) == TransferGame.WORLD_DS }
+            .filter { TransferGameCapabilities.hasNativeWriter(TransferGameCatalog.identify(it.observation?.gameId, it.source.displayName)) }
             .map { view ->
                 view to try { sends.blocker(view, id, record) }
                 catch (cancelled: CancellationException) { throw cancelled }
@@ -225,7 +226,7 @@ internal fun TransferSendScreen(characterId: Long?, archiveIndividualId: String?
         else -> R.string.transfer_send_ready
     }
     val groups = sources.orEmpty().groupBy { TransferGameCatalog.identify(it.observation?.gameId, it.source.displayName) }
-    val games = TransferGame.entries.filter { it == TransferGame.WORLD_DS || groups[it].orEmpty().isNotEmpty() }
+    val games = TransferGame.entries.filter { TransferGameCapabilities.readsNdsStory(it) || groups[it].orEmpty().isNotEmpty() }
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             character?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
@@ -239,7 +240,7 @@ internal fun TransferSendScreen(characterId: Long?, archiveIndividualId: String?
                     onClick = onDevices, leading = { Icon(Icons.Default.Nfc, null, Modifier.size(32.dp)) })
             }
             items(games, key = { it.name }) { game ->
-                if (game == TransferGame.WORLD_DS)
+                if (TransferGameCapabilities.hasNativeWriter(game))
                     OriginRow(stringResource(gameTitle(game)), stringResource(worldDsSubtitle),
                         onClick = { choosing = true }, leading = { TransferOriginIcon(game, Modifier.size(40.dp)) },
                         enabled = readyCount > 0 && !sending)

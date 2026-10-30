@@ -96,19 +96,22 @@ fun ObservedDigimon.identityEvidenceKey(): String? = if (nativeIdentity != null)
  * when the folder entry reports no size. See SAVE_READING_STANDARD.md.
  */
 object SaveDiscoveryPolicy {
-    private val worldDsRanges: List<LongRange> = listOf(
-        WorldDsSaveReader.SAVE_BYTES.toLong() until (WorldDsSaveReader.SAVE_BYTES +
-            WorldDsSaveReader.WRAPPER_SLACK_BYTES + WorldDsResearchInspector.DESMUME_FOOTER_BYTES + 1).toLong(),
-        WorldDsSaveReader.FILE_BYTES.toLong() until (WorldDsSaveReader.FILE_BYTES +
-            WorldDsSaveReader.WRAPPER_SLACK_BYTES + WorldDsResearchInspector.DESMUME_FOOTER_BYTES + 1).toLong(),
-    )
+    /** Size families derived from every registered NDS Story layout, never a single game's constants. */
+    private val ndsStoryRanges: List<LongRange> = NdsStoryProfiles.all.flatMap { profile ->
+        listOf(
+            profile.saveBytes.toLong() until (profile.saveBytes + profile.wrapperSlackBytes +
+                WorldDsResearchInspector.DESMUME_FOOTER_BYTES + 1).toLong(),
+            profile.fileBytes.toLong() until (profile.fileBytes + profile.wrapperSlackBytes +
+                WorldDsResearchInspector.DESMUME_FOOTER_BYTES + 1).toLong(),
+        )
+    }
 
-    private fun knownWorldDsSize(bytes: Long): Boolean = worldDsRanges.any { bytes in it }
+    private fun knownNdsStorySize(bytes: Long): Boolean = ndsStoryRanges.any { bytes in it }
 
     fun isCandidate(name: String, bytes: Long?): Boolean =
         (Regex("[0-9]{4}\\.bin", RegexOption.IGNORE_CASE).matches(name) &&
             (bytes == null || bytes == TimeStrangerSaveReader.FILE_BYTES.toLong())) ||
-            (bytes != null && knownWorldDsSize(bytes)) ||
+            (bytes != null && knownNdsStorySize(bytes)) ||
             (name.length > 4 && (name.endsWith(".sav", ignoreCase = true) || name.endsWith(".dsv", ignoreCase = true)) &&
-                (bytes == null || knownWorldDsSize(bytes)))
+                (bytes == null || knownNdsStorySize(bytes)))
 }

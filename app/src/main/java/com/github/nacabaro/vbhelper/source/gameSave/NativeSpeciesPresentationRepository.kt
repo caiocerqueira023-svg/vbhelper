@@ -25,9 +25,12 @@ class NativeSpeciesPresentationRepository(private val db: AppDatabase, private v
                 record.nativeSpeciesId, hints)
             val id = reviewed ?: NativeSpeciesResolution.tableIdentity(observation.gameId, observation.formatProfile,
                 observation.codecVersion, record.nativeSpeciesId, worldDsSpecies, catalog)
+            val species = id?.let { catalog.speciesById[it]?.takeIf { species -> species.kind == "DIGIMON" } }
+                ?: worldDsSpecies?.name(record.nativeSpeciesId)?.let { name ->
+                    CanonicalSpeciesDto(NativeSpeciesResolution.unresolvedIdentity(name), name, kind = "DIGIMON")
+                }
                 ?: return@mapNotNull null
-            catalog.speciesById[id]?.takeIf { it.kind == "DIGIMON" }
-                ?.let { record.recordKey to NativePresentationSource(it, userConfirmed = reviewed != null) }
+            record.recordKey to NativePresentationSource(species, userConfirmed = reviewed != null)
         }.toMap()
     }
 
@@ -44,7 +47,10 @@ class NativeSpeciesPresentationRepository(private val db: AppDatabase, private v
         val snapshot = db.nativeMaterializationDao().snapshot(snapshotId) ?: return@withContext null
         val binding = db.nativeGameArchiveDao().binding(snapshot.bindingId) ?: return@withContext null
         val id = NativeSpeciesResolution.tableIdentity(binding.gameId, binding.formatProfile, snapshot.codecVersion,
-            speciesId, worldDsSpecies, catalog) ?: return@withContext null
-        catalog.speciesById[id]?.takeIf { it.kind == "DIGIMON" }
+            speciesId, worldDsSpecies, catalog)
+        id?.let { catalog.speciesById[it]?.takeIf { species -> species.kind == "DIGIMON" } }?.let { return@withContext it }
+        return@withContext worldDsSpecies?.name(speciesId)?.let { name ->
+            CanonicalSpeciesDto(NativeSpeciesResolution.unresolvedIdentity(name), name, kind = "DIGIMON")
+        }
     }
 }

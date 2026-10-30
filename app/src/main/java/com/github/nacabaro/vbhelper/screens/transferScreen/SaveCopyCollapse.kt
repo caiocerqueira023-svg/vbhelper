@@ -5,7 +5,7 @@ import com.github.nacabaro.vbhelper.gamesave.RecordIssue
 import com.github.nacabaro.vbhelper.gamesave.RecordMembership
 import com.github.nacabaro.vbhelper.gamesave.SaveContainer
 import com.github.nacabaro.vbhelper.gamesave.SaveObservation
-import com.github.nacabaro.vbhelper.gamesave.WorldDsSaveReader
+import com.github.nacabaro.vbhelper.source.gameSave.TransferGameCapabilities
 
 /**
  * A DS card carries the same save twice, so both copies list the same Digimon. Lists show one
@@ -42,7 +42,7 @@ internal fun collapseSaveCopies(
 
 /** The records a workspace tab shows after collapsing card copies. */
 internal fun shownRecords(observation: SaveObservation, container: SaveContainer? = null): List<ObservedDigimon> =
-    collapseSaveCopies(observation.records, observation.gameId == WorldDsSaveReader.GAME_ID)
+    collapseSaveCopies(observation.records, TransferGameCapabilities.isNdsStory(observation))
         .filter { container == null || it.container == container }
 
 private fun rank(record: ObservedDigimon): Int = when {

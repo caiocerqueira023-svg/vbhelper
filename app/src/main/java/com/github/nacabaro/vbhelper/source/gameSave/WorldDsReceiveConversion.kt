@@ -1,9 +1,9 @@
 package com.github.nacabaro.vbhelper.source.gameSave
 
 import com.github.nacabaro.vbhelper.database.AppDatabase
+import com.github.nacabaro.vbhelper.domain.device_data.IndividualCharacters
 import com.github.nacabaro.vbhelper.gamesave.ObservedDigimon
 import com.github.nacabaro.vbhelper.gamesave.WorldDsStatConversion
-import com.github.nacabaro.vbhelper.utils.DeviceType
 
 /** App-side values shared by the send and receive conversion paths. */
 internal data class WorldDsAppReading(
@@ -14,16 +14,16 @@ internal data class WorldDsAppReading(
     val baseAp: Int,
     /** Canonical species reference from the partner's card; used when the individual has no species name. */
     val speciesId: String?,
-    val displayName: String?,
 )
 
 internal object WorldDsAppStatsReader {
     suspend fun read(db: AppDatabase, individualId: String): WorldDsAppReading? {
         val characters = db.userCharacterDao().getByIndividualId(individualId)
-        val character = characters.firstOrNull { it.characterType == DeviceType.APP } ?: characters.firstOrNull()
-            ?: return null
-        val assigned = character.exportCardCharacterId
-        val card = db.characterDao().getById(assigned ?: character.charId) ?: return null
+        val character = IndividualCharacters.representative(characters) ?: return null
+        val current = db.characterDao().getById(character.charId) ?: return null
+        val assigned = character.exportCardCharacterId?.let { db.characterDao().getById(it) }
+            ?.takeIf { it.cardId != null && it.speciesId != null && it.speciesId == current.speciesId }
+        val card = assigned ?: current
         val progress = db.appPartnerStateDao().state(individualId)
         val be = db.userCharacterDao().getBeDataOrNull(character.id)
         val trainingHp = progress?.trainingHp ?: be?.trainingHp ?: 0
@@ -48,7 +48,7 @@ internal object WorldDsAppStatsReader {
             rank = progress?.rank ?: 0,
         )
         return WorldDsAppReading(stats, card.stage.coerceIn(0, 5), card.baseHp, card.baseBp, card.baseAp,
-            card.catalogSpeciesId ?: card.speciesId, card.speciesId ?: card.catalogSpeciesId)
+            card.catalogSpeciesId ?: card.speciesId)
     }
 }
 

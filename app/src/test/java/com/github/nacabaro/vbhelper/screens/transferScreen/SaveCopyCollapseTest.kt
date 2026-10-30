@@ -18,8 +18,8 @@ class SaveCopyCollapseTest {
             nativeIdentity = identity,
             nativeParameters = block?.let { NativeStatParameters(1, 2, 3, 4, 5, 6, 7, 8, 9, emptyList(), it) })
 
-    private fun observation(records: List<ObservedDigimon>, gameId: String = "other") =
-        SaveObservation(gameId, "profile", 1, "revision", records, emptyList())
+    private fun observation(records: List<ObservedDigimon>, gameId: String = "other", profile: String = "profile") =
+        SaveObservation(gameId, profile, 1, "revision", records, emptyList())
 
     @Test fun bothUnreviewedCopiesShowOneEntryPerDigimon() {
         val first = record("copy:1:record:0", "save-local:7", 1, false, listOf(RecordIssue.AMBIGUOUS_SAVE_BLOCK))
@@ -59,7 +59,7 @@ class SaveCopyCollapseTest {
             listOf(RecordIssue.AMBIGUOUS_SAVE_BLOCK), container = SaveContainer.PARTY)
         val chosenStorage = record("copy:2:record:9", "save-local:7", 2, true,
             container = SaveContainer.UNASSIGNED)
-        val view = observation(listOf(setAsideParty, chosenStorage), WorldDsSaveReader.GAME_ID)
+        val view = observation(listOf(setAsideParty, chosenStorage), WorldDsSaveReader.GAME_ID, WorldDsSaveReader.PROFILE)
         assertEquals(listOf(chosenStorage), shownRecords(view))
         assertEquals(emptyList<ObservedDigimon>(), shownRecords(view, SaveContainer.PARTY))
         assertEquals(listOf(chosenStorage), shownRecords(view, SaveContainer.UNASSIGNED))

@@ -34,9 +34,11 @@ data class DsResearchInspection(
     val payloadRevision: String,
     val payloadBytes: Int,
     val blocks: List<DsResearchBlock>,
+    /** Title/layout evidence label printed instead of claiming a region. */
+    val layoutEvidence: String = "ADNE",
 ) {
     fun summary(): List<String> = buildList {
-        add("research_only=true layout_evidence=ADNE container=${container.name.lowercase()} payload_bytes=$payloadBytes blocks=${blocks.size}")
+        add("research_only=true layout_evidence=$layoutEvidence container=${container.name.lowercase()} payload_bytes=$payloadBytes blocks=${blocks.size}")
         blocks.forEachIndexed { index, block ->
             add("block=$index records=${block.records.size} party_references=${block.records.count { it.location == DsResearchLocation.PARTY_REFERENCE }} farm_references=${block.records.count { it.location == DsResearchLocation.FARM_REFERENCE }} unassigned=${block.records.count { it.location == DsResearchLocation.UNASSIGNED }} conflicts=${block.records.count { it.location == DsResearchLocation.CONFLICT }} dangling_references=${block.danglingReferences}")
             add("block=$index flagged_records=${block.records.count { it.issues.isNotEmpty() }}")
@@ -46,16 +48,16 @@ data class DsResearchInspection(
 }
 
 /**
- * Independent, opt-in structural research reader based on published ADNE save-structure facts.
+ * Independent, opt-in structural research reader driven by a registered [NdsStoryProfile].
  * Not a GameSaveReader: no title/region recognition, ownership policy, checksum or import is claimed.
- * Sources and exact evidence boundaries: WORLD_DS_RESEARCH.md.
+ * Sources and exact evidence boundaries: WORLD_DS_RESEARCH.md / DAWN_DUSK_TRANSFER_PLAN.md.
+ * The default profile keeps the World DS entry point that existing callers and evidence use.
  */
 object WorldDsResearchInspector {
     const val SAVE_BLOCK_BYTES = 0x7DC0
     const val RECORD_BYTES = 0x180
     private const val MAX_PAYLOAD_BYTES = 8 * 1024 * 1024
     private const val MAX_BLOCKS = 32
-    private val signature = "DSDIGI\u0000\u0000".toByteArray(Charsets.US_ASCII)
 
     /** The trailer both DeSmuME and DraStic append: 24 metadata bytes and a 16-byte cookie. */
     internal const val BINARY_FOOTER_BYTES = 24 + 16
@@ -65,14 +67,16 @@ object WorldDsResearchInspector {
     private val footerNotice = "|<--Snip above here to create a raw sav by excluding this DeSmuME savedata footer:".toByteArray(Charsets.US_ASCII)
     private val footerCookie = "|-DESMUME SAVE-|".toByteArray(Charsets.US_ASCII)
     internal val DESMUME_FOOTER_BYTES = footerNotice.size + 24 + footerCookie.size
-    val MAX_INPUT_BYTES: Int = MAX_PAYLOAD_BYTES + DESMUME_FOOTER_BYTES
+    val MAX_INPUT_BYTES: Int = NdsStoryProfiles.all.maxOf {
+        it.fileBytes + it.wrapperSlackBytes + DESMUME_FOOTER_BYTES
+    }.coerceAtLeast(MAX_PAYLOAD_BYTES + DESMUME_FOOTER_BYTES)
 
-    fun inspect(input: InputStream): DsResearchInspection {
+    fun inspect(input: InputStream, profile: NdsStoryProfile = NdsStoryProfiles.WORLD_DS): DsResearchInspection {
         val bytes = readBoundedSaveBytes(input, MAX_INPUT_BYTES)
-        return try { inspect(bytes) } finally { bytes.fill(0) }
+        return try { inspect(bytes, profile) } finally { bytes.fill(0) }
     }
 
-    fun inspect(bytes: ByteArray): DsResearchInspection {
+    fun inspect(bytes: ByteArray, profile: NdsStoryProfile = NdsStoryProfiles.WORLD_DS): DsResearchInspection {
         if (bytes.size > MAX_INPUT_BYTES) throw SaveReadException(SaveReadFailure.INPUT_TOO_LARGE)
         if (matches(bytes, 0, "NocashGbaBackupMediaSavDataFile".toByteArray(Charsets.US_ASCII)))
             throw SaveReadException(SaveReadFailure.UNSUPPORTED_FORMAT)
@@ -83,18 +87,19 @@ object WorldDsResearchInspector {
         val offsets = mutableListOf<Int>()
         // Alignment is deliberately only structural. Several matching blocks never imply a newest copy.
         var offset = 0
-        while (offset <= payloadSize - SAVE_BLOCK_BYTES) {
-            if (hasSaveSignature(bytes, offset + 0x10)) {
+        while (offset <= payloadSize - profile.saveBytes) {
+            if (hasSaveSignature(bytes, offset + 0x10, profile)) {
                 if (offsets.size == MAX_BLOCKS) throw SaveReadException(SaveReadFailure.AMBIGUOUS_FORMAT)
                 offsets += offset
             }
-            offset += 4
+            offset += profile.imageStep
         }
         if (offsets.isEmpty()) throw SaveReadException(SaveReadFailure.UNRECOGNIZED_LAYOUT)
         val payload = bytes.copyOfRange(0, payloadSize)
         return try {
             DsResearchInspection(if (wrapped) DsResearchContainer.DESMUME_DSV_V0 else DsResearchContainer.RAW_CANDIDATE,
-                revision(bytes), revision(payload), payloadSize, offsets.map { readBlock(payload, it) })
+                revision(bytes), revision(payload), payloadSize, offsets.map { readBlock(payload, it, profile) },
+                profile.layoutEvidence)
         } finally { payload.fill(0) }
     }
 
@@ -119,31 +124,38 @@ object WorldDsResearchInspector {
         return padded.toInt()
     }
 
-    /** The game's own save header: writeSaveSignature writes "DSDIGI" at save+0x10 (matching decompilation). */
-    internal fun hasSaveSignature(bytes: ByteArray, offset: Int): Boolean = matches(bytes, offset, signature)
+    /** The profile's game-written save signature, when it has one; corroboration, never the rule. */
+    internal fun hasSaveSignature(bytes: ByteArray, offset: Int, profile: NdsStoryProfile = NdsStoryProfiles.WORLD_DS): Boolean {
+        val expected = profile.signature?.toByteArray() ?: return false
+        return matches(bytes, offset, expected)
+    }
 
-    internal fun readBlock(bytes: ByteArray, base: Int): DsResearchBlock {
+    internal fun readBlock(bytes: ByteArray, base: Int, profile: NdsStoryProfile = NdsStoryProfiles.WORLD_DS): DsResearchBlock {
+        val layout = profile.record
+        val region = profile.recordRegion
         fun id(offset: Int) = u32(bytes, base + offset)
-        val party = List(10) { id(0x20C + it * 4) }.filter { it != 0L }
-        val farms = (0 until 4).flatMap { farm ->
-            val offset = 0x3E40 + farm * 0x6C
-            if (id(offset) == 0L) emptyList() else List(8) { id(offset + 0x44 + it * 4) }.filter { it != 0L }
+        val party = List(profile.partySlots) { id(profile.partyReferenceBase + it * 4) }.filter { it != 0L }
+        val farm = profile.farm
+        val farms = (0 until farm.groups).flatMap { group ->
+            val offset = farm.base + group * farm.stride
+            if (id(offset) == 0L) emptyList()
+            else List(farm.residents) { id(offset + farm.residentOffset + it * 4) }.filter { it != 0L }
         }
-        val slots = (0 until 40).filter {
-            val id = id(0x234 + it * RECORD_BYTES)
-            id != 0L && id != EMPTY_RECORD_ID
+        val slots = (0 until region.count).filter {
+            val id = id(region.base + it * region.stride)
+            id != 0L && id != profile.emptyRecordId
         }
-        val ids = slots.map { id(0x234 + it * RECORD_BYTES) }
+        val ids = slots.map { id(region.base + it * region.stride) }
         val duplicates = ids.groupingBy { it }.eachCount().filterValues { it > 1 }.keys
         val records = slots.map { slot ->
-            val start = base + 0x234 + slot * RECORD_BYTES
+            val start = base + region.base + slot * region.stride
             fun signed16(offset: Int) = u16(bytes, start + offset).toShort().toInt()
             fun signed32(offset: Int) = u32(bytes, start + offset).toInt()
-            val nativeId = u32(bytes, start)
+            val nativeId = u32(bytes, start + layout.offsetLocalId)
             val partyCount = party.count { it == nativeId }
             val farmCount = farms.count { it == nativeId }
             val conflict = partyCount + farmCount > 1
-            val flags = u16(bytes, start + 0x108)
+            val flags = u16(bytes, start + layout.offsetUnk108)
             val issues = buildSet {
                 if (nativeId in duplicates) add(DsResearchIssue.DUPLICATE_LOCAL_ID)
                 if (conflict) add(DsResearchIssue.CONFLICTING_LOCATION)
@@ -152,14 +164,16 @@ object WorldDsResearchInspector {
                 if (flags and 0x10 != 0) add(DsResearchIssue.EGG)
                 if (flags and 0x20 != 0) add(DsResearchIssue.OTHER_DS_RECORD)
             }
-            val nativeBytes = bytes.copyOfRange(start, start + RECORD_BYTES)
+            val nativeBytes = bytes.copyOfRange(start, start + region.stride)
             val encoded = try { Base64.getEncoder().encodeToString(nativeBytes) } finally { nativeBytes.fill(0) }
-            DsResearchRecord(slot, nativeId, u32(bytes, start + 4),
-                List(9) { u16(bytes, start + 8 + it * 2) }.takeWhile { it != 0xFFFF },
-                signed16(0x74), signed16(0x52),
-                DsNativeStats(signed32(0x3C), signed32(0x40), signed16(0x44), signed16(0x46),
-                    signed16(0x48), signed16(0x4A), signed16(0x4C), signed16(0x4E)),
-                List(8) { u32(bytes, start + 0x78 + it * 4).toInt().toLong() },
+            DsResearchRecord(slot, nativeId, u32(bytes, start + layout.offsetSpeciesId),
+                List(layout.nameSlots) { u16(bytes, start + layout.offsetName + it * 2) }.takeWhile { it != layout.nameTerminator },
+                signed16(layout.offsetLevel), signed16(layout.offsetMaxLevel),
+                DsNativeStats(signed32(layout.offsetHp), signed32(layout.offsetMaxHp),
+                    signed16(layout.offsetMp), signed16(layout.offsetMaxMp),
+                    signed16(layout.offsetAttack), signed16(layout.offsetDefense),
+                    signed16(layout.offsetSpirit), signed16(layout.offsetSpeed)),
+                List(layout.expChannels) { u32(bytes, start + layout.offsetExp + it * 4).toInt().toLong() },
                 when { conflict -> DsResearchLocation.CONFLICT
                     partyCount == 1 -> DsResearchLocation.PARTY_REFERENCE
                     farmCount == 1 -> DsResearchLocation.FARM_REFERENCE
@@ -175,5 +189,5 @@ object WorldDsResearchInspector {
         (bytes[offset].toInt() and 255) or ((bytes[offset + 1].toInt() and 255) shl 8)
 
     private fun u32(bytes: ByteArray, offset: Int): Long =
-        (0 until 4).fold(0L) { value, index -> value or ((bytes[offset + index].toLong() and 255) shl (8 * index)) }
+        (0 until 4).fold(0L) { value, i -> value or ((bytes[offset + i].toLong() and 255) shl (8 * i)) }
 }

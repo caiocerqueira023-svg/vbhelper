@@ -52,6 +52,7 @@ import com.github.nacabaro.vbhelper.components.VitalButton
 import com.github.nacabaro.vbhelper.components.ChatMessageActionsDialog
 import com.github.nacabaro.vbhelper.components.showAppFeedback
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
+import com.github.nacabaro.vbhelper.navigation.deliverToRadar
 
 @Composable
 @OptIn(ExperimentalLayoutApi::class)
@@ -258,9 +259,7 @@ fun WorldChatScreen(
     LaunchedEffect(eventDialog) {
         val attack=(eventDialog as? WildChatEvent.Challenge)?.takeIf { !it.sparring || it.accepted } ?: return@LaunchedEffect
         eventDialog=null
-        if(runCatching { navController.getBackStackEntry(NavigationItems.World.route) }.getOrNull()==null) navController.navigate(NavigationItems.World.route)
-        navController.getBackStackEntry(NavigationItems.World.route).savedStateHandle["radar-challenge"]=attack.id
-        navController.popBackStack(NavigationItems.World.route,false)
+        navController.deliverToRadar("radar-challenge", attack.id)
     }
     eventDialog?.takeUnless { it is WildChatEvent.Challenge && (!it.sparring || it.accepted) }?.let { event ->
         val (title, body) = when (event) {
@@ -297,11 +296,7 @@ fun WorldChatScreen(
                         }
                         is WildChatEvent.QuestUpdated -> Unit
                         is WildChatEvent.Challenge -> {
-                            if(runCatching { navController.getBackStackEntry(NavigationItems.World.route) }.getOrNull()==null) {
-                                navController.navigate(NavigationItems.World.route)
-                            }
-                            navController.getBackStackEntry(NavigationItems.World.route).savedStateHandle["radar-challenge"] = event.id
-                            navController.popBackStack(NavigationItems.World.route,false)
+                            navController.deliverToRadar("radar-challenge", event.id)
                         }
                         WildChatEvent.None -> Unit
                     }

@@ -2,7 +2,7 @@ package com.github.nacabaro.vbhelper.source.gameSave
 
 import android.content.Context
 import android.net.Uri
-import com.github.nacabaro.vbhelper.gamesave.WorldDsSaveReader
+import com.github.nacabaro.vbhelper.gamesave.NdsStoryProfiles
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
@@ -26,7 +26,7 @@ class AndroidSaveDocumentWrite(context: Context) : SaveDocumentWrite {
     }
 
     override suspend fun write(documentUri: String, bytes: ByteArray) = withContext(Dispatchers.IO) {
-        require(bytes.size == WorldDsSaveReader.FILE_BYTES)
+        require(bytes.size == NdsStoryProfiles.WORLD_DS.fileBytes)
         require(Uri.parse(documentUri).scheme == "content")
         requireNotNull(resolver.openOutputStream(Uri.parse(documentUri), "rwt")) { "Writable document unavailable" }.use { output ->
             var offset = 0

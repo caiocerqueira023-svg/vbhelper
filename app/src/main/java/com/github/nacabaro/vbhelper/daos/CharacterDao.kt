@@ -98,6 +98,12 @@ interface CharacterDao {
     @Insert
     suspend fun insertCharacter(vararg characterData: CardCharacter)
 
+    @Insert
+    suspend fun insertCharacterReturning(characterData: CardCharacter): Long
+
+    @Query("SELECT * FROM CardCharacter WHERE speciesId = :speciesId LIMIT 1")
+    suspend fun getBySpeciesId(speciesId: String): CardCharacter?
+
     @Query("SELECT * FROM CardCharacter WHERE charaIndex = :monIndex AND cardId = :dimId LIMIT 1")
     fun getCharacterByMonIndex(monIndex: Int, dimId: Long): CardCharacter
 

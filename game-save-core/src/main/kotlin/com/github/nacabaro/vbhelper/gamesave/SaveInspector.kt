@@ -8,8 +8,8 @@ fun main(args: Array<String>) {
     require(args.size == 1 || (args.size == 3 && args[0] in setOf("--compare", "--preview-destination", "--write-rehearsal")) ||
         (args.size == 5 && args[0] == "--edit-rename") ||
         (args.size == 4 && args[0] == "--edit-activate") ||
-        (args.size == 2 && args[0] == "--inspect-world-ds")) {
-        "Usage: game-save-core <save-file> | --compare <before-save> <after-save> | --preview-destination <origin-save> <destination-save> | --inspect-world-ds <save-file> | --write-rehearsal <save-file> <output-dir> | --edit-rename <save-file> <output-dir> <party:N|bank:N> <name-file> | --edit-activate <save-file> <output-dir> <inactive:N>"
+        (args.size == 2 && args[0] in setOf("--inspect-world-ds", "--inspect-nds-story"))) {
+        "Usage: game-save-core <save-file> | --compare <before-save> <after-save> | --preview-destination <origin-save> <destination-save> | --inspect-world-ds <save-file> | --inspect-nds-story <save-file> | --write-rehearsal <save-file> <output-dir> | --edit-rename <save-file> <output-dir> <party:N|bank:N> <name-file> | --edit-activate <save-file> <output-dir> <inactive:N>"
     }
     if (args.size == 2) {
         Files.newInputStream(Path.of(args[1])).use { WorldDsResearchInspector.inspect(it) }.summary().forEach(::println)

@@ -7,6 +7,7 @@ import com.github.nacabaro.vbhelper.domain.device_data.IndividualOrigin
 import com.github.nacabaro.vbhelper.domain.personality.DigimonPersonalityTraits
 import com.github.nacabaro.vbhelper.domain.transfer.*
 import com.github.nacabaro.vbhelper.gamesave.*
+import com.github.nacabaro.vbhelper.gamesave.NdsStoryProfiles
 import com.google.gson.Gson
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -131,7 +132,9 @@ class ExperimentalWorldDsMoveRepository(
     private val admissions = ExperimentalEditJournal(File(journalDirectory, "admissions"), ExperimentalAdmitRecord::class.java)
     private val mutex = Mutex()
     private val gson = Gson()
-    private val profile = GameImportAcquisitionRepository.productionProfiles.single { it.gameId == WorldDsSaveReader.GAME_ID }
+    private val profile = GameImportAcquisitionRepository.productionProfiles.single {
+        it.matches(NdsStoryProfiles.WORLD_DS.gameId, NdsStoryProfiles.WORLD_DS.formatProfile, NdsStoryProfiles.WORLD_DS.codecVersion)
+    }
 
     suspend fun backups(): List<GameMoveBackup> = journal.records().sortedByDescending { it.createdAt }.map {
         GameMoveBackup(it.operationId, db.linkedGameSaveDao().get(it.sourceId)?.label, it.createdAt)

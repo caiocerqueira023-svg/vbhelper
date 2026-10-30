@@ -67,6 +67,14 @@ class WorldDsOutboundConversionTest {
         assertFalse(WorldDsOutboundConversion.matchesBaseline(state(), projection.copy(trainingHp = 13)))
     }
 
+    @Test fun retainedBytesCannotUndoAnAppLevelIncrease() {
+        val current = state()
+        val appLevel = WorldDsStatConversion.levelForVitalPoints(current.appStats.vitalPoints)
+        val retained = WorldDsOutboundConversion.generate(current, null)
+        assertFalse(WorldDsOutboundConversion.retainedCoversAppLevel(current, retained.copy(level = appLevel - 1)))
+        assertTrue(WorldDsOutboundConversion.retainedCoversAppLevel(current, retained.copy(level = appLevel + 1)))
+    }
+
     @Test fun retainedSeedKeepsNativeIdentityAndSpecies() {
         val seed = ByteArray(0x180)
         seed[0x00] = 0x07
@@ -126,8 +134,7 @@ class WorldDsOutboundConversionTest {
         assertEquals(35L, record.nativeSpeciesId)
     }
 
-    @Test fun generatedRecordCarriesConvertedStatsAndSeedUnknownBytes() {
-        val seed = ByteArray(0x180)
+    @Test fun generatedRecordCarriesConvertedStatsAndSeedUnknownBytes() {        val seed = ByteArray(0x180)
         seed[0x100] = 0x7F
         val record = WorldDsOutboundConversion.generate(state(), WorldDsRecordCodec.base64(seed))
         val bytes = WorldDsRecordCodec.decodeBase64(requireNotNull(record.nativeRecordBase64))
@@ -136,5 +143,26 @@ class WorldDsOutboundConversionTest {
         assertEquals(0x7F, bytes[0x100].toInt() and 255)
         assertNull(record.nativeIdentity)
         assertEquals(WorldDsStatConversion.levelForVitalPoints(4200), record.level)
+    }
+
+    @Test fun unnamedPartnerUsesTheGameSpeciesNameInsteadOfItsCanonicalId() {
+        assertEquals("Garurumon", WorldDsOutboundConversion.recordName(null, "Garurumon"))
+        assertEquals("Garurumon", WorldDsOutboundConversion.recordName("   ", "Garurumon"))
+        assertEquals("Rex", WorldDsOutboundConversion.recordName("Rex", "Garurumon"))
+    }
+
+    @Test fun generatedRecordForAnUnnamedPartnerNeverStoresATruncatedCanonicalId() {
+        val unnamed = state().copy(dsSpeciesId = 65, canonicalSpeciesId = "digimon.garurumon",
+            displayName = WorldDsOutboundConversion.recordName(null, "Garurumon"), fallbackName = "Garurumon")
+        val record = WorldDsOutboundConversion.generate(unnamed, null)
+        assertEquals("Garurumon", record.storedName)
+        val bytes = WorldDsRecordCodec.decodeBase64(requireNotNull(record.nativeRecordBase64))
+        val codes = (0 until WorldDsRecordCodec.NAME_SLOTS).map {
+            u16(bytes, WorldDsRecordCodec.OFFSET_NAME + it * 2)
+        }
+        // The fixed 8-glyph field truncates, but it must be the species name, never "digimon.".
+        val stored = WorldDsRecordCodec.decodeName(codes.takeWhile { it != WorldDsRecordCodec.NAME_TERMINATOR })
+        assertEquals("Garurumo", stored)
+        assertFalse(stored.startsWith("digimon"))
     }
 }

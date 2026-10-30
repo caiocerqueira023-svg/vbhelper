@@ -1,11 +1,11 @@
 package com.github.nacabaro.vbhelper.navigation
 
 import com.github.nacabaro.vbhelper.gamesave.TimeStrangerSaveReader
-import com.github.nacabaro.vbhelper.gamesave.WorldDsSaveReader
+import com.github.nacabaro.vbhelper.gamesave.NdsStoryProfiles
 import java.util.Locale
 
 enum class TransferGame(val nativeGameId: String?) {
-    WORLD_DS(WorldDsSaveReader.GAME_ID), DAWN(null), DUSK(null), LOST_EVOLUTION(null),
+    WORLD_DS(NdsStoryProfiles.WORLD_DS.gameId), DAWN(null), DUSK(null), LOST_EVOLUTION(null),
     SUPER_XROS_WARS_BLUE(null), SUPER_XROS_WARS_RED(null), TIME_STRANGER(TimeStrangerSaveReader.GAME_ID),
 }
 

@@ -1,5 +1,47 @@
 # Regression checks
 
+## NDS Story engine-family refactor (W1, schema 55)
+
+- The Digimon World DS adapter is now the first **profile** of a shared NDS Story family instead
+  of a standalone codec. New core types: `NdsStoryProfile`/`NdsStoryRecordLayout`/
+  `NdsStorySpeciesData`/`NdsStoryTextCodec` and the `NdsStoryProfiles` registry
+  (`NdsStoryProfiles.WORLD_DS`); `NdsStorySaveReader`; `NdsStoryRecordCodec`;
+  `NdsStoryCopyIntegrity`; `NdsStoryCopySelection`; `NdsStorySaveEditor` with
+  `Ds1SaveEditor` (wrapping the audited `WorldDsPartyEdits` byte windows); and
+  `NdsStoryConversionPolicies`. Every container size, copy stride/count, integrity rule,
+  record-region/field window, species count and glyph codec comes from the profile.
+- `WorldDsSaveReader`, `WorldDsRecordCodec` and `WorldDsCopySelection` remain facades with
+  their existing constants and signatures (now sourced from the DS1 profile), so app code,
+  desktop evidence and tests keep the same contract. `WorldDsPartyEdits` reads its geometry
+  and MD5 reseal from the profile and the shared `NdsStoryCopyIntegrity`; its byte windows
+  are unchanged.
+- `SaveReaderRegistry.defaultReaders()` builds one reader per registered profile plus Time
+  Stranger, and `SaveDiscoveryPolicy` derives its size families from the same registry, so a
+  second layout never requires editing the registry. The research inspector is layout-driven
+  (`inspect(bytes, profile)`, `readBlock(bytes, base, profile)`, `hasSaveSignature(...,
+  profile)`) and the desktop CLI gained `--inspect-nds-story`; the DS1 defaults keep the
+  `layout_evidence=ADNE` aggregate summary.
+- App plumbing: the ten `== WorldDsSaveReader.GAME_ID` equality sites and the library/send
+  destination gates now resolve through `TransferGameCapabilities` (profile + editor
+  registry). `SaveDocumentWrite` and the experimental journal size buffers from the profile.
+  No UI behavior changed while Dawn/Dusk still have no registered profile.
+- New tests: core `NdsStoryProfileTest` (9 cases: generic reader/facade byte-identical
+  observation, inspector equivalence, triple/profile resolution, copy-header seal/drift,
+  copy-selection equivalence, codec equivalence, editor/conversion-policy resolution,
+  profile-derived discovery, facade/profile constant sync) and app
+  `TransferGameCapabilitiesTest` (3 cases). Deliberate non-goals of this work item: moving
+  the ~700-line `WorldDsPartyEdits` body onto the profile object itself, the Dawn/Dusk
+  layout profile/species assets, the reviewed title binding (schema 56) and any new
+  reader/writer capability.
+- Verification: **191 core**, **155 filtered app JVM** (`source.gameSave`, `navigation`,
+  `species`, `screens.transferScreen`), **11 companion** and **22 SQLite** checks passed,
+  zero failures; integrity Android-test Kotlin compilation and debug assembly passed. Schema
+  stays **55**; no migration was added and no save/ROM fixture is committed. All fixtures
+  remain synthetic; this is a refactor checkpoint, not new game support.
+- Next gate: the Dawn/Dusk evidence pack (plan W2) needs one real USA save per title,
+  controlled before/after pairs and the USA ROMs (or extracted JSON) before a second profile
+  can be registered.
+
 ## Game-grounded identification and unified emulator footers (schema 55)
 
 - Reader recognition is grounded in the matching decompilation
@@ -2705,3 +2747,45 @@ spread, playable bounds, and renderer errors, with three staged captures. It is
 compile-verified but **not executed**: the Galaxy A34 connection dropped during the
 build, and ADB/mDNS currently show no device. Earlier finisher screenshots do not
 establish this movement change's visual acceptance.
+
+## Farm home shell — Phase 0 + Phase 1 (2026-10-30)
+
+Phase 0 route plumbing and Phase 1 farm-home presentation were implemented and verified on the
+connected Galaxy A34 (SM-A346M, Android 15, 1080×2340).
+
+- :app:compileDebugKotlin and :app:assembleDebug pass; the app-level JVM suite (:app:test) is
+  green.
+- On device: the Digifarm renders as the Home surface, the command deck opens Radar, Arena, Shop
+  (store tab) and Partners, the partner slab opens at half/expanded and the back ladder collapses
+  before leaving the app, and no fatal exception appears in logcat.
+- Farm diorama revision: the roster resolves the active partner plus favourites (12/12), residents are
+  built from stored sprites, the island animates while the HUD stays static, and tapping a resident
+  opens the cosmetic sheet.
+- Captures live in .plan/: inal_home.png, inal_roster.png, inal_half.png,
+  inal_expanded.png, inal_radar.png.
+
+Not verified (needs owner input or longer runs): idle battery drain, light-palette contrast over the
+bright island, TalkBack order, 1.3 font scale, tablet layout, and the aesthetic verdict itself.
+
+### Farm home shell — follow-up round (2026-10-30)
+
+- Top bar rebuilt as a single shelf with Material vectors; Settings reachable from a dedicated gear
+  and from the first menu row. Device-verified: gear opens Settings.
+- The 3D world now lives in the app shell and is paused/hidden behind places. Device-verified: a
+  Home → Radar → Home → Partners → Home round trip produces exactly one scene-ready and one GLB load
+  in logcat.
+- Resident movement is capped below the renderer's interpolation limit (0.22 units/step) so walk
+  steps animate instead of snapping; resident tap still resolves on device.
+
+### Farm home shell — feedback round 3 (2026-10-30)
+
+- Farm settings sheet (resident limit 1..12, artwork Mixed/VB only/Dot only) writes to the
+  farm-world DataStore; device-verified stepper 12→11 and an artwork switch that rebuilt all 11
+  residents.
+- Camera target locked to the followed resident (no drag override); sampled projection stayed at
+  x 519–541 of 1080 while the Digimon walked. Follow response 8.0.
+- Farm framing 3.20 → 4.20 default, max zoom 4.8 → 8.0.
+- Resident collision at 0.115 units plus capped 0.22-unit walk steps; seeded tableaux relaxed.
+- Partner overview down-arrow now collapses (Expanded → Half) instead of being a no-op.
+- Fixed a blank-world defect: the frame gate never restarted once the texture surface became
+  available (retry added); island, residents and animation re-verified on the Galaxy A34.

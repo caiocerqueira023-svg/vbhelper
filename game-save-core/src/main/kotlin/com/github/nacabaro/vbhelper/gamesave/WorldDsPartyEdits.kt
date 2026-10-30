@@ -1,6 +1,5 @@
 package com.github.nacabaro.vbhelper.gamesave
 
-import java.security.MessageDigest
 import java.util.Base64
 
 /**
@@ -12,9 +11,9 @@ import java.util.Base64
  * removals clear the identity wherever it exists, while admissions update stale copies best-effort.
  */
 class WorldDsResearchRemoval internal constructor(
-    val sourceRevision: String,
-    val candidateRevision: String,
-    val recordKey: String,
+    override val sourceRevision: String,
+    override val candidateRevision: String,
+    override val recordKey: String,
     val nativeRecordBase64: String,
     internal val bases: List<Int>,
     internal val slot: Int,
@@ -26,9 +25,9 @@ class WorldDsResearchRemoval internal constructor(
     /** Each populated copy's integrity header exactly as the source left it, for byte-identical undo. */
     internal val headersBase64: List<String>,
     candidate: ByteArray,
-) {
+) : NdsStoryPendingEdit {
     private val bytes = candidate.copyOf()
-    val candidateBytes: ByteArray get() = bytes.copyOf()
+    override val candidateBytes: ByteArray get() = bytes.copyOf()
 }
 
 /**
@@ -39,9 +38,9 @@ class WorldDsResearchRemoval internal constructor(
  * edited copy's integrity header is resealed so the game's loader accepts the result.
  */
 class WorldDsResearchInsertion internal constructor(
-    val sourceRevision: String,
-    val candidateRevision: String,
-    val recordKey: String,
+    override val sourceRevision: String,
+    override val candidateRevision: String,
+    override val recordKey: String,
     val nativeIdentity: String,
     val slot: Int,
     val position: Int,
@@ -55,9 +54,9 @@ class WorldDsResearchInsertion internal constructor(
     /** Each populated copy's integrity header exactly as the source left it, for byte-identical undo. */
     internal val headersBase64: List<String>,
     candidate: ByteArray,
-) {
+) : NdsStoryPendingEdit {
     private val bytes = candidate.copyOf()
-    val candidateBytes: ByteArray get() = bytes.copyOf()
+    override val candidateBytes: ByteArray get() = bytes.copyOf()
 }
 
 /**
@@ -66,9 +65,9 @@ class WorldDsResearchInsertion internal constructor(
  * change, and every edited copy's integrity header is resealed.
  */
 class WorldDsResearchReplacement internal constructor(
-    val sourceRevision: String,
-    val candidateRevision: String,
-    val recordKey: String,
+    override val sourceRevision: String,
+    override val candidateRevision: String,
+    override val recordKey: String,
     val nativeIdentity: String,
     internal val bases: List<Int>,
     internal val slots: List<Int>,
@@ -77,9 +76,9 @@ class WorldDsResearchReplacement internal constructor(
     /** Each populated copy's integrity header exactly as the source left it, for byte-identical undo. */
     internal val headersBase64: List<String>,
     candidate: ByteArray,
-) {
+) : NdsStoryPendingEdit {
     private val bytes = candidate.copyOf()
-    val candidateBytes: ByteArray get() = bytes.copyOf()
+    override val candidateBytes: ByteArray get() = bytes.copyOf()
 }
 
 /**
@@ -89,9 +88,9 @@ class WorldDsResearchReplacement internal constructor(
  * reserved.
  */
 class WorldDsResearchAdmission internal constructor(
-    val sourceRevision: String,
-    val candidateRevision: String,
-    val recordKey: String,
+    override val sourceRevision: String,
+    override val candidateRevision: String,
+    override val recordKey: String,
     val nativeIdentity: String,
     internal val bases: List<Int>,
     internal val slot: Int,
@@ -99,25 +98,25 @@ class WorldDsResearchAdmission internal constructor(
     /** Each populated copy's integrity header exactly as the source left it, for byte-identical undo. */
     internal val headersBase64: List<String>,
     candidate: ByteArray,
-) {
+) : NdsStoryPendingEdit {
     private val bytes = candidate.copyOf()
-    val candidateBytes: ByteArray get() = bytes.copyOf()
+    override val candidateBytes: ByteArray get() = bytes.copyOf()
 }
 
 /** Byte-level World DS party move groundwork. Never writes a file or modifies caller-owned bytes. */
 object WorldDsPartyEdits {
-    private const val LAST_ID = 0x208
-    private const val PARTY = 0x20C
+    private val PROFILE get() = NdsStoryProfiles.WORLD_DS
+    private val LAST_ID get() = PROFILE.lastIdOffset
+    private val PARTY get() = PROFILE.partyReferenceBase
     /** Full table width: slots 8 and 9 are reserved and never assigned to ordinary party members. */
-    private const val PARTY_COUNT = 10
+    private val PARTY_COUNT get() = PROFILE.partySlots
     /** The game's party screen and add path expose exactly these eight slots (`data_ov002_0225a710`). */
     const val PARTY_CAP = 8
-    private const val RECORDS = 0x234
-    private const val RECORD_COUNT = 40
-    private const val STRIDE = 0x180
+    private val RECORDS get() = PROFILE.recordRegion.base
+    private val RECORD_COUNT get() = PROFILE.recordRegion.count
+    private val STRIDE get() = PROFILE.recordRegion.stride
     /** Copy start of the integrity guard: MD5 over the copy with these bytes zeroed (crash-field cracked). */
-    private const val HEADER_BYTES = 16
-    private val HEADER_ZEROS = ByteArray(HEADER_BYTES)
+    private val HEADER_BYTES get() = PROFILE.copyHeader.headerBytes
     // The game reacts to these unk108 bits (guest, lent, locked, egg, cross-DS). Every other bit,
     // including the unmodeled 0x40 observed on ordinary stored Digimon, travels verbatim.
     private const val LIVE_OWNERSHIP_FLAGS = 0x2 or 0x4 or 0x8 or 0x10 or 0x20
@@ -685,7 +684,7 @@ object WorldDsPartyEdits {
 
     /** One populated copy's block base inside the container, wrappers included. */
     private fun base(observation: SaveObservation, saveBlock: Int): Int =
-        observation.imageBase + (saveBlock - 1) * WorldDsSaveReader.COPY_STRIDE
+        observation.imageBase + (saveBlock - 1) * PROFILE.copyStride
 
     private fun u16(bytes: ByteArray, at: Int): Int =
         (bytes[at].toInt() and 255) or ((bytes[at + 1].toInt() and 255) shl 8)
@@ -704,12 +703,6 @@ object WorldDsPartyEdits {
      * unedited copy reproduces the game's own header byte-identically, so undo paths can rely on it.
      */
     private fun resealHeaders(bytes: ByteArray, bases: List<Int>) {
-        val digest = MessageDigest.getInstance("MD5")
-        bases.forEach { base ->
-            digest.reset()
-            digest.update(HEADER_ZEROS)
-            digest.update(bytes, base + HEADER_BYTES, WorldDsSaveReader.SAVE_BYTES - HEADER_BYTES)
-            digest.digest().copyInto(bytes, base, 0, HEADER_BYTES)
-        }
+        bases.forEach { NdsStoryCopyIntegrity.seal(bytes, it, PROFILE) }
     }
 }

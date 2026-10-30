@@ -24,6 +24,14 @@ internal data class WorldDsOutboundState(
 )
 
 internal object WorldDsOutboundConversion {
+    /**
+     * The name stored on the outgoing record: the user's nickname when they set one, otherwise the
+     * game's own species name. A canonical id (for example "digimon.garurumon") must never reach the
+     * record, because the fixed 8-glyph name field would truncate it to "digimon.".
+     */
+    fun recordName(nickname: String?, gameSpeciesName: String): String =
+        nickname?.trim()?.takeIf { it.isNotEmpty() } ?: gameSpeciesName
+
     /** True when the app state still equals the checkpoint captured at the last native sync. */
     fun matchesBaseline(state: WorldDsOutboundState, projection: NativeAppProjection): Boolean =
         projection.stage == state.stage && projection.baseHp == state.baseHp && projection.baseBp == state.baseBp &&
@@ -31,6 +39,14 @@ internal object WorldDsOutboundConversion {
             projection.trainingAp == state.appStats.trainingAp && projection.trainingBp == state.appStats.trainingBp &&
             projection.vitalPoints == state.appStats.vitalPoints && projection.wins == state.appStats.wins &&
             projection.losses == state.appStats.losses
+
+    /**
+     * Retained bytes are preferred only while they cannot take app progress away. A return may
+     * deliberately keep the app's pre-evolution level when the native record changed form; the
+     * retained level must then be raised on send instead of silently restoring the native level.
+     */
+    fun retainedCoversAppLevel(state: WorldDsOutboundState, retained: ObservedDigimon): Boolean =
+        WorldDsStatConversion.levelForVitalPoints(state.appStats.vitalPoints) <= retained.level
 
     fun generate(
         state: WorldDsOutboundState,

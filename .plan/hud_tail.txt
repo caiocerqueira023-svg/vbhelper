@@ -1,0 +1,151 @@
+/**
+ * Who is currently in the diorama. Read-only by design: the farm is aesthetic, so this lists the
+ * active partner and the favourites that fill the remaining places and lets the camera pick one.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FarmRosterSheet(
+    residents: List<FarmWorldResident>,
+    followedRenderId: String?,
+    onFollow: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(start = 20.dp, end = 20.dp, bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.home_roster_sheet_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = TextPrimaryOnDark,
+                modifier = Modifier.padding(bottom = 4.dp).semantics { heading() },
+            )
+            Text(
+                text = stringResource(
+                    R.string.home_roster_sheet_note,
+                    FarmWorldSummary.CAPACITY,
+                ),
+                style = MaterialTheme.typography.bodySmall,
+                color = TextMutedOnDark,
+                modifier = Modifier.padding(bottom = 8.dp),
+            )
+            residents.forEach { resident ->
+                val followed = resident.renderId == followedRenderId
+                MenuRow(
+                    icon = R.drawable.baseline_mood_24,
+                    label = resident.name,
+                    detail = when {
+                        followed -> stringResource(R.string.home_roster_followed)
+                        resident.isActivePartner -> stringResource(R.string.home_roster_active_partner)
+                        else -> resident.attribute
+                    },
+                    tint = if (followed) VitalCyan else TextSecondaryOnDark,
+                    onClick = { onFollow(resident.renderId) },
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HomeMenuSheet(
+    navController: NavController,
+    onDismiss: () -> Unit,
+) {
+    val entries = remember(navController) { menuEntries(navController) }
+    ModalBottomSheet(onDismissRequest = onDismiss) {
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(start = 20.dp, end = 20.dp, bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = stringResource(R.string.home_menu_title),
+                style = MaterialTheme.typography.titleMedium,
+                color = TextPrimaryOnDark,
+                modifier = Modifier.padding(bottom = 8.dp).semantics { heading() },
+            )
+            entries.forEach { entry ->
+                MenuRow(
+                    icon = entry.icon,
+                    label = stringResource(entry.label),
+                    detail = null,
+                    tint = TextSecondaryOnDark,
+                    onClick = {
+                        onDismiss()
+                        entry.onClick()
+                    },
+                )
+            }
+        }
+    }
+}
+
+private data class MenuEntry(
+    @StringRes val label: Int,
+    @DrawableRes val icon: Int,
+    val onClick: () -> Unit,
+)
+
+private fun menuEntries(navController: NavController): List<MenuEntry> {
+    fun primary(item: NavigationItems): MenuEntry =
+        MenuEntry(item.label, item.icon) { navController.navigatePrimary(item) }
+    return listOf(
+        // Settings first: it is the one entry people look for by name, and burying it under Credits
+        // made the menu read as if settings did not exist.
+        primary(NavigationItems.Settings),
+        primary(NavigationItems.Quests),
+        primary(NavigationItems.Dex),
+        primary(NavigationItems.Items),
+        primary(NavigationItems.Adventure),
+        MenuEntry(R.string.nav_transfer, R.drawable.baseline_nfc_24) {
+            navController.navigate(TransferNavigation.route(TransferSection.DEVICES))
+        },
+        primary(NavigationItems.Lorebook),
+        primary(NavigationItems.Viewer),
+        primary(NavigationItems.Credits),
+    )
+}
+
+@Composable
+private fun MenuRow(
+    @DrawableRes icon: Int,
+    label: String,
+    detail: String?,
+    tint: Color,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            tint = tint,
+            modifier = Modifier.size(24.dp),
+        )
+        Text(
+            text = label,
+            style = MaterialTheme.typography.titleSmall,
+            color = TextPrimaryOnDark,
+            modifier = Modifier.weight(1f),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        detail?.let {
+            Text(text = it, style = MaterialTheme.typography.labelSmall, color = TextMutedOnDark)
+        }
+    }
+}
+

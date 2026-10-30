@@ -28,6 +28,13 @@ sealed class NavigationItems(
     )
     object World : NavigationItems("World", R.drawable.baseline_compass_24, R.string.nav_world)
 
+    /**
+     * The Radar place: today's World-tab radar surface promoted to a first-class route.
+     * `World` stays registered as an alias for one release so existing back stacks,
+     * saved-state handoffs and the legacy tab keep resolving.
+     */
+    object Radar : NavigationItems("Radar", R.drawable.baseline_compass_24, R.string.nav_radar)
+
     object Dex : NavigationItems(
         "Dex",
         R.drawable.baseline_menu_book_24,

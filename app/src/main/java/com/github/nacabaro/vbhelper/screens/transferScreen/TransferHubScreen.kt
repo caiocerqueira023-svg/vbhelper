@@ -17,6 +17,7 @@ import androidx.navigation.NavController
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.components.*
 import com.github.nacabaro.vbhelper.di.VBHelper
+import com.github.nacabaro.vbhelper.domain.device_data.CharacterCapabilities
 import com.github.nacabaro.vbhelper.domain.device_data.UserCharacter
 import com.github.nacabaro.vbhelper.navigation.TransferSection
 import com.github.nacabaro.vbhelper.navigation.TransferGame
@@ -25,7 +26,6 @@ import com.github.nacabaro.vbhelper.screens.scanScreen.ScanScreenController
 import com.github.nacabaro.vbhelper.screens.storageScreen.BraceletConversionDialog
 import com.github.nacabaro.vbhelper.screens.storageScreen.NativeGameArchivePanel
 import com.github.nacabaro.vbhelper.source.StorageRepository
-import com.github.nacabaro.vbhelper.utils.DeviceType
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -141,8 +141,22 @@ private fun TransferDevicesPane(navController: NavController, scanController: Sc
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { value = null }
     }
-    val needsConversion = selected?.characterType == DeviceType.APP && outgoing?.exportCardCharacterId == null
-    val sendId = if (busy) selectedId else selectedId.takeIf { selected != null && outgoing != null && !needsConversion }
+    // The physical slot backing the partner: a catalog-only partner with no export target needs a
+    // DIM/BEM association before it can be written to a watch, whatever its stored device type is.
+    val capabilityResolver = remember(application) {
+        com.github.nacabaro.vbhelper.source.CharacterCapabilityResolver(application.container.db)
+    }
+    val capabilities by produceState<CharacterCapabilities?>(null, outgoing?.id) {
+        value = null
+        val character = outgoing ?: return@produceState
+        try { value = withContext(Dispatchers.IO) { capabilityResolver.resolve(character) } }
+        catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { value = null }
+    }
+    val needsConversion = capabilities?.needsAssociation == true
+    val sendId = if (busy) selectedId else selectedId.takeIf {
+        selected != null && capabilities != null && !needsConversion
+    }
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.transfer_device_hint), style = MaterialTheme.typography.bodySmall)

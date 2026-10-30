@@ -18,7 +18,8 @@ data class NativeProgressReport(val version: Int, val kinds: Set<NativeChangeKin
 object NativeProgressReview {
     const val VERSION = 1
     fun review(game: String, profile: String, codec: Int, before: ObservedDigimon, after: ObservedDigimon): NativeProgressReport {
-        val ds = game == WorldDsSaveReader.GAME_ID && profile == WorldDsSaveReader.PROFILE
+        val dsProfile = NdsStoryProfiles.forTriple(game, profile, codec)
+        val ds = dsProfile != null
         val ts = game == TimeStrangerSaveReader.GAME_ID && profile == TimeStrangerSaveReader.PROFILE
         if (codec != 1 || (!ds && !ts)) return NativeProgressReport(VERSION, setOf(NativeChangeKind.UNSUPPORTED_PROFILE), emptyList(), true)
         val changes = mutableListOf<NativeMeasureChange>()
@@ -43,12 +44,19 @@ object NativeProgressReview {
         }
         if (before.previousSpeciesIds != after.previousSpeciesIds) changes += NativeMeasureChange(NativeMeasure.FORM_HISTORY,
             before.previousSpeciesIds.joinToString(" / "), after.previousSpeciesIds.joinToString(" / "))
-        val rawBefore = decode(before.nativeRecordBase64, if (ds) 384 else 336)
-        val rawAfter = decode(after.nativeRecordBase64, if (ds) 384 else 336)
+        val layout = dsProfile?.record
+        val rawBefore = decode(before.nativeRecordBase64, layout?.bytes ?: 336)
+        val rawAfter = decode(after.nativeRecordBase64, layout?.bytes ?: 336)
         try {
-            val nameRange = if (ds) 8..0x19 else 4..0x23
-            val known = if (ds) listOf(0..7, nameRange, 0x3C..0x4F, 0x52..0x53, 0x74..0x75, 0x78..0x97)
-                else listOf(0..3, nameRange, 0x64..0x6B, 0xF2..0xF2, 0x104..0x11F, 0x140..0x143, 0x14C..0x14F)
+            val nameRange = if (layout != null) layout.offsetName until (layout.offsetName + layout.nameSlots * 2) else 4..0x23
+            val known = if (layout != null) listOf(
+                0..7,
+                nameRange,
+                layout.offsetHp..(layout.offsetSpeed + 1),
+                layout.offsetMaxLevel..(layout.offsetMaxLevel + 1),
+                layout.offsetLevel..(layout.offsetLevel + 1),
+                layout.offsetExp until (layout.offsetExp + layout.expChannels * 4),
+            ) else listOf(0..3, nameRange, 0x64..0x6B, 0xF2..0xF2, 0x104..0x11F, 0x140..0x143, 0x14C..0x14F)
             val unavailable = rawBefore == null || rawAfter == null
             val rawNameChanged = !unavailable && nameRange.any { rawBefore!![it] != rawAfter!![it] }
             val outsideKnown = !unavailable && rawBefore!!.indices.any { rawBefore[it] != rawAfter!![it] && known.none { range -> it in range } }

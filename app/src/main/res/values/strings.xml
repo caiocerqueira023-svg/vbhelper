@@ -70,6 +70,8 @@
     <string name="nav_battle">Battle</string>
     <string name="nav_home">Home</string>
     <string name="nav_world">World</string>
+    <!-- Place header/route label for the Radar place (replaces the old World tab). -->
+    <string name="nav_radar">Radar</string>
     <string name="nav_dex">Dex</string>
     <string name="nav_card_adventure">Card adventure</string>
     <string name="nav_storage">Storage</string>

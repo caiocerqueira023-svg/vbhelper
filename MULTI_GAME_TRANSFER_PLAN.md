@@ -39,6 +39,15 @@ followed by Dawn/Dusk and individually validated later DS titles. Actual moves m
 durable vault retention followed by source removal, and verified native insertion on
 return. Existing snapshot-copy support is distinct from that goal.
 
+**Dawn/Dusk step opened (2026-10-24, user-directed):** the next step is planned in
+[DAWN_DUSK_TRANSFER_PLAN.md](DAWN_DUSK_TRANSFER_PLAN.md): extend the existing World DS
+feature to Digimon World Dawn (USA `A3VE`) and Dusk (USA `A6RE`) with the same flows and
+guarantees, reusing World DS code through a shared NDS Story engine-family layer. Planning
+evidence: Dawn/Dusk run on the World DS engine but persist a **different save layout**
+(64 KiB image, two copies of `0x7B2C` at `0x0`/`0x7B80`, MD5 header rule, party records
+`0x164` bytes at `0x288`), so World DS offsets are not reusable. No production reader or
+writer for Dawn/Dusk exists yet; real-save and ROM evidence is required first.
+
 **Definitive Transfer UX (2026-10-17, latest user clarification):** one **list of
 origins** containing games, Vital Bracelet and every other supported Digimon origin.
 DS games use the **icons shown by the DS launcher**, not cover artwork. Open a game
@@ -58,6 +67,11 @@ revision `cc3ff499edfd86e382e724d1da7f155b6b830e5f` (GPL-3.0), supplies USA Dawn
 ROM species, stats, moves, evolution and text research. Those ROM offsets are title-
 specific; World DS persisted-save structures additionally use the existing ReGame
 Labs evidence. Save integrity and source-removal acceptance need their own validation.
+The same author's [Dawn/Dusk research notes](https://github.com/joaomlsantos/Digimon-World-Dawn-Dusk-Research-Notes)
+supply the first persisted-save evidence (copy geometry and party-record layout); they are
+facts-only references, not a license to reuse code or assets, and every constant still
+needs real-save verification. The resulting plan is
+[DAWN_DUSK_TRANSFER_PLAN.md](DAWN_DUSK_TRANSFER_PLAN.md).
 
 **Status:** Implementation in progress at schema 55. Linked sources, provisional Time
 Stranger/World DS snapshots, reviewed native refresh, shared Home/materialization,
@@ -106,7 +120,7 @@ lists DigiLine/Quests/Items/Battle/Settings with no Transfer entry, and the Dex 
 back in the bar; the same pass fixed the hub's empty-state crash (a vertical scroll was
 measured under a lazy item's infinite height; `CyberEmptyState` now scrolls only with
 bounded height) with the crash log empty through the whole flow.
-**Updated:** 2026-10-18. Code-verified (offline compile/tests); see the verified state in section 14 and the risk register in section 22.
+**Updated:** 2026-10-25. Code-verified (offline compile/tests); see the verified state in section 14, the W1 refactor checkpoint in section 21 and the risk register in section 22.
 **Primary surface:** The Android Transfer hub, reached from Home's upper-left button, connected to VBHelper Storage.
 **First implemented adapter:** Digimon Story Time Stranger, PC version (further transfer work paused).
 **Active native-move adapter:** Digimon World DS, USA/DraStic raw save profile.
@@ -1095,6 +1109,30 @@ The following remain open; they do not change the confirmed phone-first, local, 
 
 The converter documents untested conversion directions and is not evidence of native individual identity or writer correctness. The ANAMNESIS editor's README still says "not yet licensed", but the user reports the author has granted permission to reuse the project's code and research (personal communication; keep this line updated if written confirmation is obtained). It therefore serves as an adoptable baseline: its field-map and save-diff claims are starting hypotheses, validated against the user's own save corpus and controlled samples rather than trusted blindly, and reused code or constants keep attribution to this section. Correctness acceptance still requires the controlled tests above.
 
+### Digimon World DS and Dawn/Dusk format research
+
+- [ReGame-Labs/dwds_decomp @ 91efd17c](https://github.com/ReGame-Labs/dwds_decomp/tree/91efd17c4c05ce106ce0f973155149d23d9de519)
+  — World DS save/record facts (MIT); see
+  [WORLD_DS_RESEARCH.md](game-save-core/WORLD_DS_RESEARCH.md).
+- [joaomlsantos/DigimonNDSRomEditor @ cc3ff499](https://github.com/joaomlsantos/DigimonNDSRomEditor/tree/cc3ff499edfd86e382e724d1da7f155b6b830e5f)
+  (GPL-3.0) — Dawn/Dusk ROM header codes (`A3VE`/`A6RE`/`A3VJ`/`A6RJ`), per-title ROM
+  table addresses, 398-entry species ID list, ROM text glyph table; ROM data only, never
+  save offsets and no code/assets vendored.
+- [joaomlsantos/Digimon-World-Dawn-Dusk-Research-Notes](https://github.com/joaomlsantos/Digimon-World-Dawn-Dusk-Research-Notes)
+  — Dawn/Dusk persisted-save geometry (`0x7B2C` copies at `0x0`/`0x7B80`, `DSDIG2`,
+  MD5 header, party records `0x164` bytes at `0x288`), player-name/items offsets and target
+  ROM MD5s. The repository says content is provided "for educational and community use
+  only", which is **not** a license grant: facts may be cited and independently
+  reimplemented, but no code or assets are copied, and every constant is verified against
+  the user's own saves before use.
+- <https://forums.desmume.org/viewtopic.php?id=9573> — 512 kbit save size / 164-byte `.duc`
+  header reference for Dawn.
+- <https://gbatemp.net/threads/digimon-world-dawn-u.516124/> — Dawn AR-code addresses that
+  independently corroborate the `0x164` record stride.
+- <https://en.wikipedia.org/wiki/Digimon_World:_Dawn_and_Dusk> — engine attribution,
+  release dates, six-Digimon party, Digifarm; background only, not format evidence.
+- The full step plan and parity matrix: [DAWN_DUSK_TRANSFER_PLAN.md](DAWN_DUSK_TRANSFER_PLAN.md).
+
 ### Local project context
 
 - [Expanded-mode implementation status](EXPANDED_MODE_IMPLEMENTATION.md).
@@ -1135,9 +1173,13 @@ The converter documents untested conversion directions and is not evidence of na
 4. Establish native integrity and save-copy authority, then validate changed saves in
    game. Connect the accepted writer to durable backups, journal/recovery and the
    vault transaction before exposing an actual Move action.
-5. Extend to Dawn/Dusk with the pinned DigimonNDSRomEditor species/text/parameter
-   baseline and independent persisted-save validation. Continue subsequent DS titles
-   per adapter rather than applying a shared guessed save layout.
+5. Extend to Dawn/Dusk with the pinned DigimonNDSRomEditor ROM baseline **and the
+   independently verified persisted-save layout**: the step is now planned in
+   [DAWN_DUSK_TRANSFER_PLAN.md](DAWN_DUSK_TRANSFER_PLAN.md). Dawn/Dusk share the World DS
+   engine architecture but not its layout (per-copy `0x7B2C` at `0x0`/`0x7B80`, MD5 header,
+   7 party records of `0x164` bytes at `0x288`), so the World DS adapter is first refactored
+   into a shared NDS Story family and Dawn/Dusk become a second layout profile. Continue
+   subsequent DS titles per adapter rather than applying a shared guessed save layout.
 6. Implement Storage-to-receiving-game moves using species availability and validated
    conversions for the selected destination. The original game's identity is retained
    as provenance, never used as an artificial destination lock.
@@ -1163,9 +1205,31 @@ Sections 21 and 14 record delivered work. Home/stat parity, the ledger and the f
 
 Implementation progress is recorded in `TESTING.md`. These targets do not enable unverified game writes or imply that an aggregate count confirmation proves stable native individual identity.
 
+### Dawn/Dusk extension step (2026-10-24, user-directed)
+
+The user asked to start the next step: make transfer into **Digimon World Dawn** and
+**Digimon World Dusk** work exactly like World DS, reusing the World DS implementation.
+Planning is complete in [DAWN_DUSK_TRANSFER_PLAN.md](DAWN_DUSK_TRANSFER_PLAN.md) (scope,
+parity matrix, evidence gates, work breakdown W0–W9, risks, inputs).
+
+Key evidence and decisions:
+
+- Dawn/Dusk (USA `A3VE`/`A6RE`) are documented as running on the World DS engine, but their
+  persisted save is a different layout: 64 KiB image, two copies of `0x7B2C` at `0x0`/`0x7B80`,
+  16-byte MD5 header over the zeroed-header copy, single-byte counter at `+0x18`, `DSDIG2`
+  magic at `+0x10`, and **7 party records of `0x164` bytes at `0x288`**. World DS offsets are
+  therefore not reusable; the shared code must be reorganized around a layout profile.
+- Record fields beyond two move words, DigiFarm placement, identity/allocator semantics and
+  the Dawn-vs-Dusk version marker are **unverified** and are the first evidence gate.
+- Work 1 (`W1`) is a behavior-preserving refactor of the World DS adapter into an NDS Story
+  engine-family layer and can start before any sample arrives; the Dawn/Dusk profile,
+  reader, acquisition and writers follow only after the plan's gates G1–G5.
+- Nothing is registered in production and no capability changes: Dawn/Dusk remain unreadable
+  by the app until their reader passes the save-reading standard on real saves.
+
 ## 21. Consolidated implementation checkpoint and remaining gates
 
-The current implementation has reached schema 53. Detailed commands/results live in
+The current implementation has reached schema 55. Detailed commands/results live in
 `TESTING.md`; this section distinguishes delivered code from accepted real-game support.
 
 - Linked local sources, persistent tree/PC discovery, source health/cache retention,
@@ -1505,6 +1569,64 @@ contiguous, the shape the game itself writes. It awaits user in-game acceptance 
 Remaining after this checkpoint: insert/remove and non-name field edits, sidecars,
 World DS checksum/sequence research and the plan 4.5 history/recovery UI.
 
+### Dawn/Dusk extension planning checkpoint (2026-10-24)
+
+- **Planning deliverable:** [DAWN_DUSK_TRANSFER_PLAN.md](DAWN_DUSK_TRANSFER_PLAN.md)
+  defines the parity target ("exactly like World DS" per capability), the NDS Story
+  engine-family architecture, Dawn/Dusk evidence gates, the W0–W9 work breakdown, the
+  reviewed Dawn-vs-Dusk title-binding design (schema 56, additive) and the in-game
+  acceptance protocol. No code or capability changed in this step.
+- **Evidence established for planning (not yet accepted as app support):** Dawn/Dusk use
+  the World DS engine but a distinct save layout — 64 KiB image, copies of `0x7B2C` at
+  `0x0`/`0x7B80`, MD5 header with `[0x00,0x10)` zeroed, `DSDIG2` at `+0x10`, u8 counter at
+  `+0x18`, player name `0x238`, tamer data `0x3A28`, party records `0x164` bytes at `0x288`
+  (7 slots; moves at `+0x54/+0x58`). Independent corroboration: GBAtemp AR-code stride,
+  DeSmuME's 512 kbit/164-byte-header statement, and the `0x1C0` Dawn/Dusk RAM delta. The
+  published record beyond moves remains unverified and must be measured on the user's saves.
+- **Species/text:** Dawn/Dusk expose 398 species IDs `0x41–0x1F4` (vs World DS 426) and a
+  different ROM glyph table, so per-title species assets, crosswalks and a glyph codec are
+  required; the World DS tables must never be reused for DS2.
+- **Consequence for implementation order:** first refactor World DS into a shared NDS Story
+  family without behavior change (W1); then verify the DS2 layout/record fields from real
+  saves and ROMs (W2); then read-only phone parity (W3), acquisition/Home (W4), destination
+  preview (W5), exact retained move/send with in-game acceptance (W6), generated sends (W7),
+  and UI/docs/PC parity (W8). Every rung keeps the DS guarantee set: revision-bound copies,
+  exact bytes, backups/journal/readback, and no writer flag until the game itself accepts.
+- **Next external inputs:** one Dawn and one Dusk USA raw save (fresh and/or progressed),
+  controlled before/after pairs for record-field mapping, and the USA `A3VE`/`A6RE` ROMs (or
+  the JSON produced by the generalized extraction tool). Details and the exact artifact list:
+  plan sections 6 and 10.
+- **Status:** World DS remains the only accepted DS Story adapter; Dawn/Dusk have no reader
+  registration, no acquisition profile, no writer and no UI enablement yet. Time Stranger
+  transfer work stays paused.
+
+### NDS Story family refactor checkpoint (W1 delivered 2026-10-25)
+
+- The World DS adapter is now the first registered **NDS Story profile** rather than a
+  standalone codec: `NdsStoryProfile`/`NdsStoryRecordLayout`/`NdsStorySpeciesData`/
+  `NdsStoryTextCodec`/`NdsStoryCopyHeaderRule` plus `NdsStoryProfiles.WORLD_DS`;
+  `NdsStorySaveReader`, `NdsStoryRecordCodec`, `NdsStoryCopyIntegrity`,
+  `NdsStoryCopySelection`, `NdsStorySaveEditor` + `Ds1SaveEditor`, and
+  `NdsStoryConversionPolicies`. All container sizes, copy geometry, integrity rule, record
+  windows, species count and glyph codec are profile values.
+- `WorldDsSaveReader`, `WorldDsRecordCodec`, `WorldDsCopySelection` and the audited
+  `WorldDsPartyEdits` byte windows remain the stable World DS contract (facades/delegates),
+  so app callers and the desktop evidence path are unchanged. `SaveReaderRegistry` builds one
+  reader per registered profile and `SaveDiscoveryPolicy` derives sizes from the same
+  registry, so a second layout does not require editing either. The research inspector is
+  profile-driven and the core CLI gained `--inspect-nds-story`.
+- App plumbing: the ten `== WorldDsSaveReader.GAME_ID` equality sites and the library/send
+  destination gates resolve through `TransferGameCapabilities` (profile + editor registry);
+  write/journal buffers size from the profile. UI behavior is unchanged while Dawn/Dusk have
+  no registered profile.
+- Verification: **191 core**, **155 filtered app JVM**, **11 companion** and **22 SQLite**
+  checks passed, zero failures; integrity Android-test Kotlin compilation and debug assembly
+  passed. Schema stays **55**; no migration. Fixtures remain synthetic: this is a refactor
+  checkpoint, not new game support and not a Dawn/Dusk acceptance.
+- Next gate unchanged: the Dawn/Dusk evidence pack (`DAWN_DUSK_TRANSFER_PLAN.md` W2) needs
+  one real USA save per title, controlled before/after pairs and the USA ROMs (or extracted
+  JSON) before a second profile, reader registration or any writer flag.
+
 ## 22. Risk register
 
 Ordered by current blocking power. Each risk names the evidence that would close it.
@@ -1519,19 +1641,25 @@ Ordered by current blocking power. Each risk names the evidence that would close
 | 6 | **Scope inflation:** a ~950-line plan against a ~2k-line read-only slice | Maintenance overhang; speculative abstraction | Implement container codec, planner and coordinator only at first real use; delete unused contract names rather than keeping placeholders |
 | 7 | **Reference-project licensing** (PKVault/PKForge GPLv3-family; DSTS-Save-Editor unlicensed README, author permission reported by user) | License contamination if code or libraries are reused without a grant | Sections 3 and 19 keep PKVault/PKForge as concepts only; ANAMNESIS reuse is allowed per the author's reported permission with attribution in section 19, and correctness is still validated independently |
 | 8 | **Provisional-feature drift:** snapshot copying mistaken for verified identity or native moves | False expectations or unsafe identity merges | Persist provisional confidence, require continuity review and keep farm/writer gates explicit |
+| 9 | **Dawn/Dusk "same engine" misread as "same layout":** the current save evidence shows different copy size/stride and a different record region | Copying World DS offsets would corrupt saves or garble identities | Shared NDS Story family with per-layout profiles; DS2 constants only after real-save verification (plan G1–G2); no DS2 writer flag until in-game acceptance |
+| 10 | **DS2 record internals are undocumented beyond moves** (party table known, DigiFarm/identity/empty-slot semantics unknown) | Reader/roster/acquisition/send may stall or guess fields | First-class evidence gates and controlled samples; party-scope read-only first; farm excluded; block unmapped fields rather than inventing them |
+| 11 | **Dawn vs Dusk indistinguishable in-save** (same layout expected) | Wrong title label, defaults or species interpretation | Reviewed, revision-bound title binding (schema 56); automatic detection only if evidence proves a reliable marker; never silently rebind |
+| 12 | **Research-note licensing:** Dawn/Dusk notes say "educational and community use only" with no license grant; the ROM editor is GPL-3.0 | Contamination if code/assets are copied | Facts-only citation and independent reimplementation; no vendored code/assets/ROMs; user supplies own ROMs/saves; credits in section 19 |
 
 ## 23. Critical path and external inputs
 
 The following external inputs are ordered by what they block. None can be replaced by more framework code or synthetic tests.
 
 1. **Capability-specific Time Stranger evidence:** the rename pair and existing corpus already support provisional copies. Additional controlled evidence is needed only for unresolved native identity/branch/progression/writer claims, not as a blanket manual checklist. Farm transfer is excluded.
-2. **Broader Digimon World DS evidence:** the USA/DraStic raw fixture and phone reader are present; checksums, sequence authority, other variants and later conversion/import policies need their own evidence.
-3. **A physical Android device with local-network access:** Transfer UI, Keystore pairing, SAF permission lifecycle, accessibility, timing and memory acceptance.
-4. **Per-title decisions from section 18:** later editions, memory-card formats, companion packaging and network acceptance.
-5. **Writer acceptance evidence:** per-title undefined-field behavior, checksums and an actual game-load/recovery test.
+2. **Broader Digimon World DS evidence:** the USA/DraStic raw fixture and phone reader are present; other variants and later conversion/import policies need their own evidence. The save-copy integrity header and writer reseal are now solved for the observed profile (see `WORLD_DS_RESEARCH.md`).
+3. **Dawn/Dusk evidence:** one real USA raw save per title (fresh and/or progressed), controlled before/after pairs for the party record fields/identity, and the USA ROMs (or extracted JSON) for species/defaults/lineage extraction. These block the Dawn/Dusk reader and every later step; plan G1–G4.
+4. **A physical Android device with local-network access:** Transfer UI, Keystore pairing, SAF permission lifecycle, accessibility, timing and memory acceptance.
+5. **Per-title decisions from section 18:** later editions, memory-card formats, companion packaging and network acceptance.
+6. **Writer acceptance evidence:** per-title undefined-field behavior, checksums and an actual game-load/recovery test — for Dawn/Dusk the boot/swap protocol in the plan's section 8.
 
 Work that proceeds in parallel while the inputs above are pending:
 
+- Dawn/Dusk work 1: the behavior-preserving NDS Story engine-family refactor, no evidence required.
 - Device acceptance of the existing slice when the user resumes phone testing.
 - Destination evaluation and preview (plan 4.3/4.4) is implemented for native archives,
   now including recorded app growth, retained native anchors and unresolved-change

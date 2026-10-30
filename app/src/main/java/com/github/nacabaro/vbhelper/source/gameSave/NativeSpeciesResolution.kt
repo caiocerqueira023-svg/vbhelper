@@ -8,6 +8,9 @@ data class NativeSpeciesHint(val sourceId: String, val documentKey: String, val 
 
 /** Previously reviewed individual mappings may be reused automatically, never generalized to unrelated IDs. */
 object NativeSpeciesResolution {
+    /** Stable identity for a genuine DS form the bundled catalog has no entry for. */
+    fun unresolvedIdentity(name: String): String = "ds.unresolved.${name.filter { it.isLetterOrDigit() }.lowercase()}"
+
     fun reviewedIdentity(sourceId: String, documentKey: String, gameId: String, profile: String,
         codec: Int, identity: String?, speciesId: Long, hints: List<NativeSpeciesHint>): String? {
         if (identity.isNullOrBlank()) return null

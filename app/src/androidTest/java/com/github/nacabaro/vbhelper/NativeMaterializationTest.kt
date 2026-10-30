@@ -37,9 +37,15 @@ class NativeMaterializationTest {
     private val preferences get() = context.getSharedPreferences("native-materialization-test", Context.MODE_PRIVATE)
     private val catalog = CanonicalSpeciesCatalog(CanonicalSpeciesDatabaseDto(species = listOf(
         CanonicalSpeciesDto("digimon.agumon", "Agumon", level = "Child", dotSprites = DotSpriteAssociationDto("dot", listOf("dot"))),
+        CanonicalSpeciesDto("digimon.greymon", "Greymon", level = "Adult"),
         CanonicalSpeciesDto("digimon.noart", "No art")), spriteSets = listOf(DotSpriteSetDto("dot", -100, "Agumon", "Fixture",
         width = 1, height = 1, frames = mapOf("idle_1" to "frames/${"a".repeat(64)}.bin")))))
     private lateinit var archive: NativeArchiveView
+    private val speciesTable = WorldDsSpeciesTable.parse(Gson().toJson(mapOf(
+        "gameId" to WorldDsSaveReader.GAME_ID, "formatProfile" to WorldDsSaveReader.PROFILE,
+        "names" to MutableList(WorldDsSaveReader.SPECIES_COUNT) { "" }.also {
+            it[20] = "Agumon"; it[21] = "Greymon"
+        })))
 
     @Before fun setup() = runBlocking {
         check(context.packageName.endsWith(".integritycheck"))
@@ -58,7 +64,7 @@ class NativeMaterializationTest {
         val source = sources.link(SaveDocument("provider:slot", "content://provider/slot", "content://provider/slot", "0001.bin"))
         acquisition.commit(previews.prepare(source, observed.contentRevision, listOf(record.recordKey)).draft.draftId)
         archive = acquisition.archives.first().single()
-        repository = NativeMaterializationRepository(db, acquisition, { catalog }, { definition(it) })
+        repository = NativeMaterializationRepository(db, acquisition, { catalog }, { definition(it) }, speciesTable)
     }
     @After fun cleanup() { db.close(); preferences.edit().clear().commit() }
 
@@ -136,9 +142,6 @@ class NativeMaterializationTest {
         assertEquals(expected.losses, returned.totalBattlesLost)
         assertEquals(expected.activityLevel, returned.activityLevel)
         assertEquals(changedId, db.transferContinuityDao().projection(id)?.nativeSnapshotId)
-        val speciesTable = WorldDsSpeciesTable.parse(Gson().toJson(mapOf(
-            "gameId" to WorldDsSaveReader.GAME_ID, "formatProfile" to WorldDsSaveReader.PROFILE,
-            "names" to MutableList(WorldDsSaveReader.SPECIES_COUNT) { "" }.also { it[20] = "Agumon" })))
         val sendDirectory = File(context.cacheDir, "send-${UUID.randomUUID()}")
         val sends = ExperimentalWorldDsSendRepository(db, sources, object : SaveDocumentWrite {
             override fun canWrite(documentUri: String, grantUri: String) = false
@@ -159,6 +162,28 @@ class NativeMaterializationTest {
             db.openHelper.writableDatabase.execSQL("UPDATE DigimonIndividual SET speciesName=NULL WHERE individualId=?", arrayOf<Any?>(id))
             val fromCard = requireNotNull(sends.outbound(id))
             assertEquals(20L, fromCard.nativeSpeciesId)
+            // A form change without a checkpoint must seed the app level from the evolved record,
+            // and the send must keep that level instead of restoring the native record's level.
+            db.openHelper.writableDatabase.execSQL("DELETE FROM NativeAppProjection WHERE individualId=?", arrayOf<Any?>(id))
+            db.userCharacterDao().updateCharacter(db.userCharacterDao().getByIndividualIdSync(id).single().copy(vitalPoints = 0))
+            val evolved = changed.copy(nativeSpeciesId = 21)
+            val evolvedId = db.nativeGameArchiveDao().insertSnapshot(NativeGameSnapshot(individualId = id,
+                bindingId = native.snapshot.bindingId, sourceLabel = "World DS.sav", contentRevision = "f".repeat(64),
+                codecVersion = 1, recordKey = record.recordKey, recordJson = Gson().toJson(evolved), nativePersonalityId = null,
+                mappedPersonality = requireNotNull(personality).personalityType.name, importedAt = 2))
+            assertTrue(materialization.applyWorldDsReturn(evolvedId, "digimon.agumon", "GAME_TABLE"))
+            assertEquals(WorldDsStatConversion.vitalPointsForLevel(30),
+                db.userCharacterDao().getByIndividualIdSync(id).single().vitalPoints)
+            assertEquals(ExpandedCatalogRepository.definitionId("digimon.greymon"),
+                db.userCharacterDao().getByIndividualIdSync(id).single().charId)
+            assertEquals("digimon.greymon", db.digimonIndividualDao().getIndividual(id)?.speciesName)
+            assertEquals(evolvedId, db.transferContinuityDao().projection(id)?.nativeSnapshotId)
+            val preserved = requireNotNull(sends.outbound(id))
+            assertEquals(30, preserved.level)
+            assertEquals(21L, preserved.nativeSpeciesId)
+            db.userCharacterDao().updateCharacter(db.userCharacterDao().getByIndividualIdSync(id).single()
+                .copy(vitalPoints = WorldDsStatConversion.vitalPointsForLevel(50)))
+            assertEquals(50, requireNotNull(sends.outbound(id)).level)
         } finally { sendDirectory.deleteRecursively() }
     }
 

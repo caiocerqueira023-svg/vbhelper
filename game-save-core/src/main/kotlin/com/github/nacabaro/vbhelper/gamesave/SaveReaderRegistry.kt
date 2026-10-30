@@ -4,9 +4,19 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 import java.security.MessageDigest
 
-class SaveReaderRegistry(private val readers: List<GameSaveReader> = listOf(TimeStrangerSaveReader(), WorldDsSaveReader())) {
+class SaveReaderRegistry(private val readers: List<GameSaveReader> = defaultReaders()) {
     init { require(readers.isNotEmpty() && readers.all { it.maxInputBytes in 1..(64 * 1024 * 1024) }) }
     val maxInputBytes: Int = readers.maxOf { it.maxInputBytes }
+
+    companion object {
+        /**
+         * Every registered NDS Story layout becomes one reader, so adding a profile never means
+         * editing this registry. Layout resolution is content-led; a profile whose bytes cannot
+         * decode throws its own failure and never silently claims another profile's save.
+         */
+        fun defaultReaders(): List<GameSaveReader> =
+            listOf(TimeStrangerSaveReader()) + NdsStoryProfiles.all.map { NdsStorySaveReader(it) }
+    }
 
     /** Registration order is a contract: broad readers first, specific readers last (see SAVE_READING_STANDARD.md). */
     fun read(input: InputStream): SaveObservation = capture(input).use { it.observation }

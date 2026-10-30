@@ -8,7 +8,6 @@ import com.github.nacabaro.vbhelper.domain.transfer.NativeGameSnapshot
 import com.github.nacabaro.vbhelper.gamesave.ObservedDigimon
 import com.github.nacabaro.vbhelper.gamesave.RecordIssue
 import com.github.nacabaro.vbhelper.gamesave.WorldDsCopySelection
-import com.github.nacabaro.vbhelper.gamesave.WorldDsSaveReader
 import com.google.gson.Gson
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -32,7 +31,7 @@ class AutomaticSaveReconciler(
     suspend fun reconcile(view: LinkedSaveView): Int = withContext(Dispatchers.IO) {
         mutex.withLock {
             val observation = view.observation ?: return@withLock materialization.reconcileReturnedSpecies()
-            if (observation.gameId != WorldDsSaveReader.GAME_ID) {
+            if (!TransferGameCapabilities.isNdsStory(observation)) {
                 return@withLock materialization.reconcileReturnedSpecies()
             }
             val copy = WorldDsCopySelection.latestCopy(observation)
@@ -44,7 +43,7 @@ class AutomaticSaveReconciler(
                 .mapNotNull { (identity, records) -> records.singleOrNull()?.let { identity to it } }
                 .toMap()
             val bindings = db.nativeGameArchiveDao().allBindings()
-                .filter { binding -> binding.gameId == WorldDsSaveReader.GAME_ID &&
+                .filter { binding -> TransferGameCapabilities.isNdsStoryBinding(binding.gameId, binding.formatProfile) &&
                     (binding.sourceId == view.source.sourceId || binding.documentKey == view.source.documentKey) }
                 .groupBy { it.nativeIdentity }
                 .mapNotNull { (_, values) -> values.singleOrNull() }

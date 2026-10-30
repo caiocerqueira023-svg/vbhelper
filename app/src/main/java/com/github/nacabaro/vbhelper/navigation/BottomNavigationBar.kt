@@ -42,6 +42,9 @@ private fun topLevelRoute(route: String?, previousRoute: String? = null): String
     route.startsWith("WorldChat/") || route.startsWith("WorldConversation/") || route == NavigationItems.WorldRecruits.route -> NavigationItems.World.route
     route.startsWith("WildContact/") || route.startsWith("FarmGroup/") -> NavigationItems.Digiline.route
     route.startsWith("ApplyItem/") -> NavigationItems.Items.route
+    // The Items destination is registered as `Items?tab={tab}`; normalise it so the overflow
+    // entry stays highlighted when the store tab was requested explicitly.
+    route.startsWith("${NavigationItems.Items.route}?") -> NavigationItems.Items.route
     route in listOf(NavigationItems.Credits.route, NavigationItems.Lorebook.route, NavigationItems.Viewer.route) -> NavigationItems.Settings.route
     else -> route
 }

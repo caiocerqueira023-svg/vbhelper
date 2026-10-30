@@ -9,8 +9,15 @@ import android.view.ViewGroup
 import android.view.TextureView
 import android.widget.FrameLayout
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.google.android.filament.Engine
 import com.google.android.filament.Colors
 import com.google.android.filament.EntityManager
@@ -23,8 +30,13 @@ import com.google.android.filament.gltfio.FilamentAsset
 import com.google.android.filament.gltfio.ResourceLoader
 import com.google.android.filament.gltfio.UbershaderProvider
 import com.google.android.filament.utils.ModelViewer
+import com.github.nacabaro.vbhelper.digifarm.FarmCameraState
 import com.github.nacabaro.vbhelper.digifarm.map.Digifarm3dAssetCatalog
 import com.github.nacabaro.vbhelper.rendering.HybridSceneKind
+import com.github.nacabaro.vbhelper.rendering.SceneFrameBudget
+import com.github.nacabaro.vbhelper.rendering.SceneFrameInputs
+import com.github.nacabaro.vbhelper.rendering.SceneFramePacer
+import com.github.nacabaro.vbhelper.rendering.SceneFrameTier
 import com.github.nacabaro.vbhelper.rendering.applyHybridSceneProfile
 import com.github.nacabaro.vbhelper.rendering.approachSceneAxis
 import com.github.nacabaro.vbhelper.rendering.sprite3d.ResidentFrameImage
@@ -76,12 +88,73 @@ internal fun prioritizeResidentLoads(
 }
 
 /**
+ * Camera framing presets for the two surfaces that share this renderer.
+ *
+ * `targetY` is the orbit's look-at height in world units; lowering it below the residents' feet pushes
+ * them *up* the screen, which is what the farm-home framing needs because the bottom ~184dp of the
+ * viewport is covered by the partner slab and the place dock.
+ *
+ * Height estimate for the hard contract "the followed resident sits between 30% and 52% of viewport
+ * height" (PRESENTATION_REDESIGN_PLAN §5.2), with a 50mm lens on Filament's 24mm sensor
+ * (vertical FOV = 2*atan(12/50) ≈ 26.9°):
+ *  - [Home]: targetY −0.12 at ~3.2 units puts the feet 0.12 above the aim → atan(0.12/3.2) ≈ 2.15°
+ *    ≈ 8% of the height above centre → feet at ~42%, head (0.14 higher) at ~34%. Inside 30–52%.
+ *  - [World]: targetY −0.05 at 3.86 → feet ~47%, head ~53%: too low once bottom chrome exists, which
+ *    is why the legacy World tab keeps it and the home does not.
+ * The device capture pass must confirm these numbers on the A34; they are geometry, not taste.
+ */
+data class FarmFraming(
+    val targetY: Float,
+    val homeYaw: Float,
+    val homePitch: Float,
+    val homeDistance: Float,
+    val pitchMin: Float,
+    val pitchMax: Float,
+    val distanceMin: Float,
+    val distanceMax: Float,
+) {
+    companion object {
+        /** World tab: byte-for-byte the framing that shipped, so that surface does not change. */
+        val World = FarmFraming(
+            targetY = -0.05f,
+            homeYaw = 0f,
+            homePitch = 0.30f,
+            homeDistance = 3.86f,
+            pitchMin = 0.18f,
+            pitchMax = 1.22f,
+            distanceMin = 1.2f,
+            distanceMax = 4.8f,
+        )
+
+        /**
+         * Farm-home (§5.2): target lifted for the bottom chrome and pulled back so the island reads
+         * as a habitat rather than a close-up (owner request: default zoom further away).
+         */
+        val Home = FarmFraming(
+            targetY = -0.12f,
+            homeYaw = 0f,
+            homePitch = 0.42f,
+            homeDistance = 4.20f,
+            pitchMin = 0.18f,
+            pitchMax = 1.10f,
+            distanceMin = 1.2f,
+            // Owner request: the maximum zoom-out has to reach well beyond the old default so the whole
+            // habitat can be taken in (the camera far plane is 20 units, so this stays safe).
+            distanceMax = 8.0f,
+        )
+    }
+}
+
+/**
  * Compose host for the 2.5D Digifarm scene.
  *
- * The Filament scene owns the island and the extruded Digimon models. Compose
- * above it only draws UI (speech bubbles, invisible tap targets, resident
- * controls) positioned with the same camera projection, so residents sit on
+ * The Filament scene owns the island and the extruded Digimon models. Compose above it only draws UI
+ * (speech bubbles, projected markers) positioned with the same camera projection, so residents sit on
  * the terrain with real depth and occlusion instead of floating over it.
+ *
+ * The surface is deliberately *not* keyed on [worldActive]: the caller can pause rendering (sheet
+ * expanded, place route covering it, app backgrounded) without paying an engine rebuild. Only the
+ * lifecycle/engine release paths tear the GL stack down.
  */
 @Composable
 fun Digifarm3dViewport(
@@ -89,15 +162,35 @@ fun Digifarm3dViewport(
     assetName: String = "digifarm/3d/digi_farm_3d.glb",
     onReady: ((Digifarm3dSceneView) -> Unit)? = null,
     onAssetError: ((String) -> Unit)? = null,
+    framing: FarmFraming = FarmFraming.World,
+    /** False pauses the frame loop; the surface and its Engine stay alive. */
+    worldActive: Boolean = true,
+    reduceMotion: Boolean = false,
+    onResidentTap: ((String) -> Unit)? = null,
+    onCameraIdle: ((FarmCameraState) -> Unit)? = null,
 ) {
     val backgroundColor = DeepPurpleBgAlt
     val appTheme = LocalAppTheme.current
+    // Callbacks are re-read on every recomposition (never captured once in the factory closure).
+    val currentOnReady by rememberUpdatedState(onReady)
+    val currentOnAssetError by rememberUpdatedState(onAssetError)
+    val currentOnResidentTap by rememberUpdatedState(onResidentTap)
+    val currentOnCameraIdle by rememberUpdatedState(onCameraIdle)
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    // The lifecycle observer is installed once per composition but must address whichever view the
+    // AndroidView currently owns, so the reference is a holder rather than a captured value.
+    val sceneRef = remember { java.util.concurrent.atomic.AtomicReference<Digifarm3dSceneView?>(null) }
     AndroidView(
         modifier = modifier,
         factory = { context ->
             FrameLayout(context).also { container ->
-                runCatching { Digifarm3dSceneView(context, backgroundColor, appTheme) }
+                runCatching { Digifarm3dSceneView(context, backgroundColor, appTheme, framing) }
                     .onSuccess { view ->
+                        view.reduceMotion = reduceMotion
+                        view.worldActive = worldActive
+                        view.onResidentTap = { id -> currentOnResidentTap?.invoke(id) }
+                        view.onCameraIdle = { state -> currentOnCameraIdle?.invoke(state) }
+                        sceneRef.set(view)
                         container.addView(
                             view,
                             FrameLayout.LayoutParams(
@@ -105,16 +198,16 @@ fun Digifarm3dViewport(
                                 ViewGroup.LayoutParams.MATCH_PARENT
                             )
                         )
-                        view.loadAsset(assetName, onAssetError)
+                        view.loadAsset(assetName, { message -> currentOnAssetError?.invoke(message) })
                         // Defer state callbacks until the AndroidView has been
                         // attached; mutating Compose state from the factory can
                         // otherwise race the first composition.
-                        container.post { onReady?.invoke(view) }
+                        container.post { currentOnReady?.invoke(view) }
                     }
                     .onFailure { failure ->
                         Log.e("Digifarm3d", "Could not create Digifarm scene view", failure)
                         container.post {
-                            onAssetError?.invoke(
+                            currentOnAssetError?.invoke(
                                 describeDigifarmFailure(
                                     failure,
                                     "Digifarm 3D renderer unavailable"
@@ -125,6 +218,7 @@ fun Digifarm3dViewport(
             }
         },
         onRelease = { container ->
+            sceneRef.set(null)
             (container.getChildAt(0) as? Digifarm3dSceneView)?.releaseScene()
             container.removeAllViews()
         },
@@ -133,17 +227,42 @@ fun Digifarm3dViewport(
             // Engine. Recreating the whole GL view here crashed on devices.
             (container.getChildAt(0) as? Digifarm3dSceneView)?.apply {
                 setTheme(appTheme)
-                switchAsset(assetName, onAssetError)
+                switchAsset(assetName, { message -> currentOnAssetError?.invoke(message) })
+                applyReduceMotionSetting(reduceMotion)
+                applyWorldActive(worldActive)
+                this.onResidentTap = { id -> currentOnResidentTap?.invoke(id) }
+                this.onCameraIdle = { state -> currentOnCameraIdle?.invoke(state) }
             }
         },
     )
+    // Lifecycle is an input of the frame gate: pausing on STOP is not optional for an always-mounted
+    // world surface (PRESENTATION_REDESIGN_PLAN §7 "Pause and frame budget").
+    DisposableEffect(lifecycle) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME, Lifecycle.Event.ON_START ->
+                    sceneRef.get()?.setLifecycleResumed(true)
+                Lifecycle.Event.ON_PAUSE, Lifecycle.Event.ON_STOP ->
+                    sceneRef.get()?.setLifecycleResumed(false)
+                else -> Unit
+            }
+        }
+        lifecycle.addObserver(observer)
+        // The view may have been created while the host was already resumed/paused.
+        sceneRef.get()?.setLifecycleResumed(
+            lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+        )
+        onDispose { lifecycle.removeObserver(observer) }
+    }
 }
+
 
 /** A TextureView is used so Compose bubbles can be layered above it. */
 class Digifarm3dSceneView(
     context: Context,
     backgroundColor: Color = AppTheme.VB_HELPER.palette.backgroundAlt,
     initialTheme: AppTheme = AppTheme.VB_HELPER,
+    private val framing: FarmFraming = FarmFraming.World,
 ) : TextureView(context) {
     private val logTag = "Digifarm3d"
     private val engine: Engine
@@ -165,6 +284,43 @@ class Digifarm3dSceneView(
     var onCameraChange: (() -> Unit)? = null
     private var lastNotifyNanos = 0L
 
+    /** Fired on the main thread when a resident is tapped; carries `individualId`. */
+    var onResidentTap: ((String) -> Unit)? = null
+
+    /** Fired when the user lets go of the camera, so the caller can persist yaw/pitch/dist/target. */
+    var onCameraIdle: ((FarmCameraState) -> Unit)? = null
+
+    // ---- Frame gate (PRESENTATION_REDESIGN_PLAN §7) ----
+
+    /** The host wants this surface rendered (route visible, HUD detent below expanded). */
+    var worldActive: Boolean = true
+        set(value) {
+            if (field == value) return
+            field = value
+            refreshFrameLoop()
+        }
+    private var lifecycleResumed = true
+    private var windowVisible = true
+    private val pacer = SceneFramePacer()
+    private var framePosted = false
+    private var startRetryPosted = false
+
+    /** True while a finger is down or within the short grace period after release. */
+    private var interacting = false
+    private var lastTouchNanos = 0L
+
+    // ---- Reduced motion (§7) ----
+
+    /** Honours the system animator setting: no island bob, no glow pulse, no pose cycling, cuts. */
+    var reduceMotion: Boolean = false
+        set(value) {
+            if (field == value) return
+            field = value
+            appliedStaticMotion = false
+            if (value) pacer.reset()
+        }
+    private var appliedStaticMotion = false
+
     /**
      * Resident id the camera follows; null = island center. Written from
      * Compose; consumed on the render thread each frame, so the target
@@ -175,11 +331,13 @@ class Digifarm3dSceneView(
     private var curTargetZ = TARGET_Z
     private var lastFollowFrameNanos = 0L
 
+    /** A drag/pinch suspends following until this instant (Q8: 5s), then it eases back (~600ms). */
+
     // Orbit camera with a bounded elevation and zoom. The island now has a
     // complete cliff around its perimeter, so horizontal orbit is unrestricted.
-    private var camYaw = HOME_YAW
-    private var camPitch = HOME_PITCH
-    private var camDist = HOME_DIST
+    private var camYaw = framing.homeYaw
+    private var camPitch = framing.homePitch
+    private var camDist = framing.homeDistance
     private var touchMode = TOUCH_NONE
     private var dragId = -1
     private var pinchId = -1
@@ -187,6 +345,15 @@ class Digifarm3dSceneView(
     private var lastY = 0f
     private var lastPinch = 0f
     private val tmpMat = FloatArray(16)
+
+    // Tap / double-tap tracking (single hit test, no per-resident Compose boxes).
+    private var downX = 0f
+    private var downY = 0f
+    private var downNanos = 0L
+    private var lastTapNanos = 0L
+    private var lastTapX = 0f
+    private var lastTapY = 0f
+    private val tapSlopPx = 18f * (context.resources?.displayMetrics?.density ?: 1f)
 
     private data class FloatingBlocks(
         val transformInstance: Int,
@@ -239,7 +406,16 @@ class Digifarm3dSceneView(
 
     private val frameCallback = object : Choreographer.FrameCallback {
         override fun doFrame(frameTimeNanos: Long) {
+            framePosted = false
             if (released) return
+            val tier = currentFrameTier(frameTimeNanos)
+            // Paused: stop rescheduling entirely. A state change (resume, touch, asset) restarts us,
+            // so a covered/backgrounded home costs literally zero main-thread frames.
+            if (tier == SceneFrameTier.Paused) return
+            if (!pacer.claim(frameTimeNanos, tier)) {
+                scheduleFrame(0L)
+                return
+            }
             loadNextResident()
             updateResidentMotion(frameTimeNanos)
             updateFollowTarget(frameTimeNanos)
@@ -249,8 +425,93 @@ class Digifarm3dSceneView(
             viewer.render(frameTimeNanos)
             environmentThemes.onFrame(viewer.progress >= 1f)
             notifyCameraChangeIfMoved(frameTimeNanos)
-            Choreographer.getInstance().postFrameCallback(this)
+            scheduleFrame(0L)
         }
+    }
+
+    private fun currentFrameTier(frameTimeNanos: Long): SceneFrameTier = SceneFrameBudget.tier(
+        SceneFrameInputs(
+            worldActive = worldActive,
+            lifecycleResumed = lifecycleResumed,
+            windowVisible = windowVisible,
+            surfaceAvailable = isAvailable && viewW > 0 && viewH > 0,
+            interacting = (frameTimeNanos - lastTouchNanos) in 0 until
+                SceneFrameBudget.INTERACTION_GRACE_NANOS,
+            animating = isAnimating(),
+        )
+    )
+
+    /** Anything that visibly changes this frame: streaming, walking, or the camera catching up. */
+    private fun isAnimating(): Boolean {
+        if (pendingFrames.isNotEmpty() || residentLoadQueue.isNotEmpty()) return true
+        for (entry in residents.values) if (entry.segmentActive) return true
+        val followed = followId?.let { residents[it] } ?: return false
+        return kotlin.math.abs(followed.visualX - curTargetX) > 0.002f ||
+            kotlin.math.abs(followed.visualZ - curTargetZ) > 0.002f
+    }
+
+    private fun scheduleFrame(delayMillis: Long) {
+        if (released || framePosted) return
+        framePosted = true
+        if (delayMillis <= 0L) Choreographer.getInstance().postFrameCallback(frameCallback)
+        else Choreographer.getInstance().postFrameCallbackDelayed(frameCallback, delayMillis)
+    }
+
+    /** Stops or restarts the loop from the gate inputs; safe to call from any state setter. */
+    private fun refreshFrameLoop() {
+        if (released) return
+        val paused = currentFrameTier(System.nanoTime()) == SceneFrameTier.Paused
+        if (paused) {
+            Choreographer.getInstance().removeFrameCallback(frameCallback)
+            framePosted = false
+            // The surface is not available yet right after the view is created, and nothing else
+            // calls back into here when it becomes available. Without this retry the world stayed
+            // paused forever and the farm rendered as an empty backdrop.
+            if (!isAvailable || viewW <= 0 || viewH <= 0) requestFrameLoopRetry()
+            return
+        }
+        pacer.reset()
+        scheduleFrame(0L)
+    }
+
+    /** Re-checks the gate shortly; used only while the texture surface is still coming up. */
+    private fun requestFrameLoopRetry() {
+        if (released || startRetryPosted) return
+        startRetryPosted = true
+        postDelayed({
+            startRetryPosted = false
+            refreshFrameLoop()
+        }, FRAME_START_RETRY_MILLIS)
+    }
+
+    fun setLifecycleResumed(resumed: Boolean) {
+        if (lifecycleResumed == resumed) return
+        lifecycleResumed = resumed
+        refreshFrameLoop()
+    }
+
+    fun applyReduceMotionSetting(value: Boolean) {
+        reduceMotion = value
+    }
+
+    fun applyWorldActive(active: Boolean) {
+        worldActive = active
+    }
+
+    override fun onWindowVisibilityChanged(visibility: Int) {
+        super.onWindowVisibilityChanged(visibility)
+        val visible = visibility == android.view.View.VISIBLE
+        if (windowVisible == visible) return
+        windowVisible = visible
+        refreshFrameLoop()
+    }
+
+    override fun onVisibilityChanged(changedView: android.view.View, visibility: Int) {
+        super.onVisibilityChanged(changedView, visibility)
+        val visible = visibility == android.view.View.VISIBLE
+        if (windowVisible == visible) return
+        windowVisible = visible
+        refreshFrameLoop()
     }
 
     init {
@@ -278,17 +539,20 @@ class Digifarm3dSceneView(
         // default background untouched keeps the surface transparent without
         // triggering TextureView.setBackgroundDrawable at runtime.
         setOnTouchListener { view, event ->
-            // The Compose screen is vertically scrollable so its lower
-            // controls remain reachable. Once a gesture starts on the 3D
-            // viewport, keep the parent from stealing orbit or pinch input.
+            // The legacy World screen is vertically scrollable so its lower
+            // controls remain reachable; the farm-home is not scrollable. In both
+            // cases, once a gesture starts on the 3D viewport, keep the parent
+            // from stealing orbit or pinch input.
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN,
                 MotionEvent.ACTION_POINTER_DOWN -> {
                     view.parent?.requestDisallowInterceptTouchEvent(true)
+                    markInteraction()
                 }
                 MotionEvent.ACTION_UP,
                 MotionEvent.ACTION_CANCEL -> {
                     view.parent?.requestDisallowInterceptTouchEvent(false)
+                    markInteraction()
                 }
             }
             if (!released && event.actionMasked == MotionEvent.ACTION_DOWN) {
@@ -296,7 +560,13 @@ class Digifarm3dSceneView(
             }
             if (!released) onTouchImpl(event) else false
         }
-        startFrames()
+        refreshFrameLoop()
+    }
+
+    /** Keeps the frame gate at full rate around a gesture, and restarts a paused loop. */
+    private fun markInteraction() {
+        lastTouchNanos = System.nanoTime()
+        if (currentFrameTier(lastTouchNanos) != SceneFrameTier.Paused) scheduleFrame(0L)
     }
 
     fun loadAsset(assetName: String, onAssetError: ((String) -> Unit)? = null) {
@@ -481,6 +751,11 @@ class Digifarm3dSceneView(
     }
 
     private fun updateFloatingBlocks(frameTimeNanos: Long) {
+        if (reduceMotion) {
+            // §7: no island bob, no glow pulse. Apply the static state exactly once.
+            if (!appliedStaticMotion) applyStaticMotion()
+            return
+        }
         if (floatingBlocks.isEmpty() && floatingCubes.isEmpty() &&
             floatingIsland == null && pulsingGlows.isEmpty()) return
         if (floatingStartNanos == 0L) floatingStartNanos = frameTimeNanos
@@ -512,6 +787,41 @@ class Digifarm3dSceneView(
             val strength = GLOW_BASE_INTENSITY + glow.amplitude * pulse
             if (!environmentThemes.updateEmission(glow.material, strength)) {
                 glow.material.setParameter("emissiveFactor", strength, strength, strength)
+            }
+        }
+    }
+
+    /**
+     * Reduced-motion static state (§7): the scene keeps its authored composition but stops bobbing,
+     * drifting and pulsing. Applied exactly once per motion-mode change, not per frame.
+     */
+    private fun applyStaticMotion() {
+        appliedStaticMotion = true
+        val manager = engine.transformManager
+        for (group in floatingBlocks) {
+            group.animated[12] = group.base[12]
+            group.animated[13] = group.base[13]
+            manager.setTransform(group.transformInstance, group.animated)
+        }
+        for (cube in floatingCubes) {
+            cube.animated[12] = cube.base[12]
+            cube.animated[13] = cube.base[13]
+            cube.animated[14] = cube.base[14]
+            manager.setTransform(cube.transformInstance, cube.animated)
+        }
+        floatingIsland?.let { island ->
+            islandFloatOffsetY = 0f
+            island.animated[13] = island.base[13]
+            manager.setTransform(island.transformInstance, island.animated)
+        }
+        pulsingGlows.forEach { glow ->
+            if (!environmentThemes.updateEmission(glow.material, GLOW_BASE_INTENSITY)) {
+                glow.material.setParameter(
+                    "emissiveFactor",
+                    GLOW_BASE_INTENSITY,
+                    GLOW_BASE_INTENSITY,
+                    GLOW_BASE_INTENSITY,
+                )
             }
         }
     }
@@ -674,9 +984,9 @@ class Digifarm3dSceneView(
 
     fun resetCamera() {
         if (released) return
-        camYaw = HOME_YAW
-        camPitch = HOME_PITCH
-        camDist = HOME_DIST
+        camYaw = framing.homeYaw
+        camPitch = framing.homePitch
+        camDist = framing.homeDistance
         followId = null
         curTargetX = TARGET_X
         curTargetZ = TARGET_Z
@@ -685,6 +995,58 @@ class Digifarm3dSceneView(
     /** Recenters the orbit on the island without touching zoom/angle. */
     fun clearFollow() {
         followId = null
+    }
+
+    /** Current camera, for persistence and for the host's "save on leave" path. */
+    fun currentCameraState(): FarmCameraState = FarmCameraState(
+        yaw = camYaw,
+        pitch = camPitch,
+        distance = camDist,
+        targetX = curTargetX,
+        targetZ = curTargetZ,
+    )
+
+    /**
+     * Restores a persisted orbit. Values outside the legal envelope (the legacy 2D defaults on a farm
+     * row that never saved a 3D camera) are ignored rather than clamped, so a first open always gets
+     * the framing contract instead of a garbage yaw.
+     */
+    fun applyCameraState(state: FarmCameraState) {
+        if (released || !state.isUsable()) return
+        val clamped = state.clamped()
+        camYaw = clamped.yaw
+        camPitch = clamped.pitch
+        camDist = clamped.distance
+        curTargetX = clamped.targetX
+        curTargetZ = clamped.targetZ
+        lastFollowFrameNanos = 0L
+        pacer.reset()
+        refreshFrameLoop()
+        applyCamera()
+    }
+
+    /**
+     * "Ease back onto the partner" (Q8/Q9): drops a pending drag override so the target starts
+     * heading for the followed resident immediately. Under reduced motion the target is cut instead
+     * of eased (§7).
+     */
+    fun recenterOnFollow() {
+        if (released) return
+        lastFollowFrameNanos = 0L
+        val followed = followId?.let { residents[it] }
+        if (followed != null && reduceMotion) {
+            curTargetX = followed.visualX
+            curTargetZ = followed.visualZ
+            applyCamera()
+        }
+        refreshFrameLoop()
+    }
+
+    /** Hands the settled camera to the host so it can persist it. */
+    private fun notifyCameraIdle() {
+        val callback = onCameraIdle ?: return
+        runCatching { callback(currentCameraState()) }
+            .onFailure { failure -> Log.w(logTag, "Camera idle callback failed", failure) }
     }
 
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
@@ -702,19 +1064,19 @@ class Digifarm3dSceneView(
             // farther than ~8 from the camera.
             viewer.cameraNear = DIGIFARM_NEAR
             viewer.cameraFar = DIGIFARM_FAR
+            // First layout is also the first moment the frame gate can accept frames: the surface
+            // had no size while init() ran, so it paused itself. Restart it here.
+            refreshFrameLoop()
         }
-    }
-
-    private fun startFrames() {
-        if (frameStarted) return
-        frameStarted = true
-        Choreographer.getInstance().postFrameCallback(frameCallback)
     }
 
     fun releaseScene() {
         if (released) return
+        // Persist the camera before the Engine goes away.
+        runCatching { onCameraIdle?.invoke(currentCameraState()) }
         released = true
         Choreographer.getInstance().removeFrameCallback(frameCallback)
+        framePosted = false
         destroyResidents()
         environmentThemes.release()
         releaseBackgroundSkybox()
@@ -727,6 +1089,7 @@ class Digifarm3dSceneView(
         if (!released) {
             released = true
             Choreographer.getInstance().removeFrameCallback(frameCallback)
+            framePosted = false
         }
         // Resident textures, assets and loaders must be freed BEFORE
         // ModelViewer's detach listener destroys the Engine.
@@ -751,6 +1114,9 @@ class Digifarm3dSceneView(
                 dragId = event.getPointerId(0)
                 lastX = event.x
                 lastY = event.y
+                downX = event.x
+                downY = event.y
+                downNanos = System.nanoTime()
                 pinchId = -1
                 touchMode = TOUCH_DRAG
             }
@@ -770,7 +1136,8 @@ class Digifarm3dSceneView(
                 if (touchMode == TOUCH_PINCH && pinchId != -1) {
                     val d = pinchDist(event)
                     if (d > 0f && lastPinch > 0f) {
-                        camDist = (camDist * lastPinch / d).coerceIn(DIST_MIN, DIST_MAX)
+                        camDist = (camDist * lastPinch / d)
+                            .coerceIn(framing.distanceMin, framing.distanceMax)
                     }
                     lastPinch = d
                     refreshDragAnchor(event)
@@ -782,9 +1149,13 @@ class Digifarm3dSceneView(
                         val nextYaw = camYaw - (x - lastX) * YAW_GAIN
                         camYaw = atan2(sin(nextYaw), cos(nextYaw))
                         camPitch = (camPitch + (y - lastY) * PITCH_GAIN)
-                            .coerceIn(PITCH_MIN, PITCH_MAX)
+                            .coerceIn(framing.pitchMin, framing.pitchMax)
                         lastX = x
                         lastY = y
+                        if (kotlin.math.abs(x - downX) > tapSlopPx ||
+                            kotlin.math.abs(y - downY) > tapSlopPx
+                        ) {
+                        }
                     }
                 }
             }
@@ -806,13 +1177,87 @@ class Digifarm3dSceneView(
                     touchMode = TOUCH_DRAG
                 }
             }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+            MotionEvent.ACTION_UP -> {
+                val upId = event.getPointerId(0)
+                val di = event.findPointerIndex(upId)
+                val upX = if (di >= 0) event.getX(di) else downX
+                val upY = if (di >= 0) event.getY(di) else downY
+                val moved = kotlin.math.abs(upX - downX) > tapSlopPx ||
+                    kotlin.math.abs(upY - downY) > tapSlopPx
+                if (!moved && System.nanoTime() - downNanos < TAP_TIMEOUT_NANOS) {
+                    handleTap(upX, upY)
+                } else {
+                    notifyCameraIdle()
+                }
+                touchMode = TOUCH_NONE
+                dragId = -1
+                pinchId = -1
+            }
+            MotionEvent.ACTION_CANCEL -> {
+                if (kotlin.math.abs(event.x - downX) > tapSlopPx ||
+                    kotlin.math.abs(event.y - downY) > tapSlopPx
+                ) {
+                    notifyCameraIdle()
+                }
                 touchMode = TOUCH_NONE
                 dragId = -1
                 pinchId = -1
             }
         }
         return true
+    }
+
+    /**
+     * Single hit test for residents (replaces the twelve invisible Compose boxes).
+     *
+     * A tap near a resident selects the nearest one by projected centre distance, within a radius
+     * derived from that resident's projected height so a big sprite is as easy to hit as a small one.
+     * A double tap anywhere recenters on the followed partner — the old explicit "Follow" button,
+     * now implicit (§5.2).
+     */
+    private fun handleTap(x: Float, y: Float) {
+        val now = System.nanoTime()
+        val density = resources.displayMetrics.density
+        val doubleTapRadius = 48f * density
+        if (now - lastTapNanos < DOUBLE_TAP_NANOS &&
+            kotlin.math.abs(x - lastTapX) < doubleTapRadius &&
+            kotlin.math.abs(y - lastTapY) < doubleTapRadius
+        ) {
+            lastTapNanos = 0L
+            recenterOnFollow()
+            return
+        }
+        lastTapNanos = now
+        lastTapX = x
+        lastTapY = y
+        val hit = findResidentAt(x, y, density) ?: return
+        val callback = onResidentTap ?: return
+        runCatching { callback(hit) }
+            .onFailure { failure -> Log.w(logTag, "Resident tap callback failed", failure) }
+    }
+
+    private fun findResidentAt(px: Float, py: Float, density: Float): String? {
+        if (viewW <= 0 || viewH <= 0) return null
+        var bestId: String? = null
+        var bestDistance = Float.MAX_VALUE
+        for ((id, entry) in residents) {
+            if (!entry.hasVisualPosition) continue
+            val foot = projectWorld(entry.visualX, 0f, entry.visualZ) ?: continue
+            val head = projectWorld(entry.visualX, RESIDENT_TAP_HEAD_Y, entry.visualZ) ?: continue
+            val heightPx = (foot.second - head.second).coerceAtLeast(24f)
+            val radius = (heightPx * 0.62f).coerceAtLeast(TAP_MIN_RADIUS_DP * density)
+            // Aim at the chest, not the feet: that is where the sprite's mass is.
+            val cx = (foot.first + head.first) * 0.5f
+            val cy = (foot.second + head.second) * 0.5f
+            val dx = px - cx
+            val dy = py - cy
+            val distance = sqrt(dx * dx + dy * dy)
+            if (distance <= radius && distance < bestDistance) {
+                bestDistance = distance
+                bestId = id
+            }
+        }
+        return bestId
     }
 
     private fun refreshDragAnchor(event: MotionEvent) {
@@ -835,20 +1280,43 @@ class Digifarm3dSceneView(
     private fun applyCamera() {
         val cp = cos(camPitch)
         val ex = curTargetX + camDist * cp * sin(camYaw)
-        val ey = TARGET_Y + camDist * sin(camPitch)
+        val ey = framing.targetY + camDist * sin(camPitch)
         val ez = curTargetZ + camDist * cp * cos(camYaw)
         viewer.camera.lookAt(
             ex.toDouble(), ey.toDouble(), ez.toDouble(),
-            curTargetX.toDouble(), TARGET_Y.toDouble(), curTargetZ.toDouble(),
+            curTargetX.toDouble(), framing.targetY.toDouble(), curTargetZ.toDouble(),
             0.0, 1.0, 0.0
         )
     }
 
-    /** Eases the orbit target toward the followed resident (or back home). */
+    /**
+     * Eases the orbit target toward the followed resident (or back home).
+     *
+     * The target is **always** locked to the followed resident (owner request: the camera must stay
+     * centred on the Digimon 100% of the time). A drag or pinch only changes the orbit angle and
+     * distance around that same lock, so looking around never parks the camera on empty island.
+     *
+     * Two states, in order:
+     *  1. the followed id is known but its GLB has not streamed in yet → hold the last target
+     *     instead of snapping to the island centre (the visible drift on open);
+     *  2. otherwise ease onto the resident. [FOLLOW_RESPONSE] keeps the resident under the crosshair
+     *     while it walks, and tracks it continuously.
+     */
     private fun updateFollowTarget(frameTimeNanos: Long) {
         val followed = followId?.let { residents[it] }
+        if (followId != null && followed == null) {
+            lastFollowFrameNanos = frameTimeNanos
+            return
+        }
         val tx = followed?.visualX ?: TARGET_X
         val tz = followed?.visualZ ?: TARGET_Z
+        if (reduceMotion) {
+            // Reduced motion: no camera easing at all.
+            curTargetX = tx
+            curTargetZ = tz
+            lastFollowFrameNanos = frameTimeNanos
+            return
+        }
         val deltaSeconds = if (lastFollowFrameNanos == 0L) 1.0 / 60.0 else
             (frameTimeNanos - lastFollowFrameNanos).coerceAtLeast(0L) / 1_000_000_000.0
         lastFollowFrameNanos = frameTimeNanos
@@ -1128,7 +1596,7 @@ class Digifarm3dSceneView(
         private const val PITCH_MAX = 1.22f
         private const val DIST_MIN = 1.2f
         private const val DIST_MAX = 4.8f
-        private const val FOLLOW_RESPONSE = 5.0
+        private const val FOLLOW_RESPONSE = 8.0
         private const val YAW_GAIN = 0.0016f
         private const val PITCH_GAIN = 0.0013f
         private const val TOUCH_NONE = 0
@@ -1136,6 +1604,21 @@ class Digifarm3dSceneView(
         private const val TOUCH_PINCH = 2
 
         private const val CAMERA_NOTIFY_MIN_NANOS = 120_000_000L
+
+        /** How long to wait before re-checking the frame gate while the surface is still coming up. */
+        private const val FRAME_START_RETRY_MILLIS = 150L
+
+        /** A press released inside this window and within the slop is a tap. */
+        private const val TAP_TIMEOUT_NANOS = 300_000_000L
+
+        /** Two taps inside this window and radius are a double tap (recenter). */
+        private const val DOUBLE_TAP_NANOS = 300_000_000L
+
+        /** Sprite height used to build the tap hit box: the extruded resident is ~0.13 units tall. */
+        private const val RESIDENT_TAP_HEAD_Y = 0.16f
+
+        /** Never make a resident harder to hit than this, regardless of how far the camera is. */
+        private const val TAP_MIN_RADIUS_DP = 26f
 
         @Synchronized
         private fun ensureFilament() {

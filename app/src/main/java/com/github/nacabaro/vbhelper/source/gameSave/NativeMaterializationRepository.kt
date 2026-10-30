@@ -3,11 +3,16 @@ package com.github.nacabaro.vbhelper.source.gameSave
 import androidx.room.withTransaction
 import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.domain.card.CardCharacter
+import com.github.nacabaro.vbhelper.domain.device_data.IndividualCharacters
 import com.github.nacabaro.vbhelper.domain.device_data.TransformationHistory
+import com.github.nacabaro.vbhelper.domain.species.SpeciesProfile
+import com.github.nacabaro.vbhelper.domain.species.SpeciesSource
 import com.github.nacabaro.vbhelper.domain.transfer.*
+import com.github.nacabaro.vbhelper.gamesave.NdsStoryProfiles
 import com.github.nacabaro.vbhelper.gamesave.ObservedDigimon
 import com.github.nacabaro.vbhelper.gamesave.WorldDsSaveReader
 import com.github.nacabaro.vbhelper.gamesave.WorldDsStatConversion
+import com.github.nacabaro.vbhelper.gamesave.WorldDsSpeciesStages
 import com.github.nacabaro.vbhelper.species.*
 import com.github.nacabaro.vbhelper.utils.DeviceType
 import com.google.gson.Gson
@@ -209,13 +214,18 @@ class NativeMaterializationRepository(
         }
     }
 
+    /** World DS layout gate; the conversion below is DS1-policy-specific until its own adapter lands. */
+    private fun isWorldDsBinding(binding: ExternalIndividualBinding): Boolean =
+        binding.gameId == NdsStoryProfiles.WORLD_DS.gameId &&
+            binding.formatProfile == NdsStoryProfiles.WORLD_DS.formatProfile
+
     /**
      * First materialization of a World DS record seeds the app partner with the reverse-converted
      * values. Wrapped in the projection guard so the seed is never counted as fresh app progress.
      */
     private suspend fun applyWorldDsInitialStats(snapshot: NativeGameSnapshot, binding: ExternalIndividualBinding,
         definition: CardCharacter) {
-        if (binding.gameId != WorldDsSaveReader.GAME_ID) return
+        if (!isWorldDsBinding(binding)) return
         val record = gson.fromJson(snapshot.recordJson, ObservedDigimon::class.java)
         val native = WorldDsReceiveConversion.nativeStats(record) ?: return
         val reading = WorldDsAppStatsReader.read(db, snapshot.individualId) ?: return
@@ -223,7 +233,7 @@ class NativeMaterializationRepository(
             stage = definition.stage.coerceIn(0, 5), baseHp = definition.baseHp, baseBp = definition.baseBp, baseAp = definition.baseAp))
         UniversalJourneyRepository(db).projection(snapshot.individualId, "world-ds-initial:${snapshot.id}") {
             val character = db.userCharacterDao().getByIndividualIdSync(snapshot.individualId)
-                .firstOrNull { it.characterType == DeviceType.APP } ?: return@projection
+                .let(IndividualCharacters::representative) ?: return@projection
             db.userCharacterDao().updateCharacter(character.copy(mood = converted.mood, vitalPoints = converted.vitalPoints,
                 trophies = converted.trophies, totalBattlesWon = converted.wins, totalBattlesLost = converted.losses,
                 activityLevel = converted.activityLevel))
@@ -243,29 +253,71 @@ class NativeMaterializationRepository(
         canonicalAuthority: String = "GAME_TABLE"): Boolean = withContext(Dispatchers.IO) {
         val snapshot = dao.snapshot(snapshotId) ?: return@withContext false
         val binding = dao.binding(snapshot.bindingId) ?: return@withContext false
-        if (binding.gameId != WorldDsSaveReader.GAME_ID) return@withContext false
+        if (!isWorldDsBinding(binding)) return@withContext false
         val record = gson.fromJson(snapshot.recordJson, ObservedDigimon::class.java)
         val current = WorldDsReceiveConversion.nativeStats(record) ?: return@withContext false
-        val reading = WorldDsAppStatsReader.read(db, snapshot.individualId) ?: return@withContext false
+        val reading = WorldDsAppStatsReader.read(db, snapshot.individualId)
         val projection = db.transferContinuityDao().projection(snapshot.individualId)
         val previous = projection?.takeIf { it.nativeSnapshotId != snapshot.id }?.let { saved ->
             dao.snapshot(saved.nativeSnapshotId)?.let { gson.fromJson(it.recordJson, ObservedDigimon::class.java) }
         }
         val previousStats = previous?.let(WorldDsReceiveConversion::nativeStats)
-        val updated = previousStats?.let { WorldDsStatConversion.applyDelta(it, current, reading.appStats) }
         val existingMapping = dao.mapping(snapshot.id)?.takeIf { it.nativeSpeciesId == record.nativeSpeciesId }
-        val canonical = canonicalSpeciesId
-            ?: existingMapping?.canonicalSpeciesId
-            ?: NativeSpeciesResolution.tableIdentity(binding.gameId, binding.formatProfile, snapshot.codecVersion,
-                record.nativeSpeciesId, worldDsSpecies, catalog())
+        val tableCanonical = NativeSpeciesResolution.tableIdentity(binding.gameId, binding.formatProfile,
+            snapshot.codecVersion, record.nativeSpeciesId, worldDsSpecies, catalog())
+        // The current native record is the authority on the form.
+        // 1) If the game's own species table resolves a catalog species, use it (unless user explicitly confirmed otherwise).
+        // 2) If the table has no entry for this DS form, create a synthetic definition for the DS name.
+        // 3) Only fall back to a caller-supplied canonical if the table has no entry AND it's a user confirmation.
+        val canonical: String? = when {
+            tableCanonical != null && canonicalAuthority != "USER_CONFIRMED" -> tableCanonical
+            tableCanonical != null -> tableCanonical
+            canonicalSpeciesId != null && canonicalAuthority == "USER_CONFIRMED" -> canonicalSpeciesId
+            else -> null
+        }
         val target = canonical?.let { id -> runCatching { NativeCanonicalMappingPolicy.target(catalog(), id) }.getOrNull() }
-        val definition = target?.let { species -> runCatching { prepareDefinition(species.id) }.getOrNull() }
+        val definition = target?.let { species ->
+            runCatching { prepareDefinition(species.id) }.getOrNull()
+                ?: db.characterDao().getById(ExpandedCatalogRepository.definitionId(species.id))
+                ?: ensureCatalogDefinition(species)
+        }
+        val dsName = worldDsSpecies?.name(record.nativeSpeciesId)
+        val syntheticDefinition = if (definition == null && target == null && dsName != null) {
+            ensureSyntheticDefinition(dsName, record.nativeSpeciesId, reading?.appStats)
+        } else null
+        val effectiveDefinition = definition ?: syntheticDefinition
+        val effectiveTargetId = target?.id ?: syntheticDefinition?.speciesId
+        val updated = reading?.let { appReading ->
+            val bases = effectiveDefinition?.let {
+                appReading.appStats.copy(stage = it.stage.coerceIn(0, 5), baseHp = it.baseHp,
+                    baseBp = it.baseBp, baseAp = it.baseAp)
+            } ?: appReading.appStats
+            if (previousStats != null) {
+                val delta = WorldDsStatConversion.applyDelta(previousStats, current, bases)
+                if (previous.nativeSpeciesId != record.nativeSpeciesId) {
+                    // A DS evolution may change the stored level; never let it erase the level the
+                    // app partner had before the form change.
+                    delta.copy(vitalPoints = maxOf(bases.vitalPoints,
+                        WorldDsStatConversion.vitalPointsForLevel(current.level)))
+                } else delta
+            } else {
+                // No checkpoint exists yet (for example a partner created outside the transfer
+                // baseline). Seed from the native record exactly like first materialization instead
+                // of leaving an unrelated app level behind.
+                val seeded = WorldDsStatConversion.toApp(current, bases)
+                bases.copy(trainingHp = seeded.trainingHp, trainingBp = seeded.trainingBp,
+                    trainingAp = seeded.trainingAp, vitalPoints = seeded.vitalPoints, mood = seeded.mood,
+                    trophies = seeded.trophies, wins = seeded.wins, losses = seeded.losses,
+                    activityLevel = seeded.activityLevel)
+            }
+        }
         var changed = false
         db.withTransaction {
             if (updated != null) {
                 UniversalJourneyRepository(db).projection(snapshot.individualId, "world-ds-return:${snapshot.id}") {
-                    val character = db.userCharacterDao().getByIndividualIdSync(snapshot.individualId)
-                        .firstOrNull { it.characterType == DeviceType.APP } ?: return@projection
+                    val characters = db.userCharacterDao().getByIndividualIdSync(snapshot.individualId)
+                    val character = IndividualCharacters.representative(characters)
+                        ?: return@projection
                     db.userCharacterDao().updateCharacter(character.copy(vitalPoints = updated.vitalPoints,
                         trophies = updated.trophies, totalBattlesWon = updated.wins, totalBattlesLost = updated.losses,
                         activityLevel = updated.activityLevel))
@@ -277,58 +329,91 @@ class NativeMaterializationRepository(
                 }
                 changed = true
             }
-            val character = db.userCharacterDao().getByIndividualIdSync(snapshot.individualId)
-                .firstOrNull { it.characterType == DeviceType.APP }
+            val characters = db.userCharacterDao().getByIndividualIdSync(snapshot.individualId)
+            val character = IndividualCharacters.representative(characters)
             val individual = db.digimonIndividualDao().getIndividual(snapshot.individualId)
-            if (definition != null && target != null && character != null) {
-                val speciesChanged = character.charId != definition.id || individual?.speciesName != target.id
+            if (effectiveDefinition != null && character != null && effectiveTargetId != null) {
+                // If the partner is associated with a DIM/BEM card, prefer the evolved form on that same card.
+                // When the card has no such form, fall back to the non-DIM catalog definition.
+                val currentDefinition = db.characterDao().getById(character.charId)
+                val associatedCardId = currentDefinition?.cardId
+                    ?: character.exportCardCharacterId?.let { db.characterDao().getById(it)?.cardId }
+                val dimSlot = associatedCardId?.let { cardId ->
+                    db.characterDao().getAllCharacters().firstOrNull { slot ->
+                        slot.cardId == cardId &&
+                            (slot.speciesId == effectiveTargetId || slot.catalogSpeciesId == effectiveTargetId)
+                    }
+                }
+                // An APP partner keeps its catalog definition and only points its DIM export at the slot.
+                // A device partner is the DIM slot itself, so it moves onto the matching slot when present.
+                val isApp = character.characterType == DeviceType.APP
+                val appliedDefinition = if (isApp) effectiveDefinition else (dimSlot ?: effectiveDefinition)
+                val newExportTarget = if (isApp) {
+                    when {
+                        dimSlot != null -> dimSlot.id
+                        character.exportCardCharacterId == null -> null
+                        character.exportCardCharacterId == character.charId -> effectiveDefinition.id
+                        else -> null
+                    }
+                } else character.exportCardCharacterId
+                val speciesChanged = character.charId != appliedDefinition.id || individual?.speciesName != effectiveTargetId
                 if (speciesChanged) {
-                    db.userCharacterDao().updateCharacter(character.copy(charId = definition.id,
-                        exportCardCharacterId = if (character.exportCardCharacterId == character.charId)
-                            definition.id else character.exportCardCharacterId))
-                    db.digimonIndividualDao().updateSpeciesName(snapshot.individualId, target.id)
-                    if (character.charId != definition.id) {
+                    db.userCharacterDao().updateCharacter(character.copy(charId = appliedDefinition.id,
+                        exportCardCharacterId = newExportTarget))
+                    db.digimonIndividualDao().updateSpeciesName(snapshot.individualId, effectiveTargetId)
+                    if (character.charId != appliedDefinition.id) {
                         db.userCharacterDao().insertTransformationHistory(TransformationHistory(
-                            monId = character.id, stageId = definition.id, transformationDate = clock()))
+                            monId = character.id, stageId = appliedDefinition.id, transformationDate = clock()))
                     }
                     changed = true
                 }
-                if (existingMapping == null || (existingMapping.authority != "USER_CONFIRMED" &&
-                        existingMapping.canonicalSpeciesId != target.id)) {
-                    dao.saveMapping(NativeCanonicalMapping(snapshot.id, record.nativeSpeciesId, target.id,
+                if (target != null && (existingMapping == null || (existingMapping.authority != "USER_CONFIRMED" &&
+                        existingMapping.canonicalSpeciesId != effectiveTargetId))) {
+                    dao.saveMapping(NativeCanonicalMapping(snapshot.id, record.nativeSpeciesId, effectiveTargetId,
                         canonicalAuthority, clock()))
                 }
                 dao.receipt(snapshot.individualId)?.let { receipt ->
-                    if (receipt.snapshotId != snapshot.id || receipt.canonicalSpeciesId != target.id ||
-                        receipt.definitionId != definition.id || receipt.characterId != character.id) {
-                        dao.updateReceipt(receipt.copy(snapshotId = snapshot.id, canonicalSpeciesId = target.id,
-                            definitionId = definition.id, characterId = character.id))
+                    if (receipt.snapshotId != snapshot.id || receipt.canonicalSpeciesId != effectiveTargetId ||
+                        receipt.definitionId != effectiveDefinition.id || receipt.characterId != character.id) {
+                        dao.updateReceipt(receipt.copy(snapshotId = snapshot.id, canonicalSpeciesId = effectiveTargetId,
+                            definitionId = effectiveDefinition.id, characterId = character.id))
                         changed = true
                     }
                 }
             }
-            if (projection != null && (updated != null || (definition != null &&
-                    (projection.stage != definition.stage || projection.baseHp != definition.baseHp ||
-                        projection.baseBp != definition.baseBp || projection.baseAp != definition.baseAp ||
-                        projection.nativeSnapshotId != snapshot.id)))) {
-                val stats = updated
-                val progress = db.appPartnerStateDao().state(snapshot.individualId)
-                val latestCharacter = db.userCharacterDao().getByIndividualIdSync(snapshot.individualId)
-                    .firstOrNull { it.characterType == DeviceType.APP }
-                val stage = definition?.stage ?: reading.stage
-                val baseHp = definition?.baseHp ?: reading.baseHp
-                val baseBp = definition?.baseBp ?: reading.baseBp
-                val baseAp = definition?.baseAp ?: reading.baseAp
-                db.transferContinuityDao().saveProjection(projection.copy(nativeSnapshotId = snapshot.id,
-                    stage = stage, baseHp = baseHp, baseBp = baseBp, baseAp = baseAp,
-                    trainingHp = stats?.trainingHp ?: progress?.trainingHp ?: 0,
-                    trainingAp = stats?.trainingAp ?: progress?.trainingAp ?: 0,
-                    trainingBp = stats?.trainingBp ?: progress?.trainingBp ?: 0,
-                    vitalPoints = latestCharacter?.vitalPoints ?: 0,
-                    wins = latestCharacter?.totalBattlesWon ?: 0,
-                    losses = latestCharacter?.totalBattlesLost ?: 0,
-                    baselineDeltaId = db.transferContinuityDao().lastDelta(snapshot.individualId),
-                    recordedAt = clock(), originBasisPoints = projection.originBasisPoints))
+            val stats = updated
+            val progress = db.appPartnerStateDao().state(snapshot.individualId)
+            val latestCharacter = db.userCharacterDao().getByIndividualIdSync(snapshot.individualId)
+                .let(IndividualCharacters::representative)
+            val stage = effectiveDefinition?.stage ?: reading?.stage ?: 0
+            val baseHp = effectiveDefinition?.baseHp ?: reading?.baseHp ?: 0
+            val baseBp = effectiveDefinition?.baseBp ?: reading?.baseBp ?: 0
+            val baseAp = effectiveDefinition?.baseAp ?: reading?.baseAp ?: 0
+            val needsProjection = stats != null || effectiveDefinition != null &&
+                (projection == null || projection.stage != stage || projection.baseHp != baseHp ||
+                    projection.baseBp != baseBp || projection.baseAp != baseAp ||
+                    projection.nativeSnapshotId != snapshot.id)
+            if (needsProjection) {
+                val vitalPoints = latestCharacter?.vitalPoints ?: 0
+                val wins = latestCharacter?.totalBattlesWon ?: 0
+                val losses = latestCharacter?.totalBattlesLost ?: 0
+                val trainingHp = stats?.trainingHp ?: progress?.trainingHp ?: 0
+                val trainingAp = stats?.trainingAp ?: progress?.trainingAp ?: 0
+                val trainingBp = stats?.trainingBp ?: progress?.trainingBp ?: 0
+                val baselineDeltaId = db.transferContinuityDao().lastDelta(snapshot.individualId)
+                if (projection == null) {
+                    db.transferContinuityDao().saveProjection(NativeAppProjection(snapshot.individualId,
+                        snapshot.id, WorldDsStatConversion.VERSION, "APP_RETURN_VALUES", stage, baseHp, baseBp,
+                        baseAp, trainingHp, trainingAp, trainingBp, vitalPoints, wins, losses, baselineDeltaId,
+                        clock(), progress?.originBasisPoints ?: 10000))
+                } else {
+                    db.transferContinuityDao().saveProjection(projection.copy(nativeSnapshotId = snapshot.id,
+                        stage = stage, baseHp = baseHp, baseBp = baseBp, baseAp = baseAp,
+                        trainingHp = trainingHp, trainingAp = trainingAp, trainingBp = trainingBp,
+                        vitalPoints = vitalPoints, wins = wins, losses = losses,
+                        baselineDeltaId = baselineDeltaId, recordedAt = clock(),
+                        originBasisPoints = projection.originBasisPoints))
+                }
                 changed = true
             }
         }
@@ -341,61 +426,149 @@ class NativeMaterializationRepository(
      */
     suspend fun reconcileReturnedSpecies(): Int = withContext(Dispatchers.IO) {
         if (worldDsSpecies == null) return@withContext 0
-        val bindings = db.nativeGameArchiveDao().allBindings().filter { it.gameId == WorldDsSaveReader.GAME_ID }
+        val bindings = db.nativeGameArchiveDao().allBindings().filter(::isWorldDsBinding)
         if (bindings.isEmpty()) return@withContext 0
         val byId = bindings.associateBy { it.bindingId }
         var repaired = 0
         for (snapshot in db.nativeGameArchiveDao().latestSnapshots(bindings.map { it.bindingId })) {
             val binding = byId[snapshot.bindingId] ?: continue
-            val character = db.userCharacterDao().getByIndividualIdSync(snapshot.individualId)
-                .firstOrNull { it.characterType == DeviceType.APP } ?: continue
+            val characters = db.userCharacterDao().getByIndividualIdSync(snapshot.individualId)
+            val character = IndividualCharacters.representative(characters)
+                ?: continue
             val individual = db.digimonIndividualDao().getIndividual(snapshot.individualId) ?: continue
             val record = runCatching { gson.fromJson(snapshot.recordJson, ObservedDigimon::class.java) }.getOrNull()
                 ?: continue
             val mapping = dao.mapping(snapshot.id)
             if (mapping?.authority == "USER_CONFIRMED" && mapping.nativeSpeciesId == record.nativeSpeciesId) continue
+            // Only a catalog-resolvable form can be repaired automatically. An unresolved name may
+            // have been mapped by the user to a real species; never replace that with a placeholder.
             val canonical = NativeSpeciesResolution.tableIdentity(binding.gameId, binding.formatProfile,
                 snapshot.codecVersion, record.nativeSpeciesId, worldDsSpecies, catalog()) ?: continue
-            if (character.charId == ExpandedCatalogRepository.definitionId(canonical) && individual.speciesName == canonical)
-                continue
-            val definition = runCatching { prepareDefinition(canonical) }.getOrNull() ?: continue
+            val definition = runCatching { prepareDefinition(canonical) }.getOrNull()
+                ?: db.characterDao().getById(ExpandedCatalogRepository.definitionId(canonical))
+                ?: ensureCatalogDefinition(requireNotNull(NativeCanonicalMappingPolicy.target(catalog(), canonical)))
+            val speciesId = canonical
+            val currentDefinition = db.characterDao().getById(character.charId)
+            val associatedCardId = currentDefinition?.cardId
+                ?: character.exportCardCharacterId?.let { db.characterDao().getById(it)?.cardId }
+            val dimSlot = associatedCardId?.let { cardId ->
+                db.characterDao().getAllCharacters().firstOrNull { slot ->
+                    slot.cardId == cardId && (slot.speciesId == speciesId || slot.catalogSpeciesId == speciesId)
+                }
+            }
+            val isApp = character.characterType == DeviceType.APP
+            val appliedDefinition = if (isApp) definition else (dimSlot ?: definition)
+            if (character.charId == appliedDefinition.id && individual.speciesName == speciesId) continue
             db.withTransaction {
                 val current = db.userCharacterDao().getByIndividualIdSync(snapshot.individualId)
-                    .firstOrNull { it.characterType == DeviceType.APP } ?: return@withTransaction
-                val speciesChanged = current.charId != definition.id || individual.speciesName != canonical
+                    .let(IndividualCharacters::representative)
+                    ?: return@withTransaction
+                val newExportTarget = if (isApp) {
+                    when {
+                        dimSlot != null -> dimSlot.id
+                        current.exportCardCharacterId == null -> null
+                        current.exportCardCharacterId == current.charId -> appliedDefinition.id
+                        else -> null
+                    }
+                } else current.exportCardCharacterId
+                val speciesChanged = current.charId != appliedDefinition.id || individual.speciesName != speciesId
                 if (speciesChanged) {
-                    db.userCharacterDao().updateCharacter(current.copy(charId = definition.id,
-                        exportCardCharacterId = if (current.exportCardCharacterId == current.charId)
-                            definition.id else current.exportCardCharacterId))
-                    db.digimonIndividualDao().updateSpeciesName(snapshot.individualId, canonical)
-                    if (current.charId != definition.id) {
+                    db.userCharacterDao().updateCharacter(current.copy(charId = appliedDefinition.id,
+                        exportCardCharacterId = newExportTarget))
+                    db.digimonIndividualDao().updateSpeciesName(snapshot.individualId, speciesId)
+                    if (current.charId != appliedDefinition.id) {
                         db.userCharacterDao().insertTransformationHistory(TransformationHistory(
-                            monId = current.id, stageId = definition.id, transformationDate = clock()))
+                            monId = current.id, stageId = appliedDefinition.id, transformationDate = clock()))
                     }
                 }
-                if (mapping?.authority != "USER_CONFIRMED") {
+                if (canonical != null && mapping?.authority != "USER_CONFIRMED") {
                     dao.saveMapping(NativeCanonicalMapping(snapshot.id, record.nativeSpeciesId, canonical,
                         "GAME_TABLE", clock()))
                 }
                 dao.receipt(snapshot.individualId)?.let { receipt ->
-                    if (receipt.snapshotId != snapshot.id || receipt.canonicalSpeciesId != canonical ||
-                        receipt.definitionId != definition.id || receipt.characterId != current.id) {
-                        dao.updateReceipt(receipt.copy(snapshotId = snapshot.id, canonicalSpeciesId = canonical,
-                            definitionId = definition.id, characterId = current.id))
+                    if (receipt.snapshotId != snapshot.id || receipt.canonicalSpeciesId != speciesId ||
+                        receipt.definitionId != appliedDefinition.id || receipt.characterId != current.id) {
+                        dao.updateReceipt(receipt.copy(snapshotId = snapshot.id, canonicalSpeciesId = speciesId,
+                            definitionId = appliedDefinition.id, characterId = current.id))
                     }
                 }
                 db.transferContinuityDao().projection(snapshot.individualId)?.let { saved ->
-                    if (saved.nativeSnapshotId != snapshot.id || saved.stage != definition.stage ||
-                        saved.baseHp != definition.baseHp || saved.baseBp != definition.baseBp ||
-                        saved.baseAp != definition.baseAp) {
+                    if (saved.nativeSnapshotId != snapshot.id || saved.stage != appliedDefinition.stage ||
+                        saved.baseHp != appliedDefinition.baseHp || saved.baseBp != appliedDefinition.baseBp ||
+                        saved.baseAp != appliedDefinition.baseAp) {
                         db.transferContinuityDao().saveProjection(saved.copy(nativeSnapshotId = snapshot.id,
-                            stage = definition.stage, baseHp = definition.baseHp, baseBp = definition.baseBp,
-                            baseAp = definition.baseAp, recordedAt = clock()))
+                            stage = appliedDefinition.stage, baseHp = appliedDefinition.baseHp,
+                            baseBp = appliedDefinition.baseBp, baseAp = appliedDefinition.baseAp, recordedAt = clock()))
                     }
                 }
             }
             repaired++
         }
         repaired
+    }
+
+    /**
+     * Minimal catalog identity used when the normal artwork preparation is unavailable. The
+     * deterministic catalog id and species binding let a later catalog pass upgrade it in place.
+     */
+    private suspend fun ensureCatalogDefinition(species: CanonicalSpeciesDto): CardCharacter {
+        val id = ExpandedCatalogRepository.definitionId(species.id)
+        db.characterDao().getById(id)?.let { return it }
+        val stats = CatalogGameplayProfile.stats(species)
+        val model = CardCharacter(
+            id = id,
+            cardId = null,
+            spriteId = PlaceholderSprite.ID.toLong(),
+            charaIndex = 0,
+            stage = CatalogGameplayProfile.tier(species),
+            attribute = com.github.cfogrady.vbnfc.data.NfcCharacter.Attribute.None,
+            baseHp = stats.first,
+            baseBp = stats.second,
+            baseAp = stats.third,
+            nameSprite = byteArrayOf(0xe0.toByte(), 7),
+            nameWidth = 1,
+            nameHeight = 1,
+            speciesId = species.id,
+            catalogSpeciesId = species.id
+        )
+        db.characterDao().insertCharacter(model)
+        val inserted = requireNotNull(db.characterDao().getById(id))
+        if (db.speciesProfileDao().getByCardCharacterId(id) == null) {
+            db.speciesProfileDao().upsert(SpeciesProfile(id, species.name, species.name, species.level,
+                species.type, source = SpeciesSource.OFFICIAL_MATCHED))
+        }
+        return inserted
+    }
+
+    /**
+     * A genuine DS form the bundled catalog does not know still has to be shown as itself. The row is
+     * persisted so the partner's character reference is valid; it never claims a catalog identity.
+     */
+    private suspend fun ensureSyntheticDefinition(dsName: String, nativeSpeciesId: Long,
+        bases: WorldDsStatConversion.AppStats?): CardCharacter {
+        val syntheticId = NativeSpeciesResolution.unresolvedIdentity(dsName)
+        db.characterDao().getBySpeciesId(syntheticId)?.let { return it }
+        val model = CardCharacter(
+            id = 0,
+            cardId = null,
+            spriteId = PlaceholderSprite.ID.toLong(),
+            charaIndex = 0,
+            stage = WorldDsSpeciesStages.recordStage(nativeSpeciesId).coerceIn(0, 5),
+            attribute = com.github.cfogrady.vbnfc.data.NfcCharacter.Attribute.None,
+            baseHp = bases?.baseHp ?: 0,
+            baseBp = bases?.baseBp ?: 0,
+            baseAp = bases?.baseAp ?: 0,
+            nameSprite = dsName.toByteArray(),
+            nameWidth = dsName.length,
+            nameHeight = 1,
+            speciesId = syntheticId,
+            catalogSpeciesId = null
+        )
+        val rowId = db.characterDao().insertCharacterReturning(model)
+        val inserted = requireNotNull(db.characterDao().getById(rowId))
+        if (db.speciesProfileDao().getByCardCharacterId(inserted.id) == null) {
+            db.speciesProfileDao().upsert(SpeciesProfile(inserted.id, dsName, dsName, source = SpeciesSource.MANUAL))
+        }
+        return inserted
     }
 }

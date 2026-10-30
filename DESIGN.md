@@ -339,6 +339,44 @@ A Activity usa `adjustResize` para manter cabeçalho e compositor na área dispo
 sem deslocar a janela por pan. Diálogos de edição usam limites da janela, conteúdo
 rolável e ações que podem quebrar linha. O fechamento dos detalhes de Storage permanece acessível fora da lista de ações.
 
+### Farm home shell
+
+Home is the Digifarm: the 3D habitat fills the window edge-to-edge, and the app chrome floats over
+it instead of framing it. The compact bottom navigation is retired; navigation happens on the world.
+
+- **Top zone:** one solid cut-corner shelf rather than floating pills. Left: farm identity (home
+  glyph, resident count, roster chevron — it opens who-is-here, not a farm manager). Right: bits with a
+  coin glyph, quests, settings gear and menu. Utility actions use Material vectors, never hand-drawn
+  glyphs, and the shelf guarantees contrast over a moving scene.
+- **Command deck:** five 56dp cut-corner place tiles — Radar, Arena, DigiLine, Shop, Partners — each
+  with its visible label. Cyan marks the current or actionable place; badges appear only while
+  something is actually waiting. The menu sheet carries Quests, Dex, Items, Adventure, Transfer,
+  Credits, Viewer, Lorebook and Settings.
+- **Partner deck:** a 96dp slab that doubles as the drag handle, over a three-detent sheet (peek
+  96dp, half 44%, expanded 96%). Half and expanded are non-modal and reuse the existing
+  partner-overview modules unchanged; only expanded scrims. Back collapses Expanded → Half → Peek
+  before the system leaves the app.
+- **Gesture ownership:** the slab claims its drag area above the navigation-bar strip with
+  `systemGestureExclusion`, so pulling the sheet up is never read as the system Home gesture. Drags
+  on the 3D surface belong to the camera; drags on chrome belong to the sheet; nothing else.
+- **Camera:** the active partner is followed by default, a drag or pinch overrides for five seconds
+  and then eases back over 600ms. The followed resident stays between 30% and 52% of viewport height
+  so the bottom chrome never covers it.
+- **Frame budget:** rendering pauses when a place covers Home or the app leaves the foreground, runs
+  at 30fps idle and 60fps during interaction, and honours reduced motion by stopping the island bob,
+  glow pulse and pose cycling.
+- **Content rule — the diorama is not a simulation:** there is exactly one home farm. It shows the
+  active partner plus the stored favourites, up to twelve, rotating at random when the favourites
+  exceed that. Nothing on the island writes progress, consumes time or asks for care. Residents run
+  their own rhythms rather than one shared clock — each wanders, rests, trains, plays or idles on its
+  own timing — and pairs walk up to each other, face, share a celebration and drift apart so the
+  island reads as a living group. Tapping one offers only the camera or a chat. Farm
+  creation, switching, needs, activities, grouping and autonomous farm dialogue are retired from the
+  home surface; their stored data is left untouched rather than migrated or deleted.
+
+Place destinations keep the instrument TopBanner and their own back behaviour; leaving a place
+returns to the farm, which remains the single entry point for the collection and the menu.
+
 ### Readiness and feedback
 
 Home distingue carregamento, configuração incompleta, coleção vazia, escolha de
@@ -372,7 +410,8 @@ suppresses extra app/origin bonuses while assigned. Native baselines and earned 
 separate, so display/configuration changes cannot create gains or rewrite native
 originals. Normalization policy numbers are authored rules, not device measurements.
 
-The compact shell has Home, Storage, Dex, World and More (five touch targets).
+The farm home is the compact shell: the Digifarm fills Home, places are reached from its command
+deck and menu, and the phone bottom navigation bar is retired (see **Farm home shell**).
 Home's upper-left Transfer action is being redesigned from PKForge's library/editor/
 bank references into a **vertical origin list**. Games, Vital Bracelet and every other
 supported Digimon origin are peer rows. DS entries use the recognizable DS launcher

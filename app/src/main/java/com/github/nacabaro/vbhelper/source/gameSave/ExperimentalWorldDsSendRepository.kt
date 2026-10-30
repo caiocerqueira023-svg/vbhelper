@@ -61,7 +61,9 @@ class ExperimentalWorldDsSendRepository(
     private val journal = ExperimentalEditJournal(journalDirectory, ExperimentalSendRecord::class.java)
     private val mutex = Mutex()
     private val gson = Gson()
-    private val profile = GameImportAcquisitionRepository.productionProfiles.single { it.gameId == WorldDsSaveReader.GAME_ID }
+    private val profile = GameImportAcquisitionRepository.productionProfiles.single {
+        it.matches(NdsStoryProfiles.WORLD_DS.gameId, NdsStoryProfiles.WORLD_DS.formatProfile, NdsStoryProfiles.WORLD_DS.codecVersion)
+    }
 
     suspend fun backups(): List<GameMoveBackup> = journal.records().sortedByDescending { it.createdAt }.map {
         GameMoveBackup(it.operationId, db.linkedGameSaveDao().get(it.sourceId)?.label, it.createdAt)
@@ -116,7 +118,8 @@ class ExperimentalWorldDsSendRepository(
         // Existing records written before species defaults were generated stay unusable until the
         // record itself is regenerated; matchBaseline alone would keep returning the broken bytes.
         if (retained != null && !needsSpeciesRepair(retained) && projection != null &&
-            WorldDsOutboundConversion.matchesBaseline(state, projection)) return retained
+            WorldDsOutboundConversion.matchesBaseline(state, projection) &&
+            WorldDsOutboundConversion.retainedCoversAppLevel(state, retained)) return retained
         val speciesId = retained?.nativeSpeciesId ?: state.dsSpeciesId
         val defaults = speciesTable?.defaults(speciesId)
         val lineage = speciesTable?.lineage(speciesId).orEmpty()
@@ -159,7 +162,7 @@ class ExperimentalWorldDsSendRepository(
         ).firstNotNullOfOrNull { catalog.resolve(it) } ?: return null
         val dsSpeciesId = WorldDsSpeciesCrosswalk.dsIdsByCanonical(table, catalog)[canonical.id] ?: return null
         val fallback = table.name(dsSpeciesId) ?: return null
-        val displayName = individual.nickname?.trim()?.takeIf { it.isNotEmpty() } ?: reading.displayName ?: canonical.name
+        val displayName = WorldDsOutboundConversion.recordName(individual.nickname, fallback)
         return WorldDsOutboundState(dsSpeciesId, canonical.id, displayName, fallback,
             reading.stage, reading.baseHp, reading.baseBp, reading.baseAp, reading.appStats)
     }

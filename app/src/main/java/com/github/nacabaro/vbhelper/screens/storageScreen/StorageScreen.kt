@@ -173,8 +173,16 @@ fun StorageScreen(
 
     LaunchedEffect(gridState) {
         snapshotFlow {
-            gridState.firstVisibleItemIndex * 10_000 + gridState.firstVisibleItemScrollOffset
-        }.collect { position ->
+            val layoutInfo = gridState.layoutInfo
+            val position = gridState.firstVisibleItemIndex * 10_000 + gridState.firstVisibleItemScrollOffset
+            position to (layoutInfo.totalItemsCount > layoutInfo.visibleItemsInfo.size)
+        }.collect { (position, hasOverflow) ->
+            if (!hasOverflow) {
+                toolbarVisible = true
+                downwardScrollDistance = 0
+                lastScrollPosition = position
+                return@collect
+            }
             val delta = position - lastScrollPosition
             if (delta > 0) {
                 downwardScrollDistance += delta

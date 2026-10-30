@@ -1254,7 +1254,7 @@ private const val BUBBLE_ABOVE_DP = 56
 private const val TAP_HEAD_WORLD_Y = 0.18f
 private const val BUBBLE_WORLD_Y = 0.24f
 
-private fun residentFrameImage(frameBytes: ByteArray, resident: FarmResidentWithDetails): ResidentFrameImage {
+internal fun residentFrameImage(frameBytes: ByteArray, resident: FarmResidentWithDetails): ResidentFrameImage {
     val w = resident.spriteWidth
     val h = resident.spriteHeight
     val argb = runCatching { BitmapData(frameBytes, w, h).createARGBIntArray() }
@@ -1262,7 +1262,7 @@ private fun residentFrameImage(frameBytes: ByteArray, resident: FarmResidentWith
     return ResidentFrameImage(argb = argb, width = w, height = h)
 }
 
-private fun residentSpriteSetKey(resident: FarmResidentWithDetails): String = buildString {
+internal fun residentSpriteSetKey(resident: FarmResidentWithDetails): String = buildString {
     append(resident.spriteWidth).append('x').append(resident.spriteHeight).append(':')
     append(resident.spriteIdle.contentHashCode()).append(',')
     append(resident.spriteIdle2.contentHashCode()).append(',')

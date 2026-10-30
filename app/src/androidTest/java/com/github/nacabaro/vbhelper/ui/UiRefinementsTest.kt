@@ -91,7 +91,7 @@ class UiRefinementsTest {
             Column {
                 NavHost(nav, NavigationItems.Home.route, Modifier.weight(1f)) {
                     listOf(NavigationItems.Home, NavigationItems.Storage, NavigationItems.Dex, NavigationItems.World,
-                        NavigationItems.Digiline, NavigationItems.Quests, NavigationItems.Items,
+                        NavigationItems.Radar, NavigationItems.Digiline, NavigationItems.Quests, NavigationItems.Items,
                         NavigationItems.Battles, NavigationItems.Settings).forEach { item ->
                         composable(item.route) { Text("page:${item.route}") }
                     }
@@ -113,7 +113,7 @@ class UiRefinementsTest {
                 VitalNavigationRail(nav)
                 NavHost(nav, NavigationItems.Home.route, Modifier.weight(1f)) {
                     listOf(NavigationItems.Home, NavigationItems.Storage, NavigationItems.Dex, NavigationItems.World,
-                        NavigationItems.Digiline, NavigationItems.Quests, NavigationItems.Items,
+                        NavigationItems.Radar, NavigationItems.Digiline, NavigationItems.Quests, NavigationItems.Items,
                         NavigationItems.Battles, NavigationItems.Settings).forEach { item ->
                         composable(item.route) { Text("page:${item.route}") }
                     }

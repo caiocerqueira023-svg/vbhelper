@@ -29,6 +29,7 @@ import com.github.nacabaro.vbhelper.chat.WorldDialogueCodec
 import com.github.nacabaro.vbhelper.components.*
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.navigation.NavigationItems
+import com.github.nacabaro.vbhelper.navigation.deliverToRadar
 import com.github.nacabaro.vbhelper.ui.theme.TextSecondaryOnDark
 import com.github.nacabaro.vbhelper.world.GeoPoint
 import com.github.nacabaro.vbhelper.world.ecosystem.*
@@ -68,10 +69,8 @@ fun WorldConversationScreen(navController: NavController, interactionId: String)
     fun returnToRadar(id: String) {
         if(returning) return
         returning=true
-        val world=runCatching { navController.getBackStackEntry(NavigationItems.World.route) }.getOrNull()
-        if(world==null) navController.navigate(NavigationItems.World.route)
-        navController.getBackStackEntry(NavigationItems.World.route).savedStateHandle["radar-interaction"]=id
-        navController.popBackStack(NavigationItems.World.route,false)
+        // Radar place first, legacy World route second, and a push when neither is on the stack.
+        navController.deliverToRadar("radar-interaction", id)
     }
 
     fun showFailure(failure: Throwable) {

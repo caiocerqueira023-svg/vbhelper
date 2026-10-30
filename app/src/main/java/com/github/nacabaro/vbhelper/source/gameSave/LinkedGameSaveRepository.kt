@@ -10,7 +10,6 @@ import com.github.nacabaro.vbhelper.gamesave.SaveReadException
 import com.github.nacabaro.vbhelper.gamesave.SaveReaderRegistry
 import com.github.nacabaro.vbhelper.gamesave.CapturedSave
 import com.github.nacabaro.vbhelper.gamesave.WorldDsCopySelection
-import com.github.nacabaro.vbhelper.gamesave.WorldDsSaveReader
 import com.google.gson.Gson
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -190,7 +189,7 @@ class LinkedGameSaveRepository(
             try {
                 readPermits.withPermit { readLocked(id).use { captured ->
                     val fresh = captured.observation
-                    if (fresh.contentRevision != expectedRevision || fresh.gameId != WorldDsSaveReader.GAME_ID)
+                    if (fresh.contentRevision != expectedRevision || !TransferGameCapabilities.isNdsStory(fresh))
                         throw ImportSourceChangedException()
                     val reviewed = WorldDsCopySelection.apply(fresh, expectedRevision, copy)
                     db.withTransaction {

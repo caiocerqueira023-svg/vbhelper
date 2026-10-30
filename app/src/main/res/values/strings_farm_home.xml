@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Farm home: place labels stay literal, flavour lives in the place headers (owner decision Q2/Q3). -->
+    <string name="place_radar">Radar</string>
+    <string name="place_radar_subtitle">Field signals</string>
+    <string name="place_arena">Arena</string>
+    <string name="place_arena_subtitle">Colosseum</string>
+    <string name="place_digiline">DigiLine</string>
+    <string name="place_digiline_subtitle">Messages</string>
+    <string name="place_shop">Shop</string>
+    <string name="place_shop_subtitle">Exchange</string>
+    <string name="place_partners">Partners</string>
+    <string name="place_partners_subtitle">Vault</string>
+
+    <string name="home_open_place">Open %1$s</string>
+    <string name="home_farm_chip_description">Who is in the Digifarm</string>
+    <string name="home_farm_residents">%1$d/%2$d</string>
+    <string name="home_quests_chip_description">Quests</string>
+    <string name="home_settings_description">Settings</string>
+    <string name="home_menu_description">Menu</string>
+    <string name="home_menu_title">Menu</string>
+    <string name="home_roster_sheet_title">In the Digifarm</string>
+    <string name="home_roster_sheet_note">Your active partner and favourites live here. With more than %1$d favourites, the farm shows a rotating selection.</string>
+    <string name="home_roster_active_partner">Active partner</string>
+    <string name="home_roster_follow">Follow with camera</string>
+    <string name="home_roster_followed">Followed</string>
+    <string name="home_farm_resident_active">Active</string>
+    <string name="home_farm_empty_title">No partner in the Digifarm yet</string>
+    <string name="home_farm_empty_body">Set an active partner or favourite a stored Digimon and it will appear in the farm.</string>
+    <string name="home_farm_empty_action">Open Storage</string>
+    <string name="home_cancel">Cancel</string>
+    <string name="home_resident_open_partner">Open partner</string>
+    <string name="home_resident_chat">Chat</string>
+    <string name="home_partner_collapse">Collapse partner overview</string>
+    <string name="home_partner_expand">Expand partner overview</string>
+    <string name="home_farm_settings_title">Farm settings</string>
+    <string name="home_farm_resident_limit">Digimon in the farm</string>
+    <string name="home_farm_artwork">Sprite art</string>
+    <string name="home_farm_art_mixed">Mixed</string>
+    <string name="home_farm_art_vb">VB only</string>
+    <string name="home_farm_art_dot">Dot only</string>
+    <string name="home_farm_showing">showing %1$d of %2$d</string>
+    <string name="home_farm_increase">More Digimon</string>
+    <string name="home_farm_decrease">Fewer Digimon</string>
+</resources>

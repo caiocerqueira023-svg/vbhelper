@@ -44,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.input.pointer.pointerInput
@@ -92,7 +93,12 @@ import com.github.nacabaro.vbhelper.components.FeedbackDestination
 import com.github.nacabaro.vbhelper.R
 import com.github.nacabaro.vbhelper.screens.lorebookScreen.LorebookScreen
 import com.github.nacabaro.vbhelper.screens.lorebookScreen.LorebookScreenControllerImpl
+import com.github.nacabaro.vbhelper.screens.farmHome.FarmHomeScreen
+import com.github.nacabaro.vbhelper.screens.digifarmScreen.FarmHomeWorld
+import com.github.nacabaro.vbhelper.screens.farmHome.rememberFarmHomeShellState
+import com.github.nacabaro.vbhelper.screens.homeScreens.PartnerDetent
 import com.github.nacabaro.vbhelper.screens.worldScreen.WorldScreen
+import com.github.nacabaro.vbhelper.screens.worldScreen.RadarPlaceScreen
 import com.github.nacabaro.vbhelper.screens.worldScreen.WorldChatScreen
 import com.github.nacabaro.vbhelper.screens.worldScreen.WorldConversationScreen
 import com.github.nacabaro.vbhelper.screens.worldScreen.WorldChatScreenControllerImpl
@@ -125,6 +131,12 @@ fun AppNavigation(
     val settingsScreenController = applicationNavigationHandlers.settingsScreenController
     val pendingCardOriginPrompts by settingsScreenController.pendingCardOriginPrompts.collectAsState()
     val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    // Home is a place, not a panel: it owns the whole window, draws its own insets and hides the
+    // app chrome. Every other destination keeps the standard inset-boxed shell.
+    val isFarmHome = currentRoute == null || currentRoute == NavigationItems.Home.route
+    // The farm world is a shell-level surface: it stays composed (paused, invisible) while a place is
+    // open, so returning to the farm never rebuilds the Filament engine or re-streams residents.
+    val farmShell = rememberFarmHomeShellState()
     var battleFullScreen by remember { mutableStateOf(false) }
     val tabSwipeThresholdPx = with(LocalDensity.current) { 96.dp.toPx() }
     val allowMotion = motionEnabled()
@@ -158,7 +170,9 @@ fun AppNavigation(
     val musicController = remember { AppMusicController(context) }
 
     LaunchedEffect(currentRoute) {
-        if (currentRoute != NavigationItems.Battles.route && currentRoute != NavigationItems.World.route) {
+        if (currentRoute != NavigationItems.Battles.route && currentRoute != NavigationItems.World.route &&
+            currentRoute != NavigationItems.Radar.route
+        ) {
             battleFullScreen = false
         }
         if (currentRoute != NavigationItems.Battles.route) {
@@ -187,65 +201,37 @@ fun AppNavigation(
     BoxWithConstraints {
         val expandedNavigation = maxWidth >= 840.dp
         Scaffold(
-            // Reserve system bars here and the remaining IME once in the content root.
-            contentWindowInsets = WindowInsets.safeDrawing.exclude(WindowInsets.ime),
+            // Reserve system bars here and the remaining IME once in the content root. The farm home
+            // is edge-to-edge: its HUD applies the status/navigation insets itself so the world can
+            // bleed behind the system bars.
+            contentWindowInsets = if (isFarmHome) WindowInsets(0) else
+                WindowInsets.safeDrawing.exclude(WindowInsets.ime),
             snackbarHost = { SnackbarHost(snackbar, Modifier.imePadding()) },
-            bottomBar = {
-                if (!expandedNavigation) {
-                    AnimatedVisibility(
-                        visible = !battleFullScreen && !keyboardVisible,
-                        enter = slideInVertically(
-                            animationSpec = tween(battleChromeMotionDuration, easing = FastOutSlowInEasing),
-                            initialOffsetY = { it }
-                        ) + expandVertically(
-                            animationSpec = tween(battleChromeMotionDuration, easing = FastOutSlowInEasing),
-                            expandFrom = Alignment.Bottom
-                        ) + fadeIn(tween(battleChromeFadeDuration)),
-                        exit = slideOutVertically(
-                            animationSpec = tween(battleChromeMotionDuration, easing = FastOutSlowInEasing),
-                            targetOffsetY = { it }
-                        ) + shrinkVertically(
-                            animationSpec = tween(battleChromeMotionDuration, easing = FastOutSlowInEasing),
-                            shrinkTowards = Alignment.Bottom
-                        ) + fadeOut(tween(battleChromeFadeDuration))
-                    ) {
-                        BottomNavigationBar(navController = navController)
-                    }
-                }
-            }
         ) { contentPadding ->
             Row(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(contentPadding)
-                    .consumeWindowInsets(contentPadding)
+                    .then(
+                        if (isFarmHome) Modifier
+                        else Modifier.padding(contentPadding).consumeWindowInsets(contentPadding)
+                    )
                     .imePadding()
             ) {
-                if (expandedNavigation) {
-                    AnimatedVisibility(
-                        visible = !battleFullScreen,
-                        enter = slideInHorizontally(
-                            animationSpec = tween(battleChromeMotionDuration, easing = FastOutSlowInEasing),
-                            initialOffsetX = { -it }
-                        ) + expandHorizontally(
-                            animationSpec = tween(battleChromeMotionDuration, easing = FastOutSlowInEasing),
-                            expandFrom = Alignment.Start
-                        ) + fadeIn(tween(battleChromeFadeDuration)),
-                        exit = slideOutHorizontally(
-                            animationSpec = tween(battleChromeMotionDuration, easing = FastOutSlowInEasing),
-                            targetOffsetX = { -it }
-                        ) + shrinkHorizontally(
-                            animationSpec = tween(battleChromeMotionDuration, easing = FastOutSlowInEasing),
-                            shrinkTowards = Alignment.Start
-                        ) + fadeOut(tween(battleChromeFadeDuration))
-                    ) {
-                        VitalNavigationRail(navController = navController)
-                    }
-                }
                 Box(
                     modifier = Modifier
                         .weight(1f)
                 ) {
+                // Persistent world surface: composed once for the shell's lifetime, paused and hidden
+                // whenever a place is on top. This is what stops the farm from re-loading on every tab
+                // change (the engine, island GLB and resident meshes all survive).
+                FarmHomeWorld(
+                    controller = farmShell.controller,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer { alpha = if (isFarmHome) 1f else 0f },
+                    isActive = isFarmHome && farmShell.detent != PartnerDetent.Expanded,
+                    onResidentTap = { renderId -> farmShell.selectedResidentId = renderId },
+                )
                 NavHost(
             navController = navController,
             startDestination = initialRoute ?: NavigationItems.Home.route,
@@ -254,8 +240,12 @@ fun AppNavigation(
                     initialState.destination.route,
                     targetState.destination.route
                 )
-                if (!allowMotion || direction == 0) {
-                    fadeIn(animationSpec = tween(if (allowMotion) 160 else 80))
+                val touchesFarmHome = initialState.destination.route == NavigationItems.Home.route ||
+                    targetState.destination.route == NavigationItems.Home.route
+                if (!allowMotion || direction == 0 || touchesFarmHome) {
+                    // The world never slides sideways like a page; entering or leaving Home is a
+                    // fade-through so the place reads as arriving, not as a tab switch.
+                    fadeIn(animationSpec = tween(if (allowMotion) 200 else 80))
                 } else {
                     slideInHorizontally(
                         animationSpec = tween(280, easing = FastOutSlowInEasing),
@@ -268,8 +258,10 @@ fun AppNavigation(
                     initialState.destination.route,
                     targetState.destination.route
                 )
-                if (!allowMotion || direction == 0) {
-                    fadeOut(animationSpec = tween(if (allowMotion) 120 else 60))
+                val touchesFarmHome = initialState.destination.route == NavigationItems.Home.route ||
+                    targetState.destination.route == NavigationItems.Home.route
+                if (!allowMotion || direction == 0 || touchesFarmHome) {
+                    fadeOut(animationSpec = tween(if (allowMotion) 140 else 60))
                 } else {
                     slideOutHorizontally(
                         animationSpec = tween(220, easing = FastOutSlowInEasing),
@@ -288,20 +280,28 @@ fun AppNavigation(
             }
             composable(NavigationItems.Home.route) {
                 val importingConnection by settingsScreenController.importingConnection.collectAsState()
-                HomeScreen(
+                FarmHomeScreen(
                     navController = navController,
+                    shell = farmShell,
                     homeScreenController = applicationNavigationHandlers.homeScreenController,
                     storageScreenController = applicationNavigationHandlers.storageScreenController,
+                    importingConnection = importingConnection,
                     onImportCards = {
                         navController.navigatePrimary(NavigationItems.Dex)
                         settingsScreenController.onClickImportCardsFromDex()
                     },
                     onImportConnection = settingsScreenController::onClickImportApk,
-                    importingConnection = importingConnection,
                 )
             }
             composable(NavigationItems.World.route) { entry ->
                 WorldScreen(
+                    navController = navController,
+                    worldEntry = entry,
+                    onFullScreenBattleChanged = { battleFullScreen = it }
+                )
+            }
+            composable(NavigationItems.Radar.route) { entry ->
+                RadarPlaceScreen(
                     navController = navController,
                     worldEntry = entry,
                     onFullScreenBattleChanged = { battleFullScreen = it }
@@ -423,9 +423,19 @@ fun AppNavigation(
                     )
                 }
             }
-            composable(NavigationItems.Items.route) {
+            composable(
+                ItemsDestination.PATTERN,
+                arguments = listOf(
+                    androidx.navigation.navArgument(ItemsDestination.ARG_TAB) {
+                        type = androidx.navigation.NavType.StringType
+                        defaultValue = ItemsDestination.TAB_MINE
+                    }
+                )
+            ) { entry ->
                 ItemsScreen(
-                    navController = navController
+                    navController = navController,
+                    initialTab = entry.arguments?.getString(ItemsDestination.ARG_TAB)
+                        ?: ItemsDestination.TAB_MINE
                 )
             }
             composable(NavigationItems.ApplyItem.route) {

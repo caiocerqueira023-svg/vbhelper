@@ -11,6 +11,8 @@ import com.github.nacabaro.vbhelper.database.AppDatabase
 import com.github.nacabaro.vbhelper.di.VBHelper
 import com.github.nacabaro.vbhelper.domain.device_data.NfcEvolutionHistory
 import com.github.nacabaro.vbhelper.domain.device_data.UserCharacter
+import com.github.nacabaro.vbhelper.domain.device_data.hasPhysicalSlot
+import com.github.nacabaro.vbhelper.domain.device_data.isCatalogPartner
 import com.github.nacabaro.vbhelper.dtos.CharacterDtos
 import com.github.nacabaro.vbhelper.utils.DeviceType
 import kotlinx.coroutines.flow.first
@@ -36,14 +38,14 @@ class ToNfcConverter(
         val sourceCharacter = database.characterDao().getById(userCharacter.charId)
         // Catalog-defined partners have no physical slot of their own; the outgoing
         // payload uses the exact converted DIM/BEM slot recorded by conversion.
-        val exportTarget = if (sourceCharacter?.cardId == null) {
+        val exportTarget = if (sourceCharacter == null || sourceCharacter.isCatalogPartner) {
             val targetId = requireNotNull(userCharacter.exportCardCharacterId) {
                 "Convert this partner to a loaded DIM/BEM slot before sending it to a watch."
             }
             val target = requireNotNull(database.characterDao().getById(targetId)) {
                 "Converted slot is no longer available."
             }
-            require(target.cardId != null && target.catalogSpeciesId == null) {
+            require(target.hasPhysicalSlot && target.catalogSpeciesId == null) {
                 "The converted slot must be an exact loaded DIM/BEM entry."
             }
             require(exportSpeciesMatches(sourceCharacter, target)) {

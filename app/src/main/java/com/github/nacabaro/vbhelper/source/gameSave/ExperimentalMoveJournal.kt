@@ -3,7 +3,7 @@ package com.github.nacabaro.vbhelper.source.gameSave
 import android.util.AtomicFile
 import com.github.nacabaro.vbhelper.gamesave.ObservedDigimon
 import com.github.nacabaro.vbhelper.gamesave.SaveObservation
-import com.github.nacabaro.vbhelper.gamesave.WorldDsSaveReader
+import com.github.nacabaro.vbhelper.gamesave.NdsStoryProfiles
 import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -113,7 +113,7 @@ internal class ExperimentalEditJournal<T : ExperimentalEditOperation>(private va
     }
 
     private fun readSave(file: File): ByteArray {
-        val bytes = ByteArray(WorldDsSaveReader.FILE_BYTES)
+        val bytes = ByteArray(NdsStoryProfiles.WORLD_DS.fileBytes)
         try {
             AtomicFile(file).openRead().use { stream ->
                 val input = DataInputStream(stream)
