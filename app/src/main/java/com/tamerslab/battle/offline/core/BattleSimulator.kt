@@ -433,6 +433,13 @@ class BattleSimulator(
         completedFinisherEventCount = eventCount
     }
 
+    /**
+     * Cheap completion check for tight simulation loops: true once a result exists.
+     * Prefer this over allocating [snapshot] on every fixed step (the arena simulator
+     * loop can advance tens of thousands of steps).
+     */
+    val isFinished: Boolean get() = outcome != null
+
     fun snapshot(): BattleSnapshot {
         val members = combatants.values.map { actor ->
             val def = actor.definition

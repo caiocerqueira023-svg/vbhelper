@@ -9,20 +9,34 @@ import org.junit.runner.RunWith
 /**
  * Generates the committed baseline profiles on a connected device.
  *
- * Run with: `.\gradlew.bat :app:generateBaselineProfile` (device required). The startup
- * block feeds `startup-prof.txt`; the journeys feed the regular profile so scan, battle,
- * farm and transfer entry paths are covered as required by Phase 1.4. Journeys are
- * best-effort by design — a missing screen must not make profile generation fail.
+ * Run with: `.\gradlew.bat :app:generateBaselineProfile` (device required).
+ *
+ * The startup profile and the journey profile are collected separately on purpose:
+ * `includeInStartupProfile = true` marks every rule from the test as startup-critical, so
+ * mixing journeys into that test bloats `startup-prof.txt` (it used to be byte-identical
+ * to `baseline-prof.txt`). Keeping startup to the cold launch and the journeys in a
+ * second collection produces a small startup profile plus a broader baseline profile.
  */
 @RunWith(AndroidJUnit4::class)
 class BaselineProfileGenerator {
     @get:Rule
     val baselineProfileRule = BaselineProfileRule()
 
+    /** Cold app start only: feeds `startup-prof.txt`. */
     @Test
-    fun startupAndJourneys() = baselineProfileRule.collect(
+    fun startupProfile() = baselineProfileRule.collect(
         packageName = TARGET_PACKAGE,
         includeInStartupProfile = true,
+    ) {
+        pressHome()
+        startActivityAndWait()
+    }
+
+    /** Scan/battle/farm/transfer journeys: feeds the regular `baseline-prof.txt`. */
+    @Test
+    fun appJourneys() = baselineProfileRule.collect(
+        packageName = TARGET_PACKAGE,
+        includeInStartupProfile = false,
     ) {
         pressHome()
         startActivityAndWait()

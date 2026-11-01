@@ -1,5 +1,10 @@
 # Platform-Coupling Audit: VBHelper Rust Rewrite Portability Analysis
 
+> **Pre-refactor snapshot:** measured 2026-10-30 on Alpha 0.6.5. The current-tree
+> re-measurement is in
+> [04-post-refactor-reassessment.md](04-post-refactor-reassessment.md); use that for
+> current numbers.
+
 **Date:** 2026-10-30
 **Analyst:** Lead (direct analysis)
 **Method:** Full source inventory (1,057 Kotlin/Java files, 110,743 lines) classified by import patterns and directory structure. Build outputs excluded (`build/`, `.gradle/`, `.git/`, `.kotlin/`, `node_modules/`).

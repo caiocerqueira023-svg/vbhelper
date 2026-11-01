@@ -1,11 +1,15 @@
 package com.tamerslab.di
 
+import android.app.Activity
 import android.app.Application
+import android.os.Bundle
 import android.util.Log
+import android.view.Choreographer
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import com.tamerslab.companion.validation.ValidatedCardManager
 import com.tamerslab.companion.logs.CompanionLogService
+import com.tamerslab.diagnostics.StartupTrace
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -30,24 +34,73 @@ class TamersLabApplication : Application() {
     val companionLogService: CompanionLogService
         get() = container.companionLogService
 
+    /** Guard so the deferred startup pass runs exactly once per process. */
+    private var deferredStartupDispatched = false
+
     override fun onCreate() {
         super.onCreate()
-        val languageTag = getSharedPreferences("app_preferences", MODE_PRIVATE)
-            .getString("language_tag", null)
-        if (!languageTag.isNullOrBlank()) {
-            AppCompatDelegate.setApplicationLocales(
-                if (languageTag == "system") {
-                    LocaleListCompat.getEmptyLocaleList()
-                } else {
-                    LocaleListCompat.forLanguageTags(languageTag)
+        StartupTrace.section("startup:app-locale") {
+            val languageTag = getSharedPreferences("app_preferences", MODE_PRIVATE)
+                .getString("language_tag", null)
+            if (!languageTag.isNullOrBlank()) {
+                AppCompatDelegate.setApplicationLocales(
+                    if (languageTag == "system") {
+                        LocaleListCompat.getEmptyLocaleList()
+                    } else {
+                        LocaleListCompat.forLanguageTags(languageTag)
+                    }
+                )
+            }
+        }
+        StartupTrace.section("startup:koin") {
+            startKoin {
+                androidContext(this@TamersLabApplication)
+                modules(appModules)
+            }
+            container = GlobalContext.get().get()
+        }
+        deferStartupWorkUntilFirstFrame()
+    }
+
+    /**
+     * The first-frame critical path only needs the locale and the Koin graph. In release
+     * builds everything that touches disk/DB (linked-save refresh, participation
+     * reconcile, catalog bindings, personality/history repair, AFK scheduling) is
+     * dispatched after the first frame so it cannot compete with cold-start rendering.
+     * Each job is idempotent and used to run asynchronously at startup anyway.
+     *
+     * Debug/integrityCheck keeps the legacy immediate dispatch: instrumentation tests
+     * exercise the app right after launch and a delayed pass can contend with slow
+     * Compose tests (observed as a 45 s finisher-test timeout). The release benchmark
+     * build verifies the deferred path.
+     */
+    private fun deferStartupWorkUntilFirstFrame() {
+        if (com.tamerslab.BuildConfig.DEBUG) {
+            launchDeferredStartupWork()
+            return
+        }
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityResumed(activity: Activity) {
+                if (deferredStartupDispatched) return
+                deferredStartupDispatched = true
+                this@TamersLabApplication.unregisterActivityLifecycleCallbacks(this)
+                Choreographer.getInstance().postFrameCallback {
+                    StartupTrace.section("startup:deferred-init-dispatch") {
+                        launchDeferredStartupWork()
+                    }
                 }
-            )
-        }
-        startKoin {
-            androidContext(this@TamersLabApplication)
-            modules(appModules)
-        }
-        container = GlobalContext.get().get()
+            }
+
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
+            override fun onActivityStarted(activity: Activity) = Unit
+            override fun onActivityPaused(activity: Activity) = Unit
+            override fun onActivityStopped(activity: Activity) = Unit
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
+            override fun onActivityDestroyed(activity: Activity) = Unit
+        })
+    }
+
+    private fun launchDeferredStartupWork() {
         applicationScope.launch {
             try { container.linkedGameSaves.refreshAll() }
             catch (cancelled: CancellationException) { throw cancelled }

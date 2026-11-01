@@ -1,5 +1,12 @@
 # 03 — Rust Feasibility: Can VBHelper Be Rewritten in Rust?
 
+> **Superseded for current-tree numbers:** this analysis was measured before the
+> Alpha 0.7.0 refactor (`screens/` layout, `:vb-*` modules, R8 and Baseline Profiles
+> absent). The structural verdict still holds, but the current measurements, build
+> facts, and refreshed effort model are in
+> [04-post-refactor-reassessment.md](04-post-refactor-reassessment.md). Use 04 for any
+> current decision; use 01–03 for the detailed component analysis and sources.
+
 **Status:** analysis, read-only. No project source file was modified.
 **Subject:** VBHelper (`com.github.nacabaro.vbhelper`), Alpha 0.6.5, Kotlin + Jetpack Compose, `minSdk 28`, `targetSdk 37`.
 **Question:** what would it take to replace this app with a Rust implementation, and is the result worth it?

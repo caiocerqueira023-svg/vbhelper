@@ -12,6 +12,13 @@ plugins {
     jacoco
 }
 
+// A/B switch for the Phase 5.4 battle scene/UI channel. Defaults to off; benchmark both
+// builds with -PbattleSceneChannel=true and record the comparison in
+// docs/performance/BASELINE.md before changing the default.
+val battleSceneChannelEnabled = providers.gradleProperty("battleSceneChannel")
+    .map { it.equals("true", ignoreCase = true) }
+    .getOrElse(false)
+
 android {
     namespace = "com.tamerslab"
     compileSdk = 37
@@ -28,7 +35,8 @@ android {
         // Phase 5.4 rollback switch: when false the battle screen keeps the
         // original 60 Hz full-snapshot Compose state path. Enable only after the
         // device Perfetto validation described in docs/performance/BASELINE.md.
-        buildConfigField("boolean", "BATTLE_SCENE_CHANNEL_ENABLED", "false")
+        // Override for an A/B build with -PbattleSceneChannel=true.
+        buildConfigField("boolean", "BATTLE_SCENE_CHANNEL_ENABLED", battleSceneChannelEnabled.toString())
     }
 
     buildTypes {
@@ -58,6 +66,19 @@ android {
         buildConfig = true
     }
 
+    // Optional ABI splits for size measurements: -PabiSplits produces per-ABI APKs.
+    // Play delivery should use an App Bundle instead; local/default builds are unchanged.
+    if (providers.gradleProperty("abiSplits").isPresent) {
+        splits {
+            abi {
+                isEnable = true
+                reset()
+                include("arm64-v8a", "armeabi-v7a")
+                isUniversalApk = providers.gradleProperty("abiUniversalApk").isPresent
+            }
+        }
+    }
+
     lint {
         baseline = file("lint-baseline.xml")
     }
@@ -66,6 +87,15 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget = JvmTarget.JVM_11
+    }
+}
+
+// Opt-in Compose compiler reports for recomposition/unstable-class analysis:
+// .\gradlew.bat :app:assembleRelease -PcomposeCompilerMetrics
+if (providers.gradleProperty("composeCompilerMetrics").isPresent) {
+    composeCompiler {
+        reportsDestination.set(layout.buildDirectory.dir("reports/compose-compiler"))
+        metricsDestination.set(layout.buildDirectory.dir("reports/compose-compiler"))
     }
 }
 

@@ -38,14 +38,15 @@ recorded in [BASELINE.md](../performance/BASELINE.md) section 6.
   launches (debug 4,909 ms; debug-key-signed release 1,562 ms cold start) are
   single-launch smoke checks, not benchmarks, and are not current results.
 - Device benchmarks are a **manual gate** today: CI has build, unit tests, and
-  lint, but no device or macrobenchmark step. The `baselineprofile` module contains
-  the harness: a startup+journeys `BaselineProfileRule` generator, `StartupBenchmark`
-  (`StartupTimingMetric`, 5 cold iterations), and `FrameTimingBenchmark`
-  (`FrameTimingMetric` for farm and battle). On 2026-10-31 the startup benchmark
-  measured a **875.0 ms median TTID** on the reference device and the frame benchmark
-  measured battle `frameDurationCpuMs` **P95 13.3 ms**; the full evidence is in
-  BASELINE.md section 6. The relative cold-start budget is still undefined because the
-  Phase 0 release baseline was never captured.
+  lint, but no device or macrobenchmark step. The harness lives in two device-only
+  modules: `:baselineprofile` (startup+journeys `BaselineProfileRule` generator) and
+  `:benchmark` (`StartupBenchmark` with `StartupTimingMetric` + trace sections, and
+  `FrameTimingBenchmark` with `FrameTimingMetric` for farm idle/active and battle). They
+  were split so profile generation no longer executes benchmark launch loops. On
+  2026-10-31 the startup benchmark measured a **875.0 ms median TTID** on the reference
+  device and the frame benchmark measured battle `frameDurationCpuMs` **P95 13.3 ms**;
+  the full evidence is in BASELINE.md section 6. The relative cold-start budget is still
+  undefined because the Phase 0 release baseline was never captured.
 - The final 2026-10-31 verification pass covered unit tests, assemble, lint, and device
   instrumentation/install; the separate device benchmark runs afterwards produced the
   cold-start and frame-timing rows recorded in BASELINE.md. Room query plans and the

@@ -202,8 +202,8 @@ completed **BUILD SUCCESSFUL** with warnings only (`10m 14s`).
 | App coverage | `:app:jacocoTestReport` | Report generated; named app classes: BattleSimulator 95.8%, TamerTrainerController 95.5%, PersonalityBattleProfile 93.3% line |
 | game-save-core coverage | `:game-save-core:test` (finalizes report) | Report generated; WorldDsRecordCodec 81.0%, NdsStoryRecordCodec 93.0%, WorldDsPartyEdits 92.6% line |
 | Baseline profiles | `:app:generateBaselineProfile` | Regenerated on device: 2,723,442 bytes each; 24,408 rules (3,858 added / 2,139 removed vs the re-mapped files) |
-| Cold-start benchmark | `:baselineprofile:connectedBenchmarkReleaseAndroidTest` (StartupBenchmark) | R8 `benchmarkRelease`, 5 cold iterations: TTID **median 875.0 ms** (min 830.5 / max 1,848.8), 5 Perfetto traces |
-| Frame-timing benchmarks | same task (FrameTimingBenchmark) | Battle `frameDurationCpuMs` P95 **13.3 ms** (P90 11.5); farm 3-second post-startup window P95 29.8 ms with median 194 frames (â‰ˆ64 fps, includes asset loading) |
+| Cold-start benchmark | historical: `:baselineprofile:connectedBenchmarkReleaseAndroidTest` (StartupBenchmark; benchmarks later moved to `:benchmark`) | R8 `benchmarkRelease`, 5 cold iterations: TTID **median 875.0 ms** (min 830.5 / max 1,848.8), 5 Perfetto traces |
+| Frame-timing benchmarks | historical: same task (FrameTimingBenchmark; now `:benchmark:connectedBenchmarkReleaseAndroidTest`) | Battle `frameDurationCpuMs` P95 **13.3 ms** (P90 11.5); farm 3-second post-startup window P95 29.8 ms with median 194 frames (≈64 fps, includes asset loading) |
 | Install + cold launch smoke | `adb install -r`, `am start -W` | Debug: install OK, cold launch 4,241 ms; debug-key-signed release: install OK (versionName `Alpha 0.7.0`), cold launch 820 ms; no crash-buffer entries; debug build restored afterwards |
 
 Notes and caveats:

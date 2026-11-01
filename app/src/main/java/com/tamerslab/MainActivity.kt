@@ -1,4 +1,4 @@
-﻿package com.tamerslab
+package com.tamerslab
 
 import android.content.Intent
 import android.net.Uri
@@ -20,6 +20,7 @@ import androidx.lifecycle.lifecycleScope
 import com.tamerslab.vitalwear.protos.Character
 import com.tamerslab.navigation.AppNavigation
 import com.tamerslab.di.TamersLabApplication
+import com.tamerslab.diagnostics.StartupTrace
 import com.tamerslab.navigation.AppNavigationHandlers
 import com.tamerslab.navigation.AppRoute
 import com.tamerslab.navigation.appRouteFromUri
@@ -64,7 +65,7 @@ class MainActivity : AppCompatActivity() {
         setTheme(initialTheme.nativeThemeResource)
         super.onCreate(savedInstanceState)
         applyDefaultLanguageIfUnset()
-
+        StartupTrace.section("startup:activity-oncreate") {
         val application = applicationContext as TamersLabApplication
         val scanScreenController = ScanScreenControllerImpl(
             application.container.dataStoreSecretsRepository.secretsFlow,
@@ -117,6 +118,7 @@ class MainActivity : AppCompatActivity() {
 
         Log.i("MainActivity", "Activity onCreated")
         handleImportIntent(intent)
+        }
     }
 
     override fun onPause() {

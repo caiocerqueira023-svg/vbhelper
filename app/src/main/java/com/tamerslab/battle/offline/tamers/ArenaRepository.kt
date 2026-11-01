@@ -229,8 +229,9 @@ class ArenaRepository(private val db: AppDatabase, private val currency: Currenc
         repeat(60_000) { step ->
             if (step % 128 == 0) currentCoroutineContext().ensureActive()
             simulator.advance(BattleRules.STEP_MILLIS)
-            val snapshot = simulator.snapshot()
-            if (snapshot.result != null) return snapshot
+            // Only materialize the full immutable snapshot when the simulation ended;
+            // snapshot() was previously allocated on every one of up to 60k steps.
+            if (simulator.isFinished) return simulator.snapshot()
         }
         simulator.abandon()
         return simulator.snapshot()

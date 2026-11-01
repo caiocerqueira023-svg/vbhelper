@@ -109,22 +109,32 @@ Screen unlocked, device idle, one launch per `force-stop`; discard run 1 and rec
 2-5. Report `TotalTime` (process start to first idle frame) and mention `WaitTime` if it
 diverges.
 
-Macrobenchmark: `baselineprofile` is a `com.android.test` module with
-`targetProjectPath = :app`, `androidx.benchmark.macro.junit4`, UiAutomator, a
-`BaselineProfileRule` startup+journeys generator, `StartupBenchmark` (cold-start
-`StartupTimingMetric`, 5 iterations), and `FrameTimingBenchmark` (farm and battle
-`FrameTimingMetric`). `:app` applies the baselineprofile plugin, consumes the module, and
-ships `profileinstaller`. Profile regeneration is device-gated:
+Macrobenchmark: two device-only Gradle modules are involved. `:baselineprofile` is the
+`BaselineProfileRule` generator with **separate startup and journey tests** (the startup
+profile is no longer identical to the journey profile); it contains no benchmark tests, so
+`:app:generateBaselineProfile` does not run macrobenchmark launch loops. `:benchmark` is a
+separate `com.android.test` module with `StartupBenchmark` (cold-start
+`StartupTimingMetric` + `TraceSectionMetric` for `startup:*` sections, 5 iterations) and
+`FrameTimingBenchmark` (`farmIdleFrameTiming`, `farmActiveFrameTiming`,
+`battleFrameTiming`). `:app` applies the baselineprofile plugin, consumes `:baselineprofile`,
+and ships `profileinstaller`. Profile regeneration is device-gated:
 
 ```powershell
 .\gradlew.bat :app:generateBaselineProfile
 Get-ChildItem app/src/release/generated/baselineProfiles | Select-Object Name,Length,LastWriteTime
 ```
 
+The startup/journey split, the benchmark-module separation, and the new benchmark windows
+are documented in [OPTIMIZATION_LOG.md](OPTIMIZATION_LOG.md).
+
 The benchmark tests are device-gated too and are **not** part of CI. Run them with the
-`baselineprofile` module's connected benchmark task on the reference device, then record
-the exact command, device, build and result JSON path in section 6. Do not quote a
-benchmark run that was not executed on the recorded build.
+`:benchmark` connected benchmark task on the reference device, then record the exact
+command, device, build and result JSON path in section 6. Do not quote a benchmark run
+that was not executed on the recorded build.
+
+For the Phase 5.4 battle-channel A/B, build both variants with the same command plus
+`-PbattleSceneChannel=true` (default is `false`) and compare the two `frameDurationCpuMs`
+results; only change the default after recording the comparison here.
 
 ### 4.2 Battle frame time (p95)
 

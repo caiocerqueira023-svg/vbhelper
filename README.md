@@ -43,7 +43,8 @@ in place and keep their collection; do not "fix" the package id without reading 
 | [`game-save-core/`](game-save-core/README.md) | Pure Kotlin/JVM save readers, planners, conversion, `SaveInspector` CLI |
 | [`companion-protocol/`](companion-protocol/README.md) | JSON/Gson pairing and pinned-TLS listing protocol |
 | [`pc-save-companion/`](pc-save-companion/README.md) | Read-only local-network desktop companion |
-| `baselineprofile/` | Device-gated baseline-profile/macrobenchmark generator (not shipped) |
+| `baselineprofile/` | Device-gated Baseline Profile generator (not shipped) |
+| `benchmark/` | Device-gated macrobenchmark harness (not shipped) |
 
 `app` depends on `hardware`, `game-save-core`, and `companion-protocol`; libraries never
 depend on `app`. `pc-save-companion` is a desktop distribution, not an app dependency.
@@ -313,8 +314,9 @@ Optional coverage and desktop distribution tasks:
 ```
 
 Coverage is recorded for the named classes and game-save-core, but no threshold is
-enforced. Baseline-profile generation requires a connected device/emulator; benchmark
-profiles live in the `baselineprofile` module and are device-gated (see
+enforced. Baseline-profile generation requires a connected device/emulator and lives in
+`:baselineprofile`; the macrobenchmarks live in the separate `:benchmark` device-only
+module so profile generation does not run benchmark launch loops (see
 [TESTING.md](TESTING.md)). `:app:lint` passed with zero errors on 2026-10-31; the
 historical baseline is in [docs/refactor/TARGETS.md](docs/refactor/TARGETS.md).
 

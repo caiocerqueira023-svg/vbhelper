@@ -45,9 +45,15 @@ archive or [docs/refactor/TARGETS.md](docs/refactor/TARGETS.md) as current.
 # Baseline-profile regeneration (device required; startup + best-effort journeys)
 .\gradlew.bat :app:generateBaselineProfile
 
-# Macrobenchmarks (device required; not part of CI)
-.\gradlew.bat :baselineprofile:connectedBenchmarkReleaseAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.tamerslab.baselineprofile.StartupBenchmark"
-.\gradlew.bat :baselineprofile:connectedBenchmarkReleaseAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.tamerslab.baselineprofile.FrameTimingBenchmark"
+# Macrobenchmarks (device required; not part of CI). These live in :benchmark, a separate
+# test module, so :app:generateBaselineProfile only runs the profile generator.
+.\gradlew.bat :benchmark:connectedBenchmarkReleaseAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.tamerslab.benchmark.StartupBenchmark"
+.\gradlew.bat :benchmark:connectedBenchmarkReleaseAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.tamerslab.benchmark.FrameTimingBenchmark"
+
+# Optional optimization instrumentation (no behaviour change by default)
+.\gradlew.bat :app:assembleRelease -PcomposeCompilerMetrics   # Compose compiler reports
+.\gradlew.bat :app:assembleRelease -PabiSplits                 # per-ABI APKs for size checks
+.\gradlew.bat :app:assembleRelease -PbattleSceneChannel=true   # battle channel A/B build
 
 # Coverage (opt-in; no threshold is enforced yet)
 .\gradlew.bat :app:jacocoTestReport :game-save-core:jacocoTestReport

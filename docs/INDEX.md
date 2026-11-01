@@ -50,7 +50,8 @@ for PR expectations.
 | `:game-save-core` | [game-save-core/README.md](../game-save-core/README.md) | Save reading/planning/conversion; desktop `SaveInspector` |
 | `:companion-protocol` | [companion-protocol/README.md](../companion-protocol/README.md) | Pairing and pinned-TLS listing protocol (JSON/Gson) |
 | `:pc-save-companion` | [pc-save-companion/README.md](../pc-save-companion/README.md) | Read-only local-network desktop companion |
-| `:baselineprofile` | — | Device-gated baseline-profile/macrobenchmark generator (not shipped) |
+| `:baselineprofile` | — | Device-gated Baseline Profile generator (not shipped) |
+| `:benchmark` | — | Device-gated macrobenchmark harness: startup trace metrics and farm/battle frame timing (not shipped) |
 
 Dependency direction: `app` depends on the three runtime libraries (`hardware`,
 `game-save-core`, `companion-protocol`), never the reverse; `game-save-core`,
@@ -85,7 +86,9 @@ removed from the build after the aggregate run could not complete reliably.
 ## Performance
 
 - [performance/BASELINE.md](performance/BASELINE.md) — budgets, repeatable measurement
-  procedures, recording template, and the honest current status (mostly "not measured").
+  procedures, recording template, and the honest current status.
+- [performance/OPTIMIZATION_LOG.md](performance/OPTIMIZATION_LOG.md) — post-0.7.0
+  optimization pass: implemented changes, measurement commands, and the deferred list.
 - [ADR 0005](adr/0005-performance-budgets.md) — why budgets gate releases and what counts
   as evidence.
 
