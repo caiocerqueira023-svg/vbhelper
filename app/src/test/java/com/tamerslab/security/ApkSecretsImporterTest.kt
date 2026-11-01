@@ -1,0 +1,83 @@
+package com.tamerslab.security
+
+import com.tamerslab.security.proto.Secrets
+import org.junit.Assert
+import org.junit.Assume.assumeNotNull
+import org.junit.Test
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.net.URL
+import java.nio.charset.StandardCharsets
+import java.util.zip.ZipEntry
+import java.util.zip.ZipOutputStream
+
+class ApkSecretsImporterTest {
+
+    @Test
+    fun testThatRealImportSecretsPasses() {
+        val apkFileSecretsImporter = ApkSecretsImporter()
+        val url = getAndAssertApkFile()
+        val file = File(url.toURI())
+        file.inputStream().use {
+            val secrets = apkFileSecretsImporter.importSecrets(it)
+            Assert.assertEquals("Cipher size isn't correct", 16, secrets.vbCipherCount)
+            Assert.assertEquals("BE Cipher size isn't correct", 16, secrets.beCipherCount)
+            Assert.assertFalse("AES Key is empty", secrets.aesKey.isEmpty())
+            assertHmacKeysArePopulated("VBDM", secrets.vbdmHmacKeys)
+            assertHmacKeysArePopulated("VBC", secrets.vbcHmacKeys)
+            assertHmacKeysArePopulated("BE", secrets.beHmacKeys)
+        }
+    }
+
+    @Test
+    fun testThatApkSecretsImporterCallsDexSecretImporterOnDexFile() {
+        val expectedDexContents = byteArrayOf(0, 1, 2, 3, 4, 5, 6, 7, 6, 5, 4, 3, 2, 1)
+        var foundFile = false
+        val apkFileSecretsImporter = ApkSecretsImporter {
+            val inputStreamContents = it.readAllBytes()
+            Assert.assertTrue("Unexpected file contents received by DexSecretsImporter", inputStreamContents.contentEquals(expectedDexContents))
+            foundFile = true
+            Secrets.newBuilder().build()
+        }
+        val apkBytes = constructTestApk(expectedDexContents)
+        ByteArrayInputStream(apkBytes).use {
+            apkFileSecretsImporter.importSecrets(it)
+        }
+        Assert.assertTrue("${ApkSecretsImporter.DEX_FILE} not found", foundFile)
+    }
+
+    fun constructTestApk(dexContents: ByteArray): ByteArray {
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        ZipOutputStream(byteArrayOutputStream).use { zipOutputStream ->
+            zipOutputStream.putNextEntry(ZipEntry("dummy.txt"))
+            zipOutputStream.write("This is a text file".toByteArray(StandardCharsets.UTF_8))
+            zipOutputStream.putNextEntry(ZipEntry("AndroidManifest.xml"))
+            zipOutputStream.write("Malformed xml!".toByteArray(StandardCharsets.UTF_8))
+            zipOutputStream.putNextEntry(ZipEntry("assets/"))
+            zipOutputStream.putNextEntry(ZipEntry("assets/bad.assets"))
+            zipOutputStream.write("Malformed asset!".toByteArray(StandardCharsets.UTF_8))
+            zipOutputStream.putNextEntry(ZipEntry(ApkSecretsImporter.DEX_FILE))
+            zipOutputStream.write(dexContents)
+        }
+        return byteArrayOutputStream.toByteArray()
+    }
+
+    private fun getAndAssertApkFile(): URL {
+        val url = javaClass.getResource("com.bandai.vitalbraceletarena.apk")
+        // Optional integration fixture: proprietary APK must not be checked into the repository.
+        assumeNotNull(url)
+        return url!!
+    }
+
+    @Test fun rejectsArchiveWithoutClassesDex() {
+        val bytes = ByteArrayOutputStream()
+        ZipOutputStream(bytes).use {
+            it.putNextEntry(ZipEntry("AndroidManifest.xml"))
+            it.write(byteArrayOf(0))
+        }
+        Assert.assertThrows(IllegalArgumentException::class.java) {
+            ApkSecretsImporter().importSecrets(ByteArrayInputStream(bytes.toByteArray()))
+        }
+    }
+}

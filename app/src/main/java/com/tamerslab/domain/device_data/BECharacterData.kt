@@ -1,0 +1,42 @@
+package com.tamerslab.domain.device_data
+
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.PrimaryKey
+import com.tamerslab.hardware.nfc.data.NfcCharacter
+
+@Entity(
+    foreignKeys = [
+        ForeignKey(
+            entity = UserCharacter::class,
+            parentColumns = ["id"],
+            childColumns = ["id"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ]
+)
+data class BECharacterData (
+    @PrimaryKey(autoGenerate = true) val id: Long,
+    val trainingHp: Int,
+    val trainingAp: Int,
+    val trainingBp: Int,
+    var remainingTrainingTimeInMinutes: Int,
+    val itemEffectMentalStateValue: Int,
+    val itemEffectMentalStateMinutesRemaining: Int,
+    val itemEffectActivityLevelValue: Int,
+    val itemEffectActivityLevelMinutesRemaining: Int,
+    val itemEffectVitalPointsChangeValue: Int,
+    val itemEffectVitalPointsChangeMinutesRemaining: Int,
+    val abilityRarity: NfcCharacter.AbilityRarity,
+    val abilityType: Int,
+    val abilityBranch: Int,
+    val abilityReset: Int,
+    val rank: Int,
+    var itemType: Int,
+    var itemMultiplier: Int,
+    var itemRemainingTime: Int,
+    val otp0: String,
+    val otp1: String,
+    val minorVersion: Int,
+    val majorVersion: Int,
+)

@@ -1,0 +1,115 @@
+﻿package com.tamerslab.transfer.ui.scan.screens
+
+import androidx.compose.runtime.Composable
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import com.tamerslab.ActivityLifecycleListener
+import com.tamerslab.domain.card.Card
+import com.tamerslab.species.ui.card.ChooseCard
+import com.tamerslab.transfer.ui.scan.SCAN_SCREEN_ACTIVITY_LIFECYCLE_LISTENER
+import com.tamerslab.transfer.ui.scan.ScanScreenController
+import com.tamerslab.R
+
+
+@Composable
+fun ReadingScreen(
+    scanScreenController: ScanScreenController,
+    onCancel: () -> Unit,
+    onComplete: () -> Unit
+) {
+    val secrets by scanScreenController.secretsFlow.collectAsStateWithLifecycle(null)
+
+    var cardsRead by remember { mutableStateOf<List<Card>?>(null) }
+
+    var readingScreen by remember { mutableStateOf(false) }
+    var isDoneReadingCharacter by remember { mutableStateOf(false) }
+    var cardSelectScreen by remember { mutableStateOf(false) }
+
+    DisposableEffect(readingScreen) {
+        if(readingScreen) {
+            scanScreenController.registerActivityLifecycleListener(
+                SCAN_SCREEN_ACTIVITY_LIFECYCLE_LISTENER,
+                object: ActivityLifecycleListener {
+                    override fun onPause() {
+                        scanScreenController.cancelRead()
+                    }
+
+                    override fun onResume() {
+                        scanScreenController.onClickRead(
+                            secrets = secrets!!,
+                            onComplete = {
+                                isDoneReadingCharacter = true
+                            },
+                            onMultipleCards = { cards ->
+                                cardsRead = cards
+                                readingScreen = false
+                                cardSelectScreen = true
+                                isDoneReadingCharacter = true
+                            }
+                        )
+                    }
+                }
+            )
+            scanScreenController.onClickRead(
+                secrets = secrets!!,
+                onComplete = {
+                    isDoneReadingCharacter = true
+                },
+                onMultipleCards = { cards ->
+                    cardsRead = cards
+                    readingScreen = false
+                    cardSelectScreen = true
+                    isDoneReadingCharacter = true
+                }
+            )
+        }
+        onDispose {
+            if(readingScreen) {
+                scanScreenController.unregisterActivityLifecycleListener(
+                    SCAN_SCREEN_ACTIVITY_LIFECYCLE_LISTENER
+                )
+                scanScreenController.cancelRead()
+            }
+        }
+    }
+
+    if (isDoneReadingCharacter && !cardSelectScreen) {
+        readingScreen = false
+        onComplete()
+    }
+
+    if (!readingScreen) {
+        ReadCharacterScreen(
+            onClickConfirm = {
+                readingScreen = true
+            },
+            onClickCancel = {
+                onCancel()
+            }
+        )
+    }
+
+    if (readingScreen) {
+        ActionScreen(topBannerText = stringResource(R.string.reading_character_title),) {
+            readingScreen = false
+            scanScreenController.cancelRead()
+            onCancel()
+        }
+    } else if (cardSelectScreen) {
+        ChooseCard(
+            cards = cardsRead!!,
+            onCardSelected = { card ->
+                cardSelectScreen = false
+                scanScreenController.flushCharacter(card.id)
+                isDoneReadingCharacter = false
+                readingScreen = true
+            }
+        )
+    }
+}
+

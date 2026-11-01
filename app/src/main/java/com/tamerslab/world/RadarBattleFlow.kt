@@ -1,0 +1,103 @@
+package com.tamerslab.world
+
+import com.tamerslab.hardware.nfc.data.NfcCharacter
+import com.tamerslab.battle.domain.BattleAttribute
+import com.tamerslab.battle.offline.core.BattleOutcome
+import com.tamerslab.battle.offline.data.BattleStatSourceScale
+import com.tamerslab.battle.offline.data.VitalBattleProfile
+import com.tamerslab.battle.offline.data.VitalStatScale
+import com.tamerslab.battle.offline.data.EncounterBattleProfiles
+import com.tamerslab.domain.personality.DigimonPersonalityGenerator
+import com.tamerslab.dtos.WorldDtos
+import com.tamerslab.battle.ui.OfflineBattleParticipant
+import com.tamerslab.battle.ui.OfflineBattleSpriteSet
+import kotlin.random.Random
+
+/** Database side effects allowed when a World Radar battle reaches a terminal outcome. */
+data class RadarBattleEffect(
+    val recordsBattle: Boolean,
+    val won: Boolean?,
+    val removesSpawn: Boolean
+)
+
+fun BattleOutcome.toRadarBattleEffect(): RadarBattleEffect = when (this) {
+    BattleOutcome.ALLIED_VICTORY -> RadarBattleEffect(
+        recordsBattle = true,
+        won = true,
+        removesSpawn = true
+    )
+
+    BattleOutcome.OPPOSING_VICTORY -> RadarBattleEffect(
+        recordsBattle = true,
+        won = false,
+        removesSpawn = false
+    )
+
+    BattleOutcome.DRAW,
+    BattleOutcome.ABANDONED -> RadarBattleEffect(
+        recordsBattle = false,
+        won = null,
+        removesSpawn = false
+    )
+}
+
+/** Builds the wild side directly from its DiM/BEM card record. */
+fun worldRadarBattleParticipant(spawn: WorldDtos.SpawnWithDetails): OfflineBattleParticipant {
+    val scale = if (spawn.isBemCard) VitalStatScale.BEM else VitalStatScale.DIM
+    val personality = DigimonPersonalityGenerator.generate(
+        individualId = spawn.individualId,
+        attribute = spawn.attribute,
+        stage = spawn.stage,
+        now = spawn.spawnedAt,
+        random = Random(spawn.individualId.hashCode())
+    ).personalityType
+    val externalCharacterId = spawn.externalCharacterId
+    val encounter = EncounterBattleProfiles.wild(externalCharacterId)
+
+    return OfflineBattleParticipant(
+        character = null,
+        assetCharacterId = externalCharacterId,
+        externalCharacterId = externalCharacterId,
+        cardCharacterId = spawn.cardCharacterId,
+        displayName = spawn.speciesName?.takeIf(String::isNotBlank) ?: "Wild Digimon #${spawn.id}",
+        maxHp = spawn.baseHp.coerceAtLeast(1),
+        attackPower = spawn.baseAp.coerceAtLeast(1),
+        stage = spawn.stage,
+        vitalStats = VitalBattleProfile(
+            scale = scale,
+            baseHp = spawn.baseHp,
+            baseBp = spawn.baseBp,
+            baseAp = spawn.baseAp,
+            mood = spawn.mood
+        ),
+        attribute = spawn.attribute.toBattleAttribute(),
+        individualId = spawn.individualId,
+        stableRngKey = spawn.individualId,
+        personalityType = personality,
+        techniqueIds = encounter.techniqueIds,
+        aiProfile = encounter.ai,
+        spriteSet = OfflineBattleSpriteSet(
+            idle = spawn.spriteIdle,
+            idle2 = spawn.spriteIdle2,
+            walk = spawn.spriteWalk,
+            walk2 = spawn.spriteWalk2,
+            attack = spawn.spriteRun,
+            defeated = spawn.spriteRun2,
+            width = spawn.spriteWidth,
+            height = spawn.spriteHeight
+        ),
+        statSourceScale = if (spawn.isBemCard) {
+            BattleStatSourceScale.CARD_BEM
+        } else {
+            BattleStatSourceScale.CARD_DIM
+        }
+    )
+}
+
+private fun NfcCharacter.Attribute.toBattleAttribute(): BattleAttribute = when (this) {
+    NfcCharacter.Attribute.Virus -> BattleAttribute.VIRUS
+    NfcCharacter.Attribute.Data -> BattleAttribute.DATA
+    NfcCharacter.Attribute.Vaccine -> BattleAttribute.VACCINE
+    NfcCharacter.Attribute.Free -> BattleAttribute.FREE
+    NfcCharacter.Attribute.None -> BattleAttribute.NONE
+}

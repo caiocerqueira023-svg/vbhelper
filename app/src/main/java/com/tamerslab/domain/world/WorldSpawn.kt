@@ -1,0 +1,64 @@
+package com.tamerslab.domain.world
+
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
+import com.tamerslab.domain.card.CardCharacter
+import com.tamerslab.domain.device_data.DigimonIndividual
+
+@Entity(
+    foreignKeys = [
+        ForeignKey(
+            entity = CardCharacter::class,
+            parentColumns = ["id"],
+            childColumns = ["cardCharacterId"],
+            onDelete = ForeignKey.CASCADE
+        ),
+        ForeignKey(
+            entity = DigimonIndividual::class,
+            parentColumns = ["individualId"],
+            childColumns = ["individualId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [
+        Index(value = ["cardCharacterId"]),
+        Index(value = ["individualId"], unique = true)
+    ]
+)
+data class WorldSpawn(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val cardCharacterId: Long,
+    val individualId: String,
+    val latitude: Double,
+    val longitude: Double,
+    val spawnedAt: Long,
+    val expiresAt: Long,
+    val interacted: Boolean = false,
+    /** 0-100. Começa em 50. Mais volátil para baixo do que para cima. */
+    val mood: Int = 50,
+    val recruitmentState: RecruitmentState = RecruitmentState.WILD,
+    /**
+     * Inert legacy column kept for migration safety (§11). No new code may read or
+     * write follow state; trust lives in WildRelationship and Radar never follows.
+     */
+    @Deprecated("Inert after Digiline migration; always false.")
+    val isFollowing: Boolean = false,
+    @Deprecated("Inert after Digiline migration; always null.")
+    val followLastLat: Double? = null,
+    @Deprecated("Inert after Digiline migration; always null.")
+    val followLastLon: Double? = null,
+    @ColumnInfo(defaultValue = "0.0") val homeLatitude: Double = latitude,
+    @ColumnInfo(defaultValue = "0.0") val homeLongitude: Double = longitude,
+    val wanderTargetLatitude: Double? = null,
+    val wanderTargetLongitude: Double? = null,
+    @ColumnInfo(defaultValue = "'HOME'") val movementState: WorldMovementState = WorldMovementState.HOME,
+    @ColumnInfo(defaultValue = "25.0") val anchorRadiusMeters: Double = 25.0,
+    val denId: String? = null,
+    /** NPC emotion is separate from mood/player trust; autonomous events never update that trust. */
+    @ColumnInfo(defaultValue = "0") val ecosystemEmotion: Int = 0,
+    @ColumnInfo(defaultValue = "0") val movementTick: Long = 0,
+    @ColumnInfo(defaultValue = "0") val nextDecisionTick: Long = 0
+)

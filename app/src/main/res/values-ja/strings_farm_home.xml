@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Japanese translations for the farm-home place labels and roster UI. -->
+    <string name="place_radar">レーダー</string>
+    <string name="place_radar_subtitle">フィールドの信号</string>
+    <string name="place_arena">アリーナ</string>
+    <string name="place_arena_subtitle">コロシアム</string>
+    <string name="place_digiline">デジライン</string>
+    <string name="place_digiline_subtitle">メッセージ</string>
+    <string name="place_shop">ショップ</string>
+    <string name="place_shop_subtitle">交換</string>
+    <string name="place_partners">パートナー</string>
+    <string name="place_partners_subtitle">保管庫</string>
+
+    <string name="home_open_place">%1$s を開く</string>
+    <string name="home_farm_chip_description">デジファームにいるデジモン</string>
+    <string name="home_farm_residents">%1$d/%2$d</string>
+    <string name="home_quests_chip_description">クエスト</string>
+    <string name="home_settings_description">設定</string>
+    <string name="home_menu_description">メニュー</string>
+    <string name="home_menu_title">メニュー</string>
+    <string name="home_roster_sheet_title">デジファーム内</string>
+    <string name="home_roster_sheet_note">アクティブなパートナーとお気に入りがここに表示されます。お気に入りが %1$d 体を超えると、ファームにはローテーションで表示されます。</string>
+    <string name="home_roster_active_partner">アクティブパートナー</string>
+    <string name="home_roster_follow">カメラで追従</string>
+    <string name="home_roster_followed">追従中</string>
+    <string name="home_farm_resident_active">アクティブ</string>
+    <string name="home_farm_empty_title">デジファームにパートナーがいません</string>
+    <string name="home_farm_empty_body">アクティブなパートナーを設定するか、ストレージのデジモンをお気に入りにすると、ファームに表示されます。</string>
+    <string name="home_farm_empty_action">ストレージを開く</string>
+    <string name="home_cancel">キャンセル</string>
+    <string name="home_resident_open_partner">パートナーを開く</string>
+    <string name="home_resident_chat">チャット</string>
+    <string name="home_partner_collapse">パートナー概要を折りたたむ</string>
+    <string name="home_partner_expand">パートナー概要を展開</string>
+    <string name="home_farm_settings_title">ファーム設定</string>
+    <string name="home_farm_resident_limit">ファーム内のデジモン</string>
+    <string name="home_farm_artwork">スプライトアート</string>
+    <string name="home_farm_art_mixed">混合</string>
+    <string name="home_farm_art_vb">VBのみ</string>
+    <string name="home_farm_art_dot">ドットのみ</string>
+    <string name="home_farm_showing">%1$d/%2$d を表示中</string>
+    <string name="home_farm_increase">デジモンを増やす</string>
+    <string name="home_farm_decrease">デジモンを減らす</string>
+</resources>

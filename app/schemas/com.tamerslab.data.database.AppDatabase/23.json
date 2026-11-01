@@ -1,0 +1,2928 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 23,
+    "identityHash": "56d8b25c3af6ebd320b8984b368e2592",
+    "entities": [
+      {
+        "tableName": "Card",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `cardId` INTEGER NOT NULL, `logo` BLOB NOT NULL, `logoWidth` INTEGER NOT NULL, `logoHeight` INTEGER NOT NULL, `name` TEXT NOT NULL, `stageCount` INTEGER NOT NULL, `isBEm` INTEGER NOT NULL, `officialStatus` TEXT NOT NULL, `worldSpawnsEnabled` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cardId",
+            "columnName": "cardId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "logo",
+            "columnName": "logo",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "logoWidth",
+            "columnName": "logoWidth",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "logoHeight",
+            "columnName": "logoHeight",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stageCount",
+            "columnName": "stageCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isBEm",
+            "columnName": "isBEm",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "officialStatus",
+            "columnName": "officialStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "worldSpawnsEnabled",
+            "columnName": "worldSpawnsEnabled",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "CardProgress",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`cardId` INTEGER NOT NULL, `currentStage` INTEGER NOT NULL, `unlocked` INTEGER NOT NULL, PRIMARY KEY(`cardId`), FOREIGN KEY(`cardId`) REFERENCES `Card`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "cardId",
+            "columnName": "cardId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currentStage",
+            "columnName": "currentStage",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unlocked",
+            "columnName": "unlocked",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "cardId"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "Card",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "cardId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "CardCharacter",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `cardId` INTEGER NOT NULL, `spriteId` INTEGER NOT NULL, `charaIndex` INTEGER NOT NULL, `stage` INTEGER NOT NULL, `attribute` TEXT NOT NULL, `baseHp` INTEGER NOT NULL, `baseBp` INTEGER NOT NULL, `baseAp` INTEGER NOT NULL, `nameSprite` BLOB NOT NULL, `nameWidth` INTEGER NOT NULL, `nameHeight` INTEGER NOT NULL, FOREIGN KEY(`cardId`) REFERENCES `Card`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`spriteId`) REFERENCES `Sprite`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cardId",
+            "columnName": "cardId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spriteId",
+            "columnName": "spriteId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "charaIndex",
+            "columnName": "charaIndex",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stage",
+            "columnName": "stage",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attribute",
+            "columnName": "attribute",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseHp",
+            "columnName": "baseHp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseBp",
+            "columnName": "baseBp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "baseAp",
+            "columnName": "baseAp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nameSprite",
+            "columnName": "nameSprite",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nameWidth",
+            "columnName": "nameWidth",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nameHeight",
+            "columnName": "nameHeight",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_CardCharacter_cardId",
+            "unique": false,
+            "columnNames": [
+              "cardId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_CardCharacter_cardId` ON `${TABLE_NAME}` (`cardId`)"
+          },
+          {
+            "name": "index_CardCharacter_spriteId",
+            "unique": false,
+            "columnNames": [
+              "spriteId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_CardCharacter_spriteId` ON `${TABLE_NAME}` (`spriteId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Card",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "cardId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "Sprite",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "spriteId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "CardAdventure",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `cardId` INTEGER NOT NULL, `characterId` INTEGER NOT NULL, `steps` INTEGER NOT NULL, `bossHp` INTEGER NOT NULL, `bossAp` INTEGER NOT NULL, `bossDp` INTEGER NOT NULL, `bossBp` INTEGER, FOREIGN KEY(`characterId`) REFERENCES `CardCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`cardId`) REFERENCES `Card`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cardId",
+            "columnName": "cardId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "characterId",
+            "columnName": "characterId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "steps",
+            "columnName": "steps",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bossHp",
+            "columnName": "bossHp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bossAp",
+            "columnName": "bossAp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bossDp",
+            "columnName": "bossDp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "bossBp",
+            "columnName": "bossBp",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_CardAdventure_characterId",
+            "unique": false,
+            "columnNames": [
+              "characterId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_CardAdventure_characterId` ON `${TABLE_NAME}` (`characterId`)"
+          },
+          {
+            "name": "index_CardAdventure_cardId",
+            "unique": false,
+            "columnNames": [
+              "cardId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_CardAdventure_cardId` ON `${TABLE_NAME}` (`cardId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "CardCharacter",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "characterId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "Card",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "cardId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "CardFusions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `fromCharaId` INTEGER NOT NULL, `attribute` TEXT NOT NULL, `toCharaId` INTEGER NOT NULL, FOREIGN KEY(`fromCharaId`) REFERENCES `CardCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`toCharaId`) REFERENCES `CardCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fromCharaId",
+            "columnName": "fromCharaId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "attribute",
+            "columnName": "attribute",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "toCharaId",
+            "columnName": "toCharaId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_CardFusions_fromCharaId",
+            "unique": false,
+            "columnNames": [
+              "fromCharaId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_CardFusions_fromCharaId` ON `${TABLE_NAME}` (`fromCharaId`)"
+          },
+          {
+            "name": "index_CardFusions_toCharaId",
+            "unique": false,
+            "columnNames": [
+              "toCharaId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_CardFusions_toCharaId` ON `${TABLE_NAME}` (`toCharaId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "CardCharacter",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "fromCharaId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "CardCharacter",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "toCharaId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "Sprite",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `spriteIdle1` BLOB NOT NULL, `spriteIdle2` BLOB NOT NULL, `spriteWalk1` BLOB NOT NULL, `spriteWalk2` BLOB NOT NULL, `spriteRun1` BLOB NOT NULL, `spriteRun2` BLOB NOT NULL, `spriteTrain1` BLOB NOT NULL, `spriteTrain2` BLOB NOT NULL, `spriteHappy` BLOB NOT NULL, `spriteSleep` BLOB NOT NULL, `spriteAttack` BLOB NOT NULL, `spriteDodge` BLOB NOT NULL, `width` INTEGER NOT NULL, `height` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spriteIdle1",
+            "columnName": "spriteIdle1",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spriteIdle2",
+            "columnName": "spriteIdle2",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spriteWalk1",
+            "columnName": "spriteWalk1",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spriteWalk2",
+            "columnName": "spriteWalk2",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spriteRun1",
+            "columnName": "spriteRun1",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spriteRun2",
+            "columnName": "spriteRun2",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spriteTrain1",
+            "columnName": "spriteTrain1",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spriteTrain2",
+            "columnName": "spriteTrain2",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spriteHappy",
+            "columnName": "spriteHappy",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spriteSleep",
+            "columnName": "spriteSleep",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spriteAttack",
+            "columnName": "spriteAttack",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spriteDodge",
+            "columnName": "spriteDodge",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "width",
+            "columnName": "width",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "height",
+            "columnName": "height",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "UserCharacter",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `individualId` TEXT NOT NULL, `charId` INTEGER NOT NULL, `ageInDays` INTEGER NOT NULL, `mood` INTEGER NOT NULL, `vitalPoints` INTEGER NOT NULL, `transformationCountdown` INTEGER NOT NULL, `injuryStatus` TEXT NOT NULL, `trophies` INTEGER NOT NULL, `currentPhaseBattlesWon` INTEGER NOT NULL, `currentPhaseBattlesLost` INTEGER NOT NULL, `totalBattlesWon` INTEGER NOT NULL, `totalBattlesLost` INTEGER NOT NULL, `activityLevel` INTEGER NOT NULL, `heartRateCurrent` INTEGER NOT NULL, `characterType` TEXT NOT NULL, `isActive` INTEGER NOT NULL, `isFavorite` INTEGER NOT NULL, FOREIGN KEY(`charId`) REFERENCES `CardCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "individualId",
+            "columnName": "individualId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "charId",
+            "columnName": "charId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ageInDays",
+            "columnName": "ageInDays",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mood",
+            "columnName": "mood",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "vitalPoints",
+            "columnName": "vitalPoints",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "transformationCountdown",
+            "columnName": "transformationCountdown",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "injuryStatus",
+            "columnName": "injuryStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trophies",
+            "columnName": "trophies",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currentPhaseBattlesWon",
+            "columnName": "currentPhaseBattlesWon",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currentPhaseBattlesLost",
+            "columnName": "currentPhaseBattlesLost",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalBattlesWon",
+            "columnName": "totalBattlesWon",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalBattlesLost",
+            "columnName": "totalBattlesLost",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activityLevel",
+            "columnName": "activityLevel",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "heartRateCurrent",
+            "columnName": "heartRateCurrent",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "characterType",
+            "columnName": "characterType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isActive",
+            "columnName": "isActive",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isFavorite",
+            "columnName": "isFavorite",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_UserCharacter_charId",
+            "unique": false,
+            "columnNames": [
+              "charId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_UserCharacter_charId` ON `${TABLE_NAME}` (`charId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "CardCharacter",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "charId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "DigimonIndividual",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`individualId` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `nickname` TEXT, `lastDiaryEntryAt` INTEGER, `lastCelebratedWinsMilestone` INTEGER NOT NULL, `lastCelebratedTrophyMilestone` INTEGER NOT NULL, PRIMARY KEY(`individualId`))",
+        "fields": [
+          {
+            "fieldPath": "individualId",
+            "columnName": "individualId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nickname",
+            "columnName": "nickname",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastDiaryEntryAt",
+            "columnName": "lastDiaryEntryAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "lastCelebratedWinsMilestone",
+            "columnName": "lastCelebratedWinsMilestone",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastCelebratedTrophyMilestone",
+            "columnName": "lastCelebratedTrophyMilestone",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "individualId"
+          ]
+        }
+      },
+      {
+        "tableName": "WatchTransfer",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`token` TEXT NOT NULL, `individualId` TEXT NOT NULL, `deviceType` INTEGER NOT NULL, `dimId` INTEGER NOT NULL, `generation` INTEGER, `ageInDays` INTEGER NOT NULL, `totalBattlesWon` INTEGER NOT NULL, `totalBattlesLost` INTEGER NOT NULL, `history` TEXT NOT NULL, `sourceCharacterId` INTEGER, `cardId` INTEGER, `sourceFingerprint` TEXT, `deviceKey` TEXT NOT NULL, PRIMARY KEY(`token`))",
+        "fields": [
+          {
+            "fieldPath": "token",
+            "columnName": "token",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "individualId",
+            "columnName": "individualId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deviceType",
+            "columnName": "deviceType",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dimId",
+            "columnName": "dimId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "generation",
+            "columnName": "generation",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "ageInDays",
+            "columnName": "ageInDays",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalBattlesWon",
+            "columnName": "totalBattlesWon",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalBattlesLost",
+            "columnName": "totalBattlesLost",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "history",
+            "columnName": "history",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sourceCharacterId",
+            "columnName": "sourceCharacterId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "cardId",
+            "columnName": "cardId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "sourceFingerprint",
+            "columnName": "sourceFingerprint",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "deviceKey",
+            "columnName": "deviceKey",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "token"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_WatchTransfer_individualId",
+            "unique": true,
+            "columnNames": [
+              "individualId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_WatchTransfer_individualId` ON `${TABLE_NAME}` (`individualId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "WatchImportReceipt",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`fingerprint` TEXT NOT NULL, `characterId` INTEGER NOT NULL, `individualId` TEXT NOT NULL, PRIMARY KEY(`fingerprint`))",
+        "fields": [
+          {
+            "fieldPath": "fingerprint",
+            "columnName": "fingerprint",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "characterId",
+            "columnName": "characterId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "individualId",
+            "columnName": "individualId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "fingerprint"
+          ]
+        }
+      },
+      {
+        "tableName": "BECharacterData",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `trainingHp` INTEGER NOT NULL, `trainingAp` INTEGER NOT NULL, `trainingBp` INTEGER NOT NULL, `remainingTrainingTimeInMinutes` INTEGER NOT NULL, `itemEffectMentalStateValue` INTEGER NOT NULL, `itemEffectMentalStateMinutesRemaining` INTEGER NOT NULL, `itemEffectActivityLevelValue` INTEGER NOT NULL, `itemEffectActivityLevelMinutesRemaining` INTEGER NOT NULL, `itemEffectVitalPointsChangeValue` INTEGER NOT NULL, `itemEffectVitalPointsChangeMinutesRemaining` INTEGER NOT NULL, `abilityRarity` TEXT NOT NULL, `abilityType` INTEGER NOT NULL, `abilityBranch` INTEGER NOT NULL, `abilityReset` INTEGER NOT NULL, `rank` INTEGER NOT NULL, `itemType` INTEGER NOT NULL, `itemMultiplier` INTEGER NOT NULL, `itemRemainingTime` INTEGER NOT NULL, `otp0` TEXT NOT NULL, `otp1` TEXT NOT NULL, `minorVersion` INTEGER NOT NULL, `majorVersion` INTEGER NOT NULL, FOREIGN KEY(`id`) REFERENCES `UserCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trainingHp",
+            "columnName": "trainingHp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trainingAp",
+            "columnName": "trainingAp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trainingBp",
+            "columnName": "trainingBp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "remainingTrainingTimeInMinutes",
+            "columnName": "remainingTrainingTimeInMinutes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemEffectMentalStateValue",
+            "columnName": "itemEffectMentalStateValue",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemEffectMentalStateMinutesRemaining",
+            "columnName": "itemEffectMentalStateMinutesRemaining",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemEffectActivityLevelValue",
+            "columnName": "itemEffectActivityLevelValue",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemEffectActivityLevelMinutesRemaining",
+            "columnName": "itemEffectActivityLevelMinutesRemaining",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemEffectVitalPointsChangeValue",
+            "columnName": "itemEffectVitalPointsChangeValue",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemEffectVitalPointsChangeMinutesRemaining",
+            "columnName": "itemEffectVitalPointsChangeMinutesRemaining",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "abilityRarity",
+            "columnName": "abilityRarity",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "abilityType",
+            "columnName": "abilityType",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "abilityBranch",
+            "columnName": "abilityBranch",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "abilityReset",
+            "columnName": "abilityReset",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "rank",
+            "columnName": "rank",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemType",
+            "columnName": "itemType",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemMultiplier",
+            "columnName": "itemMultiplier",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemRemainingTime",
+            "columnName": "itemRemainingTime",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "otp0",
+            "columnName": "otp0",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "otp1",
+            "columnName": "otp1",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minorVersion",
+            "columnName": "minorVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "majorVersion",
+            "columnName": "majorVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "UserCharacter",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "VBCharacterData",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `generation` INTEGER NOT NULL, `totalTrophies` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`id`) REFERENCES `UserCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "generation",
+            "columnName": "generation",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalTrophies",
+            "columnName": "totalTrophies",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "UserCharacter",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "SpecialMissions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `characterId` INTEGER NOT NULL, `goal` INTEGER NOT NULL, `watchId` INTEGER NOT NULL, `progress` INTEGER NOT NULL, `status` TEXT NOT NULL, `timeElapsedInMinutes` INTEGER NOT NULL, `timeLimitInMinutes` INTEGER NOT NULL, `missionType` TEXT NOT NULL, FOREIGN KEY(`characterId`) REFERENCES `UserCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "characterId",
+            "columnName": "characterId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "goal",
+            "columnName": "goal",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "watchId",
+            "columnName": "watchId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "progress",
+            "columnName": "progress",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeElapsedInMinutes",
+            "columnName": "timeElapsedInMinutes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timeLimitInMinutes",
+            "columnName": "timeLimitInMinutes",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "missionType",
+            "columnName": "missionType",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_SpecialMissions_characterId",
+            "unique": false,
+            "columnNames": [
+              "characterId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_SpecialMissions_characterId` ON `${TABLE_NAME}` (`characterId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "UserCharacter",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "characterId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "TransformationHistory",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `monId` INTEGER NOT NULL, `stageId` INTEGER NOT NULL, `transformationDate` INTEGER NOT NULL, FOREIGN KEY(`monId`) REFERENCES `UserCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`stageId`) REFERENCES `CardCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "monId",
+            "columnName": "monId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stageId",
+            "columnName": "stageId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "transformationDate",
+            "columnName": "transformationDate",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_TransformationHistory_monId",
+            "unique": false,
+            "columnNames": [
+              "monId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_TransformationHistory_monId` ON `${TABLE_NAME}` (`monId`)"
+          },
+          {
+            "name": "index_TransformationHistory_stageId",
+            "unique": false,
+            "columnNames": [
+              "stageId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_TransformationHistory_stageId` ON `${TABLE_NAME}` (`stageId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "UserCharacter",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "monId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "CardCharacter",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "stageId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "VitalsHistory",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `charId` INTEGER NOT NULL, `year` INTEGER NOT NULL, `month` INTEGER NOT NULL, `day` INTEGER NOT NULL, `vitalPoints` INTEGER NOT NULL, FOREIGN KEY(`charId`) REFERENCES `UserCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "charId",
+            "columnName": "charId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "year",
+            "columnName": "year",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "month",
+            "columnName": "month",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "day",
+            "columnName": "day",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "vitalPoints",
+            "columnName": "vitalPoints",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_VitalsHistory_charId",
+            "unique": false,
+            "columnNames": [
+              "charId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_VitalsHistory_charId` ON `${TABLE_NAME}` (`charId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "UserCharacter",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "charId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "Dex",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `discoveredOn` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`id`) REFERENCES `CardCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "discoveredOn",
+            "columnName": "discoveredOn",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "CardCharacter",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "Items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `description` TEXT NOT NULL, `itemIcon` INTEGER NOT NULL, `itemLength` INTEGER NOT NULL, `price` INTEGER NOT NULL, `quantity` INTEGER NOT NULL, `itemType` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemIcon",
+            "columnName": "itemIcon",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemLength",
+            "columnName": "itemLength",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "price",
+            "columnName": "price",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quantity",
+            "columnName": "quantity",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "itemType",
+            "columnName": "itemType",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "Adventure",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`characterId` INTEGER NOT NULL, `originalDuration` INTEGER NOT NULL, `finishesAdventure` INTEGER NOT NULL, PRIMARY KEY(`characterId`), FOREIGN KEY(`characterId`) REFERENCES `UserCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "characterId",
+            "columnName": "characterId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "originalDuration",
+            "columnName": "originalDuration",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "finishesAdventure",
+            "columnName": "finishesAdventure",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "characterId"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "UserCharacter",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "characterId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "Background",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `cardId` INTEGER NOT NULL, `background` BLOB NOT NULL, `backgroundWidth` INTEGER NOT NULL, `backgroundHeight` INTEGER NOT NULL, FOREIGN KEY(`cardId`) REFERENCES `Card`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cardId",
+            "columnName": "cardId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "background",
+            "columnName": "background",
+            "affinity": "BLOB",
+            "notNull": true
+          },
+          {
+            "fieldPath": "backgroundWidth",
+            "columnName": "backgroundWidth",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "backgroundHeight",
+            "columnName": "backgroundHeight",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_Background_cardId",
+            "unique": false,
+            "columnNames": [
+              "cardId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_Background_cardId` ON `${TABLE_NAME}` (`cardId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Card",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "cardId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "PossibleTransformations",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `charaId` INTEGER NOT NULL, `requiredVitals` INTEGER NOT NULL, `requiredTrophies` INTEGER NOT NULL, `requiredBattles` INTEGER NOT NULL, `requiredWinRate` INTEGER NOT NULL, `changeTimerHours` INTEGER NOT NULL, `requiredAdventureLevelCompleted` INTEGER NOT NULL, `toCharaId` INTEGER, FOREIGN KEY(`charaId`) REFERENCES `CardCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`toCharaId`) REFERENCES `CardCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "charaId",
+            "columnName": "charaId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requiredVitals",
+            "columnName": "requiredVitals",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requiredTrophies",
+            "columnName": "requiredTrophies",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requiredBattles",
+            "columnName": "requiredBattles",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requiredWinRate",
+            "columnName": "requiredWinRate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "changeTimerHours",
+            "columnName": "changeTimerHours",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "requiredAdventureLevelCompleted",
+            "columnName": "requiredAdventureLevelCompleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "toCharaId",
+            "columnName": "toCharaId",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_PossibleTransformations_charaId",
+            "unique": false,
+            "columnNames": [
+              "charaId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_PossibleTransformations_charaId` ON `${TABLE_NAME}` (`charaId`)"
+          },
+          {
+            "name": "index_PossibleTransformations_toCharaId",
+            "unique": false,
+            "columnNames": [
+              "toCharaId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_PossibleTransformations_toCharaId` ON `${TABLE_NAME}` (`toCharaId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "CardCharacter",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "charaId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "CardCharacter",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "toCharaId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "validated",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`cardId` INTEGER NOT NULL, PRIMARY KEY(`cardId`))",
+        "fields": [
+          {
+            "fieldPath": "cardId",
+            "columnName": "cardId",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "cardId"
+          ]
+        }
+      },
+      {
+        "tableName": "VitalWearCharacterSettings",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`characterId` INTEGER NOT NULL, `trainingInBackground` INTEGER NOT NULL, `allowedBattles` INTEGER NOT NULL, `accumulatedDailyInjuries` INTEGER NOT NULL, PRIMARY KEY(`characterId`))",
+        "fields": [
+          {
+            "fieldPath": "characterId",
+            "columnName": "characterId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trainingInBackground",
+            "columnName": "trainingInBackground",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "allowedBattles",
+            "columnName": "allowedBattles",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accumulatedDailyInjuries",
+            "columnName": "accumulatedDailyInjuries",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "characterId"
+          ]
+        }
+      },
+      {
+        "tableName": "CharacterTransferPolicy",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`characterId` INTEGER NOT NULL, `nativeDeviceType` TEXT NOT NULL, `preferredHceExportFormat` TEXT NOT NULL, `preferredNfcaExportFormat` TEXT NOT NULL, `lastObservedImportFormat` TEXT, `lastTransferTransport` TEXT, `lastTransferTarget` TEXT, `preserveVbRoundTrip` INTEGER NOT NULL, `preserveBeRoundTrip` INTEGER NOT NULL, PRIMARY KEY(`characterId`), FOREIGN KEY(`characterId`) REFERENCES `UserCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "characterId",
+            "columnName": "characterId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "nativeDeviceType",
+            "columnName": "nativeDeviceType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preferredHceExportFormat",
+            "columnName": "preferredHceExportFormat",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preferredNfcaExportFormat",
+            "columnName": "preferredNfcaExportFormat",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastObservedImportFormat",
+            "columnName": "lastObservedImportFormat",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastTransferTransport",
+            "columnName": "lastTransferTransport",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastTransferTarget",
+            "columnName": "lastTransferTarget",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "preserveVbRoundTrip",
+            "columnName": "preserveVbRoundTrip",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "preserveBeRoundTrip",
+            "columnName": "preserveBeRoundTrip",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "characterId"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "UserCharacter",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "characterId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "ChatMessageEntity",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `individualId` TEXT NOT NULL, `role` TEXT NOT NULL, `content` TEXT NOT NULL, `timestamp` INTEGER NOT NULL, `isRead` INTEGER NOT NULL, FOREIGN KEY(`individualId`) REFERENCES `DigimonIndividual`(`individualId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "individualId",
+            "columnName": "individualId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "role",
+            "columnName": "role",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isRead",
+            "columnName": "isRead",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_ChatMessageEntity_individualId",
+            "unique": false,
+            "columnNames": [
+              "individualId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_ChatMessageEntity_individualId` ON `${TABLE_NAME}` (`individualId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "DigimonIndividual",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "individualId"
+            ],
+            "referencedColumns": [
+              "individualId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "SpeciesProfile",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`cardCharacterId` INTEGER NOT NULL, `speciesName` TEXT, `matchedName` TEXT, `level` TEXT, `type` TEXT, `profileDescription` TEXT, `specialMoves` TEXT NOT NULL, `source` TEXT NOT NULL, PRIMARY KEY(`cardCharacterId`), FOREIGN KEY(`cardCharacterId`) REFERENCES `CardCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "cardCharacterId",
+            "columnName": "cardCharacterId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "speciesName",
+            "columnName": "speciesName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "matchedName",
+            "columnName": "matchedName",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "level",
+            "columnName": "level",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "profileDescription",
+            "columnName": "profileDescription",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "specialMoves",
+            "columnName": "specialMoves",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "cardCharacterId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_SpeciesProfile_cardCharacterId",
+            "unique": false,
+            "columnNames": [
+              "cardCharacterId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_SpeciesProfile_cardCharacterId` ON `${TABLE_NAME}` (`cardCharacterId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "CardCharacter",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "cardCharacterId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "DigimonPersonalityTraits",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`individualId` TEXT NOT NULL, `personalityType` TEXT NOT NULL, `generatedAt` INTEGER NOT NULL, `systemVersion` INTEGER NOT NULL, PRIMARY KEY(`individualId`), FOREIGN KEY(`individualId`) REFERENCES `DigimonIndividual`(`individualId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "individualId",
+            "columnName": "individualId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "personalityType",
+            "columnName": "personalityType",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "generatedAt",
+            "columnName": "generatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "systemVersion",
+            "columnName": "systemVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "individualId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_DigimonPersonalityTraits_individualId",
+            "unique": true,
+            "columnNames": [
+              "individualId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_DigimonPersonalityTraits_individualId` ON `${TABLE_NAME}` (`individualId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "DigimonIndividual",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "individualId"
+            ],
+            "referencedColumns": [
+              "individualId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "DigimonStateSnapshot",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`individualId` TEXT NOT NULL, `stage` INTEGER NOT NULL, `mood` INTEGER NOT NULL, `vitalPoints` INTEGER NOT NULL, `trophies` INTEGER NOT NULL, `totalBattlesWon` INTEGER NOT NULL, `totalBattlesLost` INTEGER NOT NULL, `injuryStatus` TEXT NOT NULL, `specialMissionsJson` TEXT NOT NULL, `capturedAt` INTEGER NOT NULL, PRIMARY KEY(`individualId`), FOREIGN KEY(`individualId`) REFERENCES `DigimonIndividual`(`individualId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "individualId",
+            "columnName": "individualId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "stage",
+            "columnName": "stage",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mood",
+            "columnName": "mood",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "vitalPoints",
+            "columnName": "vitalPoints",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trophies",
+            "columnName": "trophies",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalBattlesWon",
+            "columnName": "totalBattlesWon",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "totalBattlesLost",
+            "columnName": "totalBattlesLost",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "injuryStatus",
+            "columnName": "injuryStatus",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "specialMissionsJson",
+            "columnName": "specialMissionsJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "capturedAt",
+            "columnName": "capturedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "individualId"
+          ]
+        },
+        "foreignKeys": [
+          {
+            "table": "DigimonIndividual",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "individualId"
+            ],
+            "referencedColumns": [
+              "individualId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "LorebookEntry",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `triggerKeys` TEXT NOT NULL, `content` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `caseSensitive` INTEGER NOT NULL, `priority` INTEGER NOT NULL, `source` TEXT NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "triggerKeys",
+            "columnName": "triggerKeys",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "content",
+            "columnName": "content",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "enabled",
+            "columnName": "enabled",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "caseSensitive",
+            "columnName": "caseSensitive",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "priority",
+            "columnName": "priority",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "source",
+            "columnName": "source",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "WorldSpawn",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `cardCharacterId` INTEGER NOT NULL, `individualId` TEXT NOT NULL, `latitude` REAL NOT NULL, `longitude` REAL NOT NULL, `spawnedAt` INTEGER NOT NULL, `expiresAt` INTEGER NOT NULL, `interacted` INTEGER NOT NULL, `mood` INTEGER NOT NULL, `recruitmentState` TEXT NOT NULL, `isFollowing` INTEGER NOT NULL, `followLastLat` REAL, `followLastLon` REAL, FOREIGN KEY(`cardCharacterId`) REFERENCES `CardCharacter`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`individualId`) REFERENCES `DigimonIndividual`(`individualId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cardCharacterId",
+            "columnName": "cardCharacterId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "individualId",
+            "columnName": "individualId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "latitude",
+            "columnName": "latitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "longitude",
+            "columnName": "longitude",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spawnedAt",
+            "columnName": "spawnedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expiresAt",
+            "columnName": "expiresAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "interacted",
+            "columnName": "interacted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mood",
+            "columnName": "mood",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recruitmentState",
+            "columnName": "recruitmentState",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isFollowing",
+            "columnName": "isFollowing",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "followLastLat",
+            "columnName": "followLastLat",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "followLastLon",
+            "columnName": "followLastLon",
+            "affinity": "REAL"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_WorldSpawn_cardCharacterId",
+            "unique": false,
+            "columnNames": [
+              "cardCharacterId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_WorldSpawn_cardCharacterId` ON `${TABLE_NAME}` (`cardCharacterId`)"
+          },
+          {
+            "name": "index_WorldSpawn_individualId",
+            "unique": true,
+            "columnNames": [
+              "individualId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_WorldSpawn_individualId` ON `${TABLE_NAME}` (`individualId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "CardCharacter",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "cardCharacterId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "DigimonIndividual",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "individualId"
+            ],
+            "referencedColumns": [
+              "individualId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "Farm",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `mapId` TEXT NOT NULL, `mapVersion` INTEGER NOT NULL, `capacity` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `lastSimulatedAt` INTEGER NOT NULL, `randomSeed` INTEGER NOT NULL, `cameraScale` REAL NOT NULL, `cameraX` REAL NOT NULL, `cameraY` REAL NOT NULL, `cameraYaw` REAL NOT NULL, `cameraPitch` REAL NOT NULL, `cameraDistance` REAL NOT NULL, `cameraTargetX` REAL NOT NULL, `cameraTargetZ` REAL NOT NULL, `autonomousDialogueEnabled` INTEGER NOT NULL, `archivedAt` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mapId",
+            "columnName": "mapId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "mapVersion",
+            "columnName": "mapVersion",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "capacity",
+            "columnName": "capacity",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastSimulatedAt",
+            "columnName": "lastSimulatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "randomSeed",
+            "columnName": "randomSeed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cameraScale",
+            "columnName": "cameraScale",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cameraX",
+            "columnName": "cameraX",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cameraY",
+            "columnName": "cameraY",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cameraYaw",
+            "columnName": "cameraYaw",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cameraPitch",
+            "columnName": "cameraPitch",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cameraDistance",
+            "columnName": "cameraDistance",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cameraTargetX",
+            "columnName": "cameraTargetX",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cameraTargetZ",
+            "columnName": "cameraTargetZ",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "autonomousDialogueEnabled",
+            "columnName": "autonomousDialogueEnabled",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "archivedAt",
+            "columnName": "archivedAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "FarmResident",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`individualId` TEXT NOT NULL, `farmId` TEXT NOT NULL, `positionX` REAL NOT NULL, `positionY` REAL NOT NULL, `targetX` REAL NOT NULL, `targetY` REAL NOT NULL, `facingLeft` INTEGER NOT NULL, `activity` TEXT NOT NULL, `energy` INTEGER NOT NULL, `satiety` INTEGER NOT NULL, `social` INTEGER NOT NULL, `funLevel` INTEGER NOT NULL, `activityStartedAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`individualId`), FOREIGN KEY(`farmId`) REFERENCES `Farm`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`individualId`) REFERENCES `DigimonIndividual`(`individualId`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "individualId",
+            "columnName": "individualId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "farmId",
+            "columnName": "farmId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "positionX",
+            "columnName": "positionX",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "positionY",
+            "columnName": "positionY",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetX",
+            "columnName": "targetX",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "targetY",
+            "columnName": "targetY",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "facingLeft",
+            "columnName": "facingLeft",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activity",
+            "columnName": "activity",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "energy",
+            "columnName": "energy",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "satiety",
+            "columnName": "satiety",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "social",
+            "columnName": "social",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "funLevel",
+            "columnName": "funLevel",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "activityStartedAt",
+            "columnName": "activityStartedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "individualId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_FarmResident_farmId",
+            "unique": false,
+            "columnNames": [
+              "farmId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_FarmResident_farmId` ON `${TABLE_NAME}` (`farmId`)"
+          },
+          {
+            "name": "index_FarmResident_individualId",
+            "unique": true,
+            "columnNames": [
+              "individualId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_FarmResident_individualId` ON `${TABLE_NAME}` (`individualId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Farm",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "farmId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "DigimonIndividual",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "individualId"
+            ],
+            "referencedColumns": [
+              "individualId"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "FarmMessage",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `farmId` TEXT NOT NULL, `sequence` INTEGER NOT NULL, `type` TEXT NOT NULL, `authorIndividualId` TEXT, `authorNameSnapshot` TEXT NOT NULL, `body` TEXT NOT NULL, `audience` TEXT NOT NULL, `replyToMessageId` TEXT, `sessionId` TEXT, `timestamp` INTEGER NOT NULL, PRIMARY KEY(`id`), FOREIGN KEY(`farmId`) REFERENCES `Farm`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "farmId",
+            "columnName": "farmId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sequence",
+            "columnName": "sequence",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "authorIndividualId",
+            "columnName": "authorIndividualId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "authorNameSnapshot",
+            "columnName": "authorNameSnapshot",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "body",
+            "columnName": "body",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "audience",
+            "columnName": "audience",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "replyToMessageId",
+            "columnName": "replyToMessageId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "sessionId",
+            "columnName": "sessionId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "timestamp",
+            "columnName": "timestamp",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_FarmMessage_farmId_sequence",
+            "unique": true,
+            "columnNames": [
+              "farmId",
+              "sequence"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_FarmMessage_farmId_sequence` ON `${TABLE_NAME}` (`farmId`, `sequence`)"
+          },
+          {
+            "name": "index_FarmMessage_timestamp",
+            "unique": false,
+            "columnNames": [
+              "timestamp"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_FarmMessage_timestamp` ON `${TABLE_NAME}` (`timestamp`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Farm",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "farmId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "FarmMessageRecipient",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`messageId` TEXT NOT NULL, `individualId` TEXT NOT NULL, PRIMARY KEY(`messageId`, `individualId`), FOREIGN KEY(`messageId`) REFERENCES `FarmMessage`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "messageId",
+            "columnName": "messageId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "individualId",
+            "columnName": "individualId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "messageId",
+            "individualId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_FarmMessageRecipient_messageId",
+            "unique": false,
+            "columnNames": [
+              "messageId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_FarmMessageRecipient_messageId` ON `${TABLE_NAME}` (`messageId`)"
+          },
+          {
+            "name": "index_FarmMessageRecipient_individualId",
+            "unique": false,
+            "columnNames": [
+              "individualId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_FarmMessageRecipient_individualId` ON `${TABLE_NAME}` (`individualId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "FarmMessage",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "messageId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "FarmReadState",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`farmId` TEXT NOT NULL, `lastReadSequence` INTEGER NOT NULL, PRIMARY KEY(`farmId`), FOREIGN KEY(`farmId`) REFERENCES `Farm`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "farmId",
+            "columnName": "farmId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastReadSequence",
+            "columnName": "lastReadSequence",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "farmId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_FarmReadState_farmId",
+            "unique": false,
+            "columnNames": [
+              "farmId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_FarmReadState_farmId` ON `${TABLE_NAME}` (`farmId`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "Farm",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "farmId"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "FarmRelationship",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`observerId` TEXT NOT NULL, `otherId` TEXT NOT NULL, `affinity` INTEGER NOT NULL, `familiarity` INTEGER NOT NULL, `lastInteractionAt` INTEGER NOT NULL, PRIMARY KEY(`observerId`, `otherId`))",
+        "fields": [
+          {
+            "fieldPath": "observerId",
+            "columnName": "observerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "otherId",
+            "columnName": "otherId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "affinity",
+            "columnName": "affinity",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "familiarity",
+            "columnName": "familiarity",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastInteractionAt",
+            "columnName": "lastInteractionAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "observerId",
+            "otherId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_FarmRelationship_otherId",
+            "unique": false,
+            "columnNames": [
+              "otherId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_FarmRelationship_otherId` ON `${TABLE_NAME}` (`otherId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "FarmMemory",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `observerId` TEXT NOT NULL, `relatedIndividualId` TEXT, `eventId` TEXT NOT NULL, `summary` TEXT NOT NULL, `relevance` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "observerId",
+            "columnName": "observerId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "relatedIndividualId",
+            "columnName": "relatedIndividualId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "eventId",
+            "columnName": "eventId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "summary",
+            "columnName": "summary",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "relevance",
+            "columnName": "relevance",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_FarmMemory_observerId",
+            "unique": false,
+            "columnNames": [
+              "observerId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_FarmMemory_observerId` ON `${TABLE_NAME}` (`observerId`)"
+          },
+          {
+            "name": "index_FarmMemory_relatedIndividualId",
+            "unique": false,
+            "columnNames": [
+              "relatedIndividualId"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_FarmMemory_relatedIndividualId` ON `${TABLE_NAME}` (`relatedIndividualId`)"
+          },
+          {
+            "name": "index_FarmMemory_eventId_observerId",
+            "unique": true,
+            "columnNames": [
+              "eventId",
+              "observerId"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_FarmMemory_eventId_observerId` ON `${TABLE_NAME}` (`eventId`, `observerId`)"
+          }
+        ]
+      },
+      {
+        "tableName": "WildRelationship",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`individualId` TEXT NOT NULL, `cardCharacterId` INTEGER NOT NULL, `speciesNameSnapshot` TEXT, `trust` INTEGER NOT NULL, `contactUnlockedAt` INTEGER, `recruitmentState` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, PRIMARY KEY(`individualId`))",
+        "fields": [
+          {
+            "fieldPath": "individualId",
+            "columnName": "individualId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cardCharacterId",
+            "columnName": "cardCharacterId",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "speciesNameSnapshot",
+            "columnName": "speciesNameSnapshot",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "trust",
+            "columnName": "trust",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contactUnlockedAt",
+            "columnName": "contactUnlockedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "recruitmentState",
+            "columnName": "recruitmentState",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "individualId"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_WildRelationship_contactUnlockedAt",
+            "unique": false,
+            "columnNames": [
+              "contactUnlockedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_WildRelationship_contactUnlockedAt` ON `${TABLE_NAME}` (`contactUnlockedAt`)"
+          },
+          {
+            "name": "index_WildRelationship_updatedAt",
+            "unique": false,
+            "columnNames": [
+              "updatedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_WildRelationship_updatedAt` ON `${TABLE_NAME}` (`updatedAt`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '56d8b25c3af6ebd320b8984b368e2592')"
+    ]
+  }
+}

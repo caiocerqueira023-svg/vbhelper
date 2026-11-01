@@ -1,0 +1,168 @@
+﻿package com.tamerslab.quests.ui
+
+import androidx.activity.ComponentActivity
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.tamerslab.R
+import com.tamerslab.components.TopBanner
+import com.tamerslab.di.TamersLabApplication
+import com.tamerslab.navigation.AppRoute
+import com.tamerslab.navigation.NavigationItems
+import com.tamerslab.navigation.navigatePrimary
+import com.tamerslab.quests.QuestActionType
+import com.tamerslab.quests.QuestInstance
+import com.tamerslab.quests.QuestSteps
+import com.tamerslab.farm.ui.digiline.QuestJournal
+import com.tamerslab.farm.ui.digiline.QuestPartnerPicker
+import com.tamerslab.farm.ui.digiline.trackQuestTarget
+import com.tamerslab.world.ui.WildChatEvent
+import com.tamerslab.world.ui.WorldChatScreenControllerImpl
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+/** Opens the standalone Quests tab focused on one saved quest. */
+fun openQuestDetails(navController: NavController, questId: String) {
+    navController.navigatePrimary(NavigationItems.Quests)
+    runCatching {
+        navController.getBackStackEntry(AppRoute.Quests)
+            .savedStateHandle["quest-focus"] = questId
+    }
+}
+
+/** Standalone quest journal. All accept/track/turn-in actions live here, not in chat. */
+@Composable
+fun QuestScreen(navController: NavController) {
+    val context = LocalContext.current
+    val app = context.applicationContext as TamersLabApplication
+    val controller = remember { WorldChatScreenControllerImpl(context as ComponentActivity) }
+    val quests by app.container.questRepository.observeAll().collectAsStateWithLifecycle(emptyList())
+    val questPartners by controller.observeQuestPartners().collectAsStateWithLifecycle(emptyList())
+    var sending by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf<String?>(null) }
+    var partnerQuest by remember { mutableStateOf<QuestInstance?>(null) }
+    var eventDialog by remember { mutableStateOf<WildChatEvent?>(null) }
+
+    val questEntry = remember(navController) {
+        runCatching { navController.getBackStackEntry(AppRoute.Quests) }.getOrNull()
+    }
+    val focusId by (questEntry?.savedStateHandle?.getStateFlow<String?>("quest-focus", null)
+        ?.collectAsStateWithLifecycle() ?: remember { mutableStateOf<String?>(null) })
+
+    LaunchedEffect(quests.map { it.quest.giverId }.toSet()) {
+        withContext(Dispatchers.IO) {
+            quests.map { it.quest.giverId }.toSet().forEach { app.container.questRepository.refreshGiver(it) }
+        }
+    }
+
+    fun performQuestAction(quest: QuestInstance, action: QuestActionType, partnerId: String? = null) {
+        sending = true
+        error = null
+        controller.questAction(quest.giverId, quest.id, quest.revision, action, null, partnerId) { result ->
+            sending = false
+            result.onSuccess { if (it !is WildChatEvent.None) eventDialog = it }
+            result.onFailure { error = it.message }
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopBanner(
+                text = stringResource(R.string.quest_title),
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+    ) { padding ->
+        Column(
+            Modifier.padding(padding).fillMaxSize().padding(horizontal = 4.dp)
+        ) {
+            if (focusId != null) {
+                TextButton(
+                    onClick = { questEntry?.savedStateHandle?.set("quest-focus", null) },
+                    enabled = !sending
+                ) { Text(stringResource(R.string.quest_show_all)) }
+            }
+            error?.takeIf { it.isNotBlank() }?.let {
+                Text(
+                    it,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)
+                )
+            }
+            QuestJournal(
+                quests,
+                Modifier.fillMaxSize(),
+                busy = sending,
+                focusQuestId = focusId,
+                onOpen = { quest ->
+                    navController.navigate(AppRoute.WildContact(quest.giverId, quest.giverCardCharacterId))
+                },
+                onTrack = { trackQuestTarget(navController, it) },
+                onConfigurePartner = { quest ->
+                    questPartners.firstOrNull { it.individualId == quest.partnerId }?.let { partner ->
+                        navController.navigate(
+                            AppRoute.TechniqueLoadout(partner.characterId)
+                        )
+                    }
+                },
+                onAction = { quest, action ->
+                    val objectives = quests.firstOrNull { it.quest.id == quest.id }?.objectives.orEmpty()
+                    if (action == QuestActionType.ACCEPT && QuestSteps.needsPartner(objectives)) {
+                        partnerQuest = quest
+                    } else {
+                        performQuestAction(quest, action)
+                    }
+                }
+            )
+        }
+    }
+
+    partnerQuest?.let { quest ->
+        QuestPartnerPicker(
+            quest,
+            quests.firstOrNull { it.quest.id == quest.id }?.objectives.orEmpty(),
+            questPartners,
+            onDismiss = { partnerQuest = null },
+            onSelected = { partnerId ->
+                partnerQuest = null
+                performQuestAction(quest, QuestActionType.ACCEPT, partnerId)
+            }
+        )
+    }
+
+    (eventDialog as? WildChatEvent.Recruited)?.let { recruited ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { eventDialog = null },
+            title = { Text(stringResource(R.string.quest_title)) },
+            text = { Text(recruited.message) },
+            confirmButton = {
+                com.tamerslab.components.VitalButton(onClick = { eventDialog = null }) {
+                    Text(stringResource(R.string.ui_ok))
+                }
+            },
+            dismissButton = {}
+        )
+    }
+}
+
+
+
+

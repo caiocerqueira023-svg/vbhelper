@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brazilian Portuguese translations for the farm-home place labels and roster UI. -->
+    <string name="place_radar">Radar</string>
+    <string name="place_radar_subtitle">Sinais de campo</string>
+    <string name="place_arena">Arena</string>
+    <string name="place_arena_subtitle">Coliseu</string>
+    <string name="place_digiline">DigiLine</string>
+    <string name="place_digiline_subtitle">Mensagens</string>
+    <string name="place_shop">Loja</string>
+    <string name="place_shop_subtitle">Troca</string>
+    <string name="place_partners">Parceiros</string>
+    <string name="place_partners_subtitle">Cofre</string>
+
+    <string name="home_open_place">Abrir %1$s</string>
+    <string name="home_farm_chip_description">Quem está na Digifarm</string>
+    <string name="home_farm_residents">%1$d/%2$d</string>
+    <string name="home_quests_chip_description">Missões</string>
+    <string name="home_settings_description">Configurações</string>
+    <string name="home_menu_description">Menu</string>
+    <string name="home_menu_title">Menu</string>
+    <string name="home_roster_sheet_title">Na Digifarm</string>
+    <string name="home_roster_sheet_note">Seu parceiro ativo e seus favoritos ficam aqui. Com mais de %1$d favoritos, a fazenda mostra uma seleção rotativa.</string>
+    <string name="home_roster_active_partner">Parceiro ativo</string>
+    <string name="home_roster_follow">Seguir com a câmera</string>
+    <string name="home_roster_followed">Seguindo</string>
+    <string name="home_farm_resident_active">Ativo</string>
+    <string name="home_farm_empty_title">Ainda não há parceiro na Digifarm</string>
+    <string name="home_farm_empty_body">Defina um parceiro ativo ou favorite um Digimon do Storage para que ele apareça na fazenda.</string>
+    <string name="home_farm_empty_action">Abrir Storage</string>
+    <string name="home_cancel">Cancelar</string>
+    <string name="home_resident_open_partner">Abrir parceiro</string>
+    <string name="home_resident_chat">Chat</string>
+    <string name="home_partner_collapse">Recolher resumo do parceiro</string>
+    <string name="home_partner_expand">Expandir resumo do parceiro</string>
+    <string name="home_farm_settings_title">Configurações da fazenda</string>
+    <string name="home_farm_resident_limit">Digimon na fazenda</string>
+    <string name="home_farm_artwork">Arte dos sprites</string>
+    <string name="home_farm_art_mixed">Misto</string>
+    <string name="home_farm_art_vb">Somente VB</string>
+    <string name="home_farm_art_dot">Somente dot</string>
+    <string name="home_farm_showing">mostrando %1$d de %2$d</string>
+    <string name="home_farm_increase">Mais Digimon</string>
+    <string name="home_farm_decrease">Menos Digimon</string>
+</resources>

@@ -1,0 +1,273 @@
+package com.tamerslab.components
+
+import android.animation.ValueAnimator
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Button
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.dp
+import com.tamerslab.ui.theme.SurfaceStroke
+import com.tamerslab.ui.theme.SurfaceElevatedPurple
+import com.tamerslab.ui.theme.TextPrimaryOnDark
+import com.tamerslab.ui.theme.TextMutedOnDark
+import com.tamerslab.ui.theme.TextSecondaryOnDark
+import com.tamerslab.ui.theme.StatusRed
+import com.tamerslab.ui.theme.VitalCyan
+import com.tamerslab.ui.theme.InactiveOutline
+
+/** Quiet technical frame for panels that need to communicate state or selection. */
+@Composable
+fun Modifier.cyberFrame(active: Boolean = false, inactive: Boolean = false): Modifier {
+    val highlighted = active && !inactive
+    val color = if (inactive) InactiveOutline else if (highlighted) VitalCyan else SurfaceStroke
+    return drawBehind {
+        val alpha = if (inactive) 1f else if (highlighted) 0.72f else 0.42f
+        val stroke = 1.dp.toPx()
+        val corner = 8.dp.toPx()
+        val w = size.width
+        val h = size.height
+        drawRect(color.copy(alpha = alpha), style = androidx.compose.ui.graphics.drawscope.Stroke(stroke))
+        if (highlighted) {
+            drawRect(
+                color.copy(alpha = 0.06f),
+                topLeft = Offset(stroke, stroke),
+                size = androidx.compose.ui.geometry.Size(w - 2 * stroke, h - 2 * stroke)
+            )
+        }
+        listOf(
+            Offset(0f, 0f) to Offset(corner, 0f), Offset(0f, 0f) to Offset(0f, corner),
+            Offset(w, 0f) to Offset(w - corner, 0f), Offset(w, 0f) to Offset(w, corner),
+            Offset(0f, h) to Offset(corner, h), Offset(0f, h) to Offset(0f, h - corner),
+            Offset(w, h) to Offset(w - corner, h), Offset(w, h) to Offset(w, h - corner)
+        ).forEach { (from, to) -> drawLine(color.copy(alpha = alpha), from, to, strokeWidth = 1.5.dp.toPx()) }
+    }
+}
+
+@Composable
+fun CyberEmptyState(
+    message: String,
+    modifier: Modifier = Modifier,
+    title: String? = null,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
+    secondaryLabel: String? = null,
+    onSecondaryAction: (() -> Unit)? = null,
+) {
+    Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+    BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+    val scrollModifier =
+        if (constraints.maxHeight == Constraints.Infinity) Modifier
+        else Modifier.verticalScroll(rememberScrollState())
+    Column(
+        modifier = Modifier.fillMaxWidth().then(scrollModifier).padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Surface(
+            modifier = Modifier
+                .widthIn(max = 480.dp)
+                .fillMaxWidth()
+                .cyberFrame(),
+            color = SurfaceElevatedPurple,
+            shape = RectangleShape
+        ) {
+            Column(
+                modifier = Modifier.padding(horizontal = 24.dp, vertical = 22.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                title?.let {
+                    Text(it, style = MaterialTheme.typography.titleLarge, color = TextPrimaryOnDark,
+                        modifier = Modifier.semantics { heading() }, textAlign = TextAlign.Center)
+                }
+                Box(
+                    Modifier
+                        .width(36.dp)
+                        .height(2.dp)
+                        .background(VitalCyan.copy(alpha = 0.72f))
+                )
+                Text(
+                    text = message,
+                    modifier = Modifier.fillMaxWidth(),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondaryOnDark,
+                    textAlign = TextAlign.Center
+                )
+                if (actionLabel != null && onAction != null) {
+                    VitalButton(onClick = onAction, style = VitalButtonStyle.PRIMARY, modifier = Modifier.fillMaxWidth()) {
+                        Text(actionLabel)
+                    }
+                }
+                if (secondaryLabel != null && onSecondaryAction != null) {
+                    androidx.compose.material3.TextButton(onClick = onSecondaryAction) { Text(secondaryLabel) }
+                }
+            }
+        }
+    }
+    }
+}
+
+}
+
+/** Shared, square technical surface used by Home/Storage-level secondary flows. */
+@Composable
+fun CyberPanel(
+    modifier: Modifier = Modifier,
+    active: Boolean = false,
+    onClick: (() -> Unit)? = null,
+    contentPadding: PaddingValues = PaddingValues(12.dp),
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val interactive = if (onClick == null) modifier else modifier.clickable(onClick = onClick)
+    Surface(
+        modifier = interactive.cyberFrame(active = active),
+        color = SurfaceElevatedPurple,
+        shape = RectangleShape
+    ) {
+        Column(
+            modifier = Modifier.padding(contentPadding),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            content = content
+        )
+    }
+}
+
+/** A consistent in-flow section heading; optional metadata stays subordinate. */
+@Composable
+fun VitalSectionHeader(
+    title: String,
+    modifier: Modifier = Modifier,
+    detail: String? = null
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = title,
+            modifier = Modifier.weight(1f).semantics { heading() },
+            style = MaterialTheme.typography.titleMedium,
+            color = TextPrimaryOnDark
+        )
+        detail?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.labelSmall,
+                color = VitalCyan
+            )
+        }
+    }
+}
+
+/**
+ * Standard action control for the Vital Arena UI.
+ *
+ * Actions share the same quiet, angular outline as the favorite control so
+ * dialogs and secondary screens do not fall back to rounded Material fills.
+ * The default content color is deliberately white for readable contrast;
+ * callers can still opt into a status color for a genuinely semantic action.
+ */
+enum class VitalButtonStyle { PRIMARY, SECONDARY, DESTRUCTIVE }
+
+@Composable
+fun VitalButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    shape: Shape = CutCornerShape(8.dp),
+    borderColor: Color = SurfaceStroke,
+    contentColor: Color = TextPrimaryOnDark,
+    disabledContentColor: Color = TextMutedOnDark,
+    containerColor: Color = Color.Transparent,
+    disabledContainerColor: Color = Color.Transparent,
+    contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
+    style: VitalButtonStyle = VitalButtonStyle.SECONDARY,
+    content: @Composable RowScope.() -> Unit
+) {
+    if (style == VitalButtonStyle.PRIMARY) {
+        Button(
+            onClick = onClick, modifier = modifier.heightIn(min = 48.dp), enabled = enabled, shape = shape,
+            colors = ButtonDefaults.buttonColors(), contentPadding = contentPadding, content = content,
+        )
+        return
+    }
+    OutlinedButton(
+        onClick = onClick,
+        modifier = modifier.heightIn(min = 48.dp),
+        enabled = enabled,
+        shape = shape,
+        border = BorderStroke(1.dp, (if (style == VitalButtonStyle.DESTRUCTIVE) StatusRed else borderColor).let {
+            if (enabled) it else it.copy(alpha = 0.38f)
+        }),
+        colors = ButtonDefaults.outlinedButtonColors(
+            containerColor = containerColor,
+            contentColor = if (style == VitalButtonStyle.DESTRUCTIVE) StatusRed else contentColor,
+            disabledContainerColor = disabledContainerColor,
+            disabledContentColor = disabledContentColor
+        ),
+        contentPadding = contentPadding,
+        content = content
+    )
+}
+
+@Composable
+fun cyberPulseAlpha(): Float {
+    if (!motionEnabled()) return 1f
+    val transition = rememberInfiniteTransition(label = "cyberPulse")
+    return transition.animateFloat(
+        initialValue = .72f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(tween(1000, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        label = "cyberPulseAlpha"
+    ).value
+}
+
+/** Honors Android's system-wide animator setting for nonessential decorative motion. */
+@Composable
+fun motionEnabled(): Boolean {
+    return LocalMotionEnabled.current
+}

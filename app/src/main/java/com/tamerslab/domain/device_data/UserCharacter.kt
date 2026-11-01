@@ -1,0 +1,49 @@
+package com.tamerslab.domain.device_data
+
+import androidx.room.Entity
+import androidx.room.Index
+import androidx.room.ForeignKey
+import androidx.room.PrimaryKey
+import androidx.room.ColumnInfo
+import com.tamerslab.hardware.nfc.data.NfcCharacter
+import com.tamerslab.utils.DeviceType
+import com.tamerslab.domain.card.CardCharacter
+import com.tamerslab.domain.identity.IndividualIdentity
+
+@Entity(
+    foreignKeys = [
+        ForeignKey(
+            entity = CardCharacter::class,
+            parentColumns = ["id"],
+            childColumns = ["charId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index(value = ["charId"])]
+)
+/**
+ * UserCharacter represents and instance of a character. The charId should map to a Character
+ */
+data class UserCharacter (
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    /** Permanent app identity; physical-watch transfers use a separate one-time token. */
+    val individualId: String = IndividualIdentity.generate(),
+    var charId: Long,
+    var ageInDays: Int,
+    var mood: Int,
+    var vitalPoints: Int,
+    var transformationCountdown: Int,
+    var injuryStatus: NfcCharacter.InjuryStatus,
+    var trophies: Int,
+    var currentPhaseBattlesWon: Int,
+    var currentPhaseBattlesLost: Int,
+    var totalBattlesWon: Int,
+    var totalBattlesLost: Int,
+    var activityLevel: Int,
+    var heartRateCurrent: Int,
+    var characterType: DeviceType,
+    var isActive: Boolean,
+    var isFavorite: Boolean = false,
+    /** Optional real device target; distinct from the partner's current app species definition. */
+    @ColumnInfo(defaultValue = "NULL") val exportCardCharacterId: Long? = null
+)

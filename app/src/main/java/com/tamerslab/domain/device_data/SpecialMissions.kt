@@ -1,0 +1,30 @@
+package com.tamerslab.domain.device_data
+
+import androidx.room.Entity
+import androidx.room.Index
+import androidx.room.ForeignKey
+import androidx.room.PrimaryKey
+import com.tamerslab.hardware.nfc.vb.SpecialMission
+
+@Entity(
+    foreignKeys = [
+        ForeignKey(
+            entity = UserCharacter::class,
+            parentColumns = ["id"],
+            childColumns = ["characterId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index(value = ["characterId"])]
+)
+data class SpecialMissions (
+    @PrimaryKey(autoGenerate = true) var id: Long = 0,
+    var characterId: Long,
+    var goal: Int,
+    val watchId: Int,
+    val progress: Int,
+    val status: SpecialMission.Status,
+    val timeElapsedInMinutes: Int,
+    val timeLimitInMinutes: Int,
+    val missionType: SpecialMission.Type
+)
