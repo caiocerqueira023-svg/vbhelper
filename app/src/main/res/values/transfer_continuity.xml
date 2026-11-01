@@ -1,7 +1,7 @@
 <resources>
-    <string name="transfer_provisional_short">Provisional source match · VBHelper identity retained</string>
+    <string name="transfer_provisional_short">Provisional source match · Tamers Lab identity retained</string>
     <string name="transfer_snapshot_copy_only">Party/bank snapshot copies are available. The original game save stays intact. Farm/boundary records need review; native writes are unavailable.</string>
-    <string name="transfer_provisional_identity">Snapshot matching uses a provisional, source-scoped candidate marker. VBHelper assigns its own permanent identity. Future matches require review; this is not a verified game-wide identity or a move.</string>
+    <string name="transfer_provisional_identity">Snapshot matching uses a provisional, source-scoped candidate marker. Tamers Lab assigns its own permanent identity. Future matches require review; this is not a verified game-wide identity or a move.</string>
     <string name="transfer_confirm_same_individuals">I confirm these source records are the same Storage individuals shown in this review.</string>
     <string name="continuity_trophies">Trophies gained: %1$d</string>
     <string name="native_mapping_origin_unmapped">The origin’s stat normalization is not mapped yet. Native values are retained instead of replacing them with unrelated default stats.</string>
@@ -9,7 +9,7 @@
     <string name="app_item_not_applied">This item could not be applied. Your inventory and partner data were kept.</string>
     <string name="pc_connect">Connect local PC</string>
     <string name="pc_default_label">My PC</string>
-    <string name="pc_pairing_hint">Run the VBHelper save companion on your PC and paste its pairing link here. The phone and PC must be on the same local network. This connection reads persisted saves only.</string>
+    <string name="pc_pairing_hint">Run the Tamers Lab save companion on your PC and paste its pairing link here. The phone and PC must be on the same local network. This connection reads persisted saves only.</string>
     <string name="pc_pairing_link">Companion pairing link</string>
     <string name="pc_pair">Pair and discover saves</string>
     <string name="pc_repair">Reconnect PC</string>

@@ -1,14 +1,19 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.gradle.testing.jacoco.plugins.JacocoTaskExtension
+import org.gradle.testing.jacoco.tasks.JacocoReport
 
 plugins {
     alias(libs.plugins.android.application)
+    alias(libs.plugins.androidx.baselineprofile)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.vksp)
     alias(libs.plugins.vprotobuf)
+    jacoco
 }
 
 android {
-    namespace = "com.github.nacabaro.vbhelper"
+    namespace = "com.tamerslab"
     compileSdk = 37
 
     defaultConfig {
@@ -16,9 +21,14 @@ android {
         minSdk = 28
         targetSdk = 37
         versionCode = 1
-        versionName = "Alpha 0.6.5"
+        versionName = "Alpha 0.7.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("boolean", "ONLINE_PVP_ENABLED", "true")
+        // Phase 5.4 rollback switch: when false the battle screen keeps the
+        // original 60 Hz full-snapshot Compose state path. Enable only after the
+        // device Perfetto validation described in docs/performance/BASELINE.md.
+        buildConfigField("boolean", "BATTLE_SCENE_CHANNEL_ENABLED", "false")
     }
 
     buildTypes {
@@ -28,7 +38,8 @@ android {
             matchingFallbacks += "debug"
         }
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -44,6 +55,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     lint {
@@ -64,7 +76,9 @@ ksp {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:4.27.0"
+        // Version is pinned in gradle/libs.versions.toml (protoc); keep it aligned
+        // with the protobuf-javalite runtime.
+        artifact = "com.google.protobuf:protoc:${libs.versions.protoc.get()}"
     }
 
     generateProtoTasks {
@@ -78,12 +92,86 @@ protobuf {
     }
 }
 
+jacoco { toolVersion = libs.versions.jacoco.get() }
+
+tasks.withType<Test>().configureEach {
+    extensions.configure<JacocoTaskExtension> {
+        isIncludeNoLocationClasses = true
+        excludes = listOf("jdk.internal.*")
+    }
+}
+
+val jacocoUnitTestReport = tasks.register<JacocoReport>("jacocoTestReport") {
+    dependsOn("testIntegrityCheckUnitTest")
+    group = "verification"
+    description = "Generates JaCoCo coverage for the app's integrityCheck unit tests."
+
+    val coverageExcludes = listOf(
+        "**/R.class",
+        "**/R$*.class",
+        "**/BuildConfig.*",
+        "**/Manifest*.*",
+        "**/*_Impl.class",
+        "**/*_Impl$*.class",
+        "**/*_Factory.class",
+        "**/*_Factory$*.class",
+        "**/*_MembersInjector.class",
+        "**/*_MembersInjector$*.class",
+        "**/*Hilt*.*",
+        "**/dagger/**",
+        "**/hilt_aggregated_deps/**",
+    )
+
+    classDirectories.setFrom(
+        files(
+            // AGP 9/Kotlin 2.x keeps the Kotlin class outputs under intermediates;
+            // the old `tmp/kotlin-classes` path is kept as a fallback for other AGP
+            // versions but is normally empty on this toolchain.
+            fileTree(
+                layout.buildDirectory.dir(
+                    "intermediates/built_in_kotlinc/integrityCheck/compileIntegrityCheckKotlin/classes",
+                ),
+            ) {
+                exclude(coverageExcludes)
+            },
+            fileTree(layout.buildDirectory.dir("tmp/kotlin-classes/integrityCheck")) {
+                exclude(coverageExcludes)
+            },
+            fileTree(
+                layout.buildDirectory.dir(
+                    "intermediates/javac/integrityCheck/compileIntegrityCheckJavaWithJavac/classes",
+                ),
+            ) {
+                exclude(coverageExcludes)
+            },
+        ),
+    )
+    sourceDirectories.setFrom(files("src/main/java", "src/integrityCheck/java"))
+    executionData.setFrom(layout.buildDirectory.file("jacoco/testIntegrityCheckUnitTest.exec"))
+
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+        csv.required.set(false)
+    }
+}
+
+// Coverage collection is opt-in: the report task is intentionally NOT wired
+// into `check`, because the aggregate check is used by local/CI verification and
+// a JaCoCo report over the whole app is slow. Run it explicitly when collecting
+// coverage: .\gradlew.bat :app:jacocoTestReport
+// (Coverage targets and the measurement record live in
+// docs/performance/BASELINE.md and docs/ADR 0005.)
+
 dependencies {
     implementation(libs.androidx.room.runtime)
-    implementation(project(":vb-nfc-reader"))
-    implementation(project(":vb-dim-reader"))
+    implementation(project(":hardware"))
     implementation(project(":game-save-core"))
     implementation(project(":companion-protocol"))
+    implementation(libs.androidx.profileinstaller)
+    implementation(libs.koin.android)
+    implementation(libs.koin.androidx.compose)
+    baselineProfile(project(":baselineprofile"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.room.ktx)
@@ -93,6 +181,8 @@ dependencies {
     implementation(libs.protobuf.javalite)
     implementation(libs.androidx.compose.material)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.kotlinx.serialization.json)
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.datastore)
@@ -114,8 +204,9 @@ dependencies {
     add("integrityCheckImplementation", libs.androidx.ui.test.manifest)
 
     testImplementation(libs.junit)
+    testImplementation(libs.koin.test)
     testImplementation(libs.kotlinx.coroutines.test)
-    testImplementation("org.json:json:20240303")
+    testImplementation(libs.json)
 
     ksp(libs.androidx.room.compiler)
     annotationProcessor(libs.androidx.room.compiler)
@@ -135,3 +226,5 @@ dependencies {
     implementation(libs.filament.gltfio.android)
     implementation(libs.filament.utils.android)
 }
+
+

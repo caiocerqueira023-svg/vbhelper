@@ -13,17 +13,17 @@ continuing home for their individual Digimon across supported products.
 
 ## Product Purpose
 
-VBHelper is a universal Digimon home and in-world Tamer companion: individuals move
+Tamers Lab is a universal Digimon home and in-world Tamer companion: individuals move
 through supported games and V-Pets via Storage while retaining identity and progress.
 The app tracks and converts growth between products and presents each stored partner
-through its familiar DIM-style VBHelper experience. The whole Digimon.net About tab
+through its familiar DIM-style Tamers Lab experience. The whole Digimon.net About tab
 (overview, device history, game history, Profile reports, Iliad, Shambhala) is the primary
 lore source set, supplemented by official Seekers, Re:Digitize, and Liberator observations
 kept in their own scope; see LORE_FOUNDATION.md.
 
 ## Positioning
 
-Beyond character storage and watch interaction, VBHelper adds AI chat and real-world Digimon encounters to make the companion experience more immersive.
+Beyond character storage and watch interaction, Tamers Lab adds AI chat and real-world Digimon encounters to make the companion experience more immersive.
 
 ## Operating Context
 

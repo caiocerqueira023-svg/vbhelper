@@ -50,8 +50,8 @@
     <string name="immersion_vital_points">バイタル値</string>
     <string name="immersion_card_name">カード名</string>
     <string name="immersion_evolution_history">進化の履歴</string>
-    <string name="immersion_widget_empty">VBHelperで活動パートナーを選択してください。</string>
-    <string name="immersion_widget_partner">%1$s · VBHelperを開く</string>
+    <string name="immersion_widget_empty">Tamers Labで活動パートナーを選択してください。</string>
+    <string name="immersion_widget_partner">%1$s · Tamers Labを開く</string>
     <string name="immersion_record_notice">記録</string>
     <string name="immersion_references">研究資料</string>
     <string name="immersion_hide_references">資料を閉じる</string>

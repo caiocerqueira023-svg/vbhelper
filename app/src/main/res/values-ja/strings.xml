@@ -27,7 +27,7 @@
     <string name="settings_debug_instant_scan_title" formatted="false">1勝でスキャン100%</string>
     <string name="settings_debug_instant_scan_description" formatted="false">対象となるレーダーバトルの勝利で、倒した野生デジモンのスキャンを完了します。オフでは1体につき+20%に戻ります。</string>
     <string name="scan_selected_card_rescan">DIMを選択しました。受信を完了するには、時計をもう一度スマートフォンに近づけてください。</string>
-    <string name="app_name">VBHelper</string>
+    <string name="app_name">Tamers Lab</string>
     <string name="beta_warning_button_dismiss">閉じる</string>
     <string name="nav_scan">スキャン</string>
     <string name="nav_battle">バトル</string>
@@ -985,4 +985,16 @@
     <string name="ui_battle_finisher_duo">デュオブラスト</string>
     <string name="ui_battle_finisher_damage">%1$dダメージ</string>
     <string name="ui_battle_finisher_no_damage">ダメージなし</string>
+    <string name="nav_radar">レーダー</string>
+    <string name="storage_filter_away">ゲーム内</string>
+    <string name="storage_away_in_source">%1$s 内にいます</string>
+    <string name="storage_away_unknown_source">ゲーム内にいます</string>
+    <string name="storage_away_native_info">このデジモンはゲームセーブ %1$s 内にあり、Tamers Lab のストレージには取り込まれていません。</string>
+    <string name="storage_debug_add_button">デバッグ: デジモンをストレージに追加</string>
+    <string name="storage_debug_add_hint_vb">読み込まれた DIM/BEM デジモンのみ（VBモード）。</string>
+    <string name="storage_debug_add_hint_expanded">すべてのカタログデジモン（拡張モード）。</string>
+    <string name="storage_debug_add_success">デバッグ用デジモンをストレージに追加しました。</string>
+    <string name="storage_debug_add_failure">このデジモンをストレージに追加できませんでした。</string>
+    <string name="transfer_send_no_species">このパートナーの種族はまだゲームのリストにないため、ワールドDSのレコードを作成できません。</string>
+    <string name="transfer_send_destination_full">このセーブにはパーティまたはレコードの空きがありません。ゲーム内で枠を空けてから更新してください。</string>
 </resources>

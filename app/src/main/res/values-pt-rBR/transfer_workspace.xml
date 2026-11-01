@@ -28,7 +28,7 @@
     <string name="transfer_backups_empty">Ainda não há backups de movimentações nativas.</string>
     <string name="transfer_workspace_title">Jogos</string>
     <string name="transfer_workspace_save">No jogo</string>
-    <string name="transfer_workspace_vault">Storage do VBHelper</string>
+    <string name="transfer_workspace_vault">Storage do Tamers Lab</string>
     <string name="transfer_workspace_open">Abrir save</string>
     <string name="transfer_workspace_open_hint">Abra um save de jogo para ver seus Digimon.</string>
     <string name="transfer_workspace_choose_save">Escolher save</string>

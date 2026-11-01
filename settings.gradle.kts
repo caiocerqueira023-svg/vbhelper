@@ -24,10 +24,11 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "VBHelper"
+rootProject.name = "TamersLab"
 include(":app")
-include(":vb-nfc-reader")
-include(":vb-dim-reader")
+include(":hardware")
+include(":hardware-dim")
 include(":game-save-core")
 include(":companion-protocol")
 include(":pc-save-companion")
+include(":baselineprofile")

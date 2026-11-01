@@ -28,7 +28,7 @@
     <string name="settings_debug_instant_scan_title" formatted="false">100% scan from one win</string>
     <string name="settings_debug_instant_scan_description" formatted="false">Complete scan data for each defeated wild Digimon after one eligible Radar victory. Off restores +20% per defeat.</string>
     <string name="scan_selected_card_rescan">DIM selected. Hold the watch near the phone again to finish receiving.</string>
-    <string name="app_name">VBHelper</string>
+    <string name="app_name">Tamers Lab</string>
 
     <string name="nav_chat">Conversation</string>
     <string name="settings_section_llm_chat">Communication</string>
@@ -297,7 +297,7 @@
     <string name="storage_filter_away">Away</string>
     <string name="storage_away_in_source">Away in %1$s</string>
     <string name="storage_away_unknown_source">Away in a game</string>
-    <string name="storage_away_native_info">This Digimon is in the game save %1$s and has not been imported into VBHelper Storage.</string>
+    <string name="storage_away_native_info">This Digimon is in the game save %1$s and has not been imported into Tamers Lab Storage.</string>
     <string name="storage_sort_recent">Newest</string>
     <string name="storage_sort_name">Name</string>
     <string name="storage_sort_vitals">Highest vitals</string>

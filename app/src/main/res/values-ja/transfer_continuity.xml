@@ -1,7 +1,7 @@
 <resources>
-    <string name="transfer_provisional_short">リンク元の照合は暫定 · VBHelperの個体識別は保持</string>
+    <string name="transfer_provisional_short">リンク元の照合は暫定 · Tamers Labの個体識別は保持</string>
     <string name="transfer_snapshot_copy_only">パーティとバンクのスナップショットをコピーできます。元のゲームセーブは保持されます。ファームと境界のレコードは要確認で、ゲームへの書き込みは利用できません。</string>
-    <string name="transfer_provisional_identity">照合はリンク元に限定した暫定候補マーカーを使用します。VBHelperは独自の永続個体IDを作成します。以降の照合には確認が必要です。ゲーム全体で検証済みの識別や移動ではありません。</string>
+    <string name="transfer_provisional_identity">照合はリンク元に限定した暫定候補マーカーを使用します。Tamers Labは独自の永続個体IDを作成します。以降の照合には確認が必要です。ゲーム全体で検証済みの識別や移動ではありません。</string>
     <string name="transfer_confirm_same_individuals">これらのリンク元レコードが、確認画面に表示されたストレージの個体と同一であることを確認します。</string>
     <string name="continuity_trophies">獲得トロフィー：%1$d</string>
     <string name="native_mapping_origin_unmapped">出自の能力値の正規化は未対応です。関係のない初期値に置き換えず、ネイティブ値を保持します。</string>
@@ -9,7 +9,7 @@
     <string name="app_item_not_applied">このアイテムを適用できませんでした。所持品とパートナーのデータは保持されています。</string>
     <string name="pc_connect">ローカルPCに接続</string>
     <string name="pc_default_label">自分のPC</string>
-    <string name="pc_pairing_hint">PCでVBHelperのセーブコンパニオンを実行し、表示されたペアリングリンクを貼り付けてください。スマートフォンとPCは同じローカルネットワークに接続してください。保存済みファイルのみ読み取ります。</string>
+    <string name="pc_pairing_hint">PCでTamers Labのセーブコンパニオンを実行し、表示されたペアリングリンクを貼り付けてください。スマートフォンとPCは同じローカルネットワークに接続してください。保存済みファイルのみ読み取ります。</string>
     <string name="pc_pairing_link">コンパニオンのペアリングリンク</string>
     <string name="pc_pair">ペアリングしてセーブを検索</string>
     <string name="pc_repair">PCに再接続</string>

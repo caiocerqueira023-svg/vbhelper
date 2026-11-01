@@ -1,7 +1,7 @@
 <resources>
-    <string name="transfer_provisional_short">Correspondência de origem provisória · identidade do VBHelper mantida</string>
+    <string name="transfer_provisional_short">Correspondência de origem provisória · identidade do Tamers Lab mantida</string>
     <string name="transfer_snapshot_copy_only">Cópias de registros da equipe e do banco estão disponíveis. O save original permanece intacto. Fazenda e limites precisam de revisão; a gravação no jogo está indisponível.</string>
-    <string name="transfer_provisional_identity">A correspondência usa um marcador candidato provisório, limitado à fonte. O VBHelper cria sua própria identidade permanente. Correspondências futuras exigem revisão; isso não é uma identidade global verificada nem uma movimentação.</string>
+    <string name="transfer_provisional_identity">A correspondência usa um marcador candidato provisório, limitado à fonte. O Tamers Lab cria sua própria identidade permanente. Correspondências futuras exigem revisão; isso não é uma identidade global verificada nem uma movimentação.</string>
     <string name="transfer_confirm_same_individuals">Confirmo que estes registros da fonte são os mesmos indivíduos do Armazenamento mostrados nesta revisão.</string>
     <string name="continuity_trophies">Troféus ganhos: %1$d</string>
     <string name="native_mapping_origin_unmapped">A normalização dos atributos da origem ainda não foi mapeada. Os valores nativos são mantidos, sem substituição por atributos padrão sem relação com a origem.</string>
@@ -9,7 +9,7 @@
     <string name="app_item_not_applied">Não foi possível aplicar este item. Seu inventário e os dados do parceiro foram mantidos.</string>
     <string name="pc_connect">Conectar PC local</string>
     <string name="pc_default_label">Meu PC</string>
-    <string name="pc_pairing_hint">Execute o companheiro de saves do VBHelper no PC e cole o link de pareamento aqui. O celular e o PC devem estar na mesma rede local. Esta conexão lê apenas saves gravados.</string>
+    <string name="pc_pairing_hint">Execute o companheiro de saves do Tamers Lab no PC e cole o link de pareamento aqui. O celular e o PC devem estar na mesma rede local. Esta conexão lê apenas saves gravados.</string>
     <string name="pc_pairing_link">Link de pareamento do companheiro</string>
     <string name="pc_pair">Parear e descobrir saves</string>
     <string name="pc_repair">Reconectar PC</string>

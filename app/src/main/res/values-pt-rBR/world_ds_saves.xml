@@ -15,7 +15,7 @@
     <string name="world_ds_use_copy">Usar cópia nesta leitura</string>
     <string name="world_ds_copy_confirmed">A autoridade da cópia foi confirmada pelo usuário para esta revisão exata.</string>
     <string name="world_ds_copy_failed">O save mudou ou não pôde ser lido. Feche a revisão, atualize a origem e tente novamente.</string>
-    <string name="world_ds_personality_initialization">Este jogo não tem personalidade nativa mapeada. O VBHelper inicializa uma personalidade apenas do app uma vez; o valor nativo permanece ausente.</string>
+    <string name="world_ds_personality_initialization">Este jogo não tem personalidade nativa mapeada. O Tamers Lab inicializa uma personalidade apenas do app uma vez; o valor nativo permanece ausente.</string>
     <string name="world_ds_personality_retained">A personalidade pertence ao app. A personalidade nativa está ausente; atualizar a origem preserva sua personalidade no app.</string>
     <string name="transfer_save_copy_review">Há várias cópias preenchidas do save. Os registros são exibidos para revisão; nenhuma cópia atual foi selecionada.</string>
     <string name="transfer_move_copy_divergence">As cópias do save não concordam sobre este Digimon, então a movimentação nativa descartaria uma das versões. Salve novamente no jogo ou atualize o save vinculado.</string>

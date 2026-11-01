@@ -50,8 +50,8 @@
     <string name="immersion_vital_points">Vital points</string>
     <string name="immersion_card_name">Card name</string>
     <string name="immersion_evolution_history">Evolution history</string>
-    <string name="immersion_widget_empty">Choose an active partner in VBHelper.</string>
-    <string name="immersion_widget_partner">%1$s · Open VBHelper</string>
+    <string name="immersion_widget_empty">Choose an active partner in Tamers Lab.</string>
+    <string name="immersion_widget_partner">%1$s · Open Tamers Lab</string>
     <string name="immersion_record_notice">Journal</string>
     <string name="immersion_references">Research references</string>
     <string name="immersion_hide_references">Hide references</string>

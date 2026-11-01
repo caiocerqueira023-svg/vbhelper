@@ -1,5 +1,5 @@
 ---
-name: VBHelper
+name: Tamers Lab
 description: Um companheiro digital Android para guardar e viver experiências com Digimon.
 colors:
   space-black: "#0A0812"
@@ -86,13 +86,13 @@ components:
     rounded: "{rounded.cut-sm}"
 ---
 
-# Design System: VBHelper
+# Design System: Tamers Lab
 
 ## Overview
 
 **Creative North Star: "Companheiro Digital"**
 
-VBHelper é um companheiro de bolso para o ecossistema Digimon: técnico o bastante para transmitir confiança em fluxos de NFC e coleção, mas acolhedor o suficiente para fazer o Digimon parecer presente entre uma interação e outra. A identidade evita uma interface genérica de ferramenta; o usuário deve perceber uma extensão viva do dispositivo, não um painel administrativo.
+Tamers Lab é um companheiro de bolso para o ecossistema Digimon: técnico o bastante para transmitir confiança em fluxos de NFC e coleção, mas acolhedor o suficiente para fazer o Digimon parecer presente entre uma interação e outra. A identidade evita uma interface genérica de ferramenta; o usuário deve perceber uma extensão viva do dispositivo, não um painel administrativo.
 
 A base escura cria um espaço calmo para sprites e dados. Roxo constrói a atmosfera, enquanto ciano sinaliza energia, atividade e informação que merece atenção. Os detalhes tecnológicos — fundo de circuitos, anéis de dispositivo em rotação lenta e molduras de canto reforçado — são contidos para que dados, status e ações continuem fáceis de localizar.
 
@@ -107,12 +107,12 @@ A base escura cria um espaço calmo para sprites e dados. Roxo constrói a atmos
 
 ### Selectable Color Themes
 
-- **VB Helper:** preserves the incumbent dark purple/cyan appearance and is the default.
+- **Tamers Lab:** preserves the incumbent dark purple/cyan appearance and is the default.
 - **VB Lab:** charcoal and neutral gray surfaces, white lettering, and electric cyan signals, based on the supplied Vital Bracelet Lab references.
 - **VB Arena:** white/silver surfaces, charcoal lettering, and mint-green accents, based on the supplied Vital Bracelet Arena references. Small green text uses a deeper green to remain readable.
 - **Digimon.net:** white/pale-blue surfaces, royal-blue controls and signals (`#1251D0`), and lemon-yellow filled highlights (`#F6FF00`), based on the official portal's `css/layout.css` and `css/top.css`. Imported logos and name sprites keep the shared light-theme silhouette shadow.
 - Users select a saved palette in Settings → Appearance. Phone light/dark mode and wallpaper colors never select or alter it.
-- Variants change colors only: layouts, typography, shapes, imported artwork, interactions, and animation remain shared. The dark-surface rules below describe VB Helper and VB Lab; VB Arena and Digimon.net use equivalent light tonal levels.
+- Variants change colors only: layouts, typography, shapes, imported artwork, interactions, and animation remain shared. The dark-surface rules below describe Tamers Lab and VB Lab; VB Arena and Digimon.net use equivalent light tonal levels.
 
 ### 3D Environment Palettes
 
@@ -442,7 +442,7 @@ work. Ordinary ownership, actual activity and in-flight transfer constraints rem
 Retired source-mode pauses resume preserving activity clocks and records. A matching
 loaded DIM/BEM is required only where the receiving Vital Bracelet needs it.
 
-Ordinary Storage/Home/care/battle information is VBHelper-specific and uses the same
+Ordinary Storage/Home/care/battle information is Tamers Lab-specific and uses the same
 DIM-style presentation for every origin. Raw native levels, EXP, stats and product
 fields live in the individual's information under the relevant product's Transfer
 entry. The permanent individual retains all source and conversion data internally.

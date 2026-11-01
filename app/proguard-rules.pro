@@ -1,21 +1,55 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+-keepattributes Signature,InnerClasses,EnclosingMethod,*Annotation*
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+-keep class com.google.gson.reflect.TypeToken { *; }
+-keep class * extends com.google.gson.reflect.TypeToken
+-keepclassmembers,allowobfuscation class * {
+    @com.google.gson.annotations.SerializedName <fields>;
+}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+-keep,allowoptimization class com.tamerslab.battle.** { *; }
+-keep,allowoptimization class com.tamerslab.chat.** { *; }
+-keep,allowoptimization class com.tamerslab.data.database.** { *; }
+-keep,allowoptimization class com.tamerslab.farm.map.** { *; }
+-keep,allowoptimization class com.tamerslab.domain.identity.** { *; }
+-keep,allowoptimization class com.tamerslab.domain.reactions.** { *; }
+-keep,allowoptimization class com.tamerslab.security.** { *; }
+-keep,allowoptimization class com.tamerslab.settings.data.** { *; }
+-keep,allowoptimization class com.tamerslab.species.** { *; }
+-keep,allowoptimization class com.tamerslab.transfer.data.** { *; }
+-keep,allowoptimization class com.tamerslab.world.ecosystem.** { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Gson-serialized models whose field names are part of a persisted/network
+# contract: game-save-core JSON is stored in Room and the PVP DTOs cross the
+# network, so R8 must not rename their fields.
+-keep,allowoptimization class com.tamerslab.gamesave.** { *; }
+-keep,allowoptimization class com.tamerslab.dtos.** { *; }
+
+-keep class * extends androidx.room.RoomDatabase { *; }
+-keep @androidx.room.Entity class * { *; }
+-keep @androidx.room.Dao interface * { *; }
+
+-keep class com.tamerslab.vitalwear.protos.** { *; }
+-keep class com.tamerslab.security.proto.** { *; }
+
+-keepclasseswithmembers class * {
+    @retrofit2.http.* <methods>;
+}
+-keep interface * {
+    @retrofit2.http.* <methods>;
+}
+
+-keep class * extends androidx.work.ListenableWorker {
+    public <init>(...);
+}
+-keep class * extends androidx.work.CoroutineWorker {
+    public <init>(...);
+}
+
+-keep class org.koin.** { *; }
+-keepclassmembers class **$$serializer {
+    *;
+}
+
+-dontwarn javax.annotation.**
+-dontwarn lombok.Generated
+-dontwarn org.slf4j.impl.StaticLoggerBinder

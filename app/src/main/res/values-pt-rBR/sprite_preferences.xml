@@ -7,5 +7,5 @@
     <string name="sprite_preference_note">Apenas aparência. Todos os Digimon continuam utilizáveis; atributos, progresso e atividades não mudam.</string>
     <string name="sprite_preference_save_failed">Não foi possível salvar a preferência de gráficos. Tente novamente.</string>
     <string name="storage_debug_add_hint_all">Digimon dos cartões carregados e do catálogo.</string>
-    <string name="storage_retained_partner_info">Este indivíduo e seu progresso estão preservados no VBHelper. As informações específicas dos produtos estão em Transfer.</string>
+    <string name="storage_retained_partner_info">Este indivíduo e seu progresso estão preservados no Tamers Lab. As informações específicas dos produtos estão em Transfer.</string>
 </resources>

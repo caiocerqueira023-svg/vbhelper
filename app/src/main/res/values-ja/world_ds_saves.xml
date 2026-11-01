@@ -15,7 +15,7 @@
     <string name="world_ds_use_copy">今回の読み取りに使用</string>
     <string name="world_ds_copy_confirmed">この読み取りリビジョンのコピーがユーザーにより確認されました。</string>
     <string name="world_ds_copy_failed">セーブが変わったか、読み取れませんでした。閉じて元のセーブを更新し、再試行してください。</string>
-    <string name="world_ds_personality_initialization">このゲームに対応する元の性格はありません。VBHelperはアプリ専用の性格を一度だけ設定し、元の性格は未設定のまま保持します。</string>
+    <string name="world_ds_personality_initialization">このゲームに対応する元の性格はありません。Tamers Labはアプリ専用の性格を一度だけ設定し、元の性格は未設定のまま保持します。</string>
     <string name="world_ds_personality_retained">性格はアプリ専用です。元の性格は未設定で、セーブの更新でもアプリの性格は維持されます。</string>
     <string name="transfer_save_copy_review">複数の保存済みコピーが見つかりました。各レコードを確認用に表示します。現在のコピーは選択していません。</string>
     <string name="transfer_move_copy_divergence">セーブのコピー間でこのデジモンの内容が一致していないため、ネイティブ移動では一方のバージョンが失われます。ゲーム内で保存し直すか、リンク済みセーブを更新してください。</string>

@@ -26,7 +26,7 @@
     <string name="settings_debug_instant_scan_title" formatted="false">100% de scan com uma vitória</string>
     <string name="settings_debug_instant_scan_description" formatted="false">Complete os dados de cada Digimon selvagem derrotado após uma vitória elegível no Radar. Desligado, restaura +20% por derrota do selvagem.</string>
     <string name="scan_selected_card_rescan">DIM selecionado. Aproxime o relógio novamente para concluir o recebimento.</string>
-    <string name="app_name">VBHelper</string>
+    <string name="app_name">Tamers Lab</string>
     <string name="beta_warning_message_main">
         Este aplicativo ainda está em versão alfa e não está completo. Não o use para armazenar personagens importantes para você, pois futuras atualizações podem apagar todos os seus personagens. Desculpe pelo transtorno!
     </string>
@@ -259,7 +259,7 @@
     <string name="storage_filter_away">Ausente</string>
     <string name="storage_away_in_source">Ausente em %1$s</string>
     <string name="storage_away_unknown_source">Ausente em um jogo</string>
-    <string name="storage_away_native_info">Este Digimon está no save %1$s e não foi importado para o Armazenamento do VBHelper.</string>
+    <string name="storage_away_native_info">Este Digimon está no save %1$s e não foi importado para o Armazenamento do Tamers Lab.</string>
     <string name="storage_sort_recent">Mais recentes</string>
     <string name="storage_sort_name">Nome</string>
     <string name="storage_sort_vitals">Mais vitais</string>
@@ -1057,4 +1057,12 @@
     <string name="home_special_mission_delete_main">O progresso atual será perdido. Remover esta missão?</string>
     <string name="home_special_mission_delete_dismiss">Manter missão</string>
     <string name="home_special_mission_delete_remove">Remover missão</string>
+    <string name="nav_radar">Radar</string>
+    <string name="storage_debug_add_button">DEBUG: adicionar Digimon ao Storage</string>
+    <string name="storage_debug_add_hint_vb">Somente Digimon de DIM/BEM carregados (modo VB).</string>
+    <string name="storage_debug_add_hint_expanded">Qualquer Digimon do catálogo (modo Expandido).</string>
+    <string name="storage_debug_add_success">Digimon de depuração adicionado ao Storage.</string>
+    <string name="storage_debug_add_failure">Não foi possível adicionar este Digimon ao Storage.</string>
+    <string name="transfer_send_no_species">A espécie deste parceiro ainda não está na lista do jogo, então um registro do World DS não pode ser criado.</string>
+    <string name="transfer_send_destination_full">Este save não tem espaço livre na equipe ou nos registros. Libere um espaço no jogo e atualize.</string>
 </resources>

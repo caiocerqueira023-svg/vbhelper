@@ -7,5 +7,5 @@
     <string name="sprite_preference_note">Appearance only. Every Digimon stays usable; stats, progress and activities are unchanged.</string>
     <string name="sprite_preference_save_failed">Could not save the graphics preference. Try again.</string>
     <string name="storage_debug_add_hint_all">Loaded card and catalog Digimon.</string>
-    <string name="storage_retained_partner_info">This individual and its progress are retained in VBHelper. Product-specific information is available in Transfer.</string>
+    <string name="storage_retained_partner_info">This individual and its progress are retained in Tamers Lab. Product-specific information is available in Transfer.</string>
 </resources>

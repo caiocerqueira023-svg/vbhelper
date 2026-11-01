@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="transfer_origins_title">Origins</string>
     <string name="transfer_origin_devices">Vital Bracelet, BE and VitalWear</string>
     <string name="transfer_origin_storage">Your stored Digimon</string>
@@ -28,7 +28,7 @@
     <string name="transfer_backups_empty">No native move backups yet.</string>
     <string name="transfer_workspace_title">Games</string>
     <string name="transfer_workspace_save">In game</string>
-    <string name="transfer_workspace_vault">VBHelper Storage</string>
+    <string name="transfer_workspace_vault">Tamers Lab Storage</string>
     <string name="transfer_workspace_open">Open save</string>
     <string name="transfer_workspace_open_hint">Open a game save to see its Digimon.</string>
     <string name="transfer_workspace_choose_save">Choose a save</string>

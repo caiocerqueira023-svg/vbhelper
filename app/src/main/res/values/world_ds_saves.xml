@@ -15,7 +15,7 @@
     <string name="world_ds_use_copy">Use this copy for this read</string>
     <string name="world_ds_copy_confirmed">Save-copy authority was user-confirmed for this exact revision.</string>
     <string name="world_ds_copy_failed">The save changed or could not be read. Close this review, refresh the source and try again.</string>
-    <string name="world_ds_personality_initialization">This game has no mapped native personality. VBHelper initializes an app-only personality once; native personality stays absent.</string>
+    <string name="world_ds_personality_initialization">This game has no mapped native personality. Tamers Lab initializes an app-only personality once; native personality stays absent.</string>
     <string name="world_ds_personality_retained">Personality belongs to the app. Native personality is absent; source refresh preserves your app personality.</string>
     <string name="transfer_save_copy_review">Multiple populated save copies were found. Their records are shown for review; no current copy has been selected.</string>
     <string name="transfer_move_copy_divergence">The save\'s copies disagree about this Digimon, so a native move would discard one version. Save again in the game or refresh the linked save.</string>

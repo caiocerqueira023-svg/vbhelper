@@ -3,6 +3,11 @@
 
 .kotlin/
 
+# JVM crash and profiling artifacts
+hs_err_pid*.log
+replay_pid*.log
+*.hprof
+
 # Generated Gradle outputs; historical checked-in build/ references remain tracked.
 build/
 
@@ -12,13 +17,20 @@ local.properties
 
 app/src/main/res/values/keys.xml
 
-app/src/test/resources/com/github/nacabaro/vbhelper/source/com.bandai.vitalbraceletarena.apk
+app/src/test/resources/com/tamerslab/source/com.bandai.vitalbraceletarena.apk
 
-app/src/test/resources/com/github/nacabaro/vbhelper/source/classes.dex
+app/src/test/resources/com/tamerslab/source/classes.dex
 
-app/src/main/java/com/github/nacabaro/vbhelper/battle/Battle_Sprites_Reference/
+app/src/main/java/com/tamerslab/battle/Battle_Sprites_Reference/
 
 # The checked-in battle presentation pack is required by the APK at runtime.
 app/src/main/assets/extracted_audio
 
 API-ACR122USAM-2.01.pdf
+
+# Python bytecode
+__pycache__/
+
+# Local verification build logs and performance artifacts (evidence is recorded by
+# provenance in docs/performance/BASELINE.md, not by committing the raw files).
+build-logs/

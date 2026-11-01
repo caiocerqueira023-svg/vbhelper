@@ -1,14 +1,20 @@
-# VBHelper local PC save companion
+# Tamers Lab local PC save companion (`:pc-save-companion`)
 
 This is a **read-only local-network** companion. The phone remains the main UI.
 It exposes only supported candidate files under the save folders explicitly supplied
 on the command line. The phone uses the shared decoder and refreshes persisted files;
 neither emulator RAM nor save states are inspected. No game-save write endpoint exists.
 
+Module facts: Kotlin/JVM (`org.jetbrains.kotlin.jvm` + `application`), Java 11 target,
+main class `com.tamerslab.pccompanion.CompanionMainKt`. It depends on
+`:game-save-core` (readers/planners) and `:companion-protocol` (pairing, pinned TLS,
+listing), plus Gson. It is a desktop distribution, not an Android dependency of `:app`.
+
 ## Windows setup
 
 1. Install a Java 11+ **JDK** (including `keytool`).
-2. Build `:pc-save-companion:installDist` or extract the generated distribution ZIP.
+2. Build `.\gradlew.bat :pc-save-companion:installDist` or
+   `.\gradlew.bat :pc-save-companion:distZip`, or extract a prebuilt distribution ZIP.
 3. Run, for example:
 
    `.\bin\pc-save-companion.bat --save-dir "C:\Games\Digimon Story - Time Stranger\gamedata\savedata\YOUR_PROFILE"`
@@ -26,6 +32,26 @@ neither emulator RAM nor save states are inspected. No game-save write endpoint 
 Repeat `--save-dir` to authorize additional folders. Discovery is bounded to 32
 candidate saves/2,000 entries and excludes `backups` directories and symlink files.
 Names/sizes are discovery hints; the phone still validates actual contents.
+
+## Package layout and tests
+
+| Package | Contents |
+|---------|----------|
+| `com.tamerslab.pccompanion` | `CompanionMain.kt` (CLI), `ReadOnlyCompanionServer.kt`, `CompanionIdentity.kt`, `ControlledSamples.kt` |
+| `com.tamerslab.companionprotocol` | Pairing, listing validation, pinned-TLS connection (module `:companion-protocol`) |
+| `com.tamerslab.gamesave` | Save readers, discovery policy, planners, World DS inspector (module `:game-save-core`) |
+
+```powershell
+.\gradlew.bat :pc-save-companion:test
+.\gradlew.bat :pc-save-companion:installDist
+.\gradlew.bat :pc-save-companion:distZip
+```
+
+The tests cover pairing rotation, pinned-TLS discovery/read bounds, controlled-capture
+comparison, and the World DS research command. They use JUnit 4 and a temporary
+`java.io.tmpdir`. No test needs a phone or a real save; the committed fixtures are
+synthetic. Build/test verification is **not yet re-verified after the Phase 6
+restructure**.
 
 ## Pairing and persistence
 
