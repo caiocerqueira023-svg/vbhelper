@@ -2,6 +2,7 @@ package com.tamerslab.world
 
 import com.tamerslab.hardware.nfc.data.NfcCharacter
 import com.tamerslab.domain.card.CardCharacter
+import com.tamerslab.species.PlaceholderSprite
 import java.util.Locale
 import kotlin.random.Random
 
@@ -34,7 +35,11 @@ internal object WorldSpawnSelector {
         favoredAttribute: NfcCharacter.Attribute? = null,
         random: Random = Random.Default
     ): CardCharacter? {
-        val speciesByStage = characters
+        // A character that only has the neutral placeholder artwork can never be a wild encounter:
+        // it would appear as the app's own "no artwork" marker on the radar, not as a Digimon.
+        val spawnable = characters.filter { it.spriteId != PlaceholderSprite.ID.toLong() }
+        if (spawnable.isEmpty()) return null
+        val speciesByStage = spawnable
             .groupBy { it.stage }
             .mapValues { (_, variants) ->
                 variants.groupBy { it.speciesKey(speciesNames[it.id]) }.values.toList()

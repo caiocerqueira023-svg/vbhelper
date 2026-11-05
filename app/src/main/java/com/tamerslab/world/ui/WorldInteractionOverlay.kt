@@ -79,7 +79,7 @@ internal fun WorldInteractionOverlay(
                     style=MaterialTheme.typography.titleMedium,modifier=Modifier.weight(1f))
                 TextButton(onClick=onClose,modifier=Modifier.heightIn(min=48.dp)) { Text(stringResource(R.string.ui_world_stop_spectating)) }
             }
-            Text(wilds.joinToString(" Â· ") { names[it.individualId].orEmpty() },style=MaterialTheme.typography.bodyMedium)
+            Text(wilds.joinToString(" · ") { names[it.individualId].orEmpty() },style=MaterialTheme.typography.bodyMedium)
             if(current==null || current.state.terminal) Text(stringResource(R.string.ui_world_interaction_ended))
             if(current?.type==InteractionType.BATTLE) {
                 if(wilds.size==1 && !hasOwnedPartner) Text(stringResource(R.string.ui_world_battle_choose_active),style=MaterialTheme.typography.bodySmall)
@@ -114,8 +114,8 @@ internal fun WorldInteractionOverlay(
         }
     }
     if(previewVisible && current!=null) AlertDialog(onDismissRequest={previewVisible=false},title={Text(stringResource(R.string.ui_world_team_preview))},
-        text={Text(if(previewBoth) "$activeName + ${owned.firstOrNull { it.first==secondOwned }?.second}  Ã—  ${names.values.joinToString(" + ")}" else
-            "$activeName + ${names[previewAlly]}  Ã—  ${names.filterKeys { it!=previewAlly }.values.joinToString()}")},
+        text={Text(if(previewBoth) "$activeName + ${owned.firstOrNull { it.first==secondOwned }?.second}  ·  ${names.values.joinToString(" + ")}" else
+            "$activeName + ${names[previewAlly]}  ·  ${names.filterKeys { it!=previewAlly }.values.joinToString()}")},
         confirmButton={VitalButton(onClick={previewVisible=false;onJoinBattle(current.revision,previewAlly,if(previewBoth)secondOwned else null)},enabled=joinable) { Text(stringResource(R.string.ui_world_accept_challenge)) }},
         dismissButton={TextButton(onClick={previewVisible=false}) { Text(stringResource(R.string.ui_cancel)) }})
 }

@@ -23,9 +23,20 @@ data class RadarPresentation(val individual: EcosystemIndividual, val assets: Wo
 fun radarPresentations(snapshot: EcosystemSnapshot, assets: List<WorldDtos.SpawnWithDetails>): List<RadarPresentation> {
     val byId = assets.associateBy { it.individualId }
     return snapshot.individuals.mapNotNull { individual ->
-        byId[individual.individualId]?.takeIf { it.id == individual.spawnId }?.let { RadarPresentation(individual, it) }
+        byId[individual.individualId]
+            ?.takeIf { it.id == individual.spawnId }
+            ?.takeIf { !it.isPlaceholderArtwork() }
+            ?.let { RadarPresentation(individual, it) }
     }
 }
+
+/**
+ * The neutral placeholder sprite is an app data marker (a 32x32 diamond), not a Digimon. Encounters
+ * that still reference it are dropped from the radar instead of being drawn as that marker.
+ */
+internal fun WorldDtos.SpawnWithDetails.isPlaceholderArtwork(): Boolean =
+    spriteWidth == 32 && spriteHeight == 32 &&
+        spriteIdle.contentEquals(com.tamerslab.species.PlaceholderSprite.create().spriteIdle1)
 
 fun radarPlayerPosition(snapshot: EcosystemSnapshot): GeoPoint? {
     val checkpointPosition = snapshot.session?.let { session ->

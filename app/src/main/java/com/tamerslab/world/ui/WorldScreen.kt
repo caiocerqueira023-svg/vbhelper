@@ -1,9 +1,10 @@
-﻿package com.tamerslab.world.ui
+package com.tamerslab.world.ui
 
 import android.Manifest
 import android.content.pm.PackageManager
 import android.location.Location
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.Animatable
@@ -79,7 +80,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.asImageBitmap
@@ -94,6 +97,7 @@ import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -106,6 +110,12 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavBackStackEntry
 import com.tamerslab.R
+import com.tamerslab.ar.ArAvailability
+import com.tamerslab.ar.ArBattleContent
+import com.tamerslab.ar.ArBattleStage
+import com.tamerslab.ar.ArPlacement
+import com.tamerslab.ar.ArStagePhase
+import com.tamerslab.ar.checkArAvailability
 import com.tamerslab.components.TopBanner
 import com.tamerslab.components.motionEnabled
 import com.tamerslab.components.VitalButton
@@ -144,6 +154,7 @@ import com.tamerslab.world.ecosystem.WorldPlayerFix
 import com.tamerslab.world.ecosystem.EcosystemSeed
 import com.tamerslab.world.ecosystem.EcosystemStatus
 import com.tamerslab.world.ecosystem.RadarCommand
+import com.tamerslab.world.ecosystem.RadarCommandStamp
 import com.tamerslab.world.ecosystem.RadarCommandKind
 import com.tamerslab.world.ecosystem.RadarCommandResult
 import com.tamerslab.world.ecosystem.RadarCommandException
@@ -160,6 +171,7 @@ import com.tamerslab.world.ecosystem.publicInteractionFor
 import com.tamerslab.world.ecosystem.speechFor
 import com.tamerslab.world.ecosystem.isPlayerBattle
 import com.tamerslab.battle.offline.core.BattleOutcome
+import com.tamerslab.battle.offline.session.BattleSceneChannel
 import com.tamerslab.world.worldRadarBattleParticipant
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -192,13 +204,15 @@ fun RadarScreen(
     selectedWorldTab: Int = 0,
     onWorldTabSelected: (Int) -> Unit = {},
     onFullScreenBattleChanged: (Boolean) -> Unit = {},
-    firstPersonPreferred: Boolean = false,
-    onViewPreferenceChanged: (Boolean) -> Unit = {},
+    /** Radar renderer; the isometric world is the default and the legacy views are Debug-only. */
+    legacyView: RadarLegacyView = RadarLegacyView.NONE,
+    onLegacyViewChanged: (RadarLegacyView) -> Unit = {},
     labelsPreferred: Boolean = false,
     onLabelsPreferenceChanged: (Boolean) -> Unit = {},
-    /** Banner label: the legacy World tab keeps "World", the Radar place passes `nav_radar`. */
-    @androidx.annotation.StringRes titleRes: Int = R.string.nav_world,
-    /** The Radar place owns the header alone; the legacy World route still shows Radar|Digifarm. */
+    /** "AR battles" radar preference, hoisted/persisted like the legacy view choice. */
+    arPreferred: Boolean = false,
+    onArPreferenceChanged: (Boolean) -> Unit = {},
+    /** The legacy World route still shows Radar|Digifarm tabs floating over the radar world. */
     showSectionTabs: Boolean = true
 ) {
     val context = LocalContext.current
@@ -206,9 +220,13 @@ fun RadarScreen(
     val app = context.applicationContext as TamersLabApplication
     val ecosystem = app.container.worldEcosystemCoordinator
     val worldSnapshot by ecosystem.snapshot.collectAsStateWithLifecycle()
-    var firstPersonEnabled by rememberSaveable { mutableStateOf(firstPersonPreferred) }
-    LaunchedEffect(firstPersonEnabled) { onViewPreferenceChanged(firstPersonEnabled) }
-    var firstPersonFailed by remember { mutableStateOf(false) }
+    var legacyName by rememberSaveable { mutableStateOf(legacyView.name) }
+    val hoistedLegacy = runCatching { RadarLegacyView.valueOf(legacyName) }.getOrDefault(RadarLegacyView.NONE)
+    LaunchedEffect(hoistedLegacy) { onLegacyViewChanged(hoistedLegacy) }
+    var showRadarOptions by rememberSaveable { mutableStateOf(false) }
+    var isoProjection by remember { mutableStateOf(emptyList<RadarProjection>()) }
+    var isoFailed by remember { mutableStateOf(false) }
+    val isometricRendererPresent = remember { java.util.concurrent.atomic.AtomicBoolean(false) }
     var requestedBattleRenderer by remember { mutableStateOf(false) }
     val rendererOwnership = remember { RadarRendererOwnership() }
     val rendererState by rendererOwnership.state.collectAsStateWithLifecycle()
@@ -218,6 +236,8 @@ fun RadarScreen(
     val currentPitch by rememberUpdatedState(cameraPitch)
     var showEntityLabels by rememberSaveable { mutableStateOf(labelsPreferred) }
     LaunchedEffect(showEntityLabels) { onLabelsPreferenceChanged(showEntityLabels) }
+    var arBattleEnabled by rememberSaveable { mutableStateOf(arPreferred) }
+    LaunchedEffect(arBattleEnabled) { onArPreferenceChanged(arBattleEnabled) }
     var fpProjection by remember { mutableStateOf(emptyList<RadarProjection>()) }
     var firstPersonViewportWidth by remember { mutableIntStateOf(0) }
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -264,6 +284,13 @@ fun RadarScreen(
             debugSpawnCharacters = null
         }
     }
+    val debugEnabled = debugSettings.enabled
+    // The legacy renderers are a Debug instrument: ordinary use always gets the isometric world.
+    LaunchedEffect(debugEnabled, hoistedLegacy) {
+        if (!debugEnabled && hoistedLegacy != RadarLegacyView.NONE) legacyName = RadarLegacyView.NONE.name
+    }
+    val effectiveLegacy = if (debugEnabled) hoistedLegacy else RadarLegacyView.NONE
+    val cardinalNames = stringArrayResource(R.array.world_cardinal_directions_8).toList()
     DisposableEffect(debugSettingsRepository) {
         onDispose { debugSettingsRepository.setAnyDistance(false) }
     }
@@ -276,10 +303,27 @@ fun RadarScreen(
     var pendingBattleEventId by rememberSaveable { mutableStateOf<String?>(null) }
     var pendingBattleOutcome by rememberSaveable { mutableStateOf<BattleOutcome?>(null) }
     var pendingBattleSnapshot by remember { mutableStateOf<com.tamerslab.battle.offline.core.BattleSnapshot?>(null) }
+    // AR battle entry: the stage is armed (camera/placement visible) before the battle starts and
+    // stays mounted through SCANNING -> BATTLE until the battle exits or the user backs out.
+    var arStageVisible by remember { mutableStateOf(false) }
+    var arSpawn by remember { mutableStateOf<WorldDtos.SpawnWithDetails?>(null) }
+    var arPlacement by remember { mutableStateOf<ArPlacement?>(null) }
+    var arAvailability by remember { mutableStateOf<ArAvailability?>(null) }
     val battleActive = battleSessionId != null
+
+    /** Removes the AR stage and forgets its placement so the next battle starts a fresh world. */
+    fun tearDownArStage() {
+        arStageVisible = false
+        arPlacement = null
+        arSpawn = null
+        arAvailability = null
+    }
     val desiredRenderer = when {
-        battleActive || requestedBattleRenderer -> RadarRendererOwner.BATTLE
-        firstPersonEnabled && radarResumed && pendingBattleEventId == null -> RadarRendererOwner.FIRST_PERSON
+        battleActive || arStageVisible || requestedBattleRenderer -> RadarRendererOwner.BATTLE
+        effectiveLegacy == RadarLegacyView.FIRST_PERSON && radarResumed && pendingBattleEventId == null ->
+            RadarRendererOwner.FIRST_PERSON
+        effectiveLegacy == RadarLegacyView.NONE && radarResumed && !battleActive && !arStageVisible &&
+            pendingBattleEventId == null -> RadarRendererOwner.ISOMETRIC
         else -> RadarRendererOwner.NONE
     }
     LaunchedEffect(desiredRenderer) {
@@ -289,6 +333,7 @@ fun RadarScreen(
         val present=when(owner) {
             RadarRendererOwner.BATTLE -> battleRendererPresent.get()
             RadarRendererOwner.FIRST_PERSON -> firstPersonRendererPresent.get()
+            RadarRendererOwner.ISOMETRIC -> isometricRendererPresent.get()
             RadarRendererOwner.NONE -> false
         }
         if(owner!=desiredRenderer && owner!=RadarRendererOwner.NONE && !present) rendererOwnership.released(owner,rendererOwnership.generation)
@@ -314,20 +359,29 @@ fun RadarScreen(
         }
     }
     val allowMotion = motionEnabled()
-    LaunchedEffect(battleActive) {
-        onFullScreenBattleChanged(battleActive)
+    LaunchedEffect(battleActive, arStageVisible) {
+        // AR scanning is already an immersive camera view, so the battle chrome treats it as full screen.
+        onFullScreenBattleChanged(battleActive || arStageVisible)
     }
-    val explorationActive = radarResumed && !battleActive && pendingBattleEventId == null && worldSnapshot.status != EcosystemStatus.FROZEN
+    val explorationActive = radarResumed && !battleActive && !arStageVisible && pendingBattleEventId == null && worldSnapshot.status != EcosystemStatus.FROZEN
     val compass = rememberWorldCompass(location, enabled = explorationActive, diagnosticsEnabled = debugSettings.enabled)
     val heading = compass.heading ?: 0f // Uncalibrated map is explicitly north-up.
+    val cardinalLabel = compass.heading?.let { cardinalDirection(heading) }
     var frozenRadarHeading by remember { mutableFloatStateOf(0f) }
     SideEffect {
         if (explorationActive) frozenRadarHeading = heading
     }
     val radarHeading = if (explorationActive) heading else frozenRadarHeading
-    val spawns by app.container.worldRepository.observeSpawns().collectAsStateWithLifecycle(initialValue = emptyList())
-    val questTasks by app.container.questRepository.observeTargetTasks().collectAsStateWithLifecycle(initialValue = emptyList())
-    val questTrials by app.container.questRepository.observeBattleTargets().collectAsStateWithLifecycle(initialValue = emptyList())
+    // Every flow here is remembered: the compass updates at sensor rate, and re-creating these Room
+    // flows on each recomposition used to restart their queries thousands of times a second. That
+    // churn is what made the nearby Digimon take so long to appear (the spawn list kept restarting
+    // before its first emission and stayed empty).
+    val spawnsFlow = remember { app.container.worldRepository.observeSpawns() }
+    val spawns by spawnsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
+    val questTasksFlow = remember { app.container.questRepository.observeTargetTasks() }
+    val questTasks by questTasksFlow.collectAsStateWithLifecycle(initialValue = emptyList())
+    val questTrialsFlow = remember { app.container.questRepository.observeBattleTargets() }
+    val questTrials by questTrialsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
     var questInteractionInProgress by remember { mutableStateOf<String?>(null) }
     val questTarget by remember(worldState) { worldState.getStateFlow<String?>("radar-quest-target", null) }.collectAsStateWithLifecycle()
     LaunchedEffect(questTarget, spawns) {
@@ -336,14 +390,34 @@ fun RadarScreen(
         selectedEncounterName = target.speciesName
         worldState.set<String?>("radar-quest-target", null)
     }
-    val activeOwned by app.container.db.userCharacterDao().getActiveCharacter().collectAsStateWithLifecycle(initialValue = null)
+    val activeCharacterFlow = remember { app.container.db.userCharacterDao().getActiveCharacter() }
+    val activeOwned by activeCharacterFlow.collectAsStateWithLifecycle(initialValue = null)
+    // The active partner is the radar's player token: its four stored frames become the extruded
+    // 3D model standing at the centre of the isometric world.
+    val playerSprite = remember(activeOwned) {
+        activeOwned?.let { character ->
+            val frames = buildMap {
+                if (character.spriteIdle.isNotEmpty()) put("idle", character.spriteIdle)
+                if (character.spriteIdle2.isNotEmpty()) put("idle2", character.spriteIdle2)
+                if (character.spriteRun1.isNotEmpty()) put("walk", character.spriteRun1)
+                if (character.spriteRun2.isNotEmpty()) put("walk2", character.spriteRun2)
+            }
+            if (frames.isEmpty()) null else RadarPlayerSprite(
+                frames = frames,
+                width = character.spriteWidth.coerceAtLeast(1),
+                height = character.spriteHeight.coerceAtLeast(1),
+                stage = character.stage,
+            )
+        }
+    }
     val attemptedWildAttacks=remember { mutableMapOf<String,Int>() }
-    val pendingRecruits by app.container.worldRepository.observePendingRecruits()
-        .collectAsStateWithLifecycle(initialValue = emptyList())
-    val worldSpawnCardsState by app.container.db.cardDao().observeCardsForWorldSpawns()
-        .collectAsStateWithLifecycle(initialValue = null)
+    val pendingRecruitsFlow = remember { app.container.worldRepository.observePendingRecruits() }
+    val pendingRecruits by pendingRecruitsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
+    val worldSpawnCardsFlow = remember { app.container.db.cardDao().observeCardsForWorldSpawns() }
+    val worldSpawnCardsState by worldSpawnCardsFlow.collectAsStateWithLifecycle(initialValue = null)
     val worldSpawnCards = worldSpawnCardsState.orEmpty()
-    val currentBiome by app.container.worldRepository.currentBiome.collectAsStateWithLifecycle()
+    val currentBiomeFlow = remember { app.container.worldRepository.currentBiome }
+    val currentBiome by currentBiomeFlow.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     LaunchedEffect(showDebugSpawnPicker, debugSpawnPickerAttempt, debugSettings.enabled) {
         if (!showDebugSpawnPicker || !debugSettings.enabled) return@LaunchedEffect
@@ -376,6 +450,17 @@ fun RadarScreen(
     val playerPosition = radarPlayerPosition(worldSnapshot)
     val displayedCommandStamp = worldSnapshot.commandStamp
     val presentations = remember(worldSnapshot.individuals, spawns) { radarPresentations(worldSnapshot, spawns) }
+    // The compass needle points at the nearest wild Digimon: its world bearing, plus the localized
+    // cardinal for the layer's accessibility description.
+    val nearestWildBearing = remember(presentations, playerPosition) {
+        val player = playerPosition ?: return@remember null
+        presentations.minByOrNull { presentation ->
+            RadarWorldGeometry.relative(player, presentation.individual.position).distanceMeters
+        }?.let { nearest ->
+            RadarWorldGeometry.relative(player, nearest.individual.position).bearingDegrees.toFloat()
+        }
+    }
+    val nearestWildCardinal = nearestWildBearing?.let { cardinalDirection(it) }
     LaunchedEffect(selectedEncounterId,worldSnapshot.interactions) {
         selectedEncounterId?.let { id -> worldSnapshot.publicInteractionFor(id)?.let { event ->
             selectedEncounterId=null
@@ -386,6 +471,7 @@ fun RadarScreen(
     var populationRefreshInProgress by remember { mutableStateOf(false) }
     var populationRefreshFailed by remember { mutableStateOf(false) }
     var lastPopulationPosition by remember { mutableStateOf<GeoPoint?>(null) }
+    var spawnAssetRefreshAttempted by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(explorationActive, allowMotion) {
         if (!allowMotion) idleFrame = 0
@@ -449,8 +535,20 @@ fun RadarScreen(
         }
     }
 
+    /**
+     * Builds a radar command from the *latest* published command stamp.
+     *
+     * The visible stamp is only used to enable/disable controls. Submitting with the latest stamp
+     * keeps an ordinary location update from cancelling the interaction: every accepted GPS fix
+     * bumps the session revision, so a command built from the previously rendered stamp would be
+     * rejected as a stale snapshot ("localization changed") even though claims, range and state
+     * are revalidated inside the command transaction anyway.
+     */
+    fun latestCommandStamp(): RadarCommandStamp =
+        ecosystem.snapshot.value.commandStamp ?: throw RadarCommandException(rejection = RadarRejection.NOT_READY)
+
     fun displayedCommand(kind: RadarCommandKind, id: String? = null): RadarCommand =
-        RadarCommand(displayedCommandStamp ?: throw RadarCommandException(rejection = RadarRejection.NOT_READY), kind, id)
+        RadarCommand(latestCommandStamp(), kind, id)
 
     suspend fun awaitBattleRenderer() {
         requestedBattleRenderer = true
@@ -483,9 +581,10 @@ fun RadarScreen(
                 }
                 val current = ecosystem.snapshot.value
                 if (current.leaseEpoch != epoch) return@launch
-                val ticket = current.commandStamp ?: return@launch
                 val result = withContext(Dispatchers.IO) {
-                    ecosystem.executeCommand(radarLease, RadarCommand(ticket, RadarCommandKind.REGION)) { command ->
+                    // Build the command stamp at submission time: the biome lookup above is a long
+                    // gap and an ordinary GPS fix during it would otherwise make this refresh stale.
+                    ecosystem.executeCommand(radarLease, RadarCommand(latestCommandStamp(), RadarCommandKind.REGION)) { command ->
                         val latest = command.playerFix.position
                         if (!RadarWorldGeometry.relative(fix.position, latest).withinRadius(60.0)) {
                             throw RadarCommandException(rejection = RadarRejection.STALE_SNAPSHOT)
@@ -506,6 +605,18 @@ fun RadarScreen(
                 populationRefreshInProgress = false
             }
         }
+    }
+
+    // The world session can outlive the sixteen-minute spawn window (an overnight pause): the
+    // ecosystem still reports its residents, but every sprite asset row has expired, so the radar
+    // would draw an empty plate. Re-resolve the region once on entry when that mismatch is seen.
+    LaunchedEffect(radarResumed, worldSnapshot.status, worldSnapshot.individuals.size, spawns.size) {
+        if (!radarResumed || worldSnapshot.status != EcosystemStatus.READY) return@LaunchedEffect
+        if (worldSnapshot.individuals.isEmpty() || spawns.isNotEmpty() || spawnAssetRefreshAttempted) {
+            return@LaunchedEffect
+        }
+        spawnAssetRefreshAttempted = true
+        requestPopulationRefresh(force = true)
     }
 
     DisposableEffect(hasLocationPermission, explorationActive, worldSnapshot.leaseEpoch) {
@@ -610,6 +721,7 @@ fun RadarScreen(
         battleSessionId = null
         committedBattleSessionId = null
         battleTerminalOutcome = null
+        tearDownArStage()
         savePendingBattle()
     }
 
@@ -631,7 +743,7 @@ fun RadarScreen(
         val sessionId="world-radar:${java.util.UUID.randomUUID()}"
         scope.launch {
             try {
-                val command=RadarCommand(displayedCommandStamp ?: throw RadarCommandException(rejection=RadarRejection.NOT_READY),
+                val command=RadarCommand(latestCommandStamp(),
                     RadarCommandKind.EVENT_RESERVATION,interactionId=sourceId)
                 val prepared=withContext(Dispatchers.IO) {
                     ecosystem.executeCommand(radarLease,command) { context ->
@@ -675,12 +787,20 @@ fun RadarScreen(
 
     fun startRadarBattle(spawn: WorldDtos.SpawnWithDetails,challengeId:String?=null,wildAttack:EcosystemInteractionSummary?=null) {
         if (preparingSpawnId != null || battleActive) return
+        // While the AR stage is scanning, the encounter flow owns battle entry: a stray
+        // wild-attack/challenge trigger must not start a battle rendered without the AR scene.
+        if (arStageVisible && arPlacement == null) return
         preparingSpawnId = spawn.id
         val sessionId = "world-radar:${java.util.UUID.randomUUID()}"
         scope.launch {
             try {
-                val ticket = if(wildAttack==null) displayedCommand(RadarCommandKind.BATTLE_RESERVATION, spawn.individualId)
-                    else RadarCommand(displayedCommandStamp ?: throw RadarCommandException(rejection=RadarRejection.NOT_READY),RadarCommandKind.EVENT_RESERVATION,interactionId=wildAttack.id)
+                // Built at submission time (below), after the preparation reads: a GPS fix during
+                // those reads must not turn the battle reservation into a stale-snapshot failure.
+                fun battleTicket(): RadarCommand = if (wildAttack == null) {
+                    RadarCommand(latestCommandStamp(), RadarCommandKind.BATTLE_RESERVATION, spawn.individualId)
+                } else {
+                    RadarCommand(latestCommandStamp(), RadarCommandKind.EVENT_RESERVATION, interactionId = wildAttack.id)
+                }
                 // Quest battles field the bound quest partner automatically instead of
                 // requiring the player to switch the active partner manually.
                 val switchedPartnerName = withContext(Dispatchers.IO) {
@@ -700,7 +820,7 @@ fun RadarScreen(
                     activeCharacter to profile
                 }
                 val prepared = withContext(Dispatchers.IO) {
-                    ecosystem.executeCommand(radarLease, ticket) { command ->
+                    ecosystem.executeCommand(radarLease, battleTicket()) { command ->
                         val activeCharacter = owned.first
                         val currentOwned = app.container.db.userCharacterDao().getCharacterSync(activeCharacter.id)
                             ?: throw WorldInteractionException(InteractionFailure.UNAVAILABLE)
@@ -770,12 +890,50 @@ fun RadarScreen(
             } catch (failure: Exception) {
                 if (battleSessionId != null) leaveRadarBattle()
                 discardPreparation(sessionId)
+                // A failed start cannot be retried from the AR stage's placement overlay; drop the
+                // stage so the player is back on the radar with the error toast.
+                if (arStageVisible && battleSessionId == null) tearDownArStage()
                 showRadarFailure(failure, R.string.ui_world_battle_start_failed)
             } finally {
                 preparingSpawnId = null
                 requestedBattleRenderer = false
             }
         }
+    }
+
+    /**
+     * Encounter battle entry point. Keeps the historical normal battle when AR is off or the
+     * device cannot run ARCore at all; otherwise arms the AR stage and lets the user place the
+     * arena on a real surface. Availability is re-checked by the stage while scanning, so a
+     * transient failure there still falls back to the normal Coliseum battle.
+     */
+    fun beginRadarBattle(spawn: WorldDtos.SpawnWithDetails) {
+        if (preparingSpawnId != null || battleActive || arStageVisible) return
+        if (!arBattleEnabled || checkArAvailability(context) == ArAvailability.UNSUPPORTED) {
+            startRadarBattle(spawn)
+            return
+        }
+        selectedEncounterId = null
+        arSpawn = spawn
+        arPlacement = null
+        arAvailability = null
+        arStageVisible = true
+    }
+
+    /** Placement confirmed: start the battle while keeping the same AR stage mounted for BATTLE. */
+    fun confirmArPlacement(placement: ArPlacement) {
+        arPlacement = placement
+        val spawn = arSpawn
+        if (spawn != null) startRadarBattle(spawn) else tearDownArStage()
+    }
+
+    /** Back/"Fight normally": tear the stage down, falling back to the normal battle when AR failed. */
+    fun cancelArStage() {
+        val spawn = arSpawn
+        val fallBackToNormalBattle = arAvailability == ArAvailability.UNSUPPORTED ||
+            arAvailability == ArAvailability.SUPPORTED_NOT_INSTALLED
+        tearDownArStage()
+        if (fallBackToNormalBattle && spawn != null) startRadarBattle(spawn)
     }
 
     LaunchedEffect(battleSessionId, battleSessionState.sessionId) {
@@ -819,8 +977,8 @@ fun RadarScreen(
             }
         }
     }
-    LaunchedEffect(worldSnapshot.session?.tickIndex,worldSnapshot.status,activeOwned?.id,radarResumed,battleActive,spawns) {
-        if(!regionMutationsEnabled || battleActive || preparingSpawnId!=null || activeOwned==null || incomingChallengeId!=null || privateChallenge!=null) return@LaunchedEffect
+    LaunchedEffect(worldSnapshot.session?.tickIndex,worldSnapshot.status,activeOwned?.id,radarResumed,battleActive,spawns,arStageVisible) {
+        if(!regionMutationsEnabled || battleActive || arStageVisible || preparingSpawnId!=null || activeOwned==null || incomingChallengeId!=null || privateChallenge!=null) return@LaunchedEffect
         val attack=worldSnapshot.interactions.firstOrNull { it.type==InteractionType.BATTLE && it.state==InteractionState.ACTIVE &&
             it.isPlayerBattle && (worldSnapshot.session?.tickIndex ?: 0)>=it.nextActionTick &&
             (attemptedWildAttacks[it.id] ?: 0)<3 } ?: return@LaunchedEffect
@@ -832,9 +990,9 @@ fun RadarScreen(
         if(attack.publicReason?.startsWith("WILD_ATTACK:")==true) context.showAppFeedback(R.string.ui_world_wild_attack)
         startRadarBattle(attacker,wildAttack=attack)
     }
-    LaunchedEffect(privateChallenge,regionMutationsEnabled,activeOwned?.id,worldSnapshot.claimedIndividuals) {
+    LaunchedEffect(privateChallenge,regionMutationsEnabled,activeOwned?.id,worldSnapshot.claimedIndividuals,arStageVisible) {
         val intent=privateChallenge ?: return@LaunchedEffect
-        if((intent.sparring && intent.type!=com.tamerslab.world.ecosystem.DialogueIntentType.ACCEPT_CHALLENGE) || incomingChallengeId==null || !regionMutationsEnabled || activeOwned==null || preparingSpawnId!=null || battleActive || intent.initiatorId in worldSnapshot.claimedIndividuals) return@LaunchedEffect
+        if((intent.sparring && intent.type!=com.tamerslab.world.ecosystem.DialogueIntentType.ACCEPT_CHALLENGE) || incomingChallengeId==null || !regionMutationsEnabled || activeOwned==null || preparingSpawnId!=null || battleActive || arStageVisible || intent.initiatorId in worldSnapshot.claimedIndividuals) return@LaunchedEffect
         val attacker=spawns.firstOrNull { it.individualId==intent.initiatorId } ?: return@LaunchedEffect
         incomingChallengeId=null
         privateChallenge=null
@@ -867,54 +1025,22 @@ fun RadarScreen(
             ?.let { openConversation(it.id) }
     }
 
-    Scaffold(
-        topBar = {
-            AnimatedVisibility(
-                visible = !battleActive,
-                enter = slideInVertically(
-                    animationSpec = tween(if (allowMotion) 240 else 0, easing = FastOutSlowInEasing),
-                    initialOffsetY = { -it }
-                ) + expandVertically(
-                    animationSpec = tween(if (allowMotion) 240 else 0, easing = FastOutSlowInEasing),
-                    expandFrom = Alignment.Top
-                ) + fadeIn(tween(if (allowMotion) 160 else 0)),
-                exit = slideOutVertically(
-                    animationSpec = tween(if (allowMotion) 240 else 0, easing = FastOutSlowInEasing),
-                    targetOffsetY = { -it }
-                ) + shrinkVertically(
-                    animationSpec = tween(if (allowMotion) 240 else 0, easing = FastOutSlowInEasing),
-                    shrinkTowards = Alignment.Top
-                ) + fadeOut(tween(if (allowMotion) 160 else 0))
-            ) {
-                Column {
-                    TopBanner(text = when {
-                        compass.heading != null -> "${stringResource(titleRes)} â€¢ ${cardinalDirection(heading)}"
-                        else -> stringResource(titleRes)
-                    }, onGearClick = { showWorldSpawnSettings = true })
-                    if (showSectionTabs) WorldSectionTabs(
-                        selectedTab = selectedWorldTab,
-                        onTabSelected = onWorldTabSelected
-                    )
-                }
+    // System back while scanning must leave the AR stage instead of popping the radar destination
+    // (which would otherwise leave the full-screen chrome flagged as active).
+    BackHandler(enabled = arStageVisible && !battleActive) { cancelArStage() }
+
+    Box(Modifier.fillMaxSize()) {
+            val onBattleRendererCreated: () -> Unit = { battleRendererPresent.set(true) }
+            val onBattleRendererReleased: () -> Unit = {
+                if (rendererOwnership.released(RadarRendererOwner.BATTLE, battleRendererToken)) battleRendererPresent.set(false)
             }
-        },
-        contentWindowInsets = WindowInsets.statusBars
-    ) { contentPadding ->
-        Column(
-            Modifier
-                .padding(contentPadding)
-                .fillMaxSize()
-                .then(if (battleActive) Modifier else Modifier.verticalScroll(rememberScrollState()))
-                .padding(16.dp)
-        ) {
             WorldRadarBattleContent(
                 viewModel = battleViewModel,
                 battleActive = battleActive,
+                fullBleedRadar = true,
                 rendererAllowed = rendererState.owner == RadarRendererOwner.BATTLE && rendererState.requested == RadarRendererOwner.BATTLE && !rendererState.releasing,
-                onRendererCreated = { battleRendererPresent.set(true) },
-                onRendererReleased = {
-                    if(rendererOwnership.released(RadarRendererOwner.BATTLE, battleRendererToken)) battleRendererPresent.set(false)
-                },
+                onRendererCreated = onBattleRendererCreated,
+                onRendererReleased = onBattleRendererReleased,
                 onOutcome = outcome@ { outcome ->
                     if (battleExitInProgress || battleSessionState.sessionId != battleSessionId ||
                         battleSessionState.snapshot?.result?.outcome != outcome) return@outcome
@@ -947,8 +1073,55 @@ fun RadarScreen(
                 },
                 onExit = ::leaveRadarBattle,
                 rewardContent = { battleSessionId?.let { DigimonScanBattleRewards(app.container.db, it) } },
+                arStage = if (arStageVisible) {
+                    { hooks ->
+                        ArBattleStage(
+                            phase = if (battleActive) ArStagePhase.BATTLE else ArStagePhase.SCANNING,
+                            // Single Filament engine invariant: the AR battle scene may only claim
+                            // an Engine while the battle renderer owns the renderer slot (a
+                            // lingering FIRST_PERSON release must finish first).
+                            battle = if (battleActive && arPlacement != null &&
+                                rendererState.owner == RadarRendererOwner.BATTLE &&
+                                rendererState.requested == RadarRendererOwner.BATTLE &&
+                                !rendererState.releasing
+                            ) ArBattleContent(
+                                snapshot = battleSessionState.snapshot,
+                                fighters = battleSessionState.fighters,
+                                manifest = battleSessionState.arenaManifest,
+                                sessionId = battleSessionState.sessionId,
+                                preparedForms = battleSessionState.preparedForms,
+                                allowMotion = allowMotion,
+                                sceneSnapshotFlow = if (BattleSceneChannel.enabled) battleViewModel.sceneSnapshot else null,
+                            ) else null,
+                            onPlacementConfirmed = { placement -> confirmArPlacement(placement) },
+                            onCancel = { cancelArStage() },
+                            onSceneViewReady = hooks.onSceneViewReady,
+                            onSceneReady = hooks.onSceneReady,
+                            onProjectionChanged = hooks.onProjectionChanged,
+                            onFighterTapped = hooks.onFighterTapped,
+                            onRendererReleased = onBattleRendererReleased,
+                            onRendererCreated = onBattleRendererCreated,
+                            onAssetError = hooks.onAssetError,
+                            onAvailabilityChanged = { arAvailability = it },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    }
+                } else null,
                 radarViewport = {
-            if (firstPersonEnabled && rendererState.owner == RadarRendererOwner.FIRST_PERSON &&
+                    Box(
+                        Modifier
+                            .fillMaxSize()
+                            .then(
+                                if (effectiveLegacy == RadarLegacyView.NONE)
+                                    Modifier.pointerInput(Unit) {
+                                        detectTransformGestures { _, _, zoomChange, _ ->
+                                            zoom = (zoom * zoomChange).coerceIn(RADAR_ISO_MIN_ZOOM, RADAR_ISO_MAX_ZOOM)
+                                        }
+                                    }
+                                else Modifier
+                            )
+                    ) {
+            if (effectiveLegacy == RadarLegacyView.FIRST_PERSON && rendererState.owner == RadarRendererOwner.FIRST_PERSON &&
                 rendererState.requested == RadarRendererOwner.FIRST_PERSON && !rendererState.releasing) {
                 val rendererToken = rendererState.generation
                 val density=LocalDensity.current
@@ -960,7 +1133,7 @@ fun RadarScreen(
                 }) {
                     RadarFirstPersonViewport(worldSnapshot,presentations,radarHeading,cameraPitch,radarResumed,allowMotion,
                         onProjection = { fpProjection = it },
-                        onFailure = { firstPersonFailed = true; firstPersonEnabled = false },
+                        onFailure = { legacyName = RadarLegacyView.NONE.name },
                         onCreated = { firstPersonRendererPresent.set(true) },
                         onReleased = { if(rendererOwnership.released(RadarRendererOwner.FIRST_PERSON,rendererToken)) firstPersonRendererPresent.set(false) },
                         modifier = Modifier.fillMaxSize())
@@ -989,20 +1162,19 @@ fun RadarScreen(
                     if(compass.heading==null) Text(stringResource(R.string.ui_world_north_preview),color=TextPrimaryOnDark,
                         modifier=Modifier.align(Alignment.TopCenter).padding(8.dp))
                 }
-            } else if (firstPersonEnabled || rendererState.releasing) {
+            } else if (effectiveLegacy == RadarLegacyView.FIRST_PERSON || rendererState.releasing) {
                 Box(Modifier.fillMaxSize(),contentAlignment=Alignment.Center) { Text(stringResource(R.string.ui_world_renderer_handoff)) }
-            } else {
+            } else if (effectiveLegacy == RadarLegacyView.CLASSIC_2D) {
             BoxWithConstraints(
                 modifier = Modifier
                     .fillMaxSize()
                     .pointerInput(battleActive) {
                         detectTransformGestures { _, _, gestureZoom, _ ->
-                            if (!battleActive) zoom = (zoom * gestureZoom).coerceIn(0.5f, 4f)
+                            if (!battleActive) zoom = (zoom * gestureZoom).coerceIn(RADAR_ISO_MIN_ZOOM, RADAR_ISO_MAX_ZOOM)
                         }
                     }
             ) {
                 val density = LocalDensity.current
-                val cardinalNames = stringArrayResource(R.array.world_cardinal_directions_8)
                 val boxWidthPx = with(density) { maxWidth.toPx() }
                 val center = Offset(boxWidthPx / 2f, boxWidthPx / 2f)
                 val visibleRadiusMeters = 500.0 / zoom
@@ -1012,8 +1184,8 @@ fun RadarScreen(
                     .step(RADAR_RING_INTERVAL_METERS)
                     .toList()
 
-                // O jogador permanece sempre no centro da tela. O mundo Ã© que se desloca
-                // em sentido contrÃ¡rio ao movimento do jogador.
+                // O jogador permanece sempre no centro da tela. O mundo é que se desloca
+                // em sentido contrário ao movimento do jogador.
                 val playerOffset = center
                 val playerDisplacement = origin?.let { originPosition ->
                     playerPosition?.let { currentPosition ->
@@ -1034,7 +1206,7 @@ fun RadarScreen(
                 val compassColor = RadarCompass
 
                 Canvas(modifier = Modifier.fillMaxSize()) {
-                    // A grade representa o mundo, se desloca com o jogador e gira com a bÃºssola.
+                    // A grade representa o mundo, se desloca com o jogador e gira com a bússola.
                     withTransform({
                         rotate(degrees = -radarHeading, pivot = center)
                     }) {
@@ -1042,7 +1214,7 @@ fun RadarScreen(
                         val originX = center.x - playerDisplacement.x
                         val originY = center.y - playerDisplacement.y
 
-                        // Desenha a grade em uma Ã¡rea maior que a tela para que a rotaÃ§Ã£o
+                        // Desenha a grade em uma área maior que a tela para que a rotação
                         // nunca revele as bordas vazias do Canvas.
                         val diagonal = sqrt(
                             size.width * size.width +
@@ -1277,118 +1449,273 @@ fun RadarScreen(
                     }
                 }
             }
+            } else {
+                val isoToken = rendererState.generation
+                if (rendererState.owner == RadarRendererOwner.ISOMETRIC &&
+                    rendererState.requested == RadarRendererOwner.ISOMETRIC && !rendererState.releasing) {
+                    RadarIsometricViewport(
+                        snapshot = worldSnapshot,
+                        presentations = presentations,
+                        playerSprite = playerSprite,
+                        heading = radarHeading,
+                        zoom = zoom,
+                        active = radarResumed && !battleActive && !arStageVisible && pendingBattleEventId == null,
+                        motion = allowMotion,
+                        onProjection = { isoProjection = it },
+                        onFailure = { isoFailed = true; legacyName = RadarLegacyView.NONE.name },
+                        onCreated = { isometricRendererPresent.set(true) },
+                        onReleased = {
+                            if (rendererOwnership.released(RadarRendererOwner.ISOMETRIC, isoToken)) {
+                                isometricRendererPresent.set(false)
+                            }
+                        },
+                        pitchDegrees = RADAR_ISO_PITCH_DEGREES,
+                        rings = emptyList(),
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                } else {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            stringResource(R.string.ui_world_renderer_handoff),
+                            color = TextSecondaryOnDark,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
             }
 
-                },
-                radarControls = {
-            observedInteractionId?.let { id ->
-                WorldInteractionOverlay(id,app.container.db,worldSnapshot,onClose={observedInteractionId=null},hasOwnedPartner=activeOwned!=null,
-                    allowAnyDistance=debugSettings.allowAnyDistance,
-                    onOpenConversation={openConversation(id)},
-                    onDefend={
-                        val attack=worldSnapshot.interactions.firstOrNull { it.id==id }
-                        val attacker=attack?.let { event -> spawns.firstOrNull { it.individualId in event.participantIds } }
-                        if(attack!=null && attacker!=null) startRadarBattle(attacker,wildAttack=attack)
-                    },
-                    onJoinBattle={ revision,ally,second -> startJoinedRadarBattle(id,revision,ally,second) },
+            if (effectiveLegacy == RadarLegacyView.NONE && !isoFailed) {
+                // Owner decisions: no distance/range rings; a large minimal tick ring with longer
+                // cardinal ticks and a red two-triangle needle at the nearest wild Digimon's bearing.
+                // The idle search gesture only runs while the radar is live and motion is allowed.
+                RadarCompassLayer(
+                    heading = radarHeading,
+                    nearestBearingDegrees = nearestWildBearing,
+                    nearestCardinalName = nearestWildCardinal,
+                    animate = allowMotion && explorationActive,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                if (playerSprite == null) {
+                    // No stored partner artwork: keep "you are here" readable instead of an empty plate.
+                    Box(
+                        Modifier
+                            .align(Alignment.Center)
+                            .size(44.dp)
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.22f), CircleShape)
+                            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
                     )
+                }
+                val density = LocalDensity.current
+                val markerHalfPx = with(density) { 24.dp.toPx() }
+                // Label pills are opt-in and dense clusters would otherwise stack them. A pill only
+                // appears when it does not cover one already placed; the marker dot/hit target stays.
+                val usedLabelRects = mutableListOf<Rect>()
+                val pillHeightPx = with(density) { 24.dp.toPx() }
+                val pillGapPx = with(density) { 25.dp.toPx() }
+                val pillMaxWidthPx = with(density) { 176.dp.toPx() }
+                val pillPaddingPx = with(density) { 16.dp.toPx() }
+                val pillCharWidthPx = with(density) { 7.2.dp.toPx() }
+                isoProjection.sortedByDescending { it.distance }.forEach { projection ->
+                    val entity = spawns.firstOrNull { it.individualId == projection.individualId }
+                    val activity = worldSnapshot.publicInteractionFor(projection.individualId)
+                    val label = if (showEntityLabels) entity?.speciesName ?: "Digimon" else null
+                    val labelWidth = label?.let {
+                        (it.length * pillCharWidthPx + pillPaddingPx).coerceAtMost(pillMaxWidthPx)
+                    } ?: 0f
+                    val labelRect = if (label != null) Rect(
+                        left = projection.x - labelWidth / 2f,
+                        top = projection.y - pillGapPx - pillHeightPx,
+                        right = projection.x + labelWidth / 2f,
+                        bottom = projection.y - pillGapPx,
+                    ) else null
+                    // Farm parity: the sprite itself is the tap target, not a box floating above its
+                    // head. The projected billboard rect gets a full-size invisible target (at least
+                    // 48dp) with the same tap/long-press actions as the marker.
+                    val onTapEncounter: () -> Unit = {
+                        if (activity != null) openInteraction(activity) else {
+                            selectedEncounterId = projection.individualId
+                            selectedEncounterName = entity?.speciesName
+                        }
+                    }
+                    val onLongPressEncounter: () -> Unit = {
+                        scope.launch {
+                            selectedSpecies = withContext(Dispatchers.IO) {
+                                val dex = DexRepository(app.container.db)
+                                val spawn = entity ?: return@withContext null
+                                spawn.cardId?.let { cardId ->
+                                    dex.getCharactersByCardId(cardId).first()
+                                        .firstOrNull { character -> character.id == spawn.cardCharacterId }
+                                } ?: dex.getCharacterProgress(spawn.cardCharacterId).first()
+                            }
+                        }
+                        Unit
+                    }
+                    val hitWidthPx = maxOf(projection.width, with(density) { 48.dp.toPx() })
+                    val hitHeightPx = maxOf(projection.height, with(density) { 48.dp.toPx() })
+                    // The marker itself is the farm-style hit target: it is placed and sized over the
+                    // projected sprite, so pressing the Digimon presses that Digimon.
+                    val markerModifier = Modifier
+                        .offset {
+                            IntOffset(
+                                (projection.x - hitWidthPx / 2f).toInt(),
+                                (projection.y + projection.height / 2f - hitHeightPx / 2f).toInt(),
+                            )
+                        }
+                        .size(
+                            with(density) { hitWidthPx.toDp() },
+                            with(density) { hitHeightPx.toDp() },
+                        )
+                    if (labelRect != null && usedLabelRects.any { it.overlaps(labelRect) }) {
+                        // Another pill already owns this area: keep the marker, drop only the text.
+                        RadarEntityMarker(
+                            name = null,
+                            distanceMeters = null,
+                            hasInteraction = activity != null,
+                            onTap = onTapEncounter,
+                            onLongPress = onLongPressEncounter,
+                            modifier = markerModifier,
+                        )
+                    } else {
+                        labelRect?.let { usedLabelRects += it }
+                        RadarEntityMarker(
+                            name = label,
+                            distanceMeters = if (label != null) projection.distance.toInt() else null,
+                            hasInteraction = activity != null,
+                            onTap = onTapEncounter,
+                            onLongPress = onLongPressEncounter,
+                            modifier = markerModifier,
+                        )
+                    }
+                }
+                // One bubble only, anchored to the nearest live speaker: no stacked speech.
+                val spoken = presentations.mapNotNull { item ->
+                    val text = worldSnapshot.speechFor(item.individual.individualId) ?: return@mapNotNull null
+                    val projection = isoProjection.firstOrNull { it.individualId == item.individual.individualId }
+                        ?: return@mapNotNull null
+                    Triple(projection, text, item.individual.individualId)
+                }.minByOrNull { it.first.distance }
+                spoken?.let { (projection, text, individualId) ->
+                    RadarSpeechBubble(
+                        text = text,
+                        onTap = { worldSnapshot.publicInteractionFor(individualId)?.let { openInteraction(it) } },
+                        width = 196.dp,
+                        modifier = Modifier.offset {
+                            IntOffset(
+                                (projection.x - with(density) { 110.dp.toPx() }).toInt(),
+                                (projection.y - with(density) { 72.dp.toPx() }).toInt(),
+                            )
+                        },
+                    )
+                }
             }
-            Spacer(Modifier.height(8.dp))
-            Text(
-                stringResource(R.string.ui_world_nearby_count, worldSnapshot.individuals.size),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .wrapContentWidth()
+
+            if (showSectionTabs) {
+                Box(Modifier.align(Alignment.TopCenter).padding(top = 96.dp)) {
+                    WorldSectionTabs(selectedTab = selectedWorldTab, onTabSelected = onWorldTabSelected)
+                }
+            }
+
+            RadarTopChrome(
+                cardinal = cardinalLabel,
+                onBack = { navController.popBackStack() },
+                onOptions = { showRadarOptions = true },
+                onSpawnSettings = { showWorldSpawnSettings = true },
+                debugEnabled = debugEnabled,
+                modifier = Modifier.align(Alignment.TopCenter).fillMaxWidth(),
             )
 
-            RadarSessionStatusPanel(surfaceState, onRecovery = ::recoverRadar, modifier = Modifier.padding(top = 8.dp))
-
-            Row(Modifier.fillMaxWidth().padding(top=8.dp),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                VitalButton(onClick={firstPersonEnabled=false},enabled=firstPersonEnabled,modifier=Modifier.weight(1f).heightIn(min=48.dp)) { Text(stringResource(R.string.ui_world_mode_2d)) }
-                VitalButton(onClick={firstPersonFailed=false;firstPersonEnabled=true},enabled=!firstPersonEnabled,modifier=Modifier.weight(1f).heightIn(min=48.dp)) { Text(stringResource(R.string.ui_world_mode_fp)) }
-            }
-            if(firstPersonFailed) Text(stringResource(R.string.ui_world_fp_failure),color=MaterialTheme.colorScheme.error,modifier=Modifier.padding(top=8.dp))
-            Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
-                com.tamerslab.components.LabeledSwitchRow(stringResource(R.string.ui_world_show_labels),
-                    showEntityLabels, { showEntityLabels = it })
-            }
-            if(firstPersonEnabled) {
-                Text(stringResource(R.string.ui_world_vertical_look),style=MaterialTheme.typography.bodySmall)
-                Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                    VitalButton(onClick={cameraPitch=radarPitchStep(cameraPitch,true)},modifier=Modifier.weight(1f).heightIn(min=48.dp)) { Text(stringResource(R.string.ui_world_look_up)) }
-                    TextButton(onClick={cameraPitch=RADAR_DEFAULT_PITCH},modifier=Modifier.heightIn(min=48.dp)) { Text(stringResource(R.string.ui_world_look_reset)) }
-                    VitalButton(onClick={cameraPitch=radarPitchStep(cameraPitch,false)},modifier=Modifier.weight(1f).heightIn(min=48.dp)) { Text(stringResource(R.string.ui_world_look_down)) }
-                }
-            }
-
-            Text(stringResource(R.string.ui_world_scene_hint),style=MaterialTheme.typography.bodySmall,modifier=Modifier.padding(top=8.dp))
-
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-            ) {
-                VitalButton(onClick = { zoom = (zoom / 1.5f).coerceAtLeast(.5f) }) { Text("-") }
-                Text(
-                    stringResource(R.string.ui_world_zoom_label, (zoom * 100).toInt()),
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
-                )
-                VitalButton(onClick = { zoom = (zoom * 1.5f).coerceAtMost(4f) }) { Text("+") }
-            }
-            if (debugSettings.enabled) {
-                DebugSpawnButton(
-                    onRandomSpawn = { spawnDebugDigimon() },
-                    onChooseSpawn = { showDebugSpawnPicker = true },
-                    loading = debugSpawnInProgress,
-                    enabled = regionMutationsEnabled && !debugSpawnInProgress,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentWidth()
-                        .padding(top = 8.dp)
-                )
-                Text(stringResource(R.string.ui_world_debug_picker_hint), style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(top = 4.dp))
-                Row(Modifier.fillMaxWidth(),verticalAlignment = Alignment.CenterVertically) {
-                    com.tamerslab.components.LabeledSwitchRow(stringResource(R.string.ui_world_debug_any_distance),
-                        debugSettings.allowAnyDistance, debugSettingsRepository::setAnyDistance)
-                }
-            }
+            val bandStatus = radarChromeStatus(surfaceState)
+            RadarSignalBand(
+                nearbyCount = worldSnapshot.individuals.size,
+                statusText = bandStatus.text?.let { stringResource(it) },
+                statusIsError = bandStatus.error,
+                recoveryLabel = bandStatus.action?.let { stringResource(it) },
+                onRecovery = ::recoverRadar,
+                zoom = zoom,
+                onZoomIn = { zoom = (zoom * 1.5f).coerceAtMost(RADAR_ISO_MAX_ZOOM) },
+                onZoomOut = { zoom = (zoom / 1.5f).coerceAtLeast(RADAR_ISO_MIN_ZOOM) },
+                onZoomReset = { zoom = 1f },
+                modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
+            )
             if (pendingRecruits.isNotEmpty()) {
                 VitalButton(
                     onClick = { navController.navigate(AppRoute.WorldRecruits) },
                     modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = 16.dp, bottom = 104.dp),
+                ) { Text(stringResource(R.string.ui_world_recruits_button)) }
+            }
+            observedInteractionId?.let { interactionId ->
+                Box(
+                    Modifier
+                        .align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .wrapContentWidth()
-                        .padding(top = 8.dp)
+                        .heightIn(max = 420.dp)
+                        .padding(horizontal = 12.dp, vertical = 104.dp)
                 ) {
-                    Text(stringResource(R.string.ui_world_recruits_button))
+                    WorldInteractionOverlay(
+                        id = interactionId,
+                        db = app.container.db,
+                        snapshot = worldSnapshot,
+                        onClose = { observedInteractionId = null },
+                        hasOwnedPartner = activeOwned != null,
+                        allowAnyDistance = debugSettings.allowAnyDistance,
+                        onOpenConversation = { openConversation(interactionId) },
+                        onDefend = {
+                            val attack = worldSnapshot.interactions.firstOrNull { it.id == interactionId }
+                            val attacker = attack?.let { event -> spawns.firstOrNull { it.individualId in event.participantIds } }
+                            if (attack != null && attacker != null) startRadarBattle(attacker, wildAttack = attack)
+                        },
+                        onJoinBattle = { revision, ally, second -> startJoinedRadarBattle(interactionId, revision, ally, second) },
+                    )
                 }
             }
+                    }
 
-            if (!hasLocationPermission || location == null) {
-                VitalButton(
-                    onClick = {
-                        launcher.launch(
-                            arrayOf(
-                                Manifest.permission.ACCESS_FINE_LOCATION,
-                                Manifest.permission.ACCESS_COARSE_LOCATION
-                            )
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .wrapContentWidth()
-                        .padding(top = 8.dp)
-                ) { Text(stringResource(R.string.ui_world_enable_location)) }
-            }
                 },
-                modifier = Modifier.fillMaxWidth().then(if (battleActive) Modifier.weight(1f) else Modifier)
+                modifier = Modifier.fillMaxSize()
             )
     }
 
-    if (!battleActive) {
+    RadarOptionsSheet(
+        visible = showRadarOptions && !battleActive && !arStageVisible,
+        labelsEnabled = showEntityLabels,
+        onLabelsChange = { showEntityLabels = it },
+        arBattlesEnabled = arBattleEnabled,
+        onArBattlesChange = { arBattleEnabled = it },
+        debugEnabled = debugEnabled,
+        legacyView = effectiveLegacy,
+        onLegacyViewChange = { legacy ->
+            legacyName = legacy.name
+            showRadarOptions = false
+        },
+        onSpawnSettings = {
+            showRadarOptions = false
+            showWorldSpawnSettings = true
+        },
+        onDismiss = { showRadarOptions = false },
+        debugExtra = {
+            DebugSpawnButton(
+                onRandomSpawn = { spawnDebugDigimon() },
+                onChooseSpawn = { showDebugSpawnPicker = true },
+                loading = debugSpawnInProgress,
+                enabled = regionMutationsEnabled && !debugSpawnInProgress,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            com.tamerslab.components.LabeledSwitchRow(
+                stringResource(R.string.ui_world_debug_any_distance),
+                debugSettings.allowAnyDistance,
+                debugSettingsRepository::setAnyDistance,
+            )
+            Text(
+                stringResource(R.string.ui_world_debug_picker_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+    )
+
+    if (!battleActive && !arStageVisible) {
         selectedEncounterId?.let { individualId ->
             val spawn = spawns.firstOrNull { it.individualId == individualId }
             val blocker = if (displayedCommandStamp == null) RadarRejection.NOT_READY else
@@ -1420,7 +1747,7 @@ fun RadarScreen(
                         }
                     }
                 },
-                onBattle = { spawn?.let { startRadarBattle(it) } },
+                onBattle = { spawn?.let { beginRadarBattle(it) } },
                 questContent = {
                     QuestTargetActions(questTasks.filter { it.targetIndividualId == individualId },
                         enabled = blocker == null && preparingSpawnId == null && questInteractionInProgress == null,
@@ -1544,7 +1871,7 @@ fun RadarScreen(
     privateChallenge?.takeIf { incomingChallengeId!=null && it.sparring && it.type!=com.tamerslab.world.ecosystem.DialogueIntentType.ACCEPT_CHALLENGE }?.let { intent ->
         val spawn=spawns.firstOrNull { it.individualId==intent.initiatorId }
         AlertDialog(onDismissRequest={incomingChallengeId=null;privateChallenge=null},title={Text(stringResource(R.string.ui_world_team_preview))},
-            text={Text((spawn?.speciesName ?: "Digimon")+" Â· 1 Ã— 1\n"+intent.reason)},
+            text={Text((spawn?.speciesName ?: "Digimon")+" · 1 × 1\n"+intent.reason)},
             confirmButton={VitalButton(onClick={
                 val id=intent.id;incomingChallengeId=null;privateChallenge=null
                 spawn?.let { startRadarBattle(it,id) }
@@ -1553,7 +1880,6 @@ fun RadarScreen(
                 Text(stringResource(R.string.ui_world_decline_challenge))
             }})
     }
-}
 }
 
 private data class WorldDimSpecies(

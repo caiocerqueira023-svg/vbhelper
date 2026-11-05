@@ -15,8 +15,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.CustomAccessibilityAction
-import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import com.tamerslab.R
@@ -39,8 +37,6 @@ fun ActiveDigimonCard(
 ) {
     val allowMotion = motionEnabled()
     val canCycleFavorites = favoriteIndex >= 0 && favoriteCount > 1
-    val nextLabel = stringResource(R.string.home_next_favorite)
-    val previousLabel = stringResource(R.string.home_previous_favorite)
     val detailsLabel = stringResource(R.string.home_open_dex_details)
     val positionLabel = stringResource(
         R.string.home_favorite_position,
@@ -49,19 +45,9 @@ fun ActiveDigimonCard(
     )
 
     val accessibilityModifier = if (canCycleFavorites) {
-        Modifier.semantics {
-            stateDescription = positionLabel
-            customActions = listOf(
-                CustomAccessibilityAction(nextLabel) {
-                    onFavoriteSwipe(1)
-                    true
-                },
-                CustomAccessibilityAction(previousLabel) {
-                    onFavoriteSwipe(-1)
-                    true
-                }
-            )
-        }
+        // Position is still announced; the swipe/custom actions that switched the active partner are
+        // gone with the gesture.
+        Modifier.semantics { stateDescription = positionLabel }
     } else {
         Modifier
     }
@@ -112,7 +98,9 @@ fun ActiveDigimonCard(
             onClick = onClick,
             onLongClick = onLongClick,
             longClickLabel = detailsLabel,
-            onVerticalSwipe = if (canCycleFavorites) onFavoriteSwipe else null,
+            // Switching the active partner by scrolling over the card is retired: the sheet's own
+            // controls own that decision now.
+            onVerticalSwipe = null,
             modifier = Modifier.fillMaxSize()
         )
     }

@@ -1,0 +1,977 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/C:/Users/julye/.gradle/wrapper/dists/gradle-9.6.1-bin/4ticwg1pgcbps2hj28r8so764/gradle-9.6.1/lib/native-platform-0.22-milestone-29.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+
+> Configure project :app
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :baselineprofile
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :benchmark
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :hardware
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Task :game-save-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :game-save-core:compileKotlin UP-TO-DATE
+> Task :game-save-core:compileJava NO-SOURCE
+> Task :game-save-core:processResources NO-SOURCE
+> Task :game-save-core:classes UP-TO-DATE
+> Task :game-save-core:jar UP-TO-DATE
+> Task :companion-protocol:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :companion-protocol:compileKotlin UP-TO-DATE
+> Task :companion-protocol:compileJava NO-SOURCE
+> Task :companion-protocol:processResources NO-SOURCE
+> Task :companion-protocol:classes UP-TO-DATE
+> Task :companion-protocol:jar UP-TO-DATE
+> Task :hardware-dim:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :hardware-dim:compileKotlin UP-TO-DATE
+> Task :hardware-dim:compileJava UP-TO-DATE
+> Task :hardware-dim:processResources NO-SOURCE
+> Task :hardware-dim:classes UP-TO-DATE
+> Task :hardware-dim:jar UP-TO-DATE
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:protobufDummy UP-TO-DATE
+> Task :app:extractDebugProto UP-TO-DATE
+> Task :hardware:preBuild UP-TO-DATE
+> Task :hardware:preDebugBuild UP-TO-DATE
+> Task :hardware:generateDebugResources UP-TO-DATE
+> Task :hardware:packageDebugResources UP-TO-DATE
+> Task :hardware:processDebugNavigationResources UP-TO-DATE
+> Task :hardware:parseDebugLocalResources UP-TO-DATE
+> Task :hardware:generateDebugRFile UP-TO-DATE
+> Task :hardware:compileDebugKotlin UP-TO-DATE
+> Task :hardware:javaPreCompileDebug UP-TO-DATE
+> Task :hardware:compileDebugJavaWithJavac NO-SOURCE
+> Task :hardware:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :hardware:processDebugJavaRes UP-TO-DATE
+> Task :hardware:createFullJarDebug UP-TO-DATE
+> Task :app:extractIncludeDebugProto UP-TO-DATE
+> Task :app:extractProto UP-TO-DATE
+> Task :app:generateDebugProto FROM-CACHE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:processDebugNavigationResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:generateDebugRFile UP-TO-DATE
+> Task :hardware:bundleLibCompileToJarDebug UP-TO-DATE
+
+> Task :app:kspDebugKotlin
+w: [ksp] C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/species/data/SpeciesProfileDao.kt:39: The DAO function return type (kotlin.collections.List<kotlin.String?>) with the nullable type argument is meaningless because for now Room will never put a null value in a result.
+w: [ksp] C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/species/data/SpeciesProfileDao.kt:51: The DAO function return type (kotlin.collections.List<kotlin.String?>) with the nullable type argument is meaningless because for now Room will never put a null value in a result.
+
+> Task :app:compileDebugKotlin
+e: org.jetbrains.kotlin.backend.common.BackendException: Backend Internal error: Exception during IR lowering
+File being compiled: C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/world/ui/WorldScreen.kt
+The root cause java.io.FileNotFoundException was thrown at: java.base/java.io.IoOverNioFileSystem.convertNioToIoExceptionInStreams(Unknown Source)
+	at org.jetbrains.kotlin.backend.common.BackendException$Companion.report(BackendException.kt:31)
+	at org.jetbrains.kotlin.backend.common.BackendException$Companion.report$default(BackendException.kt:15)
+	at org.jetbrains.kotlin.backend.common.phaser.PerformByIrFilePhase.invoke(PerformByIrFilePhase.kt:39)
+	at org.jetbrains.kotlin.backend.common.phaser.PerformByIrFilePhase.invoke(PerformByIrFilePhase.kt:16)
+	at org.jetbrains.kotlin.backend.common.phaser.PhaseEngine.runPhase(PhaseEngine.kt:72)
+	at org.jetbrains.kotlin.backend.common.phaser.PhaseEngine.runPhase$default(PhaseEngine.kt:64)
+	at org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory.invokeLowerings(JvmIrCodegenFactory.kt:365)
+	at org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler.runLowerings$org_jetbrains_kotlin_cli_jvm(KotlinToJVMBytecodeCompiler.kt:373)
+	at org.jetbrains.kotlin.cli.pipeline.jvm.JvmBackendPipelinePhase.executePhase(JvmBackendPipelinePhase.kt:81)
+	at org.jetbrains.kotlin.cli.pipeline.jvm.JvmBackendPipelinePhase.executePhase(JvmBackendPipelinePhase.kt:28)
+	at org.jetbrains.kotlin.cli.pipeline.PipelinePhase.phaseBody(PipelinePhase.kt:63)
+	at org.jetbrains.kotlin.cli.pipeline.PipelinePhase.phaseBody(PipelinePhase.kt:53)
+	at org.jetbrains.kotlin.config.phaser.NamedCompilerPhase.invoke(CompilerPhase.kt:102)
+	at org.jetbrains.kotlin.backend.common.phaser.CompositePhase.invoke(PhaseBuilders.kt:22)
+	at org.jetbrains.kotlin.config.phaser.CompilerPhaseKt.invokeToplevel(CompilerPhase.kt:53)
+	at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.runPhasedPipeline(AbstractCliPipeline.kt:135)
+	at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.executeAndReturnPipeLineArtifact(AbstractCliPipeline.kt:89)
+	at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.executeAndReturnPipeLineArtifact$default(AbstractCliPipeline.kt:49)
+	at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.execute(AbstractCliPipeline.kt:40)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecutePhased(K2JVMCompiler.kt:54)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecutePhased(K2JVMCompiler.kt:45)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.execImpl(CLICompiler.kt:94)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.exec(CLICompiler.kt:366)
+	at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunnerBase.runCompiler(IncrementalJvmCompilerRunnerBase.kt:211)
+	at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunnerBase.runCompiler(IncrementalJvmCompilerRunnerBase.kt:53)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.doCompile(IncrementalCompilerRunner.kt:539)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compileImpl(IncrementalCompilerRunner.kt:451)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.tryCompileIncrementally$lambda$0$compile(IncrementalCompilerRunner.kt:271)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.tryCompileIncrementally(IncrementalCompilerRunner.kt:289)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compile(IncrementalCompilerRunner.kt:130)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.execIncrementalCompiler(CompileServiceImpl.kt:782)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.access$execIncrementalCompiler(CompileServiceImpl.kt:108)
+	at org.jetbrains.kotlin.daemon.CompileServiceImpl.compile(CompileServiceImpl.kt:2046)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source)
+	at java.base/java.lang.reflect.Method.invoke(Unknown Source)
+	at java.rmi/sun.rmi.server.UnicastServerRef.dispatch(Unknown Source)
+	at java.rmi/sun.rmi.transport.Transport.serviceCall(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport.handleMessages(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+Caused by: java.io.FileNotFoundException: C:\Users\julye\IdeaProjects\vbhelper\app\build\intermediates\built_in_kotlinc\debug\compileDebugKotlin\classes\com\tamerslab\components\DimLogoKt.class (O sistema não pode encontrar o caminho especificado)
+	at java.base/java.io.IoOverNioFileSystem.convertNioToIoExceptionInStreams(Unknown Source)
+	at java.base/java.io.IoOverNioFileSystem.initializeStreamsUsingNio0(Unknown Source)
+	at java.base/java.io.IoOverNioFileSystem.initializeStreamUsingNio(Unknown Source)
+	at java.base/java.io.FileInputStream.<init>(Unknown Source)
+	at org.jetbrains.kotlin.com.intellij.openapi.util.io.FileUtil.loadFileBytes(FileUtil.java:188)
+	at org.jetbrains.kotlin.cli.common.localfs.KotlinLocalVirtualFile.contentsToByteArray(KotlinLocalVirtualFile.kt:108)
+	at org.jetbrains.kotlin.codegen.inline.InlineCodegenUtilsKt.classFileContainsMethod(inlineCodegenUtils.kt:116)
+	at org.jetbrains.kotlin.backend.jvm.ir.JvmIrUtilsKt.classFileContainsMethod(JvmIrUtils.kt:497)
+	at org.jetbrains.kotlin.backend.jvm.MemoizedInlineClassReplacements.buildReplacement(MemoizedInlineClassReplacements.kt:237)
+	at org.jetbrains.kotlin.backend.jvm.MemoizedInlineClassReplacements.buildReplacement$default(MemoizedInlineClassReplacements.kt:225)
+	at org.jetbrains.kotlin.backend.jvm.MemoizedInlineClassReplacements.createMethodReplacement(MemoizedInlineClassReplacements.kt:163)
+	at org.jetbrains.kotlin.backend.jvm.MemoizedInlineClassReplacements.getReplacementFunctionImpl$lambda$0(MemoizedInlineClassReplacements.kt:80)
+	at org.jetbrains.kotlin.storage.LockBasedStorageManager$MapBasedMemoizedFunction.invoke(LockBasedStorageManager.java:578)
+	at org.jetbrains.kotlin.backend.jvm.MemoizedValueClassAbstractReplacements.getReplacementFunction(MemoizedValueClassAbstractReplacements.kt:37)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmInlineClassLowering.visitFunctionAccess(JvmInlineClassLowering.kt:245)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitCall(IrElementTransformerVoid.kt:302)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmInlineClassLowering.visitCall(JvmInlineClassLowering.kt:424)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitCall(IrElementTransformerVoid.kt:305)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitCall(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrCall.accept(IrCall.kt:24)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitContainerExpression(JvmValueClassAbstractLowering.kt:223)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:254)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBlock(JvmValueClassAbstractLowering.kt:337)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:257)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBlock.accept(IrBlock.kt:18)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBlockBody(JvmValueClassAbstractLowering.kt:228)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlockBody(IrElementTransformerVoid.kt:191)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlockBody(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBlockBody.accept(IrBlockBody.kt:20)
+	at org.jetbrains.kotlin.ir.expressions.IrBody.transform(IrBody.kt:20)
+	at org.jetbrains.kotlin.ir.declarations.IrFunction.transformChildren(IrFunction.kt:76)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitDeclaration(IrElementTransformerVoid.kt:40)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitDeclaration(JvmValueClassAbstractLowering.kt:317)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitFunction(IrElementTransformerVoid.kt:72)
+	at org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext.visitFunctionNew(IrElementTransformerVoidWithContext.kt:130)
+	at org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext.visitFunction(IrElementTransformerVoidWithContext.kt:83)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitSimpleFunction(IrElementTransformerVoid.kt:128)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitSimpleFunction(JvmValueClassAbstractLowering.kt:318)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitSimpleFunction(IrElementTransformerVoid.kt:131)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitSimpleFunction(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.declarations.IrSimpleFunction.accept(IrSimpleFunction.kt:39)
+	at org.jetbrains.kotlin.ir.IrElementBase.transform(IrElementBase.kt:33)
+	at org.jetbrains.kotlin.ir.expressions.IrRichFunctionReference.transformChildren(IrRichFunctionReference.kt:150)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitExpression(IrElementTransformerVoid.kt:166)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitExpression(JvmValueClassAbstractLowering.kt:329)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitRichCallableReference(IrElementTransformerVoid.kt:332)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitRichFunctionReference(IrElementTransformerVoid.kt:338)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitRichFunctionReference(IrElementTransformerVoid.kt:341)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitRichFunctionReference(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrRichFunctionReference.accept(IrRichFunctionReference.kt:141)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.util.TransformKt.transformInPlaceNullable(transform.kt:46)
+	at org.jetbrains.kotlin.ir.expressions.IrMemberAccessExpression.transformChildren(IrMemberAccessExpression.kt:204)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitExpression(IrElementTransformerVoid.kt:166)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitExpression(JvmValueClassAbstractLowering.kt:329)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitDeclarationReference(IrElementTransformerVoid.kt:194)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitDeclarationReference(JvmValueClassAbstractLowering.kt:339)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitMemberAccess(IrElementTransformerVoid.kt:200)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitMemberAccess(JvmValueClassAbstractLowering.kt:345)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitFunctionAccess(IrElementTransformerVoid.kt:206)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmInlineClassLowering.visitFunctionAccess(JvmInlineClassLowering.kt:246)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitCall(IrElementTransformerVoid.kt:302)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmInlineClassLowering.visitCall(JvmInlineClassLowering.kt:424)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitCall(IrElementTransformerVoid.kt:305)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitCall(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrCall.accept(IrCall.kt:24)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitContainerExpression(JvmValueClassAbstractLowering.kt:223)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:254)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBlock(JvmValueClassAbstractLowering.kt:337)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:257)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBlock.accept(IrBlock.kt:18)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitContainerExpression(JvmValueClassAbstractLowering.kt:223)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:254)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBlock(JvmValueClassAbstractLowering.kt:337)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:257)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBlock.accept(IrBlock.kt:18)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrBranch.transformChildren(IrBranch.kt:37)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitElseBranch(IrElementTransformerVoid.kt:580)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitElseBranch(JvmValueClassAbstractLowering.kt:376)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitElseBranch(IrElementTransformerVoid.kt:585)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitElseBranch(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrElseBranch.accept(IrElseBranch.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrElseBranch.transform(IrElseBranch.kt:22)
+	at org.jetbrains.kotlin.ir.expressions.IrElseBranch.transform(IrElseBranch.kt:17)
+	at org.jetbrains.kotlin.ir.util.TransformKt.transformInPlace(transform.kt:35)
+	at org.jetbrains.kotlin.ir.expressions.IrWhen.transformChildren(IrWhen.kt:31)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitExpression(IrElementTransformerVoid.kt:166)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitExpression(JvmValueClassAbstractLowering.kt:329)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitWhen(IrElementTransformerVoid.kt:566)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitWhen(JvmValueClassAbstractLowering.kt:374)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitWhen(IrElementTransformerVoid.kt:569)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitWhen(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrWhen.accept(IrWhen.kt:24)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitContainerExpression(JvmValueClassAbstractLowering.kt:223)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:254)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBlock(JvmValueClassAbstractLowering.kt:337)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:257)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBlock.accept(IrBlock.kt:18)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrTypeOperatorCall.transformChildren(IrTypeOperatorCall.kt:33)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitExpression(IrElementTransformerVoid.kt:166)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitExpression(JvmValueClassAbstractLowering.kt:329)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitTypeOperator(IrElementTransformerVoid.kt:528)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitTypeOperator(JvmValueClassAbstractLowering.kt:373)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitTypeOperator(IrElementTransformerVoid.kt:531)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitTypeOperator(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrTypeOperatorCall.accept(IrTypeOperatorCall.kt:26)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitContainerExpression(JvmValueClassAbstractLowering.kt:223)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitComposite(IrElementTransformerVoid.kt:260)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitComposite(JvmValueClassAbstractLowering.kt:338)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitComposite(IrElementTransformerVoid.kt:263)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitComposite(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrComposite.accept(IrComposite.kt:18)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitContainerExpression(JvmValueClassAbstractLowering.kt:223)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:254)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBlock(JvmValueClassAbstractLowering.kt:337)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:257)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBlock.accept(IrBlock.kt:18)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBlockBody(JvmValueClassAbstractLowering.kt:228)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlockBody(IrElementTransformerVoid.kt:191)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlockBody(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBlockBody.accept(IrBlockBody.kt:20)
+	at org.jetbrains.kotlin.ir.expressions.IrBody.transform(IrBody.kt:20)
+	at org.jetbrains.kotlin.ir.declarations.IrFunction.transformChildren(IrFunction.kt:76)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitDeclaration(IrElementTransformerVoid.kt:40)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitDeclaration(JvmValueClassAbstractLowering.kt:317)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitFunction(IrElementTransformerVoid.kt:72)
+	at org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext.visitFunctionNew(IrElementTransformerVoidWithContext.kt:130)
+	at org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext.visitFunction(IrElementTransformerVoidWithContext.kt:83)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitSimpleFunction(IrElementTransformerVoid.kt:128)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitSimpleFunction(JvmValueClassAbstractLowering.kt:318)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitSimpleFunction(IrElementTransformerVoid.kt:131)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitSimpleFunction(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.declarations.IrSimpleFunction.accept(IrSimpleFunction.kt:39)
+	at org.jetbrains.kotlin.ir.IrElementBase.transform(IrElementBase.kt:33)
+	at org.jetbrains.kotlin.ir.expressions.IrRichFunctionReference.transformChildren(IrRichFunctionReference.kt:150)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitExpression(IrElementTransformerVoid.kt:166)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitExpression(JvmValueClassAbstractLowering.kt:329)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitRichCallableReference(IrElementTransformerVoid.kt:332)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitRichFunctionReference(IrElementTransformerVoid.kt:338)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitRichFunctionReference(IrElementTransformerVoid.kt:341)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitRichFunctionReference(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrRichFunctionReference.accept(IrRichFunctionReference.kt:141)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.util.TransformKt.transformInPlaceNullable(transform.kt:46)
+	at org.jetbrains.kotlin.ir.expressions.IrMemberAccessExpression.transformChildren(IrMemberAccessExpression.kt:204)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitExpression(IrElementTransformerVoid.kt:166)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitExpression(JvmValueClassAbstractLowering.kt:329)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitDeclarationReference(IrElementTransformerVoid.kt:194)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitDeclarationReference(JvmValueClassAbstractLowering.kt:339)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitMemberAccess(IrElementTransformerVoid.kt:200)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitMemberAccess(JvmValueClassAbstractLowering.kt:345)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitFunctionAccess(IrElementTransformerVoid.kt:206)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmInlineClassLowering.visitFunctionAccess(JvmInlineClassLowering.kt:246)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitCall(IrElementTransformerVoid.kt:302)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmInlineClassLowering.visitCall(JvmInlineClassLowering.kt:424)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitCall(IrElementTransformerVoid.kt:305)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitCall(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrCall.accept(IrCall.kt:24)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitContainerExpression(JvmValueClassAbstractLowering.kt:223)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:254)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBlock(JvmValueClassAbstractLowering.kt:337)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:257)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBlock.accept(IrBlock.kt:18)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrBranch.transformChildren(IrBranch.kt:37)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBranch(IrElementTransformerVoid.kt:572)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBranch(JvmValueClassAbstractLowering.kt:375)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBranch(IrElementTransformerVoid.kt:577)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBranch(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBranch.accept(IrBranch.kt:25)
+	at org.jetbrains.kotlin.ir.expressions.IrBranch.transform(IrBranch.kt:28)
+	at org.jetbrains.kotlin.ir.expressions.IrBranch.transform(IrBranch.kt:19)
+	at org.jetbrains.kotlin.ir.util.TransformKt.transformInPlace(transform.kt:35)
+	at org.jetbrains.kotlin.ir.expressions.IrWhen.transformChildren(IrWhen.kt:31)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitExpression(IrElementTransformerVoid.kt:166)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitExpression(JvmValueClassAbstractLowering.kt:329)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitWhen(IrElementTransformerVoid.kt:566)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitWhen(JvmValueClassAbstractLowering.kt:374)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitWhen(IrElementTransformerVoid.kt:569)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitWhen(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrWhen.accept(IrWhen.kt:24)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBlockBody(JvmValueClassAbstractLowering.kt:228)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlockBody(IrElementTransformerVoid.kt:191)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlockBody(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBlockBody.accept(IrBlockBody.kt:20)
+	at org.jetbrains.kotlin.ir.expressions.IrBody.transform(IrBody.kt:20)
+	at org.jetbrains.kotlin.ir.declarations.IrFunction.transformChildren(IrFunction.kt:76)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoidKt.transformChildrenVoid(IrElementTransformerVoid.kt:589)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.transformChildrenVoid(IrElementTransformerVoid.kt:28)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.transformFunctionFlat(JvmValueClassAbstractLowering.kt:70)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmInlineClassLowering.visitClassNew$lambda$1(JvmInlineClassLowering.kt:125)
+	at org.jetbrains.kotlin.ir.util.TransformKt.transformDeclarationsFlat(transform.kt:117)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmInlineClassLowering.visitClassNew(JvmInlineClassLowering.kt:122)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmInlineClassLowering.visitClassNew(JvmInlineClassLowering.kt:50)
+	at org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext.visitClass(IrElementTransformerVoidWithContext.kt:62)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitClass(IrElementTransformerVoid.kt:57)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitClass(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.declarations.IrClass.accept(IrClass.kt:72)
+	at org.jetbrains.kotlin.ir.IrElementBase.transform(IrElementBase.kt:33)
+	at org.jetbrains.kotlin.ir.util.TransformKt.transformInPlace(transform.kt:35)
+	at org.jetbrains.kotlin.ir.declarations.IrPackageFragment.transformChildren(IrPackageFragment.kt:31)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoidKt.transformChildrenVoid(IrElementTransformerVoid.kt:589)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.transformChildrenVoid(IrElementTransformerVoid.kt:28)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.lower(JvmValueClassAbstractLowering.kt:34)
+	at org.jetbrains.kotlin.backend.common.phaser.FileLoweringPhase.phaseBody(PhaseFactories.kt:57)
+	at org.jetbrains.kotlin.backend.common.phaser.FileLoweringPhase.phaseBody(PhaseFactories.kt:52)
+	at org.jetbrains.kotlin.config.phaser.NamedCompilerPhase.invoke(CompilerPhase.kt:102)
+	at org.jetbrains.kotlin.backend.common.phaser.PerformByIrFilePhase.invoke(PerformByIrFilePhase.kt:36)
+	... 40 more
+Caused by: java.nio.file.NoSuchFileException: C:\Users\julye\IdeaProjects\vbhelper\app\build\intermediates\built_in_kotlinc\debug\compileDebugKotlin\classes\com\tamerslab\components\DimLogoKt.class
+	at java.base/sun.nio.fs.WindowsException.translateToIOException(Unknown Source)
+	at java.base/sun.nio.fs.WindowsException.rethrowAsIOException(Unknown Source)
+	at java.base/sun.nio.fs.WindowsException.rethrowAsIOException(Unknown Source)
+	at java.base/sun.nio.fs.WindowsFileSystemProvider.newFileChannel(Unknown Source)
+	... 297 more
+
+java.lang.RuntimeException: org.jetbrains.kotlin.backend.common.BackendException: Backend Internal error: Exception during IR lowering
+File being compiled: C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/world/ui/WorldScreen.kt
+The root cause java.io.FileNotFoundException was thrown at: java.base/java.io.IoOverNioFileSystem.convertNioToIoExceptionInStreams(Unknown Source)
+	at org.jetbrains.kotlin.backend.common.BackendException$Companion.report(BackendException.kt:31)
+	at org.jetbrains.kotlin.backend.common.BackendException$Companion.report$default(BackendException.kt:15)
+	at org.jetbrains.kotlin.backend.common.phaser.PerformByIrFilePhase.invoke(PerformByIrFilePhase.kt:39)
+	at org.jetbrains.kotlin.backend.common.phaser.PerformByIrFilePhase.invoke(PerformByIrFilePhase.kt:16)
+	at org.jetbrains.kotlin.backend.common.phaser.PhaseEngine.runPhase(PhaseEngine.kt:72)
+	at org.jetbrains.kotlin.backend.common.phaser.PhaseEngine.runPhase$default(PhaseEngine.kt:64)
+	at org.jetbrains.kotlin.backend.jvm.JvmIrCodegenFactory.invokeLowerings(JvmIrCodegenFactory.kt:365)
+	at org.jetbrains.kotlin.cli.jvm.compiler.KotlinToJVMBytecodeCompiler.runLowerings$org_jetbrains_kotlin_cli_jvm(KotlinToJVMBytecodeCompiler.kt:373)
+	at org.jetbrains.kotlin.cli.pipeline.jvm.JvmBackendPipelinePhase.executePhase(JvmBackendPipelinePhase.kt:81)
+	at org.jetbrains.kotlin.cli.pipeline.jvm.JvmBackendPipelinePhase.executePhase(JvmBackendPipelinePhase.kt:28)
+	at org.jetbrains.kotlin.cli.pipeline.PipelinePhase.phaseBody(PipelinePhase.kt:63)
+	at org.jetbrains.kotlin.cli.pipeline.PipelinePhase.phaseBody(PipelinePhase.kt:53)
+	at org.jetbrains.kotlin.config.phaser.NamedCompilerPhase.invoke(CompilerPhase.kt:102)
+	at org.jetbrains.kotlin.backend.common.phaser.CompositePhase.invoke(PhaseBuilders.kt:22)
+	at org.jetbrains.kotlin.config.phaser.CompilerPhaseKt.invokeToplevel(CompilerPhase.kt:53)
+	at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.runPhasedPipeline(AbstractCliPipeline.kt:135)
+	at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.executeAndReturnPipeLineArtifact(AbstractCliPipeline.kt:89)
+	at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.executeAndReturnPipeLineArtifact$default(AbstractCliPipeline.kt:49)
+	at org.jetbrains.kotlin.cli.pipeline.AbstractCliPipeline.execute(AbstractCliPipeline.kt:40)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecutePhased(K2JVMCompiler.kt:54)
+	at org.jetbrains.kotlin.cli.jvm.K2JVMCompiler.doExecutePhased(K2JVMCompiler.kt:45)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.execImpl(CLICompiler.kt:94)
+	at org.jetbrains.kotlin.cli.common.CLICompiler.exec(CLICompiler.kt:366)
+	at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunnerBase.runCompiler(IncrementalJvmCompilerRunnerBase.kt:211)
+	at org.jetbrains.kotlin.incremental.IncrementalJvmCompilerRunnerBase.runCompiler(IncrementalJvmCompilerRunnerBase.kt:53)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.doCompile(IncrementalCompilerRunner.kt:539)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compileImpl(IncrementalCompilerRunner.kt:451)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.tryCompileIncrementally$lambda$0$compile(IncrementalCompilerRunner.kt:271)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.tryCompileIncrementally(IncrementalCompilerRunner.kt:289)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compile(IncrementalCompilerRunner.kt:130)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.execIncrementalCompiler(CompileServiceImpl.kt:782)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.access$execIncrementalCompiler(CompileServiceImpl.kt:108)
+	at org.jetbrains.kotlin.daemon.CompileServiceImpl.compile(CompileServiceImpl.kt:2046)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source)
+	at java.base/java.lang.reflect.Method.invoke(Unknown Source)
+	at java.rmi/sun.rmi.server.UnicastServerRef.dispatch(Unknown Source)
+	at java.rmi/sun.rmi.transport.Transport.serviceCall(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport.handleMessages(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+Caused by: java.io.FileNotFoundException: C:\Users\julye\IdeaProjects\vbhelper\app\build\intermediates\built_in_kotlinc\debug\compileDebugKotlin\classes\com\tamerslab\components\DimLogoKt.class (O sistema não pode encontrar o caminho especificado)
+	at java.base/java.io.IoOverNioFileSystem.convertNioToIoExceptionInStreams(Unknown Source)
+	at java.base/java.io.IoOverNioFileSystem.initializeStreamsUsingNio0(Unknown Source)
+	at java.base/java.io.IoOverNioFileSystem.initializeStreamUsingNio(Unknown Source)
+	at java.base/java.io.FileInputStream.<init>(Unknown Source)
+	at org.jetbrains.kotlin.com.intellij.openapi.util.io.FileUtil.loadFileBytes(FileUtil.java:188)
+	at org.jetbrains.kotlin.cli.common.localfs.KotlinLocalVirtualFile.contentsToByteArray(KotlinLocalVirtualFile.kt:108)
+	at org.jetbrains.kotlin.codegen.inline.InlineCodegenUtilsKt.classFileContainsMethod(inlineCodegenUtils.kt:116)
+	at org.jetbrains.kotlin.backend.jvm.ir.JvmIrUtilsKt.classFileContainsMethod(JvmIrUtils.kt:497)
+	at org.jetbrains.kotlin.backend.jvm.MemoizedInlineClassReplacements.buildReplacement(MemoizedInlineClassReplacements.kt:237)
+	at org.jetbrains.kotlin.backend.jvm.MemoizedInlineClassReplacements.buildReplacement$default(MemoizedInlineClassReplacements.kt:225)
+	at org.jetbrains.kotlin.backend.jvm.MemoizedInlineClassReplacements.createMethodReplacement(MemoizedInlineClassReplacements.kt:163)
+	at org.jetbrains.kotlin.backend.jvm.MemoizedInlineClassReplacements.getReplacementFunctionImpl$lambda$0(MemoizedInlineClassReplacements.kt:80)
+	at org.jetbrains.kotlin.storage.LockBasedStorageManager$MapBasedMemoizedFunction.invoke(LockBasedStorageManager.java:578)
+	at org.jetbrains.kotlin.backend.jvm.MemoizedValueClassAbstractReplacements.getReplacementFunction(MemoizedValueClassAbstractReplacements.kt:37)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmInlineClassLowering.visitFunctionAccess(JvmInlineClassLowering.kt:245)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitCall(IrElementTransformerVoid.kt:302)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmInlineClassLowering.visitCall(JvmInlineClassLowering.kt:424)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitCall(IrElementTransformerVoid.kt:305)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitCall(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrCall.accept(IrCall.kt:24)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitContainerExpression(JvmValueClassAbstractLowering.kt:223)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:254)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBlock(JvmValueClassAbstractLowering.kt:337)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:257)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBlock.accept(IrBlock.kt:18)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBlockBody(JvmValueClassAbstractLowering.kt:228)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlockBody(IrElementTransformerVoid.kt:191)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlockBody(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBlockBody.accept(IrBlockBody.kt:20)
+	at org.jetbrains.kotlin.ir.expressions.IrBody.transform(IrBody.kt:20)
+	at org.jetbrains.kotlin.ir.declarations.IrFunction.transformChildren(IrFunction.kt:76)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitDeclaration(IrElementTransformerVoid.kt:40)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitDeclaration(JvmValueClassAbstractLowering.kt:317)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitFunction(IrElementTransformerVoid.kt:72)
+	at org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext.visitFunctionNew(IrElementTransformerVoidWithContext.kt:130)
+	at org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext.visitFunction(IrElementTransformerVoidWithContext.kt:83)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitSimpleFunction(IrElementTransformerVoid.kt:128)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitSimpleFunction(JvmValueClassAbstractLowering.kt:318)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitSimpleFunction(IrElementTransformerVoid.kt:131)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitSimpleFunction(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.declarations.IrSimpleFunction.accept(IrSimpleFunction.kt:39)
+	at org.jetbrains.kotlin.ir.IrElementBase.transform(IrElementBase.kt:33)
+	at org.jetbrains.kotlin.ir.expressions.IrRichFunctionReference.transformChildren(IrRichFunctionReference.kt:150)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitExpression(IrElementTransformerVoid.kt:166)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitExpression(JvmValueClassAbstractLowering.kt:329)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitRichCallableReference(IrElementTransformerVoid.kt:332)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitRichFunctionReference(IrElementTransformerVoid.kt:338)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitRichFunctionReference(IrElementTransformerVoid.kt:341)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitRichFunctionReference(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrRichFunctionReference.accept(IrRichFunctionReference.kt:141)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.util.TransformKt.transformInPlaceNullable(transform.kt:46)
+	at org.jetbrains.kotlin.ir.expressions.IrMemberAccessExpression.transformChildren(IrMemberAccessExpression.kt:204)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitExpression(IrElementTransformerVoid.kt:166)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitExpression(JvmValueClassAbstractLowering.kt:329)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitDeclarationReference(IrElementTransformerVoid.kt:194)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitDeclarationReference(JvmValueClassAbstractLowering.kt:339)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitMemberAccess(IrElementTransformerVoid.kt:200)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitMemberAccess(JvmValueClassAbstractLowering.kt:345)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitFunctionAccess(IrElementTransformerVoid.kt:206)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmInlineClassLowering.visitFunctionAccess(JvmInlineClassLowering.kt:246)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitCall(IrElementTransformerVoid.kt:302)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmInlineClassLowering.visitCall(JvmInlineClassLowering.kt:424)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitCall(IrElementTransformerVoid.kt:305)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitCall(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrCall.accept(IrCall.kt:24)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitContainerExpression(JvmValueClassAbstractLowering.kt:223)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:254)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBlock(JvmValueClassAbstractLowering.kt:337)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:257)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBlock.accept(IrBlock.kt:18)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitContainerExpression(JvmValueClassAbstractLowering.kt:223)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:254)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBlock(JvmValueClassAbstractLowering.kt:337)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:257)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBlock.accept(IrBlock.kt:18)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrBranch.transformChildren(IrBranch.kt:37)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitElseBranch(IrElementTransformerVoid.kt:580)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitElseBranch(JvmValueClassAbstractLowering.kt:376)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitElseBranch(IrElementTransformerVoid.kt:585)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitElseBranch(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrElseBranch.accept(IrElseBranch.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrElseBranch.transform(IrElseBranch.kt:22)
+	at org.jetbrains.kotlin.ir.expressions.IrElseBranch.transform(IrElseBranch.kt:17)
+	at org.jetbrains.kotlin.ir.util.TransformKt.transformInPlace(transform.kt:35)
+	at org.jetbrains.kotlin.ir.expressions.IrWhen.transformChildren(IrWhen.kt:31)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitExpression(IrElementTransformerVoid.kt:166)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitExpression(JvmValueClassAbstractLowering.kt:329)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitWhen(IrElementTransformerVoid.kt:566)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitWhen(JvmValueClassAbstractLowering.kt:374)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitWhen(IrElementTransformerVoid.kt:569)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitWhen(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrWhen.accept(IrWhen.kt:24)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitContainerExpression(JvmValueClassAbstractLowering.kt:223)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:254)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBlock(JvmValueClassAbstractLowering.kt:337)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:257)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBlock.accept(IrBlock.kt:18)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrTypeOperatorCall.transformChildren(IrTypeOperatorCall.kt:33)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitExpression(IrElementTransformerVoid.kt:166)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitExpression(JvmValueClassAbstractLowering.kt:329)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitTypeOperator(IrElementTransformerVoid.kt:528)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitTypeOperator(JvmValueClassAbstractLowering.kt:373)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitTypeOperator(IrElementTransformerVoid.kt:531)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitTypeOperator(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrTypeOperatorCall.accept(IrTypeOperatorCall.kt:26)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitContainerExpression(JvmValueClassAbstractLowering.kt:223)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitComposite(IrElementTransformerVoid.kt:260)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitComposite(JvmValueClassAbstractLowering.kt:338)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitComposite(IrElementTransformerVoid.kt:263)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitComposite(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrComposite.accept(IrComposite.kt:18)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitContainerExpression(JvmValueClassAbstractLowering.kt:223)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:254)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBlock(JvmValueClassAbstractLowering.kt:337)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:257)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBlock.accept(IrBlock.kt:18)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBlockBody(JvmValueClassAbstractLowering.kt:228)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlockBody(IrElementTransformerVoid.kt:191)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlockBody(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBlockBody.accept(IrBlockBody.kt:20)
+	at org.jetbrains.kotlin.ir.expressions.IrBody.transform(IrBody.kt:20)
+	at org.jetbrains.kotlin.ir.declarations.IrFunction.transformChildren(IrFunction.kt:76)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitDeclaration(IrElementTransformerVoid.kt:40)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitDeclaration(JvmValueClassAbstractLowering.kt:317)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitFunction(IrElementTransformerVoid.kt:72)
+	at org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext.visitFunctionNew(IrElementTransformerVoidWithContext.kt:130)
+	at org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext.visitFunction(IrElementTransformerVoidWithContext.kt:83)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitSimpleFunction(IrElementTransformerVoid.kt:128)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitSimpleFunction(JvmValueClassAbstractLowering.kt:318)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitSimpleFunction(IrElementTransformerVoid.kt:131)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitSimpleFunction(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.declarations.IrSimpleFunction.accept(IrSimpleFunction.kt:39)
+	at org.jetbrains.kotlin.ir.IrElementBase.transform(IrElementBase.kt:33)
+	at org.jetbrains.kotlin.ir.expressions.IrRichFunctionReference.transformChildren(IrRichFunctionReference.kt:150)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitExpression(IrElementTransformerVoid.kt:166)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitExpression(JvmValueClassAbstractLowering.kt:329)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitRichCallableReference(IrElementTransformerVoid.kt:332)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitRichFunctionReference(IrElementTransformerVoid.kt:338)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitRichFunctionReference(IrElementTransformerVoid.kt:341)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitRichFunctionReference(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrRichFunctionReference.accept(IrRichFunctionReference.kt:141)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.util.TransformKt.transformInPlaceNullable(transform.kt:46)
+	at org.jetbrains.kotlin.ir.expressions.IrMemberAccessExpression.transformChildren(IrMemberAccessExpression.kt:204)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitExpression(IrElementTransformerVoid.kt:166)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitExpression(JvmValueClassAbstractLowering.kt:329)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitDeclarationReference(IrElementTransformerVoid.kt:194)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitDeclarationReference(JvmValueClassAbstractLowering.kt:339)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitMemberAccess(IrElementTransformerVoid.kt:200)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitMemberAccess(JvmValueClassAbstractLowering.kt:345)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitFunctionAccess(IrElementTransformerVoid.kt:206)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmInlineClassLowering.visitFunctionAccess(JvmInlineClassLowering.kt:246)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitCall(IrElementTransformerVoid.kt:302)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmInlineClassLowering.visitCall(JvmInlineClassLowering.kt:424)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitCall(IrElementTransformerVoid.kt:305)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitCall(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrCall.accept(IrCall.kt:24)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitContainerExpression(JvmValueClassAbstractLowering.kt:223)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:254)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBlock(JvmValueClassAbstractLowering.kt:337)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:257)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlock(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBlock.accept(IrBlock.kt:18)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrBranch.transformChildren(IrBranch.kt:37)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBranch(IrElementTransformerVoid.kt:572)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBranch(JvmValueClassAbstractLowering.kt:375)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBranch(IrElementTransformerVoid.kt:577)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBranch(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBranch.accept(IrBranch.kt:25)
+	at org.jetbrains.kotlin.ir.expressions.IrBranch.transform(IrBranch.kt:28)
+	at org.jetbrains.kotlin.ir.expressions.IrBranch.transform(IrBranch.kt:19)
+	at org.jetbrains.kotlin.ir.util.TransformKt.transformInPlace(transform.kt:35)
+	at org.jetbrains.kotlin.ir.expressions.IrWhen.transformChildren(IrWhen.kt:31)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitExpression(IrElementTransformerVoid.kt:166)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitExpression(JvmValueClassAbstractLowering.kt:329)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitWhen(IrElementTransformerVoid.kt:566)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitWhen(JvmValueClassAbstractLowering.kt:374)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitWhen(IrElementTransformerVoid.kt:569)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitWhen(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrWhen.accept(IrWhen.kt:24)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:23)
+	at org.jetbrains.kotlin.ir.expressions.IrExpression.transform(IrExpression.kt:19)
+	at org.jetbrains.kotlin.ir.IrElementsKt.transformStatement(IrElements.kt:11)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitStatementContainer(JvmValueClassAbstractLowering.kt:212)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.visitBlockBody(JvmValueClassAbstractLowering.kt:228)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlockBody(IrElementTransformerVoid.kt:191)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitBlockBody(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.expressions.IrBlockBody.accept(IrBlockBody.kt:20)
+	at org.jetbrains.kotlin.ir.expressions.IrBody.transform(IrBody.kt:20)
+	at org.jetbrains.kotlin.ir.declarations.IrFunction.transformChildren(IrFunction.kt:76)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoidKt.transformChildrenVoid(IrElementTransformerVoid.kt:589)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.transformChildrenVoid(IrElementTransformerVoid.kt:28)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.transformFunctionFlat(JvmValueClassAbstractLowering.kt:70)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmInlineClassLowering.visitClassNew$lambda$1(JvmInlineClassLowering.kt:125)
+	at org.jetbrains.kotlin.ir.util.TransformKt.transformDeclarationsFlat(transform.kt:117)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmInlineClassLowering.visitClassNew(JvmInlineClassLowering.kt:122)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmInlineClassLowering.visitClassNew(JvmInlineClassLowering.kt:50)
+	at org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext.visitClass(IrElementTransformerVoidWithContext.kt:62)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitClass(IrElementTransformerVoid.kt:57)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.visitClass(IrElementTransformerVoid.kt:19)
+	at org.jetbrains.kotlin.ir.declarations.IrClass.accept(IrClass.kt:72)
+	at org.jetbrains.kotlin.ir.IrElementBase.transform(IrElementBase.kt:33)
+	at org.jetbrains.kotlin.ir.util.TransformKt.transformInPlace(transform.kt:35)
+	at org.jetbrains.kotlin.ir.declarations.IrPackageFragment.transformChildren(IrPackageFragment.kt:31)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoidKt.transformChildrenVoid(IrElementTransformerVoid.kt:589)
+	at org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid.transformChildrenVoid(IrElementTransformerVoid.kt:28)
+	at org.jetbrains.kotlin.backend.jvm.lower.JvmValueClassAbstractLowering.lower(JvmValueClassAbstractLowering.kt:34)
+	at org.jetbrains.kotlin.backend.common.phaser.FileLoweringPhase.phaseBody(PhaseFactories.kt:57)
+	at org.jetbrains.kotlin.backend.common.phaser.FileLoweringPhase.phaseBody(PhaseFactories.kt:52)
+	at org.jetbrains.kotlin.config.phaser.NamedCompilerPhase.invoke(CompilerPhase.kt:102)
+	at org.jetbrains.kotlin.backend.common.phaser.PerformByIrFilePhase.invoke(PerformByIrFilePhase.kt:36)
+	... 40 more
+Caused by: java.nio.file.NoSuchFileException: C:\Users\julye\IdeaProjects\vbhelper\app\build\intermediates\built_in_kotlinc\debug\compileDebugKotlin\classes\com\tamerslab\components\DimLogoKt.class
+	at java.base/sun.nio.fs.WindowsException.translateToIOException(Unknown Source)
+	at java.base/sun.nio.fs.WindowsException.rethrowAsIOException(Unknown Source)
+	at java.base/sun.nio.fs.WindowsException.rethrowAsIOException(Unknown Source)
+	at java.base/sun.nio.fs.WindowsFileSystemProvider.newFileChannel(Unknown Source)
+	... 297 more
+
+	at org.jetbrains.kotlin.buildtools.internal.KotlinLoggerMessageCollectorAdapter.report(KotlinLoggerMessageCollectorAdapter.kt:33)
+	at org.jetbrains.kotlin.cli.common.messages.MessageCollector.report$default(MessageCollector.kt:12)
+	at org.jetbrains.kotlin.daemon.client.BasicCompilerServicesWithResultsFacadeServerKt.reportFromDaemon(BasicCompilerServicesWithResultsFacadeServer.kt:58)
+	at org.jetbrains.kotlin.daemon.client.BasicCompilerServicesWithResultsFacadeServer.report(BasicCompilerServicesWithResultsFacadeServer.kt:37)
+	at org.jetbrains.kotlin.buildtools.internal.BtaCompilerServicesWithResultsFacade.report(BaseCompilationOperationImpl.kt:365)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source)
+	at java.base/java.lang.reflect.Method.invoke(Unknown Source)
+	at java.rmi/sun.rmi.server.UnicastServerRef.dispatch(Unknown Source)
+	at java.rmi/sun.rmi.transport.Transport.serviceCall(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport.handleMessages(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+e: Daemon compilation failed
+java.lang.Exception
+	at org.jetbrains.kotlin.daemon.common.CompileService$CallResult$Error.get(CompileService.kt:69)
+	at org.jetbrains.kotlin.daemon.common.CompileService$CallResult$Error.get(CompileService.kt:65)
+	at org.jetbrains.kotlin.buildtools.internal.BaseCompilationOperationImpl.compileWithDaemon(BaseCompilationOperationImpl.kt:222)
+	at org.jetbrains.kotlin.buildtools.internal.BaseCompilationOperationImpl.executeCancellableImpl(BaseCompilationOperationImpl.kt:91)
+	at org.jetbrains.kotlin.buildtools.internal.BaseCompilationOperationImpl.executeCancellableImpl(BaseCompilationOperationImpl.kt:55)
+	at org.jetbrains.kotlin.buildtools.internal.CancellableBuildOperationImpl.executeImpl(CancellableBuildOperationImpl.kt:58)
+	at org.jetbrains.kotlin.buildtools.internal.BuildOperationImpl.execute(BuildOperationImpl.kt:33)
+	at org.jetbrains.kotlin.buildtools.internal.KotlinToolchainsImpl$BuildSessionImpl.executeOperation$lambda$1(KotlinToolchainsImpl.kt:74)
+	at org.jetbrains.kotlin.buildtools.internal.KotlinToolchainsImpl$BuildSessionImpl.executeOperation(KotlinToolchainsImpl.kt:78)
+	at org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork.performCompilation(BuildToolsApiCompilationWork.kt:184)
+	at org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork.compileInDaemon(BuildToolsApiCompilationWork.kt:261)
+	at org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork.execute(BuildToolsApiCompilationWork.kt:309)
+	at org.gradle.workers.internal.DefaultWorkerServer.execute(DefaultWorkerServer.java:68)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:64)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:61)
+	at org.gradle.internal.classloader.ClassLoaderUtils.executeInClassloader(ClassLoaderUtils.java:102)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.lambda$execute$0(NoIsolationWorkerFactory.java:61)
+	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:44)
+	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:41)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.workers.internal.AbstractWorker.executeWrappedInBuildOperation(AbstractWorker.java:41)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.execute(NoIsolationWorkerFactory.java:58)
+	at org.gradle.workers.internal.DefaultWorkerExecutor.lambda$submitWork$0(DefaultWorkerExecutor.java:174)
+	at java.base/java.util.concurrent.FutureTask.run(Unknown Source)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runExecution(DefaultConditionalExecutionQueue.java:191)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.access$500(DefaultConditionalExecutionQueue.java:112)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner$1.run(DefaultConditionalExecutionQueue.java:168)
+	at org.gradle.internal.Factories$1.create(Factories.java:30)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.lambda$runAndReleaseLocks$0(DefaultWorkerLeaseService.java:300)
+	at org.gradle.internal.work.ResourceLockStatistics$1.measure(ResourceLockStatistics.java:43)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAndReleaseLocks(DefaultWorkerLeaseService.java:298)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocksAcquired(DefaultWorkerLeaseService.java:294)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:286)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:130)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:135)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runBatch(DefaultConditionalExecutionQueue.java:163)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.run(DefaultConditionalExecutionQueue.java:125)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)
+	at java.base/java.util.concurrent.FutureTask.run(Unknown Source)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+Caused by: java.nio.file.NoSuchFileException: C:\Users\julye\AppData\Local\Temp\kotlin-backups14225143924200203521\43.backup -> C:\Users\julye\IdeaProjects\vbhelper\app\build\intermediates\built_in_kotlinc\debug\compileDebugKotlin\classes\com\tamerslab\battle\ui\offline\OfflineTrainingBattleScreenKt$OfflineTrainingBattleScreen$lambda$66$0$$inlined$onDispose$1.class
+	at java.base/sun.nio.fs.WindowsException.translateToIOException(Unknown Source)
+	at java.base/sun.nio.fs.WindowsException.rethrowAsIOException(Unknown Source)
+	at java.base/sun.nio.fs.WindowsFileCopy.move(Unknown Source)
+	at java.base/sun.nio.fs.WindowsFileSystemProvider.move(Unknown Source)
+	at java.base/java.nio.file.Files.move(Unknown Source)
+	at org.jetbrains.kotlin.incremental.RecoverableCompilationTransaction.revertChanges(CompilationTransaction.kt:230)
+	at org.jetbrains.kotlin.incremental.RecoverableCompilationTransaction.close(CompilationTransaction.kt:255)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.tryCompileIncrementally(IncrementalCompilerRunner.kt:752)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compile(IncrementalCompilerRunner.kt:130)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.execIncrementalCompiler(CompileServiceImpl.kt:782)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.access$execIncrementalCompiler(CompileServiceImpl.kt:108)
+	at org.jetbrains.kotlin.daemon.CompileServiceImpl.compile(CompileServiceImpl.kt:2046)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source)
+	at java.base/java.lang.reflect.Method.invoke(Unknown Source)
+	at java.rmi/sun.rmi.server.UnicastServerRef.dispatch(Unknown Source)
+	at java.rmi/sun.rmi.transport.Transport.serviceCall(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport.handleMessages(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(Unknown Source)
+	... 3 more
+w: Failed to compile with Kotlin daemon: java.lang.Exception
+	at org.jetbrains.kotlin.daemon.common.CompileService$CallResult$Error.get(CompileService.kt:69)
+	at org.jetbrains.kotlin.daemon.common.CompileService$CallResult$Error.get(CompileService.kt:65)
+	at org.jetbrains.kotlin.buildtools.internal.BaseCompilationOperationImpl.compileWithDaemon(BaseCompilationOperationImpl.kt:222)
+	at org.jetbrains.kotlin.buildtools.internal.BaseCompilationOperationImpl.executeCancellableImpl(BaseCompilationOperationImpl.kt:91)
+	at org.jetbrains.kotlin.buildtools.internal.BaseCompilationOperationImpl.executeCancellableImpl(BaseCompilationOperationImpl.kt:55)
+	at org.jetbrains.kotlin.buildtools.internal.CancellableBuildOperationImpl.executeImpl(CancellableBuildOperationImpl.kt:58)
+	at org.jetbrains.kotlin.buildtools.internal.BuildOperationImpl.execute(BuildOperationImpl.kt:33)
+	at org.jetbrains.kotlin.buildtools.internal.KotlinToolchainsImpl$BuildSessionImpl.executeOperation$lambda$1(KotlinToolchainsImpl.kt:74)
+	at org.jetbrains.kotlin.buildtools.internal.KotlinToolchainsImpl$BuildSessionImpl.executeOperation(KotlinToolchainsImpl.kt:78)
+	at org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork.performCompilation(BuildToolsApiCompilationWork.kt:184)
+	at org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork.compileInDaemon(BuildToolsApiCompilationWork.kt:261)
+	at org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork.execute(BuildToolsApiCompilationWork.kt:309)
+	at org.gradle.workers.internal.DefaultWorkerServer.execute(DefaultWorkerServer.java:68)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:64)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1$1.create(NoIsolationWorkerFactory.java:61)
+	at org.gradle.internal.classloader.ClassLoaderUtils.executeInClassloader(ClassLoaderUtils.java:102)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.lambda$execute$0(NoIsolationWorkerFactory.java:61)
+	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:44)
+	at org.gradle.workers.internal.AbstractWorker$1.call(AbstractWorker.java:41)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:210)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$CallableBuildOperationWorker.execute(DefaultBuildOperationRunner.java:205)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:67)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner$2.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:167)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.execute(DefaultBuildOperationRunner.java:60)
+	at org.gradle.internal.operations.DefaultBuildOperationRunner.call(DefaultBuildOperationRunner.java:54)
+	at org.gradle.workers.internal.AbstractWorker.executeWrappedInBuildOperation(AbstractWorker.java:41)
+	at org.gradle.workers.internal.NoIsolationWorkerFactory$1.execute(NoIsolationWorkerFactory.java:58)
+	at org.gradle.workers.internal.DefaultWorkerExecutor.lambda$submitWork$0(DefaultWorkerExecutor.java:174)
+	at java.base/java.util.concurrent.FutureTask.run(Unknown Source)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runExecution(DefaultConditionalExecutionQueue.java:191)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.access$500(DefaultConditionalExecutionQueue.java:112)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner$1.run(DefaultConditionalExecutionQueue.java:168)
+	at org.gradle.internal.Factories$1.create(Factories.java:30)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.lambda$runAndReleaseLocks$0(DefaultWorkerLeaseService.java:300)
+	at org.gradle.internal.work.ResourceLockStatistics$1.measure(ResourceLockStatistics.java:43)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAndReleaseLocks(DefaultWorkerLeaseService.java:298)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocksAcquired(DefaultWorkerLeaseService.java:294)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.withLocks(DefaultWorkerLeaseService.java:286)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:130)
+	at org.gradle.internal.work.DefaultWorkerLeaseService.runAsWorkerThread(DefaultWorkerLeaseService.java:135)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.runBatch(DefaultConditionalExecutionQueue.java:163)
+	at org.gradle.internal.work.DefaultConditionalExecutionQueue$ExecutionRunner.run(DefaultConditionalExecutionQueue.java:125)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Unknown Source)
+	at java.base/java.util.concurrent.FutureTask.run(Unknown Source)
+	at org.gradle.internal.concurrent.ExecutorPolicy$CatchAndRecordFailures.onExecute(ExecutorPolicy.java:64)
+	at org.gradle.internal.concurrent.AbstractManagedExecutor$1.run(AbstractManagedExecutor.java:47)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(Unknown Source)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(Unknown Source)
+	at java.base/java.lang.Thread.run(Unknown Source)
+Caused by: java.nio.file.NoSuchFileException: C:\Users\julye\AppData\Local\Temp\kotlin-backups14225143924200203521\43.backup -> C:\Users\julye\IdeaProjects\vbhelper\app\build\intermediates\built_in_kotlinc\debug\compileDebugKotlin\classes\com\tamerslab\battle\ui\offline\OfflineTrainingBattleScreenKt$OfflineTrainingBattleScreen$lambda$66$0$$inlined$onDispose$1.class
+	at java.base/sun.nio.fs.WindowsException.translateToIOException(Unknown Source)
+	at java.base/sun.nio.fs.WindowsException.rethrowAsIOException(Unknown Source)
+	at java.base/sun.nio.fs.WindowsFileCopy.move(Unknown Source)
+	at java.base/sun.nio.fs.WindowsFileSystemProvider.move(Unknown Source)
+	at java.base/java.nio.file.Files.move(Unknown Source)
+	at org.jetbrains.kotlin.incremental.RecoverableCompilationTransaction.revertChanges(CompilationTransaction.kt:230)
+	at org.jetbrains.kotlin.incremental.RecoverableCompilationTransaction.close(CompilationTransaction.kt:255)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.tryCompileIncrementally(IncrementalCompilerRunner.kt:752)
+	at org.jetbrains.kotlin.incremental.IncrementalCompilerRunner.compile(IncrementalCompilerRunner.kt:130)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.execIncrementalCompiler(CompileServiceImpl.kt:782)
+	at org.jetbrains.kotlin.daemon.CompileServiceImplBase.access$execIncrementalCompiler(CompileServiceImpl.kt:108)
+	at org.jetbrains.kotlin.daemon.CompileServiceImpl.compile(CompileServiceImpl.kt:2046)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(Unknown Source)
+	at java.base/java.lang.reflect.Method.invoke(Unknown Source)
+	at java.rmi/sun.rmi.server.UnicastServerRef.dispatch(Unknown Source)
+	at java.rmi/sun.rmi.transport.Transport.serviceCall(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport.handleMessages(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(Unknown Source)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(Unknown Source)
+	... 3 more
+Using fallback strategy: Compile without Kotlin daemon
+Try ./gradlew --stop if this issue persists
+If it does not look related to your configuration, please file an issue with logs to https://kotl.in/issue
+
+The Daemon will expire after the build after running out of JVM Metaspace.
+The project memory settings are likely not configured or are configured to an insufficient value.
+The daemon will restart for the next build, which may increase subsequent build times.
+These settings can be adjusted by setting 'org.gradle.jvmargs' in 'gradle.properties'.
+The currently configured max heap space is '2 GiB' and the configured max metaspace is '768 MiB'.
+For more information on how to set these values, please refer to https://docs.gradle.org/9.6.1/userguide/build_environment.html#sec:configuring_jvm_memory in the Gradle documentation.
+To disable this warning, set 'org.gradle.daemon.performance.disable-logging=true'.
+Daemon will be stopped at the end of the build after running out of JVM Metaspace
+
+> Task :app:compileDebugKotlin
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/BattlesScreen.kt:1731:64 Unnecessary safe call on a non-null receiver of type 'UserInfo'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/BattlesScreen.kt:1850:68 Unnecessary safe call on a non-null receiver of type 'UserInfo'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/arena/ArenaBriefing.kt:123:58 'val Icons.Outlined.MergeType: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Outlined.MergeType.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/arena/ArenaBriefing.kt:149:37 'val Icons.Outlined.OpenInNew: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Outlined.OpenInNew.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/arena/TamerArenaLobby.kt:104:41 Condition is always 'true'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/arena/TamerArenaLobby.kt:131:73 Unnecessary safe call on a non-null receiver of type 'TamerTeamResolver'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/offline/OfflineTrainingBattleScreen.kt:336:42 Condition is always 'true'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/offline/OfflineTrainingBattleScreen.kt:1094:42 Condition is always 'true'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/offline/OfflineTrainingBattleScreen.kt:2559:15 Unnecessary safe call on a non-null receiver of type 'CombatantSnapshot'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/domain/reactions/DigimonReactionEngine.kt:124:45 Redundant call of conversion method.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/dtos/WorldDtos.kt:48:17 'val isFollowing: Boolean' is deprecated. Inert after Digiline migration.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/dtos/WorldDtos.kt:48:38 'val isFollowing: Boolean' is deprecated. Inert after Digiline migration.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/dtos/WorldDtos.kt:58:36 'val isFollowing: Boolean' is deprecated. Inert after Digiline migration.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:150:75 Unnecessary safe call on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:176:117 Unnecessary safe call on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:296:41 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CardDtos.CardIcon'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:297:42 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CardDtos.CardIcon'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:302:62 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:302:156 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:309:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:316:92 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:317:80 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:324:56 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:324:90 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:329:37 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:331:46 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:332:40 Unnecessary non-null assertion (!!) on a non-null receiver of type 'BECharacterData'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:334:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:343:56 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:346:80 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:352:56 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:352:90 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:358:38 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:358:63 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:360:46 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:361:40 Unnecessary non-null assertion (!!) on a non-null receiver of type 'BECharacterData'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:363:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:372:56 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:375:80 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:381:56 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:381:90 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:389:46 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:390:40 Unnecessary non-null assertion (!!) on a non-null receiver of type 'VBCharacterData'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:392:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:407:56 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:410:80 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:416:56 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:416:90 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/PartnerOverviewState.kt:165:18 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/PartnerOverviewState.kt:176:75 Unnecessary safe call on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/PartnerOverviewState.kt:203:25 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/PartnerOverviewState.kt:226:75 Unnecessary safe call on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/species/SpeciesRepository.kt:376:55 No cast needed.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/species/SpeciesRepository.kt:546:44 No cast needed.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/species/SpeciesRepository.kt:547:47 No cast needed.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/storage/data/CharacterCapabilityResolver.kt:14:73 Elvis operator (?:) always returns the left operand of non-nullable type 'UserCharacter'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/transfer/data/gameSave/NativeMaterializationRepository.kt:484:21 Condition is always 'true'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/transfer/data/gameSave/NativeProgressReviewRepository.kt:30:98 Condition is always 'true'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/transfer/data/gameSave/NativeProgressReviewRepository.kt:32:89 Unnecessary safe call on a non-null receiver of type 'NativeGameSnapshot'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/transfer/ui/NativeArchiveStorageEntry.kt:75:36 'val Icons.Filled.HelpOutline: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.HelpOutline.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/transfer/ui/TransferGameLibraryScreen.kt:171:88 Unnecessary safe call on a non-null receiver of type 'UserCharacter'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/transfer/ui/TransferIndividualInformation.kt:56:33 'val Icons.Filled.HelpOutline: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.HelpOutline.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/transfer/ui/TransferScreen.kt:178:26 'val LocalLifecycleOwner: ProvidableCompositionLocal<LifecycleOwner>' is deprecated. Moved to lifecycle-runtime-compose library in androidx.lifecycle.compose package.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/widget/DigimonWidgetProvider.kt:287:49 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.WidgetSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/world/ui/WorldInteractionOverlay.kt:64:18 Condition is always 'true'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/world/ui/WorldInteractionOverlay.kt:78:47 Unnecessary safe call on a non-null receiver of type 'WorldInteraction'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/world/ui/WorldInteractionOverlay.kt:83:16 Condition is always 'false'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/world/ui/WorldInteractionOverlay.kt:84:23 Unnecessary safe call on a non-null receiver of type 'WorldInteraction'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/world/ui/WorldInteractionOverlay.kt:113:36 Unnecessary safe call on a non-null receiver of type 'WorldInteraction'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/world/ui/WorldInteractionOverlay.kt:116:26 Condition is always 'true'.
+
+[Incubating] Problems report is available at: file:///C:/Users/julye/IdeaProjects/vbhelper/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.6.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 9m 57s
+30 actionable tasks: 2 executed, 1 from cache, 27 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.6.1/userguide/configuration_cache_enabling.html

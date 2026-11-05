@@ -1,6 +1,7 @@
-﻿package com.tamerslab.home.ui
+package com.tamerslab.home.ui
 
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
@@ -8,6 +9,16 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.Velocity
+import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.collect
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +46,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -45,7 +58,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
@@ -70,9 +85,11 @@ import com.tamerslab.components.VitalButton
 import com.tamerslab.components.VitalButtonStyle
 import com.tamerslab.components.motionEnabled
 import com.tamerslab.dtos.CharacterDtos
+import com.tamerslab.farm.ui.digiline.DigilinePin
 import com.tamerslab.dtos.ItemDtos
 import com.tamerslab.navigation.AppRoute
 import com.tamerslab.navigation.NavigationItems
+import com.tamerslab.navigation.navigatePrimary
 import com.tamerslab.navigation.TransferNavigation
 import com.tamerslab.home.ui.screens.MAX_VITAL_POINTS
 import com.tamerslab.home.ui.screens.shortStageName
@@ -101,7 +118,7 @@ import kotlin.math.abs
  * dock when the sheet is expanded and owns the back-collapse ladder, so this composable never adds a
  * `BackHandler` of its own.
  *
- * Gesture arbitration with the world underneath: **drags are accepted only from Compose chrome** â€”
+ * Gesture arbitration with the world underneath: **drags are accepted only from Compose chrome** —
  * this composable is the chrome, so the sheet can never steal a camera gesture from the 3D surface.
  * There is no scrim at Peek or Half (the farm stays interactive and visible); the scrim exists only
  * at Expanded, where it also captures the tap that collapses to Half.
@@ -120,6 +137,10 @@ fun PartnerDeck(
     detent: PartnerDetent,
     onDetentChange: (PartnerDetent) -> Unit,
     modifier: Modifier = Modifier,
+    /** Height of the place row that sits under the sheet at Peek; the sheet yields it while opening. */
+    placeRowBand: Dp = 0.dp,
+    /** Reports 0 at Peek and 1 at Half so the shell can fade the place row in the same motion. */
+    onSheetProgress: (Float) -> Unit = {},
 ) {
     val state = rememberPartnerOverviewState(homeScreenController, storageScreenController)
     val allowMotion = motionEnabled()
@@ -138,6 +159,11 @@ fun PartnerDeck(
                 AppRoute.Chat(it.id)
             )
         }
+    }
+    // The slab's chat key opens the whole DigiLine list, with the partner it belongs to pinned on top.
+    val openDigiline: () -> Unit = {
+        activeMon?.let { DigilinePin.target = it.id }
+        navController.navigatePrimary(NavigationItems.Digiline)
     }
     val openTransfer: () -> Unit = { navController.navigate(TransferNavigation.route()) }
     val openStorage: () -> Unit = { navController.navigate(AppRoute.Storage) }
@@ -175,32 +201,67 @@ fun PartnerDeck(
 
         val restPx = heightOf(detent)
         var dragging by remember { mutableStateOf(false) }
-        var dragOffsetPx by remember { mutableFloatStateOf(0f) }
-
-        val animatedRestPx by animateFloatAsState(
-            targetValue = restPx,
-            animationSpec = tween(if (allowMotion) 260 else 0, easing = FastOutSlowInEasing),
-            label = "partnerDeckDetent",
-        )
-        val sheetHeightPx = (if (dragging) restPx + dragOffsetPx else animatedRestPx)
-            .coerceIn(peekPx, expandedPx)
-        val sheetHeight: Dp = with(density) { sheetHeightPx.toDp() }
+        // One owned height value. The drag writes it 1:1 under the finger and the settle animation
+        // continues from wherever the finger left it, so there is no jump at drag start or release.
+        val sheetHeightState = remember { mutableFloatStateOf(peekPx) }
+        var settleToken by remember { mutableIntStateOf(0) }
+        LaunchedEffect(restPx, dragging, settleToken, peekPx, expandedPx) {
+            if (dragging) return@LaunchedEffect
+            animate(
+                initialValue = sheetHeightState.floatValue,
+                targetValue = restPx.coerceIn(peekPx, expandedPx),
+                animationSpec = tween(if (allowMotion) 300 else 0, easing = FastOutSlowInEasing),
+            ) { value, _ -> sheetHeightState.floatValue = value }
+        }
+        // 0 at Peek, 1 at Half. The place row under the sheet reads this to fade and give up its band
+        // in the same motion. The sheet's height itself is only read in layout and in the graphics
+        // layer, never during composition: dragging then invalidates layout/draw instead of
+        // recomposing the whole overview on every pointer frame, which is what made the drag feel
+        // rougher than the detent button.
+        val halfSpan = (halfPx - peekPx).coerceAtLeast(1f)
+        val bandPx = with(density) { placeRowBand.toPx() }
+        fun progressOf(heightPx: Float): Float =
+            if (stateCard) 0f else ((heightPx - peekPx) / halfSpan).coerceIn(0f, 1f)
+        LaunchedEffect(peekPx, halfPx, stateCard) {
+            snapshotFlow { sheetHeightState.floatValue }.collect { onSheetProgress(progressOf(it)) }
+        }
+        // Compose the body as soon as the sheet has clearly left Peek, not after the drag lands: an
+        // empty slab sliding up and then filling in was most of the "rebuilt every time" feel. The
+        // threshold is a derived flag, so crossing it costs one recomposition per drag, not one per
+        // frame.
+        val pastPeekThreshold = with(density) { 44.dp.toPx() }
+        val pastPeek by remember(peekPx, pastPeekThreshold) {
+            derivedStateOf { sheetHeightState.floatValue > peekPx + pastPeekThreshold }
+        }
+        val bodyDetent = when {
+            detent != PartnerDetent.Peek -> detent
+            dragging && pastPeek -> PartnerDetent.Half
+            else -> PartnerDetent.Peek
+        }
+        // Keep the body alive once it has been opened: rebuilding the whole overview on every pull was
+        // the clank. At Peek it is simply clipped away by the sheet.
+        var overviewWarm by remember { mutableStateOf(false) }
+        LaunchedEffect(bodyDetent) {
+            if (bodyDetent != PartnerDetent.Peek) overviewWarm = true
+        }
+        val showBody = overviewWarm
 
         val deckGesture = Modifier.pointerInput(detent, peekPx, halfPx, expandedPx) {
             detectDeckGesture(
                 onDragStart = {
+                    // Cancels the settle animation without moving the sheet: the finger takes over from
+                    // exactly where the animation had got to.
                     dragging = true
-                    dragOffsetPx = 0f
                 },
                 onVerticalDrag = { delta ->
-                    // Dragging down (positive delta) shrinks the sheet.
-                    dragOffsetPx = (dragOffsetPx - delta)
-                        .coerceIn(peekPx - restPx, expandedPx - restPx)
+                    // Dragging down (positive delta) shrinks the sheet; 1:1 with the finger.
+                    sheetHeightState.floatValue =
+                        (sheetHeightState.floatValue - delta).coerceIn(peekPx, expandedPx)
                 },
                 onVerticalEnd = { velocityY ->
-                    val released = (restPx + dragOffsetPx).coerceIn(peekPx, expandedPx)
+                    val released = sheetHeightState.floatValue
                     dragging = false
-                    dragOffsetPx = 0f
+                    settleToken++
                     onDetentChange(
                         resolveDetent(
                             current = detent,
@@ -214,7 +275,7 @@ fun PartnerDeck(
                 },
                 onVerticalCancel = {
                     dragging = false
-                    dragOffsetPx = 0f
+                    settleToken++
                 },
                 onHorizontalSwipe = { direction -> state.cycleFavorite(direction) },
             )
@@ -235,26 +296,126 @@ fun PartnerDeck(
             )
         }
 
+        // A tap on the farm lowers a half-open sheet. The catcher covers only the world above the
+        // sheet, so the sheet keeps its own gestures; it is drawn before the sheet for the same reason.
+        if (detent == PartnerDetent.Half) {
+            Box(
+                Modifier
+                    .align(Alignment.TopCenter)
+                    .fillMaxWidth()
+                    .layout { measurable, constraints ->
+                        val sheetTop = (constraints.maxHeight - sheetHeightState.floatValue)
+                            .roundToInt().coerceIn(0, constraints.maxHeight)
+                        val placeable = measurable.measure(
+                            constraints.copy(minHeight = sheetTop, maxHeight = sheetTop)
+                        )
+                        layout(placeable.width, sheetTop) { placeable.place(0, 0) }
+                    }
+                    .pointerInput(detent) {
+                        detectTapGestures { onDetentChange(PartnerDetent.Peek) }
+                    },
+            )
+        }
+
+        val closeSlopPx = with(density) { 16.dp.toPx() }
+
+        // Overscroll hand-off state for the current touch. The sheet only takes over on a scroll that
+        // *starts* with the inner content already at its end: a gesture that merely reaches the end
+        // stops there, and the next one pulls the sheet. [consumed] tracks whether the inner list took
+        // any of this gesture's scroll, [pulled] whether the sheet moved, [settled] whether the release
+        // has been resolved.
+        val overscrollGesture = remember { OverscrollGesture() }
+
+        fun resolveOverscrollGesture(velocityY: Float, availableY: Float) {
+            if (!overscrollGesture.pulled || overscrollGesture.settled) return
+            overscrollGesture.settled = true
+            dragging = false
+            settleToken++
+            val released = sheetHeightState.floatValue
+            val pulledDown = (heightOf(detent) - released) > closeSlopPx
+            // A pull on the content's overscroll closes: it travels all the way under the finger and
+            // lands at Peek instead of stopping at the detent below.
+            onDetentChange(
+                if (pulledDown || availableY > 0f || velocityY > 0f) PartnerDetent.Peek else detent
+            )
+        }
+
+        val sheetNestedScroll = remember(peekPx, halfPx, expandedPx, detent) {
+            object : NestedScrollConnection {
+                override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+                    if (available.y == 0f) {
+                        // The inner list took this scroll: the gesture did not start at its end.
+                        overscrollGesture.consumed = true
+                        return Offset.Zero
+                    }
+                    if (available.y < 0f) return Offset.Zero
+                    if (overscrollGesture.consumed) return Offset.Zero
+                    val current = sheetHeightState.floatValue
+                    if (current <= peekPx + 0.5f) return Offset.Zero
+                    dragging = true
+                    overscrollGesture.pulled = true
+                    val next = (current - available.y).coerceIn(peekPx, expandedPx)
+                    sheetHeightState.floatValue = next
+                    return Offset(0f, current - next)
+                }
+
+                override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                    resolveOverscrollGesture(velocityY = available.y, availableY = available.y)
+                    return Velocity(0f, available.y)
+                }
+            }
+        }
+
         val corner = CutCornerShape(topStart = SHEET_CORNER, topEnd = SHEET_CORNER)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                // Drop into the place row's band as the sheet opens: at Peek the slab sits above the
+                // row, at Half and beyond it owns the bottom of the screen.
+                .graphicsLayer {
+                    translationY = -(bandPx * (1f - progressOf(sheetHeightState.floatValue)))
+                }
                 .then(
                     if (stateCard) {
                         Modifier.heightIn(min = PartnerPeekHeight)
                     } else {
-                        Modifier.heightIn(min = PartnerPeekHeight).height(sheetHeight)
+                        Modifier
+                            .heightIn(min = PartnerPeekHeight)
+                            .layout { measurable, constraints ->
+                                val heightPx = sheetHeightState.floatValue.roundToInt()
+                                    .coerceIn(peekPx.roundToInt(), expandedPx.roundToInt())
+                                val placeable = measurable.measure(
+                                    constraints.copy(minHeight = heightPx, maxHeight = heightPx)
+                                )
+                                layout(placeable.width, heightPx) { placeable.place(0, 0) }
+                            }
                     }
                 )
+                .nestedScroll(sheetNestedScroll)
+                .pointerInput(detent) {
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent(PointerEventPass.Final)
+                            if (event.changes.none { it.pressed }) {
+                                resolveOverscrollGesture(velocityY = 0f, availableY = 0f)
+                                overscrollGesture.consumed = false
+                                overscrollGesture.pulled = false
+                                overscrollGesture.settled = false
+                            }
+                        }
+                    }
+                }
                 .clip(corner)
-                .background(SurfaceElevatedPurple.copy(alpha = 0.82f))
-                .border(1.dp, SurfaceStroke, corner)
+                .background(SurfaceElevatedPurple.copy(alpha = PartnerSlabAlpha))
+                .slabFrame(SurfaceStroke, 1.dp, SHEET_CORNER)
                 .semantics { this.paneTitle = paneTitle }
                 .testTag("partner-deck"),
         ) {
             PartnerDeckBody(
                 state = state,
                 detent = detent,
+                bodyDetent = bodyDetent,
+                showBody = showBody,
                 stateCard = stateCard,
                 homeScreenController = homeScreenController,
                 importingConnection = importingConnection,
@@ -262,7 +423,7 @@ fun PartnerDeck(
                 onImportConnection = onImportConnection,
                 onOpenStorage = openStorage,
                 onOpenDex = openDex,
-                onOpenChat = openChat,
+                onOpenChat = openDigiline,
                 onOpenTransfer = openTransfer,
                 onClickCharacter = openChat,
                 onLongClickCharacter = { activeMon?.let { detailsCharacterId = it.charId } },
@@ -297,6 +458,10 @@ fun PartnerDeck(
 private fun ColumnScope.PartnerDeckBody(
     state: PartnerOverviewState,
     detent: PartnerDetent,
+    /** Which body the sheet should show this frame; may lead [detent] while the sheet is being pulled. */
+    bodyDetent: PartnerDetent,
+    /** Once opened, the body stays composed so re-opening never rebuilds it. */
+    showBody: Boolean,
     stateCard: Boolean,
     homeScreenController: HomeScreenController,
     importingConnection: Boolean,
@@ -356,13 +521,13 @@ private fun ColumnScope.PartnerDeckBody(
                 allowMotion = allowMotion,
                 onOpenChat = onOpenChat,
                 onExpand = {
-                    // The chevron is an actual detent control: up from peek/half opens one step,
-                    // and the down arrow shown while expanded pulls the sheet back down one step.
+                    // The chevron is an actual detent control: up from peek/half opens one step, and
+                    // the down arrow shown while expanded drops the sheet all the way to peek.
                     onDetentChange(
                         when (detent) {
                             PartnerDetent.Peek -> PartnerDetent.Half
                             PartnerDetent.Half -> PartnerDetent.Expanded
-                            PartnerDetent.Expanded -> PartnerDetent.Half
+                            PartnerDetent.Expanded -> PartnerDetent.Peek
                         }
                     )
                 },
@@ -370,8 +535,8 @@ private fun ColumnScope.PartnerDeckBody(
                 gesture = deckGesture,
             )
 
-            if (detent != PartnerDetent.Peek) {
-                if (detent == PartnerDetent.Half) {
+            if (showBody) {
+                if (bodyDetent == PartnerDetent.Half) {
                     Column(
                         Modifier
                             .fillMaxWidth()
@@ -411,7 +576,7 @@ private fun ColumnScope.PartnerDeckBody(
 }
 
 /**
- * The 96dp always-visible slab: portrait, name, `stage Â· attribute`, vitals bar with the numeric
+ * The 96dp always-visible slab: portrait, name, `stage · attribute`, vitals bar with the numeric
  * value, mood dot, a 48dp chat button and the detent chevron. It is also the drag handle, the
  * favourite swiper and the tap target that opens the half sheet.
  */
@@ -463,7 +628,7 @@ private fun PartnerSlab(
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "$stageLabel Â· ${activeMon.attribute.name}",
+                    text = "$stageLabel · ${activeMon.attribute.name}",
                     style = MaterialTheme.typography.labelSmall,
                     color = TextSecondaryOnDark,
                     maxLines = 1,
@@ -837,7 +1002,7 @@ private fun PartnerVitalsBar(current: Int, modifier: Modifier = Modifier) {
     }
 }
 
-/** Mood dot: green settled-positive, yellow neutral, red low â€” the same thresholds as the copy. */
+/** Mood dot: green settled-positive, yellow neutral, red low — the same thresholds as the copy. */
 @Composable
 private fun moodDotColor(mood: Int): Color = when (PartnerCondition.mood(mood)) {
     MoodCondition.POSITIVE -> StatusGreen
@@ -849,13 +1014,32 @@ private fun moodDotColor(mood: Int): Color = when (PartnerCondition.mood(mood)) 
 
 private const val HALF_FRACTION = 0.44f
 private const val EXPANDED_FRACTION = 0.96f
+
+/**
+ * Sheet frame: chamfers, top edge and sides only. The bottom edge is deliberately left open so the
+ * sheet flows into the place row under it - a stroked bottom edge is exactly the hard line that made
+ * the two zones look glued together.
+ */
+private fun Modifier.slabFrame(color: Color, stroke: Dp, corner: Dp): Modifier = drawWithContent {
+    drawContent()
+    val strokePx = stroke.toPx()
+    val cornerPx = corner.toPx()
+    val half = strokePx / 2f
+    val w = size.width
+    // Upper edge only: the two chamfers and the top line separate the sheet from the farm. Sides and
+    // bottom stay open so the sheet has no silhouette where it meets the place row beside/below it.
+    drawLine(color, Offset(half, cornerPx), Offset(cornerPx, half), strokePx)
+    drawLine(color, Offset(cornerPx, half), Offset(w - cornerPx, half), strokePx)
+    drawLine(color, Offset(w - cornerPx, half), Offset(w - half, cornerPx), strokePx)
+}
+
 private val SHEET_CORNER = 18.dp
 
 /**
  * Maps the released sheet height (plus vertical velocity) to the detent it should settle in.
  *
- * A fast flick wins over proximity â€” that is what makes the 96dp slab feel like a handle rather than
- * a slider â€” otherwise the nearest detent by height wins.
+ * A fast flick wins over proximity — that is what makes the 96dp slab feel like a handle rather than
+ * a slider — otherwise the nearest detent by height wins.
  */
 private fun resolveDetent(
     current: PartnerDetent,
@@ -887,6 +1071,16 @@ private fun resolveDetent(
 }
 
 private const val FLICK_VELOCITY = 900f
+
+/** Per-touch bookkeeping for the overview's overscroll hand-off. */
+private class OverscrollGesture {
+    /** The inner content consumed scroll during this touch, so it was not already at its end. */
+    var consumed = false
+    /** The sheet moved with this touch. */
+    var pulled = false
+    /** The release of this touch has already been resolved into a detent. */
+    var settled = false
+}
 private const val AXIS_UNDECIDED = 0
 private const val AXIS_VERTICAL = 1
 private const val AXIS_HORIZONTAL = 2

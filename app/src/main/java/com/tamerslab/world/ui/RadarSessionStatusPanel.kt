@@ -20,17 +20,36 @@ import com.tamerslab.components.CyberPanel
 import com.tamerslab.components.VitalButton
 import com.tamerslab.ui.theme.TextSecondaryOnDark
 
+/** One quiet line for the floating signal band; errors are the only statuses that shout. */
+internal data class RadarChromeStatus(val text: Int?, val action: Int?, val error: Boolean)
+
+/**
+ * The Radar place no longer owns a status panel: the band shows the same wording and recovery
+ * action, and stays silent while the radar is READY.
+ */
+internal fun radarChromeStatus(state: RadarSurfaceState): RadarChromeStatus = RadarChromeStatus(
+    text = state.messageResource().takeUnless { state == RadarSurfaceState.READY },
+    action = state.recoveryAction(),
+    error = state in setOf(
+        RadarSurfaceState.STORAGE_FAILURE,
+        RadarSurfaceState.POPULATION_FAILURE,
+        RadarSurfaceState.BATTLE_SAVE_FAILURE,
+    ),
+)
+
+internal fun RadarSurfaceState.recoveryAction(): Int? = when (this) {
+    RadarSurfaceState.STORAGE_FAILURE -> R.string.ui_world_retry_world
+    RadarSurfaceState.LOCATION_PERMISSION -> R.string.ui_world_enable_location
+    RadarSurfaceState.POPULATION_FAILURE, RadarSurfaceState.EMPTY_REGION -> R.string.ui_world_refresh_radar
+    RadarSurfaceState.BATTLE_SAVE_FAILURE -> R.string.ui_world_retry_battle_save
+    else -> null
+}
+
 /** Reserve the recovery-action slot so incoming statuses do not move the Zoom controls. */
 @Composable
 internal fun RadarSessionStatusPanel(state: RadarSurfaceState, onRecovery: () -> Unit, modifier: Modifier = Modifier) {
     val error = state in listOf(RadarSurfaceState.STORAGE_FAILURE, RadarSurfaceState.POPULATION_FAILURE, RadarSurfaceState.BATTLE_SAVE_FAILURE)
-    val action = when (state) {
-        RadarSurfaceState.STORAGE_FAILURE -> R.string.ui_world_retry_world
-        RadarSurfaceState.LOCATION_PERMISSION -> R.string.ui_world_enable_location
-        RadarSurfaceState.POPULATION_FAILURE, RadarSurfaceState.EMPTY_REGION -> R.string.ui_world_refresh_radar
-        RadarSurfaceState.BATTLE_SAVE_FAILURE -> R.string.ui_world_retry_battle_save
-        else -> null
-    }
+    val action = state.recoveryAction()
     val textHeight = with(LocalDensity.current) { MaterialTheme.typography.bodyMedium.lineHeight.toDp() * 3 }
     CyberPanel(modifier.fillMaxWidth().testTag("radar-session-status")) {
         Text(
@@ -50,7 +69,7 @@ internal fun RadarSessionStatusPanel(state: RadarSurfaceState, onRecovery: () ->
     }
 }
 
-private fun RadarSurfaceState.messageResource(): Int = when (this) {
+internal fun RadarSurfaceState.messageResource(): Int = when (this) {
     RadarSurfaceState.RECONCILING -> R.string.ui_world_reconciling
     RadarSurfaceState.UPDATING -> R.string.ui_world_updating
     RadarSurfaceState.STORAGE_FAILURE -> R.string.ui_world_storage_failure

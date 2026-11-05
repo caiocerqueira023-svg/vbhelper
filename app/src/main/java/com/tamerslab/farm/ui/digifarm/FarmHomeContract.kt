@@ -48,6 +48,8 @@ data class FarmWorldSummary(
     val spriteFilter: FarmSpriteFilter = FarmSpriteFilter.MIXED,
     /** Active partner + favourites before filtering/limiting, so the UI can explain what is hidden. */
     val candidateCount: Int = 0,
+    /** Every stored partner and whether it lives on the island; drives the roster sheet. */
+    val memberOptions: List<FarmMemberOption> = emptyList(),
 ) {
     val residentCount: Int get() = residents.size
     val hasResidents: Boolean get() = residents.isNotEmpty()
@@ -70,5 +72,21 @@ class FarmWorldController internal constructor(
     val setResidentLimit: (Int) -> Unit,
     /** Persisted owner setting: which artwork the farm may draw. */
     val setSpriteFilter: (FarmSpriteFilter) -> Unit,
+    /** Removes a partner from the island (the active partner cannot be removed this way). */
+    val removeFromFarm: (characterId: Long) -> Unit,
+    /** Puts a stored partner on the island or takes it off. */
+    val setFarmMember: (characterId: Long, member: Boolean) -> Unit,
+    /** True once the diorama has streamed the complete roster and drawn it. Drives the boot cover. */
+    val sceneReady: State<Boolean>,
+    /** Called by the diorama host once it has actually drawn the settled roster. */
+    internal val notifySceneSettled: () -> Unit,
     internal val recenterRequests: State<Int>,
+)
+
+/** One stored partner as the roster sheet needs it: who it is, and whether it lives on the island. */
+data class FarmMemberOption(
+    val characterId: Long,
+    val name: String,
+    val isMember: Boolean,
+    val isActive: Boolean,
 )

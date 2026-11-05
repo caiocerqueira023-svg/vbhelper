@@ -1,25 +1,31 @@
-package com.tamerslab.farm.ui.home
+﻿package com.tamerslab.farm.ui.home
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
@@ -35,30 +41,41 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.tamerslab.R
+import com.tamerslab.components.VitalButton
+import com.tamerslab.components.VitalButtonStyle
 import com.tamerslab.navigation.NavigationItems
 import com.tamerslab.navigation.TransferNavigation
 import com.tamerslab.navigation.TransferSection
 import com.tamerslab.navigation.navigatePrimary
 import com.tamerslab.farm.FarmSpriteFilter
+import com.tamerslab.farm.ui.digifarm.FarmMemberOption
 import com.tamerslab.farm.ui.digifarm.FarmWorldResident
 import com.tamerslab.farm.ui.digifarm.FarmWorldSummary
 import com.tamerslab.ui.theme.SurfaceElevatedPurple
@@ -69,12 +86,12 @@ import com.tamerslab.ui.theme.TextSecondaryOnDark
 import com.tamerslab.ui.theme.VitalCyan
 
 /**
- * Top status bar of the farm home (PRESENTATION_REDESIGN_PLAN.md §5.1).
+ * Top status zone of the farm home (PRESENTATION_REDESIGN_PLAN.md §5.1).
  *
- * One solid shelf instead of four floating pills: a farm identity block on the left (home glyph,
- * resident count, "who is here" chevron) and the utility cluster on the right (bits, quests,
- * settings, menu). The shelf guarantees contrast over a moving 3D scene, and the utility actions use
- * real Material vectors — the previous hand-drawn menu glyph was the thing that could vanish.
+ * No shelf, no box: the HUD is two detached clusters on the world - status on the left (home glyph,
+ * resident count with its place gauge, and live bits) and the three utility keys on the right. A soft
+ * scrim and a hairline ground line carry the contrast that a panel used to carry, so the rail reads as
+ * an overlay on the Digifarm instead of a toolbar sitting on top of it.
  */
 @Composable
 fun HomeTopHud(
@@ -82,59 +99,56 @@ fun HomeTopHud(
     capacity: Int,
     bits: Int,
     onFarmClick: () -> Unit,
-    onQuestsClick: () -> Unit,
+    onTransferClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onMenuClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val barShape = CutCornerShape(12.dp)
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(
-                Brush.verticalGradient(
-                    0f to MaterialTheme.colorScheme.background.copy(alpha = 0.78f),
-                    0.72f to MaterialTheme.colorScheme.background.copy(alpha = 0.32f),
-                    1f to Color.Transparent,
-                )
-            )
+            .hudTopScrim()
             .windowInsetsPadding(WindowInsets.statusBars)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .padding(top = 4.dp),
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = 56.dp)
-                .clip(barShape)
-                .background(SurfaceElevatedPurple.copy(alpha = 0.84f))
-                .border(1.dp, SurfaceStroke.copy(alpha = 0.9f), barShape)
-                .padding(start = 6.dp, end = 6.dp),
+                .padding(start = 12.dp, end = 8.dp)
+                .heightIn(min = 56.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(2.dp),
         ) {
+            // Status cluster keeps its natural width on the left; the rest of the bar is the separator,
+            // and the three actions sit together on the right - starting past the middle of the screen,
+            // so the currency and the farm count are never crowded by them. Settings lives in the menu
+            // sheet (its first entry), which is why the bar carries three keys rather than four.
             FarmIdentity(
                 residentCount = residentCount,
                 capacity = capacity,
                 onClick = onFarmClick,
             )
-            Spacer(Modifier.weight(1f))
+            Spacer(Modifier.width(12.dp))
             BitsReadout(bits = bits)
-            HudBarButton(
-                icon = Icons.Rounded.Flag,
-                description = stringResource(R.string.home_quests_chip_description),
-                onClick = onQuestsClick,
+            Spacer(Modifier.weight(1f))
+            HudKey(
+                icon = R.drawable.baseline_nfc_24,
+                description = stringResource(R.string.nav_transfer),
+                onClick = onTransferClick,
             )
-            HudBarButton(
+            Spacer(Modifier.width(6.dp))
+            HudKey(
                 icon = Icons.Rounded.Settings,
                 description = stringResource(R.string.home_settings_description),
                 onClick = onSettingsClick,
             )
-            HudBarButton(
+            Spacer(Modifier.width(6.dp))
+            HudKey(
                 icon = Icons.Rounded.Menu,
                 description = stringResource(R.string.home_menu_description),
                 onClick = onMenuClick,
             )
         }
+        HudGroundLine()
     }
 }
 
@@ -143,108 +157,222 @@ private fun FarmIdentity(
     residentCount: Int,
     capacity: Int,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val description = stringResource(R.string.home_farm_chip_description)
+    // Over the world the clusters have to hold up at any text size: past 1.2 the count drops one type
+    // role, which is what keeps the action keys on screen on a 360dp phone.
+    val compact = LocalDensity.current.fontScale > 1.2f
+    val shadow = hudTextShadow()
     Row(
-        modifier = Modifier
+        modifier = modifier
             .heightIn(min = 48.dp)
-            .clip(CutCornerShape(8.dp))
+            .clip(CutCornerShape(6.dp))
             .clickable(role = Role.Button, onClick = onClick)
             .semantics { contentDescription = description }
-            .padding(horizontal = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Icon(
-            imageVector = Icons.Rounded.Home,
-            contentDescription = null,
-            tint = VitalCyan,
-            modifier = Modifier.size(20.dp),
-        )
-        Text(
-            text = stringResource(R.string.home_farm_residents, residentCount, capacity),
-            style = MaterialTheme.typography.titleSmall,
-            color = TextPrimaryOnDark,
-            maxLines = 1,
-        )
-        Icon(
-            imageVector = Icons.Rounded.KeyboardArrowDown,
-            contentDescription = null,
-            tint = TextSecondaryOnDark,
-            modifier = Modifier.size(18.dp),
-        )
-    }
-}
-
-@Composable
-private fun BitsReadout(bits: Int) {
-    val description = stringResource(R.string.items_store_credits, bits)
-    Row(
-        modifier = Modifier
-            .heightIn(min = 48.dp)
-            .clip(CutCornerShape(8.dp))
-            .semantics { contentDescription = description }
-            .padding(horizontal = 8.dp),
+            .padding(end = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        Icon(
-            imageVector = Icons.Rounded.MonetizationOn,
-            contentDescription = null,
-            tint = VitalCyan,
-            modifier = Modifier.size(18.dp),
-        )
+        if (!compact) {
+            Icon(
+                imageVector = Icons.Rounded.Home,
+                contentDescription = null,
+                tint = VitalCyan,
+                modifier = Modifier.size(17.dp),
+            )
+        }
+        Column(
+            modifier = Modifier.width(IntrinsicSize.Max),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(3.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.home_farm_residents, residentCount, capacity),
+                    style = if (compact) {
+                        MaterialTheme.typography.titleMedium.copy(shadow = shadow)
+                    } else {
+                        MaterialTheme.typography.titleLarge.copy(shadow = shadow)
+                    },
+                    fontWeight = FontWeight.Bold,
+                    color = TextPrimaryOnDark,
+                    maxLines = 1,
+                    softWrap = false,
+                    autoSize = TextAutoSize.StepBased(
+                        minFontSize = 14.sp,
+                        maxFontSize = if (compact) {
+                            MaterialTheme.typography.titleMedium.fontSize
+                        } else {
+                            MaterialTheme.typography.titleLarge.fontSize
+                        },
+                        stepSize = 0.5.sp,
+                    ),
+                    overflow = TextOverflow.Ellipsis,
+                )
+                if (!compact) {
+                    Icon(
+                        imageVector = Icons.Rounded.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = TextSecondaryOnDark,
+                        modifier = Modifier.size(14.dp),
+                    )
+                }
+            }
+            ResidentPlaceGauge(
+                filled = residentCount,
+                capacity = capacity,
+                modifier = Modifier.fillMaxWidth().height(4.dp),
+            )
+        }
+    }
+}
+
+/**
+ * The count as an instrument reading: "3/12" alone is cryptic, so the same fraction is drawn as one
+ * slot per farm place. Occupied slots are accent; empty slots are ink at low alpha, which keeps the
+ * gauge readable on any sky without a panel behind it.
+ */
+@Composable
+private fun ResidentPlaceGauge(
+    filled: Int,
+    capacity: Int,
+    modifier: Modifier = Modifier,
+) {
+    val slots = capacity.coerceIn(1, 24)
+    val on = VitalCyan
+    val off = TextPrimaryOnDark.copy(alpha = 0.22f)
+    Canvas(modifier) {
+        val gap = 1.dp.toPx()
+        val slotWidth = ((size.width - gap * (slots - 1)) / slots).coerceAtLeast(1f)
+        for (index in 0 until slots) {
+            drawRect(
+                color = if (index < filled) on else off,
+                topLeft = Offset(index * (slotWidth + gap), 0f),
+                size = Size(slotWidth, size.height),
+            )
+        }
+    }
+}
+
+/** Live currency, floating: the accent carries the numerals so the eye lands on the number. */
+@Composable
+private fun BitsReadout(bits: Int) {
+    val description = stringResource(R.string.items_store_credits, bits)
+    val shadow = hudTextShadow()
+    Row(
+        modifier = Modifier
+            .heightIn(min = 48.dp)
+            .semantics { contentDescription = description },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
         Text(
             text = bits.toString(),
-            style = MaterialTheme.typography.labelLarge,
+            style = MaterialTheme.typography.labelLarge.copy(
+                fontFeatureSettings = "tnum",
+                shadow = shadow,
+            ),
             color = VitalCyan,
             maxLines = 1,
-            modifier = Modifier.widthIn(min = 24.dp),
+            softWrap = false,
         )
     }
 }
 
 @Composable
-private fun HudBarButton(
+private fun HudKey(
     icon: ImageVector,
     description: String,
     onClick: () -> Unit,
 ) {
-    Box(
-        modifier = Modifier
-            .size(44.dp)
-            .clip(CutCornerShape(8.dp))
-            .clickable(role = Role.Button, onClick = onClick)
-            .semantics { contentDescription = description },
-        contentAlignment = Alignment.Center,
-    ) {
+    HudKeySlot(description = description, onClick = onClick) {
         Icon(
             imageVector = icon,
             contentDescription = null,
-            tint = TextSecondaryOnDark,
+            tint = TextPrimaryOnDark.copy(alpha = 0.92f),
             modifier = Modifier.size(22.dp),
         )
     }
 }
 
-/**
- * Who is currently in the diorama. Read-only by design: the farm is aesthetic, so this lists the
- * active partner and the favourites that fill the remaining places and lets the camera pick one.
- */
+@Composable
+private fun HudKey(
+    @DrawableRes icon: Int,
+    description: String,
+    onClick: () -> Unit,
+) {
+    HudKeySlot(description = description, onClick = onClick) {
+        Icon(
+            painter = painterResource(icon),
+            contentDescription = null,
+            tint = TextPrimaryOnDark.copy(alpha = 0.92f),
+            modifier = Modifier.size(22.dp),
+        )
+    }
+}
+
+@Composable
+private fun HudKeyCell(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    Box(modifier = modifier, contentAlignment = Alignment.Center) { content() }
+}
+
+@Composable
+private fun HudKeySlot(
+    description: String,
+    onClick: () -> Unit,
+    content: @Composable () -> Unit,
+) {
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .clip(CutCornerShape(10.dp))
+            .clickable(role = Role.Button, onClick = onClick)
+            .semantics { contentDescription = description },
+        contentAlignment = Alignment.Center,
+    ) {
+        content()
+    }
+}
+
+/** The HUD's ground line: a single hairline that ends the status zone without enclosing it. */
+@Composable
+private fun HudGroundLine() {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .padding(start = 16.dp, end = 16.dp, top = 6.dp)
+            .height(1.dp)
+            .background(TextPrimaryOnDark.copy(alpha = 0.12f))
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FarmRosterSheet(
-    residents: List<FarmWorldResident>,
-    followedRenderId: String?,
+    options: List<FarmMemberOption>,
     residentLimit: Int,
-    candidateCount: Int,
     spriteFilter: FarmSpriteFilter,
     onResidentLimitChange: (Int) -> Unit,
     onSpriteFilterChange: (FarmSpriteFilter) -> Unit,
-    onFollow: (String) -> Unit,
+    onToggleMember: (characterId: Long, member: Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    // Members only, plus an explicit way in: the sheet never dumps the whole collection on the owner.
+    val members = options.filter { it.isMember }
+    val candidates = options.filterNot { it.isMember }
+    val capacity = residentLimit.coerceAtMost(FarmWorldSummary.CAPACITY)
+    val room = (capacity - members.size).coerceAtLeast(0)
+    var picking by remember { mutableStateOf(false) }
+
+    ModalBottomSheet(
+        onDismissRequest = { if (picking) picking = false else onDismiss() },
+    ) {
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
@@ -252,41 +380,87 @@ fun FarmRosterSheet(
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
-                text = stringResource(R.string.home_roster_sheet_title),
+                text = stringResource(
+                    if (picking) R.string.home_roster_pick_title else R.string.home_roster_sheet_title
+                ),
                 style = MaterialTheme.typography.titleMedium,
                 color = TextPrimaryOnDark,
                 modifier = Modifier.padding(bottom = 4.dp).semantics { heading() },
             )
-            FarmSettingsControls(
-                residentLimit = residentLimit,
-                shownCount = residents.size,
-                candidateCount = candidateCount,
-                spriteFilter = spriteFilter,
-                onResidentLimitChange = onResidentLimitChange,
-                onSpriteFilterChange = onSpriteFilterChange,
-            )
-            Text(
-                text = stringResource(
-                    R.string.home_roster_sheet_note,
-                    FarmWorldSummary.CAPACITY,
-                ),
-                style = MaterialTheme.typography.bodySmall,
-                color = TextMutedOnDark,
-                modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
-            )
-            residents.forEach { resident ->
-                val followed = resident.renderId == followedRenderId
-                MenuRow(
-                    icon = R.drawable.baseline_mood_24,
-                    label = resident.name,
-                    detail = when {
-                        followed -> stringResource(R.string.home_roster_followed)
-                        resident.isActivePartner -> stringResource(R.string.home_roster_active_partner)
-                        else -> resident.attribute
-                    },
-                    tint = if (followed) VitalCyan else TextSecondaryOnDark,
-                    onClick = { onFollow(resident.renderId) },
+            if (picking) {
+                if (candidates.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.home_roster_pick_empty),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextMutedOnDark,
+                        modifier = Modifier.padding(vertical = 6.dp),
+                    )
+                } else {
+                    candidates.forEach { option ->
+                        MenuRow(
+                            icon = R.drawable.baseline_mood_24,
+                            label = option.name,
+                            detail = stringResource(R.string.home_roster_in_storage),
+                            tint = if (room > 0) TextSecondaryOnDark else TextMutedOnDark,
+                            onClick = {
+                                if (room > 0) onToggleMember(option.characterId, true)
+                            },
+                            trailingIcon = Icons.Rounded.Add.takeIf { room > 0 },
+                        )
+                    }
+                }
+                androidx.compose.material3.TextButton(
+                    onClick = { picking = false },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                ) {
+                    Text(stringResource(R.string.home_roster_pick_back))
+                }
+            } else {
+                // Quantity and membership live together: this is the one place that decides how the
+                // island is populated, so the limit, the artwork and the partner list never disagree.
+                FarmSettingsControls(
+                    residentLimit = residentLimit,
+                    shownCount = members.size,
+                    candidateCount = options.size,
+                    spriteFilter = spriteFilter,
+                    onResidentLimitChange = onResidentLimitChange,
+                    onSpriteFilterChange = onSpriteFilterChange,
                 )
+                Text(
+                    text = stringResource(R.string.home_roster_members_title),
+                    style = MaterialTheme.typography.labelLarge,
+                    color = VitalCyan,
+                    modifier = Modifier.padding(top = 10.dp),
+                )
+                members.forEach { option ->
+                    MenuRow(
+                        icon = R.drawable.baseline_mood_24,
+                        label = option.name,
+                        detail = if (option.isActive) {
+                            stringResource(R.string.home_roster_active_partner)
+                        } else {
+                            stringResource(R.string.home_roster_in_farm)
+                        },
+                        tint = if (option.isActive) VitalCyan else TextSecondaryOnDark,
+                        onClick = {
+                            // The active partner always lives on the island.
+                            if (!option.isActive) onToggleMember(option.characterId, false)
+                        },
+                        trailingIcon = if (option.isActive) null else Icons.Rounded.Remove,
+                    )
+                }
+                if (room > 0) {
+                    VitalButton(
+                        onClick = { picking = true },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp)
+                            .padding(top = 8.dp),
+                        style = VitalButtonStyle.SECONDARY,
+                    ) {
+                        Text(stringResource(R.string.home_roster_add_member))
+                    }
+                }
             }
         }
     }
@@ -517,6 +691,7 @@ private fun MenuRow(
     detail: String?,
     tint: Color,
     onClick: () -> Unit,
+    trailingIcon: ImageVector? = null,
 ) {
     Row(
         modifier = Modifier
@@ -543,6 +718,14 @@ private fun MenuRow(
         )
         detail?.let {
             Text(text = it, style = MaterialTheme.typography.labelSmall, color = TextMutedOnDark)
+        }
+        trailingIcon?.let { glyph ->
+            Icon(
+                imageVector = glyph,
+                contentDescription = null,
+                tint = tint,
+                modifier = Modifier.size(20.dp),
+            )
         }
     }
 }

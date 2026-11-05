@@ -1,0 +1,177 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/C:/Users/julye/.gradle/wrapper/dists/gradle-9.6.1-bin/4ticwg1pgcbps2hj28r8so764/gradle-9.6.1/lib/native-platform-0.22-milestone-29.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+Starting a Gradle Daemon, 3 busy Daemons could not be reused, use --status for details
+
+> Configure project :app
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :baselineprofile
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :benchmark
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :hardware
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Task :game-save-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :game-save-core:compileKotlin UP-TO-DATE
+> Task :game-save-core:compileJava NO-SOURCE
+> Task :game-save-core:processResources NO-SOURCE
+> Task :game-save-core:classes UP-TO-DATE
+> Task :game-save-core:jar UP-TO-DATE
+> Task :companion-protocol:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :companion-protocol:compileKotlin UP-TO-DATE
+> Task :companion-protocol:compileJava NO-SOURCE
+> Task :companion-protocol:processResources NO-SOURCE
+> Task :companion-protocol:classes UP-TO-DATE
+> Task :companion-protocol:jar UP-TO-DATE
+> Task :hardware-dim:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :hardware-dim:compileKotlin UP-TO-DATE
+> Task :hardware-dim:compileJava UP-TO-DATE
+> Task :hardware-dim:processResources NO-SOURCE
+> Task :hardware-dim:classes UP-TO-DATE
+> Task :hardware-dim:jar UP-TO-DATE
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:protobufDummy UP-TO-DATE
+> Task :app:extractDebugProto UP-TO-DATE
+> Task :hardware:preBuild UP-TO-DATE
+> Task :hardware:preDebugBuild UP-TO-DATE
+> Task :hardware:generateDebugResources UP-TO-DATE
+> Task :hardware:packageDebugResources UP-TO-DATE
+> Task :hardware:processDebugNavigationResources UP-TO-DATE
+> Task :hardware:parseDebugLocalResources UP-TO-DATE
+> Task :hardware:generateDebugRFile UP-TO-DATE
+> Task :hardware:compileDebugKotlin UP-TO-DATE
+> Task :hardware:javaPreCompileDebug UP-TO-DATE
+> Task :hardware:compileDebugJavaWithJavac NO-SOURCE
+> Task :hardware:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :hardware:processDebugJavaRes UP-TO-DATE
+> Task :hardware:createFullJarDebug UP-TO-DATE
+> Task :app:extractIncludeDebugProto UP-TO-DATE
+> Task :app:extractProto UP-TO-DATE
+> Task :app:generateDebugProto UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:processDebugNavigationResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:generateDebugRFile UP-TO-DATE
+> Task :hardware:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :app:kspDebugKotlin
+w: [ksp] C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/species/data/SpeciesProfileDao.kt:39: The DAO function return type (kotlin.collections.List<kotlin.String?>) with the nullable type argument is meaningless because for now Room will never put a null value in a result.
+w: [ksp] C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/species/data/SpeciesProfileDao.kt:51: The DAO function return type (kotlin.collections.List<kotlin.String?>) with the nullable type argument is meaningless because for now Room will never put a null value in a result.
+
+> Task :app:compileDebugKotlin
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/BattlesScreen.kt:1731:64 Unnecessary safe call on a non-null receiver of type 'UserInfo'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/BattlesScreen.kt:1850:68 Unnecessary safe call on a non-null receiver of type 'UserInfo'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/arena/ArenaBriefing.kt:123:58 'val Icons.Outlined.MergeType: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Outlined.MergeType.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/arena/ArenaBriefing.kt:149:37 'val Icons.Outlined.OpenInNew: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Outlined.OpenInNew.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/arena/TamerArenaLobby.kt:104:41 Condition is always 'true'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/arena/TamerArenaLobby.kt:131:73 Unnecessary safe call on a non-null receiver of type 'TamerTeamResolver'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/offline/OfflineTrainingBattleScreen.kt:336:42 Condition is always 'true'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/offline/OfflineTrainingBattleScreen.kt:1094:42 Condition is always 'true'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/offline/OfflineTrainingBattleScreen.kt:2568:69 Unnecessary safe call on a non-null receiver of type 'CombatantSnapshot'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/domain/reactions/DigimonReactionEngine.kt:124:45 Redundant call of conversion method.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/dtos/WorldDtos.kt:48:17 'val isFollowing: Boolean' is deprecated. Inert after Digiline migration.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/dtos/WorldDtos.kt:48:38 'val isFollowing: Boolean' is deprecated. Inert after Digiline migration.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/dtos/WorldDtos.kt:58:36 'val isFollowing: Boolean' is deprecated. Inert after Digiline migration.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:150:75 Unnecessary safe call on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:176:117 Unnecessary safe call on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:296:41 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CardDtos.CardIcon'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:297:42 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CardDtos.CardIcon'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:302:62 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:302:156 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:309:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:316:92 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:317:80 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:324:56 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:324:90 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:329:37 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:331:46 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:332:40 Unnecessary non-null assertion (!!) on a non-null receiver of type 'BECharacterData'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:334:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:343:56 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:346:80 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:352:56 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:352:90 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:358:38 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:358:63 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:360:46 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:361:40 Unnecessary non-null assertion (!!) on a non-null receiver of type 'BECharacterData'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:363:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:372:56 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:375:80 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:381:56 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:381:90 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:389:46 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:390:40 Unnecessary non-null assertion (!!) on a non-null receiver of type 'VBCharacterData'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:392:45 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:407:56 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:410:80 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:416:56 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/HomeScreen.kt:416:90 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/PartnerOverviewState.kt:165:18 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/PartnerOverviewState.kt:176:75 Unnecessary safe call on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/PartnerOverviewState.kt:203:25 This declaration needs opt-in. Its usage should be marked with '@kotlinx.coroutines.ExperimentalCoroutinesApi' or '@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)'
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/home/ui/PartnerOverviewState.kt:226:75 Unnecessary safe call on a non-null receiver of type 'CharacterDtos.CharacterWithSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/species/SpeciesRepository.kt:376:55 No cast needed.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/species/SpeciesRepository.kt:546:44 No cast needed.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/species/SpeciesRepository.kt:547:47 No cast needed.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/storage/data/CharacterCapabilityResolver.kt:14:73 Elvis operator (?:) always returns the left operand of non-nullable type 'UserCharacter'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/transfer/data/gameSave/NativeMaterializationRepository.kt:484:21 Condition is always 'true'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/transfer/data/gameSave/NativeProgressReviewRepository.kt:30:98 Condition is always 'true'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/transfer/data/gameSave/NativeProgressReviewRepository.kt:32:89 Unnecessary safe call on a non-null receiver of type 'NativeGameSnapshot'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/transfer/ui/NativeArchiveStorageEntry.kt:75:36 'val Icons.Filled.HelpOutline: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.HelpOutline.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/transfer/ui/TransferGameLibraryScreen.kt:171:88 Unnecessary safe call on a non-null receiver of type 'UserCharacter'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/transfer/ui/TransferIndividualInformation.kt:56:33 'val Icons.Filled.HelpOutline: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.HelpOutline.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/transfer/ui/TransferScreen.kt:178:26 'val LocalLifecycleOwner: ProvidableCompositionLocal<LifecycleOwner>' is deprecated. Moved to lifecycle-runtime-compose library in androidx.lifecycle.compose package.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/widget/DigimonWidgetProvider.kt:287:49 Unnecessary non-null assertion (!!) on a non-null receiver of type 'CharacterDtos.WidgetSprites'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/world/ui/WorldInteractionOverlay.kt:64:18 Condition is always 'true'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/world/ui/WorldInteractionOverlay.kt:78:47 Unnecessary safe call on a non-null receiver of type 'WorldInteraction'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/world/ui/WorldInteractionOverlay.kt:83:16 Condition is always 'false'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/world/ui/WorldInteractionOverlay.kt:84:23 Unnecessary safe call on a non-null receiver of type 'WorldInteraction'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/world/ui/WorldInteractionOverlay.kt:113:36 Unnecessary safe call on a non-null receiver of type 'WorldInteraction'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/world/ui/WorldInteractionOverlay.kt:116:26 Condition is always 'true'.
+
+[Incubating] Problems report is available at: file:///C:/Users/julye/IdeaProjects/vbhelper/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.6.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 13m 8s
+30 actionable tasks: 2 executed, 28 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.6.1/userguide/configuration_cache_enabling.html

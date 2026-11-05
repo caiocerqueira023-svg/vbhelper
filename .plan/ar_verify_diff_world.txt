@@ -1,0 +1,224 @@
+﻿diff --git a/app/src/main/java/com/tamerslab/world/ui/WorldScreen.kt b/app/src/main/java/com/tamerslab/world/ui/WorldScreen.kt
+index a86a09df..80e9b85a 100644
+--- a/app/src/main/java/com/tamerslab/world/ui/WorldScreen.kt
++++ b/app/src/main/java/com/tamerslab/world/ui/WorldScreen.kt
+@@ -106,6 +106,12 @@ import androidx.lifecycle.repeatOnLifecycle
+ import androidx.navigation.NavController
+ import androidx.navigation.NavBackStackEntry
+ import com.tamerslab.R
++import com.tamerslab.ar.ArAvailability
++import com.tamerslab.ar.ArBattleContent
++import com.tamerslab.ar.ArBattleStage
++import com.tamerslab.ar.ArPlacement
++import com.tamerslab.ar.ArStagePhase
++import com.tamerslab.ar.checkArAvailability
+ import com.tamerslab.components.TopBanner
+ import com.tamerslab.components.motionEnabled
+ import com.tamerslab.components.VitalButton
+@@ -160,6 +166,7 @@ import com.tamerslab.world.ecosystem.publicInteractionFor
+ import com.tamerslab.world.ecosystem.speechFor
+ import com.tamerslab.world.ecosystem.isPlayerBattle
+ import com.tamerslab.battle.offline.core.BattleOutcome
++import com.tamerslab.battle.offline.session.BattleSceneChannel
+ import com.tamerslab.world.worldRadarBattleParticipant
+ import com.google.android.gms.location.LocationCallback
+ import com.google.android.gms.location.LocationRequest
+@@ -196,6 +203,9 @@ fun RadarScreen(
+     onViewPreferenceChanged: (Boolean) -> Unit = {},
+     labelsPreferred: Boolean = false,
+     onLabelsPreferenceChanged: (Boolean) -> Unit = {},
++    /** "AR battles" radar preference, hoisted/persisted like the first-person toggle. */
++    arPreferred: Boolean = false,
++    onArPreferenceChanged: (Boolean) -> Unit = {},
+     /** Banner label: the legacy World tab keeps "World", the Radar place passes `nav_radar`. */
+     @androidx.annotation.StringRes titleRes: Int = R.string.nav_world,
+     /** The Radar place owns the header alone; the legacy World route still shows Radar|Digifarm. */
+@@ -218,6 +228,8 @@ fun RadarScreen(
+     val currentPitch by rememberUpdatedState(cameraPitch)
+     var showEntityLabels by rememberSaveable { mutableStateOf(labelsPreferred) }
+     LaunchedEffect(showEntityLabels) { onLabelsPreferenceChanged(showEntityLabels) }
++    var arBattleEnabled by rememberSaveable { mutableStateOf(arPreferred) }
++    LaunchedEffect(arBattleEnabled) { onArPreferenceChanged(arBattleEnabled) }
+     var fpProjection by remember { mutableStateOf(emptyList<RadarProjection>()) }
+     var firstPersonViewportWidth by remember { mutableIntStateOf(0) }
+     val lifecycleOwner = LocalLifecycleOwner.current
+@@ -276,9 +288,23 @@ fun RadarScreen(
+     var pendingBattleEventId by rememberSaveable { mutableStateOf<String?>(null) }
+     var pendingBattleOutcome by rememberSaveable { mutableStateOf<BattleOutcome?>(null) }
+     var pendingBattleSnapshot by remember { mutableStateOf<com.tamerslab.battle.offline.core.BattleSnapshot?>(null) }
++    // AR battle entry: the stage is armed (camera/placement visible) before the battle starts and
++    // stays mounted through SCANNING -> BATTLE until the battle exits or the user backs out.
++    var arStageVisible by remember { mutableStateOf(false) }
++    var arSpawn by remember { mutableStateOf<WorldDtos.SpawnWithDetails?>(null) }
++    var arPlacement by remember { mutableStateOf<ArPlacement?>(null) }
++    var arAvailability by remember { mutableStateOf<ArAvailability?>(null) }
+     val battleActive = battleSessionId != null
++
++    /** Removes the AR stage and forgets its placement so the next battle starts a fresh world. */
++    fun tearDownArStage() {
++        arStageVisible = false
++        arPlacement = null
++        arSpawn = null
++        arAvailability = null
++    }
+     val desiredRenderer = when {
+-        battleActive || requestedBattleRenderer -> RadarRendererOwner.BATTLE
++        battleActive || arStageVisible || requestedBattleRenderer -> RadarRendererOwner.BATTLE
+         firstPersonEnabled && radarResumed && pendingBattleEventId == null -> RadarRendererOwner.FIRST_PERSON
+         else -> RadarRendererOwner.NONE
+     }
+@@ -314,10 +340,11 @@ fun RadarScreen(
+         }
+     }
+     val allowMotion = motionEnabled()
+-    LaunchedEffect(battleActive) {
+-        onFullScreenBattleChanged(battleActive)
++    LaunchedEffect(battleActive, arStageVisible) {
++        // AR scanning is already an immersive camera view, so the battle chrome treats it as full screen.
++        onFullScreenBattleChanged(battleActive || arStageVisible)
+     }
+-    val explorationActive = radarResumed && !battleActive && pendingBattleEventId == null && worldSnapshot.status != EcosystemStatus.FROZEN
++    val explorationActive = radarResumed && !battleActive && !arStageVisible && pendingBattleEventId == null && worldSnapshot.status != EcosystemStatus.FROZEN
+     val compass = rememberWorldCompass(location, enabled = explorationActive, diagnosticsEnabled = debugSettings.enabled)
+     val heading = compass.heading ?: 0f // Uncalibrated map is explicitly north-up.
+     var frozenRadarHeading by remember { mutableFloatStateOf(0f) }
+@@ -610,6 +637,7 @@ fun RadarScreen(
+         battleSessionId = null
+         committedBattleSessionId = null
+         battleTerminalOutcome = null
++        tearDownArStage()
+         savePendingBattle()
+     }
+ 
+@@ -778,6 +806,41 @@ fun RadarScreen(
+         }
+     }
+ 
++    /**
++     * Encounter battle entry point. Keeps the historical normal battle when AR is off or the
++     * device cannot run ARCore at all; otherwise arms the AR stage and lets the user place the
++     * arena on a real surface. Availability is re-checked by the stage while scanning, so a
++     * transient failure there still falls back to the normal Coliseum battle.
++     */
++    fun beginRadarBattle(spawn: WorldDtos.SpawnWithDetails) {
++        if (preparingSpawnId != null || battleActive || arStageVisible) return
++        if (!arBattleEnabled || checkArAvailability(context) == ArAvailability.UNSUPPORTED) {
++            startRadarBattle(spawn)
++            return
++        }
++        selectedEncounterId = null
++        arSpawn = spawn
++        arPlacement = null
++        arAvailability = null
++        arStageVisible = true
++    }
++
++    /** Placement confirmed: start the battle while keeping the same AR stage mounted for BATTLE. */
++    fun confirmArPlacement(placement: ArPlacement) {
++        arPlacement = placement
++        val spawn = arSpawn
++        if (spawn != null) startRadarBattle(spawn) else tearDownArStage()
++    }
++
++    /** Back/"Fight normally": tear the stage down, falling back to the normal battle when AR failed. */
++    fun cancelArStage() {
++        val spawn = arSpawn
++        val fallBackToNormalBattle = arAvailability == ArAvailability.UNSUPPORTED ||
++            arAvailability == ArAvailability.SUPPORTED_NOT_INSTALLED
++        tearDownArStage()
++        if (fallBackToNormalBattle && spawn != null) startRadarBattle(spawn)
++    }
++
+     LaunchedEffect(battleSessionId, battleSessionState.sessionId) {
+         // A process recreation cannot restore the running simulator. Return to
+         // the live Radar instead of leaving a dead 3D viewport on screen.
+@@ -907,14 +970,16 @@ fun RadarScreen(
+                 .then(if (battleActive) Modifier else Modifier.verticalScroll(rememberScrollState()))
+                 .padding(16.dp)
+         ) {
++            val onBattleRendererCreated: () -> Unit = { battleRendererPresent.set(true) }
++            val onBattleRendererReleased: () -> Unit = {
++                if (rendererOwnership.released(RadarRendererOwner.BATTLE, battleRendererToken)) battleRendererPresent.set(false)
++            }
+             WorldRadarBattleContent(
+                 viewModel = battleViewModel,
+                 battleActive = battleActive,
+                 rendererAllowed = rendererState.owner == RadarRendererOwner.BATTLE && rendererState.requested == RadarRendererOwner.BATTLE && !rendererState.releasing,
+-                onRendererCreated = { battleRendererPresent.set(true) },
+-                onRendererReleased = {
+-                    if(rendererOwnership.released(RadarRendererOwner.BATTLE, battleRendererToken)) battleRendererPresent.set(false)
+-                },
++                onRendererCreated = onBattleRendererCreated,
++                onRendererReleased = onBattleRendererReleased,
+                 onOutcome = outcome@ { outcome ->
+                     if (battleExitInProgress || battleSessionState.sessionId != battleSessionId ||
+                         battleSessionState.snapshot?.result?.outcome != outcome) return@outcome
+@@ -947,6 +1012,33 @@ fun RadarScreen(
+                 },
+                 onExit = ::leaveRadarBattle,
+                 rewardContent = { battleSessionId?.let { DigimonScanBattleRewards(app.container.db, it) } },
++                arStage = if (arStageVisible) {
++                    { hooks ->
++                        ArBattleStage(
++                            phase = if (battleActive) ArStagePhase.BATTLE else ArStagePhase.SCANNING,
++                            battle = if (battleActive && arPlacement != null) ArBattleContent(
++                                snapshot = battleSessionState.snapshot,
++                                fighters = battleSessionState.fighters,
++                                manifest = battleSessionState.arenaManifest,
++                                sessionId = battleSessionState.sessionId,
++                                preparedForms = battleSessionState.preparedForms,
++                                allowMotion = allowMotion,
++                                sceneSnapshotFlow = if (BattleSceneChannel.enabled) battleViewModel.sceneSnapshot else null,
++                            ) else null,
++                            onPlacementConfirmed = { placement -> confirmArPlacement(placement) },
++                            onCancel = { cancelArStage() },
++                            onSceneViewReady = hooks.onSceneViewReady,
++                            onSceneReady = hooks.onSceneReady,
++                            onProjectionChanged = hooks.onProjectionChanged,
++                            onFighterTapped = hooks.onFighterTapped,
++                            onRendererReleased = onBattleRendererReleased,
++                            onRendererCreated = onBattleRendererCreated,
++                            onAssetError = hooks.onAssetError,
++                            onAvailabilityChanged = { arAvailability = it },
++                            modifier = Modifier.fillMaxSize(),
++                        )
++                    }
++                } else null,
+                 radarViewport = {
+             if (firstPersonEnabled && rendererState.owner == RadarRendererOwner.FIRST_PERSON &&
+                 rendererState.requested == RadarRendererOwner.FIRST_PERSON && !rendererState.releasing) {
+@@ -1308,6 +1400,16 @@ fun RadarScreen(
+                 VitalButton(onClick={firstPersonEnabled=false},enabled=firstPersonEnabled,modifier=Modifier.weight(1f).heightIn(min=48.dp)) { Text(stringResource(R.string.ui_world_mode_2d)) }
+                 VitalButton(onClick={firstPersonFailed=false;firstPersonEnabled=true},enabled=!firstPersonEnabled,modifier=Modifier.weight(1f).heightIn(min=48.dp)) { Text(stringResource(R.string.ui_world_mode_fp)) }
+             }
++            if (!arStageVisible) {
++                Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
++                    com.tamerslab.components.LabeledSwitchRow(
++                        label = stringResource(R.string.ar_battle_toggle),
++                        checked = arBattleEnabled,
++                        onCheckedChange = { arBattleEnabled = it },
++                        description = stringResource(R.string.ar_battle_toggle_description)
++                    )
++                }
++            }
+             if(firstPersonFailed) Text(stringResource(R.string.ui_world_fp_failure),color=MaterialTheme.colorScheme.error,modifier=Modifier.padding(top=8.dp))
+             Row(Modifier.fillMaxWidth(),verticalAlignment=Alignment.CenterVertically) {
+                 com.tamerslab.components.LabeledSwitchRow(stringResource(R.string.ui_world_show_labels),
+@@ -1388,7 +1490,7 @@ fun RadarScreen(
+             )
+     }
+ 
+-    if (!battleActive) {
++    if (!battleActive && !arStageVisible) {
+         selectedEncounterId?.let { individualId ->
+             val spawn = spawns.firstOrNull { it.individualId == individualId }
+             val blocker = if (displayedCommandStamp == null) RadarRejection.NOT_READY else
+@@ -1420,7 +1522,7 @@ fun RadarScreen(
+                         }
+                     }
+                 },
+-                onBattle = { spawn?.let { startRadarBattle(it) } },
++                onBattle = { spawn?.let { beginRadarBattle(it) } },
+                 questContent = {
+                     QuestTargetActions(questTasks.filter { it.targetIndividualId == individualId },
+                         enabled = blocker == null && preparingSpawnId == null && questInteractionInProgress == null,

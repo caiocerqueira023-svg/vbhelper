@@ -23,7 +23,11 @@ import androidx.compose.ui.platform.LocalView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import kotlin.math.roundToInt
 import kotlin.math.sqrt
+
+/** Headline precision the radar UI needs; the sensor stream itself stays at display rate. */
+private const val COMPASS_HEADING_STEP_DEGREES = 1f
 
 internal enum class CompassStatus { WAITING, CALIBRATE, TRACKING, APPROXIMATE, UNAVAILABLE }
 
@@ -118,7 +122,21 @@ internal fun rememberWorldCompass(
                     "field=$fieldStrength µT, expected=$expectedField µT, declination=$declination"
                 if (debug) Log.d("WorldCompass", diagnostic)
             }
-            reading = CompassReading(heading, status, diagnostic)
+            // Quantize what Compose observes: the sensor stream runs at display rate, but the radar
+            // only needs a heading step per degree. Without this the whole screen recomposed on every
+            // rotation-vector sample, restarting every remembered flow and rebuilding the chrome.
+            val previous = reading
+            val quantized = heading?.let {
+                ((it / COMPASS_HEADING_STEP_DEGREES).roundToInt() * COMPASS_HEADING_STEP_DEGREES) % 360f
+            }
+            val next = CompassReading(quantized, status, diagnostic)
+            val headingChanged = previous.heading == null || quantized == null ||
+                kotlin.math.abs(
+                    ((quantized - previous.heading + 540f) % 360f) - 180f
+                ) >= COMPASS_HEADING_STEP_DEGREES / 2f
+            if (headingChanged || status != previous.status || diagnostic != previous.diagnostic) {
+                reading = next
+            }
         }
 
         val listener = object : SensorEventListener {

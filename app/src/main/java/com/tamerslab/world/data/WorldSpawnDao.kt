@@ -71,6 +71,17 @@ interface WorldSpawnDao {
     @Query("DELETE FROM WorldSpawn WHERE expiresAt <= :now AND NOT EXISTS(SELECT 1 FROM WorldParticipationClaim WHERE spawnId = WorldSpawn.id)")
     suspend fun deleteExpired(now: Long)
 
+    /**
+     * Removes encounters that only have the neutral placeholder artwork. Those characters are app
+     * data markers, not Digimon, and used to show up on the Radar as the placeholder's diamond.
+     */
+    @Query("""
+        DELETE FROM WorldSpawn
+        WHERE cardCharacterId IN (SELECT id FROM CardCharacter WHERE spriteId = -1)
+          AND NOT EXISTS(SELECT 1 FROM WorldParticipationClaim WHERE spawnId = WorldSpawn.id)
+    """)
+    suspend fun deletePlaceholderSpawns(): Int
+
     @Query(
         """
         SELECT

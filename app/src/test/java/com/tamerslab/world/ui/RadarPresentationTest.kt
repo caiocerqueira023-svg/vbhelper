@@ -35,6 +35,23 @@ class RadarPresentationTest {
         assertTrue(radarPresentations(snapshot(), listOf(assets(individualId = "another"))).isEmpty())
     }
 
+    @Test fun `placeholder artwork never becomes a radar encounter`() {
+        val placeholder = com.tamerslab.species.PlaceholderSprite.create()
+        val placeholderAssets = assets().copy(
+            spriteWidth = placeholder.width,
+            spriteHeight = placeholder.height,
+            spriteIdle = placeholder.spriteIdle1,
+            spriteIdle2 = placeholder.spriteIdle2,
+            spriteWalk = placeholder.spriteWalk1,
+            spriteWalk2 = placeholder.spriteWalk2,
+            spriteRun = placeholder.spriteRun1,
+            spriteRun2 = placeholder.spriteRun2,
+        )
+        assertTrue(placeholderAssets.isPlaceholderArtwork())
+        assertTrue(radarPresentations(snapshot(), listOf(placeholderAssets)).isEmpty())
+        assertFalse(assets().isPlaceholderArtwork())
+    }
+
     @Test fun `movement pose selects walking frames while reduced motion keeps a static frame`() {
         val frame = snapshot().copy(individuals = snapshot().individuals.map { it.copy(movementState = WorldMovementState.WANDERING) })
         val marker = radarPresentations(frame, listOf(assets())).single()

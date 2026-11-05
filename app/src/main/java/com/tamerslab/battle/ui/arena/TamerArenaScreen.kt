@@ -36,7 +36,7 @@ fun TamerArenaScreen(viewModel: TamerArenaViewModel, battleViewModel: OfflineBat
         OfflineTrainingBattleScreen(battleViewModel, onExit = { viewModel.closeMatch() }, modifier = modifier,
             battleTitle = stringResource(R.string.arena_vs, match.right.name),
             arenaSession = true,
-            battleSubtitle = "${match.left.members.size} Ã— ${match.right.members.size} Â· ${arenaDifficultyName(match.difficulty)}",
+            battleSubtitle = "${match.left.members.size} × ${match.right.members.size} · ${arenaDifficultyName(match.difficulty)}",
             resultContent = { snapshot ->
                 ArenaResult(snapshot, match, battle.arenaSettlement, battle.recordingArenaResult,
                     battle.arenaRecordError, state.busy, state.activeRun?.championId == com.tamerslab.battle.offline.tamers.ArenaRepository.PLAYER_ID,

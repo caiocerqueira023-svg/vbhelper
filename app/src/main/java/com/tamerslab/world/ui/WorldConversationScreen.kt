@@ -1,4 +1,4 @@
-﻿package com.tamerslab.world.ui
+package com.tamerslab.world.ui
 
 import android.Manifest
 import com.tamerslab.navigation.AppRoute
@@ -147,7 +147,7 @@ fun WorldConversationScreen(navController: NavController, interactionId: String)
         Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding).imePadding().padding(horizontal=16.dp,vertical=12.dp),
             verticalArrangement=Arrangement.spacedBy(8.dp)) {
             if(group || !canParticipate) ChatContextPanel {
-                if(group) Text(names.values.joinToString(" Â· "),style=MaterialTheme.typography.labelLarge,color=TextSecondaryOnDark)
+                if(group) Text(names.values.joinToString(" · "),style=MaterialTheme.typography.labelLarge,color=TextSecondaryOnDark)
                 if(!canParticipate) Text(stringResource(when {
                     event==null || event?.state?.terminal==true -> R.string.ui_world_interaction_ended
                     snapshot.status!=EcosystemStatus.READY -> R.string.ui_world_updating
@@ -172,9 +172,8 @@ fun WorldConversationScreen(navController: NavController, interactionId: String)
                 Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                     VitalButton(onClick={ scope.launch {
                         try {
-                            val frame=coordinator.snapshot.value
-                            val id=withContext(Dispatchers.IO) { coordinator.executeCommand(lease,RadarCommand(frame.commandStamp!!,
-                                RadarCommandKind.EVENT_PARTICIPATION,interactionId=interactionId)) { ctx ->
+                            val id=withContext(Dispatchers.IO) { coordinator.executeCommandLatest(lease,
+                                RadarCommandKind.EVENT_PARTICIPATION, interactionId=interactionId) { ctx ->
                                 orchestrator.prepareHumanChallengeSource(intent.id,ctx.playerFix)
                             }.getOrThrow() } ?: throw WorldInteractionException(InteractionFailure.UNAVAILABLE)
                             returnToRadar(id)
@@ -193,8 +192,8 @@ fun WorldConversationScreen(navController: NavController, interactionId: String)
                         scope.launch {
                             try {
                                 val frame=coordinator.snapshot.value
-                                val prepared=withContext(Dispatchers.IO) { coordinator.executeCommand(lease,RadarCommand(frame.commandStamp!!,
-                                    RadarCommandKind.EVENT_PARTICIPATION,interactionId=interactionId)) { ctx ->
+                                val prepared=withContext(Dispatchers.IO) { coordinator.executeCommandLatest(lease,
+                                    RadarCommandKind.EVENT_PARTICIPATION, interactionId=interactionId) { ctx ->
                                     val current=db.worldInteractionDao().getInteraction(interactionId) ?: throw WorldInteractionException(InteractionFailure.UNAVAILABLE)
                                     if(current.state==InteractionState.ACTIVE && !orchestrator.joinConversation(current.id,current.revision,ctx.playerFix))
                                         throw WorldInteractionException(InteractionFailure.UNAVAILABLE)

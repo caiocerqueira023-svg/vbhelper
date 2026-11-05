@@ -4,6 +4,8 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import com.tamerslab.components.showAppFeedback
+import com.tamerslab.farm.FarmWorldPreferences
+import com.tamerslab.farm.farmWorldStore
 import com.tamerslab.species.PartnerUnavailableException
 import com.tamerslab.R
 import kotlinx.coroutines.Dispatchers
@@ -13,11 +15,19 @@ class StorageScreenControllerImpl(
     private val componentActivity: ComponentActivity
 ): StorageScreenController {
     private val storage = com.tamerslab.di.AppServices.storageRepository
+    private val farmPreferences =
+        FarmWorldPreferences(componentActivity.farmWorldStore)
 
     override fun setActive(characterId: Long, announce: Boolean, onCompletion: () -> Unit, onRejected: () -> Unit) {
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
             try {
                 storage.setOnlyActive(characterId)
+                // A promoted partner belongs on the island: membership is explicit, but the leader is
+                // added to it, so stepping down later cannot make it vanish.
+                farmPreferences.updateFarmMembers(
+                    favouriteIds = storage.favouriteIds(),
+                    add = characterId,
+                )
             } catch (_: PartnerUnavailableException) {
                 componentActivity.runOnUiThread {
                     componentActivity.showAppFeedback(R.string.participation_inactive_hint)

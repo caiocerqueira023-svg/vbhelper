@@ -315,7 +315,7 @@ private fun FarmWorld(
         topBar = {
             Column {
                 TopBanner(
-                    text = "${farm.name}  â€¢  ${residents.size}/${farm.capacity}",
+                    text = "${farm.name}  ·  ${residents.size}/${farm.capacity}",
                     onGearClick = { showFarmSettings = true }
                 )
                 WorldSectionTabs(selectedWorldTab, onWorldTabSelected)
@@ -833,7 +833,7 @@ private fun FarmSettingsSheet(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    "$residentCount/${farm.capacity} Â· ${stringResource(R.string.ui_digifarm_residents)}",
+                    "$residentCount/${farm.capacity} · ${stringResource(R.string.ui_digifarm_residents)}",
                     style = MaterialTheme.typography.labelLarge,
                     color = TextSecondaryOnDark
                 )

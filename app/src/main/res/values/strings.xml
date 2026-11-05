@@ -532,6 +532,7 @@
     <string name="ui_world_grid_instruction">Each grid square represents about 60 m.</string>
     <string name="ui_world_zoom_instruction">Use a two-finger pinch on the map to zoom.</string>
     <string name="ui_world_compass_instruction">The N, E, S and W arrows rotate around the player like a compass.</string>
+    <string name="ui_world_compass_nearest">Nearest Digimon: %1$s</string>
     <string name="ui_world_zoom_label">Zoom %1$d%%</string>
     <string name="ui_world_debug_spawn_button">DEBUG: Spawn random Digimon (20 m)</string>
     <string name="ui_world_debug_picker_title">Choose a Digimon to spawn</string>
@@ -576,6 +577,17 @@
     <string name="ui_world_spawn_dim_species_title">%1$s Digimon</string>
     <string name="ui_world_spawn_dim_species_empty">This DiM has no Digimon.</string>
     <string name="ui_world_spawn_dim_species_fallback">Digimon %1$d</string>
+
+    <!-- Radar place floating chrome + options sheet. Keep the three locales in sync. -->
+    <string name="ui_world_options_title">Radar options</string>
+    <string name="ui_world_options_display">Display</string>
+    <string name="ui_world_options_battles">Battles</string>
+    <string name="ui_world_options_legacy">Legacy view</string>
+    <string name="ui_world_options_technical">Technical</string>
+    <string name="ui_world_mode_iso">Isometric</string>
+    <string name="ui_world_spawn_settings">Spawn settings</string>
+    <string name="ui_world_zoom_reset">Reset zoom</string>
+    <string name="ui_world_interaction_available">Interaction available</string>
 
     <string-array name="world_cardinal_directions_8">
         <item>N</item><item>NE</item><item>E</item><item>SE</item>
@@ -1075,4 +1087,48 @@
     <string name="ui_battle_finisher_duo">Duo Blast</string>
     <string name="ui_battle_finisher_damage">%1$d damage</string>
     <string name="ui_battle_finisher_no_damage">No damage</string>
+    <!-- AR battle placement + stage (ar-placement task). Keep the three locales in sync. -->
+    <string name="ar_battle_toggle">AR battles</string>
+    <string name="ar_battle_toggle_description">Place the arena on a surface and watch the fight through the camera.</string>
+    <string name="ar_battle_badge">AR</string>
+    <string name="ar_battle_scan_instruction">Point the phone at a table or the floor and keep it steady</string>
+    <string name="ar_battle_scan_hold">Surface found - hold still, starting the battle...</string>
+    <string name="ar_battle_scan_starting">Starting the battle...</string>
+    <string name="ar_battle_scan_fallback">No surface found - placing the battle in front of you...</string>
+    <string name="ar_battle_scan_hint">Move the phone slowly left and right over the surface to help the camera find it</string>
+    <string name="ar_battle_instructions_scan">Slowly sweep the phone over a table or the floor - the battle starts by itself once a surface is found</string>
+    <string name="ar_battle_instructions_adjust">Drag to rotate, pinch to resize, then place the battle</string>
+    <string name="ar_battle_scale_label">Arena size</string>
+    <string name="ar_battle_arena_size">%1$s m arena</string>
+    <string name="ar_battle_arena_size_unknown">Tap a surface to size the arena</string>
+    <string name="ar_battle_no_hit">No surface there - try another spot</string>
+    <string name="ar_battle_no_surface">No surface yet - slowly sweep the phone over a table or the floor, in good light</string>
+    <string name="ar_battle_surface_found">Surface found - tap to move the arena, then place the battle</string>
+    <string name="ar_battle_place_manual">No surface? Place in front of me</string>
+    <string name="ar_battle_tracking_paused">Tracking paused - point the phone back at the surface</string>
+    <string name="ar_battle_tracking_lost">Tracking lost - move the phone slowly</string>
+    <string name="ar_battle_too_dark">It is too dark - move to a brighter place</string>
+    <string name="ar_battle_move_slower">Moving too fast - sweep the phone slowly</string>
+    <string name="ar_battle_find_texture">Not enough detail here - point at the table edge, the floor or another textured surface</string>
+    <string name="ar_battle_plan_auto">Auto</string>
+    <string name="ar_battle_plan_tabletop">Tabletop</string>
+    <string name="ar_battle_plan_room">Room</string>
+    <string name="ar_battle_plan_open_space">Open space</string>
+    <string name="ar_battle_place">Place battle</string>
+    <string name="ar_battle_back">Back</string>
+    <string name="ar_battle_permission_title">Camera access needed</string>
+    <string name="ar_battle_permission_rationale">AR battles use the camera to place the arena on a surface around you.</string>
+    <string name="ar_battle_permission_denied">Camera access was denied. Allow it to fight in AR, or fight normally.</string>
+    <string name="ar_battle_permission_grant">Allow camera</string>
+    <string name="ar_battle_unavailable_title">AR unavailable</string>
+    <string name="ar_battle_unavailable_message">AR battles are not supported on this device. Fight normally instead.</string>
+    <string name="ar_battle_install_title">ARCore needed</string>
+    <string name="ar_battle_install_message">Google Play Services for AR must be installed to fight in AR.</string>
+    <string name="ar_battle_install_action">Install</string>
+    <string name="ar_battle_fight_normally">Fight normally</string>
+    <string name="ar_battle_starting_camera">Starting camera...</string>
+    <string name="ar_battle_loading_scene">Preparing the AR battle...</string>
+    <string name="app_loading">Loading…</string>
+    <string name="farm_swap_pick_title">Pick the new partner</string>
+    <string name="farm_swap_pick_body">Tap a Digimon to replace %1$s in the Digifarm.</string>
 </resources>

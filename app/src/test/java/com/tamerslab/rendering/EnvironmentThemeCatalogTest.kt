@@ -1,12 +1,15 @@
 package com.tamerslab.rendering
 
 import com.tamerslab.ui.theme.AppTheme
+import org.json.JSONObject
 import org.junit.Assert.*
 import org.junit.Test
 import java.io.File
 
 class EnvironmentThemeCatalogTest {
-    private val catalog = EnvironmentThemeCatalog.parse(File("src/main/assets/environment_themes/manifest.json").readText())
+    private val manifestText = File("src/main/assets/environment_themes/manifest.json").readText()
+    private val catalog = EnvironmentThemeCatalog.parse(manifestText)
+    private val palettes = JSONObject(manifestText).getJSONObject("palettes")
 
     @Test fun everyEnvironmentHasAllFourPalettesAndOnlyEnvironmentBindings() {
         assertEquals(3, catalog.scenes.size)
@@ -45,17 +48,61 @@ class EnvironmentThemeCatalogTest {
         }
     }
 
-    @Test fun radarLightThemesHaveLightFloorsAndDistinctEnergyColors() {
+    @Test fun radarLightThemesKeepALightFloorWithDarkerGridAndReadableBoundary() {
         val scene = catalog.scenes.getValue("radar")
         val floor = scene.materials.first { it.name == "radar_floor" }
+        val grid = scene.materials.first { it.name == "world_grid" }
         val boundary = scene.materials.first { it.name == "battle_boundary" }
         assertTrue(floor.variant(AppTheme.VB_HELPER).baseColor.take(3).all { it < .01f })
         assertTrue(floor.variant(AppTheme.VB_LAB).baseColor.take(3).all { it < .02f })
         for (theme in listOf(AppTheme.VB_ARENA, AppTheme.DIGIMON_NET)) {
-            assertTrue(floor.variant(theme).baseColor.take(3).all { it > .8f })
+            val floorLuminance = relativeLuminance(floor.variant(theme).baseColor)
+            // A near-white floor on a near-white backdrop is what flattened the light radar.
+            assertTrue("$theme radar floor stopped reading as a surface", floorLuminance > .4f)
+            assertTrue("$theme radar floor must stay lighter than its grid",
+                relativeLuminance(grid.variant(theme).baseColor) < floorLuminance * .5f)
+            assertTrue("$theme battle boundary disappears into the floor",
+                contrastRatio(relativeLuminance(boundary.variant(theme).baseColor), floorLuminance) > 2.5f)
         }
         assertEquals(4, AppTheme.entries.map { boundary.variant(it).baseColor }.toSet().size)
     }
+
+    /**
+     * The light themes must not repaint the whole map in the theme hue: geometry keeps a
+     * neutral ink ramp that reaches true black, and chroma is reserved for accents. Tinting
+     * the mid-tones is what produced the washed-out, oddly green/blue light arenas.
+     */
+    @Test fun lightThemesUseNeutralInkAndReserveChromaForAccents() {
+        for (theme in listOf(AppTheme.VB_ARENA, AppTheme.DIGIMON_NET)) {
+            val palette = palettes.getJSONObject(theme.preferenceValue)
+            for (key in listOf("structureDark", "structureLight", "grid")) {
+                assertTrue("$theme $key is tinted toward the theme hue", chroma(srgb(palette, key)) < .10f)
+            }
+            assertTrue("$theme structure ramp no longer reaches black",
+                luminance(srgb(palette, "structureDark")) < .12f)
+            assertTrue("$theme panel blocks are no longer near black",
+                luminance(srgb(palette, "panel")) < .08f)
+            assertTrue("$theme energy lost its accent chroma", chroma(srgb(palette, "energy")) > .25f)
+        }
+    }
+
+    private fun srgb(palette: JSONObject, key: String): List<Float> {
+        val hex = palette.getString(key)
+        require(hex.length == 7 && hex[0] == '#') { "Unexpected ${palette}.$key color $hex" }
+        return (1..5 step 2).map { hex.substring(it, it + 2).toInt(16) / 255f }
+    }
+
+    private fun luminance(srgb: List<Float>) =
+        .2126f * srgb[0] + .7152f * srgb[1] + .0722f * srgb[2]
+
+    private fun chroma(srgb: List<Float>) = srgb.max() - srgb.min()
+
+    /** Manifest factors are already linear, unlike the sRGB palette swatches. */
+    private fun relativeLuminance(linear: List<Float>) =
+        .2126f * linear[0] + .7152f * linear[1] + .0722f * linear[2]
+
+    private fun contrastRatio(a: Float, b: Float) =
+        (maxOf(a, b) + .05f) / (minOf(a, b) + .05f)
 
     @Test fun defaultDomeFactorsRemainAuthoredAndLightEmissionIsBounded() {
         val dome = catalog.scenes.getValue("colosseum").materials.first { it.name == "Sphere001" }

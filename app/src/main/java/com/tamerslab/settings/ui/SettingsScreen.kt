@@ -163,7 +163,7 @@ fun SettingsScreen(
                 title = stringResource(R.string.ui_language),
                 description = when (currentLanguage) {
                     "en" -> "English"
-                    "pt-BR" -> "PortuguÃªs (Brasil)"
+                    "pt-BR" -> "Português (Brasil)"
                     "ja" -> "æ—¥æœ¬èªž"
                     else -> stringResource(R.string.immersion_system_language)
                 }

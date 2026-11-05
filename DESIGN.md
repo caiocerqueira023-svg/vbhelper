@@ -116,9 +116,9 @@ A base escura cria um espaço calmo para sprites e dados. Roxo constrói a atmos
 
 ### 3D Environment Palettes
 
-Digifarm, Colosseum, Radar battle and first-person Radar follow the selected saved
-theme. Structural surfaces, digital panels, grids, boundaries and dome energy use
-environment-specific roles: Helper purple/cyan, Lab charcoal/cyan, Arena
+Digifarm, Colosseum, Radar battle and the isometric Radar world follow the selected
+saved theme. Structural surfaces, digital panels, grids, boundaries and dome energy
+use environment-specific roles: Helper purple/cyan, Lab charcoal/cyan, Arena
 silver/green, and Digimon.net pale blue/royal blue with selected yellow highlights.
 Natural turf and texture detail remain recognizable, and Digimon/effect artwork
 retains its own colors. Theme changes update existing materials/textures and
@@ -344,23 +344,54 @@ rolável e ações que podem quebrar linha. O fechamento dos detalhes de Storage
 Home is the Digifarm: the 3D habitat fills the window edge-to-edge, and the app chrome floats over
 it instead of framing it. The compact bottom navigation is retired; navigation happens on the world.
 
-- **Top zone:** one solid cut-corner shelf rather than floating pills. Left: farm identity (home
-  glyph, resident count, roster chevron — it opens who-is-here, not a farm manager). Right: bits with a
-  coin glyph, quests, settings gear and menu. Utility actions use Material vectors, never hand-drawn
-  glyphs, and the shelf guarantees contrast over a moving scene.
-- **Command deck:** five 56dp cut-corner place tiles — Radar, Arena, DigiLine, Shop, Partners — each
-  with its visible label. Cyan marks the current or actionable place; badges appear only while
-  something is actually waiting. The menu sheet carries Quests, Dex, Items, Adventure, Transfer,
-  Credits, Viewer, Lorebook and Settings.
-- **Partner deck:** a 96dp slab that doubles as the drag handle, over a three-detent sheet (peek
-  96dp, half 44%, expanded 96%). Half and expanded are non-modal and reuse the existing
-  partner-overview modules unchanged; only expanded scrims. Back collapses Expanded → Half → Peek
-  before the system leaves the app.
+- **Top zone:** no shelf, no box. The HUD is two detached clusters over the world: status on the
+  left (home glyph, resident count with a twelve-slot place gauge underneath, roster chevron inline
+  with the count) and the bits readout beside it in the accent, then four keys floating at the right:
+  Transfer, Dex, the settings gear and the menu. Quests lives in the menu sheet rather than the bar. A palette-resolved scrim and a single hairline ground line carry
+  the contrast a panel used to carry; text and marks sit in HUD ink with a soft 1dp/3dp shadow, so
+  each cluster holds up against sky, ground or chasm. Keys keep 48dp targets; past font scale 1.2 the
+  count drops a type role and the chevron goes, which keeps every key on a 360dp phone.
+- **Place row:** five places as pure overlay, matching the top zone: Radar, Arena, Dex, Shop,
+  Partners are icon plus caption floating on a bottom scrim, and the row owns the very bottom of the
+  screen - the partner slab sits directly above it, like a mini player over a tab row. There is no
+  deck, no tile and no container: contrast comes from a ground painted in the partner slab's own
+  surface tone (`surfaceElevated` at the slab's opacity), so the top zone, the slab and the place row
+  read as one material, plus HUD ink with a soft shadow. The row's ground starts at the sheet's own tone
+  so the two fit together with no seam, then firms up toward the bottom edge so the places sit on their
+  most solid ground; a single inset hairline - the same device the top zone uses against the farm -
+  marks the junction. There is no blur or glass effect on chrome: translucency is tint only. The slab's frame keeps only its upper edge (two chamfers
+  plus the top line): no side or bottom strokes, so it has no silhouette where it meets the row.
+  The icon is the action and the caption its descriptor; the caption auto-sizes down rather than
+  truncating, so localized labels ("Parceiros") and large font scales stay complete. Pressing a place
+  turns it accent; a current place would also keep a 2dp accent underline. The row is capped at 460dp
+  and centred so wide windows do not stretch it. Badges appear only while something is actually
+  waiting. The menu sheet carries Quests, Dex, Items, Adventure, Transfer, Credits, Viewer, Lorebook
+  and Settings. Earlier machined tile keys and the floating deck are superseded.
+- **Partner deck:** a 96dp slab that doubles as the drag handle, sitting above the place row, over a
+  three-detent sheet (peek 96dp, half 44%, expanded 96%). The sheet owns one height value: a drag moves
+  it 1:1 under the finger (no jump at grab or release, no detent snap while dragging) and the settle
+  animation continues from wherever the finger left it; the chevron opens one detent upward and drops
+  the sheet all the way to peek from expanded. A gesture that merely reaches the end of the overview's
+  own scrolling stops there - the sheet only takes over on the next touch that starts at that end, and
+  that pull closes it all the way to peek. When the sheet is fully open the top status zone fades
+  and lifts away, because the overview owns the screen. While the sheet is pulled, its bottom slides
+  into the place row's band and the row fades and drifts out in the same motion, so the two never
+  overlap and never leave a gap; the row is fully gone by the time the sheet reaches Half. Half and
+  expanded are non-modal and reuse the existing partner-overview modules unchanged; only expanded
+  scrims. Back collapses Expanded -> Half -> Peek before the system leaves the app.
 - **Gesture ownership:** the slab claims its drag area above the navigation-bar strip with
   `systemGestureExclusion`, so pulling the sheet up is never read as the system Home gesture. Drags
   on the 3D surface belong to the camera; drags on chrome belong to the sheet; nothing else.
 - **Camera:** the active partner is followed by default, a drag or pinch overrides for five seconds
-  and then eases back over 600ms. The followed resident stays between 30% and 52% of viewport height
+  and then eases back over 600ms. A cinematic drift runs whenever nobody is touching the scene: the
+  orbit turns slowly around the followed partner (~70s per revolution) while elevation and distance
+  drift on incommensurate periods (~47s and ~71s), so the island is never seen from one fixed angle.
+  Elevation stays under ~33 degrees because higher angles foreshorten the extruded sprite artwork.
+  Every 14-26s the shot cuts abruptly to another side, height and distance instead of drifting there;
+  cuts are drawn from three heights (grazing, three-quarter, and the steepest the artwork allows) and
+  never repeat the previous one, so the sequence includes the low angles too.
+  After a touch the drift re-bases on the visitor's framing rather than easing back into the previous
+  loop, so manual camera work is respected; reduced motion disables the drift and the cuts entirely. The followed resident stays between 30% and 52% of viewport height
   so the bottom chrome never covers it.
 - **Frame budget:** rendering pauses when a place covers Home or the app leaves the foreground, runs
   at 30fps idle and 60fps during interaction, and honours reduced motion by stopping the island bob,
@@ -375,7 +406,100 @@ it instead of framing it. The compact bottom navigation is retired; navigation h
   home surface; their stored data is left untouched rather than migrated or deleted.
 
 Place destinations keep the instrument TopBanner and their own back behaviour; leaving a place
-returns to the farm, which remains the single entry point for the collection and the menu.
+returns to the farm, which remains the single entry point for the collection and the menu. The
+Radar place is the exception: it is a second full-bleed world and owns floating chrome instead of
+the banner (see **Radar place**).
+
+### Radar place
+
+Radar is the world surface for the real-world ecosystem: it answers "what is near me, which way,
+how far" at a glance and then gets out of the way. It inherits Home's shell (a live 3D world fills
+the window; chrome floats over it) and Storage's instrument vocabulary (cut-corner 48dp keys,
+Oxanium labels, cyan for live signals, no nested cards).
+
+- **World:** the Radar plate is the authored radar grid with the battle props, sky dome and battle
+  boundary stripped (`Arena/Radar/radar_plate.glb`, generated from `radar_grid.glb` by
+  `tools/build_radar_plate.py`, so the Radar place never shows the false range ring or the floating
+  voxel set pieces). It is theme-bound through the same environment-theme controller as battle, by
+  mapping the derived asset onto the authored radar scene. Every nearby Digimon stands on it as its
+  extruded sprite model at the bearing and distance the radar reports; the active partner stands at
+  the plate centre as the player token, on a violet ring whose radius is the interaction proximity —
+  it is placed at the same radial fraction a Digimon at `RadarWorldGeometry.INTERACTION_RANGE_METERS`
+  gets, so anything inside the ring is inside the range the Radar uses for chat, battles and quests.
+  The ring itself is a single clean violet line drawn as a **real 3D ground decal**, so the depth
+  buffer makes Digimon occlude it exactly like the plate — no Compose overlay and no clipping tricks.
+  Its thickness stays constant on screen through a small ladder of pre-baked decals (each calibrated
+  for a different ring radius) whose alpha is cross-faded as the ring radius changes, so the line
+  follows a pinch smoothly without rebuilding textures or waiting for the zoom to settle. There is no
+  glow or halo, and the ring is always behind the Digimon standing on it.
+  The plate turns with the compass heading so the screen stays north-up and the partner stays planted
+  at the centre.
+- **Cardboard sprites:** wild Digimon use the farm/battle cardboard treatment: the extruded slab turns
+  toward its real-world travel heading and is camera-assisted so it is never edge-on and mostly faces
+  the camera (the radar clamps the assist to ±15°, tighter than the farm, because the radar camera is
+  fixed while the plate turns). It mirrors only when travel crosses the screen's profile. Travel is
+  measured from the Digimon's world position, never from its on-screen motion, so the compass turn and
+  the zoom animation cannot read as a direction change (the plate deliberately rotates under a
+  north-up view; sprites rotate with it instead of flipping). Walk/idle pose changes use a smoothed
+  speed with start/stop hysteresis so the ecosystem's 1 s interpolation steps cannot flicker the
+  animation. A Digimon that has not walked yet stands facing the camera like an idle island resident;
+  idle residents keep their last heading instead of snapping back to the camera. Visibility is decided
+  by the projected billboard rect, not by the visible-radius value, so zooming never hides a Digimon
+  that is still on screen.
+- **No distance rings:** the Radar place draws no range/metre rings (owner decision 2026-11-04); the
+  ring capability stays in the renderer behind an empty ring list but is not used. Orientation comes
+  from a **large, minimal instrument ring** in the same footprint as the earlier compass: 120 thin
+  cyan ticks turn with the heading, the four cardinal directions get longer, thicker ticks (north the
+  longest), with no letters, blocks, bezel face or inner circle — the plate itself is the dial. A
+  single red needle (the reference digivice arrow's shape: a larger triangle pointing outward, a
+  small gap, then a slightly smaller triangle pointing inward) rides the ring at the nearest wild
+  Digimon's bearing and points outward at it. While the radar is live, the needle occasionally
+  performs one short idle search gesture — a full sweep or a searching wiggle — and returns to the
+  true bearing; the tick nearest that bearing is always drawn slightly longer, so the reading stays
+  visible even while the needle sweeps. Reduced motion keeps the needle static. A soft vignette fades
+  the plate edge into the page. The
+  plate floor itself is enlarged so the ground continues past the grid at every zoom and camera
+  angle; no horizon or floor edge is visible.
+- **Chrome:** a detached top cluster (48dp back key, "Radar · NW" in HUD ink, options key, plus the
+  spawn-settings key while Debug is on) over a single top scrim, and one bottom signal band holding
+  the nearby count, the zoom keys and, only while the state is not ready, one status line with its
+  recovery action. No panel wraps the world, and no permanent toggle rows exist.
+- **Options sheet:** labels, AR battles, spawn/DIM settings (Debug) and the legacy renderers live in
+  one `ModalBottomSheet`. The legacy 2D radar and the first-person radar remain in the codebase and
+  are selectable there only while the master Debug switch is on; they are instruments, not a second
+  interface.
+- **Labels:** entity names and distances are off by default and never cover the top or bottom chrome;
+  at most one speech bubble is shown, anchored to the nearest speaker. Tapping a Digimon opens the
+  encounter sheet; long-pressing opens its species details. The tap target is the projected sprite
+  billboard itself (minimum 48dp), not a box floating above its head, so hitting a Digimon works like
+  hitting a farm resident; it draws no pressed ripple or overlay, so pressing never paints a grey box
+  over the sprite. No marker sits over a Digimon's head: the former interaction dot was
+  removed, and a live interaction is carried by the encounter sheet and the marker's accessibility
+  description.
+- **States:** locating, populating, empty region, approximate fix, frozen and failure states are one
+  quiet line in the band with the recovery action beside it; READY is silent.
+- **Motion:** the compass turn is continuous and follows the motion preference; pose cycling and
+  interaction lunges reuse the farm's reduced-motion rules; the 3D surface pauses whenever the app is
+  not resumed or a battle/AR stage covers it, and only one Filament engine exists at a time.
+- **Camera:** the radar opens at its lowest readable angle (34°) and that is the only angle — the
+  vertical tilt gesture was removed, so the plate keeps one predictable foreshortening while zoom and
+  compass rotation remain free. (The Debug legacy first-person view keeps its own pitch drag.)
+- **Social pause:** wild ↔ wild chat and battles are paused for the current versions, behind
+  `WildSocialInteractionGate`. The planner, dialogue, NPC battle simulation and history all stay
+  in the codebase and the Radar keeps rendering whatever history remains; player-directed and
+  wild → player encounters are unchanged. Paused pairs are cancelled (releasing claims) and
+  omitted from the public snapshot, so no wild-on-wild interaction appears on the radar while the
+  gate is off.
+- **Encounter data:** encounters that only carry the neutral 32×32 placeholder artwork are data
+  markers, not Digimon: they are excluded from world population (and from Debug spawn choices), and
+  any stale row referencing them is cleaned on the next population pass and filtered out of the radar.
+- **Rendering budget:** the radar loads the plate, then extrudes each Digimon once. Extruded model
+  bytes are cached process-wide, built on a small worker pool and uploaded nearest-first at up to two
+  models per frame, so the closest Digimon are visible within a frame or two and re-entering the place
+  does not rebuild the roster.
+- **Numbers:** default visible radius 200 m; pinch zoom and the band keys range 0.5×–4×, which now maps
+  to 400 m at the widest view and 50 m at the closest (the old 1000 m/125 m envelope left too much
+  empty ground). Sprites share the radar's radial legibility curve so distant Digimon stay separated.
 
 ### Readiness and feedback
 

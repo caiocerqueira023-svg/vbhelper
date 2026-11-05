@@ -1,0 +1,458 @@
+﻿diff --git a/app/src/main/java/com/tamerslab/battle/ui/offline/OfflineBattleScene.kt b/app/src/main/java/com/tamerslab/battle/ui/offline/OfflineBattleScene.kt
+index ddc3bfa2..94171cb1 100644
+--- a/app/src/main/java/com/tamerslab/battle/ui/offline/OfflineBattleScene.kt
++++ b/app/src/main/java/com/tamerslab/battle/ui/offline/OfflineBattleScene.kt
+@@ -29,13 +29,21 @@ import com.tamerslab.ui.theme.AppTheme
+ import com.tamerslab.ui.theme.LocalAppTheme
+ import com.tamerslab.rendering.EnvironmentThemeController
+ import androidx.compose.ui.graphics.Color
++import com.google.android.filament.Camera
+ import com.google.android.filament.Colors
+ import com.google.android.filament.Engine
+ import com.google.android.filament.EntityManager
+ import com.google.android.filament.Filament
+ import com.google.android.filament.MaterialInstance
++import com.google.android.filament.Renderer
+ import com.google.android.filament.Skybox
++import com.google.android.filament.View as FilamentView
+ import com.google.android.filament.android.UiHelper
++import com.tamerslab.ar.ArBattlePresentation
++import com.tamerslab.ar.ArTrackingState
++import com.tamerslab.ar.arSceneCamera
++import com.tamerslab.ar.arSceneCameraPitch
++import com.tamerslab.ar.arSceneCameraYaw
+ import com.google.android.filament.gltfio.AssetLoader
+ import com.google.android.filament.gltfio.FilamentAsset
+ import com.google.android.filament.gltfio.ResourceLoader
+@@ -73,6 +81,12 @@ fun OfflineBattleScene(
+      * recomposition; [snapshot] keeps carrying the throttled UI-state snapshot.
+      */
+     sceneSnapshotFlow: StateFlow<BattleSnapshot?>? = null,
++    /**
++     * AR presentation: when non-null the scene becomes a transparent overlay whose camera is
++     * driven by the ARCore pose instead of the cinematic/orbit camera. Null keeps the regular
++     * opaque arena rendering and is the default so existing call sites are unaffected.
++     */
++    arPresentation: ArBattlePresentation? = null,
+ ) {
+     if (manifest == null) return
+     val backgroundColor = DeepPurpleBgAlt
+@@ -107,6 +121,7 @@ fun OfflineBattleScene(
+                     .onSuccess { scene ->
+                         sceneViewRef.value = scene
+                         scene.importantForAccessibility = android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO
++                        scene.setArPresentation(arPresentation)
+                         onCreated()
+                         host.addView(scene, FrameLayout.LayoutParams(
+                             ViewGroup.LayoutParams.MATCH_PARENT,
+@@ -126,6 +141,7 @@ fun OfflineBattleScene(
+         },
+         update = { host ->
+             val scene = host.getChildAt(0) as? OfflineBattleSceneView
++            scene?.setArPresentation(arPresentation)
+             scene?.setTheme(appTheme)
+             scene?.setRenderingEnabled(renderingEnabled)
+             scene?.setBattleState(
+@@ -225,11 +241,14 @@ class OfflineBattleSceneView(
+     /** (combatantId, setKey) pairs that failed to build; a new setKey always retries. */
+     private var failedFighterKeys = linkedSetOf<Pair<String, String>>()
+     private var arenaEnergyMaterial: MaterialInstance? = null
+-    private var arenaDomeMotion: ArenaDomeMotion? = null
+-    private var arenaDomeStartNanos = 0L
+     private var arenaVoxelGroups: List<ArenaVoxelMotion> = emptyList()
+     private var arenaVoxelCubes: List<ArenaVoxelMotion> = emptyList()
+     private var arenaVoxelStartNanos = 0L
++    /** AR overlay state; null keeps the regular opaque arena presentation. */
++    private var arPresentation: ArBattlePresentation? = null
++    /** Timestamp of the last ARCore camera frame applied, so repeated polls are cheap. */
++    private var arCameraAppliedNanos = 0L
++    private var arenaUsesRadarSkybox = false
+ 
+     private data class ArenaVoxelMotion(
+         val transformInstance: Int,
+@@ -240,12 +259,6 @@ class OfflineBattleSceneView(
+         val phase: Double,
+     )
+ 
+-    private data class ArenaDomeMotion(
+-        val transformInstance: Int,
+-        val base: FloatArray,
+-        val animated: FloatArray,
+-    )
+-
+     private data class RenderedFighter(
+         val asset: FilamentAsset,
+         val presentation: BattleFighterPresentation,
+@@ -272,16 +285,22 @@ class OfflineBattleSceneView(
+     private val frameCallback = object : Choreographer.FrameCallback {
+         override fun doFrame(frameTimeNanos: Long) {
+             if (released || !renderingEnabled) return
+-            updateCinematicCamera()
+-            if (latestSnapshot?.finisher == null) {
+-                updateAutomaticOrbit(frameTimeNanos)
+-                updateFocusedCameraTarget(frameTimeNanos)
++            if (arPresentation != null) {
++                // AR: the device pose owns the camera; orbit/focus/cinematic camera changes are
++                // skipped (finisher actors and effects keep animating below).
++                updateArCamera()
++                cameraDirty = false
++            } else {
++                updateCinematicCamera()
++                if (latestSnapshot?.finisher == null) {
++                    updateAutomaticOrbit(frameTimeNanos)
++                    updateFocusedCameraTarget(frameTimeNanos)
++                }
+             }
+-            updateArenaDomeMotion(frameTimeNanos)
+             updateArenaEmission(frameTimeNanos)
+             updateArenaVoxelMotion(frameTimeNanos)
+             projectionNotificationPending = projectionNotificationPending || cameraDirty
+-            applyCameraIfNeeded()
++            if (arPresentation == null) applyCameraIfNeeded()
+             syncFighters()
+             fighterPool.values.filter { it !in renderedFighters.values }.forEach(::hideFighter)
+             val poseTime = (latestSnapshot?.elapsedMillis ?: 0L) +
+@@ -347,11 +366,14 @@ class OfflineBattleSceneView(
+         isOpaque = false
+         setOnTouchListener { view, event ->
+             if (event.actionMasked == MotionEvent.ACTION_DOWN) performClick()
+-            when (event.actionMasked) {
+-                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN ->
+-                    view.parent?.requestDisallowInterceptTouchEvent(true)
+-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
+-                    view.parent?.requestDisallowInterceptTouchEvent(false)
++            // AR overlays must not steal drags from the Compose HUD; the camera is pose-driven.
++            if (arPresentation == null) {
++                when (event.actionMasked) {
++                    MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN ->
++                        view.parent?.requestDisallowInterceptTouchEvent(true)
++                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL ->
++                        view.parent?.requestDisallowInterceptTouchEvent(false)
++                }
+             }
+             handleCameraTouch(event)
+         }
+@@ -516,6 +538,107 @@ class OfflineBattleSceneView(
+         environmentThemes.setTheme(theme)
+     }
+ 
++    /**
++     * Switches between the regular opaque arena and the AR overlay presentation.
++     *
++     * The same Filament engine, scene and view are reused; only the backdrop (blend mode, clear
++     * colour, skybox), the arena occluders and the camera source change. Passing null restores
++     * the regular presentation so non-AR battles are unaffected.
++     */
++    fun setArPresentation(presentation: ArBattlePresentation?) {
++        if (released || arPresentation === presentation) return
++        val wasAr = arPresentation != null
++        arPresentation = presentation
++        val isAr = presentation != null
++        if (wasAr == isAr) return
++        arCameraAppliedNanos = 0L
++        if (isAr) {
++            applyArBackdrop(true)
++            // Apply the occluders again if the arena was loaded before AR was switched on.
++            viewer.asset?.let { arena -> hideArArenaOccluders(arena) }
++        } else {
++            applyArBackdrop(false)
++            cameraYaw = 0.0
++            cameraPitch = manifest?.cameraPitchRadians ?: 0.27
++            cameraDistance = manifest?.cameraDistance ?: 19.0
++            cameraTargetX = 0.0
++            cameraTargetZ = 0.0
++            cameraDirty = true
++            lastCameraFrameNanos = 0L
++            lastOrbitFrameNanos = 0L
++            manualOrbitResumeAtNanos = 0L
++        }
++    }
++
++    /** Camera feed as backdrop: translucent view, transparent clear colour, no skybox. */
++    private fun applyArBackdrop(ar: Boolean) {
++        if (ar) {
++            viewer.view.blendMode = FilamentView.BlendMode.TRANSLUCENT
++            viewer.scene.skybox = null
++            val options = Renderer.ClearOptions()
++            options.clearColor = doubleArrayOf(0.0, 0.0, 0.0, 0.0)
++            options.clear = true
++            options.discard = true
++            viewer.renderer.clearOptions = options
++        } else {
++            viewer.view.blendMode = FilamentView.BlendMode.OPAQUE
++            viewer.renderer.clearOptions = Renderer.ClearOptions()
++            viewer.scene.skybox = if (arenaUsesRadarSkybox) radarSkybox else backgroundSkybox
++        }
++    }
++
++    /**
++     * Applies the latest ARCore camera frame. While tracking is missing or paused the previous
++     * transform is kept, so a momentary tracking loss never snaps the camera elsewhere.
++     */
++    private fun updateArCamera() {
++        val presentation = arPresentation ?: return
++        val frame = presentation.cameraSource.latestFrame()?.camera ?: return
++        if (frame.tracking != ArTrackingState.TRACKING) return
++        if (frame.timestampNanos == arCameraAppliedNanos) return
++        arCameraAppliedNanos = frame.timestampNanos
++        val sceneCamera = arSceneCamera(frame, presentation.placement)
++        viewer.camera.setModelMatrix(sceneCamera.modelMatrix)
++        // The Filament viewport is the battle stage, which can differ from the camera image
++        // aspect (the stage is square); project with the stage aspect so the rendered geometry
++        // lines up with the cropped camera background.
++        val stageAspect = if (viewportWidth > 0 && viewportHeight > 0) {
++            viewportWidth.toFloat() / viewportHeight.toFloat()
++        } else {
++            sceneCamera.aspect
++        }
++        // Keep ModelViewer's lens fields coherent with the AR clip planes. They are only
++        // meaningful once the surface has a viewport (the setters re-project using it).
++        if (viewportWidth > 0 && viewportHeight > 0) {
++            if (viewer.cameraNear != sceneCamera.nearSceneUnits) viewer.cameraNear = sceneCamera.nearSceneUnits
++            if (viewer.cameraFar != sceneCamera.farSceneUnits) viewer.cameraFar = sceneCamera.farSceneUnits
++        }
++        viewer.camera.setProjection(
++            sceneCamera.fovYDegrees.toDouble(),
++            stageAspect.toDouble(),
++            sceneCamera.nearSceneUnits.toDouble(),
++            sceneCamera.farSceneUnits.toDouble(),
++            Camera.Fov.VERTICAL,
++        )
++        // Sprite fighters, impact billboards and finisher effects face the device camera.
++        cameraYaw = arSceneCameraYaw(sceneCamera).toDouble()
++        cameraPitch = arSceneCameraPitch(sceneCamera).toDouble()
++        effectCameraYaw = cameraYaw
++        effectCameraPitch = cameraPitch
++        projectionNotificationPending = true
++    }
++
++    /** The camera feed is the backdrop, so the arena dome and boundary ring are hidden. */
++    private fun hideArArenaOccluders(arena: FilamentAsset) {
++        val renderables = engine.renderableManager
++        for (name in AR_HIDDEN_NODES) {
++            val entity = arena.getFirstEntityByName(name)
++            if (entity == 0) continue
++            val instance = renderables.getInstance(entity)
++            if (instance != 0) renderables.setLayerMask(instance, 0xFF, 0)
++        }
++    }
++
+     private fun updateThemeBackdrop() {
+         val c = sceneTheme.palette.backgroundAlt
+         val linear = Colors.toLinear(Colors.RgbType.SRGB, c.red, c.green, c.blue)
+@@ -530,7 +653,6 @@ class OfflineBattleSceneView(
+         failedFighterKeys.clear()
+         arenaLoaded = false
+         arenaEnergyMaterial = null
+-        arenaDomeMotion = null
+         arenaVoxelGroups = emptyList()
+         arenaVoxelCubes = emptyList()
+         environmentThemes.clearEnvironment()
+@@ -541,6 +663,8 @@ class OfflineBattleSceneView(
+     }
+ 
+     fun resetCamera() {
++        // In AR the device pose owns the camera; there is nothing to recentre.
++        if (arPresentation != null) return
+         cameraYaw = 0.0
+         cameraPitch = manifest?.cameraPitchRadians ?: 0.27
+         cameraDistance = manifest?.cameraDistance ?: 19.0
+@@ -686,34 +810,29 @@ class OfflineBattleSceneView(
+         val dome = arena.getFirstEntityByName("Sphere001")
+         val renderables = engine.renderableManager
+         val isRadarArena = arena.getFirstEntityByName("RadarVoxelFragments") != 0
+-        viewer.scene.skybox = if (isRadarArena) radarSkybox else backgroundSkybox
+-        val transforms = engine.transformManager
+-        arenaDomeMotion = if (isRadarArena && dome != 0) {
+-            val transformInstance = transforms.getInstance(dome)
+-            if (transformInstance != 0) {
+-                val base = transforms.getTransform(transformInstance, FloatArray(16))
+-                ArenaDomeMotion(transformInstance, base, base.copyOf())
+-            } else null
+-        } else null
+-        arenaDomeStartNanos = 0L
+-        arenaEnergyMaterial = if (dome != 0 && renderables.hasComponent(dome)) {
++        arenaUsesRadarSkybox = isRadarArena
++        if (isRadarArena && dome != 0 && renderables.hasComponent(dome)) {
++            // The radar's enclosing sphere carries the RadarSkyDome mosaic; from inside it
++            // only cut a hard band across the horizon and hid the themed backdrop, so the
++            // radar scene now renders without it (the skybox is the whole backdrop).
++            renderables.setLayerMask(renderables.getInstance(dome), 0xFF, 0)
++        }
++        val arActive = arPresentation != null
++        // AR draws over the camera feed: no skybox, and no emissive environment pulse that
++        // would wash out the physical background.
++        viewer.scene.skybox = when {
++            arActive -> null
++            isRadarArena -> radarSkybox
++            else -> backgroundSkybox
++        }
++        arenaEnergyMaterial = if (!arActive && !isRadarArena && dome != 0 && renderables.hasComponent(dome)) {
+             val instance = renderables.getInstance(dome)
+             if (instance != 0 && renderables.getPrimitiveCount(instance) > 0) {
+                 renderables.getMaterialInstanceAt(instance, 0)
+                     .takeIf { it.material.hasParameter("emissiveFactor") }
+             } else null
+         } else null
+-    }
+-
+-    private fun updateArenaDomeMotion(frameTimeNanos: Long) {
+-        val dome = arenaDomeMotion ?: return
+-        if (arenaDomeStartNanos == 0L) arenaDomeStartNanos = frameTimeNanos
+-        val elapsed = (frameTimeNanos - arenaDomeStartNanos) / 1_000_000_000.0
+-        val yaw = (elapsed * RADAR_DOME_DRIFT_DEGREES_PER_SECOND).toFloat()
+-        Matrix.setIdentityM(arenaDomeDelta, 0)
+-        Matrix.rotateM(arenaDomeDelta, 0, yaw, 0f, 1f, 0f)
+-        Matrix.multiplyMM(dome.animated, 0, dome.base, 0, arenaDomeDelta, 0)
+-        engine.transformManager.setTransform(dome.transformInstance, dome.animated)
++        if (arActive) hideArArenaOccluders(arena)
+     }
+ 
+     private fun configureArenaVoxelMotion(arena: FilamentAsset) {
+@@ -757,6 +876,9 @@ class OfflineBattleSceneView(
+     }
+ 
+     private fun updateArenaVoxelMotion(frameTimeNanos: Long) {
++        // The AR overlay keeps the arena quiet so the camera feed stays readable; the transforms
++        // keep their last (or authored) values and resume untouched when AR is disabled.
++        if (arPresentation != null) return
+         if (arenaVoxelGroups.isEmpty() && arenaVoxelCubes.isEmpty()) return
+         if (arenaVoxelStartNanos == 0L) arenaVoxelStartNanos = frameTimeNanos
+         val elapsed = (frameTimeNanos - arenaVoxelStartNanos) / 1_000_000_000.0
+@@ -778,33 +900,17 @@ class OfflineBattleSceneView(
+     }
+ 
+     private fun updateArenaEmission(frameTimeNanos: Long) {
++        if (arPresentation != null) return
+         val elapsed = frameTimeNanos / 1_000_000_000.0
+         val pulse = (0.5 + 0.5 * kotlin.math.sin(elapsed * ARENA_ENERGY_PULSE_SPEED)).toFloat()
+-        val domeMotion = arenaDomeMotion
+-        if (domeMotion != null) {
+-            val slowPulse = (0.5 + 0.5 * kotlin.math.sin(
+-                elapsed * RADAR_DOME_SECONDARY_PULSE_SPEED + 1.15
+-            )).toFloat()
+-            val strength = RADAR_DOME_ENERGY_BASE +
+-                RADAR_DOME_ENERGY_AMPLITUDE * pulse +
+-                RADAR_DOME_SECONDARY_AMPLITUDE * slowPulse
+-            arenaEnergyMaterial?.let { if (environmentThemes.updateEmission(it, strength)) return }
+-            arenaEnergyMaterial?.setParameter(
+-                "emissiveFactor",
+-                0.68f * strength,
+-                0.68f * strength,
+-                0.68f * strength,
+-            )
+-        } else {
+-            val strength = ARENA_ENERGY_BASE + ARENA_ENERGY_AMPLITUDE * pulse
+-            arenaEnergyMaterial?.let { if (environmentThemes.updateEmission(it, strength)) return }
+-            arenaEnergyMaterial?.setParameter(
+-                "emissiveFactor",
+-                0.50f * strength,
+-                0.16f * strength,
+-                1.0f * strength,
+-            )
+-        }
++        val strength = ARENA_ENERGY_BASE + ARENA_ENERGY_AMPLITUDE * pulse
++        arenaEnergyMaterial?.let { if (environmentThemes.updateEmission(it, strength)) return }
++        arenaEnergyMaterial?.setParameter(
++            "emissiveFactor",
++            0.50f * strength,
++            0.16f * strength,
++            1.0f * strength,
++        )
+     }
+ 
+     private fun centerCameraOnFighter(fighterId: String): Boolean {
+@@ -845,6 +951,8 @@ class OfflineBattleSceneView(
+     }
+ 
+     private fun handleCameraTouch(event: MotionEvent): Boolean {
++        // In AR the orbit/zoom gestures would fight the device pose; only fighter taps survive.
++        if (arPresentation != null) return handleArSceneTouch(event)
+         if (latestSnapshot?.finisher != null) return true
+         when (event.actionMasked) {
+             MotionEvent.ACTION_DOWN -> {
+@@ -934,6 +1042,40 @@ class OfflineBattleSceneView(
+         return true
+     }
+ 
++    /**
++     * AR touch handling: the camera is the device pose, so no orbit/pinch is applied. Taps still
++     * resolve against the projected fighters so the HUD can select a target.
++     */
++    private fun handleArSceneTouch(event: MotionEvent): Boolean {
++        when (event.actionMasked) {
++            MotionEvent.ACTION_DOWN -> {
++                touchStartX = event.x
++                touchStartY = event.y
++                tapCandidate = true
++                return true
++            }
++            MotionEvent.ACTION_MOVE -> {
++                val touchSlop = 8f * resources.displayMetrics.density
++                if (abs(event.x - touchStartX) > touchSlop || abs(event.y - touchStartY) > touchSlop) {
++                    tapCandidate = false
++                }
++                return true
++            }
++            MotionEvent.ACTION_UP -> {
++                if (tapCandidate) {
++                    pickFighterAt(event.x, event.y)?.let { fighterId -> onFighterTapped?.invoke(fighterId) }
++                }
++                tapCandidate = false
++                return true
++            }
++            MotionEvent.ACTION_CANCEL -> {
++                tapCandidate = false
++                return true
++            }
++        }
++        return true
++    }
++
+     private fun pointerDistance(event: MotionEvent, first: Int, second: Int): Float {
+         val dx = event.getX(first) - event.getX(second)
+         val dy = event.getY(first) - event.getY(second)
+@@ -1384,12 +1526,12 @@ class OfflineBattleSceneView(
+     fun releaseScene() {
+         if (released) return
+         released = true
++        arPresentation = null
+         arenaLoadGeneration++
+         Choreographer.getInstance().removeFrameCallback(frameCallback)
+         releaseFighters()
+         arenaEnergyMaterial = null
+         environmentThemes.release()
+-        arenaDomeMotion = null
+         arenaVoxelGroups = emptyList()
+         arenaVoxelCubes = emptyList()
+         viewer.scene.skybox = null
+@@ -1404,7 +1546,6 @@ class OfflineBattleSceneView(
+             releaseFighters()
+             arenaEnergyMaterial = null
+             environmentThemes.release()
+-            arenaDomeMotion = null
+             arenaVoxelGroups = emptyList()
+             arenaVoxelCubes = emptyList()
+             viewer.scene.skybox = null
+@@ -1440,7 +1581,6 @@ class OfflineBattleSceneView(
+     }
+ 
+     private val arenaTransform = FloatArray(16)
+-    private val arenaDomeDelta = FloatArray(16)
+     private val fighterTransform = FloatArray(16)
+     private val impactTransform = FloatArray(16)
+     private val viewProjection = FloatArray(16)
+@@ -1456,11 +1596,8 @@ class OfflineBattleSceneView(
+         const val ARENA_ENERGY_PULSE_SPEED = 0.82
+         const val ARENA_ENERGY_BASE = 1.10f
+         const val ARENA_ENERGY_AMPLITUDE = 0.24f
+-        const val RADAR_DOME_DRIFT_DEGREES_PER_SECOND = 3.2
+-        const val RADAR_DOME_SECONDARY_PULSE_SPEED = 0.34
+-        const val RADAR_DOME_ENERGY_BASE = 0.48f
+-        const val RADAR_DOME_ENERGY_AMPLITUDE = 0.62f
+-        const val RADAR_DOME_SECONDARY_AMPLITUDE = 0.14f
++        /** Radar arena nodes that would occlude the camera feed in AR (dome and boundary ring). */
++        val AR_HIDDEN_NODES = listOf("Sphere001", "battle_boundary")
+         val nativeInitialized = AtomicBoolean(false)
+ 
+         fun ensureFilament() {

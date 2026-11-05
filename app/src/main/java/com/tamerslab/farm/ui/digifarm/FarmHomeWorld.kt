@@ -76,8 +76,8 @@ import kotlin.random.Random
 /**
  * The Digifarm is presentation only (owner revision, 2026-10-30).
  *
- * One home farm, no data model, no simulation: the active partner plus favourites wander the island
- * as pure animation. The owner controls how many appear and whether the diorama may draw card/VB
+ * One home farm, no data model, no simulation: the active partner plus the explicitly curated farm
+ * members wander the island as pure animation. The owner controls how many appear and whether the diorama may draw card/VB
  * artwork or Dot artwork.
  */
 private const val ROTATION_BUCKET_MILLIS = 3_600_000L
@@ -111,7 +111,9 @@ fun rememberFarmWorldController(): FarmWorldController {
         settled = true
     }
     val bucket = remember { System.currentTimeMillis() / ROTATION_BUCKET_MILLIS }
-    val candidates = remember(charactersState.value) { orderedFarmCandidates(charactersState.value) }
+    val candidates = remember(charactersState.value, prefs.farmMemberIds) {
+        orderedFarmCandidates(charactersState.value, prefs.farmMemberIds)
+    }
     val candidateKey = remember(candidates) { candidates.joinToString(",") { it.id.toString() } }
 
     // Artwork resolution hits SQLite and, for Dot sprites, the bundled pack: keep it off the UI thread
@@ -135,14 +137,37 @@ fun rememberFarmWorldController(): FarmWorldController {
     }
     val roster = rosterState.value
 
-    var followedRenderId by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(roster) {
-        if (roster.none { it.renderId == followedRenderId }) {
-            followedRenderId = roster.firstOrNull { it.isActivePartner }?.renderId
-                ?: roster.firstOrNull()?.renderId
-        }
+    // The follow choice is a persisted preference keyed by character id, so rotation or a roster
+    // refresh can never re-point it; only a deliberate follow changes it. While the chosen partner is
+    // not on screen the camera falls back to the leader, and it returns to the choice as soon as the
+    // partner is visible again.
+    val followedRenderId = remember(roster, prefs.followedCharacterId) {
+        val stored = prefs.followedCharacterId
+        val chosen = roster.firstOrNull { it.characterId == stored }
+            ?: roster.firstOrNull { it.isActivePartner }
+            ?: roster.firstOrNull()
+        chosen?.renderId
     }
 
+    val memberOptions = remember(charactersState.value, prefs.farmMemberIds) {
+        val participating = charactersState.value.filter { !it.isInAdventure }
+        val activeId = participating.firstOrNull { it.active }?.id
+        val explicit = prefs.farmMemberIds
+        val seeded = participating.filter { it.isFavorite }.map { it.id }.toSet()
+        val members = explicit ?: seeded
+        participating
+            .map { character ->
+                FarmMemberOption(
+                    characterId = character.id,
+                    name = character.nickname?.takeIf(String::isNotBlank)
+                        ?: character.speciesName?.takeIf(String::isNotBlank)
+                        ?: "Digimon",
+                    isMember = character.id == activeId || character.id in members,
+                    isActive = character.id == activeId,
+                )
+            }
+            .sortedWith(compareBy({ !it.isActive }, { it.name.lowercase() }))
+    }
     val summary = FarmWorldSummary(
         residents = roster,
         followedRenderId = followedRenderId,
@@ -150,13 +175,19 @@ fun rememberFarmWorldController(): FarmWorldController {
         residentLimit = prefs.residentLimit,
         spriteFilter = prefs.spriteFilter,
         candidateCount = candidates.size,
+        memberOptions = memberOptions,
     )
     val summaryState = rememberUpdatedState(summary)
+    val sceneSettled = remember { mutableStateOf(false) }
     val recenterSignal = remember { mutableIntStateOf(0) }
 
     return FarmWorldController(
         summary = summaryState,
-        setFollowTarget = { renderId -> followedRenderId = renderId },
+        setFollowTarget = { renderId ->
+            scope.launch {
+                preferences.setFollowCharacter(renderId?.removePrefix("farm-")?.toLongOrNull())
+            }
+        },
         recenterOnPartner = { recenterSignal.intValue = recenterSignal.intValue + 1 },
         setResidentLimit = { limit ->
             scope.launch { preferences.setResidentLimit(limit) }
@@ -164,6 +195,25 @@ fun rememberFarmWorldController(): FarmWorldController {
         setSpriteFilter = { filter ->
             scope.launch { preferences.setSpriteFilter(filter) }
         },
+        removeFromFarm = { characterId ->
+            scope.launch {
+                preferences.updateFarmMembers(
+                    favouriteIds = charactersState.value.filter { it.isFavorite }.map { it.id },
+                    remove = characterId,
+                )
+            }
+        },
+        setFarmMember = { characterId, member ->
+            scope.launch {
+                preferences.updateFarmMembers(
+                    favouriteIds = charactersState.value.filter { it.isFavorite }.map { it.id },
+                    add = if (member) characterId else null,
+                    remove = if (member) null else characterId,
+                )
+            }
+        },
+        sceneReady = sceneSettled,
+        notifySceneSettled = { sceneSettled.value = true },
         recenterRequests = recenterSignal,
     )
 }
@@ -171,15 +221,22 @@ fun rememberFarmWorldController(): FarmWorldController {
 /** Active partner first, then favourites (ordered by id so the selection is stable). */
 private fun orderedFarmCandidates(
     characters: List<CharacterDtos.CharacterWithSprites>,
+    memberIds: Set<Long>?,
 ): List<CharacterDtos.CharacterWithSprites> {
     val participating = characters.filter { !it.isInAdventure }
     val active = participating.firstOrNull { it.active }
-    val favourites = participating
-        .filter { it.isFavorite && it.id != active?.id }
-        .sortedBy { it.id }
+    // Membership is explicit. `null` means the owner has never curated the island, so it falls back to
+    // favourites once for continuity with the old behaviour; after the first edit, favourites have no
+    // influence on who lives here.
+    val members = if (memberIds != null) {
+        participating.filter { it.id in memberIds }
+    } else {
+        participating.filter { it.isFavorite }
+    }
+    val others = members.filter { it.id != active?.id }.sortedBy { it.id }
     return buildList {
         active?.let(::add)
-        addAll(favourites)
+        addAll(others)
     }
 }
 
@@ -198,6 +255,12 @@ internal suspend fun buildFarmRoster(
         val artwork = when (filter) {
             FarmSpriteFilter.MIXED, FarmSpriteFilter.VB_ONLY -> vbArtwork(character)
             FarmSpriteFilter.DOT_ONLY -> dotArtwork(character, dotLibrary)
+        // The leader is never filtered off the island by an artwork preference: if the chosen set has
+        // nothing for it, fall back to whichever artwork exists rather than dropping it.
+        } ?: if (character.active) {
+            vbArtwork(character) ?: dotArtwork(character, dotLibrary)
+        } else {
+            null
         }
         artwork?.let { character to it }
     }
@@ -359,6 +422,7 @@ fun FarmHomeWorld(
             },
             onAssetError = { sceneIssue = it },
             onResidentTap = onResidentTap,
+            onSceneSettled = { controller.notifySceneSettled() },
         )
         sceneIssue?.let { message ->
             Column(
@@ -389,7 +453,7 @@ fun FarmHomeWorld(
 
 /**
  * Cosmetic resident detail. The farm is not a management surface: no needs, activities, grouping or
- * transfers â€” just who this is and the two entry points that still make sense.
+ * transfers — just who this is and the two entry points that still make sense.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -399,6 +463,9 @@ fun FarmResidentSheet(
     onDismiss: () -> Unit,
     onOpenChat: (characterId: Long) -> Unit = {},
     onFollow: (renderId: String) -> Unit = {},
+    onSetActive: (characterId: Long) -> Unit = {},
+    onSwitchFromStorage: () -> Unit = {},
+    onRemoveFromFarm: () -> Unit = {},
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -448,6 +515,39 @@ fun FarmResidentSheet(
                         if (isFollowed) R.string.home_roster_followed else R.string.home_roster_follow
                     )
                 )
+            }
+            if (!resident.isActivePartner) {
+                VitalButton(
+                    onClick = {
+                        onSetActive(resident.characterId)
+                        onDismiss()
+                    },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                    style = VitalButtonStyle.SECONDARY,
+                ) {
+                    Text(stringResource(R.string.home_resident_set_active))
+                }
+            }
+            VitalButton(
+                onClick = {
+                    onDismiss()
+                    onSwitchFromStorage()
+                },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                style = VitalButtonStyle.SECONDARY,
+            ) {
+                Text(stringResource(R.string.home_resident_switch_storage))
+            }
+            if (!resident.isActivePartner) {
+                TextButton(
+                    onClick = {
+                        onDismiss()
+                        onRemoveFromFarm()
+                    },
+                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                ) {
+                    Text(stringResource(R.string.farm_resident_remove))
+                }
             }
             TextButton(
                 onClick = {

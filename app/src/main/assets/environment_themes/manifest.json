@@ -25,25 +25,27 @@
     },
     "vb_arena": {
       "light": true,
-      "floor": "#EFF3F0",
-      "panel": "#E3EAE5",
-      "elevated": "#F8FCF9",
-      "structureDark": "#A6B5AC",
-      "structureLight": "#F5FAF7",
-      "grid": "#7C9588",
+      "floor": "#D6D9D6",
+      "panel": "#0B0D0C",
+      "elevated": "#E6EAE7",
+      "structureDark": "#121514",
+      "structureLight": "#C6CCCA",
+      "grid": "#3A423E",
       "energy": "#24E88A",
-      "secondaryEnergy": "#007648"
+      "secondaryEnergy": "#24E88A",
+      "boundary": "#067A47"
     },
     "digimon_net": {
       "light": true,
-      "floor": "#F1F5FF",
-      "panel": "#D9E3FA",
-      "elevated": "#F6F8FF",
-      "structureDark": "#91A5CB",
-      "structureLight": "#F7F9FF",
-      "grid": "#6883B5",
-      "energy": "#1251D0",
-      "secondaryEnergy": "#F6FF00"
+      "floor": "#D7DAE0",
+      "panel": "#0B0C10",
+      "elevated": "#E7EAF1",
+      "structureDark": "#13151A",
+      "structureLight": "#C7CBD4",
+      "grid": "#3B404A",
+      "energy": "#3E7BF0",
+      "secondaryEnergy": "#F6FF00",
+      "boundary": "#1251D0"
     }
   },
   "scenes": {
@@ -113,7 +115,7 @@
               ],
               "textures": {
                 "emissiveMap": {
-                  "asset": "environment_themes/textures/4c48ad56aaead6bb9fd36e5bd1bb482bfde71fe2e6fa031462cd2a269384d6ec.png",
+                  "asset": "environment_themes/textures/dcd65475a493b084cc79e2c7e6333311a8554492af435a537313e3d6c519ba45.png",
                   "wrapS": 10497,
                   "wrapT": 10497,
                   "minFilter": 9987,
@@ -135,7 +137,7 @@
               ],
               "textures": {
                 "emissiveMap": {
-                  "asset": "environment_themes/textures/37e1da00763a25b9b2a0c58ba4cf880641d5842f115a217647f0ac00c8b9c262.png",
+                  "asset": "environment_themes/textures/81693f7c6b92ba3a3974a8c42a7baf4f06fa4481ba3cfd044dc3f2f7ea721c10.png",
                   "wrapS": 10497,
                   "wrapT": 10497,
                   "minFilter": 9987,
@@ -147,7 +149,7 @@
         },
         {
           "name": "island_side_baked",
-          "role": "structure",
+          "role": "cliff",
           "variants": {
             "vb_helper": {
               "baseColorFactor": [
@@ -221,14 +223,14 @@
               ],
               "textures": {
                 "baseColorMap": {
-                  "asset": "environment_themes/textures/4ad97708934a3ea4cdc1cce9d88a53b7a0c83f10eb66b5957784e4cad0e27bc0.png",
+                  "asset": "environment_themes/textures/a7eaeb12b1bc160a8dc18f49efad974464b0e1eea5485325920daa87fd6a30c2.png",
                   "wrapS": 10497,
                   "wrapT": 33071,
                   "minFilter": 9987,
                   "magFilter": 9729
                 },
                 "emissiveMap": {
-                  "asset": "environment_themes/textures/4ad97708934a3ea4cdc1cce9d88a53b7a0c83f10eb66b5957784e4cad0e27bc0.png",
+                  "asset": "environment_themes/textures/a7eaeb12b1bc160a8dc18f49efad974464b0e1eea5485325920daa87fd6a30c2.png",
                   "wrapS": 10497,
                   "wrapT": 33071,
                   "minFilter": 9987,
@@ -250,14 +252,14 @@
               ],
               "textures": {
                 "baseColorMap": {
-                  "asset": "environment_themes/textures/3ccdbdc803e2c72109f697a2012f397e2ce6c0aaabc44d1930869b4d533ff5c7.png",
+                  "asset": "environment_themes/textures/b57830e5db9c17db7d02fc1bff1fa3bca2ec7cb97111cd91db8bceaaba9a3c27.png",
                   "wrapS": 10497,
                   "wrapT": 33071,
                   "minFilter": 9987,
                   "magFilter": 9729
                 },
                 "emissiveMap": {
-                  "asset": "environment_themes/textures/3ccdbdc803e2c72109f697a2012f397e2ce6c0aaabc44d1930869b4d533ff5c7.png",
+                  "asset": "environment_themes/textures/b57830e5db9c17db7d02fc1bff1fa3bca2ec7cb97111cd91db8bceaaba9a3c27.png",
                   "wrapS": 10497,
                   "wrapT": 33071,
                   "minFilter": 9987,
@@ -329,7 +331,7 @@
               ],
               "textures": {
                 "emissiveMap": {
-                  "asset": "environment_themes/textures/b299b6257d12fb2e102f6b482d908dbc09fe27dbee9e48028379f2ba670d23ed.png",
+                  "asset": "environment_themes/textures/c519bfd3b044d3c02cdbb1681241f11a3f1e53f0f9204a884e6f29f0fc20ba4a.png",
                   "wrapS": 10497,
                   "wrapT": 10497,
                   "minFilter": 9987,
@@ -351,7 +353,7 @@
               ],
               "textures": {
                 "emissiveMap": {
-                  "asset": "environment_themes/textures/735a1196bb3e952ba51058a3db195d7d647382df768e5b188ed40f3636b48b66.png",
+                  "asset": "environment_themes/textures/6439fed63b5c7cd5b6e2b5c0dd8524c717885144576609331760d0522a18bcba.png",
                   "wrapS": 10497,
                   "wrapT": 10497,
                   "minFilter": 9987,
@@ -423,7 +425,7 @@
               ],
               "textures": {
                 "emissiveMap": {
-                  "asset": "environment_themes/textures/b51864417dfad65a241c99de6d5f7bddc8cda14d27e3b6d0e9d494aad5dcc578.png",
+                  "asset": "environment_themes/textures/cee7af8fe4914b65916a2d724381ac5af433b77fc68736801c4a01897d1a0d40.png",
                   "wrapS": 10497,
                   "wrapT": 10497,
                   "minFilter": 9987,
@@ -445,7 +447,7 @@
               ],
               "textures": {
                 "emissiveMap": {
-                  "asset": "environment_themes/textures/39e344c8597b9282d8c99d2cbcef1a96c055522039881a18aaa0458c2819f73e.png",
+                  "asset": "environment_themes/textures/fe469b7803b719393c261093fe621b4b4ce2e25f89a12891ac747ca4be732580.png",
                   "wrapS": 10497,
                   "wrapT": 10497,
                   "minFilter": 9987,
@@ -523,7 +525,7 @@
               ],
               "textures": {
                 "baseColorMap": {
-                  "asset": "environment_themes/textures/081a706b479c3a1a317a40dbb7651b40bbd9da311fecd607ef6b1c7ba2158fc0.png",
+                  "asset": "environment_themes/textures/f96002a327d49f7849cfad73ada208447f0da9addb70d28dac6c6d9a41a6fa6f.png",
                   "wrapS": 10497,
                   "wrapT": 10497,
                   "minFilter": 9987,
@@ -545,7 +547,7 @@
               ],
               "textures": {
                 "baseColorMap": {
-                  "asset": "environment_themes/textures/ce1cb68551cfc50016c532c975ea73233d4e854b0f001a9fe5ba8e5fd31853f1.png",
+                  "asset": "environment_themes/textures/938af70c958706df2e1bbc1a4726361700871577d3795f7317642a90e9d2a0fc.png",
                   "wrapS": 10497,
                   "wrapT": 10497,
                   "minFilter": 9987,
@@ -631,14 +633,14 @@
               ],
               "textures": {
                 "baseColorMap": {
-                  "asset": "environment_themes/textures/9628a20ebdc031030740cf313f0471fe9567629033344e71bd5eb0ee8f446b10.png",
+                  "asset": "environment_themes/textures/8a7a9a8d9f8d75ad3d5e9c463ca82c128b5f95f23dd1ae134e701573a0f3680c.png",
                   "wrapS": 10497,
                   "wrapT": 10497,
                   "minFilter": 9987,
                   "magFilter": 9729
                 },
                 "emissiveMap": {
-                  "asset": "environment_themes/textures/52a682edfab5daa57690b941db2498adfb734d98c3f18588f6adda08f0ba8659.png",
+                  "asset": "environment_themes/textures/8944c1e9edc7fbd8bb568904a207a544c4ba42603379f9330afa1abd83ba0b49.png",
                   "wrapS": 10497,
                   "wrapT": 10497,
                   "minFilter": 9987,
@@ -660,14 +662,14 @@
               ],
               "textures": {
                 "baseColorMap": {
-                  "asset": "environment_themes/textures/3d7dfb69d28e9fe03a360eccecd0a26b79f62bccdbca8a5b1a88fc3f3ab407b1.png",
+                  "asset": "environment_themes/textures/fc025377535cea745cd9a817ca144ae0b39c15f81ff94638f06d9483d0343461.png",
                   "wrapS": 10497,
                   "wrapT": 10497,
                   "minFilter": 9987,
                   "magFilter": 9729
                 },
                 "emissiveMap": {
-                  "asset": "environment_themes/textures/c05940a139b3b326c242c3067d03aecb57de8ec57e5cfe647e40876bfe6e445a.png",
+                  "asset": "environment_themes/textures/f67f48de7a2e933b065adb646f759295098f1488f0deab0496fa59ce341ca17d.png",
                   "wrapS": 10497,
                   "wrapT": 10497,
                   "minFilter": 9987,
@@ -717,9 +719,9 @@
             },
             "vb_arena": {
               "baseColorFactor": [
-                0.8631572134541023,
-                0.8962693533742664,
-                0.8713671191987972,
+                0.6724431569576875,
+                0.6938717612919899,
+                0.6724431569576875,
                 1.0
               ],
               "emissiveFactor": [
@@ -731,9 +733,9 @@
             },
             "digimon_net": {
               "baseColorFactor": [
-                0.8796223968878317,
-                0.9130986517934192,
-                1.0,
+                0.6795424696330938,
+                0.7011018919329731,
+                0.7454042095403874,
                 1.0
               ],
               "emissiveFactor": [
@@ -779,9 +781,9 @@
             },
             "vb_arena": {
               "baseColorFactor": [
-                0.20155625379439707,
-                0.3005437944157765,
-                0.24620132670783548,
+                0.042311410620809675,
+                0.05448027644244237,
+                0.04817182422688942,
                 0.72
               ],
               "emissiveFactor": [
@@ -793,9 +795,9 @@
             },
             "digimon_net": {
               "baseColorFactor": [
-                0.13843161503245183,
-                0.22696587351009836,
-                0.4620769996544071,
+                0.043735029256973465,
+                0.05126945837404324,
+                0.06847816984440017,
                 0.72
               ],
               "emissiveFactor": [
@@ -841,9 +843,9 @@
             },
             "vb_arena": {
               "baseColorFactor": [
-                0.017641954488384078,
-                0.8069522576692516,
-                0.25415209433082675,
+                0.001821161901293025,
+                0.1946178304415758,
+                0.06301001765316767,
                 0.65
               ],
               "emissiveFactor": [
@@ -931,7 +933,7 @@
               ],
               "textures": {
                 "baseColorMap": {
-                  "asset": "environment_themes/textures/011b80568b947e35064c175363a359e101ab3b12395fb737166ac0617a5ea52a.png",
+                  "asset": "environment_themes/textures/699df979eadd83a55df2ae73b9419fb19ebb5eaa19bbfcbd5975adab07b7d330.png",
                   "wrapS": 33071,
                   "wrapT": 33071,
                   "minFilter": 9729,
@@ -953,7 +955,7 @@
               ],
               "textures": {
                 "baseColorMap": {
-                  "asset": "environment_themes/textures/bbaf5e5fc41fe126b29fb21b55236f2c3e90dc27cf6076f01823d547c2ab308c.png",
+                  "asset": "environment_themes/textures/47b0f848454c3e8db0f7da36ca18bf1e23dd2754b2f224a65d9046dad967aa52.png",
                   "wrapS": 33071,
                   "wrapT": 33071,
                   "minFilter": 9729,
@@ -1025,7 +1027,7 @@
               ],
               "textures": {
                 "baseColorMap": {
-                  "asset": "environment_themes/textures/89b55240f7696165fb8cb0936c6654eec8c8fc6ceff7bd2764c60d92f3f9d786.png",
+                  "asset": "environment_themes/textures/25ccf9cda6c80bfef3a7d8f88d69ac7c019d70d96663da020021a639d3efd6db.png",
                   "wrapS": 33071,
                   "wrapT": 33071,
                   "minFilter": 9729,
@@ -1047,7 +1049,7 @@
               ],
               "textures": {
                 "baseColorMap": {
-                  "asset": "environment_themes/textures/1f9e89ae4281a1e157424b779813dbeba993713306feda1c038421cfa424d570.png",
+                  "asset": "environment_themes/textures/cb22d21b67092a2e4f2c99930949f0a39cddfcc617fff8483722d1be67851fe2.png",
                   "wrapS": 33071,
                   "wrapT": 33071,
                   "minFilter": 9729,
@@ -1133,14 +1135,14 @@
               ],
               "textures": {
                 "baseColorMap": {
-                  "asset": "environment_themes/textures/bf69fcd8ff4d19104aba19198a0a7f6a784710e9c2555d1915b7893b2b815e65.png",
+                  "asset": "environment_themes/textures/8b7732ac526df1e226eabf60545ade0e7ad39ad0283745671d1755ccb493de67.png",
                   "wrapS": 10497,
                   "wrapT": 10497,
                   "minFilter": 9987,
                   "magFilter": 9729
                 },
                 "emissiveMap": {
-                  "asset": "environment_themes/textures/866c41df5b625702b8ce708ee56102b7127553b37bc98e460d83abca36a0b8b2.png",
+                  "asset": "environment_themes/textures/43dbba09fb708c4ef44dd522254f6010f4f4e4d10ed3cd4682e38587fc6c48d0.png",
                   "wrapS": 10497,
                   "wrapT": 10497,
                   "minFilter": 9987,
@@ -1162,14 +1164,14 @@
               ],
               "textures": {
                 "baseColorMap": {
-                  "asset": "environment_themes/textures/82f91d92560ab22239d4b249c622b9c3ff918e5fe5afae66c7943136af3cd4b3.png",
+                  "asset": "environment_themes/textures/bfb70b381a619e88ecdb7703463644694b7c3e2517be5b23e71f8168f79570f4.png",
                   "wrapS": 10497,
                   "wrapT": 10497,
                   "minFilter": 9987,
                   "magFilter": 9729
                 },
                 "emissiveMap": {
-                  "asset": "environment_themes/textures/9465fe7f64d3e2b74033f105764dd2d2b158692da8df55e0ad8cf039422a219c.png",
+                  "asset": "environment_themes/textures/a540517439d0d6cdab8790b8400475d3e1575e4f0a69c0d97b3a851822fa177b.png",
                   "wrapS": 10497,
                   "wrapT": 10497,
                   "minFilter": 9987,

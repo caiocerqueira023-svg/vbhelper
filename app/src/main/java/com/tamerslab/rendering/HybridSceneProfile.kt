@@ -2,7 +2,7 @@ package com.tamerslab.rendering
 
 import com.google.android.filament.View
 
-internal enum class HybridSceneKind { BATTLE, DIGIFARM, RADAR_FP }
+internal enum class HybridSceneKind { BATTLE, DIGIFARM, RADAR_FP, RADAR_ISO }
 
 internal data class HybridSceneProfile(
     val bloomStrength: Float,
@@ -29,6 +29,9 @@ internal fun hybridSceneProfile(kind: HybridSceneKind): HybridSceneProfile = whe
         ambientOcclusionIntensity = 0.58f,
     )
     HybridSceneKind.RADAR_FP -> HybridSceneProfile(0.22f, false, 0.18f, 1f, 0.5f)
+    // The isometric radar reads under a compass/vignette overlay, so bloom stays restrained and
+    // depth cues come from the authored plate instead of an AO pass that would fringe sprite edges.
+    HybridSceneKind.RADAR_ISO -> HybridSceneProfile(0.24f, false, 0.18f, 1f, 0.5f)
 }
 
 /**

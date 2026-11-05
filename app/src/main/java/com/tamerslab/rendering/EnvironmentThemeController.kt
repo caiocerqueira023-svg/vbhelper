@@ -142,8 +142,13 @@ internal class EnvironmentThemeController(context: Context, private val engine: 
             val bindings = materialInstances.mapNotNull { instance ->
                 definitions[instance.name]?.let { instance to it.variant(prepared.theme) }
             }
-            check(prepared.scene == null || definitions.keys == bindings.map { it.first.name }.toSet()) {
-                "Environment material names changed: expected ${definitions.keys}, found ${materialInstances.map { it.name }}"
+            // Derived scene assets (for example the Radar place's plate, which drops the battle
+            // props from the authored radar arena) expose a subset of the authored materials. Every
+            // material instance the asset has must be a known scene material; extra definitions are
+            // simply unused so the derived asset still receives the authored theme.
+            check(prepared.scene == null || materialInstances.all { it.name in definitions.keys }) {
+                "Environment material names changed: expected ${definitions.keys}, " +
+                    "found ${materialInstances.map { it.name }}"
             }
             for ((instance, variant) in bindings) for (parameter in variant.textures.keys) {
                 check(instance.material.hasParameter(parameter)) { "${instance.name} has no $parameter" }

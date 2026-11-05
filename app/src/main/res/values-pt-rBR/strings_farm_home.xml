@@ -42,4 +42,18 @@
     <string name="home_farm_showing">mostrando %1$d de %2$d</string>
     <string name="home_farm_increase">Mais Digimon</string>
     <string name="home_farm_decrease">Menos Digimon</string>
+    <string name="home_resident_set_active">Definir como ativo</string>
+    <string name="home_resident_switch_storage">Trocar por um do Storage</string>
+    <string name="farm_resident_remove">Remover da Digifarm</string>
+    <string name="home_roster_members_title">Parceiros da Digifarm</string>
+    <string name="home_roster_members_hint">Toque em um parceiro para colocá-lo na ilha ou tirá-lo.</string>
+    <string name="home_roster_in_farm">Na Digifarm</string>
+    <string name="home_roster_in_storage">No Storage</string>
+    <string name="home_roster_add_member">Adicionar membro</string>
+    <string name="home_roster_pick_title">Escolha um parceiro</string>
+    <string name="home_roster_pick_empty">Todos os parceiros guardados já estão na ilha.</string>
+    <string name="home_roster_pick_back">Voltar para a Digifarm</string>
+    <string name="place_dex">Dex</string>
+    <string name="place_dex_subtitle">Coleção</string>
+    <string name="digiline_start_chat">Começar uma conversa</string>
 </resources>

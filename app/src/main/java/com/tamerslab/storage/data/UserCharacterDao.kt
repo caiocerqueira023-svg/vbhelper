@@ -282,6 +282,9 @@ interface UserCharacterDao {
         setActiveCharacter(id)
     }
 
+    @Query("SELECT id FROM UserCharacter WHERE isFavorite = 1")
+    suspend fun favouriteCharacterIds(): List<Long>
+
     @Query("UPDATE UserCharacter SET isFavorite = :isFavorite WHERE id = :id")
     fun setFavorite(id: Long, isFavorite: Boolean)
 

@@ -26,6 +26,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -44,6 +45,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.tamerslab.R
@@ -55,6 +58,8 @@ import com.tamerslab.components.rememberCollectionLoad
 import com.tamerslab.components.CollectionStatePanel
 import com.tamerslab.components.CollectionRefreshNotice
 import com.tamerslab.di.TamersLabApplication
+import com.tamerslab.dtos.CharacterDtos
+import com.tamerslab.farm.ui.digiline.DigilinePin
 import com.tamerslab.dtos.DigilineFarmThread
 import com.tamerslab.dtos.DigilineStorageThread
 import com.tamerslab.dtos.DigilineWildThread
@@ -80,6 +85,17 @@ fun DigilineScreen(navController: NavController) {
     val wild = wildLoad.data.orEmpty()
     val farms = farmsLoad.data.orEmpty()
     var tab by rememberSaveable { mutableIntStateOf(0) }
+    // One-shot pin from Home: the conversation of the partner the visitor was just looking at.
+    var pinnedId by remember { mutableStateOf<Long?>(null) }
+    var pinnedCharacter by remember { mutableStateOf<CharacterDtos.CharacterWithSprites?>(null) }
+    val storageRepository = remember(app) { com.tamerslab.storage.data.StorageRepository(app.container.db) }
+    LaunchedEffect(Unit) { pinnedId = DigilinePin.consume() }
+    LaunchedEffect(pinnedId) {
+        val id = pinnedId ?: return@LaunchedEffect
+        pinnedCharacter = withContext(Dispatchers.IO) {
+            runCatching { storageRepository.getSingleCharacter(id) }.getOrNull()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -100,8 +116,31 @@ fun DigilineScreen(navController: NavController) {
             if (!CollectionStatePanel(activeLoad)) Column(Modifier.fillMaxSize()) {
             CollectionRefreshNotice(activeLoad)
             when (tab) {
-                0 -> ThreadList(storage, stringResource(R.string.ui_digiline_empty_storage)) { thread ->
-                    navController.navigate(AppRoute.Chat(thread.characterId))
+                0 -> {
+                    // The pinned partner leads the list even before it has a thread of its own.
+                    val pinnedThread = pinnedId?.let { id -> storage.firstOrNull { it.characterId == id } }
+                    val pinnedRow = pinnedThread ?: pinnedCharacter?.let { character ->
+                        DigilineStorageThread(
+                            characterId = character.id,
+                            individualId = "pinned-${character.id}",
+                            nickname = character.nickname,
+                            speciesName = character.speciesName,
+                            spriteIdle = character.spriteIdle,
+                            spriteWidth = character.spriteWidth,
+                            spriteHeight = character.spriteHeight,
+                            lastMessage = stringResource(R.string.digiline_start_chat),
+                            lastTimestamp = null,
+                            unreadCount = 0,
+                        )
+                    }
+                    val ordered = if (pinnedRow == null) {
+                        storage
+                    } else {
+                        listOf(pinnedRow) + storage.filterNot { it.characterId == pinnedRow.characterId }
+                    }
+                    ThreadList(ordered, stringResource(R.string.ui_digiline_empty_storage)) { thread ->
+                        navController.navigate(AppRoute.Chat(thread.characterId))
+                    }
                 }
                 1 -> WildThreadList(wild, stringResource(R.string.ui_digiline_empty_wild)) { thread ->
                     navController.navigate(AppRoute.WildContact(thread.individualId, thread.cardCharacterId))

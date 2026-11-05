@@ -433,6 +433,7 @@
     <string name="ui_world_grid_instruction">グリッドの1マスは約60mです。</string>
     <string name="ui_world_zoom_instruction">地図上で2本指のピンチ操作でズームできます。</string>
     <string name="ui_world_compass_instruction">N・E・S・Wの矢印はコンパスのようにプレイヤーの周りを回ります。</string>
+    <string name="ui_world_compass_nearest">最寄りのデジモン: %1$s</string>
     <string name="ui_world_zoom_label">ズーム %1$d%%</string>
     <string name="ui_world_debug_spawn_button">DEBUG: ランダムなデジモンを出現 (20 m)</string>
     <string name="ui_world_debug_any_distance">DEBUG: どの距離からでも交流する</string>
@@ -477,6 +478,17 @@
     <string name="ui_world_spawn_dim_species_title">%1$sのデジモン</string>
     <string name="ui_world_spawn_dim_species_empty">このDiMにはデジモンがいません。</string>
     <string name="ui_world_spawn_dim_species_fallback">デジモン %1$d</string>
+
+    <!-- レーダーのフローティングUIとオプションシート。3ロケールを同期してください。 -->
+    <string name="ui_world_options_title">レーダーの設定</string>
+    <string name="ui_world_options_display">表示</string>
+    <string name="ui_world_options_battles">バトル</string>
+    <string name="ui_world_options_legacy">クラシック表示</string>
+    <string name="ui_world_options_technical">テクニカル</string>
+    <string name="ui_world_mode_iso">アイソメトリック</string>
+    <string name="ui_world_spawn_settings">出現設定</string>
+    <string name="ui_world_zoom_reset">ズームをリセット</string>
+    <string name="ui_world_interaction_available">インタラクションあり</string>
 
     <string-array name="world_cardinal_directions_8">
         <item>北</item><item>北東</item><item>東</item><item>南東</item>
@@ -997,4 +1009,48 @@
     <string name="storage_debug_add_failure">このデジモンをストレージに追加できませんでした。</string>
     <string name="transfer_send_no_species">このパートナーの種族はまだゲームのリストにないため、ワールドDSのレコードを作成できません。</string>
     <string name="transfer_send_destination_full">このセーブにはパーティまたはレコードの空きがありません。ゲーム内で枠を空けてから更新してください。</string>
+    <!-- AR battle placement + stage (ar-placement task). Keep the three locales in sync. -->
+    <string name="ar_battle_toggle">ARバトル</string>
+    <string name="ar_battle_toggle_description">アリーナをサーフェスに配置し、カメラ越しにバトルを楽しみます。</string>
+    <string name="ar_battle_badge">AR</string>
+    <string name="ar_battle_scan_instruction">スマートフォンをテーブルや床に向けて静止してください</string>
+    <string name="ar_battle_scan_hold">サーフェスを検出しました。そのまま静止してください。バトルを開始します...</string>
+    <string name="ar_battle_scan_starting">バトルを開始しています...</string>
+    <string name="ar_battle_scan_fallback">サーフェスが見つかりません。バトルを目の前に配置します...</string>
+    <string name="ar_battle_scan_hint">スマートフォンをサーフェスの上でゆっくり左右に動かすと検出しやすくなります</string>
+    <string name="ar_battle_instructions_scan">テーブルや床の上でスマートフォンをゆっくり動かしてください。サーフェスが見つかるとバトルが自動で始まります</string>
+    <string name="ar_battle_instructions_adjust">ドラッグで回転、ピンチでサイズ変更してからバトルを配置します</string>
+    <string name="ar_battle_scale_label">アリーナサイズ</string>
+    <string name="ar_battle_arena_size">%1$s m のアリーナ</string>
+    <string name="ar_battle_arena_size_unknown">サーフェスをタップしてアリーナのサイズを決めます</string>
+    <string name="ar_battle_no_hit">ここにはサーフェスがありません。別の場所を試してください</string>
+    <string name="ar_battle_no_surface">サーフェスがまだ見つかりません。明るい場所でテーブルや床の上でスマートフォンをゆっくり動かしてください</string>
+    <string name="ar_battle_surface_found">サーフェスを検出しました。タップでアリーナを移動し、バトルを配置してください</string>
+    <string name="ar_battle_place_manual">サーフェスがない場合は目の前に配置</string>
+    <string name="ar_battle_tracking_paused">トラッキングが一時停止しました。スマートフォンをサーフェスに向けてください</string>
+    <string name="ar_battle_tracking_lost">トラッキングが失われました。スマートフォンをゆっくり動かしてください</string>
+    <string name="ar_battle_too_dark">暗すぎます。明るい場所に移動してください</string>
+    <string name="ar_battle_move_slower">動きが速すぎます。スマートフォンをゆっくり動かしてください</string>
+    <string name="ar_battle_find_texture">模様が少なすぎます。テーブルの端や床など、模様のある面に向けてください</string>
+    <string name="ar_battle_plan_auto">自動</string>
+    <string name="ar_battle_plan_tabletop">テーブル</string>
+    <string name="ar_battle_plan_room">部屋</string>
+    <string name="ar_battle_plan_open_space">オープンスペース</string>
+    <string name="ar_battle_place">バトルを配置</string>
+    <string name="ar_battle_back">戻る</string>
+    <string name="ar_battle_permission_title">カメラへのアクセスが必要です</string>
+    <string name="ar_battle_permission_rationale">ARバトルではカメラを使って、周囲のサーフェスにアリーナを配置します。</string>
+    <string name="ar_battle_permission_denied">カメラへのアクセスが拒否されました。ARで戦うには許可するか、通常のバトルを選んでください。</string>
+    <string name="ar_battle_permission_grant">カメラを許可</string>
+    <string name="ar_battle_unavailable_title">ARは利用できません</string>
+    <string name="ar_battle_unavailable_message">この端末はARバトルに対応していません。通常のバトルで戦ってください。</string>
+    <string name="ar_battle_install_title">ARCoreが必要です</string>
+    <string name="ar_battle_install_message">ARバトルにはGoogle Play開発者サービス（AR）のインストールが必要です。</string>
+    <string name="ar_battle_install_action">インストール</string>
+    <string name="ar_battle_fight_normally">通常のバトルで戦う</string>
+    <string name="ar_battle_starting_camera">カメラを起動しています...</string>
+    <string name="ar_battle_loading_scene">ARバトルを準備しています...</string>
+    <string name="app_loading">読み込み中…</string>
+    <string name="farm_swap_pick_title">新しいパートナーを選ぶ</string>
+    <string name="farm_swap_pick_body">%1$s の代わりにディジファームへ置く個体を選んでください。</string>
 </resources>

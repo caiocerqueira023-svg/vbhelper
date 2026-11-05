@@ -85,6 +85,8 @@ class WorldRepository(private val db: AppDatabase,
     /** Resolve bundled artwork before entering the Radar coordinator's database transaction. */
     suspend fun prepareSpawns() {
         db.expandedCatalog?.ensureReadyDefinitions()
+        // Clean encounters that would otherwise render as the placeholder marker forever.
+        spawnDao.deletePlaceholderSpawns()
     }
 
     suspend fun ensureSpawnsForBiome(latitude: Double, longitude: Double, biome: WorldBiome) {
@@ -189,6 +191,8 @@ class WorldRepository(private val db: AppDatabase,
             WorldSpawnSelector.selectCharacter(
                 characters = db.characterDao().getCharactersForWorldSpawns(), speciesNames = speciesNames)
         } ?: return null
+        // Placeholder-art characters are data markers, not Digimon; they must never spawn in the world.
+        if (character.spriteId == com.tamerslab.species.PlaceholderSprite.ID.toLong()) return null
         val now = clock()
         interactions.reconcileLocked()
         spawnDao.deleteExpired(now)
@@ -255,6 +259,7 @@ class WorldRepository(private val db: AppDatabase,
         // them without being able to replace them.
         val loadedCharacters = (db.characterDao().getCharactersForWorldSpawns() + db.characterDao().getCatalogDefinitions())
             .distinctBy { it.speciesId ?: it.id.toString() }
+            .filter { it.spriteId != com.tamerslab.species.PlaceholderSprite.ID.toLong() }
         if (loadedCharacters.isEmpty()) return
         val speciesNames = db.speciesProfileDao().getAll().associate { profile ->
             profile.cardCharacterId to (profile.matchedName ?: profile.speciesName)

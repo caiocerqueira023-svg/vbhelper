@@ -1,0 +1,204 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/C:/Users/julye/.gradle/wrapper/dists/gradle-9.6.1-bin/4ticwg1pgcbps2hj28r8so764/gradle-9.6.1/lib/native-platform-0.22-milestone-29.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+
+> Configure project :app
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :baselineprofile
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :benchmark
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :hardware
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Task :game-save-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :game-save-core:compileKotlin UP-TO-DATE
+> Task :game-save-core:compileJava NO-SOURCE
+> Task :game-save-core:processResources NO-SOURCE
+> Task :game-save-core:classes UP-TO-DATE
+> Task :game-save-core:jar UP-TO-DATE
+> Task :companion-protocol:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :companion-protocol:compileKotlin UP-TO-DATE
+> Task :companion-protocol:compileJava NO-SOURCE
+> Task :companion-protocol:processResources NO-SOURCE
+> Task :companion-protocol:classes UP-TO-DATE
+> Task :companion-protocol:jar UP-TO-DATE
+> Task :hardware-dim:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :hardware-dim:compileKotlin UP-TO-DATE
+> Task :hardware-dim:compileJava UP-TO-DATE
+> Task :hardware-dim:processResources NO-SOURCE
+> Task :hardware-dim:classes UP-TO-DATE
+> Task :hardware-dim:jar UP-TO-DATE
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preIntegrityCheckBuild UP-TO-DATE
+> Task :app:generateIntegrityCheckBuildConfig UP-TO-DATE
+> Task :app:protobufDummy UP-TO-DATE
+> Task :hardware:preBuild UP-TO-DATE
+> Task :hardware:preDebugBuild UP-TO-DATE
+> Task :hardware:generateDebugResources UP-TO-DATE
+> Task :hardware:packageDebugResources UP-TO-DATE
+> Task :hardware:processDebugNavigationResources UP-TO-DATE
+> Task :hardware:parseDebugLocalResources UP-TO-DATE
+> Task :hardware:generateDebugRFile UP-TO-DATE
+> Task :hardware:compileDebugKotlin UP-TO-DATE
+> Task :hardware:javaPreCompileDebug UP-TO-DATE
+> Task :hardware:compileDebugJavaWithJavac NO-SOURCE
+> Task :hardware:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :hardware:processDebugJavaRes UP-TO-DATE
+> Task :hardware:createFullJarDebug UP-TO-DATE
+> Task :app:extractIncludeIntegrityCheckProto UP-TO-DATE
+> Task :app:extractIntegrityCheckProto UP-TO-DATE
+> Task :app:extractProto UP-TO-DATE
+> Task :app:generateIntegrityCheckProto FROM-CACHE
+> Task :app:generateIntegrityCheckResources FROM-CACHE
+> Task :app:packageIntegrityCheckResources
+> Task :app:processIntegrityCheckNavigationResources
+> Task :app:parseIntegrityCheckLocalResources FROM-CACHE
+> Task :app:generateIntegrityCheckRFile FROM-CACHE
+> Task :hardware:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :app:kspIntegrityCheckKotlin
+> Task :app:compileIntegrityCheckKotlin
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/offline/OfflineTrainingBattleScreen.kt:336:42 Condition is always 'true'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/offline/OfflineTrainingBattleScreen.kt:1094:42 Condition is always 'true'.
+w: file:///C:/Users/julye/IdeaProjects/vbhelper/app/src/main/java/com/tamerslab/battle/ui/offline/OfflineTrainingBattleScreen.kt:2568:69 Unnecessary safe call on a non-null receiver of type 'CombatantSnapshot'.
+e: java.lang.OutOfMemoryError: GC overhead limit exceeded
+	at java.base/java.util.ArrayList.iterator(Unknown Source)
+	at androidx.compose.compiler.plugins.kotlin.k2.ComposableCallCheckerKt.findValueParameterForLambdaAtIndex(ComposableCallChecker.kt:362)
+	at androidx.compose.compiler.plugins.kotlin.k2.ComposableCallCheckerKt.access$findValueParameterForLambdaAtIndex(ComposableCallChecker.kt:1)
+	at androidx.compose.compiler.plugins.kotlin.k2.ComposableCallCheckerKt.checkComposableCall(ComposableCallChecker.kt:371)
+	at androidx.compose.compiler.plugins.kotlin.k2.ComposableCallCheckerKt.access$checkComposableCall(ComposableCallChecker.kt:1)
+	at androidx.compose.compiler.plugins.kotlin.k2.ComposablePropertyAccessExpressionChecker.check(ComposableCallChecker.kt:50)
+	at androidx.compose.compiler.plugins.kotlin.k2.ComposablePropertyAccessExpressionChecker.check(ComposableCallChecker.kt:44)
+	at org.jetbrains.kotlin.fir.analysis.checkers.expression.ExpressionCheckersDiagnosticComponent.visitPropertyAccessExpression(ExpressionCheckersDiagnosticComponent.kt:350)
+	at org.jetbrains.kotlin.fir.analysis.checkers.expression.ExpressionCheckersDiagnosticComponent.visitPropertyAccessExpression(ExpressionCheckersDiagnosticComponent.kt:25)
+	at org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression.accept(FirPropertyAccessExpression.kt:53)
+	at org.jetbrains.kotlin.fir.analysis.collectors.CheckerRunningDiagnosticCollectorVisitor.checkElement(CheckerRunningDiagnosticCollectorVisitor.kt:24)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitElement(AbstractDiagnosticCollectorVisitor.kt:56)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitWithCallOrAssignment(AbstractDiagnosticCollectorVisitor.kt:373)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitPropertyAccessExpression(AbstractDiagnosticCollectorVisitor.kt:289)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitPropertyAccessExpression(AbstractDiagnosticCollectorVisitor.kt:38)
+	at org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression.accept(FirPropertyAccessExpression.kt:53)
+	at org.jetbrains.kotlin.fir.expressions.impl.FirPropertyAccessExpressionImpl.acceptChildren(FirPropertyAccessExpressionImpl.kt:52)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitNestedElements(AbstractDiagnosticCollectorVisitor.kt:46)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitElement(AbstractDiagnosticCollectorVisitor.kt:57)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitWithCallOrAssignment(AbstractDiagnosticCollectorVisitor.kt:373)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitPropertyAccessExpression(AbstractDiagnosticCollectorVisitor.kt:289)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitPropertyAccessExpression(AbstractDiagnosticCollectorVisitor.kt:38)
+	at org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression.accept(FirPropertyAccessExpression.kt:53)
+	at org.jetbrains.kotlin.fir.expressions.impl.FirResolvedArgumentList.acceptChildren(FirResolvedArgumentList.kt:53)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitNestedElements(AbstractDiagnosticCollectorVisitor.kt:46)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitElement(AbstractDiagnosticCollectorVisitor.kt:61)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitElement(AbstractDiagnosticCollectorVisitor.kt:38)
+	at org.jetbrains.kotlin.fir.visitors.FirVisitor.visitArgumentList(FirVisitor.kt:78)
+	at org.jetbrains.kotlin.fir.expressions.FirArgumentList.accept(FirArgumentList.kt:25)
+	at org.jetbrains.kotlin.fir.expressions.impl.FirFunctionCallImpl.acceptChildren(FirFunctionCallImpl.kt:55)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitNestedElements(AbstractDiagnosticCollectorVisitor.kt:46)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitElement(AbstractDiagnosticCollectorVisitor.kt:57)
+
+java.lang.RuntimeException: java.lang.OutOfMemoryError: GC overhead limit exceeded
+	at java.base/java.util.ArrayList.iterator(Unknown Source)
+	at androidx.compose.compiler.plugins.kotlin.k2.ComposableCallCheckerKt.findValueParameterForLambdaAtIndex(ComposableCallChecker.kt:362)
+	at androidx.compose.compiler.plugins.kotlin.k2.ComposableCallCheckerKt.access$findValueParameterForLambdaAtIndex(ComposableCallChecker.kt:1)
+	at androidx.compose.compiler.plugins.kotlin.k2.ComposableCallCheckerKt.checkComposableCall(ComposableCallChecker.kt:371)
+	at androidx.compose.compiler.plugins.kotlin.k2.ComposableCallCheckerKt.access$checkComposableCall(ComposableCallChecker.kt:1)
+	at androidx.compose.compiler.plugins.kotlin.k2.ComposablePropertyAccessExpressionChecker.check(ComposableCallChecker.kt:50)
+	at androidx.compose.compiler.plugins.kotlin.k2.ComposablePropertyAccessExpressionChecker.check(ComposableCallChecker.kt:44)
+	at org.jetbrains.kotlin.fir.analysis.checkers.expression.ExpressionCheckersDiagnosticComponent.visitPropertyAccessExpression(ExpressionCheckersDiagnosticComponent.kt:350)
+	at org.jetbrains.kotlin.fir.analysis.checkers.expression.ExpressionCheckersDiagnosticComponent.visitPropertyAccessExpression(ExpressionCheckersDiagnosticComponent.kt:25)
+	at org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression.accept(FirPropertyAccessExpression.kt:53)
+	at org.jetbrains.kotlin.fir.analysis.collectors.CheckerRunningDiagnosticCollectorVisitor.checkElement(CheckerRunningDiagnosticCollectorVisitor.kt:24)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitElement(AbstractDiagnosticCollectorVisitor.kt:56)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitWithCallOrAssignment(AbstractDiagnosticCollectorVisitor.kt:373)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitPropertyAccessExpression(AbstractDiagnosticCollectorVisitor.kt:289)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitPropertyAccessExpression(AbstractDiagnosticCollectorVisitor.kt:38)
+	at org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression.accept(FirPropertyAccessExpression.kt:53)
+	at org.jetbrains.kotlin.fir.expressions.impl.FirPropertyAccessExpressionImpl.acceptChildren(FirPropertyAccessExpressionImpl.kt:52)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitNestedElements(AbstractDiagnosticCollectorVisitor.kt:46)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitElement(AbstractDiagnosticCollectorVisitor.kt:57)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitWithCallOrAssignment(AbstractDiagnosticCollectorVisitor.kt:373)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitPropertyAccessExpression(AbstractDiagnosticCollectorVisitor.kt:289)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitPropertyAccessExpression(AbstractDiagnosticCollectorVisitor.kt:38)
+	at org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression.accept(FirPropertyAccessExpression.kt:53)
+	at org.jetbrains.kotlin.fir.expressions.impl.FirResolvedArgumentList.acceptChildren(FirResolvedArgumentList.kt:53)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitNestedElements(AbstractDiagnosticCollectorVisitor.kt:46)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitElement(AbstractDiagnosticCollectorVisitor.kt:61)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitElement(AbstractDiagnosticCollectorVisitor.kt:38)
+	at org.jetbrains.kotlin.fir.visitors.FirVisitor.visitArgumentList(FirVisitor.kt:78)
+	at org.jetbrains.kotlin.fir.expressions.FirArgumentList.accept(FirArgumentList.kt:25)
+	at org.jetbrains.kotlin.fir.expressions.impl.FirFunctionCallImpl.acceptChildren(FirFunctionCallImpl.kt:55)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitNestedElements(AbstractDiagnosticCollectorVisitor.kt:46)
+	at org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollectorVisitor.visitElement(AbstractDiagnosticCollectorVisitor.kt:57)
+
+	at org.jetbrains.kotlin.buildtools.internal.KotlinLoggerMessageCollectorAdapter.report(KotlinLoggerMessageCollectorAdapter.kt:33)
+	at org.jetbrains.kotlin.cli.common.messages.MessageCollector.report$default(MessageCollector.kt:12)
+	at org.jetbrains.kotlin.daemon.client.BasicCompilerServicesWithResultsFacadeServerKt.reportFromDaemon(BasicCompilerServicesWithResultsFacadeServer.kt:58)
+	at org.jetbrains.kotlin.daemon.client.BasicCompilerServicesWithResultsFacadeServer.report(BasicCompilerServicesWithResultsFacadeServer.kt:37)
+	at org.jetbrains.kotlin.buildtools.internal.BtaCompilerServicesWithResultsFacade.report(BaseCompilationOperationImpl.kt:365)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565)
+	at java.rmi/sun.rmi.server.UnicastServerRef.dispatch(UnicastServerRef.java:351)
+	at java.rmi/sun.rmi.transport.Transport.serviceCall(Transport.java:166)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport.handleMessages(TCPTransport.java:543)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run0(TCPTransport.java:744)
+	at java.rmi/sun.rmi.transport.tcp.TCPTransport$ConnectionHandler.run(TCPTransport.java:623)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+	at java.base/java.lang.Thread.run(Thread.java:1474)
+
+> Task :app:compileIntegrityCheckKotlin FAILED
+
+[Incubating] Problems report is available at: file:///C:/Users/julye/IdeaProjects/vbhelper/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileIntegrityCheckKotlin' (registered by plugin 'com.android.internal.application').
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.btapi.BuildToolsApiCompilationWork
+   > Not enough memory to run compilation. Try to increase it via 'gradle.properties':
+     kotlin.daemon.jvmargs=-Xmx<size>
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.6.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 6m 37s
+30 actionable tasks: 4 executed, 4 from cache, 22 up-to-date

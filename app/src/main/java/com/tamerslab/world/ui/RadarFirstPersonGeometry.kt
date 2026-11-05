@@ -76,7 +76,7 @@ internal fun radarSpritePose(walking: Boolean, motion: Boolean, alternate: Boole
         .firstOrNull { it in available }
 }
 
-enum class RadarRendererOwner { NONE, FIRST_PERSON, BATTLE }
+enum class RadarRendererOwner { NONE, FIRST_PERSON, BATTLE, ISOMETRIC }
 
 data class RadarRendererState(
     val owner: RadarRendererOwner = RadarRendererOwner.NONE,

@@ -125,16 +125,48 @@ class WorldSpawnSelectorTest {
         assertTrue(abs(virusCount / 40_000.0 - 0.5) < 0.02)
     }
 
+    @Test
+    fun `placeholder-art characters are never selected as wild encounters`() {
+        val placeholderOnly = character(
+            id = 1,
+            cardId = 1,
+            name = byteArrayOf(1),
+            spriteId = com.tamerslab.species.PlaceholderSprite.ID.toLong()
+        )
+        val real = character(id = 2, cardId = 2, name = byteArrayOf(2))
+
+        repeat(2_000) { seed ->
+            val selected = WorldSpawnSelector.selectCharacter(
+                characters = listOf(placeholderOnly, real),
+                random = Random(seed)
+            )
+            // The neutral placeholder is the app's data marker, never a wild Digimon.
+            assertTrue(selected != null && selected.id == 2L)
+        }
+    }
+
+    @Test
+    fun `a pool made only of placeholder art selects nothing`() {
+        val placeholderOnly = character(
+            id = 1,
+            cardId = 1,
+            name = byteArrayOf(1),
+            spriteId = com.tamerslab.species.PlaceholderSprite.ID.toLong()
+        )
+        assertTrue(WorldSpawnSelector.selectCharacter(listOf(placeholderOnly)) == null)
+    }
+
     private fun character(
         id: Long,
         cardId: Long,
         stage: Int = 2,
         name: ByteArray,
-        attribute: NfcCharacter.Attribute = NfcCharacter.Attribute.Vaccine
+        attribute: NfcCharacter.Attribute = NfcCharacter.Attribute.Vaccine,
+        spriteId: Long = id,
     ) = CardCharacter(
         id = id,
         cardId = cardId,
-        spriteId = id,
+        spriteId = spriteId,
         charaIndex = 0,
         stage = stage,
         attribute = attribute,

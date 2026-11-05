@@ -7,14 +7,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
-import com.tamerslab.R
 
 /**
- * The Radar **place**: the same composition as the old World-tab radar section, without the
- * Radar|Digifarm tabs, under a "Radar • <cardinal>" header.
+ * The Radar **place**: the full-bleed isometric radar world with its floating chrome, without the
+ * legacy Radar|Digifarm tabs.
  *
- * The view preferences (2D/first-person, entity labels) live in this destination's saveable state
- * so they survive a trip to another place and back, exactly like they did inside the World tab.
+ * View preferences live in this destination's saveable state so they survive a trip to another place
+ * and back: the Debug-only legacy renderer choice, entity labels and the AR battle preference.
  */
 @Composable
 fun RadarPlaceScreen(
@@ -22,17 +21,19 @@ fun RadarPlaceScreen(
     worldEntry: NavBackStackEntry,
     onFullScreenBattleChanged: (Boolean) -> Unit = {}
 ) {
-    var firstPersonPreferred by rememberSaveable { mutableStateOf(false) }
+    var legacyViewName by rememberSaveable { mutableStateOf(RadarLegacyView.NONE.name) }
     var labelsPreferred by rememberSaveable { mutableStateOf(false) }
+    var arPreferred by rememberSaveable { mutableStateOf(false) }
     RadarScreen(
         navController = navController,
         worldEntry = worldEntry,
         onFullScreenBattleChanged = onFullScreenBattleChanged,
-        firstPersonPreferred = firstPersonPreferred,
-        onViewPreferenceChanged = { firstPersonPreferred = it },
+        legacyView = runCatching { RadarLegacyView.valueOf(legacyViewName) }.getOrDefault(RadarLegacyView.NONE),
+        onLegacyViewChanged = { legacyViewName = it.name },
         labelsPreferred = labelsPreferred,
         onLabelsPreferenceChanged = { labelsPreferred = it },
-        titleRes = R.string.nav_radar,
-        showSectionTabs = false
+        arPreferred = arPreferred,
+        onArPreferenceChanged = { arPreferred = it },
+        showSectionTabs = false,
     )
 }

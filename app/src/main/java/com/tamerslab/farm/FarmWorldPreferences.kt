@@ -34,6 +34,12 @@ data class FarmWorldPreferencesSnapshot(
     val residentLimit: Int = FARM_MAX_RESIDENTS,
     /** Which artwork the diorama is allowed to draw (owner setting). */
     val spriteFilter: FarmSpriteFilter = FarmSpriteFilter.MIXED,
+    /**
+     * Explicit Digifarm membership. `null` means the owner has never curated it, in which case the
+     * island falls back to favourites once for continuity; after the first edit the island shows
+     * exactly these partners and favourites stop having any say.
+     */
+    val farmMemberIds: Set<Long>? = null,
 )
 
 class FarmWorldPreferences(private val store: DataStore<Preferences>) {
@@ -48,6 +54,9 @@ class FarmWorldPreferences(private val store: DataStore<Preferences>) {
                     ?.coerceIn(FARM_MIN_RESIDENTS, FARM_MAX_RESIDENTS)
                     ?: FARM_MAX_RESIDENTS,
                 spriteFilter = FarmSpriteFilter.from(preferences[KEY_SPRITE_FILTER]),
+                farmMemberIds = preferences[KEY_FARM_MEMBERS]?.let { raw ->
+                    if (raw.isBlank()) emptySet() else raw.split(',').mapNotNull(String::toLongOrNull).toSet()
+                },
             )
         }
         .distinctUntilChanged()
@@ -67,6 +76,30 @@ class FarmWorldPreferences(private val store: DataStore<Preferences>) {
 
     suspend fun setSpriteFilter(filter: FarmSpriteFilter) {
         store.edit { preferences -> preferences[KEY_SPRITE_FILTER] = filter.key }
+    }
+
+    /** Persists which partner the camera follows; survives roster rotation and app restarts. */
+    suspend fun setFollowCharacter(characterId: Long?) {
+        store.edit { preferences ->
+            if (characterId == null || characterId <= 0L) preferences.remove(KEY_FOLLOW_CHARACTER)
+            else preferences[KEY_FOLLOW_CHARACTER] = characterId
+        }
+    }
+
+    /**
+     * Curates Digifarm membership. [favouriteIds] seeds the explicit set the first time membership is
+     * edited, so nobody loses partners on the migration from the favourites-based island.
+     */
+    suspend fun updateFarmMembers(favouriteIds: Collection<Long>, add: Long? = null, remove: Long? = null) {
+        store.edit { preferences ->
+            val current = preferences[KEY_FARM_MEMBERS]?.let { raw ->
+                if (raw.isBlank()) emptySet() else raw.split(',').mapNotNull(String::toLongOrNull).toSet()
+            } ?: favouriteIds.toSet()
+            val next = current.toMutableSet()
+            add?.let { next += it }
+            remove?.let { next -= it }
+            preferences[KEY_FARM_MEMBERS] = next.joinToString(",")
+        }
     }
 
     /** `individualId` drives the camera; `characterId` lets later screens validate farm membership. */
@@ -92,11 +125,13 @@ class FarmWorldPreferences(private val store: DataStore<Preferences>) {
         const val NAME_FOLLOW_CHARACTER = "farm_home_follow_character_id"
         const val NAME_RESIDENT_LIMIT = "farm_home_resident_limit"
         const val NAME_SPRITE_FILTER = "farm_home_sprite_filter"
+        const val NAME_FARM_MEMBERS = "farm_home_members"
 
         private val KEY_SELECTED_FARM = stringPreferencesKey(NAME_SELECTED_FARM)
         private val KEY_FOLLOW_INDIVIDUAL = stringPreferencesKey(NAME_FOLLOW_INDIVIDUAL)
         private val KEY_FOLLOW_CHARACTER = longPreferencesKey(NAME_FOLLOW_CHARACTER)
         private val KEY_RESIDENT_LIMIT = intPreferencesKey(NAME_RESIDENT_LIMIT)
         private val KEY_SPRITE_FILTER = stringPreferencesKey(NAME_SPRITE_FILTER)
+        private val KEY_FARM_MEMBERS = stringPreferencesKey(NAME_FARM_MEMBERS)
     }
 }

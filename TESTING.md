@@ -7,6 +7,44 @@ it is historical evidence, not the current result. Performance evidence lives in
 [docs/performance/BASELINE.md](docs/performance/BASELINE.md); quality-tooling decisions
 live in [docs/refactor/PHASE7_DECISIONS.md](docs/refactor/PHASE7_DECISIONS.md).
 
+## Radar place redesign (2026-11-04, uncommitted tree)
+
+This pass replaced the Radar place's 2D/first-person split with a full-bleed isometric radar world and
+fixed the encounter-asset starvation that made nearby Digimon slow or absent. Evidence for this
+working tree only:
+
+| Check | Result |
+|---|---|
+| JVM unit tests (`:app:testIntegrityCheckUnitTest`) | 984 tests, 0 failures, 0 errors, 3 skipped |
+| `:app:assembleDebug` | Passed; installed on Samsung SM-A346M (wireless ADB), API 35 |
+| Radar flow on device | Home → Radar opens the isometric plate with the partner token, wild cardboard sprites and the digivice-bezel compass (tick ring, cardinal beacons, nearest-Digimon needle; no distance rings); zoom, vertical tilt, labels, options sheet and the Debug-only legacy views exercised |
+| Encounter loading | Spawn assets appear immediately after the remembered Room flow emits (empty-list restarts removed); shared GLB cache + parallel builders + nearest-first uploads cover a 16–20 Digimon roster; expired-region recovery repopulates sprite rows on entry and stale placeholder encounters are removed |
+| Screen captures (this tree) | `.impeccable/review/radar-18-final100.png`, `radar-19-spread.png`, `radar-17-wide.png`, `radar-20-options.png`, `radar-21-labels.png` (light palette); `radar-11-ready.png` (dark palette). The label-collision pass that followed these captures is compile/unit-test verified only. |
+| `:app:lint` | 0 errors, 471 warnings, 38 hints (32 warnings and 5 hints filtered by `lint-baseline.xml`). A first lint run crashed inside the K2 UAST resolver before reporting; the clean rerun above supersedes it. |
+
+Boundaries and remaining acceptance work:
+
+- The battle handoff and AR stage were not re-exercised on device in this pass. Their code paths are
+  unchanged except for the `WorldRadarBattleContent` full-bleed radar branch, which keeps the
+  established battle/AR layout.
+- The legacy 2D and first-person renderers are untouched and remain reachable only with the master
+  Debug switch on (Radar options → Legacy view). A native capture of the legacy 2D view is pending.
+- No TalkBack or large-font (1.3×) capture of the new radar was made in this pass; the chrome keeps
+  48dp targets and the existing semantics contract.
+- Sprite settle time was measured during development (first sprite ~1 s, a 20-Digimon roster ~3.7 s
+  on a cold process, including plate load and GLB build) with temporary logging that has been
+  removed; no benchmark entry was recorded.
+- **Wild↔wild social pause (2026-11-04).** `WildSocialInteractionGate` is off, so autonomous wild
+  pair chat/battles are not created, activated or shown; the retained planner/dialogue/combat code
+  stays compiled. Covered by `WildSocialInteractionGateTest` (family matching, player encounters
+  unaffected, re-enable path). Wild → player and player-directed encounters were not behaviourally
+  re-exercised on device after this change; the gate keeps them out of scope by construction.
+- **Radar cardboard orientation (2026-11-04).** Travel is derived from real-world positions and the
+  display orientation from a pure helper (`radarCardboardOrientation`), so compass/zoom motion cannot
+  flip sprites. Covered by three JVM tests: standing Digimon ignore compass motion, the four travel
+  directions match the farm' camera-assisted profile/mirror behaviour, and a turning compass rotates
+  the sprite with the plate without chatter at the mirror latch.
+
 ## Current verified state (2026-10-31, uncommitted tree)
 
 | Check | Result |

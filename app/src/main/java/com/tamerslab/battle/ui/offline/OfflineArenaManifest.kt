@@ -41,6 +41,9 @@ data class OfflineArenaManifest(
         const val DEFAULT_MANIFEST_PATH = "Arena/Colosseum/arena.json"
         const val RADAR_MANIFEST_PATH = "Arena/Radar/arena.json"
 
+        /** Radar place plate: the authored radar floor/grid without the battle props or boundary. */
+        const val RADAR_PLATE_MANIFEST_PATH = "Arena/Radar/plate.json"
+
         fun read(
             context: Context,
             manifestPath: String = DEFAULT_MANIFEST_PATH

@@ -32,11 +32,11 @@ enum class PlaceDestination(
         R.string.place_arena,
         R.string.place_arena_subtitle,
     ),
-    DigiLine(
-        AppRoute.Digiline,
-        R.drawable.baseline_mood_24,
-        R.string.place_digiline,
-        R.string.place_digiline_subtitle,
+    Dex(
+        AppRoute.Dex,
+        R.drawable.baseline_menu_book_24,
+        R.string.place_dex,
+        R.string.place_dex_subtitle,
     ),
     Shop(
         AppRoute.Items(ItemsDestination.TAB_STORE),

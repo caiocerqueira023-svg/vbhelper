@@ -1,0 +1,852 @@
+﻿--------- beginning of main
+11-01 17:35:44.640 22047 22047 I cabaro.vbhelper: Late-enabling -Xcheck:jni
+11-01 17:35:44.662 22047 22047 I cabaro.vbhelper: Using generational CollectorTypeCMC GC.
+11-01 17:35:44.672 22047 22047 D nativeloader: Load libframework-connectivity-tiramisu-jni.so using APEX ns com_android_tethering for caller /apex/com.android.tethering/javalib/framework-connectivity-t.jar: ok
+11-01 17:35:44.682 22047 22047 D ActivityThread: setConscryptValidator
+11-01 17:35:44.683 22047 22047 D ActivityThread: setConscryptValidator - put
+11-01 17:35:44.729 22047 22047 D nativeloader: Load libstats_jni.so using APEX ns com_android_os_statsd for caller /apex/com.android.os.statsd/javalib/framework-statsd.jar: ok
+11-01 17:35:44.753 22047 22047 D ApplicationLoaders: Returning zygote-cached class loader: /system_ext/framework/androidx.window.extensions.jar
+11-01 17:35:44.753 22047 22047 D ApplicationLoaders: Returning zygote-cached class loader: /system_ext/framework/androidx.window.sidecar.jar
+11-01 17:35:45.265 22047 22047 D nativeloader: Configuring clns-7 for other apk /data/app/~~cizCQqiNylqcaZeMUZtpKg==/com.github.nacabaro.vbhelper-wFsHJTenzNUcRkJsnqH4jQ==/base.apk. target_sdk_version=37, uses_libraries=, library_path=/data/app/~~cizCQqiNylqcaZeMUZtpKg==/com.github.nacabaro.vbhelper-wFsHJTenzNUcRkJsnqH4jQ==/lib/arm64:/data/app/~~cizCQqiNylqcaZeMUZtpKg==/com.github.nacabaro.vbhelper-wFsHJTenzNUcRkJsnqH4jQ==/base.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand:/data/user/0/com.github.nacabaro.vbhelper
+11-01 17:35:45.281 22047 22047 V GraphicsEnvironment: Turn on ANGLE for all applications.
+11-01 17:35:45.282 22047 22047 V GraphicsEnvironment: Invalid number of ANGLE packages. Required: 1, Found: 0
+11-01 17:35:45.282 22047 22047 V GraphicsEnvironment: Failed to find ANGLE package.
+11-01 17:35:45.283 22047 22047 V GraphicsEnvironment: App is not on the allowlist for updatable production driver.
+11-01 17:35:45.366 22047 22047 D WM-WrkMgrInitializer: Initializing WorkManager with default configuration.
+11-01 17:35:45.400 22047 22047 D WM-PackageManagerHelper: Skipping component enablement for androidx.work.impl.background.systemjob.SystemJobService
+11-01 17:35:45.400 22047 22047 D WM-Schedulers: Created SystemJobScheduler and enabled SystemJobService
+11-01 17:35:45.411 22047 22086 D WM-ForceStopRunnable: The default process name was not specified.
+11-01 17:35:45.413 22047 22086 D WM-ForceStopRunnable: Performing cleanup operations.
+11-01 17:35:45.487 22047 22086 D WM-SystemJobScheduler: Reconciling jobs
+11-01 17:35:45.513 22047 22086 D WM-ForceStopRunnable: Application was force-stopped, rescheduling.
+11-01 17:35:45.533 22047 22047 D WM-RescheduleReceiver: Received intent Intent { act=android.intent.action.BOOT_COMPLETED flg=0x9000030 pkg=com.github.nacabaro.vbhelper cmp=com.github.nacabaro.vbhelper/androidx.work.impl.background.systemalarm.RescheduleReceiver (has extras) }
+--------- beginning of system
+11-01 17:35:45.537 22047 22047 D ActivityThread: com.github.nacabaro.vbhelper will use render engine as VK
+11-01 17:35:45.539 22047 22047 D HWUI    : HWUI - treat SMPTE_170M as sRGB
+11-01 17:35:45.541 22047 22086 D WM-SystemJobScheduler: Scheduling work ID e3a3a52d-2e22-494a-8db4-fa408a8e1f5eJob ID 50
+11-01 17:35:45.546 22047 22097 D HWUI    : CacheManager constructor. deviceInfo=(1080, 1920)
+11-01 17:35:45.548 22047 22097 D vulkan  : searching for layers in '/data/app/~~cizCQqiNylqcaZeMUZtpKg==/com.github.nacabaro.vbhelper-wFsHJTenzNUcRkJsnqH4jQ==/lib/arm64'
+11-01 17:35:45.551 22047 22097 D vulkan  : searching for layers in '/data/app/~~cizCQqiNylqcaZeMUZtpKg==/com.github.nacabaro.vbhelper-wFsHJTenzNUcRkJsnqH4jQ==/base.apk!/lib/arm64-v8a'
+11-01 17:35:45.564 22047 22097 D vulkan  : searching for layers in '/data/app/~~cizCQqiNylqcaZeMUZtpKg==/com.github.nacabaro.vbhelper-wFsHJTenzNUcRkJsnqH4jQ==/lib/arm64'
+11-01 17:35:45.566 22047 22097 D vulkan  : searching for layers in '/data/app/~~cizCQqiNylqcaZeMUZtpKg==/com.github.nacabaro.vbhelper-wFsHJTenzNUcRkJsnqH4jQ==/base.apk!/lib/arm64-v8a'
+11-01 17:35:45.577 22047 22097 D MMUD    : mtk_memory_debug_init com.github.nacabaro.vbhelper 0xb400007015202400
+11-01 17:35:45.580 22047 22113 E cabaro.vbhelper: setpriority success to 100 : mali-cmar-backend
+11-01 17:35:45.598 22047 22114 D WM-GreedyScheduler: Cancelling work ID e3a3a52d-2e22-494a-8db4-fa408a8e1f5e
+11-01 17:35:45.630 22047 22114 D WM-SystemJobScheduler: Scheduling work ID e3a3a52d-2e22-494a-8db4-fa408a8e1f5eJob ID 51
+11-01 17:35:45.646 22047 22114 D WM-PackageManagerHelper: Skipping component enablement for androidx.work.impl.background.systemalarm.RescheduleReceiver
+11-01 17:35:45.656 22047 22047 I DecorView: setWindowBackground: isPopOver=false color=ff120f1f d=android.graphics.drawable.ColorDrawable@3f3558
+11-01 17:35:45.680 22047 22104 D MMUD    : get_leak_baseline 3246391296
+11-01 17:35:45.703 22047 22047 I ViewRootImpl: dVRR is disabled
+11-01 17:35:45.704 22047 22047 D HardwareRenderer: onDisplayChanged. displayId=0 current wxh=1080x2340 mLargest wxh=0x0
+11-01 17:35:45.704 22047 22047 W HWUI    : Unknown dataspace 0
+11-01 17:35:45.704 22047 22047 D HardwareRenderer: Set largestWidth and largestHeight as logical resolution. (1080x2340)
+11-01 17:35:45.704 22047 22097 D HWUI    : setMaxSurfaceArea requested wxh=(1080,2340) requestedSurfaceArea(2527200) mMaxSurfaceArea(2073600)
+11-01 17:35:45.706 22047 22097 D NativeCustomFrequencyManager: [NativeCFMS] BpCustomFrequencyManager::BpCustomFrequencyManager()
+11-01 17:35:45.712 22047 22047 D InputTransport: Input channel constructed: '1ef66a0', fd=141
+11-01 17:35:45.713 22047 22047 I InsetsController: onStateChanged: host=com.github.nacabaro.vbhelper/com.tamerslab.ar.ArDiagnosticsActivity, from=android.view.ViewRootImpl.setView:1999, state=InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2340), mDisplayCutout=DisplayCutout{insets=Rect(0, 73 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(484, 0 - 596, 73), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2340 physicalDisplayWidth=1080 physicalDisplayHeight=2340 density={2.8125} cutoutSpec={M 0,0 H -25.6 V 26.66666666666667 H 25.6 V 0 H 0 Z @dp} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}} sideOverrides={}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=120, center=Point(120, 120)}, RoundedCorner{position=TopRight, radius=120, center=Point(960, 120)}, RoundedCorner{position=BottomRight, radius=120, center=Point(960, 2220)}, RoundedCorner{position=BottomLeft, radius=120, center=Point(120, 2220)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2340), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(948, 0 - 1080, 82) rotation=0}, mDisplayShape=DisplayShape{ spec=-311912193 displayWidth=1080 displayHeight=2340 physicalPixelDisplaySizeRatio=1.0 rotation=0 offsetX=0 offsetY=0 scale=1.0}, mSources= { InsetsSource: {27 mType=displayCutout mFrame=[0,0][1080,73] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {16020001 mType=navigationBars mFrame=[0,2196][1080,2340] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {16020004 mType=systemGestures mFrame=[0,0][0,0] mVisible=true mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {16020005 mType=mandatorySystemGestures mFrame=[0,2196][1080,2340] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {16020006 mType=tappableElement mFrame=[0,2196][1080,2340] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {16020024 mType=systemGestures mFrame=[0,0][0,0] mVisible=true mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {35d40000 mType=statusBars mFrame=[0,0][1080,82] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {35d40005 mType=mandatorySystemGestures mFrame=[0,0][1080,109] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {35d40006 mType=tappableElement mFrame=[0,0][1080,82] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null} }
+11-01 17:35:45.714 22047 22047 I VRI[ArDiagnosticsActivity]@eb7682b: synced displayState. AttachInfo displayState=2
+11-01 17:35:45.714 22047 22047 I VRI[ArDiagnosticsActivity]@eb7682b: setView = com.android.internal.policy.DecorView@b58134 IsHRR=false TM=true
+11-01 17:35:45.715 22047 22047 I IDS_TAG : Clearing training data of com.tamerslab.di.TamersLabApplication@1f230f1
+11-01 17:35:45.715 22047 22047 I IDS_TAG : Starting IDS observe window
+11-01 17:35:45.716 22047 22047 I IDS_TAG : Getting Shared Preference for com.tamerslab.di.TamersLabApplication@1f230f1 uid = 11275
+11-01 17:35:45.716 22047 22047 I IDS_TAG : App com.tamerslab.di.TamersLabApplication@1f230f1 has not finished training
+11-01 17:35:45.718 22047 22047 I IDS_TAG : Closing IDS observe window
+11-01 17:35:45.718 22047 22047 I IDS_TAG : Getting Shared Preference for com.tamerslab.di.TamersLabApplication@1f230f1 uid = 11275
+11-01 17:35:45.719 22047 22047 I IDS_TAG : IDS count updated to 1 for com.tamerslab.di.TamersLabApplication@1f230f1
+11-01 17:35:45.770 22047 22116 W cabaro.vbhelper: Long monitor contention with owner arch_disk_io_0 (22115) at java.lang.Object kotlin.SynchronizedLazyImpl.getValue()(LazyJVM.kt:81) waiters=0 in java.lang.Object kotlin.SynchronizedLazyImpl.getValue() for 113ms
+11-01 17:35:45.879 22047 22047 I cabaro.vbhelper: hiddenapi: Accessing hidden method Landroid/os/SystemProperties;->addChangeCallback(Ljava/lang/Runnable;)V (runtime_flags=0, domain=platform, api=unsupported) from Landroidx/compose/ui/platform/AndroidComposeView$Companion; (domain=app, TargetSdkVersion=37) using reflection: allowed
+11-01 17:35:45.917 22047 22047 D libEGL  : Unload system gl driver.
+11-01 17:35:45.919 22047 22047 D libMEOW : destructor: unload_file !
+11-01 17:35:46.121 22047 22058 I cabaro.vbhelper: Compiler allocated 7484KB to compile void android.view.ViewRootImpl.performTraversals()
+11-01 17:35:46.307 22047 22047 D nativeloader: Load /data/app/~~cizCQqiNylqcaZeMUZtpKg==/com.github.nacabaro.vbhelper-wFsHJTenzNUcRkJsnqH4jQ==/base.apk!/lib/arm64-v8a/libfilament-jni.so using class loader ns clns-7 (caller=/data/app/~~cizCQqiNylqcaZeMUZtpKg==/com.github.nacabaro.vbhelper-wFsHJTenzNUcRkJsnqH4jQ==/base.apk!classes29.dex): ok
+11-01 17:35:46.321 22047 22047 D nativeloader: Load /data/app/~~cizCQqiNylqcaZeMUZtpKg==/com.github.nacabaro.vbhelper-wFsHJTenzNUcRkJsnqH4jQ==/base.apk!/lib/arm64-v8a/libgltfio-jni.so using class loader ns clns-7 (caller=/data/app/~~cizCQqiNylqcaZeMUZtpKg==/com.github.nacabaro.vbhelper-wFsHJTenzNUcRkJsnqH4jQ==/base.apk!classes12.dex): ok
+11-01 17:35:46.340 22047 22047 I Filament: FEngine (64 bits) created at 0xb400006f33daff30 (threading is enabled)
+11-01 17:35:46.343 22047 22129 I Filament: FEngine resolved backend: OpenGL
+11-01 17:35:46.369 22047 22129 D vulkan  : searching for layers in '/data/app/~~cizCQqiNylqcaZeMUZtpKg==/com.github.nacabaro.vbhelper-wFsHJTenzNUcRkJsnqH4jQ==/lib/arm64'
+11-01 17:35:46.378 22047 22129 D vulkan  : searching for layers in '/data/app/~~cizCQqiNylqcaZeMUZtpKg==/com.github.nacabaro.vbhelper-wFsHJTenzNUcRkJsnqH4jQ==/base.apk!/lib/arm64-v8a'
+11-01 17:35:46.388 22047 22129 I vulkan  : CreateInfoWrapper::FilterExtension: already have 'VK_KHR_external_fence_fd'.
+11-01 17:35:46.388 22047 22129 D MMUD    : mtk_memory_debug_init com.github.nacabaro.vbhelper 0xb400007014e7e400
+11-01 17:35:46.391 22047 22142 E cabaro.vbhelper: setpriority success to 100 : mali-cmar-backend
+11-01 17:35:46.398 22047 22129 I DMABUFHEAPS: Using DMA-BUF heap named: mtk_svp_region
+11-01 17:35:46.400 22047 22129 I DMABUFHEAPS: Using DMA-BUF heap named: mtk_svp_region
+11-01 17:35:46.421 22047 22129 I ANGLE   : Version (2.1.0 git hash: unknown hash), Renderer (Vulkan 1.3.278 (Mali-G68 MC4 (0x92041010)))
+11-01 17:35:46.434 22047 22129 I Filament: [Google Inc. (ARM)], [ANGLE (ARM, Vulkan 1.3.278 (Mali-G68 MC4 (0x92041010)), Mali-G68 MC4-49.1.0)], [OpenGL ES 3.2.0 (ANGLE 2.1.0 git hash: unknown hash)], [OpenGL ES GLSL ES 3.20 (ANGLE 2.1.0 git hash: unknown hash)]
+11-01 17:35:46.435 22047 22129 I Filament: Feature level: 3
+11-01 17:35:46.435 22047 22129 I Filament: Active workarounds: 
+11-01 17:35:46.442 22047 22047 I Filament: Backend feature level: 3
+11-01 17:35:46.442 22047 22047 I Filament: FEngine feature level: 1
+11-01 17:35:46.586 22047 22047 I SurfaceView@7eacf89: onWindowVisibilityChanged(0) true com.tamerslab.ar.ArCameraBackgroundView{7eacf89 V.E...... ......I. 0,0-0,0} of VRI[ArDiagnosticsActivity]@eb7682b
+11-01 17:35:46.586 22047 22047 D SurfaceView: 132829065 updateSurface: has no frame
+11-01 17:35:46.648 22047 22047 D BufferQueueConsumer: [](id:561f00000000,api:0,p:-1,c:22047) connect: controlledByApp=false
+11-01 17:35:46.650 22047 22047 I BLASTBufferQueue: [VRI[ArDiagnosticsActivity]@eb7682b#0](f:0,a:0,s:0) constructor()
+11-01 17:35:46.650 22047 22047 I BLASTBufferQueue_Java: new BLASTBufferQueue, mName= VRI[ArDiagnosticsActivity]@eb7682b mNativeObject= 0xb400006e53f3feb0 sc.mNativeObject= 0xb400006db3dc6250 caller= android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3397 android.view.ViewRootImpl.relayoutWindow:11361 android.view.ViewRootImpl.performTraversals:4544 android.view.ViewRootImpl.doTraversal:3708 android.view.ViewRootImpl$TraversalRunnable.run:12542 android.view.Choreographer$CallbackRecord.run:1751 android.view.Choreographer$CallbackRecord.run:1760 android.view.Choreographer.doCallbacks:1216 android.view.Choreographer.doFrame:1142 android.view.Choreographer$FrameDisplayEventReceiver.run:1707 
+11-01 17:35:46.650 22047 22047 I BLASTBufferQueue_Java: update, w= 1080 h= 2340 mName = VRI[ArDiagnosticsActivity]@eb7682b mNativeObject= 0xb400006e53f3feb0 sc.mNativeObject= 0xb400006db3dc6250 format= -3 caller= android.graphics.BLASTBufferQueue.<init>:88 android.view.ViewRootImpl.updateBlastSurfaceIfNeeded:3397 android.view.ViewRootImpl.relayoutWindow:11361 android.view.ViewRootImpl.performTraversals:4544 android.view.ViewRootImpl.doTraversal:3708 android.view.ViewRootImpl$TraversalRunnable.run:12542 
+11-01 17:35:46.650 22047 22047 I BLASTBufferQueue: [VRI[ArDiagnosticsActivity]@eb7682b#0](f:0,a:0,s:0) update width=1080 height=2340 format=-3 mTransformHint=0
+11-01 17:35:46.661 22047 22047 I VRI[ArDiagnosticsActivity]@eb7682b: Relayout returned: old=(0,0,1080,2340) new=(0,0,1080,2340) relayoutAsync=false req=(1080,2340)0 dur=7 res=0x3 s={true 0xb400006ed3f49110} ch=true seqId=0
+11-01 17:35:46.663 22047 22047 I VRI[ArDiagnosticsActivity]@eb7682b: performConfigurationChange setNightDimText nightDimLevel=0
+11-01 17:35:46.667 22047 22047 D VRI[ArDiagnosticsActivity]@eb7682b: mThreadedRenderer.initialize() mSurface={isValid=true 0xb400006ed3f49110} hwInitialized=true
+11-01 17:35:46.681 22047 22047 D SurfaceView: 132829065 updateSurface: has no frame
+11-01 17:35:46.685 22047 22047 I SurfaceView@7eacf89: windowStopped(false) true com.tamerslab.ar.ArCameraBackgroundView{7eacf89 V.E...... ......ID 0,0-1080,2340} of VRI[ArDiagnosticsActivity]@eb7682b
+11-01 17:35:46.685 22047 22047 D SurfaceView: 132829065 updateSurface: has no frame
+11-01 17:35:46.686 22047 22047 D VRI[ArDiagnosticsActivity]@eb7682b: reportNextDraw android.view.ViewRootImpl.performTraversals:5193 android.view.ViewRootImpl.doTraversal:3708 android.view.ViewRootImpl$TraversalRunnable.run:12542 android.view.Choreographer$CallbackRecord.run:1751 android.view.Choreographer$CallbackRecord.run:1760 
+11-01 17:35:46.686 22047 22047 I SurfaceView: 132829065 Changes: creating=true format=true size=true visible=true alpha=false hint=false visible=true left=true top=true z=false attached=true lifecycleStrategy=false
+11-01 17:35:46.690 22047 22047 D BufferQueueConsumer: [](id:561f00000001,api:0,p:-1,c:22047) connect: controlledByApp=false
+11-01 17:35:46.690 22047 22047 I BLASTBufferQueue: [SurfaceView[com.github.nacabaro.vbhelper/com.tamerslab.ar.ArDiagnosticsActivity]@0#1](f:0,a:0,s:0) constructor()
+11-01 17:35:46.690 22047 22047 I BLASTBufferQueue_Java: update, w= 1080 h= 2340 mName = null mNativeObject= 0xb400006e53f45d90 sc.mNativeObject= 0xb400006db3dc2590 format= 4 caller= android.view.SurfaceView.createBlastSurfaceControls:1642 android.view.SurfaceView.updateSurface:1318 android.view.SurfaceView.lambda$new$0:268 android.view.SurfaceView.$r8$lambda$NfZyM_TG8F8lqzaOVZ7noREFjzU:0 android.view.SurfaceView$$ExternalSyntheticLambda1.onPreDraw:0 android.view.ViewTreeObserver.dispatchOnPreDraw:1226 
+11-01 17:35:46.690 22047 22047 I BLASTBufferQueue: [SurfaceView[com.github.nacabaro.vbhelper/com.tamerslab.ar.ArDiagnosticsActivity]@0#1](f:0,a:0,s:0) update width=1080 height=2340 format=4 mTransformHint=0
+11-01 17:35:46.691 22047 22047 I SurfaceView: 132829065 Cur surface: Surface(name=null mNativeObject=0)/@0x5c9a5cc
+11-01 17:35:46.691 22047 22047 I SurfaceView@7eacf89: pST: sr = Rect(0, 0 - 1080, 2340) sw = 1080 sh = 2340
+11-01 17:35:46.692 22047 22047 D SurfaceView: 132829065 performSurfaceTransaction RenderWorker position = [0, 0, 1080, 2340] surfaceSize = 1080x2340
+11-01 17:35:46.692 22047 22047 I SurfaceView@7eacf89: updateSurface: mVisible = true mSurface.isValid() = true
+11-01 17:35:46.692 22047 22047 I SurfaceView@7eacf89: updateSurface: mSurfaceCreated = false surfaceChanged = true visibleChanged = true
+11-01 17:35:46.692 22047 22047 I SurfaceView: 132829065 visibleChanged -- surfaceCreated
+11-01 17:35:46.693 22047 22047 I SurfaceView@7eacf89: surfaceCreated 1 #8 com.tamerslab.ar.ArCameraBackgroundView{7eacf89 V.E...... ......ID 0,0-1080,2340}
+11-01 17:35:46.693 22047 22047 I SurfaceView: 132829065 surfaceChanged -- format=4 w=1080 h=2340
+11-01 17:35:46.693 22047 22047 I SurfaceView@7eacf89: surfaceChanged (1080,2340) 1 #8 com.tamerslab.ar.ArCameraBackgroundView{7eacf89 V.E...... ......ID 0,0-1080,2340}
+11-01 17:35:46.693 22047 22047 I SurfaceView: 132829065 surfaceRedrawNeeded
+11-01 17:35:46.694 22047 22047 V SurfaceView: Layout: x=0 y=0 w=1080 h=2340, frame=Rect(0, 0 - 1080, 2340)
+11-01 17:35:46.695 22047 22047 D VRI[ArDiagnosticsActivity]@eb7682b: Setup new sync=wmsSync-VRI[ArDiagnosticsActivity]@eb7682b#1
+11-01 17:35:46.695 22047 22047 I VRI[ArDiagnosticsActivity]@eb7682b: Creating new active sync group VRI[ArDiagnosticsActivity]@eb7682b#2
+11-01 17:35:46.697 22047 22122 D MAGT_SYNC_FRAME: MAGT Sync: MAGT is not supported. Disabling Sync.
+11-01 17:35:46.700 22047 22122 D cabaro.vbhelper: Can't load libmbrainSDK
+11-01 17:35:46.700 22047 22047 D VRI[ArDiagnosticsActivity]@eb7682b: registerCallbacksForSync syncBuffer=false
+11-01 17:35:46.706 22047 22047 D BufferQueueConsumer: [](id:561f00000002,api:0,p:-1,c:22047) connect: controlledByApp=true
+11-01 17:35:46.750 22047 22047 I View    : setRequestedFrameRate frameRate=0.0, this=androidx.compose.ui.platform.AndroidComposeView{69ec9b2 VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.View.draw:25878 
+11-01 17:35:46.750 22047 22047 I View    : setRequestedFrameRate frameRate=-4.0, this=android.view.View{ea47891 V.ED..... ......I. 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.View.draw:25878 
+11-01 17:35:46.769 22047 22122 I ArBackgroundRenderer: Camera background renderer ready (texture=1)
+11-01 17:35:46.770 22047 22097 D SurfaceView: 132829065 updateSurfacePosition RenderWorker, frameNr = 1, position = [0, 0, 1080, 2340] surfaceSize = 1080x2340
+11-01 17:35:46.771 22047 22097 I SurfaceView@7eacf89: uSP: rtp = Rect(0, 0 - 1080, 2340) rtsw = 1080 rtsh = 2340
+11-01 17:35:46.771 22047 22097 I SurfaceView@7eacf89: onSSPAndSRT: pl = 0 pt = 0 sx = 1.0 sy = 1.0
+11-01 17:35:46.771 22047 22097 I SurfaceView@7eacf89: aOrMT: VRI[ArDiagnosticsActivity]@eb7682b t = android.view.SurfaceControl$Transaction@9e9b3f6 fN = 1 android.view.SurfaceView.-$$Nest$mapplyOrMergeTransaction:0 android.view.SurfaceView$SurfaceViewPositionUpdateListener.positionChanged:1792 android.graphics.RenderNode$CompositePositionUpdateListener.positionChanged:398 
+11-01 17:35:46.771 22047 22097 I VRI[ArDiagnosticsActivity]@eb7682b: mWNT: t=0xb400006d63df3450 mBlastBufferQueue=0xb400006e53f3feb0 fn= 1 HdrRenderState mRenderHdrSdrRatio=1.0 caller= android.view.SurfaceView.applyOrMergeTransaction:1723 android.view.SurfaceView.-$$Nest$mapplyOrMergeTransaction:0 android.view.SurfaceView$SurfaceViewPositionUpdateListener.positionChanged:1792 
+11-01 17:35:46.774 22047 22156 D VRI[ArDiagnosticsActivity]@eb7682b: Received frameDrawingCallback syncResult=0 frameNum=1.
+11-01 17:35:46.777 22047 22156 I VRI[ArDiagnosticsActivity]@eb7682b: mWNT: t=0xb400006d63df4090 mBlastBufferQueue=0xb400006e53f3feb0 fn= 1 HdrRenderState mRenderHdrSdrRatio=1.0 caller= android.view.ViewRootImpl$11.onFrameDraw:15016 android.view.ThreadedRenderer$1.onFrameDraw:761 <bottom of call stack> 
+11-01 17:35:46.777 22047 22097 I GrallocExtra: gralloc_extra_query:is_SW3D 0
+11-01 17:35:46.777 22047 22156 I VRI[ArDiagnosticsActivity]@eb7682b: Setting up sync and frameCommitCallback
+11-01 17:35:46.779 22047 22122 I BLASTBufferQueue: [SurfaceView[com.github.nacabaro.vbhelper/com.tamerslab.ar.ArDiagnosticsActivity]@0#1](f:0,a:0,s:0) onFrameAvailable the first frame is available
+11-01 17:35:46.779 22047 22122 I GrallocExtra: gralloc_extra_query:is_SW3D 0
+11-01 17:35:46.780 22047 22122 I BLASTBufferQueue: [SurfaceView[com.github.nacabaro.vbhelper/com.tamerslab.ar.ArDiagnosticsActivity]@0#1](f:0,a:1,s:0) acquireNextBufferLocked size=1080x2340 mFrameNumber=1 applyTransaction=true mTimestamp=357221379466752(auto) mPendingTransactions.size=0 graphicBufferId=94691143974922 transform=0
+11-01 17:35:46.783 22047 22122 D cabaro.vbhelper: Can't load libmbrainSDK
+11-01 17:35:46.788 22047 22122 I SurfaceView: 132829065 finishedDrawing
+11-01 17:35:46.808 22047 22097 I BLASTBufferQueue: [VRI[ArDiagnosticsActivity]@eb7682b#0](f:0,a:0,s:0) onFrameAvailable the first frame is available
+11-01 17:35:46.809 22047 22097 I BLASTBufferQueue: [VRI[ArDiagnosticsActivity]@eb7682b#0](f:0,a:1,s:0) acquireNextBufferLocked size=1080x2340 mFrameNumber=1 applyTransaction=true mTimestamp=357221408869291(auto) mPendingTransactions.size=0 graphicBufferId=94691143974924 transform=0
+11-01 17:35:46.809 22047 22097 I VRI[ArDiagnosticsActivity]@eb7682b: Received frameCommittedCallback lastAttemptedDrawFrameNum=1 didProduceBuffer=true
+11-01 17:35:46.810 22047 22097 D HWUI    : CFMS:: SetUp Pid : 22047    Tid : 22097
+11-01 17:35:46.811 22047 22047 D VRI[ArDiagnosticsActivity]@eb7682b: reportDrawFinished seqId=0
+11-01 17:35:46.813 22047 22097 D HWUI    : HWUI - treat SMPTE_170M as sRGB
+11-01 17:35:46.813 22047 22047 I Choreographer: Skipped 63 frames!  The application may be doing too much work on its main thread.
+11-01 17:35:46.831 22047 22069 I HWUI    : Davey! duration=1092ms; Flags=1, FrameTimelineVsyncId=92050495, IntendedVsync=357220317441522, Vsync=357220317441522, InputEventId=0, HandleInputStart=357220320094752, AnimationStart=357220320102214, PerformTraversalsStart=357220320195752, DrawStart=357221301406829, FrameDeadline=357220346562147, FrameInterval=357220320051060, FrameStartTime=16655436, SyncQueued=357221352310829, SyncStart=357221352644906, IssueDrawCommandsStart=357221374128291, SwapBuffers=357221408843368, FrameCompleted=357221410144676, DequeueBufferDuration=2395385, QueueBufferDuration=1042769, GpuCompleted=357221408843368, SwapBuffersCompleted=357221410144676, DisplayPresentTime=0, CommandSubmissionCompleted=357221408843368, 
+11-01 17:35:47.610 22047 22059 W cabaro.vbhelper: Suspending all threads took: 13.940ms
+11-01 17:35:47.752 22047 22047 I Choreographer: Skipped 119 frames!  The application may be doing too much work on its main thread.
+11-01 17:35:47.758 22047 22047 I InsetsSourceConsumer: applyRequestedVisibilityToControl: visible=true, type=statusBars, host=com.github.nacabaro.vbhelper/com.tamerslab.ar.ArDiagnosticsActivity
+11-01 17:35:47.762 22047 22047 I InsetsSourceConsumer: applyRequestedVisibilityToControl: visible=true, type=navigationBars, host=com.github.nacabaro.vbhelper/com.tamerslab.ar.ArDiagnosticsActivity
+11-01 17:35:47.805 22047 22059 I cabaro.vbhelper: Background concurrent mark compact GC freed 29MB AllocSpace bytes, 18(768KB) LOS objects, 43% free, 31MB/55MB, paused 25.920ms,2.049ms total 577.378ms
+11-01 17:35:47.813 22047 22047 I ArDiagnosticsOverlay: Filament transparency overlay ready
+11-01 17:35:47.814 22047 22047 D VRI[ArDiagnosticsActivity]@eb7682b: mThreadedRenderer.initializeIfNeeded()#2 mSurface={isValid=true 0xb400006ed3f49110}
+11-01 17:35:47.816 22047 22047 D InputMethodManagerUtils: startInputInner - Id : 0
+11-01 17:35:47.816 22047 22047 I InputMethodManager: startInputInner - IInputMethodManagerGlobalInvoker.startInputOrWindowGainedFocus
+11-01 17:35:47.860 22047 22129 E BufferQueueProducer: [SurfaceTexture-0-22047-0](id:561f00000002,api:1,p:22047,c:22047) connect: already connected (cur=1 req=1)
+11-01 17:35:47.860 22047 22129 E vulkan  : native_window_api_connect() failed: Invalid argument (-22)
+11-01 17:35:47.861 22047 22129 E Filament: PlatformEGL::createSwapChain: eglCreateWindowSurface failed with EGL_BAD_SURFACE
+11-01 17:35:47.861 22047 22129 E libEGL  : eglGetCompositorTimingSupportedANDROIDImpl:2358 error 300d (EGL_BAD_SURFACE)
+11-01 17:35:47.861 22047 22129 E libEGL  : eglGetFrameTimestampSupportedANDROIDImpl:2481 error 300d (EGL_BAD_SURFACE)
+11-01 17:35:47.868 22047 22064 D InputTransport: Input channel constructed: 'ClientS', fd=163
+11-01 17:35:47.874 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{69ec9b2 VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:47.875 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{ea47891 V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:47.901 22047 22047 D nativeloader: Load /data/app/~~cizCQqiNylqcaZeMUZtpKg==/com.github.nacabaro.vbhelper-wFsHJTenzNUcRkJsnqH4jQ==/base.apk!/lib/arm64-v8a/libarcore_sdk_jni.so using class loader ns clns-7 (caller=/data/app/~~cizCQqiNylqcaZeMUZtpKg==/com.github.nacabaro.vbhelper-wFsHJTenzNUcRkJsnqH4jQ==/base.apk!classes29.dex): ok
+11-01 17:35:47.905 22047 22047 I third_party/arcore/ar/core/android/sdk/session_create.cc: Entering ArSession_createWithFeaturesAndTrace
+11-01 17:35:47.909 22047 22047 I third_party/arcore/ar/core/android/sdk/session_create.cc: ARCore Version: SDK build name: 1.57
+11-01 17:35:47.938 22047 22047 I third_party/arcore/ar/core/android/sdk/session_create.cc: ARCore Version: APK version code: 262640093 from package com.google.ar.core
+11-01 17:35:47.965 22047 22047 W cabaro.vbhelper: Loading /data/app/~~h0Dxxl5gsN8pEFzWRPpBXA==/com.google.ar.core-Gf0Up4aGWQWYYwiDbSziAw==/oat/arm64/base.odex non-executable as it requires an image which we failed to load
+11-01 17:35:47.966 22047 22047 W cabaro.vbhelper: Failed to find entry 'classes.dex': Entry not found
+11-01 17:35:47.967 22047 22047 W cabaro.vbhelper: Failed to find entry 'classes.dex': Entry not found
+11-01 17:35:47.968 22047 22047 D nativeloader: Configuring clns-8 for other apk /data/app/~~h0Dxxl5gsN8pEFzWRPpBXA==/com.google.ar.core-Gf0Up4aGWQWYYwiDbSziAw==/base.apk:/data/app/~~h0Dxxl5gsN8pEFzWRPpBXA==/com.google.ar.core-Gf0Up4aGWQWYYwiDbSziAw==/split_config.pt.apk:/data/app/~~h0Dxxl5gsN8pEFzWRPpBXA==/com.google.ar.core-Gf0Up4aGWQWYYwiDbSziAw==/split_config.xxhdpi.apk. target_sdk_version=37, uses_libraries=, library_path=/data/app/~~h0Dxxl5gsN8pEFzWRPpBXA==/com.google.ar.core-Gf0Up4aGWQWYYwiDbSziAw==/lib/arm64:/data/app/~~h0Dxxl5gsN8pEFzWRPpBXA==/com.google.ar.core-Gf0Up4aGWQWYYwiDbSziAw==/base.apk!/lib/arm64-v8a:/data/app/~~h0Dxxl5gsN8pEFzWRPpBXA==/com.google.ar.core-Gf0Up4aGWQWYYwiDbSziAw==/split_config.pt.apk!/lib/arm64-v8a:/data/app/~~h0Dxxl5gsN8pEFzWRPpBXA==/com.google.ar.core-Gf0Up4aGWQWYYwiDbSziAw==/split_config.xxhdpi.apk!/lib/arm64-v8a, permitted_path=/data:/mnt/expand
+11-01 17:35:47.972 22047 22047 I third_party/arcore/ar/core/android/sdk/session_create.cc: Dynamite load ok.
+11-01 17:35:47.972 22047 22047 I third_party/arcore/java/com/google/vr/dynamite/client/native/dynamite_client.cc: Attempting to load native library arcore_c from package com.google.ar.core
+11-01 17:35:48.050 22047 22047 D nativeloader: Load /data/app/~~h0Dxxl5gsN8pEFzWRPpBXA==/com.google.ar.core-Gf0Up4aGWQWYYwiDbSziAw==/base.apk!/lib/arm64-v8a/libarcore_c.so using class loader ns clns-8 (caller=/data/app/~~h0Dxxl5gsN8pEFzWRPpBXA==/com.google.ar.core-Gf0Up4aGWQWYYwiDbSziAw==/base.apk!classes2.dex): ok
+11-01 17:35:48.061 22047 22047 I third_party/arcore/java/com/google/vr/dynamite/client/native/dynamite_client.cc: Dynamite::LoadNativeRemoteLibrary handle=1205758630152426915
+11-01 17:35:48.062 22047 22047 I third_party/arcore/ar/core/android/sdk/session_create.cc: ARCore SDK: dynamite number_of_symbols_loaded=319
+11-01 17:35:48.067 22047 22047 I native  : I0000 00:00:1793565348.067522   22047 session_create_implementation.cc:273] Entering createImplementationWithFeaturesAndSettings. ARCore SDK version: [1.57.262070000].
+11-01 17:35:48.083 22047 22047 I native  : I0000 00:00:1793565348.081084   22047 session_create_implementation.cc:231] AugmentedRegion downsample mode from Phenotype: true
+11-01 17:35:48.091 22047 22249 V third_party/redwood/infrastructure/jni_common/jni_helper.cc: JniHelper: attached thread (Called from line 370).
+11-01 17:35:48.223 22047 22047 I native  : I0000 00:00:1793565348.223052   22047 session_create_implementation_shared.cc:2596] min_apk_version_code is: 262070000, phenotype flag of enable_dual_camera_support is: false, phenotype flag of unified_data_source_status is: 2, is_dual_camera_supported based on device profile is: false
+11-01 17:35:48.223 22047 22047 I native  : I0000 00:00:1793565348.223629   22047 session_create_implementation_shared.cc:2607] Settings.camera_stack_option is not specified
+11-01 17:35:48.223 22047 22047 I native  : I0000 00:00:1793565348.223649   22047 session_create_implementation_shared.cc:2680] Datasource will be created with camera_stack_option = kUnifiedMono
+11-01 17:35:48.223 22047 22047 I native  : I0000 00:00:1793565348.223658   22047 android_camera.cc:185] [Live DS] Camera start operation timeout set to 4000 ms.
+11-01 17:35:48.227 22047 22047 E ACameraManager: getCurrentDeviceId: Failed to call getDeviceIdsForUid to determine device id for uid 11275: No error
+11-01 17:35:48.227 22047 22047 I native  : I0000 00:00:1793565348.227642   22047 android_camera.cc:2055] [Live DS] Initializing camera manager.
+--------- beginning of crash
+11-01 17:35:48.254 22047 22129 F libc    : Fatal signal 11 (SIGSEGV), code 1 (SEGV_MAPERR), fault addr 0x0 in tid 22129 (FEngine::loop), pid 22047 (cabaro.vbhelper)
+11-01 17:35:48.293 22047 22047 D VendorTagDescriptor: addVendorDescriptor: vendor tag id 8932615658386372252 added
+11-01 17:35:48.302 22047 22047 E ACameraManager: getCurrentDeviceId: Failed to call getDeviceIdsForUid to determine device id for uid 11275: No error
+11-01 17:35:48.314 22047 22047 E ACameraManager: getCurrentDeviceId: Failed to call getDeviceIdsForUid to determine device id for uid 11275: No error
+11-01 17:35:48.339 22047 22047 E ACameraManager: getCurrentDeviceId: Failed to call getDeviceIdsForUid to determine device id for uid 11275: No error
+11-01 17:35:48.344 22047 22047 I native  : I0000 00:00:1793565348.344248   22047 android_camera.cc:2092] [Live DS] Camera manager initialized successfully with 3 cameras.
+11-01 17:35:48.344 22047 22047 I native  : I0000 00:00:1793565348.344561   22047 session_create_implementation_shared.cc:2693] ARCore Feature Additional Cameras and FOV enabled
+11-01 17:35:48.347 22047 22047 I native  : I0000 00:00:1793565348.347840   22047 android_camera.cc:831] [Live DS] [Camera=0; State=CLOSED] Reset cleanly got to CLOSED state.
+11-01 17:35:48.349 22047 22047 I native  : I0000 00:00:1793565348.349778   22047 android_camera.cc:831] [Live DS] [Camera=2; State=CLOSED] Reset cleanly got to CLOSED state.
+11-01 17:35:48.353 22047 22047 I native  : I0000 00:00:1793565348.353116   22047 android_camera.cc:831] [Live DS] [Camera=1; State=CLOSED] Reset cleanly got to CLOSED state.
+11-01 17:35:48.368 22047 22047 I native  : I0000 00:00:1793565348.368071   22047 session_create_implementation_shared.cc:2884] Persistent online recalibration is enabled by Phenotype.
+11-01 17:35:48.381 22047 22047 I tflite  : Initialized TensorFlow Lite runtime.
+11-01 17:35:48.392 22047 22047 W libc    : Access denied finding property "ro.mediatek.platform"
+11-01 17:35:48.474 22047 22047 I tflite  : Created TensorFlow Lite XNNPACK delegate for CPU.
+11-01 17:35:48.475 22047 22047 I tflite  : Replacing 2 out of 2 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 1 partitions for subgraph 0 (main).
+11-01 17:35:48.490 22047 22047 I native  : I0000 00:00:1793565348.489615   22047 online_calibration_manager.cc:96] OnlineCalibrationManager: Could not open /data/user/0/com.github.nacabaro.vbhelper/cache/arcore-online-recalibration for reading.
+11-01 17:35:48.562 22047 22117 W cabaro.vbhelper: Long monitor contention with owner DefaultDispatcher-worker-6 (22093) at com.tamerslab.species.CanonicalSpeciesCatalog com.tamerslab.species.BundledDotSpriteLibrary.catalogBlocking()(BundledDotSpriteLibrary.kt:40) waiters=0 in com.tamerslab.species.CanonicalSpeciesCatalog com.tamerslab.species.BundledDotSpriteLibrary.catalogBlocking() for 2.220s
+11-01 17:35:48.587 22047 22047 W ARCore-ContextUtils: The API key for use with the Google AR service could not be obtained!
+11-01 17:35:48.634 22047 22059 I cabaro.vbhelper: NativeAlloc concurrent mark compact GC freed 10044KB AllocSpace bytes, 1(60KB) LOS objects, 42% free, 33MB/57MB, paused 1.065ms,1.894ms total 132.181ms
+11-01 17:35:48.651 22047 22047 I native  : I0000 00:00:1793565348.651721   22047 session_create_implementation_shared.cc:1358] semantic_segmentation enabled
+11-01 17:35:48.682 22047 22047 I CameraManagerGlobal: Connecting to camera service
+11-01 17:35:48.686 22047 22047 D VendorTagDescriptor: addVendorDescriptor: vendor tag id 8932615658386372252 added
+11-01 17:35:48.699 22047 22063 I CameraManagerGlobal: Camera 0 facing CAMERA_FACING_BACK state now CAMERA_STATE_CLOSED for client com.github.nacabaro.vbhelper API Level 2 User Id 0Device Id 0
+11-01 17:35:48.699 22047 22289 I CameraManagerGlobal: Camera 1 facing CAMERA_FACING_FRONT state now CAMERA_STATE_CLOSED for client com.samsung.android.smartface API Level 2 User Id 0Device Id 0
+11-01 17:35:48.704 22047 22289 I CameraManagerGlobal: Camera 2 facing CAMERA_FACING_FRONT state now CAMERA_STATE_CLOSED for client android.system API Level 2 User Id 0Device Id 0
+11-01 17:35:48.704 22047 22063 I CameraManagerGlobal: Camera 23 facing CAMERA_FACING_BACK state now CAMERA_STATE_CLOSED for client android.system API Level 2 User Id 0Device Id 0
+11-01 17:35:48.704 22047 22063 I CameraManagerGlobal: Camera 3 facing CAMERA_FACING_FRONT state now CAMERA_STATE_CLOSED for client android.system API Level 2 User Id 0Device Id 0
+11-01 17:35:48.704 22047 22063 I CameraManagerGlobal: Camera 50 facing CAMERA_FACING_BACK state now CAMERA_STATE_CLOSED for client android.system API Level 2 User Id 0Device Id 0
+11-01 17:35:48.704 22047 22063 I CameraManagerGlobal: Camera 54 facing CAMERA_FACING_BACK state now CAMERA_STATE_CLOSED for client android.system API Level 2 User Id 0Device Id 0
+11-01 17:35:48.721 22047 22047 D nativeloader: Load /data/app/~~h0Dxxl5gsN8pEFzWRPpBXA==/com.google.ar.core-Gf0Up4aGWQWYYwiDbSziAw==/base.apk!/lib/arm64-v8a/libhardware_buffer_stream_jni.so using class loader ns clns-8 (caller=/data/app/~~h0Dxxl5gsN8pEFzWRPpBXA==/com.google.ar.core-Gf0Up4aGWQWYYwiDbSziAw==/base.apk!classes2.dex): ok
+11-01 17:35:48.736 22047 22047 I native  : I0000 00:00:1793565348.736425   22047 session_create_implementation_shared.cc:1649] ARCore feature image_prevent_callback_during_stop is: = false
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.918000   22047 sensors_provider.cc:68] [Live DS] static sensor with name: LSM6DSOTR Accelerometer, type: 1
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919108   22047 sensors_provider.cc:68] [Live DS] static sensor with name: MXG4300S Magnetometer, type: 2
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919138   22047 sensors_provider.cc:68] [Live DS] static sensor with name: LSM6DSOTR Gyroscope, type: 4
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919154   22047 sensors_provider.cc:68] [Live DS] static sensor with name: TCS3701 Light, type: 5
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919168   22047 sensors_provider.cc:68] [Live DS] static sensor with name: MXG4300S Magnetometer Uncalibrated, type: 14
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919185   22047 sensors_provider.cc:68] [Live DS] static sensor with name: LSM6DSOTR Gyroscope Uncalibrated, type: 16
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919200   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Significant Motion, type: 17
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919214   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Step Detector, type: 18
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919228   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Step Counter, type: 19
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919243   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Tilt Detector, type: 22
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919257   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Pick Up Gesture, type: 25
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919270   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Device Orientataion, type: 27
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919283   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Interrupt Gyroscope, type: 65579
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919321   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Scontext, type: 65586
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919336   22047 sensors_provider.cc:68] [Live DS] static sensor with name: TCS3701 Light CCT, type: 65587
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919349   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Call Gesture, type: 65594
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919363   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Wake Up Motion, type: 65590
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919377   22047 sensors_provider.cc:68] [Live DS] static sensor with name: TCS3701 Auto Brightness Sensor, type: 65601
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919391   22047 sensors_provider.cc:68] [Live DS] static sensor with name: VDIS Gyroscope, type: 65607
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919405   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Pro Tos Motion, type: 65613
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919418   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Flip Cover Detector, type: 65639
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919432   22047 sensors_provider.cc:68] [Live DS] static sensor with name: LSM6DSOTR Accelerometer Uncalibrated, type: 35
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919446   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Aois Sensor, type: 65699
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919494   22047 sensors_provider.cc:68] [Live DS] static sensor with name: SuperSteady Gyroscope, type: 65646
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919511   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Device Orientataion Wake Up, type: 27
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919525   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Light Seamless Sensor, type: 65614
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919621   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Hover Proximity, type: 65599
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919643   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Touch Pocket, type: 65610
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919658   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Samsung Hall IC, type: 65600
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919672   22047 sensors_provider.cc:68] [Live DS] static sensor with name: ISG5320A Grip sensor, type: 65560
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919685   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Grip Notifier Sensor, type: 65645
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919698   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Motion Sensor, type: 65559
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919710   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Ear Hover Proximity Sensor (ProToS), type: 8
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919732   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Samsung Game Rotation Vector Sensor, type: 15
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919746   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Samsung Gravity Sensor, type: 9
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919760   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Samsung Linear Acceleration Sensor, type: 10
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919772   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Samsung Rotation Vector Sensor, type: 11
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919784   22047 sensors_provider.cc:68] [Live DS] static sensor with name: Samsung Orientation Sensor, type: 3
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919884   22047 sensors_provider.cc:122] [Live DS] Using default sensor LSM6DSOTR Gyroscope Uncalibrated of type 16 as preferred sensor.
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919907   22047 sensors_provider.cc:275] [Live DS] Using uncalibrated gyroscope:LSM6DSOTR Gyroscope Uncalibrated as the preferred gyroscope.
+11-01 17:35:48.919 22047 22047 I native  : I0000 00:00:1793565348.919929   22047 sensors_provider.cc:122] [Live DS] Using default sensor LSM6DSOTR Accelerometer Uncalibrated of type 35 as preferred sensor.
+11-01 17:35:48.920 22047 22047 I native  : I0000 00:00:1793565348.920012   22047 sensors_provider.cc:332] [Live DS] Using uncalibrated accelerometer:LSM6DSOTR Accelerometer Uncalibrated as the preferred accelerometer.
+11-01 17:35:48.920 22047 22047 I native  : I0000 00:00:1793565348.920050   22047 sensors_provider.cc:122] [Live DS] Using default sensor MXG4300S Magnetometer Uncalibrated of type 14 as preferred sensor.
+11-01 17:35:48.920 22047 22047 I native  : I0000 00:00:1793565348.920072   22047 sensors_provider.cc:378] [Live DS] Uncalibrated magnetometer available.
+11-01 17:35:48.920 22047 22047 I native  : I0000 00:00:1793565348.920090   22047 sensors_provider.cc:122] [Live DS] Using default sensor MXG4300S Magnetometer of type 2 as preferred sensor.
+11-01 17:35:48.920 22047 22047 I native  : I0000 00:00:1793565348.920126   22047 sensors_provider.cc:386] [Live DS] Calibrated magnetometer available.
+11-01 17:35:48.920 22047 22047 I native  : I0000 00:00:1793565348.920150   22047 sensors_provider.cc:122] [Live DS] Using default sensor TCS3701 Light of type 5 as preferred sensor.
+11-01 17:35:48.921 22047 22047 I native  : I0000 00:00:1793565348.920169   22047 sensors_provider.cc:402] [Live DS] Using SENSOR_TYPE_LIGHT
+11-01 17:35:48.921 22047 22047 I native  : I0000 00:00:1793565348.921163   22047 sensors_provider.cc:406] [Live DS] Could not find SENSOR_TYPE_PRESSURE
+11-01 17:35:48.921 22047 22047 I native  : I0000 00:00:1793565348.921209   22047 sensors_provider.cc:122] [Live DS] Using default sensor Ear Hover Proximity Sensor (ProToS) of type 8 as preferred sensor.
+11-01 17:35:48.921 22047 22047 I native  : I0000 00:00:1793565348.921236   22047 sensors_provider.cc:402] [Live DS] Using SENSOR_TYPE_PROXIMITY
+11-01 17:35:48.921 22047 22047 I native  : I0000 00:00:1793565348.921251   22047 sensors_provider.cc:122] [Live DS] Using default sensor Samsung Gravity Sensor of type 9 as preferred sensor.
+11-01 17:35:48.921 22047 22047 I native  : I0000 00:00:1793565348.921274   22047 sensors_provider.cc:402] [Live DS] Using SENSOR_TYPE_GRAVITY
+11-01 17:35:48.921 22047 22047 I native  : I0000 00:00:1793565348.921290   22047 sensors_provider.cc:122] [Live DS] Using default sensor Samsung Rotation Vector Sensor of type 11 as preferred sensor.
+11-01 17:35:48.921 22047 22047 I native  : I0000 00:00:1793565348.921303   22047 sensors_provider.cc:402] [Live DS] Using SENSOR_TYPE_ROTATION_VECTOR
+11-01 17:35:48.921 22047 22047 I native  : I0000 00:00:1793565348.921318   22047 sensors_provider.cc:122] [Live DS] Using default sensor Samsung Game Rotation Vector Sensor of type 15 as preferred sensor.
+11-01 17:35:48.921 22047 22047 I native  : I0000 00:00:1793565348.921330   22047 sensors_provider.cc:402] [Live DS] Using SENSOR_TYPE_GAME_ROTATION_VECTOR
+11-01 17:35:48.921 22047 22047 I native  : I0000 00:00:1793565348.921341   22047 sensors_provider.cc:406] [Live DS] Could not find SENSOR_TYPE_GEOMAGNETIC_ROTATION_VECTOR
+11-01 17:35:48.921 22047 22047 I native  : I0000 00:00:1793565348.921355   22047 sensors_provider.cc:122] [Live DS] Using default sensor Step Detector of type 18 as preferred sensor.
+11-01 17:35:48.921 22047 22047 I native  : I0000 00:00:1793565348.921367   22047 sensors_provider.cc:402] [Live DS] Using SENSOR_TYPE_STEP_DETECTOR
+11-01 17:35:48.921 22047 22047 I native  : I0000 00:00:1793565348.921378   22047 sensors_provider.cc:406] [Live DS] Could not find SENSOR_TYPE_HINGE_ANGLE
+11-01 17:35:48.921 22047 22047 I native  : I0000 00:00:1793565348.921388   22047 sensors_provider.cc:406] [Live DS] Could not find SENSOR_TYPE_AMBIENT_TEMPERATURE
+11-01 17:35:48.921 22047 22047 I native  : I0000 00:00:1793565348.921410   22047 sensor_ndk_wrapper.cc:311] [XR Sensors] RegisterForDeathNotification called
+11-01 17:35:48.924 22047 22047 I native  : I0000 00:00:1793565348.924611   22047 android_platform_checks.cc:206] IsZeroRotationLandscape = false
+11-01 17:35:48.926 22047 22047 I native  : I0000 00:00:1793565348.926289   22047 app_version_util.cc:51] Package name: com.google.ar.core App version: 1.57.262640093
+11-01 17:35:48.926 22047 22047 I native  : I0000 00:00:1793565348.926731   22047 logger.h:29] DataSourceMetrics: CamerasInit: 2.385us
+11-01 17:35:48.926 22047 22047 I native  : I0000 00:00:1793565348.926792   22047 session_create_implementation_shared.cc:1780] CPU Image enable frame delay to compensate delay: false
+11-01 17:35:48.937 22047 22047 I native  : I0000 00:00:1793565348.936998   22047 config_helpers.cc:470] IMU sigma values from data source are used
+11-01 17:35:48.937 22047 22047 I native  : I0000 00:00:1793565348.937266   22047 deep_io.cc:106] Load deepIO config: deepio_v5_pb.uncompressed
+11-01 17:35:48.937 22047 22047 I native  : I0000 00:00:1793565348.937434   22047 deep_io.cc:118] Load TFLite model: deepio_v5_tflite.uncompressed
+11-01 17:35:48.956 22047 22047 I tflite  : Replacing 65 out of 83 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 19 partitions for subgraph 0 (main).
+11-01 17:35:48.962 22047 22047 I native  : I0000 00:00:1793565348.962453   22047 session_create_implementation_shared.cc:1023] DeepIO release instantiated successfully.
+11-01 17:35:48.965 22047 22047 I native  : I0000 00:00:1793565348.965730   22047 inertial_estimator.cc:102] DeepIO model id: 5
+11-01 17:35:48.966 22047 22047 W native  : W0000 00:00:1793565348.966141   22047 motion_tracking_calibration_config.cc:513] Using default camera pinhole intrinsic covariance for camera stream id: {0;0}
+11-01 17:35:48.968 22047 22047 I native  : I0000 00:00:1793565348.968105   22047 motion_tracking_context_config_helpers.cc:1431] [MTCC] MotionTrackingContextConfig Settings:
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969282   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] DeviceType: ARCore
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969360   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio_estimator_options:
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969494   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-max_num_slam_landmarks: 15
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969505   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-max_num_keyframes: 5
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969513   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-pixel_noise_sigma_for_unmapped_landmarks: 0.8
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969520   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-max_unmapped_landmark_constraints: 51
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969526   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-max_total_visual_constraints: 102
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969531   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-sbr_mahalanobis_distance_threshold_factor: 1
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969538   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-mahalanobis_distance_upper_bound_approximation: 0
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969544   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-sbr_measurement_pixel_sigma_scale_factor: 1
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969550   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-camera_intrinsics_random_walk_variance: 0.001
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969556   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-bearing_variance: 1.11111e-05
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969562   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-map_p_camera_variance: 0.000625
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969568   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-inverse_depth_variance: 0.000625
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969574   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-map_q_camera_variance: 0.000109662
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969579   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-use_simplified_noise_integration: 0
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969585   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-use_block_monitor_for_online_calibration: 0
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969591   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-initial_velocity_variance: 0.01
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969597   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-initial_roll_variance: 0.000685389
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969603   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-initial_pitch_variance: 0.000685389
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969608   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-gyro_noise_sigma: -1
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969614   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-gyro_bias_sigma: -1
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969620   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-accel_noise_sigma: -1
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969626   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-accel_bias_sigma: -1
+11-01 17:35:48.969 22047 22047 I native  : I0000 00:00:1793565348.969631   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-output_vio_state_covariance: 1
+11-01 17:35:48.970 22047 22047 I native  : I0000 00:00:1793565348.970748   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-disable_expected_features_hints: 0
+11-01 17:35:48.970 22047 22047 I native  : I0000 00:00:1793565348.970882   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-max_consecutive_failed_inits_before_discarding_online_calibration: 7
+11-01 17:35:48.970 22047 22047 I native  : I0000 00:00:1793565348.970929   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-discard_online_calibration_after_vio_fault: 0
+11-01 17:35:48.970 22047 22047 I native  : I0000 00:00:1793565348.970963   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-max_dropout_duration_for_tracking_initialization: 400ms
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.970991   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-initialization_solver_type: 0
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971020   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-use_inverse_depth_prioritizing_policy_for_slam_landmarks: 0
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971051   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-max_accel_value_for_initialization: 17
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971078   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-enable_init_quality_gate: 0
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971113   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-stationary_accel_threshold: 0.5
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971160   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-stationary_gyro_threshold_deg: 2
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971189   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vio-stationary_gyro_strict_threshold_deg: 0.96
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971216   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] mapping_options:
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971243   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-enable_dsp: 0
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971267   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-active_map_manager_mode: 0
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971294   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-map_publish_keyframe_position_baseline_meter_squared_threshold: 0
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971318   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-map_publish_keyframe_orientation_diff_rad_threshold: 0
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971342   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-multi_map_process_mode: 2
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971365   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-map_optimizer_type: Ceres
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971389   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-ceres_trust_region_strategy: 
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971441   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-pose_graph_optimizer_type: Ceres
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971614   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-enable_loop_closure: 1
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971638   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-run_pgo_before_bundle_adjustment: 0
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971652   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-pgo_number_of_temporal_edges: 2
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971661   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-pgo_number_of_covisibility_edges: 0
+11-01 17:35:48.971 22047 22047 I native  : I0000 00:00:1793565348.971668   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-pose_parameterization_type: 0
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.972966   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-loop_closure_max_keyframe_matches: 1
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973149   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-loop_closure_query_delta_time_sec: 0.5
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973220   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-loop_closure_query_every_nth_keyframe: -1
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973252   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-loop_closure_keyframe_insert_every_nth: 1
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973276   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-loop_closure_query_mode: 0
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973300   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-min_landmark_observations: 5
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973324   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-min_landmark_observation_angle_rad: nullopt
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973348   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-min_landmark_distance_to_closest_observer: nullopt
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973372   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-max_landmark_distance_to_closest_observer: nullopt
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973396   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-landmark_associator_reprojection_error_threshold: 10
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973431   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-map_optimizer_triangulation_reprojection_error_threshold: 7.5
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973457   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-map_marginalization_enable: 1
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973486   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-map_marginalization_num_keyframes_to_marginalize: 20
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973509   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-map_marginalization_num_keyframes_to_retain: 5
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973533   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-map_marginalization_solver_type: Simple
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973563   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-mapping_mode: 0
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973591   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-add_keyframe_delta_time_seconds: 1
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973617   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-add_keyframe_delta_rotation_degrees: 5
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973641   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-add_keyframe_delta_translation_meters: 0.06
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973727   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-add_keyframe_llc_percentage_threshold: 0.5
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973753   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-add_keyframe_min_llc_match_threshold: 30
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973763   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-enable_spatial_keyframing: 1
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973772   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-estimate_camera_intrinsics_mode: 0
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973778   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-estimate_imu_camera_extrinsics_mode: 0
+11-01 17:35:48.973 22047 22047 I native  : I0000 00:00:1793565348.973784   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-estimate_imu_intrinsics: 0
+11-01 17:35:48.974 22047 22047 I native  : I0000 00:00:1793565348.974868   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-use_prior_terms_in_calibration: 0
+11-01 17:35:48.974 22047 22047 I native  : I0000 00:00:1793565348.974922   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-pinhole_camera_prior_sigma: 2.5
+11-01 17:35:48.974 22047 22047 I native  : I0000 00:00:1793565348.974933   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-use_motion_constraints: 1
+11-01 17:35:48.974 22047 22047 I native  : I0000 00:00:1793565348.974940   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-use_keyframe_freezing_strategy: 0
+11-01 17:35:48.974 22047 22047 I native  : I0000 00:00:1793565348.974947   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-litecom_active_landmark_window_seconds: 5
+11-01 17:35:48.974 22047 22047 I native  : I0000 00:00:1793565348.974953   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-litecom_active_keyframe_window_seconds: 10
+11-01 17:35:48.974 22047 22047 I native  : I0000 00:00:1793565348.974959   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-litecom_enable_unconstrained_recovery_on_non_convergence: 1
+11-01 17:35:48.974 22047 22047 I native  : I0000 00:00:1793565348.974965   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-litecom_non_converged_cooldown_epochs: 5
+11-01 17:35:48.974 22047 22047 I native  : I0000 00:00:1793565348.974971   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-use_visual_constraints_sparsification: 0
+11-01 17:35:48.974 22047 22047 I native  : I0000 00:00:1793565348.974978   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-visual_constraints_temporal_downsampling_rate: 1
+11-01 17:35:48.974 22047 22047 I native  : I0000 00:00:1793565348.974983   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-max_consecutive_skipped_online_solves: 5
+11-01 17:35:48.974 22047 22047 I native  : I0000 00:00:1793565348.974989   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-always_run_optimization: 0
+11-01 17:35:48.974 22047 22047 I native  : I0000 00:00:1793565348.974995   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-max_z_of_pointlandmark_in_camera_frame: 15
+11-01 17:35:48.975 22047 22047 I native  : I0000 00:00:1793565348.975002   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-map_landmark_keypoint_pixel_sigma: 1.5
+11-01 17:35:48.975 22047 22047 I native  : I0000 00:00:1793565348.975008   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-remove_outlier_landmark_mode: 0
+11-01 17:35:48.975 22047 22047 I native  : I0000 00:00:1793565348.975014   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-remove_outlier_landmark_with_covariance_mode: 0
+11-01 17:35:48.975 22047 22047 I native  : I0000 00:00:1793565348.975020   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-landmark_cov_cond_threshold: 55
+11-01 17:35:48.975 22047 22047 I native  : I0000 00:00:1793565348.975026   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-landmark_outlier_rejection_threshold: 3
+11-01 17:35:48.975 22047 22047 I native  : I0000 00:00:1793565348.975034   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-visual_error_pixel_sigma_multiplier: 1.5
+11-01 17:35:48.975 22047 22047 I native  : I0000 00:00:1793565348.975040   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-visual_error_huber_loss_multiplier: 3
+11-01 17:35:48.975 22047 22047 I native  : I0000 00:00:1793565348.975046   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-zero_velocity_error_sigma: 0.1
+11-01 17:35:48.975 22047 22047 I native  : I0000 00:00:1793565348.975052   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-zero_velocity_error_huber_loss_multiplier: 3
+11-01 17:35:48.975 22047 22047 I native  : I0000 00:00:1793565348.975059   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-is_gravity_constrained: 1
+11-01 17:35:48.975 22047 22047 I native  : I0000 00:00:1793565348.975064   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-enable_keypoint_pruning: 1
+11-01 17:35:48.975 22047 22047 I native  : I0000 00:00:1793565348.975071   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-enable_visual_constraint_compaction: 0
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976178   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-remove_poorly_observed_landmarks: 0
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976296   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-max_num_of_inactive_maps: unset (default: 4 on device, 50 offline)
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976334   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-max_map_solver_memory_use_in_mb_for_map_merging: 0
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976363   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-enable_unpersisted_memory_eviction: unset (default: true on device, false offline)
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976388   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-total_recall_max_num_inactive_maps_buffer: 5
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976413   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-keyframe_initialization_strategy: 0
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976479   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-llc_search_type: 1
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976513   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-llc_max_sq_distance_between_keyframes_for_covisibility_search: 100
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976539   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-reprojection_criteria: 
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976574   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-keyframe_growth_threshold_absolute: 2147483647
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976601   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-valid_landmark_growth_threshold_absolute: 2147483647
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976626   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-loop_closure_distance_delta_threshold_m: 3.40282e+38
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976649   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-max_map_optimizations_without_global_loop_closure: 10
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976673   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-loop_closure_force_full_ba_threshold_m: 3.40282e+38
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976696   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-problem_type: 1
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976777   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-xr_float_type: double
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976821   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-use_mixed_precision_solves: 0
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976834   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-min_num_cross_adf_constraints: 9
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976842   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-map_alignment_max_delta_rotation_degrees: 10
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976849   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-map_alignment_max_delta_translation_squared: 4
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976856   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-map_alignment_transformation_convergence_max_delta_rotation_degrees: 2
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976862   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-map_alignment_transformation_convergence_max_delta_translation_squared: 0.04
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976868   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-map_alignment_enable_multi_candidate_consistency_verification: 0
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976875   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-map_alignment_multi_candidate_threshold_position_meters: 2
+11-01 17:35:48.976 22047 22047 I native  : I0000 00:00:1793565348.976881   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-map_alignment_multi_candidate_threshold_orientation_radians: 0.174533
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.977999   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-map_alignment_multi_candidate_min_inlier_ratio: 0.9
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978154   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map-map_alignment_min_geom_inlier_ratio: 0.2
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978203   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] mapping_options_travel_mode:
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978231   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-enable_dsp: 0
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978256   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-active_map_manager_mode: 0
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978285   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-map_publish_keyframe_position_baseline_meter_squared_threshold: 0
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978311   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-map_publish_keyframe_orientation_diff_rad_threshold: 0
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978346   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-multi_map_process_mode: 2
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978373   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-map_optimizer_type: Ceres
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978432   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-ceres_trust_region_strategy: 
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978464   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-pose_graph_optimizer_type: Ceres
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978489   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-enable_loop_closure: 1
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978513   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-run_pgo_before_bundle_adjustment: 0
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978540   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-pgo_number_of_temporal_edges: 2
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978564   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-pgo_number_of_covisibility_edges: 0
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978592   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-pose_parameterization_type: 0
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978616   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-loop_closure_max_keyframe_matches: 1
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978640   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-loop_closure_query_delta_time_sec: 0.5
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978665   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-loop_closure_query_every_nth_keyframe: -1
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978691   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-loop_closure_keyframe_insert_every_nth: 1
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978717   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-loop_closure_query_mode: 0
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978756   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-min_landmark_observations: 5
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978784   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-min_landmark_observation_angle_rad: nullopt
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978829   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-min_landmark_distance_to_closest_observer: nullopt
+11-01 17:35:48.978 22047 22047 I native  : I0000 00:00:1793565348.978859   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-max_landmark_distance_to_closest_observer: nullopt
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.979978   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-landmark_associator_reprojection_error_threshold: 10
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980175   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-map_optimizer_triangulation_reprojection_error_threshold: 7.5
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980214   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-map_marginalization_enable: 1
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980254   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-map_marginalization_num_keyframes_to_marginalize: 20
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980281   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-map_marginalization_num_keyframes_to_retain: 5
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980330   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-map_marginalization_solver_type: Simple
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980355   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-mapping_mode: 0
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980379   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-add_keyframe_delta_time_seconds: 1
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980403   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-add_keyframe_delta_rotation_degrees: 5
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980429   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-add_keyframe_delta_translation_meters: 0.06
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980453   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-add_keyframe_llc_percentage_threshold: 0.5
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980478   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-add_keyframe_min_llc_match_threshold: 30
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980502   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-enable_spatial_keyframing: 1
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980550   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-estimate_camera_intrinsics_mode: 0
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980594   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-estimate_imu_camera_extrinsics_mode: 0
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980624   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-estimate_imu_intrinsics: 0
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980648   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-use_prior_terms_in_calibration: 0
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980672   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-pinhole_camera_prior_sigma: 2.5
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980696   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-use_motion_constraints: 1
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980725   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-use_keyframe_freezing_strategy: 0
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980753   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-litecom_active_landmark_window_seconds: 5
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980777   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-litecom_active_keyframe_window_seconds: 10
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980803   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-litecom_enable_unconstrained_recovery_on_non_convergence: 1
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980828   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-litecom_non_converged_cooldown_epochs: 5
+11-01 17:35:48.980 22047 22047 I native  : I0000 00:00:1793565348.980852   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-use_visual_constraints_sparsification: 0
+11-01 17:35:48.982 22047 22047 I native  : I0000 00:00:1793565348.982077   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-visual_constraints_temporal_downsampling_rate: 1
+11-01 17:35:48.982 22047 22047 I native  : I0000 00:00:1793565348.982307   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-max_consecutive_skipped_online_solves: 5
+11-01 17:35:48.982 22047 22047 I native  : I0000 00:00:1793565348.982423   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-always_run_optimization: 0
+11-01 17:35:48.982 22047 22047 I native  : I0000 00:00:1793565348.982540   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-max_z_of_pointlandmark_in_camera_frame: 15
+11-01 17:35:48.982 22047 22047 I native  : I0000 00:00:1793565348.982585   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-map_landmark_keypoint_pixel_sigma: 1.5
+11-01 17:35:48.982 22047 22047 I native  : I0000 00:00:1793565348.982626   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-remove_outlier_landmark_mode: 0
+11-01 17:35:48.982 22047 22047 I native  : I0000 00:00:1793565348.982663   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-remove_outlier_landmark_with_covariance_mode: 0
+11-01 17:35:48.982 22047 22047 I native  : I0000 00:00:1793565348.982702   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-landmark_cov_cond_threshold: 55
+11-01 17:35:48.982 22047 22047 I native  : I0000 00:00:1793565348.982738   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-landmark_outlier_rejection_threshold: 3
+11-01 17:35:48.982 22047 22047 I native  : I0000 00:00:1793565348.982773   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-visual_error_pixel_sigma_multiplier: 1.5
+11-01 17:35:48.982 22047 22047 I native  : I0000 00:00:1793565348.982808   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-visual_error_huber_loss_multiplier: 3
+11-01 17:35:48.982 22047 22047 I native  : I0000 00:00:1793565348.982843   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-zero_velocity_error_sigma: 0.1
+11-01 17:35:48.982 22047 22047 I native  : I0000 00:00:1793565348.982877   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-zero_velocity_error_huber_loss_multiplier: 3
+11-01 17:35:48.982 22047 22047 I native  : I0000 00:00:1793565348.982912   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-is_gravity_constrained: 1
+11-01 17:35:48.982 22047 22047 I native  : I0000 00:00:1793565348.982947   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-enable_keypoint_pruning: 1
+11-01 17:35:48.983 22047 22047 I native  : I0000 00:00:1793565348.982982   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-enable_visual_constraint_compaction: 0
+11-01 17:35:48.983 22047 22047 I native  : I0000 00:00:1793565348.983016   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-remove_poorly_observed_landmarks: 0
+11-01 17:35:48.983 22047 22047 I native  : I0000 00:00:1793565348.983050   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-max_num_of_inactive_maps: unset (default: 4 on device, 50 offline)
+11-01 17:35:48.983 22047 22047 I native  : I0000 00:00:1793565348.983087   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-max_map_solver_memory_use_in_mb_for_map_merging: 0
+11-01 17:35:48.983 22047 22047 I native  : I0000 00:00:1793565348.983123   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-enable_unpersisted_memory_eviction: unset (default: true on device, false offline)
+11-01 17:35:48.983 22047 22047 I native  : I0000 00:00:1793565348.983158   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-total_recall_max_num_inactive_maps_buffer: 5
+11-01 17:35:48.983 22047 22047 I native  : I0000 00:00:1793565348.983192   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-keyframe_initialization_strategy: 0
+11-01 17:35:48.983 22047 22047 I native  : I0000 00:00:1793565348.983227   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-llc_search_type: 1
+11-01 17:35:48.983 22047 22047 I native  : I0000 00:00:1793565348.983262   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-llc_max_sq_distance_between_keyframes_for_covisibility_search: 100
+11-01 17:35:48.983 22047 22047 I native  : I0000 00:00:1793565348.983297   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-reprojection_criteria: 
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984415   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-keyframe_growth_threshold_absolute: 2147483647
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984490   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-valid_landmark_growth_threshold_absolute: 2147483647
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984511   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-loop_closure_distance_delta_threshold_m: 3.40282e+38
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984522   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-max_map_optimizations_without_global_loop_closure: 10
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984530   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-loop_closure_force_full_ba_threshold_m: 3.40282e+38
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984537   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-problem_type: 1
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984544   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-xr_float_type: double
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984550   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-use_mixed_precision_solves: 0
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984556   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-min_num_cross_adf_constraints: 9
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984562   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-map_alignment_max_delta_rotation_degrees: 10
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984568   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-map_alignment_max_delta_translation_squared: 4
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984577   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-map_alignment_transformation_convergence_max_delta_rotation_degrees: 2
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984588   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-map_alignment_transformation_convergence_max_delta_translation_squared: 0.04
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984594   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-map_alignment_enable_multi_candidate_consistency_verification: 0
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984600   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-map_alignment_multi_candidate_threshold_position_meters: 2
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984606   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-map_alignment_multi_candidate_threshold_orientation_radians: 0.174533
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984612   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-map_alignment_multi_candidate_min_inlier_ratio: 0.9
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984619   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] map_travel_mode-map_alignment_min_geom_inlier_ratio: 0.2
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984625   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] localization_options:
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984631   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] loc-localization_options: nullopt
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984637   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] vision_3dof_options:
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984643   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] v3dof-failure_duration_before_reporting_loss: -1s
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984649   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] v3dof-failure_duration_before_hard_reset: -1s
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984655   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] v3dof-failure_duration_before_startup_fallback: -1s
+11-01 17:35:48.984 22047 22047 I native  : I0000 00:00:1793565348.984660   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] patch_tracking_options:
+11-01 17:35:48.985 22047 22047 I native  : I0000 00:00:1793565348.985755   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] ptp-patch_tracking_options: nullopt
+11-01 17:35:48.985 22047 22047 I native  : I0000 00:00:1793565348.985892   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_limited_map_transform_vio_changes_for_arcore: 1
+11-01 17:35:48.985 22047 22047 I native  : I0000 00:00:1793565348.985917   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] tracking_mode: LiteConcurrentOdometryAndMapping
+11-01 17:35:48.985 22047 22047 I native  : I0000 00:00:1793565348.985929   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] multicamera_litecom: 0
+11-01 17:35:48.985 22047 22047 I native  : I0000 00:00:1793565348.985937   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] buffering_policy: 0
+11-01 17:35:48.985 22047 22047 I native  : I0000 00:00:1793565348.985944   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] time_sync_estimation_mode: 1
+11-01 17:35:48.985 22047 22047 I native  : I0000 00:00:1793565348.985951   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] camera_intrinsics_recalibration_mode: 1
+11-01 17:35:48.985 22047 22047 I native  : I0000 00:00:1793565348.985957   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] imu_intrinsics_recalibration_mode: 1
+11-01 17:35:48.985 22047 22047 I native  : I0000 00:00:1793565348.985963   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] extrinsics_recalibration_mode: 1
+11-01 17:35:48.985 22047 22047 I native  : I0000 00:00:1793565348.985969   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] inertial_tracking_policy: 2
+11-01 17:35:48.985 22047 22047 I native  : I0000 00:00:1793565348.985975   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] max_alignment_transforms: 4
+11-01 17:35:48.985 22047 22047 I native  : I0000 00:00:1793565348.985981   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] reset_world_if_no_vio: 1
+11-01 17:35:48.985 22047 22047 I native  : I0000 00:00:1793565348.985988   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] init_inertial_fallback_timeout: 0
+11-01 17:35:48.985 22047 22047 I native  : I0000 00:00:1793565348.985993   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_stereo_matching: 0
+11-01 17:35:48.986 22047 22047 I native  : I0000 00:00:1793565348.986000   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] num_matching_threads: 1
+11-01 17:35:48.986 22047 22047 I native  : I0000 00:00:1793565348.986005   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] use_klt_track_stitching: 1
+11-01 17:35:48.986 22047 22047 I native  : I0000 00:00:1793565348.986011   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] use_patch_tracking_during_stationary: 0
+11-01 17:35:48.986 22047 22047 I native  : I0000 00:00:1793565348.986017   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] startup_duration_for_frame_rate_adjustment: 0
+11-01 17:35:48.986 22047 22047 I native  : I0000 00:00:1793565348.986023   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_dsp_triangulator: 0
+11-01 17:35:48.986 22047 22047 I native  : I0000 00:00:1793565348.986029   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] max_valid_tracking_velocity: 6
+11-01 17:35:48.986 22047 22047 I native  : I0000 00:00:1793565348.986035   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] min_velocity_for_feature_filtering_based_verification: 0.5
+11-01 17:35:48.986 22047 22047 I native  : I0000 00:00:1793565348.986041   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] fault_detector_min_ransac_inlier_ratio: 0.15
+11-01 17:35:48.986 22047 22047 I native  : I0000 00:00:1793565348.986049   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] fault_detector_min_num_matches: 20
+11-01 17:35:48.986 22047 22047 I native  : I0000 00:00:1793565348.986055   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] fault_detector_max_accel_value_for_fault: 100
+11-01 17:35:48.986 22047 22047 I native  : I0000 00:00:1793565348.986062   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] fault_detector_no_valid_translation_from_ransac_duration: inf
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987147   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] fault_detector_max_time_delta_between_feature_sets: 180ms
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987211   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] linear_velocity_measurement_noise_sigma: 0
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987224   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] imu_decimation_frequency_hz: 110
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987233   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] imu_decimation_frequency_hz_for_other_modules: 90
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987240   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_moving_features_robustification: 1
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987247   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] feature_matcher_sampson_pixel_error_threshold: 1.6
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987255   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] stereo_sampson_pixel_error_threshold: 4.242
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987261   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] max_stereo_ransac_depth_sq: 25
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987267   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] prune_mono_matches_using_stereo_outliers: 0
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987273   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] zero_point_ransac_low_parallax_degree_threshold: 0.9
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987280   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_robust_initialization: 1
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987286   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_use_tof_plane_in_vio: 0
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987292   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_stationary_detector: 1
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987298   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_static_poses_constraints: 0
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987304   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] static_poses_uses_imu_only: 0
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987310   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] zero_vel_uses_accel_and_gyro: 0
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987316   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] zero_velocity_noise_sigma: 0.06
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987323   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] pose_confidence_asset_path: pose_confidence_v0.tflite
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987329   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_alphatrack_debug_logging: 0
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987335   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] debug_map_load_paths: 
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987341   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] allow_persistent_map_without_annotations: 0
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987347   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] output_map_filepath: 
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987352   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] pre_opt_maps_filepath: 
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987358   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] pub_maps_filepath: 
+11-01 17:35:48.987 22047 22047 I native  : I0000 00:00:1793565348.987364   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] export_summary_maps: 0
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988440   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] sufficient_number_of_landmarks_for_vio_initialization: 200
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988508   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_qualify_translation_in_fault_detector: 1
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988523   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] ignore_speed_measurement_in_filter: 0
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988533   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] minimum_number_of_frames_for_tracking_initialization: 5
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988541   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] maximum_iterations_for_tracking_ba_initialization: 18
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988548   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] ba_initialization_min_track_length_per_landmark: 4
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988554   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] ba_initialization_reprojection_sane_threshold: 3
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988560   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] ba_initialization_strict_triangulation: 0
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988566   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] ba_initialization_enable_parallax_check: 0
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988572   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] ba_strict_initialization_min_keyframes: 7
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988579   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] ba_initialization_min_landmarks_at_max_keyframes: 50
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988585   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] max_allowable_velocity_change_after_ba_initialization: 1.5
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988591   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] max_initialization_velocity: 50
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988598   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] restrict_pose_displacement_in_initialization: 0
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988604   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] restrict_pose_drift_in_initialization: 0
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988610   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] estimator_stationary_state_detector_mode: 1
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988616   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_region_of_interest: 1
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988622   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_high_precision_vio_bad_performance_detection: 1
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988628   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] disable_thresholding_calibration_convergence_detection: 1
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988634   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] share_state_between_sessions: 1
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988640   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] share_state_between_sessions_after_stable: 0
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988646   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] min_successful_tracking_frames_to_share_state: 10
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988652   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] camera_to_camera_delta_theta_sigma: 0.00174533
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988658   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] camera_to_camera_p_sigma: 0.005
+11-01 17:35:48.988 22047 22047 I native  : I0000 00:00:1793565348.988665   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] multi_cameras_timestamp_sync_tolerance: 1ms
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989756   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] visual_measurements_timestamp_clamp_tolerance: 0
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989840   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] duration_to_drop_camera_from_system: 300ms
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989877   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] no_feature_wait_time_for_reset: 1.2s
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989889   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] fault_detector_max_bad_vio_update_time: 1.5s
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989896   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] max_consecutive_delta_adf_position_vio: 0.2
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989902   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] max_consecutive_delta_adf_rotation_vio: 4
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989909   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] max_map_vs_vio_delta_adf_position_vio: 0.3
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989915   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] max_map_vs_vio_delta_adf_rotation_vio: 5
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989921   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_accel_bias_refinement: 0
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989927   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] max_pose_extrapolation_time: 50ms
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989934   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_visual_feature_track_depth_provider_for_initialization: 0
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989941   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_gravity_vector_estimation_for_initialization: 0
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989948   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_landmark_triangulator_lite: 0
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989955   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] landmark_publish_policy: 3
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989961   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] geometric_loop_closure_verification: 0
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989967   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] klt_feature_tracks_provider_update_mode: 0
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989973   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] max_ram_usage_size_in_kb_for_mapping: 1048576
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989979   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] mapping_memory_threshold_mb: -1
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989987   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] critical_path_priority: 0
+11-01 17:35:48.989 22047 22047 I native  : I0000 00:00:1793565348.989993   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] max_rolling_shutter_readout_duration: 35ms
+11-01 17:35:48.990 22047 22047 I native  : I0000 00:00:1793565348.990000   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] dsp_acceleration_mode: 0
+11-01 17:35:48.990 22047 22047 I native  : I0000 00:00:1793565348.990006   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_multi_location_persistence: 0
+11-01 17:35:48.990 22047 22047 I native  : I0000 00:00:1793565348.990012   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_geometry_based_map_refresh: 0
+11-01 17:35:48.990 22047 22047 I native  : I0000 00:00:1793565348.990018   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_persistent_map_selection_using_image_embedding: 0
+11-01 17:35:48.990 22047 22047 I native  : I0000 00:00:1793565348.990024   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_eva_booster_for_descriptor_projection: 0
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991168   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_dsp_feature_processing: 0
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991325   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_pose_manager_dsp_proxy: 0
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991387   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] temporal_feature_matcher_type: 1
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991415   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] pose_prediction_method: 0
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991441   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] init_max_reprojection_error_per_landmark_in_pixels: 14
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991537   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] init_min_features_to_keyframe: 0
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991575   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] init_min_landmarks_per_image: 9
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991600   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] expected_feature_frame_rate: 2
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991624   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] moving_platform_detector_config:
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991649   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] mpd-enable_moving_platform_detector: 0
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991673   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] mpd-mode: VisualInertialComparator
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991697   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] mpd-reset_vio_on_moving_platform: 1
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991721   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] mpd-filter_alpha: 0.9
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991747   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] mpd-correction_position_delta_threshold: 0.03
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991771   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] mpd-use_velocity_variance: 1
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991797   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] mpd-velocity_variance_threshold: 0.0005
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991823   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] mpd-velocity_variance_filter_alpha: 0.8
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991848   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] mpd-velocity_variance_nth_landmark: 10
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991872   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] mpd-velocity_variance_landmark_distance: 10
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991900   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] mpd-relative_position_error_short_threshold_stddev: 1
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991952   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] mpd-relative_position_error_long_threshold_stddev: 0.8
+11-01 17:35:48.991 22047 22047 I native  : I0000 00:00:1793565348.991978   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] mpd-enable_extra_logging: 0
+11-01 17:35:48.992 22047 22047 I native  : I0000 00:00:1793565348.992003   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] moving_platform_support_type: 0
+11-01 17:35:48.992 22047 22047 I native  : I0000 00:00:1793565348.992027   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] max_sbr_failures_for_localization_reevaluation: 2
+11-01 17:35:48.992 22047 22047 I native  : I0000 00:00:1793565348.992053   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_new_world_for_recovery_from_inertial_fallback: 1
+11-01 17:35:48.993 22047 22047 I native  : I0000 00:00:1793565348.993163   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_partially_copy_for_map_publishing: 0
+11-01 17:35:48.993 22047 22047 I native  : I0000 00:00:1793565348.993220   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_total_recall: 0
+11-01 17:35:48.993 22047 22047 I native  : I0000 00:00:1793565348.993234   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] pose_manager_map_to_vio_query_mode: 0
+11-01 17:35:48.993 22047 22047 I native  : I0000 00:00:1793565348.993241   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] max_num_features_per_camera: 800
+11-01 17:35:48.993 22047 22047 I native  : I0000 00:00:1793565348.993248   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] camera_stream_ids_for_tracking: (0, 0)
+11-01 17:35:48.993 22047 22047 I native  : I0000 00:00:1793565348.993255   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] depth_camera_ids_for_tracking: 
+11-01 17:35:48.993 22047 22047 I native  : I0000 00:00:1793565348.993261   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] stereo_matching_pairs: 
+11-01 17:35:48.993 22047 22047 I native  : I0000 00:00:1793565348.993267   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] camera_ids_to_exclude_from_initialization: 
+11-01 17:35:48.993 22047 22047 I native  : I0000 00:00:1793565348.993274   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] stereo_feature_matcher_type: 0
+11-01 17:35:48.993 22047 22047 I native  : I0000 00:00:1793565348.993280   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_pose_manager_adf_vio_smooth: 0
+11-01 17:35:48.993 22047 22047 I native  : I0000 00:00:1793565348.993285   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_keyframe_connection_manager: 0
+11-01 17:35:48.993 22047 22047 I native  : I0000 00:00:1793565348.993292   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] enable_pivot_adjustment_in_3dof_fallback: 0
+11-01 17:35:48.993 22047 22047 I native  : I0000 00:00:1793565348.993299   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] travel_mode_3dof_logger_record_duration: 0
+11-01 17:35:48.993 22047 22047 I native  : I0000 00:00:1793565348.993306   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] memory_limit_behavior_override: nullopt
+11-01 17:35:48.993 22047 22047 I native  : I0000 00:00:1793565348.993313   22047 motion_tracking_context_config_helpers.cc:1435] [MTCC] het_logging_dir: 
+11-01 17:35:48.993 22047 22047 I native  : I0000 00:00:1793565348.993382   22047 motion_tracking_context.cc:1033] VPS data synchronizer is successfully initialized.
+11-01 17:35:48.995 22047 22047 I native  : I0000 00:00:1793565348.995641   22047 feature_matcher_and_filter.cc:328] Enabled the robustification to large-sized and fast-moving objects on this mono-camera device.
+11-01 17:35:49.008 22047 22047 I native  : I0000 00:00:1793565349.008844   22047 fused_pose_provider.cc:139] FusedPoseProvider config.max_alignment_transforms: 4 config.reset_world_if_no_vio: true config.reset_world_for_recovery_from_inertial_fallback: true
+11-01 17:35:49.015 22047 22047 I tflite  : Replacing 3 out of 3 node(s) with delegate (TfLiteXNNPackDelegate) node, yielding 1 partitions for subgraph 0 (main).
+11-01 17:35:49.015 22047 22047 I native  : I0000 00:00:1793565349.015353   22047 pose_confidence_estimator.cc:230] Pose confidence model loaded successfully
+11-01 17:35:49.018 22047 22047 I native  : I0000 00:00:1793565349.018868   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: buffering_policy: 0
+11-01 17:35:49.018 22047 22047 I native  : I0000 00:00:1793565349.018950   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: pixel_measurement_noise_sigma: 0.8
+11-01 17:35:49.018 22047 22047 I native  : I0000 00:00:1793565349.018965   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: sbr_measurement_pixel_sigma_scale_factor: 1
+11-01 17:35:49.018 22047 22047 I native  : I0000 00:00:1793565349.018972   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: min_z_of_landmark_in_camera_frame: 1e-06
+11-01 17:35:49.018 22047 22047 I native  : I0000 00:00:1793565349.018979   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: max_z_of_landmark_in_camera_frame: 1e+06
+11-01 17:35:49.018 22047 22047 I native  : I0000 00:00:1793565349.018985   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: fault_detector_max_valid_tracking_velocity: 6
+11-01 17:35:49.018 22047 22047 I native  : I0000 00:00:1793565349.018992   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: fault_detector_feature_filtering_verification_min_velocity: 0.5
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.018998   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: fault_detector_min_ransac_inlier_ratio: 0.15
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019004   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: fault_detector_min_ransac_inlier_number: 20
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019011   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: fault_detector_max_accel_value_for_fault: 100
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019018   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: fault_detector_no_valid_translation_from_ransac_duration: inf
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019025   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: fault_detector_max_time_delta_between_feature_sets: 180ms
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019031   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: fault_detector_max_bad_vio_update_time: 1.5s
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019037   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: enable_static_poses_constraints: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019043   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: enable_stationary_detector: 1
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019048   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: static_poses_uses_imu_only: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019054   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: zero_vel_uses_accel_and_gyro: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019151   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: stationary_accel_threshold: 0.5
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019168   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: stationary_gyro_threshold_dps: 2
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019177   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: stationary_gyro_strict_threshold_dps: 0.96
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019184   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: zero_velocity_noise_sigma: 0.06
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019191   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: low_parallax_degree_threshold: 0.5
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019197   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: camera_intrinsics_random_walk_variance: 0.001
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019203   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: bearing_variance: 1.11111e-05
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019209   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: map_p_camera_variance: 0.000625
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019215   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: map_q_camera_variance: 0.000109662
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019221   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: inverse_depth_variance: 0.000625
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019228   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: imu_decimation_frequency_hz: 110
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019244   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: max_num_slam_landmarks: 15
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019252   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: max_num_keyframes: 5
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019258   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: max_num_msckf_and_slam_constraints: 51
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019264   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: max_total_visual_constraints: 102
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019270   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: no_feature_wait_time_for_reset: 1.2s
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019276   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: camera_ids_to_exclude_from_initialization: 
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019283   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: pose_confidence_asset_path: pose_confidence_v0.tflite
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019301   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: ignore_speed_measurement_in_filter: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019308   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: minimum_number_of_frames_for_tracking_initialization: 5
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019314   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: max_consecutive_failed_inits_before_discarding_online_calibration: 7
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019320   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: discard_online_calibration_after_vio_fault: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019326   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: max_dropout_duration_for_tracking_initialization: 400ms
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019332   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: maximum_iterations_for_tracking_ba_initialization: 18
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019342   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: ba_initialization_min_track_length_per_landmark: 4
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019364   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: ba_initialization_reprojection_sane_threshold: 3
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019371   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: ba_initialization_strict_triangulation: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019377   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: ba_initialization_enable_parallax_check: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019384   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: ba_strict_initialization_min_keyframes: 7
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019390   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: ba_initialization_min_landmarks_at_max_keyframes: 50
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019396   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: max_allowable_velocity_change_after_ba_initialization: 1.5
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019402   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: max_initialization_velocity: 50
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019408   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: max_accel_value_for_initialization: 17
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019414   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: restrict_pose_displacement_in_initialization: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019420   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: restrict_pose_drift_in_initialization: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019428   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: share_state_between_sessions: 1
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019434   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: share_state_between_sessions_after_stable: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019440   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: min_successful_tracking_frames_to_share_state: 10
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019446   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: sufficient_number_of_landmarks_for_initialization: 200
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019453   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: max_consecutive_delta_adf_position_vio: 0.2
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019521   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: max_consecutive_delta_adf_rotation_vio: 4
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019530   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: max_map_vs_vio_delta_adf_position_vio: 0.3
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019541   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: max_map_vs_vio_delta_adf_rotation_vio: 5
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019553   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: sbr_mahalanobis_distance_threshold_factor: 1
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019559   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: mahalanobis_distance_upper_bound_approximation: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019565   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: use_simplified_noise_integration: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019571   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: use_block_monitor_for_online_calibration: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019577   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: initial_velocity_variance: 0.01
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019584   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: initial_roll_variance: 0.000685389
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019590   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: initial_pitch_variance: 0.000685389
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019596   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: gyro_noise_sigma: -1
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019602   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: gyro_bias_sigma: -1
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019610   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: accel_noise_sigma: -1
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019616   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: accel_bias_sigma: -1
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019622   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: latent_feature_update_mode: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019628   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: vio_thread_priority: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019634   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: stationary_state_detector_mode: 1
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019639   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: enable_init_quality_gate: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019645   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: output_state_covariance: 1
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019651   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: disable_expected_features_hints: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019658   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: enable_debug_logs: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019664   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: expected_feature_frame_rate: 2
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019670   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: enable_robust_initialization: 1
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019683   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: initialization_solver_type: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019689   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: use_inverse_depth_prioritizing_policy_for_slam_landmarks: 0
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019695   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: max_sbr_failures_for_localization_reevaluation: 2
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019701   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: moving_platform_support_type: 1
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019707   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: vision_3dof_estimator_options.failure_duration_before_reporting_loss: -1s
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019713   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: vision_3dof_estimator_options.failure_duration_before_hard_reset: -1s
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019720   22047 estimator_impl.cc:798] [EstimatorImpl] Estimator option: vision_3dof_estimator_options.failure_duration_before_startup_fallback: -1s
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019764   22047 bundle_adjustment_initializer.cc:121] [SSBA Initialization] SSBA initialization uses imu preintegration error with shared bias term.
+11-01 17:35:49.019 22047 22047 I native  : I0000 00:00:1793565349.019780   22047 bundle_adjustment_initializer.cc:123] [SSBA Initialization] SSBA initialization uses Ceres and uses double as Scalar.
+11-01 17:35:49.030 22047 22047 I native  : I0000 00:00:1793565349.030598   22047 outlier_detector.h:31] [Travel] OutlierDetector initialized with: Dim=3, alpha=1e-12, threshold=58.9198
+11-01 17:35:49.039 22047 22047 I native  : I0000 00:00:1793565349.039736   22047 motion_tracking_context.cc:4248] MTC Enable CPU landmark triangulation
+11-01 17:35:49.068 22047 22047 I native  : I0000 00:00:1793565349.068357   22047 visual_inertial_wls.cc:292] [M] Initializing VisualInertialWLS with viwls_config_.enable_loop_closure: true
+11-01 17:35:49.068 22047 22047 I native  : I0000 00:00:1793565349.068506   22047 visual_inertial_wls.cc:296] [M] Initializing VisualInertialWLS with viwls_config_.run_pgo_before_bundle_adjustment: false
+11-01 17:35:49.070 22047 22047 I native  : I0000 00:00:1793565349.070352   22047 asset_manager_util.cc:61] Created global reference to asset manager.
+11-01 17:35:49.070 22047 22047 I native  : I0000 00:00:1793565349.070438   22047 session_create_implementation_shared.cc:1805] Normal detector created.
+11-01 17:35:49.089 22047 22047 I native  : I0000 00:00:1793565349.089029   22047 planar_target_tracking_manager.h:120] Config of PlanarTargetTrackingManager:
+11-01 17:35:49.089 22047 22047 I native  : -pose_refinement_with_detection_interval_ns: 0
+11-01 17:35:49.089 22047 22047 I native  : -min_interval_between_detections_ns: 500000000
+11-01 17:35:49.089 22047 22047 I native  : -filter_parallax: false
+11-01 17:35:49.089 22047 22047 I native  : -filter_result: true
+11-01 17:35:49.089 22047 22047 I native  : -multiple_targets: true
+11-01 17:35:49.089 22047 22047 I native  : -mini_detection: true
+11-01 17:35:49.089 22047 22047 I native  : -tracking_mode: 1
+11-01 17:35:49.089 22047 22047 I native  : I0000 00:00:1793565349.089210   22047 planar_target_tracking_manager.h:131] -camera_stream_id: {0;0}
+11-01 17:35:49.091 22047 22047 I native  : I0000 00:00:1793565349.091021   22047 session_create_implementation.cc:464] ARCore feature image_prevent_callback_during_stop 2 is: = false
+11-01 17:35:49.096 22047 22047 I native  : I0000 00:00:1793565349.096138   22047 camera_config_manager.cc:726] UpdateBugFixes on CameraConfigManager is unimplemented!
+11-01 17:35:49.098 22047 22047 I third_party/arcore/ar/core/android/sdk/arimage_jni.cc: Loading AImage symbols
+11-01 17:35:49.099 22047 22047 I ArSession: ARCore session created
+11-01 17:35:49.101 22047 22047 I native  : I0000 00:00:1793565349.101316   22047 session.cc:649] New session config:
+11-01 17:35:49.101 22047 22047 I native  : ArConfig
+11-01 17:35:49.101 22047 22047 I native  :  augmented_face_mode:           AR_AUGMENTED_FACE_MODE_DISABLED
+11-01 17:35:49.101 22047 22047 I native  :  augmented_image_database:      <null>
+11-01 17:35:49.101 22047 22047 I native  :  cloud_anchor_mode:             AR_CLOUD_ANCHOR_MODE_DISABLED
+11-01 17:35:49.101 22047 22047 I native  :  depth_mode:                    AR_DEPTH_MODE_DISABLED
+11-01 17:35:49.101 22047 22047 I native  :  semantic_mode:                AR_SEMANTIC_MODE_DISABLED
+11-01 17:35:49.101 22047 22047 I native  :  focus_mode:                    AR_FOCUS_MODE_AUTO
+11-01 17:35:49.101 22047 22047 I native  :  exposure_mode:                 AR_EXPOSURE_MODE_AUTO
+11-01 17:35:49.101 22047 22047 I native  :  white_balance_mode:            AR_WHITE_BALANCE_MODE_AUTO
+11-01 17:35:49.101 22047 22047 I native  :  geospatial_mode:               AR_GEOSPATIAL_MODE_DISABLED
+11-01 17:35:49.101 22047 22047 I native  :  instant_placement_mode:        AR_INSTANT_PLACEMENT_MODE_DISABLED
+11-01 17:35:49.101 22047 22047 I native  :  light_estimation_mode:         AR_LIGHT_ESTIMATION_MODE_AMBIENT_INTENSITY
+11-01 17:35:49.101 22047 22047 I native  :  plane_finding_mode:            AR_PLANE_FINDING_MODE_HORIZONTAL_AND_VERTICAL
+11-01 17:35:49.101 22047 22047 I native  :  update_mode:                   AR_UPDATE_MODE_LATEST_CAMERA_IMAGE
+11-01 17:35:49.101 22047 22047 I native  : I0000 00:00:1793565349.101477   22047 session.cc:642] Session::CheckAndWriteCurrentConfig returning OK.
+11-01 17:35:49.102 22047 22047 I ArSession: ARCore session configured
+11-01 17:35:49.103 22047 22047 I native  : I0000 00:00:1793565349.103350   22047 session.cc:1339] Entering Session::Resume.
+11-01 17:35:49.103 22047 22047 I native  : I0000 00:00:1793565349.103759   22047 camera_config_manager.cc:726] UpdateBugFixes on CameraConfigManager is unimplemented!
+11-01 17:35:49.122 22047 22047 I native  : I0000 00:00:1793565349.122581   22047 session.cc:3713] Update Frame Delay to 0 frames.
+11-01 17:35:49.127 22047 22047 D BufferQueueConsumer: [](id:561f00000003,api:0,p:-1,c:22047) connect: controlledByApp=true
+11-01 17:35:49.135 22047 22047 D BufferQueueConsumer: [](id:561f00000004,api:0,p:-1,c:22047) connect: controlledByApp=true
+11-01 17:35:49.136 22047 22047 W libc    : pthread_create sched_setscheduler(1, {1}) call failed: Operation not permitted
+11-01 17:35:49.136 22047 22047 W libc    : pthread_create sched_setscheduler(1, {1}) call failed: Operation not permitted
+11-01 17:35:49.138 22047 22047 I native  : I0000 00:00:1793565349.138898   22047 android_sensors.cc:593] [Live DS] ReconfigureAfterDynamicSensorsUpdate called
+11-01 17:35:49.139 22047 22047 I native  : I0000 00:00:1793565349.139064   22047 android_sensor_event_source.cc:107] [Live DS] AndroidSensorEventSourceConfig: LSM6DSOTR Gyroscope Uncalibrated [type 16, ordinal 0] en=true, period= 5000 us, override_found=false, types_checked=2, map_entries=0
+11-01 17:35:49.139 22047 22047 I native  : I0000 00:00:1793565349.139142   22047 android_sensor_event_source.cc:205] [Live DS] ShouldEnableDirectBuffer returns: false for sensor: LSM6DSOTR Gyroscope Uncalibrated, is_direct_buffer_supported: true, use_direct_buffer: false, desired_report_delay: 5ms, min_delay: 8ms, highest_direct_report_rate_level: 0, is_hw_buffer_supported: false
+11-01 17:35:49.139 22047 22047 I native  : I0000 00:00:1793565349.139194   22047 standard_event_provider.cc:163] AddSensor: sensor=LSM6DSOTR Gyroscope Uncalibrated, ordinal=0, enabled=false, param_changed=true, desired_period=5000 us
+11-01 17:35:49.142 22047 22047 I native  : I0000 00:00:1793565349.142366   22047 sensor_ndk_wrapper.cc:143] [XR Sensors] EnableSensor called for: LSM6DSOTR Gyroscope Uncalibrated
+11-01 17:35:49.148 22047 22047 E native  : E0000 00:00:1793565349.148239   22047 standard_event_provider.cc:202] [Live DS] Failed to register sensor to queue 0 with error -1. Ignoring failure.
+11-01 17:35:49.148 22047 22047 I native  : I0000 00:00:1793565349.148666   22047 standard_event_provider.cc:276] [Live DS] SetPollTimeout called with timeout: 5ms
+11-01 17:35:49.148 22047 22047 I native  : I0000 00:00:1793565349.148888   22047 direct_channel_provider.cc:186] [Live DS] SetSleepDuration called with duration: inf
+11-01 17:35:49.149 22047 22047 I native  : I0000 00:00:1793565349.149432   22047 android_sensor_event_source.cc:107] [Live DS] AndroidSensorEventSourceConfig: LSM6DSOTR Accelerometer Uncalibrated [type 1, ordinal 0] en=true, period= 5000 us, override_found=false, types_checked=2, map_entries=0
+11-01 17:35:49.149 22047 22047 I native  : I0000 00:00:1793565349.149544   22047 android_sensor_event_source.cc:205] [Live DS] ShouldEnableDirectBuffer returns: false for sensor: LSM6DSOTR Accelerometer Uncalibrated, is_direct_buffer_supported: true, use_direct_buffer: false, desired_report_delay: 5ms, min_delay: 8ms, highest_direct_report_rate_level: 0, is_hw_buffer_supported: false
+11-01 17:35:49.149 22047 22047 I native  : I0000 00:00:1793565349.149597   22047 standard_event_provider.cc:163] AddSensor: sensor=LSM6DSOTR Accelerometer Uncalibrated, ordinal=0, enabled=false, param_changed=true, desired_period=5000 us
+11-01 17:35:49.149 22047 22047 I native  : I0000 00:00:1793565349.149635   22047 sensor_ndk_wrapper.cc:143] [XR Sensors] EnableSensor called for: LSM6DSOTR Accelerometer Uncalibrated
+11-01 17:35:49.153 22047 22047 E native  : E0000 00:00:1793565349.153191   22047 standard_event_provider.cc:202] [Live DS] Failed to register sensor to queue 0 with error -1. Ignoring failure.
+11-01 17:35:49.153 22047 22047 I native  : I0000 00:00:1793565349.153355   22047 direct_channel_provider.cc:186] [Live DS] SetSleepDuration called with duration: inf
+11-01 17:35:49.153 22047 22047 I native  : I0000 00:00:1793565349.153394   22047 android_sensor_event_source.cc:107] [Live DS] AndroidSensorEventSourceConfig: TCS3701 Light [type 5, ordinal 0] en=false, period= 5000 us, override_found=false, types_checked=1, map_entries=0
+11-01 17:35:49.153 22047 22047 I native  : I0000 00:00:1793565349.153646   22047 direct_channel_provider.cc:186] [Live DS] SetSleepDuration called with duration: inf
+11-01 17:35:49.153 22047 22047 I native  : I0000 00:00:1793565349.153679   22047 android_sensor_event_source.cc:107] [Live DS] AndroidSensorEventSourceConfig: Ear Hover Proximity Sensor (ProToS) [type 8, ordinal 0] en=false, period= 5000 us, override_found=false, types_checked=1, map_entries=0
+11-01 17:35:49.153 22047 22047 I native  : I0000 00:00:1793565349.153711   22047 direct_channel_provider.cc:186] [Live DS] SetSleepDuration called with duration: inf
+11-01 17:35:49.153 22047 22047 I native  : I0000 00:00:1793565349.153724   22047 android_sensor_event_source.cc:107] [Live DS] AndroidSensorEventSourceConfig: Samsung Rotation Vector Sensor [type 11, ordinal 0] en=false, period= 5000 us, override_found=false, types_checked=1, map_entries=0
+11-01 17:35:49.153 22047 22047 I native  : I0000 00:00:1793565349.153742   22047 direct_channel_provider.cc:186] [Live DS] SetSleepDuration called with duration: inf
+11-01 17:35:49.153 22047 22047 I native  : I0000 00:00:1793565349.153755   22047 android_sensor_event_source.cc:107] [Live DS] AndroidSensorEventSourceConfig: MXG4300S Magnetometer [type 2, ordinal 0] en=false, period= 5000 us, override_found=false, types_checked=2, map_entries=0
+11-01 17:35:49.153 22047 22047 I native  : I0000 00:00:1793565349.153774   22047 direct_channel_provider.cc:186] [Live DS] SetSleepDuration called with duration: inf
+11-01 17:35:49.153 22047 22047 I native  : I0000 00:00:1793565349.153785   22047 android_sensor_event_source.cc:107] [Live DS] AndroidSensorEventSourceConfig: MXG4300S Magnetometer Uncalibrated [type 14, ordinal 0] en=false, period= 5000 us, override_found=false, types_checked=2, map_entries=0
+11-01 17:35:49.153 22047 22047 I native  : I0000 00:00:1793565349.153803   22047 direct_channel_provider.cc:186] [Live DS] SetSleepDuration called with duration: inf
+11-01 17:35:49.153 22047 22047 I native  : I0000 00:00:1793565349.153814   22047 android_sensor_event_source.cc:107] [Live DS] AndroidSensorEventSourceConfig: Samsung Game Rotation Vector Sensor [type 15, ordinal 0] en=false, period= 5000 us, override_found=false, types_checked=1, map_entries=0
+11-01 17:35:49.153 22047 22047 I native  : I0000 00:00:1793565349.153838   22047 direct_channel_provider.cc:186] [Live DS] SetSleepDuration called with duration: inf
+11-01 17:35:49.153 22047 22047 I native  : I0000 00:00:1793565349.153849   22047 android_sensor_event_source.cc:107] [Live DS] AndroidSensorEventSourceConfig: Step Detector [type 18, ordinal 0] en=false, period= 5000 us, override_found=false, types_checked=1, map_entries=0
+11-01 17:35:49.153 22047 22047 I native  : I0000 00:00:1793565349.153866   22047 direct_channel_provider.cc:186] [Live DS] SetSleepDuration called with duration: inf
+11-01 17:35:49.153 22047 22047 I native  : I0000 00:00:1793565349.153878   22047 android_sensor_event_source.cc:107] [Live DS] AndroidSensorEventSourceConfig: Samsung Gravity Sensor [type 9, ordinal 0] en=false, period= 5000 us, override_found=false, types_checked=1, map_entries=0
+11-01 17:35:49.153 22047 22047 I native  : I0000 00:00:1793565349.153895   22047 direct_channel_provider.cc:186] [Live DS] SetSleepDuration called with duration: inf
+11-01 17:35:49.162 22047 22047 I native  : I0000 00:00:1793565349.162491   22047 logger.h:29] DataSourceMetrics: kStartImageSubSystem: 8.571ms
+11-01 17:35:49.162 22047 22047 I native  : I0000 00:00:1793565349.162579   22047 session.cc:1527] Session::ResumeWithAnalytics returning OK.
+11-01 17:35:49.163 22047 22047 I ArSession: ARCore session resumed
+11-01 17:35:49.163 22047 22047 I Choreographer: Skipped 78 frames!  The application may be doing too much work on its main thread.
+11-01 17:35:49.167 22047 22122 I ArCameraBackgroundView: ARCore camera texture attached (id=1)
+11-01 17:35:49.170 22047 22122 I native  : I0000 00:00:1793565349.170317   22122 session.cc:3713] Update Frame Delay to 0 frames.
+11-01 17:35:49.184 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{69ec9b2 VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:49.185 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{ea47891 V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:49.188 22047 22047 I InsetsController: onStateChanged: host=com.github.nacabaro.vbhelper/com.tamerslab.ar.ArDiagnosticsActivity, from=android.view.ViewRootImpl.handleInsetsControlChanged:2888, state=InsetsState: {mDisplayFrame=Rect(0, 0 - 1080, 2340), mDisplayCutout=DisplayCutout{insets=Rect(0, 73 - 0, 0) waterfall=Insets{left=0, top=0, right=0, bottom=0} boundingRect={Bounds=[Rect(0, 0 - 0, 0), Rect(484, 0 - 596, 73), Rect(0, 0 - 0, 0), Rect(0, 0 - 0, 0)]} cutoutPathParserInfo={CutoutPathParserInfo{displayWidth=1080 displayHeight=2340 physicalDisplayWidth=1080 physicalDisplayHeight=2340 density={2.8125} cutoutSpec={M 0,0 H -25.6 V 26.66666666666667 H 25.6 V 0 H 0 Z @dp} rotation={0} scale={1.0} physicalPixelDisplaySizeRatio={1.0}}} sideOverrides={}}, mRoundedCorners=RoundedCorners{[RoundedCorner{position=TopLeft, radius=120, center=Point(120, 120)}, RoundedCorner{position=TopRight, radius=120, center=Point(960, 120)}, RoundedCorner{position=BottomRight, radius=120, center=Point(960, 2220)}, RoundedCorner{position=BottomLeft, radius=120, center=Point(120, 2220)}]}  mRoundedCornerFrame=Rect(0, 0 - 1080, 2340), mPrivacyIndicatorBounds=PrivacyIndicatorBounds {static bounds=Rect(948, 0 - 1080, 82) rotation=0}, mDisplayShape=DisplayShape{ spec=-311912193 displayWidth=1080 displayHeight=2340 physicalPixelDisplaySizeRatio=1.0 rotation=0 offsetX=0 offsetY=0 scale=1.0}, mSources= { InsetsSource: {3 mType=ime mFrame=[0,0][0,0] mVisible=false mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {27 mType=displayCutout mFrame=[0,0][1080,73] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {16020001 mType=navigationBars mFrame=[0,2196][1080,2340] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {16020004 mType=systemGestures mFrame=[0,0][0,0] mVisible=true mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {16020005 mType=mandatorySystemGestures mFrame=[0,2196][1080,2340] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {16020006 mType=tappableElement mFrame=[0,2196][1080,2340] mVisible=true mFlags= mSideHint=BOTTOM mBoundingRects=null}, InsetsSource: {16020024 mType=systemGestures mFrame=[0,0][0,0] mVisible=true mFlags= mSideHint=NONE mBoundingRects=null}, InsetsSource: {35d40000 mType=statusBars mFrame=[0,0][1080,82] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {35d40005 mType=mandatorySystemGestures mFrame=[0,0][1080,109] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null}, InsetsSource: {35d40006 mType=tappableElement mFrame=[0,0][1080,82] mVisible=true mFlags= mSideHint=TOP mBoundingRects=null} }
+11-01 17:35:49.188 22047 22047 I InsetsSourceConsumer: applyRequestedVisibilityToControl: visible=false, type=ime, host=com.github.nacabaro.vbhelper/com.tamerslab.ar.ArDiagnosticsActivity
+11-01 17:35:49.202 22047 22064 I CameraManagerGlobal: Camera 0 facing CAMERA_FACING_BACK state now CAMERA_STATE_OPENING for client com.github.nacabaro.vbhelper API Level 2 User Id 0Device Id 0
+11-01 17:35:49.203 22047 22064 I HWUI    : Davey! duration=1328ms; Flags=0, FrameTimelineVsyncId=92051078, IntendedVsync=357222463989985, Vsync=357223764298813, InputEventId=0, HandleInputStart=357223768096291, AnimationStart=357223768101599, PerformTraversalsStart=357223779451368, DrawStart=357223779560599, FrameDeadline=357222513905162, FrameInterval=357223764477906, FrameStartTime=16670626, SyncQueued=357223785618522, SyncStart=357223785748291, IssueDrawCommandsStart=357223785906829, SwapBuffers=357223791503368, FrameCompleted=357223792913522, DequeueBufferDuration=1168308, QueueBufferDuration=1087923, GpuCompleted=357223792490214, SwapBuffersCompleted=357223792913522, DisplayPresentTime=0, CommandSubmissionCompleted=357223791503368, 
+11-01 17:35:49.242 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{69ec9b2 VFED..... ......ID 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:49.242 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{ea47891 V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:49.257 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{69ec9b2 VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:49.258 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{ea47891 V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:49.298 22047 22346 E native  : E0000 00:00:1793565349.297955   22346 android_data_source.cc:727] [Live DS] Callback list for SENSOR_TYPE_GYROSCOPE_UNCALIBRATED at ordinal 0 not found.
+11-01 17:35:49.321 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{69ec9b2 VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:49.321 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{ea47891 V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:49.393 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{69ec9b2 VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:49.393 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{ea47891 V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:49.450 22047 22346 I native  : I0000 00:00:1793565349.450088   22346 logging_helper.h:101] [Live DS] [Sensor][SENSOR_TYPE_GYROSCOPE_UNCALIBRATED_0] Accumulative count: 2
+11-01 17:35:49.458 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{69ec9b2 VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:49.458 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{ea47891 V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:49.461 22047 22069 I CameraManagerGlobal: Camera 0 facing CAMERA_FACING_BACK state now CAMERA_STATE_OPEN for client com.github.nacabaro.vbhelper API Level 2 User Id 0Device Id 0
+11-01 17:35:49.470 22047 22346 I native  : I0000 00:00:1793565349.470896   22346 logging_helper.h:101] [Live DS] [Sensor][SENSOR_TYPE_ACCELEROMETER_0] Accumulative count: 2
+11-01 17:35:49.471 22047 22346 I native  : I0000 00:00:1793565349.471010   22346 pose_manager.cc:364] First IMU measurement processed, timestamp: 505771835694109 is_tracking: false
+11-01 17:35:49.537 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{69ec9b2 VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:49.537 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{ea47891 V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:49.606 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{69ec9b2 VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:49.606 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{ea47891 V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:49.630 22047 22346 I native  : I0000 00:00:1793565349.630308   22346 input_synchronizer.cc:92] [InputSynchronizer] Received first IMU sample at timestamp: 505771915696226
+11-01 17:35:49.670 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{69ec9b2 VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:49.671 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{ea47891 V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:49.744 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{69ec9b2 VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:35:49.744 22047 22047 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{ea47891 V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Debug-only AR smoke test and AR stage preview hosts. Never merged into release builds. -->
+    <application>
+        <activity
+            android:name=".ar.ArDiagnosticsActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:exported="true"
+            android:label="ARCore smoke test"
+            android:theme="@style/Theme.TamersLab" />
+
+        <activity
+            android:name=".ar.ArStagePreviewActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode"
+            android:exported="true"
+            android:label="AR stage preview"
+            android:theme="@style/Theme.TamersLab" />
+    </application>
+
+</manifest>

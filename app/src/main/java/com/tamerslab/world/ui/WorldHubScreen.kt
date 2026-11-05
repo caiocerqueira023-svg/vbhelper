@@ -1,4 +1,4 @@
-﻿package com.tamerslab.world.ui
+package com.tamerslab.world.ui
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
@@ -10,6 +10,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -32,8 +33,8 @@ fun WorldScreen(
     onFullScreenBattleChanged: (Boolean) -> Unit = {}
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
-    var firstPersonPreferred by rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
-    var labelsPreferred by rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+    var legacyView by rememberSaveable { mutableStateOf(RadarLegacyView.NONE) }
+    var labelsPreferred by rememberSaveable { mutableStateOf(false) }
     val incomingChallenge by remember(worldEntry) {
         worldEntry.savedStateHandle.getStateFlow<String?>("radar-challenge",null)
     }.collectAsStateWithLifecycle()
@@ -49,8 +50,8 @@ fun WorldScreen(
             selectedWorldTab = selectedTab,
             onWorldTabSelected = { selectedTab = it },
             onFullScreenBattleChanged = onFullScreenBattleChanged,
-            firstPersonPreferred = firstPersonPreferred,
-            onViewPreferenceChanged = { firstPersonPreferred = it },
+            legacyView = legacyView,
+            onLegacyViewChanged = { legacyView = it },
             labelsPreferred = labelsPreferred,
             onLabelsPreferenceChanged = { labelsPreferred = it }
         )

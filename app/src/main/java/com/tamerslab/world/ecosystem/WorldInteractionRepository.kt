@@ -105,6 +105,8 @@ class WorldInteractionRepository(private val db: AppDatabase,
     /** Only proposals are exposed to the future planner: approach/activation remains a later step. */
     suspend fun proposeNpcInteraction(id: String, type: InteractionType, spawnIds: List<Long>, seed: Long, tick: Long,
         socialDecision: SocialEncounterDecision? = null): WorldInteraction = db.withTransaction {
+        // Owner decision: wild↔wild social play is paused for current versions (code retained).
+        if (WildSocialInteractionGate.paused) fail(InteractionFailure.UNAVAILABLE)
         reconcileLocked()
         if (db.worldEcosystemDao().getSession()?.pauseReason == WorldPauseReason.PLAYER_BATTLE) fail(InteractionFailure.BUSY)
         require(spawnIds.size == 2 && spawnIds.distinct().size == 2)
@@ -193,6 +195,8 @@ class WorldInteractionRepository(private val db: AppDatabase,
     }
 
     suspend fun activateNpcInteraction(id: String, expectedRevision: Long, tick: Long): Boolean = db.withTransaction {
+        // Owner decision: wild↔wild social play is paused for current versions (code retained).
+        if (WildSocialInteractionGate.paused) return@withTransaction false
         reconcileLocked()
         if (db.worldEcosystemDao().getSession()?.pauseReason == WorldPauseReason.PLAYER_BATTLE) return@withTransaction false
         val event = dao.getInteraction(id) ?: return@withTransaction false
@@ -292,6 +296,25 @@ class WorldInteractionRepository(private val db: AppDatabase,
     }
 
     suspend fun reconcile() = db.withTransaction { reconcileLocked() }
+
+    /**
+     * Pause hook for [WildSocialInteractionGate]: closes every wild↔wild interaction that a previous
+     * build left open, so it stops holding participation claims or appearing in the public snapshot.
+     * Player-involving encounters are untouched.
+     */
+    internal suspend fun closePausedWildSocial(): Boolean = db.withTransaction {
+        if (!WildSocialInteractionGate.paused) return@withTransaction false
+        var closed = false
+        dao.getOpenInteractions().forEach { event ->
+            val participants = dao.getParticipants(event.id)
+            val wilds = participants.count { it.role == InteractionRole.WILD }
+            if (WildSocialInteractionGate.pauses(event.origin, event.type, wilds, participants.size)) {
+                closeLocked(event, InteractionState.CANCELLED, "WILD_SOCIAL_PAUSED")
+                closed = true
+            }
+        }
+        closed
+    }
 
     internal suspend fun reconcileLocked() {
         val timestamp = now()
@@ -402,6 +425,8 @@ class WorldInteractionRepository(private val db: AppDatabase,
     }
 
     internal suspend fun transferNpcBattleLocked(source: WorldInteraction, reason: String, tick: Long): WorldInteraction? {
+        // Owner decision: wild↔wild social play is paused for current versions (code retained).
+        if (WildSocialInteractionGate.paused) return null
         if(source.type!=InteractionType.CHAT || source.state !in listOf(InteractionState.ACTIVE,InteractionState.PLAYER_CONTROLLED)) return null
         if (dao.getOpenInteractions().any { it.type == InteractionType.BATTLE && it.origin == InteractionOrigin.AUTONOMOUS && !it.state.terminal }) return null
         val participants = dao.getParticipants(source.id).filter { it.role == InteractionRole.WILD }.sortedBy { it.individualId }

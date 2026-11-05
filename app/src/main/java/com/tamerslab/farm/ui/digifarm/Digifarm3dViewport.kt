@@ -58,10 +58,11 @@ import kotlin.math.cos
 import kotlin.math.PI
 import kotlin.math.sin
 import kotlin.math.sqrt
+import kotlin.random.Random
 
 /**
- * Full sprite set of one resident. Sent once per roster/art change â€”
- * never per animation tick â€” so the GL driver sees no create/destroy churn.
+ * Full sprite set of one resident. Sent once per roster/art change —
+ * never per animation tick — so the GL driver sees no create/destroy churn.
  * Pose keys: idle, idle2, walk, walk2.
  */
 data class ResidentFrames(
@@ -99,9 +100,9 @@ internal fun prioritizeResidentLoads(
  *
  * Height estimate for the hard contract "the followed resident sits between 30% and 52% of viewport
  * height" (PRESENTATION_REDESIGN_PLAN Â§5.2), with a 50mm lens on Filament's 24mm sensor
- * (vertical FOV = 2*atan(12/50) â‰ˆ 26.9Â°):
- *  - [Home]: targetY âˆ’0.12 at ~3.2 units puts the feet 0.12 above the aim â†’ atan(0.12/3.2) â‰ˆ 2.15Â°
- *    â‰ˆ 8% of the height above centre â†’ feet at ~42%, head (0.14 higher) at ~34%. Inside 30â€“52%.
+ * (vertical FOV = 2*atan(12/50) â‰ˆ 26.9°):
+ *  - [Home]: targetY âˆ’0.12 at ~3.2 units puts the feet 0.12 above the aim â†’ atan(0.12/3.2) â‰ˆ 2.15°
+ *    â‰ˆ 8% of the height above centre â†’ feet at ~42%, head (0.14 higher) at ~34%. Inside 30–52%.
  *  - [World]: targetY âˆ’0.05 at 3.86 â†’ feet ~47%, head ~53%: too low once bottom chrome exists, which
  *    is why the legacy World tab keeps it and the home does not.
  * The device capture pass must confirm these numbers on the A34; they are geometry, not taste.
@@ -171,6 +172,10 @@ fun Digifarm3dViewport(
     reduceMotion: Boolean = false,
     onResidentTap: ((String) -> Unit)? = null,
     onCameraIdle: ((FarmCameraState) -> Unit)? = null,
+    /** Fired once the complete roster has finished streaming into the scene and a few frames landed. */
+    onSceneSettled: (() -> Unit)? = null,
+    /** Cinematic camera: the view drifts around the followed partner on its own while nobody touches it. */
+    dynamicCamera: Boolean = true,
 ) {
     val backgroundColor = DeepPurpleBgAlt
     val appTheme = LocalAppTheme.current
@@ -179,6 +184,8 @@ fun Digifarm3dViewport(
     val currentOnAssetError by rememberUpdatedState(onAssetError)
     val currentOnResidentTap by rememberUpdatedState(onResidentTap)
     val currentOnCameraIdle by rememberUpdatedState(onCameraIdle)
+    val currentOnSceneSettled by rememberUpdatedState(onSceneSettled)
+    val currentDynamicCamera by rememberUpdatedState(dynamicCamera)
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     // The lifecycle observer is installed once per composition but must address whichever view the
     // AndroidView currently owns, so the reference is a holder rather than a captured value.
@@ -191,8 +198,10 @@ fun Digifarm3dViewport(
                     .onSuccess { view ->
                         view.reduceMotion = reduceMotion
                         view.worldActive = worldActive
+                        view.dynamicCamera = currentDynamicCamera
                         view.onResidentTap = { id -> currentOnResidentTap?.invoke(id) }
                         view.onCameraIdle = { state -> currentOnCameraIdle?.invoke(state) }
+                        view.onSceneSettled = { currentOnSceneSettled?.invoke() }
                         sceneRef.set(view)
                         container.addView(
                             view,
@@ -233,6 +242,7 @@ fun Digifarm3dViewport(
                 switchAsset(assetName, { message -> currentOnAssetError?.invoke(message) })
                 applyReduceMotionSetting(reduceMotion)
                 applyWorldActive(worldActive)
+                this.dynamicCamera = currentDynamicCamera
                 this.onResidentTap = { id -> currentOnResidentTap?.invoke(id) }
                 this.onCameraIdle = { state -> currentOnCameraIdle?.invoke(state) }
             }
@@ -335,6 +345,18 @@ class Digifarm3dSceneView(
     private var curTargetZ = TARGET_Z
     private var lastFollowFrameNanos = 0L
 
+    /** Cinematic camera toggle; reduced motion and active touch both suspend the drift. */
+    var dynamicCamera: Boolean = true
+    private var autoCameraSeconds = 0.0
+    private var lastAutoFrameNanos = 0L
+    private var driftNeedsRebase = true
+    private var driftPitchCentre = framing.homePitch
+    private var driftDistanceCentre = framing.homeDistance
+    private var pitchPhase = 0.0
+    private var distancePhase = 0.0
+    private var nextCutAtSeconds = AUTO_CUT_MIN_SECONDS
+    private var lastCutTier = -1
+
     /** A drag/pinch suspends following until this instant (Q8: 5s), then it eases back (~600ms). */
 
     // Orbit camera with a bounded elevation and zoom. The island now has a
@@ -402,6 +424,12 @@ class Digifarm3dSceneView(
     private var residentLoader: AssetLoader? = null
     private var residentResources: ResourceLoader? = null
     private var pendingFrames: List<ResidentFrames> = emptyList()
+
+    /** Boot hand-shake: the roster has been handed over, streamed in and drawn a few frames. */
+    var onSceneSettled: (() -> Unit)? = null
+    private var completeRosterSeen = false
+    private var settleCandidateNanos = 0L
+    private var settledReported = false
     private val residentLoadQueue = ArrayDeque<ResidentFrames>()
     private var wantedResidentSetKeys: Map<String, String> = emptyMap()
     private var latestResidentPoses: List<ResidentPose> = emptyList()
@@ -423,15 +451,45 @@ class Digifarm3dSceneView(
             loadNextResident()
             updateResidentMotion(frameTimeNanos)
             updateFollowTarget(frameTimeNanos)
+            updateAutoCamera(frameTimeNanos)
             applyCamera()
             updateFloatingBlocks(frameTimeNanos)
             updateResidentTransforms()
             viewer.render(frameTimeNanos)
             environmentThemes.onFrame(viewer.progress >= 1f)
             notifyCameraChangeIfMoved(frameTimeNanos)
+            reportSceneSettledIfReady(frameTimeNanos)
             scheduleFrame(0L)
         }
     }
+
+    /**
+     * The visitor should never watch the farm assemble itself.
+     *
+     * "Drained" is not the same as "in place": the extruded residents are created one per display
+     * frame, the host applies their poses on a later pass and the camera framing settles after them.
+     * So this reports only once the complete roster has been handed over, every queued asset has been
+     * created, and the scene has then drawn continuously for a full settle window.
+     */
+    private fun reportSceneSettledIfReady(frameTimeNanos: Long) {
+        if (settledReported || !completeRosterSeen) return
+        if (residentLoadQueue.isNotEmpty() || pendingFrames.isNotEmpty()) {
+            settleCandidateNanos = 0L
+            return
+        }
+        if (residents.size < wantedResidentSetKeys.size) {
+            settleCandidateNanos = 0L
+            return
+        }
+        if (settleCandidateNanos == 0L) {
+            settleCandidateNanos = frameTimeNanos
+            return
+        }
+        if (frameTimeNanos - settleCandidateNanos < SETTLE_WINDOW_NANOS) return
+        settledReported = true
+        post { onSceneSettled?.invoke() }
+    }
+
 
     private fun currentFrameTier(frameTimeNanos: Long): SceneFrameTier = SceneFrameBudget.tier(
         SceneFrameInputs(
@@ -876,6 +934,7 @@ class Digifarm3dSceneView(
     /** Loads resident solids once per art change; pose ticks only change visible layers. */
     fun setResidentFrames(frames: List<ResidentFrames>, completeRoster: Boolean = true) {
         if (released || residentsReleased) return
+        if (completeRoster) completeRosterSeen = true
         if (viewer.asset == null) {
             pendingFrames = if (completeRoster) frames else {
                 (pendingFrames + frames).associateBy { it.id }.values.toList()
@@ -1220,7 +1279,7 @@ class Digifarm3dSceneView(
      *
      * A tap near a resident selects the nearest one by projected centre distance, within a radius
      * derived from that resident's projected height so a big sprite is as easy to hit as a small one.
-     * A double tap anywhere recenters on the followed partner â€” the old explicit "Follow" button,
+     * A double tap anywhere recenters on the followed partner — the old explicit "Follow" button,
      * now implicit (Â§5.2).
      */
     private fun handleTap(x: Float, y: Float) {
@@ -1283,6 +1342,117 @@ class Digifarm3dSceneView(
         val dx = event.getX(a) - event.getX(b)
         val dy = event.getY(a) - event.getY(b)
         return sqrt(dx * dx + dy * dy)
+    }
+
+    /**
+     * Cinematic camera: a slow orbit around the followed resident, elevation and distance drifting
+     * around wherever the visitor left the camera, plus occasional hard cuts to a different shot.
+     *
+     * The drift is *rebased* on the visitor's framing whenever a touch ends, so taking manual control
+     * and letting go continues from that angle instead of snapping back into the previous loop. A touch
+     * parks everything for [AUTO_CAMERA_RESUME_NANOS]; reduced motion disables the whole thing.
+     */
+    private fun updateAutoCamera(frameTimeNanos: Long) {
+        if (!dynamicCamera || reduceMotion) return
+        if (frameTimeNanos - lastTouchNanos < AUTO_CAMERA_RESUME_NANOS) {
+            lastAutoFrameNanos = frameTimeNanos
+            // Hand control back to the drift exactly where the visitor stopped.
+            driftNeedsRebase = true
+            return
+        }
+        val deltaSeconds = if (lastAutoFrameNanos == 0L) {
+            1.0 / 60.0
+        } else {
+            (frameTimeNanos - lastAutoFrameNanos).coerceAtLeast(0L) / 1_000_000_000.0
+        }
+        lastAutoFrameNanos = frameTimeNanos
+        if (deltaSeconds <= 0.0) return
+
+        if (driftNeedsRebase) {
+            rebaseDrift()
+            driftNeedsRebase = false
+        }
+        autoCameraSeconds += deltaSeconds
+
+        // Orbit: continuous and slow, so the partner is seen from every side over ~70 seconds.
+        val yaw = camYaw + (AUTO_YAW_RADIANS_PER_SECOND * deltaSeconds).toFloat()
+        camYaw = atan2(sin(yaw), cos(yaw))
+
+        // Elevation and distance drift around the visitor's framing on periods that never line up.
+        pitchPhase += deltaSeconds * 2.0 * PI / AUTO_PITCH_PERIOD_SECONDS
+        distancePhase += deltaSeconds * 2.0 * PI / AUTO_DISTANCE_PERIOD_SECONDS
+        val pitchCeiling = kotlin.math.min(framing.pitchMax, AUTO_PITCH_CEILING)
+        val pitchTarget = (
+            driftPitchCentre + AUTO_PITCH_AMPLITUDE * sin(pitchPhase.toFloat())
+            ).coerceIn(framing.pitchMin, pitchCeiling)
+        val distanceTarget = (
+            driftDistanceCentre + AUTO_DISTANCE_AMPLITUDE * sin(distancePhase.toFloat())
+            ).coerceIn(framing.distanceMin, framing.distanceMax)
+
+        val ease = (1.0 - kotlin.math.exp(-AUTO_CAMERA_EASE_RESPONSE * deltaSeconds)).toFloat()
+        camPitch += (pitchTarget - camPitch) * ease
+        camDist += (distanceTarget - camDist) * ease
+
+        // Hard cut: every so often the shot changes instantly instead of drifting there.
+        if (autoCameraSeconds >= nextCutAtSeconds) {
+            cutToNewShot()
+            autoCameraSeconds = 0.0
+            scheduleNextCut()
+        }
+    }
+
+    /** Continues the drift from the visitor's current framing instead of re-entering an old loop. */
+    private fun rebaseDrift() {
+        driftPitchCentre = camPitch.coerceIn(
+            framing.pitchMin,
+            kotlin.math.min(framing.pitchMax, AUTO_PITCH_CEILING),
+        )
+        driftDistanceCentre = camDist.coerceIn(framing.distanceMin, framing.distanceMax)
+        pitchPhase = 0.0
+        distancePhase = 0.0
+        scheduleNextCut()
+    }
+
+    /** A deliberate, abrupt change of shot: another side of the partner, another height and distance. */
+    private fun cutToNewShot() {
+        val turn = AUTO_CUT_MIN_TURN_RADIANS +
+            Random.nextFloat() * (AUTO_CUT_MAX_TURN_RADIANS - AUTO_CUT_MIN_TURN_RADIANS)
+        val direction = if (Random.nextBoolean()) 1f else -1f
+        val yaw = camYaw + direction * turn
+        camYaw = atan2(sin(yaw), cos(yaw))
+        // Cuts are drawn from three shot heights - near ground level, mid and high (still under the
+        // distortion ceiling) - and never repeat the previous tier, so the sequence keeps changing
+        // instead of always landing in the upper band.
+        val pitchCeiling = kotlin.math.min(framing.pitchMax, AUTO_PITCH_CEILING)
+        val pitchFloor = framing.pitchMin
+        val span = (pitchCeiling - pitchFloor).coerceAtLeast(0.06f)
+        var tier = Random.nextInt(3)
+        if (tier == lastCutTier) tier = (tier + 1 + Random.nextInt(2)) % 3
+        lastCutTier = tier
+        camPitch = when (tier) {
+            // Low: grazing angle, sprites at their most legible.
+            0 -> pitchFloor + Random.nextFloat() * (span * 0.18f)
+            // Mid: the everyday three-quarter view.
+            1 -> pitchFloor + span * (0.42f + Random.nextFloat() * 0.22f)
+            // High: the steepest the artwork tolerates.
+            else -> pitchCeiling - Random.nextFloat() * (span * 0.16f)
+        }
+        val nearDistance = kotlin.math.max(framing.distanceMin * 2.0f, framing.homeDistance * 0.82f)
+        val farDistance = kotlin.math.max(
+            nearDistance + 0.4f,
+            kotlin.math.min(framing.distanceMax, framing.homeDistance * 1.5f),
+        )
+        camDist = nearDistance + Random.nextFloat() * (farDistance - nearDistance)
+        // The following drift restarts from the new shot, never easing back to the old one.
+        driftPitchCentre = camPitch
+        driftDistanceCentre = camDist
+        pitchPhase = 0.0
+        distancePhase = 0.0
+    }
+
+    private fun scheduleNextCut() {
+        nextCutAtSeconds = AUTO_CUT_MIN_SECONDS +
+            Random.nextDouble() * (AUTO_CUT_MAX_SECONDS - AUTO_CUT_MIN_SECONDS)
     }
 
     private fun applyCamera() {
@@ -1594,7 +1764,10 @@ class Digifarm3dSceneView(
         private val BLOCKS_PER_GROUP = intArrayOf(3, 3, 2, 2, 2, 2)
 
         // Orbit around the single island. Elevation stays above the horizon.
-        private const val TARGET_X = 0f
+        /** How long the fully-streamed scene must hold before the boot cover may lift. */
+private const val SETTLE_WINDOW_NANOS = 1_200_000_000L
+
+private const val TARGET_X = 0f
         private const val TARGET_Y = -0.05f
         private const val TARGET_Z = 0f
         private const val HOME_YAW = 0f
@@ -1605,6 +1778,29 @@ class Digifarm3dSceneView(
         private const val DIST_MIN = 1.2f
         private const val DIST_MAX = 4.8f
         private const val FOLLOW_RESPONSE = 8.0
+
+/** Cinematic camera: orbit speed, drift periods and how long a touch parks the motion. */
+private const val AUTO_YAW_RADIANS_PER_SECOND = 0.085f
+private const val AUTO_PITCH_PERIOD_SECONDS = 47.0
+private const val AUTO_DISTANCE_PERIOD_SECONDS = 71.0
+private const val AUTO_CAMERA_EASE_RESPONSE = 1.4
+private const val AUTO_CAMERA_RESUME_NANOS = 2_800_000_000L
+/**
+ * Highest elevation the cinematic camera will pick, in radians (~33 degrees). Above this the extruded
+ * sprite artwork foreshortens badly, so the drift and its cuts stay below it even when the visitor had
+ * raised the manual camera higher.
+ */
+private const val AUTO_PITCH_CEILING = 0.58f
+
+/** Drift envelope around the visitor's framing. */
+private const val AUTO_PITCH_AMPLITUDE = 0.12f
+private const val AUTO_DISTANCE_AMPLITUDE = 0.55f
+
+/** Hard cut cadence and how far the shot turns. */
+private const val AUTO_CUT_MIN_SECONDS = 14.0
+private const val AUTO_CUT_MAX_SECONDS = 26.0
+private const val AUTO_CUT_MIN_TURN_RADIANS = 1.2f
+private const val AUTO_CUT_MAX_TURN_RADIANS = 2.6f
         private const val YAW_GAIN = 0.0016f
         private const val PITCH_GAIN = 0.0013f
         private const val TOUCH_NONE = 0

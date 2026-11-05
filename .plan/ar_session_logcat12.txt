@@ -1,0 +1,839 @@
+﻿--------- beginning of main
+11-01 17:20:35.188  9462  9621 E native  : E0000 00:00:1793564435.188861    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25362
+11-01 17:20:35.188  9462  9621 E native  : E0000 00:00:1793564435.188900    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25363
+11-01 17:20:35.188  9462  9621 E native  : E0000 00:00:1793564435.188941    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25194
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.188980    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25294
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189022    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25079
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189063    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25295
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189102    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25296
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189141    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25195
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189180    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25080
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189219    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24899
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189258    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25365
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189297    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25366
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189337    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25298
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189376    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25367
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189417    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25301
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189456    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25368
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189495    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25083
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189534    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25085
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189577    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25233
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189655    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25369
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189697    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25086
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189738    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25235
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189778    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25372
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189818    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25302
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189859    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25374
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189899    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25149
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189939    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25239
+11-01 17:20:35.189  9462  9621 E native  : E0000 00:00:1793564435.189978    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25237
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190018    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25088
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190058    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25240
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190097    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25304
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190142    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25375
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190183    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25376
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190222    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25377
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190261    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25242
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190313    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25243
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190358    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25378
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190430    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25090
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190473    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25245
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190513    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25308
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190552    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25028
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190590    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25380
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190629    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25097
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190670    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25309
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190712    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25029
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190754    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25249
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190799    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25313
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190861    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25381
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190904    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25383
+11-01 17:20:35.190  9462  9621 E native  : E0000 00:00:1793564435.190944    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25102
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.190984    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25104
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191023    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25251
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191062    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25253
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191101    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25106
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191140    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25318
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191178    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24864
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191216    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25319
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191258    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25385
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191297    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25322
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191335    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25323
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191375    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25203
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191414    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25036
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191453    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25205
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191546    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25326
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191586    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25259
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191625    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25388
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191664    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25260
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191703    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25328
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191742    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25261
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191869    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25176
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191926    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25177
+11-01 17:20:35.191  9462  9621 E native  : E0000 00:00:1793564435.191971    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25329
+11-01 17:20:35.192  9462  9621 E native  : E0000 00:00:1793564435.192017    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25330
+11-01 17:20:35.192  9462  9621 E native  : E0000 00:00:1793564435.192063    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25332
+11-01 17:20:35.192  9462  9621 E native  : E0000 00:00:1793564435.192108    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25390
+11-01 17:20:35.192  9462  9621 E native  : E0000 00:00:1793564435.192153    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25264
+11-01 17:20:35.192  9462  9621 E native  : E0000 00:00:1793564435.192199    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25266
+11-01 17:20:35.192  9462  9621 E native  : E0000 00:00:1793564435.192244    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25179
+11-01 17:20:35.192  9462  9621 E native  : E0000 00:00:1793564435.192289    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25392
+11-01 17:20:35.192  9462  9621 E native  : E0000 00:00:1793564435.192333    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25333
+11-01 17:20:35.192  9462  9621 E native  : E0000 00:00:1793564435.192378    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25395
+11-01 17:20:35.192  9462  9621 E native  : E0000 00:00:1793564435.192423    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25396
+11-01 17:20:35.192  9462  9621 E native  : E0000 00:00:1793564435.192468    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25180
+11-01 17:20:35.192  9462  9621 E native  : E0000 00:00:1793564435.192514    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25182
+11-01 17:20:35.192  9462  9621 E native  : E0000 00:00:1793564435.192559    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25398
+11-01 17:20:35.192  9462  9621 E native  : E0000 00:00:1793564435.192600    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25338
+11-01 17:20:35.192  9462  9621 E native  : E0000 00:00:1793564435.192719    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25272
+11-01 17:20:35.192  9462  9621 E native  : E0000 00:00:1793564435.192828    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25339
+11-01 17:20:35.192  9462  9621 E native  : E0000 00:00:1793564435.192932    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25401
+11-01 17:20:35.192  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.193  9462  9621 E native  : E0000 00:00:1793564435.193058    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25402
+11-01 17:20:35.193  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.193  9462  9621 E native  : E0000 00:00:1793564435.193225    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25204
+11-01 17:20:35.193  9462  9621 E native  : E0000 00:00:1793564435.193289    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25031
+11-01 17:20:35.193  9462  9621 E native  : E0000 00:00:1793564435.193332    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25327
+11-01 17:20:35.193  9462  9621 E native  : E0000 00:00:1793564435.193565    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25078
+11-01 17:20:35.193  9462  9621 E native  : E0000 00:00:1793564435.193712    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25341
+11-01 17:20:35.193  9462  9621 E native  : E0000 00:00:1793564435.193820    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25356
+11-01 17:20:35.193  9462  9621 E native  : E0000 00:00:1793564435.193947    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25303
+11-01 17:20:35.194  9462  9621 E native  : E0000 00:00:1793564435.194025    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25211
+11-01 17:20:35.194  9462  9621 E native  : E0000 00:00:1793564435.194072    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25058
+11-01 17:20:35.194  9462  9621 E native  : E0000 00:00:1793564435.194112    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25343
+11-01 17:20:35.194  9462  9621 E native  : E0000 00:00:1793564435.194155    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25346
+11-01 17:20:35.194  9462  9621 E native  : E0000 00:00:1793564435.194195    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25290
+11-01 17:20:35.194  9462  9621 E native  : E0000 00:00:1793564435.194235    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25098
+11-01 17:20:35.194  9462  9621 E native  : E0000 00:00:1793564435.194274    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25095
+11-01 17:20:35.194  9462  9621 E native  : E0000 00:00:1793564435.194313    9621 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25382
+11-01 17:20:35.196  9462  9624 W native  : W0000 00:00:1793564435.196075    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.196  9462  9624 W native  : W0000 00:00:1793564435.196130    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.196  9462  9624 W native  : W0000 00:00:1793564435.196147    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.196  9462  9624 W native  : W0000 00:00:1793564435.196159    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.196  9462  9624 W native  : W0000 00:00:1793564435.196169    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.220  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.220  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.254  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.254  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.283  9462  9622 W native  : W0000 00:00:1793564435.283586    9622 pose_manager.cc:298] INVALID_ARGUMENT: [PoseManager] CreatePoseNode: Failed to query IMU integrated posePassed timestamp: 504857592499591 is too new. [mtc.pose_node.latest_imu_timestamp_ns='504857522135386']
+11-01 17:20:35.283  9462  9622 W native  : === Source Location Trace: ===
+11-01 17:20:35.283  9462  9622 W native  : third_party/redwood/perception/pose_manager/latest_pose_tracker.cc:351
+11-01 17:20:35.283  9462  9622 E native  : E0000 00:00:1793564435.283768    9622 session.cc:973] INVALID_ARGUMENT: [PoseManager] CreatePoseNode: Failed to query IMU integrated posePassed timestamp: 504857592499591 is too new. [mtc.pose_node.latest_imu_timestamp_ns='504857522135386']
+11-01 17:20:35.283  9462  9622 E native  : === Source Location Trace: ===
+11-01 17:20:35.283  9462  9622 E native  : third_party/redwood/perception/pose_manager/latest_pose_tracker.cc:351
+11-01 17:20:35.283  9462  9622 E native  : third_party/redwood/perception/pose_manager/pose_manager.cc:298
+11-01 17:20:35.283  9462  9622 E native  : vr/perception/depth/projects/motion_stereo/manager/motion_stereo_manager.cc:192
+11-01 17:20:35.283  9462  9622 E native  : vr/perception/depth/projects/motion_stereo/manager/motion_stereo_manager.cc:820
+11-01 17:20:35.287  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.288  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.289  9462  9555 W native  : W0000 00:00:1793564435.289696    9555 pose_manager.cc:259] INVALID_ARGUMENT: [PoseManager] GetRecentDevicePose: Failed to query IMU integrated posePassed timestamp: 504857592499591 is too new. [mtc.pose_node.latest_imu_timestamp_ns='504857522135386']
+11-01 17:20:35.289  9462  9555 W native  : === Source Location Trace: ===
+11-01 17:20:35.289  9462  9555 W native  : third_party/redwood/perception/pose_manager/latest_pose_tracker.cc:351
+11-01 17:20:35.292  9462  9555 W native  : W0000 00:00:1793564435.292563    9555 pose_manager.cc:298] INVALID_ARGUMENT: [PoseManager] CreatePoseNode: Failed to query IMU integrated posePassed timestamp: 504857592499591 is too new. [mtc.pose_node.latest_imu_timestamp_ns='504857522135386']
+11-01 17:20:35.292  9462  9555 W native  : === Source Location Trace: ===
+11-01 17:20:35.292  9462  9555 W native  : third_party/redwood/perception/pose_manager/latest_pose_tracker.cc:351
+11-01 17:20:35.296  9462  9629 W native  : W0000 00:00:1793564435.296491    9629 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.298  9462  9624 I native  : I0000 00:00:1793564435.298839    9624 ralph_kf.cc:1081] Increasing total number of noise blocks from 530  to 580
+11-01 17:20:35.299  9462  9619 E native  : E0000 00:00:1793564435.299538    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25278
+11-01 17:20:35.299  9462  9619 E native  : E0000 00:00:1793564435.299764    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25344
+11-01 17:20:35.299  9462  9619 E native  : E0000 00:00:1793564435.299828    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25346
+11-01 17:20:35.299  9462  9619 E native  : E0000 00:00:1793564435.299873    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25280
+11-01 17:20:35.299  9462  9619 E native  : E0000 00:00:1793564435.299915    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25347
+11-01 17:20:35.299  9462  9619 E native  : E0000 00:00:1793564435.299956    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25282
+11-01 17:20:35.300  9462  9619 E native  : E0000 00:00:1793564435.299998    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25130
+11-01 17:20:35.300  9462  9619 E native  : E0000 00:00:1793564435.300039    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25219
+11-01 17:20:35.300  9462  9619 E native  : E0000 00:00:1793564435.300079    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25132
+11-01 17:20:35.300  9462  9619 E native  : E0000 00:00:1793564435.300120    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25189
+11-01 17:20:35.300  9462  9619 E native  : E0000 00:00:1793564435.300159    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25285
+11-01 17:20:35.300  9462  9619 E native  : E0000 00:00:1793564435.300199    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25350
+11-01 17:20:35.300  9462  9619 E native  : E0000 00:00:1793564435.300239    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25351
+11-01 17:20:35.300  9462  9619 E native  : E0000 00:00:1793564435.300279    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25131
+11-01 17:20:35.300  9462  9619 E native  : E0000 00:00:1793564435.300320    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25284
+11-01 17:20:35.300  9462  9619 E native  : E0000 00:00:1793564435.300360    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25134
+11-01 17:20:35.300  9462  9619 E native  : E0000 00:00:1793564435.300545    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25063
+11-01 17:20:35.300  9462  9619 E native  : E0000 00:00:1793564435.300655    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24983
+11-01 17:20:35.300  9462  9619 E native  : E0000 00:00:1793564435.300710    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25288
+11-01 17:20:35.300  9462  9619 E native  : E0000 00:00:1793564435.300751    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24821
+11-01 17:20:35.300  9462  9619 E native  : E0000 00:00:1793564435.300794    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25067
+11-01 17:20:35.300  9462  9619 E native  : E0000 00:00:1793564435.300838    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25066
+11-01 17:20:35.300  9462  9619 E native  : E0000 00:00:1793564435.300880    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25354
+11-01 17:20:35.300  9462  9619 E native  : E0000 00:00:1793564435.300920    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25068
+11-01 17:20:35.300  9462  9619 E native  : E0000 00:00:1793564435.300960    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25069
+11-01 17:20:35.301  9462  9619 E native  : E0000 00:00:1793564435.301002    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25356
+11-01 17:20:35.301  9462  9619 E native  : E0000 00:00:1793564435.301042    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25355
+11-01 17:20:35.301  9462  9619 E native  : E0000 00:00:1793564435.301082    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25357
+11-01 17:20:35.301  9462  9619 E native  : E0000 00:00:1793564435.301121    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25358
+11-01 17:20:35.301  9462  9619 E native  : E0000 00:00:1793564435.301160    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25291
+11-01 17:20:35.301  9462  9619 E native  : E0000 00:00:1793564435.301199    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25292
+11-01 17:20:35.301  9462  9619 E native  : E0000 00:00:1793564435.301239    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25359
+11-01 17:20:35.301  9462  9619 E native  : E0000 00:00:1793564435.301279    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25073
+11-01 17:20:35.301  9462  9619 E native  : E0000 00:00:1793564435.301318    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25360
+11-01 17:20:35.301  9462  9619 E native  : E0000 00:00:1793564435.301358    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25361
+11-01 17:20:35.301  9462  9619 E native  : E0000 00:00:1793564435.301399    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25075
+11-01 17:20:35.301  9462  9619 E native  : E0000 00:00:1793564435.301440    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25074
+11-01 17:20:35.301  9462  9619 E native  : E0000 00:00:1793564435.301480    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25139
+11-01 17:20:35.301  9462  9619 E native  : E0000 00:00:1793564435.301521    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25229
+11-01 17:20:35.301  9462  9619 E native  : E0000 00:00:1793564435.301664    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25362
+11-01 17:20:35.301  9462  9624 I native  : I0000 00:00:1793564435.301728    9624 vio_fault_detector.cc:56] timestamp_ns_in_image_clock: 504857596488443
+11-01 17:20:35.301  9462  9619 E native  : E0000 00:00:1793564435.301731    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25363
+11-01 17:20:35.301  9462  9624 I native  : I0000 00:00:1793564435.301809    9624 vio_fault_detector.cc:58]  timestamp_ns_in_imu_clock: 504857592499591
+11-01 17:20:35.301  9462  9619 E native  : E0000 00:00:1793564435.301861    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25194
+11-01 17:20:35.301  9462  9624 I native  : I0000 00:00:1793564435.301857    9624 vio_fault_detector.cc:60] bias:  -0.227373   -0.27187 -0.0286053 -0.0326389  0.0224822  0.0023974
+11-01 17:20:35.301  9462  9624 I native  : I0000 00:00:1793564435.301906    9624 vio_fault_detector.cc:63] accel_bias_variance: 0.00242379 0.00206115  0.0024092
+11-01 17:20:35.301  9462  9624 I native  : I0000 00:00:1793564435.301926    9624 vio_fault_detector.cc:67] gyro_bias_variance:  1.1591e-05 1.08974e-05 1.19119e-05
+11-01 17:20:35.301  9462  9619 E native  : E0000 00:00:1793564435.301915    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25294
+11-01 17:20:35.301  9462  9624 I native  : I0000 00:00:1793564435.301946    9624 vio_fault_detector.cc:72] imu_transform_sensor: 200 0.00145737 -0.0183979 -0.0109457  -0.715058    0.69897 0.00673601 0.00940804
+11-01 17:20:35.301  9462  9619 E native  : E0000 00:00:1793564435.301959    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25079
+11-01 17:20:35.301  9462  9624 I native  : I0000 00:00:1793564435.301973    9624 vio_fault_detector.cc:78] camera_intrinsics: 200  458.66 458.693 310.028 242.079
+11-01 17:20:35.302  9462  9624 I native  : I0000 00:00:1793564435.301993    9624 vio_fault_detector.cc:82] global_velocity_imu: 0.00309265  0.0236274   0.118289
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302003    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25295
+11-01 17:20:35.302  9462  9624 I native  : I0000 00:00:1793564435.302008    9624 vio_fault_detector.cc:85] global_velocity_imu_variance: 0.00249058 0.00169386  0.0005374
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302059    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25296
+11-01 17:20:35.302  9462  9624 I native  : I0000 00:00:1793564435.302049    9624 vio_fault_detector.cc:90] global_pose_imu_variance: 0.000145355 0.000149002 5.16981e-06 0.000156002 4.17936e-05 1.93434e-05
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302115    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25195
+11-01 17:20:35.302  9462  9624 I native  : I0000 00:00:1793564435.302105    9624 vio_fault_detector.cc:94] imu_scale_and_misalignment:      1.00381      1.01917      1.00437  -0.00635589  -0.00304508  -0.00841839     0.996249      1.00806      1.01124   -0.0104117   -0.0021375   0.00760318    0.0102691 -0.000761689   0.00537929     0.999933
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302162    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25080
+11-01 17:20:35.302  9462  9624 I native  : I0000 00:00:1793564435.302152    9624 vio_fault_detector.cc:97] imu_scale_and_misalignment_covariance: 7.65171e-06 9.61949e-06 1.10399e-05 9.16907e-06 1.02787e-05 1.09822e-05 1.10009e-05 9.94862e-06  7.7366e-06 1.08215e-05 1.03626e-05 1.04331e-05  1.0484e-05 1.04887e-05 1.06179e-05
+11-01 17:20:35.302  9462  9624 I native  : I0000 00:00:1793564435.302205    9624 vio_fault_detector.cc:101] adf_t_vio: 0 0 0
+11-01 17:20:35.302  9462  9624 I native  : I0000 00:00:1793564435.302225    9624 vio_fault_detector.cc:104] adf_t_vio_covariance: 0 0 0 0 0 0
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302213    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24899
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302255    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25365
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302300    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25366
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302346    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25298
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302392    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25301
+11-01 17:20:35.302  9462  9624 W native  : W0000 00:00:1793564435.302400    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.302  9462  9624 W native  : W0000 00:00:1793564435.302449    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.302  9462  9624 W native  : W0000 00:00:1793564435.302465    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302449    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25083
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302531    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25233
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302576    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25085
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302617    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25086
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302659    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25235
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302700    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25302
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302739    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25374
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302779    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25239
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302819    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25237
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302865    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25149
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302905    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25303
+11-01 17:20:35.302  9462  9619 E native  : E0000 00:00:1793564435.302944    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25088
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.302984    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25240
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303024    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25304
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303063    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25375
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303104    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25376
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303144    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25377
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303188    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25242
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303233    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25243
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303275    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25090
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303315    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25378
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303355    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25245
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303397    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25028
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303438    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25097
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303551    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25380
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303602    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25309
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303649    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25029
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303691    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25381
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303731    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25102
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303771    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25104
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303812    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25251
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303851    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25253
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303891    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25106
+11-01 17:20:35.303  9462  9619 E native  : E0000 00:00:1793564435.303933    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25318
+11-01 17:20:35.304  9462  9619 E native  : E0000 00:00:1793564435.304007    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24864
+11-01 17:20:35.304  9462  9619 E native  : E0000 00:00:1793564435.304099    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25322
+11-01 17:20:35.304  9462  9619 E native  : E0000 00:00:1793564435.304178    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25323
+11-01 17:20:35.304  9462  9619 E native  : E0000 00:00:1793564435.304247    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25036
+11-01 17:20:35.304  9462  9619 E native  : E0000 00:00:1793564435.304319    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25205
+11-01 17:20:35.304  9462  9619 E native  : E0000 00:00:1793564435.304375    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25326
+11-01 17:20:35.304  9462  9619 E native  : E0000 00:00:1793564435.304500    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25259
+11-01 17:20:35.304  9462  9619 E native  : E0000 00:00:1793564435.304590    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25328
+11-01 17:20:35.304  9462  9619 E native  : E0000 00:00:1793564435.304663    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25261
+11-01 17:20:35.304  9462  9619 E native  : E0000 00:00:1793564435.304727    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25177
+11-01 17:20:35.304  9462  9619 E native  : E0000 00:00:1793564435.304788    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25176
+11-01 17:20:35.304  9462  9619 E native  : E0000 00:00:1793564435.304926    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25330
+11-01 17:20:35.305  9462  9619 E native  : E0000 00:00:1793564435.305006    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25332
+11-01 17:20:35.305  9462  9619 E native  : E0000 00:00:1793564435.305068    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25264
+11-01 17:20:35.305  9462  9619 E native  : E0000 00:00:1793564435.305140    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25179
+11-01 17:20:35.305  9462  9619 E native  : E0000 00:00:1793564435.305199    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25266
+11-01 17:20:35.305  9462  9619 E native  : E0000 00:00:1793564435.305243    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25392
+11-01 17:20:35.305  9462  9619 E native  : E0000 00:00:1793564435.305285    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25333
+11-01 17:20:35.305  9462  9619 E native  : E0000 00:00:1793564435.305785    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25180
+11-01 17:20:35.305  9462  9619 E native  : E0000 00:00:1793564435.305831    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25396
+11-01 17:20:35.305  9462  9619 E native  : E0000 00:00:1793564435.305872    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25272
+11-01 17:20:35.305  9462  9619 E native  : E0000 00:00:1793564435.305912    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25398
+11-01 17:20:35.305  9462  9619 E native  : E0000 00:00:1793564435.305953    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25339
+11-01 17:20:35.306  9462  9619 E native  : E0000 00:00:1793564435.305998    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25031
+11-01 17:20:35.306  9462  9619 E native  : E0000 00:00:1793564435.306089    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25327
+11-01 17:20:35.306  9462  9619 E native  : E0000 00:00:1793564435.306184    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25341
+11-01 17:20:35.306  9462  9619 E native  : E0000 00:00:1793564435.306273    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25078
+11-01 17:20:35.306  9462  9619 E native  : E0000 00:00:1793564435.306322    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25211
+11-01 17:20:35.306  9462  9619 E native  : E0000 00:00:1793564435.306367    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25290
+11-01 17:20:35.306  9462  9619 E native  : E0000 00:00:1793564435.306410    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25401
+11-01 17:20:35.306  9462  9619 E native  : E0000 00:00:1793564435.306452    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25402
+11-01 17:20:35.306  9462  9619 E native  : E0000 00:00:1793564435.306628    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25286
+11-01 17:20:35.306  9462  9619 E native  : E0000 00:00:1793564435.306680    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25058
+11-01 17:20:35.306  9462  9619 E native  : E0000 00:00:1793564435.306721    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25343
+11-01 17:20:35.306  9462  9619 E native  : E0000 00:00:1793564435.306761    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25098
+11-01 17:20:35.306  9462  9619 E native  : E0000 00:00:1793564435.306801    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25095
+11-01 17:20:35.306  9462  9619 E native  : E0000 00:00:1793564435.306841    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25383
+11-01 17:20:35.306  9462  9619 E native  : E0000 00:00:1793564435.306880    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25382
+11-01 17:20:35.328  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ......ID 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.328  9462  9462 I View    : setRequestedFrameRate frameRate=-4.0, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.334  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.334  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.358  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.358  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.388  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.388  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.421  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.421  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.449  9462  9621 W native  : W0000 00:00:1793564435.449337    9621 pose_manager.cc:298] INVALID_ARGUMENT: [PoseManager] CreatePoseNode: Failed to query IMU integrated posePassed timestamp: 504857759215829 is too new. [mtc.pose_node.latest_imu_timestamp_ns='504857682139169']
+11-01 17:20:35.449  9462  9621 W native  : === Source Location Trace: ===
+11-01 17:20:35.449  9462  9621 W native  : third_party/redwood/perception/pose_manager/latest_pose_tracker.cc:351
+11-01 17:20:35.449  9462  9621 E native  : E0000 00:00:1793564435.449487    9621 session.cc:973] INVALID_ARGUMENT: [PoseManager] CreatePoseNode: Failed to query IMU integrated posePassed timestamp: 504857759215829 is too new. [mtc.pose_node.latest_imu_timestamp_ns='504857682139169']
+11-01 17:20:35.449  9462  9621 E native  : === Source Location Trace: ===
+11-01 17:20:35.449  9462  9621 E native  : third_party/redwood/perception/pose_manager/latest_pose_tracker.cc:351
+11-01 17:20:35.449  9462  9621 E native  : third_party/redwood/perception/pose_manager/pose_manager.cc:298
+11-01 17:20:35.449  9462  9621 E native  : vr/perception/depth/projects/motion_stereo/manager/motion_stereo_manager.cc:192
+11-01 17:20:35.449  9462  9621 E native  : vr/perception/depth/projects/motion_stereo/manager/motion_stereo_manager.cc:820
+11-01 17:20:35.454  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.454  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.456  9462  9652 I native  : I0000 00:00:1793564435.456043    9652 logging_helper.h:101] [Live DS] [Sensor][SENSOR_TYPE_GYROSCOPE_UNCALIBRATED_0] Accumulative count: 275
+11-01 17:20:35.456  9462  9652 I native  : I0000 00:00:1793564435.456292    9652 logging_helper.h:101] [Live DS] [Sensor][SENSOR_TYPE_ACCELEROMETER_0] Accumulative count: 275
+11-01 17:20:35.456  9462  9555 W native  : W0000 00:00:1793564435.456375    9555 pose_manager.cc:259] INVALID_ARGUMENT: [PoseManager] GetRecentDevicePose: Failed to query IMU integrated posePassed timestamp: 504857759215829 is too new. [mtc.pose_node.latest_imu_timestamp_ns='504857682139169']
+11-01 17:20:35.456  9462  9555 W native  : === Source Location Trace: ===
+11-01 17:20:35.456  9462  9555 W native  : third_party/redwood/perception/pose_manager/latest_pose_tracker.cc:351
+11-01 17:20:35.456  9462  9628 W native  : W0000 00:00:1793564435.456772    9628 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.458  9462  9624 I native  : I0000 00:00:1793564435.458511    9624 ralph_kf.cc:1081] Increasing total number of noise blocks from 580  to 725
+11-01 17:20:35.465  9462  9624 I native  : I0000 00:00:1793564435.465248    9624 vio_fault_detector.cc:655] [VioFaultDetector] Insufficient inliers or feature ratio ( 3 / 4), in VIO update for duration: 199.993ms Min ratio: 0.2
+11-01 17:20:35.466  9462  9624 W native  : W0000 00:00:1793564435.466023    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.466  9462  9624 W native  : W0000 00:00:1793564435.466350    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.466  9462  9624 W native  : W0000 00:00:1793564435.466799    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.467  9462  9624 W native  : W0000 00:00:1793564435.467027    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472296    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25278
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472517    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25346
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472544    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25280
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472561    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25347
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472575    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25282
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472593    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25219
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472608    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25130
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472622    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25285
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472634    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25132
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472647    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25189
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472659    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25350
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472671    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25351
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472682    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25131
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472694    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25134
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472709    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25063
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472721    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24983
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472732    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25288
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472744    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24821
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472755    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25067
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472767    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25066
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472779    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25354
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472792    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25068
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472804    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25356
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472815    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25069
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472827    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25355
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472840    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25357
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472852    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25358
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472865    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25291
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472876    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25292
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472888    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25359
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472899    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25073
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472910    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25360
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472922    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25361
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472934    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25075
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472946    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25074
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472957    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25139
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472969    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25229
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472980    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25362
+11-01 17:20:35.472  9462  9620 E native  : E0000 00:00:1793564435.472992    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25363
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473005    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25079
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473017    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25194
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473028    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25294
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473040    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25296
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473052    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25295
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473064    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25195
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473075    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25080
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473091    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24899
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473103    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25365
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473114    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25298
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473128    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25301
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473139    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25083
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473153    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25233
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473165    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25085
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473178    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25235
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473189    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25302
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473201    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25374
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473212    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25237
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473225    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25088
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473238    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25240
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473250    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25375
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473261    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25376
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473273    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25377
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473285    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25242
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473298    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25243
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473310    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25378
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473321    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25090
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473333    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25245
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473345    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25028
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473356    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25097
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473367    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25380
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473379    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25029
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473390    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25381
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473402    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25102
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473414    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25104
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473426    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25106
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473437    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25318
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473448    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24864
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473460    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25322
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473471    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25323
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473482    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25036
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473493    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25205
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473505    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25326
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473517    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25259
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473528    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25328
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473540    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25261
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473551    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25176
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473562    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25177
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473574    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25211
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473585    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25330
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473597    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25332
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473609    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25264
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473620    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25179
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473632    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25266
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473645    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25392
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473656    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25333
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473669    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25396
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473682    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25180
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473695    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25272
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473707    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25339
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473721    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25401
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473733    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25402
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473747    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25327
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473760    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25086
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473773    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25239
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473785    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25304
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473799    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25303
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473812    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25286
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473824    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25058
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473836    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25343
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473848    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25383
+11-01 17:20:35.473  9462  9620 E native  : E0000 00:00:1793564435.473860    9620 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25382
+11-01 17:20:35.492  9462  9628 W native  : W0000 00:00:1793564435.492442    9628 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.492  9462  9628 W native  : W0000 00:00:1793564435.492590    9628 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.495  9462  9624 I native  : I0000 00:00:1793564435.495400    9624 ralph_kf.cc:1081] Increasing total number of noise blocks from 725  to 855
+11-01 17:20:35.496  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ......ID 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.496  9462  9619 E native  : E0000 00:00:1793564435.496353    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25278
+11-01 17:20:35.496  9462  9619 E native  : E0000 00:00:1793564435.496493    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25343
+11-01 17:20:35.496  9462  9462 I View    : setRequestedFrameRate frameRate=-4.0, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.496  9462  9619 E native  : E0000 00:00:1793564435.496575    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25346
+11-01 17:20:35.496  9462  9619 E native  : E0000 00:00:1793564435.496634    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25280
+11-01 17:20:35.496  9462  9619 E native  : E0000 00:00:1793564435.496680    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25282
+11-01 17:20:35.496  9462  9619 E native  : E0000 00:00:1793564435.496735    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25130
+11-01 17:20:35.496  9462  9619 E native  : E0000 00:00:1793564435.496781    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25219
+11-01 17:20:35.496  9462  9619 E native  : E0000 00:00:1793564435.496824    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25285
+11-01 17:20:35.496  9462  9619 E native  : E0000 00:00:1793564435.496865    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25132
+11-01 17:20:35.496  9462  9619 E native  : E0000 00:00:1793564435.496906    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25189
+11-01 17:20:35.496  9462  9619 E native  : E0000 00:00:1793564435.496946    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25350
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.496985    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25351
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497024    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25131
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497064    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25134
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497159    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24983
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497207    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25063
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497247    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25288
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497287    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24821
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497325    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25067
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497367    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25066
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497407    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25354
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497445    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25069
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497484    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25068
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497523    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25356
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497561    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25355
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497601    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25357
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497641    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25358
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497681    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25292
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497721    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25359
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497760    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25073
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497798    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25360
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497837    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25361
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497879    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25075
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497919    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25074
+11-01 17:20:35.497  9462  9619 E native  : E0000 00:00:1793564435.497958    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25139
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.497998    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25229
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498037    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25362
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498078    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25079
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498119    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25194
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498159    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25294
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498198    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25296
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498237    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25295
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498276    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25195
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498317    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24899
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498360    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25365
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498399    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25298
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498440    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25083
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498479    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25301
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498518    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25233
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498558    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25085
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498597    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25235
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498637    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25302
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498677    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25374
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498717    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25239
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498756    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25237
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498794    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25303
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498835    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25088
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498875    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25240
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498914    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25375
+11-01 17:20:35.498  9462  9619 E native  : E0000 00:00:1793564435.498953    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25376
+11-01 17:20:35.499  9462  9619 E native  : E0000 00:00:1793564435.498992    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25377
+11-01 17:20:35.499  9462  9619 E native  : E0000 00:00:1793564435.499032    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25242
+11-01 17:20:35.499  9462  9619 E native  : E0000 00:00:1793564435.499074    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25090
+11-01 17:20:35.499  9462  9619 E native  : E0000 00:00:1793564435.499114    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25378
+11-01 17:20:35.499  9462  9619 E native  : E0000 00:00:1793564435.499155    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25245
+11-01 17:20:35.499  9462  9619 E native  : E0000 00:00:1793564435.499195    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25028
+11-01 17:20:35.499  9462  9619 E native  : E0000 00:00:1793564435.499234    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25380
+11-01 17:20:35.499  9462  9619 E native  : E0000 00:00:1793564435.499273    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25097
+11-01 17:20:35.499  9462  9619 E native  : E0000 00:00:1793564435.499323    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25029
+11-01 17:20:35.499  9462  9619 E native  : E0000 00:00:1793564435.499371    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25383
+11-01 17:20:35.499  9462  9619 E native  : E0000 00:00:1793564435.499418    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25102
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500192    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25104
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500259    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25106
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500285    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25318
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500304    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25322
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500320    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25323
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500332    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25036
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500345    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25205
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500356    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25326
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500368    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25259
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500380    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25328
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500391    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25261
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500402    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25211
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500413    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25176
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500423    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25177
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500434    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25330
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500445    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25332
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500457    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25264
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500468    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25179
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500479    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25392
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500491    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25266
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500502    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25333
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500513    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25396
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500524    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25180
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500535    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25272
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500546    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25339
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500558    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25401
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500569    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25286
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500579    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25291
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500590    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25086
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500601    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25080
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500612    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25304
+11-01 17:20:35.500  9462  9619 E native  : E0000 00:00:1793564435.500624    9619 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25402
+11-01 17:20:35.502  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.502  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.513  9462  9624 W native  : W0000 00:00:1793564435.513655    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.513  9462  9624 W native  : W0000 00:00:1793564435.513810    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.513  9462  9624 W native  : W0000 00:00:1793564435.513851    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.513  9462  9624 W native  : W0000 00:00:1793564435.513881    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.513  9462  9624 W native  : W0000 00:00:1793564435.513910    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.526  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.526  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.555  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.555  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.593  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.593  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.594  9462  9621 W native  : W0000 00:00:1793564435.594525    9621 pose_manager.cc:298] INVALID_ARGUMENT: [PoseManager] CreatePoseNode: Failed to query IMU integrated posePassed timestamp: 504857892975600 is too new. [mtc.pose_node.latest_imu_timestamp_ns='504857842149877']
+11-01 17:20:35.594  9462  9621 W native  : === Source Location Trace: ===
+11-01 17:20:35.594  9462  9621 W native  : third_party/redwood/perception/pose_manager/latest_pose_tracker.cc:351
+11-01 17:20:35.594  9462  9621 E native  : E0000 00:00:1793564435.594646    9621 session.cc:973] INVALID_ARGUMENT: [PoseManager] CreatePoseNode: Failed to query IMU integrated posePassed timestamp: 504857892975600 is too new. [mtc.pose_node.latest_imu_timestamp_ns='504857842149877']
+11-01 17:20:35.594  9462  9621 E native  : === Source Location Trace: ===
+11-01 17:20:35.594  9462  9621 E native  : third_party/redwood/perception/pose_manager/latest_pose_tracker.cc:351
+11-01 17:20:35.594  9462  9621 E native  : third_party/redwood/perception/pose_manager/pose_manager.cc:298
+11-01 17:20:35.594  9462  9621 E native  : vr/perception/depth/projects/motion_stereo/manager/motion_stereo_manager.cc:206
+11-01 17:20:35.594  9462  9621 E native  : vr/perception/depth/projects/motion_stereo/manager/motion_stereo_manager.cc:820
+11-01 17:20:35.616  9462  9625 W native  : W0000 00:00:1793564435.615927    9625 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.618  9462  9623 E native  : E0000 00:00:1793564435.617948    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25278
+11-01 17:20:35.618  9462  9623 E native  : E0000 00:00:1793564435.618223    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25346
+11-01 17:20:35.618  9462  9623 E native  : E0000 00:00:1793564435.618402    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25280
+11-01 17:20:35.618  9462  9623 E native  : E0000 00:00:1793564435.618548    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25282
+11-01 17:20:35.618  9462  9623 E native  : E0000 00:00:1793564435.618683    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25219
+11-01 17:20:35.618  9462  9623 E native  : E0000 00:00:1793564435.618846    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25130
+11-01 17:20:35.618  9462  9623 E native  : E0000 00:00:1793564435.618967    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25286
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619074    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25189
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619183    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25132
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619290    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25350
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619401    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25351
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619525    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25131
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619576    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25134
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619603    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25063
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619623    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24983
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619639    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25288
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619651    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24821
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619663    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25067
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619674    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25066
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619685    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25354
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619697    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25068
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619708    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25069
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619718    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25356
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619729    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25355
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619739    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25357
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619750    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25358
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619760    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25291
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619807    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25292
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619819    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25359
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619830    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25073
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619840    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25360
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619850    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25074
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619861    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25075
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619871    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25139
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619883    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25229
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619893    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25362
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619906    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25079
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619916    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25194
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619927    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25296
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619937    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25295
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619947    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25195
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619958    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25080
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619968    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24899
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619978    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25365
+11-01 17:20:35.619  9462  9623 E native  : E0000 00:00:1793564435.619988    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25298
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.619999    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25301
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620010    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25083
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620020    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25233
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620030    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25085
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620040    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25235
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620050    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25302
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620061    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25239
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620071    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25374
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620081    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25237
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620091    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25088
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620102    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25240
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620118    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25304
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620128    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25375
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620138    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25376
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620148    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25242
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620158    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25377
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620168    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25378
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620178    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25090
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620189    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25245
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620200    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25028
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620210    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25380
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620221    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25097
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620231    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25029
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620242    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25383
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620253    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25102
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620272    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25104
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620283    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25106
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620293    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25318
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620304    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25322
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620314    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25323
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620324    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25036
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620335    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25205
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620377    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25326
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620389    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25259
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620399    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25328
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620410    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25261
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620419    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25176
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620429    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25177
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620464    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25332
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620477    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25264
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620488    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25179
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620498    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25333
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620508    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25396
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620518    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25180
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620528    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25272
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620538    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25339
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620548    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25401
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620559    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25303
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620569    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25361
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620579    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25086
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620591    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25211
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620602    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25330
+11-01 17:20:35.620  9462  9623 E native  : E0000 00:00:1793564435.620613    9623 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25343
+11-01 17:20:35.622  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.622  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.630  9462  9624 W native  : W0000 00:00:1793564435.630421    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.630  9462  9624 W native  : W0000 00:00:1793564435.630624    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.630  9462  9624 W native  : W0000 00:00:1793564435.630738    9624 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.654  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.655  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.689  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.690  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.721  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.722  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.750  9462  9622 W native  : W0000 00:00:1793564435.750056    9622 pose_manager.cc:298] INVALID_ARGUMENT: [PoseManager] CreatePoseNode: Failed to query IMU integrated posePassed timestamp: 504858061998486 is too new. [mtc.pose_node.latest_imu_timestamp_ns='504858002146814']
+11-01 17:20:35.750  9462  9622 W native  : === Source Location Trace: ===
+11-01 17:20:35.750  9462  9622 W native  : third_party/redwood/perception/pose_manager/latest_pose_tracker.cc:351
+11-01 17:20:35.750  9462  9622 E native  : E0000 00:00:1793564435.750212    9622 session.cc:973] INVALID_ARGUMENT: [PoseManager] CreatePoseNode: Failed to query IMU integrated posePassed timestamp: 504858061998486 is too new. [mtc.pose_node.latest_imu_timestamp_ns='504858002146814']
+11-01 17:20:35.750  9462  9622 E native  : === Source Location Trace: ===
+11-01 17:20:35.750  9462  9622 E native  : third_party/redwood/perception/pose_manager/latest_pose_tracker.cc:351
+11-01 17:20:35.750  9462  9622 E native  : third_party/redwood/perception/pose_manager/pose_manager.cc:298
+11-01 17:20:35.750  9462  9622 E native  : vr/perception/depth/projects/motion_stereo/manager/motion_stereo_manager.cc:192
+11-01 17:20:35.750  9462  9622 E native  : vr/perception/depth/projects/motion_stereo/manager/motion_stereo_manager.cc:820
+11-01 17:20:35.754  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=androidx.compose.ui.platform.AndroidComposeView{5f1dd0a VFED..... ........ 0,0-1080,2340 aid=1073741824}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2248 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.754  9462  9462 I View    : setRequestedFrameRate frameRate=NaN, this=android.view.View{3c1c33d V.ED..... ........ 0,0-0,0}, caller=androidx.compose.ui.platform.Api35Impl.setRequestedFrameRate:4033 androidx.compose.ui.platform.AndroidComposeView.dispatchDraw:2251 android.view.View.draw:26151 android.view.View.updateDisplayListIfDirty:24988 android.view.ViewGroup.recreateChildDisplayList:4768 
+11-01 17:20:35.756  9462  9555 W native  : W0000 00:00:1793564435.756334    9555 pose_manager.cc:259] INVALID_ARGUMENT: [PoseManager] GetRecentDevicePose: Failed to query IMU integrated posePassed timestamp: 504858061998486 is too new. [mtc.pose_node.latest_imu_timestamp_ns='504858002146814']
+11-01 17:20:35.756  9462  9555 W native  : === Source Location Trace: ===
+11-01 17:20:35.756  9462  9555 W native  : third_party/redwood/perception/pose_manager/latest_pose_tracker.cc:351
+11-01 17:20:35.759  9462  9555 W native  : W0000 00:00:1793564435.759051    9555 pose_manager.cc:298] INVALID_ARGUMENT: [PoseManager] CreatePoseNode: Failed to query IMU integrated posePassed timestamp: 504858061998486 is too new. [mtc.pose_node.latest_imu_timestamp_ns='504858002146814']
+11-01 17:20:35.759  9462  9555 W native  : === Source Location Trace: ===
+11-01 17:20:35.759  9462  9555 W native  : third_party/redwood/perception/pose_manager/latest_pose_tracker.cc:351
+11-01 17:20:35.778  9462  9629 W native  : W0000 00:00:1793564435.778562    9629 imu_state_integration.cc:221] IMU buffer is empty or has only one sample. Returns central state only.
+11-01 17:20:35.778  9462  9629 W native  : W0000 00:00:1793564435.778633    9629 imu_state_integration.cc:228] IMU buffer's size is greater or equal to two samples but doesn't cover central_state_timestamp_ns. Returns central state only.
+11-01 17:20:35.781  9462  9618 E native  : E0000 00:00:1793564435.781446    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25278
+11-01 17:20:35.781  9462  9618 E native  : E0000 00:00:1793564435.781659    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25280
+11-01 17:20:35.781  9462  9618 E native  : E0000 00:00:1793564435.781762    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25282
+11-01 17:20:35.781  9462  9618 E native  : E0000 00:00:1793564435.781833    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25130
+11-01 17:20:35.781  9462  9618 E native  : E0000 00:00:1793564435.781886    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25219
+11-01 17:20:35.781  9462  9618 E native  : E0000 00:00:1793564435.781934    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25286
+11-01 17:20:35.781  9462  9618 E native  : E0000 00:00:1793564435.781976    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25132
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782021    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25189
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782101    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25350
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782148    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25351
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782191    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25131
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782231    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25134
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782272    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25063
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782311    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24983
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782351    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25288
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782391    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24821
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782429    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25067
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782471    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25066
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782512    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25354
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782556    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25068
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782598    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25069
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782638    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25355
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782679    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25357
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782720    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25358
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782760    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25292
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782804    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25291
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782847    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25359
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782889    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25074
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782936    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25075
+11-01 17:20:35.782  9462  9618 E native  : E0000 00:00:1793564435.782977    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25139
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783025    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25229
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783089    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25362
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783165    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25079
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783227    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25194
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783268    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25296
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783306    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25195
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783346    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25080
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783387    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24899
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783426    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25365
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783508    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25298
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783556    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25301
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783598    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25233
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783638    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25085
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783681    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25235
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783723    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25302
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783767    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25239
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783807    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25374
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783848    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25237
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783887    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25088
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783927    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25240
+11-01 17:20:35.783  9462  9618 E native  : E0000 00:00:1793564435.783969    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25304
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784016    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25375
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784056    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25376
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784096    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25377
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784136    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25242
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784177    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25378
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784221    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25090
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784269    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25245
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784311    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25028
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784352    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25380
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784392    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25097
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784434    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25029
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784477    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25102
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784518    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25104
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784560    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25106
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784600    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25318
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784644    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25322
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784685    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25323
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784731    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25036
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784776    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25205
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784822    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25326
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784865    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25259
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784910    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25328
+11-01 17:20:35.784  9462  9618 E native  : E0000 00:00:1793564435.784956    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25261
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785022    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25177
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785067    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25211
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785110    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25176
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785154    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25332
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785194    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25264
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785234    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25179
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785277    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25333
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785317    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25180
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785359    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25272
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785398    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25339
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785438    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25401
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785481    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25073
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785521    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25356
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785564    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25295
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785608    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25303
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785660    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25383
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785701    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25083
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785743    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25343
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785787    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25346
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785835    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25361
+11-01 17:20:35.785  9462  9618 E native  : E0000 00:00:1793564435.785877    9618 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25330
+11-01 17:20:35.791  9462  9622 E native  : E0000 00:00:1793564435.791752    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25278
+11-01 17:20:35.791  9462  9622 E native  : E0000 00:00:1793564435.791873    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25346
+11-01 17:20:35.791  9462  9622 E native  : E0000 00:00:1793564435.791943    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25219
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792008    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25189
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792054    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25350
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792097    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25132
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792138    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25131
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792180    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25351
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792221    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25134
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792263    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24983
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792304    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25288
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792344    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25067
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792384    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24821
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792427    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25354
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792467    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25068
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792507    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25069
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792546    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25356
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792587    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25355
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792631    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25357
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792672    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25358
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792712    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25291
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792755    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25361
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792796    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25074
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792836    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25075
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792876    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25139
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792917    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25229
+11-01 17:20:35.792  9462  9622 E native  : E0000 00:00:1793564435.792960    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25194
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793001    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25079
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793042    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25296
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793080    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25295
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793121    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25195
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793160    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25080
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793201    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 24899
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793241    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25365
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793287    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25298
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793329    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25301
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793370    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25083
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793412    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25233
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793452    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25085
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793509    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25302
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793567    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25239
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793608    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25374
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793649    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25088
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793689    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25240
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793729    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25304
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793771    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25375
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793811    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25376
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793853    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25242
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793893    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25377
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793934    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25378
+11-01 17:20:35.793  9462  9622 E native  : E0000 00:00:1793564435.793975    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25090
+11-01 17:20:35.794  9462  9622 E native  : E0000 00:00:1793564435.794017    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25245
+11-01 17:20:35.794  9462  9622 E native  : E0000 00:00:1793564435.794057    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25028
+11-01 17:20:35.794  9462  9622 E native  : E0000 00:00:1793564435.794097    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25380
+11-01 17:20:35.794  9462  9622 E native  : E0000 00:00:1793564435.794137    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25097
+11-01 17:20:35.794  9462  9622 E native  : E0000 00:00:1793564435.794181    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25029
+11-01 17:20:35.794  9462  9622 E native  : E0000 00:00:1793564435.794229    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25102
+11-01 17:20:35.794  9462  9622 E native  : E0000 00:00:1793564435.794269    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25104
+11-01 17:20:35.794  9462  9622 E native  : E0000 00:00:1793564435.794310    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25106
+11-01 17:20:35.794  9462  9622 E native  : E0000 00:00:1793564435.794353    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25318
+11-01 17:20:35.794  9462  9622 E native  : E0000 00:00:1793564435.794397    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25322
+11-01 17:20:35.794  9462  9622 E native  : E0000 00:00:1793564435.794437    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25323
+11-01 17:20:35.794  9462  9622 E native  : E0000 00:00:1793564435.794478    9622 epipolar_self_consistency_metrics.cc:471] Failed to get first occurrence transform for feature id 25036

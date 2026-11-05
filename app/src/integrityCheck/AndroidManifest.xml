@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application>
         <activity android:name=".OfflineBattleValidationActivity" android:exported="false" />
-        <activity android:name=".EnvironmentThemeValidationActivity" android:exported="false" />
+        <!-- Exported so a capture harness can launch one environment/theme pair directly
+             (adb am start + screencap). Integrity-only build type, never shipped. -->
+        <activity android:name=".EnvironmentThemeValidationActivity" android:exported="true" />
     </application>
 </manifest>

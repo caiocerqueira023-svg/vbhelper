@@ -24,7 +24,7 @@ OUTPUT = ASSETS / "environment_themes"
 PALETTES = json.loads((Path(__file__).with_name("environment_theme_palettes.json")).read_text(encoding="utf-8"))
 SCENES = {
     "farm": ("digifarm/3d/digi_farm_3d.glb", {
-        "island_top_baked": "grass_patches", "island_side_baked": "structure",
+        "island_top_baked": "grass_patches", "island_side_baked": "cliff",
         "voxel_block_dark_baked": "panel", "voxel_block_lit_baked": "panel",
     }),
     "colosseum": ("Arena/Colosseum/Colosseum.glb", {"Ground": "structure", "Sphere001": "dome"}),
@@ -93,9 +93,15 @@ def recolor(source, role, palette, emission=False):
         gray = ImageOps.grayscale(image)
         image = ImageOps.colorize(gray, black=palette["panel"], mid=palette["grid"], white=palette["energy"],
                                  midpoint=72, whitepoint=180).convert("RGBA")
-    elif role == "structure":
+    elif role in ("structure", "cliff"):
         gray = ImageOps.autocontrast(ImageOps.grayscale(image), cutoff=1)
-        image = ImageOps.colorize(gray, black=palette["structureDark"], white=palette["structureLight"]).convert("RGBA")
+        dark, light = palette["structureDark"], palette["structureLight"]
+        if role == "cliff" and palette["light"]:
+            # The island's side is authored light-at-the-rim, dark-at-the-base. On light
+            # themes that ramp puts its darkest pixels against the bright backdrop, so the
+            # floating island loses its silhouette; flip the ramp to keep the base dark.
+            dark, light = light, dark
+        image = ImageOps.colorize(gray, black=dark, white=light).convert("RGBA")
     elif role == "dome":
         gray = ImageOps.autocontrast(ImageOps.grayscale(image), cutoff=1)
         if emission:
@@ -159,8 +165,8 @@ def generate(output=OUTPUT):
                 emit = list(emission_factor)
                 if theme != "vb_helper":
                     if not channels:
-                        color_role = {"floor": "floor", "grid": "grid", "boundary": "energy"}[role]
-                        factors = [*linear(palette[color_role]), base[3]]
+                        color_role = {"floor": "floor", "grid": "grid", "boundary": "boundary"}[role]
+                        factors = [*linear(palette.get(color_role) or palette["energy"]), base[3]]
                     if any(emission_factor):
                         gain = .75 if palette["light"] else 1.0
                         emit = [gain] * 3

@@ -51,9 +51,17 @@ class RoomWorldEcosystemStore(private val db: AppDatabase, private val interacti
         WorldInteractionRepository(db) { now }.reconcileLocked()
         db.worldSpawnDao().deleteExpired(now)
         val dao = db.worldInteractionDao()
-        val summaries = dao.getOpenInteractions().map { event -> EcosystemInteractionSummary(
+        val summaries = dao.getOpenInteractions().mapNotNull { event ->
+            val participants = dao.getParticipants(event.id)
+            // Paused wild↔wild encounters stay in the database (and in history) but are not part of
+            // the public ecosystem snapshot while WildSocialInteractionGate is off.
+            val wilds = participants.count { it.role == InteractionRole.WILD }
+            if (WildSocialInteractionGate.pauses(event.origin, event.type, wilds, participants.size)) {
+                return@mapNotNull null
+            }
+            EcosystemInteractionSummary(
             event.id, event.type, event.origin, event.state, event.revision,
-            dao.getParticipants(event.id).map { it.individualId }, event.expiresAt, event.publicReason,
+            participants.map { it.individualId }, event.expiresAt, event.publicReason,
             dao.getMessages(event.id).filter { it.source==DialogueTextSource.MODEL || it.source==DialogueTextSource.AUTHORED }
                 .groupBy { it.speakerId }.values.map { lines -> lines.last().let { EcosystemUtterance(it.speakerId,it.body,it.tick) } },event.nextActionTick,
             dao.getNpcBattle(event.id)?.let { record -> runCatching {

@@ -41,6 +41,7 @@ class EnvironmentThemeValidationActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         environment = intent.getStringExtra("environment") ?: "farm"
+        previewTheme = intent.getStringExtra("theme")?.let(AppTheme::fromPreference) ?: AppTheme.VB_LAB
         val arena = if (environment in setOf("colosseum", "radar")) OfflineArenaManifest.read(this,
             if (environment == "radar") OfflineArenaManifest.RADAR_MANIFEST_PATH else OfflineArenaManifest.DEFAULT_MANIFEST_PATH) else null
         val snapshot = EcosystemSnapshot(status = EcosystemStatus.READY,

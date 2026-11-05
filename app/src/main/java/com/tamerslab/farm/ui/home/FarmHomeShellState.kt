@@ -3,6 +3,7 @@ package com.tamerslab.farm.ui.home
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -22,7 +23,15 @@ class FarmHomeShellState internal constructor(
     val controller: FarmWorldController,
 ) {
     var detent by mutableStateOf(PartnerDetent.Peek)
+
+    /**
+     * How far the partner sheet is pulled up, 0 at Peek and 1 at Half. The place row under the sheet
+     * fades and yields its band in step with this, so the row leaves softly while the sheet claims the
+     * space instead of vanishing on a detent edge.
+     */
+    var sheetProgress by mutableFloatStateOf(0f)
     var selectedResidentId by mutableStateOf<String?>(null)
+
 }
 
 @Composable

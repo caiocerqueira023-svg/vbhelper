@@ -61,6 +61,13 @@ class WorldInteractionOrchestrator(private val db: AppDatabase, private val chat
         }
         var changed = false
         var open = dao.getOpenInteractions()
+        // Owner decision: wild↔wild social play is paused for current versions. Close anything a
+        // previous build left running so it no longer holds claims or shows up in the snapshot; the
+        // planner/battle/dialogue code stays intact behind WildSocialInteractionGate.
+        if (WildSocialInteractionGate.paused && repository.closePausedWildSocial()) {
+            open = dao.getOpenInteractions()
+            changed = true
+        }
         // An unanswered invitation is short-lived; it must not monopolize every future player encounter.
         open.filter { it.publicReason?.startsWith("WILD_CHAT:") == true && it.state == InteractionState.ACTIVE &&
             it.deadlineTick?.let { deadline -> tick >= deadline } == true }.forEach { repository.cancel(it.id); changed = true }
@@ -109,7 +116,7 @@ class WorldInteractionOrchestrator(private val db: AppDatabase, private val chat
                 }
             }
         }
-        if (tick % 40L == 0L && (replay || autonomousEnabled)) {
+        if (WildSocialInteractionGate.ENABLED && tick % 40L == 0L && (replay || autonomousEnabled)) {
             val byId = actors.associateBy { it.individualId }
             val claimed = dao.getClaimedIndividuals().toSet()
             val bonds = db.worldEcosystemDao().getBonds().associateBy { it.individualA to it.individualB }

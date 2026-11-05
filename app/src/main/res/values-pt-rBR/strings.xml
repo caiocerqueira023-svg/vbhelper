@@ -486,6 +486,7 @@
     <string name="ui_world_grid_instruction">Cada quadrado da grade representa aproximadamente 60 m.</string>
     <string name="ui_world_zoom_instruction">Use dois dedos em movimento de pinça sobre o mapa para controlar o zoom.</string>
     <string name="ui_world_compass_instruction">As setas N, L, S e O giram ao redor do jogador como uma bússola.</string>
+    <string name="ui_world_compass_nearest">Digimon mais próximo: %1$s</string>
     <string name="ui_world_zoom_label">Zoom %1$d%%</string>
     <string name="ui_world_debug_spawn_button">DEBUG: Gerar Digimon aleatório (20 m)</string>
     <string name="ui_world_debug_any_distance">DEBUG: Interagir de qualquer distância</string>
@@ -530,6 +531,17 @@
     <string name="ui_world_spawn_dim_species_title">Digimon de %1$s</string>
     <string name="ui_world_spawn_dim_species_empty">Este DiM não tem Digimon.</string>
     <string name="ui_world_spawn_dim_species_fallback">Digimon %1$d</string>
+
+    <!-- Chrome flutuante do Radar + folha de opções. Mantenha os três idiomas em sincronia. -->
+    <string name="ui_world_options_title">Opções do Radar</string>
+    <string name="ui_world_options_display">Exibição</string>
+    <string name="ui_world_options_battles">Batalhas</string>
+    <string name="ui_world_options_legacy">Visual clássico</string>
+    <string name="ui_world_options_technical">Técnico</string>
+    <string name="ui_world_mode_iso">Isométrico</string>
+    <string name="ui_world_spawn_settings">Configurações de geração</string>
+    <string name="ui_world_zoom_reset">Redefinir zoom</string>
+    <string name="ui_world_interaction_available">Interação disponível</string>
 
     <string-array name="world_cardinal_directions_8">
         <item>N</item><item>NE</item><item>L</item><item>SE</item>
@@ -1065,4 +1077,48 @@
     <string name="storage_debug_add_failure">Não foi possível adicionar este Digimon ao Storage.</string>
     <string name="transfer_send_no_species">A espécie deste parceiro ainda não está na lista do jogo, então um registro do World DS não pode ser criado.</string>
     <string name="transfer_send_destination_full">Este save não tem espaço livre na equipe ou nos registros. Libere um espaço no jogo e atualize.</string>
+    <!-- AR battle placement + stage (ar-placement task). Keep the three locales in sync. -->
+    <string name="ar_battle_toggle">Batalhas em AR</string>
+    <string name="ar_battle_toggle_description">Posicione a arena em uma superfície e veja a batalha pela câmera.</string>
+    <string name="ar_battle_badge">AR</string>
+    <string name="ar_battle_scan_instruction">Aponte o celular para uma mesa ou para o chão e mantenha firme</string>
+    <string name="ar_battle_scan_hold">Superfície encontrada - segure firme, iniciando a batalha...</string>
+    <string name="ar_battle_scan_starting">Iniciando a batalha...</string>
+    <string name="ar_battle_scan_fallback">Nenhuma superfície encontrada - posicionando a batalha à sua frente...</string>
+    <string name="ar_battle_scan_hint">Mova o celular devagar para os lados sobre a superfície para a câmera encontrá-la</string>
+    <string name="ar_battle_instructions_scan">Mova o celular devagar sobre uma mesa ou o chão - a batalha começa sozinha quando uma superfície é encontrada</string>
+    <string name="ar_battle_instructions_adjust">Arraste para girar, aproxime os dedos para redimensionar e posicione a batalha</string>
+    <string name="ar_battle_scale_label">Tamanho da arena</string>
+    <string name="ar_battle_arena_size">Arena de %1$s m</string>
+    <string name="ar_battle_arena_size_unknown">Toque em uma superfície para definir o tamanho da arena</string>
+    <string name="ar_battle_no_hit">Nenhuma superfície aqui - tente outro ponto</string>
+    <string name="ar_battle_no_surface">Nenhuma superfície ainda - mova o celular devagar sobre a mesa ou o chão, em local bem iluminado</string>
+    <string name="ar_battle_surface_found">Superfície encontrada - toque para mover a arena e depois coloque a batalha</string>
+    <string name="ar_battle_place_manual">Sem superfície? Colocar à minha frente</string>
+    <string name="ar_battle_tracking_paused">Rastreamento pausado - aponte o celular de volta para a superfície</string>
+    <string name="ar_battle_tracking_lost">Rastreamento perdido - mova o celular devagar</string>
+    <string name="ar_battle_too_dark">Está muito escuro - vá para um lugar mais iluminado</string>
+    <string name="ar_battle_move_slower">Movendo rápido demais - mova o celular devagar</string>
+    <string name="ar_battle_find_texture">Poucos detalhes aqui - aponte para a borda da mesa, o chão ou outra superfície com textura</string>
+    <string name="ar_battle_plan_auto">Automático</string>
+    <string name="ar_battle_plan_tabletop">Mesa</string>
+    <string name="ar_battle_plan_room">Sala</string>
+    <string name="ar_battle_plan_open_space">Espaço aberto</string>
+    <string name="ar_battle_place">Posicionar batalha</string>
+    <string name="ar_battle_back">Voltar</string>
+    <string name="ar_battle_permission_title">Acesso à câmera necessário</string>
+    <string name="ar_battle_permission_rationale">As batalhas em AR usam a câmera para posicionar a arena em uma superfície ao seu redor.</string>
+    <string name="ar_battle_permission_denied">O acesso à câmera foi negado. Permita para batalhar em AR, ou lute normalmente.</string>
+    <string name="ar_battle_permission_grant">Permitir câmera</string>
+    <string name="ar_battle_unavailable_title">AR indisponível</string>
+    <string name="ar_battle_unavailable_message">Este dispositivo não oferece suporte a batalhas em AR. Lute normalmente.</string>
+    <string name="ar_battle_install_title">ARCore necessário</string>
+    <string name="ar_battle_install_message">O Google Play Services para AR precisa estar instalado para batalhar em AR.</string>
+    <string name="ar_battle_install_action">Instalar</string>
+    <string name="ar_battle_fight_normally">Lutar normalmente</string>
+    <string name="ar_battle_starting_camera">Iniciando câmera...</string>
+    <string name="ar_battle_loading_scene">Preparando a batalha em AR...</string>
+    <string name="app_loading">Carregando…</string>
+    <string name="farm_swap_pick_title">Escolha o novo parceiro</string>
+    <string name="farm_swap_pick_body">Toque em um Digimon para substituir %1$s na Digifarm.</string>
 </resources>

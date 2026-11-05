@@ -42,4 +42,18 @@
     <string name="home_farm_showing">%1$d/%2$d を表示中</string>
     <string name="home_farm_increase">デジモンを増やす</string>
     <string name="home_farm_decrease">デジモンを減らす</string>
+    <string name="home_resident_set_active">アクティブに設定</string>
+    <string name="home_resident_switch_storage">ストレージの個体と交換</string>
+    <string name="farm_resident_remove">ディジファームから外す</string>
+    <string name="home_roster_members_title">ディジファームのパートナー</string>
+    <string name="home_roster_members_hint">タップして島に置く／外す。</string>
+    <string name="home_roster_in_farm">島にいる</string>
+    <string name="home_roster_in_storage">ストレージ</string>
+    <string name="home_roster_add_member">メンバーを追加</string>
+    <string name="home_roster_pick_title">パートナーを選ぶ</string>
+    <string name="home_roster_pick_empty">保存されているパートナーは全員すでに島にいます。</string>
+    <string name="home_roster_pick_back">ディジファームに戻る</string>
+    <string name="place_dex">図鑑</string>
+    <string name="place_dex_subtitle">コレクション</string>
+    <string name="digiline_start_chat">会話を始める</string>
 </resources>

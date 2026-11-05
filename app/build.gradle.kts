@@ -40,6 +40,17 @@ android {
     }
 
     buildTypes {
+        debug {
+            // ARCore workaround for Samsung/One UI devices (google-ar/arcore-android-sdk#1750):
+            // plane detection and tracking degrade/flicker in *debuggable* builds, while the
+            // same app in a non-debuggable build tracks normally. Build the debug variant with
+            // -PnonDebuggable to test AR on those devices without assembling/signing a release:
+            //   .\gradlew.bat :app:installDebug -PnonDebuggable
+            // Debug-only activities and logging stay available (they are source-set based), only
+            // the debuggable manifest flag changes. Debugging with a debugger attached will not
+            // work on such a build, which is expected.
+            isDebuggable = !providers.gradleProperty("nonDebuggable").isPresent
+        }
         create("integrityCheck") {
             initWith(getByName("debug"))
             applicationIdSuffix = ".integritycheck"
@@ -255,6 +266,9 @@ dependencies {
     implementation(libs.filament.android)
     implementation(libs.filament.gltfio.android)
     implementation(libs.filament.utils.android)
+
+    // AR battle presentation: camera passthrough, plane detection and anchors.
+    implementation(libs.arcore)
 }
 
 

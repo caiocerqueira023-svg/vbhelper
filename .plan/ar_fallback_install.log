@@ -1,0 +1,195 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/C:/Users/julye/.gradle/wrapper/dists/gradle-9.6.1-bin/4ticwg1pgcbps2hj28r8so764/gradle-9.6.1/lib/native-platform-0.22-milestone-29.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+
+> Configure project :app
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :baselineprofile
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :benchmark
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Configure project :hardware
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+WARNING: The property android.dependency.excludeLibraryComponentsFromConstraints improves project import performance for very large projects. It should be enabled to improve performance.
+To suppress this warning, add android.generateSyncIssueWhenLibraryConstraintsAreEnabled=false to gradle.properties
+
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :hardware:preBuild UP-TO-DATE
+> Task :hardware:preDebugBuild UP-TO-DATE
+> Task :hardware:prepareDebugArtProfile UP-TO-DATE
+> Task :app:mergeDebugArtProfile UP-TO-DATE
+> Task :hardware-dim:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :hardware-dim:compileKotlin UP-TO-DATE
+> Task :hardware-dim:compileJava UP-TO-DATE
+> Task :hardware-dim:processResources NO-SOURCE
+> Task :hardware-dim:classes UP-TO-DATE
+> Task :hardware-dim:jar UP-TO-DATE
+> Task :hardware:generateDebugResources UP-TO-DATE
+> Task :hardware:packageDebugResources UP-TO-DATE
+> Task :hardware:processDebugNavigationResources UP-TO-DATE
+> Task :hardware:parseDebugLocalResources UP-TO-DATE
+> Task :hardware:generateDebugRFile UP-TO-DATE
+> Task :hardware:compileDebugKotlin UP-TO-DATE
+> Task :hardware:javaPreCompileDebug UP-TO-DATE
+> Task :hardware:compileDebugJavaWithJavac NO-SOURCE
+> Task :hardware:bundleLibRuntimeToJarDebug UP-TO-DATE
+> Task :game-save-core:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :game-save-core:compileKotlin UP-TO-DATE
+> Task :game-save-core:compileJava NO-SOURCE
+> Task :companion-protocol:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :companion-protocol:compileKotlin UP-TO-DATE
+> Task :companion-protocol:compileJava NO-SOURCE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :game-save-core:processResources NO-SOURCE
+> Task :game-save-core:classes UP-TO-DATE
+> Task :game-save-core:jar UP-TO-DATE
+> Task :companion-protocol:processResources NO-SOURCE
+> Task :companion-protocol:classes UP-TO-DATE
+> Task :companion-protocol:jar UP-TO-DATE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:protobufDummy UP-TO-DATE
+> Task :app:extractDebugProto UP-TO-DATE
+> Task :hardware:processDebugJavaRes UP-TO-DATE
+> Task :hardware:createFullJarDebug UP-TO-DATE
+> Task :app:extractIncludeDebugProto UP-TO-DATE
+> Task :app:extractProto UP-TO-DATE
+> Task :app:generateDebugProto UP-TO-DATE
+> Task :app:generateDebugResources
+> Task :app:packageDebugResources
+> Task :app:processDebugNavigationResources
+> Task :app:parseDebugLocalResources
+> Task :app:generateDebugRFile
+> Task :hardware:bundleLibCompileToJarDebug UP-TO-DATE
+> Task :app:kspDebugKotlin
+> Task :app:compileDebugKotlin
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:compileDebugJavaWithJavac UP-TO-DATE
+> Task :hardware:writeDebugAarMetadata UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths
+> Task :app:compileDebugNavigationResources UP-TO-DATE
+> Task :app:mergeDebugResources
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :hardware:extractDeepLinksDebug UP-TO-DATE
+> Task :hardware:processDebugManifest UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :hardware:mapDebugSourceSetPaths UP-TO-DATE
+> Task :hardware:compileDebugLibraryResources UP-TO-DATE
+> Task :app:processDebugResources
+> Task :app:dexBuilderDebug
+> Task :app:mergeDebugGlobalSynthetics UP-TO-DATE
+> Task :hardware:bundleLibRuntimeToDirDebug UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeDebugStartupProfile UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:mergeDexDebug
+> Task :app:compileDebugArtProfile
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :hardware:generateDebugAssets UP-TO-DATE
+> Task :hardware:mergeDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:extractDebugVersionControlInfo UP-TO-DATE
+> Task :app:extractProguardFiles UP-TO-DATE
+> Task :hardware:extractProguardFiles UP-TO-DATE
+> Task :hardware:generateDebugLintModel UP-TO-DATE
+> Task :hardware:prepareLintJarForPublish UP-TO-DATE
+> Task :app:generateDebugLintVitalReportModel
+> Task :hardware:checkDebugAarMetadata UP-TO-DATE
+> Task :hardware:mergeDebugJniLibFolders UP-TO-DATE
+> Task :hardware:mergeDebugNativeLibs NO-SOURCE
+> Task :hardware:stripDebugDebugSymbols NO-SOURCE
+> Task :hardware:copyDebugJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :hardware:extractDebugAnnotations UP-TO-DATE
+> Task :hardware:extractDeepLinksForAarDebug UP-TO-DATE
+> Task :hardware:mergeDebugGeneratedProguardFiles UP-TO-DATE
+> Task :hardware:mergeDebugConsumerProguardFiles UP-TO-DATE
+> Task :hardware:mergeDebugJavaResource UP-TO-DATE
+> Task :hardware:syncDebugLibJars UP-TO-DATE
+> Task :hardware:bundleDebugLocalLintAar UP-TO-DATE
+> Task :hardware:lintVitalAnalyzeDebug UP-TO-DATE
+> Task :hardware:writeDebugLintModelMetadata UP-TO-DATE
+> Task :app:lintVitalAnalyzeDebug
+> Task :hardware:generateDebugLintVitalModel UP-TO-DATE
+
+> Task :app:lintVitalReportDebug
+Lint found no errors or warnings
+
+62 errors/warnings were listed in the baseline file (C:\Users\julye\IdeaProjects\vbhelper\app\lint-baseline.xml) but not found in the project; perhaps they have been fixed?
+
+Note: The baseline was created using a different target/variant than it was checked against.
+Creation variant: lint
+Current variant: lintVitalRelease
+
+> Task :app:lintVitalDebug
+> Task :app:processDebugJavaRes UP-TO-DATE
+> Task :app:mergeDebugJavaResource UP-TO-DATE
+> Task :app:optimizeDebugResources
+> Task :app:collectDebugDependencies UP-TO-DATE
+> Task :app:sdkDebugDependencyData UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :hardware:copyDebugJniLibsProjectOnly UP-TO-DATE
+> Task :app:mergeDebugNativeLibs UP-TO-DATE
+> Task :app:stripDebugDebugSymbols UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect UP-TO-DATE
+
+> Task :app:installDebug
+Installing APK 'app-debug.apk, app-debug.dm' on 'SM-A346M - 15' for :app:debug
+Installed on 1 device.
+
+[Incubating] Problems report is available at: file:///C:/Users/julye/IdeaProjects/vbhelper/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.6.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 6m 30s
+98 actionable tasks: 20 executed, 78 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.6.1/userguide/configuration_cache_enabling.html

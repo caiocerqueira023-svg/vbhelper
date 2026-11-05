@@ -31,6 +31,7 @@ interface CharacterDao {
         JOIN Card card ON card.id = character.cardId
         JOIN DisplaySprite sprite ON sprite.cardCharacterId = character.id
         LEFT JOIN SpeciesProfile profile ON profile.cardCharacterId = character.id
+        WHERE character.spriteId != -1
         ORDER BY card.name COLLATE NOCASE, character.charaIndex, character.id
     """)
     suspend fun getDebugSpawnCharacters(): List<DebugSpawnCharacter>
@@ -43,7 +44,7 @@ interface CharacterDao {
         FROM CardCharacter character
         JOIN DisplaySprite sprite ON sprite.cardCharacterId = character.id
         LEFT JOIN SpeciesProfile profile ON profile.cardCharacterId = character.id
-        WHERE character.catalogSpeciesId IS NOT NULL
+        WHERE character.catalogSpeciesId IS NOT NULL AND character.spriteId != -1
         ORDER BY speciesName COLLATE NOCASE, character.id
     """)
     suspend fun getDebugCatalogCharacters(): List<DebugSpawnCharacter>

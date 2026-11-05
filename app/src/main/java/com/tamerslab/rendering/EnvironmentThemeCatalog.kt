@@ -16,10 +16,22 @@ internal data class EnvironmentSceneTheme(val asset: String, val materials: List
 
 /** Generated material allowlists and original factors; never infer a role from a sprite's color. */
 internal class EnvironmentThemeCatalog(val scenes: Map<String, EnvironmentSceneTheme>) {
-    fun sceneForAsset(asset: String) = scenes.values.firstOrNull { it.asset == asset }
+    fun sceneForAsset(asset: String) =
+        scenes.values.firstOrNull { it.asset == asset }
+            ?: scenes.values.firstOrNull { it.asset == assetAliases[asset] }
 
     companion object {
         const val ASSET = "environment_themes/manifest.json"
+
+        /**
+         * Derived scene assets reuse the authored scene's theme materials. The Radar place renders
+         * `radar_plate.glb` (the radar arena without battle props/boundary); it has to keep the exact
+         * floor and grid theme the authored radar grid carries, so it maps onto that scene instead of
+         * shipping a duplicate material definition.
+         */
+        private val assetAliases = mapOf(
+            "Arena/Radar/radar_plate.glb" to "Arena/Radar/radar_grid.glb",
+        )
 
         fun parse(text: String): EnvironmentThemeCatalog {
             val root = JSONObject(text)

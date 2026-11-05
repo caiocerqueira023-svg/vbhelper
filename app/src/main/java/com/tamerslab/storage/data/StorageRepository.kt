@@ -127,6 +127,8 @@ class StorageRepository (
         db.userCharacterDao().setOnlyActiveCharacter(characterId)
     }
 
+    suspend fun favouriteIds(): List<Long> = db.userCharacterDao().favouriteCharacterIds()
+
     suspend fun setFavorite(characterId: Long, isFavorite: Boolean) =
         db.userCharacterDao().setFavorite(characterId, isFavorite)
 

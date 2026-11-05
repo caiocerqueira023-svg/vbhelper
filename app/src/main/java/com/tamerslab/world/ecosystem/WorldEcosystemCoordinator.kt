@@ -243,6 +243,36 @@ class WorldEcosystemCoordinator(
         }
     }
 
+    /**
+     * Submits a command built from the freshest published stamp and retries once or twice when the
+     * only failure is a `STALE_SNAPSHOT` (an ordinary GPS fix bumped the revision between reading
+     * the snapshot and acquiring the command lock). A rejected command was never applied, so the
+     * retry cannot duplicate effects; callers that build their own command keep the existing
+     * one-shot/stale-ticket semantics.
+     */
+    suspend fun <T> executeCommandLatest(
+        owner: String,
+        kind: RadarCommandKind,
+        individualId: String? = null,
+        interactionId: String? = null,
+        action: suspend (RadarCommandContext) -> T,
+    ): RadarCommandResult<T> {
+        var attempts = 0
+        while (true) {
+            val stamp = _snapshot.value.commandStamp
+                ?: return RadarCommandResult.Rejected(RadarRejection.NOT_READY)
+            val result = executeCommand(owner, RadarCommand(stamp, kind, individualId, interactionId), action)
+            if (result is RadarCommandResult.Rejected &&
+                result.reason == RadarRejection.STALE_SNAPSHOT &&
+                attempts < 2
+            ) {
+                attempts++
+                continue
+            }
+            return result
+        }
+    }
+
     /** External replies and player transcript inputs commit against one reconciled clock. */
     internal suspend fun commitExternalInput(action:suspend ()->Boolean):Boolean = mutex.withLock {
         if(leases.isEmpty() || _snapshot.value.status!=EcosystemStatus.READY || session?.pauseReason==WorldPauseReason.PLAYER_BATTLE)return@withLock false

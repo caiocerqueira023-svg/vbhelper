@@ -4,6 +4,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -41,6 +42,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -53,10 +55,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import com.tamerslab.components.showAppFeedback
+import com.tamerslab.farm.FarmWorldPreferences
+import com.tamerslab.farm.farmWorldStore
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -109,6 +115,7 @@ fun StorageScreen(
     val sourceLabels = remember(linkedSources) { linkedSources.associate { it.source.sourceId to it.source.label } }
     val farmAssignments by application.container.digifarmRepository.observeAssignments()
         .collectAsStateWithLifecycle(initialValue = emptyList())
+    val farmPreferences = remember(application) { FarmWorldPreferences(application.farmWorldStore) }
     val farmByCharacter = remember(farmAssignments) { farmAssignments.associate { it.characterId to it.farmName } }
     val fallbackName = stringResource(R.string.widget_digimon_label)
 
@@ -116,6 +123,22 @@ fun StorageScreen(
         withContext(Dispatchers.IO) {
             storageRepository.ensureAllPersonalities()
         }
+    }
+
+    // Arriving with a pending farm swap: say it once through the shared feedback line (no card).
+    val swapContext = LocalContext.current
+    val pendingSwapTarget = FarmSwapRequest.target
+    LaunchedEffect(pendingSwapTarget) {
+        val target = pendingSwapTarget ?: return@LaunchedEffect
+        swapContext.showAppFeedback(
+            R.string.farm_swap_pick_body,
+            target.name,
+        )
+    }
+
+    // Leaving Storage abandons a pending farm swap, so a later visit behaves normally again.
+    DisposableEffect(Unit) {
+        onDispose { FarmSwapRequest.clear() }
     }
 
     var selectedCharacter by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -446,7 +469,56 @@ fun StorageScreen(
                         ) { character ->
                             val usable = participation?.owned(character.id)?.usable != false
                             val openCharacter = {
-                                if (character.id in awayCharacterIds) {
+                                val pendingSwap = FarmSwapRequest.target
+                                if (pendingSwap != null) {
+                                    // The farm asked for this place: activation is the swap, and the
+                                    // visitor goes straight back to see it.
+                                    when {
+                                        character.id in awayCharacterIds -> Toast.makeText(
+                                            application,
+                                            application.getString(R.string.transfer_send_away),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        character.isInAdventure -> Toast.makeText(
+                                            application,
+                                            application.getString(R.string.storage_in_adventure_toast),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                        else -> {
+                                            val outgoing = pendingSwap
+                                            val finishSwap: () -> Unit = {
+                                                FarmSwapRequest.clear()
+                                                navController.popBackStack()
+                                                Unit
+                                            }
+                                            scope.launch {
+                                                // The place is genuinely exchanged: Digifarm membership is
+                                                // explicit, so the outgoing partner leaves the island and the
+                                                // chosen one takes its slot; only a leader swap also moves
+                                                // the active partner.
+                                                withContext(Dispatchers.IO) {
+                                                    farmPreferences.updateFarmMembers(
+                                                        favouriteIds = characterList.filter { it.isFavorite }
+                                                            .map { it.id },
+                                                        add = character.id,
+                                                        remove = outgoing.characterId,
+                                                    )
+                                                }
+                                                if (outgoing.isActivePartner) {
+                                                    storageScreenController.setActive(
+                                                        characterId = character.id,
+                                                        announce = true,
+                                                        onCompletion = finishSwap,
+                                                        onRejected = {},
+                                                    )
+                                                } else {
+                                                    finishSwap()
+                                                }
+                                            }
+                                            Unit
+                                        }
+                                    }
+                                } else if (character.id in awayCharacterIds) {
                                     Toast.makeText(
                                         application,
                                         application.getString(R.string.transfer_send_away),
@@ -661,6 +733,4 @@ fun StorageScreen(
         }
     }
 }
-
-
 

@@ -1,0 +1,21 @@
+﻿diff --git a/app/src/main/java/com/tamerslab/world/ui/RadarPlaceScreen.kt b/app/src/main/java/com/tamerslab/world/ui/RadarPlaceScreen.kt
+index 44b96eba..1a999375 100644
+--- a/app/src/main/java/com/tamerslab/world/ui/RadarPlaceScreen.kt
++++ b/app/src/main/java/com/tamerslab/world/ui/RadarPlaceScreen.kt
+@@ -24,6 +24,7 @@ fun RadarPlaceScreen(
+ ) {
+     var firstPersonPreferred by rememberSaveable { mutableStateOf(false) }
+     var labelsPreferred by rememberSaveable { mutableStateOf(false) }
++    var arPreferred by rememberSaveable { mutableStateOf(false) }
+     RadarScreen(
+         navController = navController,
+         worldEntry = worldEntry,
+@@ -32,6 +33,8 @@ fun RadarPlaceScreen(
+         onViewPreferenceChanged = { firstPersonPreferred = it },
+         labelsPreferred = labelsPreferred,
+         onLabelsPreferenceChanged = { labelsPreferred = it },
++        arPreferred = arPreferred,
++        onArPreferenceChanged = { arPreferred = it },
+         titleRes = R.string.nav_radar,
+         showSectionTabs = false
+     )

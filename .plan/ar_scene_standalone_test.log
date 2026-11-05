@@ -1,0 +1,11 @@
+﻿== ArBattleCamera standalone JVM check (no Gradle) 2026-11-01T16:26:25.4757171-03:00 ==
+java: C:\Program Files\Java\jdk-21\bin\java.exe
+compiler: kotlin-compiler-embeddable 2.2.21 (from Gradle cache)
+COMPILE_EXIT=0
+
+TEST_EXIT=0
+JUnit version 4.13.2
+...........
+Time: 0,086
+
+OK (11 tests)
