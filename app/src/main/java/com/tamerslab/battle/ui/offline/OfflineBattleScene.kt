@@ -316,12 +316,14 @@ class OfflineBattleSceneView(
             } else {
                 updateCinematicCamera()
                 if (latestSnapshot?.finisher == null) {
-                    updateAutomaticOrbit(frameTimeNanos)
+                    if (allowCinematicMotion) updateAutomaticOrbit(frameTimeNanos)
                     updateFocusedCameraTarget(frameTimeNanos)
                 }
             }
-            updateArenaEmission(frameTimeNanos)
-            updateArenaVoxelMotion(frameTimeNanos)
+            if (allowCinematicMotion) {
+                updateArenaEmission(frameTimeNanos)
+                updateArenaVoxelMotion(frameTimeNanos)
+            }
             projectionNotificationPending = projectionNotificationPending || cameraDirty
             if (arPresentation == null) applyCameraIfNeeded()
             syncFighters()
@@ -810,9 +812,12 @@ class OfflineBattleSceneView(
         cameraDirty = false
         val sequence = latestSnapshot?.finisher
         val impact = latestSnapshot?.impacts?.maxByOrNull { it.impactId }.takeIf { sequence == null }
-        val shake = impact?.let {
-            battleImpactShake(it.impactId, it.remainingMillis, it.critical)
-        } ?: BattleCameraShake(0.0, 0.0)
+        val shake = if (allowCinematicMotion) {
+            impact?.let { battleImpactShake(it.impactId, it.remainingMillis, it.critical) }
+                ?: BattleCameraShake(0.0, 0.0)
+        } else {
+            BattleCameraShake(0.0, 0.0)
+        }
         val horizontal = cameraDistance * kotlin.math.cos(cameraPitch)
         val desiredEyeX = cameraTargetX + kotlin.math.sin(cameraYaw) * horizontal
         val desiredEyeZ = cameraTargetZ + kotlin.math.cos(cameraYaw) * horizontal
@@ -1510,7 +1515,11 @@ class OfflineBattleSceneView(
             "idle" -> "idle2"
             else -> null
         }
-        val frame = if (alternate != null && (now / POSE_FRAME_NANOS) % 2L == 1L) alternate else requested
+        val frame = if (alternate != null && allowCinematicMotion && (now / POSE_FRAME_NANOS) % 2L == 1L) {
+            alternate
+        } else {
+            requested
+        }
         return when {
             frame in fighter.poses -> frame
             requested in fighter.poses -> requested

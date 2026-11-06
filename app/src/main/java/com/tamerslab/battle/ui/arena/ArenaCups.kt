@@ -126,7 +126,7 @@ internal fun ArenaCupBracket(run: ArenaTournament, busy: Boolean, onResume: () -
                     style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                 else -> {
                     ArenaAction(stringResource(R.string.arena_resume), onResume, Modifier.fillMaxWidth(), enabled = !busy)
-                    TextButton(onClick = onWithdraw, enabled = !busy) { Text(stringResource(R.string.arena_withdraw)) }
+                    TextButton(onClick = onWithdraw, enabled = !busy, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.arena_withdraw)) }
                 }
             }
         }

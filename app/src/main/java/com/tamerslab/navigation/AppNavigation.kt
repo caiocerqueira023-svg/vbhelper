@@ -1,6 +1,8 @@
 ﻿package com.tamerslab.navigation
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
@@ -15,7 +17,6 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -110,6 +111,8 @@ import com.tamerslab.farm.ui.digiline.DigilineScreen
 import com.tamerslab.farm.ui.digiline.FarmGroupScreen
 import com.tamerslab.quests.ui.QuestScreen
 import com.tamerslab.dtos.WorldDtos
+import com.tamerslab.components.RouteArrival
+import kotlinx.coroutines.delay
 
 data class AppNavigationHandlers(
     val settingsScreenController: SettingsScreenControllerImpl,
@@ -141,9 +144,35 @@ fun AppNavigation(
     // The farm world is a shell-level surface: it stays composed (paused, invisible) while a place is
     // open, so returning to the farm never rebuilds the Filament engine or re-streams residents.
     val farmShell = rememberFarmHomeShellState()
+    // Stable for the shell's lifetime, so the world subtree can skip when only the route changes.
+    val onFarmResidentTap = remember(farmShell) {
+        { renderId: String -> farmShell.selectedResidentId = renderId }
+    }
     var battleFullScreen by remember { mutableStateOf(false) }
     val tabSwipeThresholdPx = with(LocalDensity.current) { 96.dp.toPx() }
     val allowMotion = motionEnabled()
+    // The farm is not a destination, so a route transition cannot move it: it is the depth layer the
+    // places sit over. Leaving Home it stays fully composited and pushes in under the arriving place
+    // (which itself only fades), and it is dropped only once that place is fully opaque, so the world
+    // is never cut out from under a half-transparent screen. Coming back is the same layer settling
+    // forward again while the place dissolves away.
+    val farmAlpha = remember { Animatable(if (isFarmHome) 1f else 0f) }
+    LaunchedEffect(isFarmHome) {
+        if (isFarmHome) {
+            farmAlpha.snapTo(1f)
+        } else {
+            delay(if (allowMotion) FARM_HANDOFF_MS else REDUCED_HANDOFF_MS)
+            farmAlpha.snapTo(0f)
+        }
+    }
+    val farmDepth by animateFloatAsState(
+        targetValue = if (allowMotion && !isFarmHome) FARM_DEPTH else 1f,
+        animationSpec = tween(
+            durationMillis = if (!allowMotion) 0 else if (isFarmHome) 360 else 280,
+            easing = FastOutSlowInEasing,
+        ),
+        label = "farmDepth",
+    )
     val battleChromeMotionDuration = if (allowMotion) 240 else 0
     val battleChromeFadeDuration = if (allowMotion) 160 else 0
     val context = LocalContext.current
@@ -185,6 +214,16 @@ fun AppNavigation(
         }
     }
 
+    // Tell content that arrives with this route change not to stack its own entrance on top of the
+    // page transition. Raised as the destination's effects start - before the items that arrive with
+    // its data compose - and lowered once the enter motion has settled. Not Compose state on purpose:
+    // nothing subscribes to it, and settling it never costs a recomposition wave.
+    LaunchedEffect(currentDestination) {
+        RouteArrival.markInFlight()
+        delay(if (allowMotion) ROUTE_ARRIVAL_MS else 0L)
+        RouteArrival.settle()
+    }
+
     DisposableEffect(lifecycleOwner, musicController) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
@@ -213,30 +252,32 @@ fun AppNavigation(
                 WindowInsets.safeDrawing.exclude(WindowInsets.ime),
             snackbarHost = { SnackbarHost(snackbar, Modifier.imePadding()) },
         ) { contentPadding ->
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .then(
-                        if (isFarmHome) Modifier
-                        else Modifier.padding(contentPadding).consumeWindowInsets(contentPadding)
-                    )
-                    .imePadding()
-            ) {
+            // Two independent layers. The world keeps the shell's whole window for the shell's whole
+            // life: it is deliberately not padded with the system-bar insets, so entering or leaving
+            // Home never resizes or re-lays out the surface that owns the Filament swapchain - that
+            // resize used to land in the same frames as the route transition. Only the NavHost takes
+            // the insets and the IME.
+            Box(modifier = Modifier.fillMaxSize()) {
                 Box(
                     modifier = Modifier
-                        .weight(1f)
-                ) {
-                // Persistent world surface: composed once for the shell's lifetime, paused and hidden
-                // whenever a place is on top. This is what stops the farm from re-loading on every tab
-                // change (the engine, island GLB and resident meshes all survive).
-                FarmHomeWorld(
-                    controller = farmShell.controller,
-                    modifier = Modifier
                         .fillMaxSize()
-                        .graphicsLayer { alpha = if (isFarmHome) 1f else 0f },
-                    isActive = isFarmHome && farmShell.detent != PartnerDetent.Expanded,
-                    onResidentTap = { renderId -> farmShell.selectedResidentId = renderId },
-                )
+                        .graphicsLayer {
+                            alpha = farmAlpha.value
+                            scaleX = farmDepth
+                            scaleY = farmDepth
+                        }
+                ) {
+                    // Persistent world surface: composed once for the shell's lifetime, paused and
+                    // hidden whenever a place is on top. This is what stops the farm from re-loading
+                    // on every tab change (the engine, island GLB and resident meshes all survive).
+                    // The depth transform sits on the layer above, so it invalidates draw only.
+                    FarmHomeWorld(
+                        controller = farmShell.controller,
+                        modifier = Modifier.fillMaxSize(),
+                        isActive = isFarmHome && farmShell.detent != PartnerDetent.Expanded,
+                        onResidentTap = onFarmResidentTap,
+                    )
+                }
                 NavHost(
             navController = navController,
             startDestination = initialDestination ?: AppRoute.Home,
@@ -245,17 +286,33 @@ fun AppNavigation(
                     initialState.destination,
                     targetState.destination
                 )
-                val touchesFarmHome = initialState.destination.hasRoute<AppRoute.Home>() ||
-                    targetState.destination.hasRoute<AppRoute.Home>()
-                if (!allowMotion || direction == 0 || touchesFarmHome) {
-                    // The world never slides sideways like a page; entering or leaving Home is a
-                    // fade-through so the place reads as arriving, not as a tab switch.
-                    fadeIn(animationSpec = tween(if (allowMotion) 200 else 80))
-                } else {
-                    slideInHorizontally(
-                        animationSpec = tween(280, easing = FastOutSlowInEasing),
-                        initialOffsetX = { width -> if (direction > 0) width else -width }
-                    ) + fadeIn(tween(170))
+                when (
+                    routeEnterMotion(
+                        initialIsHome = initialState.destination.hasRoute<AppRoute.Home>(),
+                        targetIsHome = targetState.destination.hasRoute<AppRoute.Home>(),
+                        direction = direction,
+                        motionAllowed = allowMotion,
+                    )
+                ) {
+                    RouteEnterMotion.HomeReturn ->
+                        // The farm is already standing underneath and settling forward; the interface
+                        // lands a beat later, so arrival reads as coming back to the world rather than
+                        // as another page fading in.
+                        fadeIn(animationSpec = tween(durationMillis = 240, delayMillis = 40))
+                    RouteEnterMotion.PlaceOverFarm ->
+                        // A place rises as it dissolves over the farm. There is no sideways slide:
+                        // Home is a place, not the first tab of a pager.
+                        fadeIn(animationSpec = tween(220)) + slideInVertically(
+                            animationSpec = tween(320, easing = FastOutSlowInEasing),
+                            initialOffsetY = { height -> (height * 0.022f).toInt() }
+                        )
+                    RouteEnterMotion.TabSlide ->
+                        slideInHorizontally(
+                            animationSpec = tween(280, easing = FastOutSlowInEasing),
+                            initialOffsetX = { width -> if (direction > 0) width else -width }
+                        ) + fadeIn(tween(170))
+                    RouteEnterMotion.Fade ->
+                        fadeIn(animationSpec = tween(if (allowMotion) 200 else 90))
                 }
             },
             exitTransition = {
@@ -263,18 +320,41 @@ fun AppNavigation(
                     initialState.destination,
                     targetState.destination
                 )
-                val touchesFarmHome = initialState.destination.hasRoute<AppRoute.Home>() ||
-                    targetState.destination.hasRoute<AppRoute.Home>()
-                if (!allowMotion || direction == 0 || touchesFarmHome) {
-                    fadeOut(animationSpec = tween(if (allowMotion) 140 else 60))
-                } else {
-                    slideOutHorizontally(
-                        animationSpec = tween(220, easing = FastOutSlowInEasing),
-                        targetOffsetX = { width -> if (direction > 0) -width else width }
-                    ) + fadeOut(tween(130))
+                when (
+                    routeExitMotion(
+                        initialIsHome = initialState.destination.hasRoute<AppRoute.Home>(),
+                        targetIsHome = targetState.destination.hasRoute<AppRoute.Home>(),
+                        direction = direction,
+                        motionAllowed = allowMotion,
+                    )
+                ) {
+                    RouteExitMotion.HomeLeave ->
+                        // Home's chrome clears out quickly; the world itself stays composited under
+                        // the arriving place and is dropped once that place covers it.
+                        fadeOut(animationSpec = tween(150))
+                    RouteExitMotion.PlaceSink ->
+                        // The place sinks and dissolves so the farm underneath is what survives the
+                        // change, and the world's own settle carries the arrival.
+                        fadeOut(animationSpec = tween(220)) + slideOutVertically(
+                            animationSpec = tween(240, easing = FastOutSlowInEasing),
+                            targetOffsetY = { height -> (height * 0.018f).toInt() }
+                        )
+                    RouteExitMotion.TabSlide ->
+                        slideOutHorizontally(
+                            animationSpec = tween(220, easing = FastOutSlowInEasing),
+                            targetOffsetX = { width -> if (direction > 0) -width else width }
+                        ) + fadeOut(tween(130))
+                    RouteExitMotion.Fade ->
+                        fadeOut(animationSpec = tween(if (allowMotion) 140 else 80))
                 }
             },
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier
+                .fillMaxSize()
+                .then(
+                    if (isFarmHome) Modifier
+                    else Modifier.padding(contentPadding).consumeWindowInsets(contentPadding)
+                )
+                .imePadding()
 
         ) {
             composable<AppRoute.Battles>(deepLinks = listOf(androidx.navigation.navDeepLink { uriPattern = "vbhelper://auth" }, androidx.navigation.navDeepLink { uriPattern = "http://localhost:8080/authenticate" }, androidx.navigation.navDeepLink { uriPattern = "http://127.0.0.1:8080/authenticate" })) {
@@ -486,7 +566,6 @@ fun AppNavigation(
             }
         }
     }
-            }
         }
     }
 
@@ -509,6 +588,60 @@ private fun primaryTabTransitionDirection(initial: NavDestination, target: NavDe
         0
     }
 }
+
+/**
+ * Which motion a route change uses. Home is a full-bleed world rather than a page, so it never rides
+ * the sideways tab slide: leaving, the place lifts over the farm while the world pushes in under it;
+ * returning, the place sinks away and hands the screen back to the farm, which has settled forward.
+ */
+internal enum class RouteEnterMotion { HomeReturn, PlaceOverFarm, TabSlide, Fade }
+
+internal enum class RouteExitMotion { HomeLeave, PlaceSink, TabSlide, Fade }
+
+internal fun routeEnterMotion(
+    initialIsHome: Boolean,
+    targetIsHome: Boolean,
+    direction: Int,
+    motionAllowed: Boolean,
+): RouteEnterMotion = when {
+    !motionAllowed -> RouteEnterMotion.Fade
+    targetIsHome -> RouteEnterMotion.HomeReturn
+    initialIsHome -> RouteEnterMotion.PlaceOverFarm
+    direction != 0 -> RouteEnterMotion.TabSlide
+    else -> RouteEnterMotion.Fade
+}
+
+internal fun routeExitMotion(
+    initialIsHome: Boolean,
+    targetIsHome: Boolean,
+    direction: Int,
+    motionAllowed: Boolean,
+): RouteExitMotion = when {
+    !motionAllowed -> RouteExitMotion.Fade
+    initialIsHome -> RouteExitMotion.HomeLeave
+    targetIsHome -> RouteExitMotion.PlaceSink
+    direction != 0 -> RouteExitMotion.TabSlide
+    else -> RouteExitMotion.Fade
+}
+
+/**
+ * How long the farm surface stays composited after Home is left. It has to outlive the arriving
+ * place's own fade (220 ms), otherwise the world cuts out from under a half-transparent screen.
+ */
+private const val FARM_HANDOFF_MS = 280L
+
+/** Reduced motion still holds the world through the short crossfade instead of cutting it. */
+private const val REDUCED_HANDOFF_MS = 90L
+
+/** How far the farm pushes in while Home is left; returning retreats from the same depth. */
+private const val FARM_DEPTH = 1.05f
+
+/**
+ * How long arrived content should treat itself as still being delivered by the route transition. It
+ * covers the longest enter motion (320 ms) plus Home's delayed chrome, with a little margin for a
+ * collection that emits its first page while the page is still settling.
+ */
+private const val ROUTE_ARRIVAL_MS = 360L
 
 private fun NavDestination?.isWorldOrBattle(): Boolean = this != null &&
     (hasRoute<AppRoute.Battles>() || hasRoute<AppRoute.World>() || hasRoute<AppRoute.Radar>())

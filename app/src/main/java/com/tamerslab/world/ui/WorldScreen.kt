@@ -116,7 +116,6 @@ import com.tamerslab.ar.ArBattleStage
 import com.tamerslab.ar.ArPlacement
 import com.tamerslab.ar.ArStagePhase
 import com.tamerslab.ar.checkArAvailability
-import com.tamerslab.components.TopBanner
 import com.tamerslab.components.motionEnabled
 import com.tamerslab.components.VitalButton
 import com.tamerslab.components.cyberFrame
@@ -1037,7 +1036,6 @@ fun RadarScreen(
             WorldRadarBattleContent(
                 viewModel = battleViewModel,
                 battleActive = battleActive,
-                fullBleedRadar = true,
                 rendererAllowed = rendererState.owner == RadarRendererOwner.BATTLE && rendererState.requested == RadarRendererOwner.BATTLE && !rendererState.releasing,
                 onRendererCreated = onBattleRendererCreated,
                 onRendererReleased = onBattleRendererReleased,
@@ -1184,8 +1182,8 @@ fun RadarScreen(
                     .step(RADAR_RING_INTERVAL_METERS)
                     .toList()
 
-                // O jogador permanece sempre no centro da tela. O mundo é que se desloca
-                // em sentido contrário ao movimento do jogador.
+                // O jogador permanece sempre no centro da tela. O mundo Ã© que se desloca
+                // em sentido contrÃ¡rio ao movimento do jogador.
                 val playerOffset = center
                 val playerDisplacement = origin?.let { originPosition ->
                     playerPosition?.let { currentPosition ->
@@ -1206,7 +1204,7 @@ fun RadarScreen(
                 val compassColor = RadarCompass
 
                 Canvas(modifier = Modifier.fillMaxSize()) {
-                    // A grade representa o mundo, se desloca com o jogador e gira com a bússola.
+                    // A grade representa o mundo, se desloca com o jogador e gira com a bÃºssola.
                     withTransform({
                         rotate(degrees = -radarHeading, pivot = center)
                     }) {
@@ -1214,7 +1212,7 @@ fun RadarScreen(
                         val originX = center.x - playerDisplacement.x
                         val originY = center.y - playerDisplacement.y
 
-                        // Desenha a grade em uma área maior que a tela para que a rotação
+                        // Desenha a grade em uma Ã¡rea maior que a tela para que a rotaÃ§Ã£o
                         // nunca revele as bordas vazias do Canvas.
                         val diagonal = sqrt(
                             size.width * size.width +
@@ -1871,7 +1869,7 @@ fun RadarScreen(
     privateChallenge?.takeIf { incomingChallengeId!=null && it.sparring && it.type!=com.tamerslab.world.ecosystem.DialogueIntentType.ACCEPT_CHALLENGE }?.let { intent ->
         val spawn=spawns.firstOrNull { it.individualId==intent.initiatorId }
         AlertDialog(onDismissRequest={incomingChallengeId=null;privateChallenge=null},title={Text(stringResource(R.string.ui_world_team_preview))},
-            text={Text((spawn?.speciesName ?: "Digimon")+" · 1 × 1\n"+intent.reason)},
+            text={Text((spawn?.speciesName ?: "Digimon")+" Â· 1 Ã— 1\n"+intent.reason)},
             confirmButton={VitalButton(onClick={
                 val id=intent.id;incomingChallengeId=null;privateChallenge=null
                 spawn?.let { startRadarBattle(it,id) }

@@ -20,7 +20,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -148,46 +147,46 @@ fun TrainingBattlePreparation(
         modifier = Modifier.fillMaxWidth().weight(1f).padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(9.dp)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(stringResource(R.string.ui_battle_prep_subtitle),
-                style = MaterialTheme.typography.bodyMedium, color = TextSecondaryOnDark,
-                maxLines = 2, overflow = TextOverflow.Ellipsis)
-        }
-
-        Surface(
-            modifier = Modifier.fillMaxWidth().cyberFrame(),
-            color = SurfaceElevatedPurple,
-            shape = RectangleShape,
-            border = BorderStroke(1.dp, SurfaceStroke)
+        Column(
+            modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()),
+            verticalArrangement = Arrangement.spacedBy(9.dp)
         ) {
-            Column(Modifier.padding(horizontal = 12.dp, vertical = 9.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
-                Text(stringResource(R.string.ui_battle_prep_format), style = MaterialTheme.typography.labelLarge,
-                    color = TextPrimaryOnDark, fontWeight = FontWeight.SemiBold)
-                Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
-                    TrainingFormat.entries.forEach { option ->
-                        val isSelected = option == format
-                        Button(
-                            onClick = { formatId = option.id },
-                            modifier = Modifier.weight(1f).heightIn(min = 48.dp)
-                                .semantics { selected = isSelected },
-                            shape = CutCornerShape(6.dp),
-                            border = if (isSelected) null else BorderStroke(1.dp, SurfaceStroke),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isSelected) VitalPurpleBright else DeepPurpleBgAlt,
-                                contentColor = if (isSelected) OnVitalPrimary else TextPrimaryOnDark
-                            )
-                        ) {
-                            Text(option.label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(stringResource(R.string.ui_battle_prep_subtitle),
+                    style = MaterialTheme.typography.bodyMedium, color = TextSecondaryOnDark,
+                    maxLines = 2, overflow = TextOverflow.Ellipsis)
+            }
+
+            Surface(
+                modifier = Modifier.fillMaxWidth().cyberFrame(),
+                color = SurfaceElevatedPurple,
+                shape = RectangleShape,
+                border = BorderStroke(1.dp, SurfaceStroke)
+            ) {
+                Column(Modifier.padding(horizontal = 12.dp, vertical = 9.dp), verticalArrangement = Arrangement.spacedBy(7.dp)) {
+                    Text(stringResource(R.string.ui_battle_prep_format), style = MaterialTheme.typography.labelLarge,
+                        color = TextPrimaryOnDark, fontWeight = FontWeight.SemiBold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+                        TrainingFormat.entries.forEach { option ->
+                            val isSelected = option == format
+                            Button(
+                                onClick = { formatId = option.id },
+                                modifier = Modifier.weight(1f).heightIn(min = 48.dp)
+                                    .semantics { selected = isSelected },
+                                shape = CutCornerShape(6.dp),
+                                border = if (isSelected) null else BorderStroke(1.dp, SurfaceStroke),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = if (isSelected) VitalPurpleBright else DeepPurpleBgAlt,
+                                    contentColor = if (isSelected) OnVitalPrimary else TextPrimaryOnDark
+                                )
+                            ) {
+                                Text(option.label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                            }
                         }
                     }
                 }
             }
-        }
 
-        Column(
-            modifier = Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
             TeamSlotButton(
                 slot = BattleTeamSlot.ALLY_ONE,
                 participant = selected(BattleTeamSlot.ALLY_ONE),
@@ -330,12 +329,12 @@ private fun TeamSlotButton(
     participant: OfflineBattleParticipant?,
     onClick: () -> Unit
 ) {
-    OutlinedButton(
+    VitalButton(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().heightIn(min = 70.dp).testTag(slot.tag),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 7.dp),
-        shape = CutCornerShape(7.dp),
-        border = BorderStroke(1.dp, if (participant != null) VitalCyan else SurfaceStroke)
+        borderColor = if (participant != null) VitalCyan else SurfaceStroke,
+        shape = CutCornerShape(7.dp)
     ) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp)) {

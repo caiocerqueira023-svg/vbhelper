@@ -122,7 +122,10 @@ fun CharacterEntry(
     val motionEnabled = motionEnabled()
     val inactiveDescription = stringResource(R.string.participation_inactive)
     val signalColor = if (unavailable) InactiveOutline else VitalCyan
-    var hasEntered by remember(animationKey) { mutableStateOf(false) }
+    // A grid that is arriving with a route change does not run its own entrance: the page transition
+    // already carries the arrival, and one animated layer per visible card on top of it was the
+    // difference between a smooth change and a dropped-frame one on a mid-range phone.
+    var hasEntered by remember(animationKey) { mutableStateOf(RouteArrival.inFlight) }
     LaunchedEffect(animationKey, motionEnabled) { hasEntered = true }
     val entranceAlpha by animateFloatAsState(
         targetValue = if (!motionEnabled || hasEntered) 1f else 0f,

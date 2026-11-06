@@ -11,6 +11,31 @@ tree; it is not a release announcement and does not claim a verified green build
 
 ### Added
 
+- **Home ↔ place transitions are animated instead of cut.** Choosing a place from the farm now
+  dissolves the outgoing chrome while the place lifts and fades over the world; the farm itself holds
+  the screen as a depth layer, pushing in slightly and staying composited until the new screen is
+  opaque, so the world is never cut out from under a half-transparent page. Returning reverses the
+  same motion: the place sinks away, the farm settles back to its framing and Home's chrome lands a
+  beat later. Place-to-place changes keep the short horizontal slide; reduced motion falls back to
+  ~90 ms crossfades. The farm's render loop pauses as soon as it is left, so no two Filament scenes
+  run during a transition, and a new `NavigationMotionTest` pins the rule that Home never rides the
+  tab slide.
+
+- **Battle screen is now a full-bleed arena.** Arena battles and Radar encounters share one floating
+  battle surface instead of a 16dp page gutter, a bordered 1:1 viewport and a half-screen command deck:
+  the arena fills the window, a top cluster carries exit/back, the matchup and context line, recenter,
+  Debug and pause, opposing Digimon carry projected name+HP plates while the selected partner's
+  HP/MP/ESP strip floats bottom-left above the band, and one bottom command band holds the CP
+  instrument, the polite event line and the nine 48dp cut-corner keys grouped as menus / orders /
+  movement (portrait 3 columns, landscape 5 columns in two rows). The Radar battle keeps the Radar
+  world full-bleed from the encounter through the fight — the square viewport special case is gone —
+  and the AR stage deliberately keeps its established square layout. Countdown, loading/transforming,
+  pause (with the tactical-pause switch moved into its panel), exit, Blast timing, finisher captions and
+  result/rewards all float over the live arena; the duplicate deck/HUD copies are replaced by shared
+  chrome, the `"â†’"` mojibake in the Blast attacker line is fixed, and the retired split-layout helper
+  and its test are removed. Implementation and unit-test evidence live in `TESTING.md`; native
+  captures, TalkBack and font-scale acceptance are recorded there after the final gate.
+
 - **Radar place is now a full-bleed isometric world (owner decision 2026-11-03/04).**
   `RadarScreen` no longer uses the World-tab scaffold: the radar grid plate fills the window, the
   active partner stands at its centre as the player token, and wild Digimon stand on the plate as
@@ -111,6 +136,23 @@ tree; it is not a release announcement and does not claim a verified green build
 
 ### Changed
 
+- **One top-header type across the app.** Every boxed screen header now uses the same top-cluster
+  material as Home, the Radar place and the battle surface instead of the old filled gradient banner:
+  a palette-resolved scrim, one leading 48dp cut-corner key, a left-aligned title with a single quiet
+  context line, trailing cut-corner keys with a hairline stroke (cyan only while pressed) and one
+  junction line. The shared primitives live in `components/HudChrome.kt`; `TopBanner` keeps its API,
+  its action priority, labels and semantics, so no call site changed. Tokens resolve through the
+  selected palette, including the light Arena and Digimon.net themes. Native captures are pending a
+  connected device.
+- **Place switching is lighter on mid-range hardware.** The transition is unchanged in shape, but the
+  work that ran inside it is not: collection cards no longer re-decode their sprite on every arrival
+  and on every idle-frame swap (a content-keyed, 16 MiB decoded-sprite cache now serves them), a
+  destination is told when a route transition is still delivering it and skips its own per-card
+  entrance instead of stacking a screenful of alpha/scale layers on top of the page motion, and the
+  persistent farm surface keeps the window's full bounds for the shell's lifetime so leaving or
+  entering Home no longer resizes and re-lays out the view that owns the Filament swapchain. Items
+  that appear later (scrolling, later pages) still animate in. No visual design change; measurement
+  is pending a connected device, see `TESTING.md` and `docs/performance/BASELINE.md`.
 - **Wild↔wild chat and battles are paused for current versions (owner decision 2026-11-04).**
   `WildSocialInteractionGate` unwires the autonomous pair planner, the wild-pair battle
   transfers and their activation while the social planner, dialogue service, NPC battle
@@ -204,6 +246,16 @@ tree; it is not a release announcement and does not claim a verified green build
 
 ### Fixed
 
+- **Radar encounters no longer crash a few seconds into the battle.** The Radar battle's Filament
+  scene is hoisted to the root of the Radar battle surface so Compose can never replace the
+  `AndroidView` mid-fight: the previous layout branch was re-composed at the countdown, destroying and
+  immediately recreating the Filament engine and tripping a native use-after-free inside
+  `libfilament-jni.so` (SIGSEGV, fault address `0x0`). The scene is now composed once per encounter and
+  renderer-permission changes only pause its frame loop. Verified on the SM-A346M with two consecutive
+  Radar battles that ran to "Radar victory" with a single engine creation each, an empty crash buffer
+  and a surviving app process. A settled battle also hands the surface to the result panel now: the
+  live top cluster, command band and projected HUD step aside instead of showing inert keys behind the
+  outcome and its rewards.
 - NFC/auth logging no longer prints callback URIs, decrypted card bytes, tag ids,
   passwords, or full transfer tokens.
 - Backup/device-transfer rules exclude `secrets.pb`, battle auth tokens, LLM settings,

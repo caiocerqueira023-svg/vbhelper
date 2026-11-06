@@ -788,6 +788,8 @@
     <string name="ui_battle_radar_exit_title">Sair da batalha?</string>
     <string name="ui_battle_radar_exit_message">Sair deste encontro? Nenhuma vitória ou derrota será adicionada. Os suprimentos usados permanecem gastos; os não usados elegíveis retornam.</string>
     <string name="ui_battle_radar_exit_confirm">Sair da batalha</string>
+    <string name="ui_battle_radar_title">Encontro selvagem</string>
+    <string name="ui_battle_radar_matchup">%1$s vs %2$s</string>
     <string name="ui_battle_radar_transforming">Transformando o Radar em arena…</string>
     <string name="ui_battle_order_queued">Ordem recebida · será executada assim que possível.</string>
     <string name="ui_battle_command_applied">Comando aplicado.</string>

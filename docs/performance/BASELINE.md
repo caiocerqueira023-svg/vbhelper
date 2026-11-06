@@ -255,6 +255,25 @@ Measure-Command { .\gradlew.bat :app:testIntegrityCheckUnitTest } | Select-Objec
 Read coverage per named class from the HTML report. Onboarding timing starts from a fresh
 clone with no Gradle cache if the number is quoted as README onboarding time; say which.
 
+### 4.8 Route / place-switch frame timing (not measured)
+
+Owner-reported clunky, low-framerate switching between Home and its places on the SM-A346M. Reset the
+framestats, switch places a fixed number of times, then compute exactly as in §4.2:
+
+```powershell
+$pkg = "com.github.nacabaro.vbhelper"
+adb shell dumpsys gfxinfo $pkg reset
+# Home -> Radar -> back -> Home -> Partners -> back -> Home -> Dex -> back -> Home -> Shop -> back
+adb shell dumpsys gfxinfo $pkg framestats > build-logs\perf\gfxinfo-place-switch.txt
+adb shell dumpsys gfxinfo $pkg | Select-String "Janky frames"
+```
+
+Report frame count, janky-frame count and p95 frame duration from the `---PROFILEDATA---` block, with
+the exact switching sequence. Build type is part of the result: a debuggable build is not
+representative of shipped performance, so repeat on `.\gradlew.bat :app:assembleDebug -PnonDebuggable`
+or a release build before quoting a number. No result is recorded yet; the 2026-11-06 optimization
+pass is described in `TESTING.md` and shipped unmeasured because no device was attached.
+
 ## 5. Gate policy: CI vs manual
 
 `.github/workflows/ci.yml` runs all unit-test suites, `:app:assembleDebug`,

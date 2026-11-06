@@ -56,7 +56,7 @@ internal fun ArenaResult(snapshot: BattleSnapshot, match: ArenaMatchSpec, settle
             error?.let {
                 Text(stringResource(R.string.ui_world_battle_record_failed), color = MaterialTheme.colorScheme.error)
                 com.tamerslab.components.DebugDetails(it)
-                TextButton(onClick = onRetryRecord) { Text(stringResource(R.string.app_retry)) }
+                TextButton(onClick = onRetryRecord, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.app_retry)) }
             }
         }
         Spacer(Modifier.height(8.dp))

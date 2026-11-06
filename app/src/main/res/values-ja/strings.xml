@@ -719,6 +719,8 @@
     <string name="ui_battle_radar_exit_title">バトルから抜けますか?</string>
     <string name="ui_battle_radar_exit_message">この遭遇から離れますか？勝敗は追加されません。使用した補給品は消費済みとなり、返却可能な未使用品は戻ります。</string>
     <string name="ui_battle_radar_exit_confirm">バトルから抜ける</string>
+    <string name="ui_battle_radar_title">野生との遭遇</string>
+    <string name="ui_battle_radar_matchup">%1$s vs %2$s</string>
     <string name="ui_battle_radar_transforming">レーダーをアリーナに変換中…</string>
     <string name="ui_battle_order_queued">命令を受け付けました · 実行可能になり次第行動します。</string>
     <string name="ui_battle_command_applied">命令を適用しました。</string>

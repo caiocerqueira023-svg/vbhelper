@@ -204,11 +204,15 @@ Controles Material usam cantos chanfrados em uma escala de 4dp a 18dp. Painéis 
 
 ### Cross-screen instrument vocabulary
 
-Home, Storage, species-information cards and the rich Tamer Arena briefing are
-binding reference compositions. Preserve their information, expressive cues and
-emojis. Other surfaces adopt their centered `TopBanner`/48dp cut-corner action
-chips, square technical information panels, complete fact rows and consistent
-action priorities rather than introducing separate toolbar/card systems.
+Home, the Radar place and the battle surface are the binding top-chrome reference
+compositions: a palette-resolved scrim instead of a shelf, one leading 48dp cut-corner
+key, a left-aligned title with a single quiet context line, trailing cut-corner keys
+closed by a hairline stroke (cyan only while pressed), and one junction line. Every
+other screen's header is that same type (`TopBanner`); no screen keeps a separate pill,
+shelf or centered toolbar. Storage, species-information cards and the rich Tamer Arena
+briefing remain binding reference compositions for content: preserve their information,
+expressive cues and emojis, their square technical panels, complete fact rows and
+consistent action priorities rather than introducing separate card systems.
 
 - `VitalTabs` owns native tab semantics, cyan/palette-resolved selected text and
   the shared full-width signal line across Items, DigiLine, World, Arena and loadout.
@@ -324,7 +328,9 @@ metadata and private stats. Empty optional fields produce no empty sections.
 ### Navigation
 
 - **Style:** barra inferior compacta com ícone e rótulo; item ativo recebe fundo violeta translúcido e ícone/texto em ciano.
-- **Motion:** cor do item ativo faz transição curta; mudanças de rota usam fade breve.
+- **Motion:** cor do item ativo faz transição curta; mudanças de rota entre lugares usam slide
+  horizontal curto, e Home tem a sua própria transição, porque é um mundo e não uma página (ver
+  **Farm home shell** → Transitions).
 
 A barra compacta preserva o desenho original: fundo técnico, seleção chanfrada
 envolvendo ícone/rótulo e quatro destinos diários mais More. Os itens mantêm
@@ -396,6 +402,20 @@ it instead of framing it. The compact bottom navigation is retired; navigation h
 - **Frame budget:** rendering pauses when a place covers Home or the app leaves the foreground, runs
   at 30fps idle and 60fps during interaction, and honours reduced motion by stopping the island bob,
   glow pulse and pose cycling.
+- **Transitions:** Home is a place, not the first tab of a pager, so it never slides sideways. The farm
+  is the depth layer: leaving it, the outgoing chrome fades in 150 ms and the arriving place lifts ~2%
+  of the window height as it dissolves (220 ms fade / 320 ms travel), while the world holds full
+  opacity and pushes in 1 → 1.05 over 280 ms - the surface is dropped only once the place is opaque,
+  so the world is never cut out from under a half-transparent screen. Returning reverses it: the place
+  sinks ~2% and dissolves (220/240 ms), the world settles 1.05 → 1 over 360 ms, and Home's chrome lands
+  40 ms behind it so arrival reads as returning to the world. The farm's frame loop pauses the moment
+  it is left, so a route change never renders two 3D scenes. Routes that touch neither Home nor the
+  primary row keep a crossfade; reduced motion removes the scale and the lift and leaves ~90 ms fades.
+  The shell and the destination are two independent layers: the farm keeps the window's full bounds
+  for the shell's lifetime, so a route change never re-lays out or resizes the surface that owns the
+  swapchain, and only the destination takes the system-bar and IME insets. Arrived collection grids do
+  not replay their per-card entrance on top of the page transition; items that appear later (scrolling,
+  later pages) still animate in.
 - **Content rule — the diorama is not a simulation:** there is exactly one home farm. It shows the
   active partner plus the stored favourites, up to twelve, rotating at random when the favourites
   exceed that. Nothing on the island writes progress, consumes time or asks for care. Residents run
@@ -641,6 +661,47 @@ A default-off master Debug switch in Settings applies in every build. Diagnostic
   haptics honor settings and lifecycle. Strong attacks accelerate into contact, with
   proportionate foreground hit sprites and short expansion/decay. Presentation was
   reviewed on Galaxy A34 in portrait/landscape; see `TESTING.md` for coverage boundaries.
+
+## Battle screen
+
+- **Shell.** Arena battles (training and Arena exhibition/cups) and Radar encounters share one
+  full-bleed battle surface: the authored Colosseum/Radar arena fills the window inside the app's
+  safe-area shell, with floating chrome instead of the former 16dp page gutter, bordered 1:1 viewport
+  and half-screen command slab. No panel wraps the arena and no permanent toggle row exists; the scene
+  itself is the page.
+- **Top cluster.** One top scrim carries the 48dp exit/back key, the matchup title (the active partner
+  against the opponent; Arena sessions keep their title) with one quiet context line (format/round,
+  pause reason in cyan, loading), a recenter-camera key, the Debug AI key while Debug is on, and the
+  pause key.
+- **Combatant HUD.** Opposing Digimon carry projected name+HP plates above their bodies (enemy red, a
+  cyan hairline on the selected target, collision-aware so 2v2 and the top cluster never overlap). The
+  selected partner's vitals are a floating HP/MP/ESP strip bottom-left above the command band, with its
+  name; the scene remains the selection surface (tap a fighter, or the existing accessibility actions).
+  Values come from the battle snapshot only; the HUD never invents state.
+- **Command band.** One bottom band over its own scrim holds the CP instrument, the selected partner's
+  name, one polite live event/feedback line and nine 48dp cut-corner keys grouped as menus
+  (Techniques ›, Items ›, Strategy ›), orders (Defend, Support, Special) and movement (Focus, Approach,
+  Fall back). Menu keys read as openers through their chevron, Techniques keeps the primary fill, and
+  disabled keys stay visible so muscle memory survives every combat state. Portrait uses three columns;
+  wide windows and landscape use five columns in two rows. Pause lives in the top cluster; the former
+  standing "Tactics ON/OFF" toggle is now the tactical-pause switch inside the pause panel, default on,
+  preserving the old pause-while-choosing behavior.
+- **States.** The countdown floats over the live scene; loading/transforming is one compact banner with
+  a hairline progress instead of a card that owns the window; pause opens a scrimmed technical panel
+  with resume, the tactical-pause switch and exit; exit keeps its native confirmation dialog; the Blast
+  timing overlay dims the scene and keeps its gauge and Stop affordance; finisher titles sit below the
+  top cluster while commands remain visible but inert and pause/exit stay reachable; once a battle
+  settles the live chrome (top cluster, command band, projected HUD and effects) steps aside so the
+  result and the Radar rewards own the surface, floating over the still-visible arena with 48dp
+  actions. Error/retry is one line in the band's language with technical details behind Debug.
+- **Radar continuity.** The Radar battle no longer falls back to a square viewport: the Radar world is
+  full-bleed before the encounter, the arena replaces it in the same frame, and leaving returns to the
+  Radar place. The AR stage keeps its established square scanning/battle layout and transparency
+  contract — it is the explicit legacy exception rather than a second battle design.
+- **Motion and adaptation.** Band and scrims use the HUD ink and soft shadows; health changes are
+  instant while the scene owns the motion; reduced motion removes the remaining fades; portrait,
+  landscape and wide windows share one structure; every saved palette resolves through the theme roles,
+  and the light palettes keep the scrims' contrast.
 
 ## Source-mode native acceptance boundary
 

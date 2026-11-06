@@ -809,6 +809,8 @@
     <string name="ui_battle_radar_exit_title">Leave battle?</string>
     <string name="ui_battle_radar_exit_message">Leave this encounter? No win or loss is added. Used inventory supplies remain spent; eligible unused supplies return.</string>
     <string name="ui_battle_radar_exit_confirm">Leave battle</string>
+    <string name="ui_battle_radar_title">Wild encounter</string>
+    <string name="ui_battle_radar_matchup">%1$s vs %2$s</string>
     <string name="ui_battle_radar_transforming">Turning Radar into an arena…</string>
     <string name="ui_battle_order_queued">Order received · will execute as soon as possible.</string>
     <string name="ui_battle_command_applied">Command applied.</string>

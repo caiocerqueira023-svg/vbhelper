@@ -1,8 +1,8 @@
 package com.tamerslab.battle.ui.offline
 
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.unit.dp
@@ -19,7 +19,7 @@ class OfflineTrainingBattleScreenTest {
     val composeRule = createComposeRule()
 
     @Test
-    fun arenaAndCommandDeckShareTheVisiblePhoneSurface() {
+    fun battleSurfaceFillsTheWindowInsteadOfAFramedViewport() {
         val viewModel = OfflineBattleSessionViewModel()
         composeRule.setContent {
             MaterialTheme {
@@ -30,30 +30,23 @@ class OfflineTrainingBattleScreenTest {
             }
         }
 
-        val arena = composeRule.onNodeWithTag("offline-battle-arena-viewport")
+        val surface = composeRule.onNodeWithTag("offline-battle-arena-viewport")
             .fetchSemanticsNode().boundsInRoot
         val root = composeRule.onRoot().fetchSemanticsNode().boundsInRoot
-        val cameraControl = composeRule.onNodeWithTag("offline-battle-recenter-camera")
-            .fetchSemanticsNode().boundsInRoot
         val deck = composeRule.onNodeWithTag("offline-battle-touch-deck")
             .fetchSemanticsNode().boundsInRoot
 
+        assertEquals("The battle surface should own the window width", root.width, surface.width, 2f)
+        assertEquals("The battle surface should own the window height", root.height, surface.height, 2f)
         assertTrue(
-            "Battle viewport should fill the phone width",
-            arena.width >= root.width - with(composeRule.density) { 32.dp.toPx() } - 2f
+            "The command band should sit in the lower half of the window",
+            deck.top >= root.height * 0.5f
         )
-        assertTrue("Camera control should remain in the battle toolbar", cameraControl.bottom <= arena.top)
-        assertTrue(
-            "The command deck should breathe below the arena",
-            deck.top - arena.bottom >= with(composeRule.density) { 8.dp.toPx() }
-        )
-        assertTrue("The command deck should remain inside the visible screen", deck.bottom <= root.bottom + 2f)
-        assertTrue("Both Decode-inspired screens should receive meaningful height", arena.height > root.height * 0.25f)
-        assertTrue("Both Decode-inspired screens should receive meaningful height", deck.height > root.height * 0.25f)
+        assertTrue("The command band should remain inside the visible screen", deck.bottom <= root.bottom + 2f)
     }
 
     @Test
-    fun touchDeckKeepsNineCommandSlotsInAStableLowerRegion() {
+    fun commandBandKeepsNineStableCutCornerKeys() {
         val viewModel = OfflineBattleSessionViewModel()
         composeRule.setContent {
             MaterialTheme {
@@ -64,27 +57,31 @@ class OfflineTrainingBattleScreenTest {
             }
         }
 
-        val arena = composeRule.onNodeWithTag("offline-battle-arena-viewport")
-            .fetchSemanticsNode().boundsInRoot
+        val root = composeRule.onRoot().fetchSemanticsNode().boundsInRoot
         val deck = composeRule.onNodeWithTag("offline-battle-touch-deck")
             .fetchSemanticsNode().boundsInRoot
         val commandSlots = composeRule.onAllNodesWithTag("offline-battle-command-slot")
             .fetchSemanticsNodes()
+        val minimumKeyPx = with(composeRule.density) { 48.dp.toPx() }
 
-        assertTrue("The command deck should read as the lower touch screen", deck.top >= arena.bottom)
         assertEquals(
-            "The touch deck should retain every command position even while loading",
+            "The command band should retain every command position even while loading",
             9,
             commandSlots.size
         )
         commandSlots.forEach { slot ->
-            assertTrue("Every command should begin inside the touch deck", slot.boundsInRoot.top >= deck.top)
+            assertTrue("Every command should begin inside the band", slot.boundsInRoot.top >= deck.top)
             assertTrue("Every command should remain visible without scrolling", slot.boundsInRoot.bottom <= deck.bottom)
+            assertTrue(
+                "Every command key should keep a 48dp touch target",
+                slot.boundsInRoot.height >= minimumKeyPx - 2f
+            )
+            assertTrue("Every command should stay inside the window", slot.boundsInRoot.bottom <= root.bottom + 2f)
         }
     }
 
     @Test
-    fun radarBattleUsesTheSameSeparatedNineCommandDeck() {
+    fun radarBattleKeepsTheFullBleedSurfaceAndCommandBand() {
         val viewModel = OfflineBattleSessionViewModel()
         composeRule.setContent {
             MaterialTheme {
@@ -93,21 +90,20 @@ class OfflineTrainingBattleScreenTest {
                     battleActive = true,
                     onOutcome = {},
                     onExit = {},
-                    radarViewport = {},
-                    radarControls = {}
+                    radarViewport = {}
                 )
             }
         }
 
-        val viewport = composeRule.onNodeWithTag("world-radar-battle-viewport")
+        val root = composeRule.onRoot().fetchSemanticsNode().boundsInRoot
+        val surface = composeRule.onNodeWithTag("world-radar-battle-viewport")
             .fetchSemanticsNode().boundsInRoot
         val deck = composeRule.onNodeWithTag("world-radar-command-deck")
             .fetchSemanticsNode().boundsInRoot
 
-        assertTrue(
-            "Radar commands should breathe below the viewport",
-            deck.top - viewport.bottom >= with(composeRule.density) { 8.dp.toPx() }
-        )
+        assertEquals("The Radar battle should stay full width", root.width, surface.width, 2f)
+        assertEquals("The Radar battle should stay full height", root.height, surface.height, 2f)
+        assertTrue("The Radar command band should sit below the midpoint", deck.top >= root.height * 0.5f)
         assertEquals(
             "Radar should expose the same complete command grid",
             9,

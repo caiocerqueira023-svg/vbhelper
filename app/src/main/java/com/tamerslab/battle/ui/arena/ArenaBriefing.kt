@@ -145,7 +145,10 @@ internal fun ArenaBriefing(state: TamerArenaState, tamer: TamerDefinition, resol
             }
             Text(stringResource(R.string.arena_safe_short), style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-            TextButton(onClick = { runCatching { uri.openUri(tamer.sourceUri) } }) {
+            TextButton(
+                onClick = { runCatching { uri.openUri(tamer.sourceUri) } },
+                modifier = Modifier.heightIn(min = 48.dp)
+            ) {
                 Icon(Icons.Outlined.OpenInNew, null, Modifier.size(16.dp)); Spacer(Modifier.width(8.dp))
                 Text(stringResource(R.string.arena_source))
             }
