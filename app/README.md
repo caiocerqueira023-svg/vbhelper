@@ -9,7 +9,7 @@ modules. Feature code lives under `app/src/main/java/com/tamerslab/`.
 |----------|-------|
 | Gradle path | `:app` |
 | Namespace | `com.tamerslab` |
-| `applicationId` | `com.github.nacabaro.vbhelper` (kept for upgrade continuity; see [ADR 0001](../docs/adr/0001-keep-application-id.md)) |
+| `applicationId` | `com.tamerslab.vbhelper` (own app identity; see [ADR 0006](../docs/adr/0006-own-application-id.md)) |
 | Launcher label | `Tamers Lab` (`@string/app_name`) |
 | `versionName` | `Alpha 0.7.0` target |
 | SDKs | `compileSdk 37`, `minSdk 28`, `targetSdk 37` |
@@ -39,7 +39,7 @@ modules. Feature code lives under `app/src/main/java/com/tamerslab/`.
 | `companion` | Firmware, logs, card validation, PC companion UI | `companion/validation/ValidatedCardManager.kt`, `companion/logs/CompanionLogService.kt` |
 | `di` | Koin modules and the container adapter | `di/AppModule.kt`, `di/DefaultAppContainer.kt`, `di/TamersLabApplication.kt` |
 | `navigation` | `@Serializable` routes and the typed `NavHost` | `navigation/AppRoute.kt`, `navigation/AppNavigation.kt` |
-| `security` | APK secrets import and protobuf secret handling | `security/ApkSecretsImporter.kt`, `security/` |
+| `security` | Baked-in watch connection keys, optional APK secrets import, protobuf secret handling | `security/BundledSecrets.kt`, `security/ApkSecretsImporter.kt`, `security/` |
 | `vitalwear`, `utils`, `widget`, `components`, `audio` | Import/export formats, widgets, shared UI, music | `widget/DigimonWidgetProvider.kt`, `components/`, `audio/AppMusicController.kt` |
 
 ## Key entry points

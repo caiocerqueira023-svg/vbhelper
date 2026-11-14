@@ -1,0 +1,333 @@
+===Noble===
+{| class="table smt5"
+! colspan="3" |Dialogue
+!Outcome
+|-
+| colspan="4" align="center" |Shake Hands
+|-
+| colspan="3" |Out meeting here must be fate. Come, friend, let us shake hands!
+|>Put out your hand
+>Ignore them
+
+>Put your hands behind you
+|-
+| colspan="2" | >>Put out your hand
+|As I thought...Your hands are stained with blood! Prepare yourself!
+|[ENEMY PHASE]
+|-
+| colspan="2" | >>Ignore them
+|Why...? Why won't you shake my hand?
+|>I'm not the handshaking type.
+>Because you're suspicious.
+>It's embarrassing
+|-
+| colspan="2" |>>>I'm not the handshaking type.
+|Is it for health reasons? Here, this might help you.
+|[GIVES ITEM, LEAVES]
+|-
+| colspan="2" |>>>Because you're suspicious.
+|
+|
+|-
+| colspan="2" |>>>It's embarrassing
+|
+|
+|-
+| colspan="2" | >>Put your hands behind you
+|
+|
+|-
+| colspan="4" align="center"|Leave
+|-
+| colspan="3" |The demon is trying to leave... What will you do?
+|>Stop them
+>Watch them go
+
+>Shout at them
+|-
+| colspan="2" | >Stop them
+|You would dare stand in my way? Very well, do as you please! 
+|[DIALOGUE SWITCH]
+|-
+| colspan="4" align="center"|Killing
+|-
+| colspan="3" |Allow me to ask you something! Does it pain you to kill demons?
+|>Not at all.
+>Yes, it does
+|-
+| colspan="2" | >Not at all.
+|Then, allow me to change the question.. Would it pain you to kill me?
+|>Not at all.
+>Yes, it does
+|- 
+| colspan="2" | >>Not at all.
+|And it wouldn't pain me to kill you either!
+|[ENEMY PHASE]
+|-
+| colspan="2" | >>Yes it does
+|Are you suggesting I'm different from the other demons you've killed? It's unfair to discriminate like that, you know!
+|[ENEMY PHASE]
+|-
+| colspan="2" | >Yes it does
+| 
+|
+|-
+| colspan="4" align="center"|Ignore
+|-
+| colspan="3" |The demon is pretending to ignore you... What will you do?
+|>Call out to them
+>Do the same
+|-
+| colspan="2" | >Call out to them
+|I've had enough fighting for today. Please, just leave me alone.
+|[LEAVES]
+|- 
+| colspan="2" | >Do the same
+|Good, this is for the best. Now, let us go our seperate ways.
+|[LEAVES]
+|- 
+| colspan="4" align="center"|Trust
+|-
+| colspan="3" |You're that new demon nearly all of the netherworld is talking about. I'm afraid I can't trust you.
+|>That's fine.
+>Please trust me. 
+
+>I can't trust you either
+|-
+| colspan="2" | >That's fine.
+|So you fight by yourself, trusting no one.. You have the heart of a lone warrior. Take this, as a parting gift.
+|[GIVES ITEM, LEAVES]
+|- 
+| colspan="4" align="center"|Name
+|-
+| colspan="3" |Could you tell me your name?
+|>Give your real name
+>Give a fake name 
+
+>Refuse
+|-
+|rowspan="2"|>Give your real name (RANDOM)
+| colspan="2" | I see. So that is your name... "[Demon] & [Playername]"... Sounds like the perfect pairing, if you ask me!
+|[INSTANT RECRUIT]
+|- 
+| colspan="2" | So you're [Playername]... I've heard a great many rumors about you! You have quite the reputation! It could be rather interesting to fight alongside you
+|[BARGAIN PHASE]
+|- 
+| colspan="2" | >Give a fake name
+|Wait, that name...! Could it be? You killed my father! Prepare to die!
+|[ENEMY PHASE]
+|-
+| colspan="2" | >Refuse
+|Such restraint. I must say I'm even more interested in you now.
+|[DIALOGUE SWITCH]
+|-
+| colspan="4" align="center"|Speak
+|-
+| colspan="3" |Why did you choose to speak to me?
+|>You look strong.
+>You look cool. 
+
+>No particular reason.
+|-
+| colspan="2" | >You look strong.
+|I look strong, you say... But what is strength in your eyes?
+|>Having physical power.
+>Having mental fortitude.
+>Individuality
+|- 
+| colspan="2" |>>Having physical power. 
+|Indeed. Without physical power, you are more or less helpless, no matter your other abilities. However, when it comes to demons, it's really all about one's bargaining prowess.
+|[BARGAIN PHASE]
+|- 
+| colspan="2" |>>Having mental fortitude. 
+|Ah, strength of the spirit, the ability to endure any hardship... So that is what it truly means to be strong. That aside, there's something I want from you. Perhaps we can come to an arrangement?
+|[BARGAIN PHASE]
+|- 
+| colspan="2" |>>Individuality
+|
+|
+|- 
+| colspan="2" |>You look cool. 
+|
+|
+|- 
+| colspan="2" |>No particular reason.
+|
+|
+|- 
+| colspan="4" align="center"|Approaching
+|-
+| colspan="3" |(The demon is approaching... What will you do?)
+|>Stop them
+>Glare at them
+>Keep calm
+|-
+| colspan="2" |>Stop them
+|So you won't allow me to close the distance so easily, I see. Very wise. I'll have to look into you a bit more.
+|[DIALOGUE SWITCH]
+|- 
+| colspan="2" |>Glare at them
+|Such sorrowful eyes... Tell me, why are you so sad?
+|>Because I'm alone.
+>Because I'm poor.
+>I'm not sad.
+|- 
+| colspan="2" |>>Because I'm alone.
+|It's likely because of your insufferable personality.
+|[TALK END, TURN USED]
+|- 
+| colspan="2" |>>Because I'm poor.
+|
+|
+|- 
+| colspan="2" |>>I'm not sad.
+|
+|
+|- 
+| colspan="2" |>Keep calm
+|
+|
+|- 
+| colspan="4" align="center"|Hair
+|-
+| colspan="3" |Your hair is rather impressive. Is it proof of your heroism?
+|>That's right
+>It's proof of my fashion sense.
+
+>It's proof of my godhood.
+|-
+| colspan="2" |>That's right
+|I must say, though, it certainly makes you stand out/ It's as if you want your enemies to find you. Would there not be a problem if you were to attract an unsavory sort?
+|>Yeah, there'd be trouble.
+>No one's gonna come for me.
+>Look who's talking.
+|- 
+| colspan="2" |>>Yeah, there'd be trouble.
+|Trouble, you say? Well, you're in luck! I am a most formidable ally to those in trouble!
+|[BARGAIN PHASE]
+|- 
+| colspan="2" |>>No one's gonna come for me.
+|
+|
+|- 
+| colspan="2" |>>Look who's talking.
+|
+|
+|- 
+| colspan="2" |>It's proof of my fashion sense.
+|
+|
+|- 
+| colspan="2" |>It's proof of my godhood.
+|
+|
+|- 
+| colspan="4" align="center"|Guard up
+|-
+| colspan="3" |(The demon has their guard up... What will you do?)
+|>Ask them to lower their guard
+>Put your guard up as well
+|-
+| colspan="2" |>Ask them to lower their guard
+|So lowering one's guard is another form of bravery... Very well, let's talk.
+|[DIALOGUE SWITCH]
+|-
+| colspan="2" |>Put your guard up as well
+|Wait! I'd prefer to avoid any unnecessary fighting. Perhaps we can talk things over?
+|[DIALOGUE SWITCH]
+|-
+| colspan="4" align="center"|Fusion
+|-
+| colspan="3" |You're no ordinary demon... I can sense a special energy from you. You are experienced with fusion, yes? 
+|>Are you talking about Aogami?
+>You mean demon fusion?
+>I'm not into that sort of thing.
+|-
+| colspan="2" |>Are you talking about Aogami?
+|
+|
+|-
+| colspan="2" |>>You mean demon fusion?
+|
+|[ENEMY PHASE]
+|-
+| colspan="2" |>I'm not into that sort of thing.
+|Then what are you into, exactly?
+|>Vanquishing demons.
+>Honing my skills.
+>Cooking, actually.
+|-
+| colspan="2" |>>Vanquishing demons.
+|Vanquishing demons is no laughing matter. You ought take it more seriously!
+|[ENEMY PHASE]
+|-
+| colspan="2" |>>Honing my skills
+|
+|
+|-
+| colspan="2" |>>Cooking, actually.
+|Nice try! I bet you were planning to fillet me and serve me up with some of your favorite sides, right? Too bad! You'll just have to make do with this. 
+|[GIVES ITEM, LEAVES]
+|-
+| colspan="4" align="center"|Hand pain
+|-
+| colspan="3" |Ngh! Not again...! Be still, my hand... Not now! 
+|>Ask if they're okay<br>>Prepare for the worst<br>>Watch from a distance
+|-
+| colspan="2" |>Ask if they're okay
+|Can't you twll!? Look here... My hand thirsts for blood!
+|[ENEMY PHASE]
+|-
+| colspan="2" |>Prepare for the worst
+|
+|
+|-
+| colspan="2" |>Watch from a distance
+|
+|
+|-
+| colspan="4" align="center"|Changing the world
+|-
+| colspan="3" |Have you ever thought about changing the world? 
+|>Yes, I have.<br>>Not once.<br>>I'd rather change myself.
+|-
+| colspan="2" |>Yes, I have.
+|And how would you go about changing the world?
+|>I'd take it by force.<br>>Through diplomacy.<br>>By appealing to everyone's emotions.
+|-
+| colspan="2" |>>I'd take it by force.
+|I see. However, you should know that those who rule with power are often themselves ruled by that very same power... Allow me to show you what I mean!
+|[ENEMY PHASE]
+|-
+| colspan="2" |>>Through diplomacy.
+|
+|
+|-
+| colspan="2" |>>By appealing to everyone's emotions.
+|
+|
+|-
+| colspan="2" |>Not once.
+|
+|
+|-
+| colspan="2" |>I'd rather change myself.
+|
+|
+|-
+| colspan="4" align="center"|Quiz
+|-
+| colspan="3" |I am sure you must be aware that the truth of this world is hidden by darkness... Show me that you are capable of seeing through the obscurity and uncovering that truth!
+|[GUESS RANDOM MONSTER]
+>Answer right
+>Answer wrong
+|-
+| colspan="2" |>Answer right
+|Splendid! You have dispelled the darkness! Now, let us go forth together!
+|[INSTANT RECRUIT]
+|-
+| colspan="2" |>Answer wrong
+|
+|
+|-
+|}

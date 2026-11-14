@@ -111,6 +111,7 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
                 AppDatabase.MIGRATION_52_53,
                 AppDatabase.MIGRATION_53_54,
                 AppDatabase.MIGRATION_54_55,
+                AppDatabase.MIGRATION_55_56,
             )
             // Missing migrations must preserve the database, never erase individuals/chats.
             .openHelperFactory(com.tamerslab.data.database.PreservingMigrationFactory())
@@ -227,7 +228,9 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
     }
 
     override val chatRepository by lazy {
-        ChatRepository(db, llmSettingsRepository, lorebookRepository, speciesRepository, questRepository = questRepository)
+        ChatRepository(db, llmSettingsRepository, lorebookRepository, speciesRepository,
+            questRepository = questRepository,
+            legacyLlmEnabled = { debugSettingsRepository.legacyLlmEnabled })
     }
     override val worldRepository by lazy { WorldRepository(db,
         scanPercentagePerDefeat = { debugSettingsRepository.state.value.percentagePerDefeat },
@@ -247,5 +250,23 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
         }
     }
     override val reactionRepository by lazy { ReactionRepository(db, chatRepository) }
-    override val diaryService by lazy { DigimonDiaryService(db, chatRepository) }
+    override val digilineContentProvider by lazy {
+        com.tamerslab.digiline.content.DigilineContentProvider(
+            com.tamerslab.digiline.content.DigilineContentLoader.fromAssets(context.assets)
+        )
+    }
+    override val ownedDigilineRepository by lazy {
+        com.tamerslab.digiline.data.OwnedDigilineRepository(db, digilineContentProvider, speciesRepository)
+    }
+    private val wildDigilineRepository by lazy {
+        com.tamerslab.digiline.data.WildDigilineRepository(
+            db, digilineContentProvider, speciesRepository, currencyRepository, questRepository
+        )
+    }
+    override val digilineGateway by lazy {
+        com.tamerslab.digiline.gateway.ScriptedDigilineGateway(
+            db, ownedDigilineRepository, wildDigilineRepository
+        )
+    }
+    override val diaryService by lazy { DigimonDiaryService(db, chatRepository, digilineContentProvider) }
 }

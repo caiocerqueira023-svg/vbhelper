@@ -15,7 +15,7 @@ import kotlin.math.pow
 
 /** Turns the alpha outline of each pixel-art pose into a shallow 3D solid. */
 internal object SpriteExtrusionGlb {
-    private const val GENERATOR_VERSION = "sprite-extrusion-v5"
+    private const val GENERATOR_VERSION = "sprite-extrusion-v6"
     private const val MAX_CACHED_MODEL_BYTES = 8 * 1024 * 1024
     private const val HALF_DEPTH = 0.045f
     private const val ALPHA_CUTOFF = 128
@@ -94,6 +94,7 @@ internal object SpriteExtrusionGlb {
             shade: Float,
             blend: Boolean = false,
             tint: FloatArray? = null,
+            unlit: Boolean = true,
         ): Int {
             val factor = tint?.let {
                 JSONArray().put(it[0]).put(it[1]).put(it[2]).put(it[3])
@@ -103,13 +104,14 @@ internal object SpriteExtrusionGlb {
                 .put("baseColorFactor", factor)
                 .put("metallicFactor", 0)
                 .put("roughnessFactor", 1)
-            materials.put(JSONObject()
+            val material = JSONObject()
                 .put("name", name)
-                .put("extensions", JSONObject().put("KHR_materials_unlit", JSONObject()))
                 .put("doubleSided", true)
                 .put("alphaMode", if (blend) "BLEND" else "MASK")
                 .put("alphaCutoff", 0.5)
-                .put("pbrMetallicRoughness", pbr))
+                .put("pbrMetallicRoughness", pbr)
+            if (unlit) material.put("extensions", JSONObject().put("KHR_materials_unlit", JSONObject()))
+            materials.put(material)
             return materials.length() - 1
         }
 
@@ -132,9 +134,12 @@ internal object SpriteExtrusionGlb {
             nodes.put(JSONObject().put("name", "pose_$pose").put("mesh", meshIndex))
         }
 
-        // Keep only a tight physical contact shadow. Broad colored ground halos
-        // compete with the arena openings and make the sprites appear detached.
-        val groundTexture = addTexture(shadowPng(maxAlpha = 220, edgePower = 1.15f))
+        // The farm island is baked (unlit), so this soft drop shadow is the residents' only
+        // grounding cue. It is declared as a LIT blended material on purpose: with the pinned
+        // gltfio 1.76.1 an unlit blended primitive of this generated asset never reaches the
+        // color buffer, while the same primitive with lighting enabled blends correctly (its
+        // albedo is black, so it renders as the shadow regardless of the scene lights).
+        val groundTexture = addTexture(shadowPng(maxAlpha = 240, edgePower = 1.5f))
 
         fun addShadow(
             name: String,
@@ -143,7 +148,7 @@ internal object SpriteExtrusionGlb {
             height: Float,
             tint: FloatArray,
         ) {
-            val material = addMaterial(name, groundTexture, 1f, blend = true, tint = tint)
+            val material = addMaterial(name, groundTexture, 1f, blend = true, tint = tint, unlit = false)
             val shadow = Geometry().apply {
                 quad(
                     floatArrayOf(-halfWidth, height, halfDepth),
@@ -164,10 +169,10 @@ internal object SpriteExtrusionGlb {
 
         addShadow(
             name = "contact_shadow",
-            halfWidth = 0.34f,
-            halfDepth = 0.13f,
-            height = 0.014f,
-            tint = floatArrayOf(0f, 0f, 0f, 0.72f),
+            halfWidth = 0.62f,
+            halfDepth = 0.46f,
+            height = 0.05f,
+            tint = floatArrayOf(0f, 0f, 0f, 0.66f),
         )
 
         val document = JSONObject()

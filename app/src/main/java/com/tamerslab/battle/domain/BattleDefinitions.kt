@@ -139,7 +139,6 @@ data class TechniqueDefinition(
     val kind: TechniqueKind,
     val power: Int,
     val energyCost: Int = 0,
-    val commandPointCost: Int = 0,
     val minRange: Float = 0f,
     val maxRange: Float = 1.5f,
     val rangeProfile: TechniqueRangeProfile = TechniqueRangeProfile.CUSTOM,

@@ -1,4 +1,4 @@
-﻿package com.tamerslab.world.ui
+package com.tamerslab.world.ui
 
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
@@ -34,6 +34,37 @@ class WorldChatScreenControllerImpl(
     private val chatRepository: ChatRepository = com.tamerslab.di.AppServices.chatRepository
     private val worldRepository: WorldRepository = com.tamerslab.di.AppServices.worldRepository
     private val quests = com.tamerslab.di.AppServices.questRepository
+    private val digilineGateway = com.tamerslab.di.AppServices.digilineGateway
+
+    fun getScene(individualId: String): Flow<com.tamerslab.digiline.gateway.DigilineScene?> =
+        digilineGateway.observeScene(individualId)
+
+    fun ensureScene(individualId: String, onResult: (Result<Unit>) -> Unit) =
+        launchSceneAction(individualId, onResult) { digilineGateway.ensureScene(individualId, wild = true) }
+
+    fun chooseSceneOption(individualId: String, optionId: String, onResult: (Result<Unit>) -> Unit) =
+        launchSceneAction(individualId, onResult) { digilineGateway.choose(individualId, optionId) }
+
+    fun dismissScene(individualId: String, onResult: (Result<Unit>) -> Unit) =
+        launchSceneAction(individualId, onResult) { digilineGateway.dismiss(individualId) }
+
+    fun isLegacyLlmEnabled(): Boolean = com.tamerslab.di.AppServices.debugSettingsRepository.legacyLlmEnabled
+
+    private fun launchSceneAction(
+        individualId: String,
+        onResult: (Result<Unit>) -> Unit,
+        action: suspend () -> com.tamerslab.digiline.gateway.DigilineResult,
+    ) {
+        componentActivity.lifecycleScope.launch(Dispatchers.IO) {
+            val result = runCatching {
+                when (val outcome = action()) {
+                    is com.tamerslab.digiline.gateway.DigilineResult.Error -> error(outcome.message)
+                    else -> Unit
+                }
+            }
+            componentActivity.runOnUiThread { onResult(result) }
+        }
+    }
 
     fun observeQuests(individualId: String) = quests.observeContact(individualId)
     fun observeQuestPartners() = quests.observePartners()

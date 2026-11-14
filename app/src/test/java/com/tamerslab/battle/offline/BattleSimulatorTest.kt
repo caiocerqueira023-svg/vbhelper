@@ -163,14 +163,83 @@ class BattleSimulatorTest {
         }
     }
 
-    @Test fun supportIsImmediateAndOnlyRewardsOncePerWindow() {
-        val hit = skill().copy(activeMillis = 500, recoveryMillis = 2000)
-        val sim = battle(allies = listOf(fighter("a", BattleSide.ALLIED, listOf(hit.techniqueId))), skills = listOf(hit))
-        until(sim) { "a" in it.pendingSupportCombatantIds }
-        assertEquals(OrderStatus.COMPLETED, sim.issueOrder("a", TrainerAction.Support).status)
-        assertEquals(8, sim.snapshot().commandPoints)
-        assertEquals(OrderStatus.FAILED, sim.issueOrder("a", TrainerAction.Support).status)
-        assertEquals(8, sim.snapshot().commandPoints)
+    @Test fun moveToOrderWalksThePartnerToTheMarkedPointAndClearsItOnArrival() {
+        val sim = battle(
+            allies = listOf(fighter("a", BattleSide.ALLIED).copy(
+                decisionDelayMinMillis = 30_000L,
+                decisionDelayMaxMillis = 30_000L
+            )),
+            enemies = listOf(fighter("b", BattleSide.OPPOSING).copy(
+                movementSpeed = 0f,
+                decisionDelayMinMillis = 30_000L,
+                decisionDelayMaxMillis = 30_000L
+            )),
+            config = BattleConfiguration(defaultPaused = true, randomSeed = 13L)
+        )
+        val destination = BattlePosition(0f, 3f)
+        val order = sim.issueOrder("a", TrainerAction.MoveTo(destination.x, destination.z))
+        assertEquals(OrderStatus.COMPLETED, order.status)
+        assertEquals(1, updates(sim, order.orderId).count { it.status == OrderStatus.EXECUTING })
+        assertEquals("Movendo para o ponto marcado.", sim.snapshot().alliedMembers.single().debug.decision)
+
+        sim.setPaused(false)
+        until(sim) { it.alliedMembers.single().debug.decision == "Chegou ao ponto marcado." }
+        val arrived = sim.snapshot().alliedMembers.single()
+        assertTrue("Partner stopped ${arrived.position.distanceTo(destination)} away from the marked point",
+            arrived.position.distanceTo(destination) <= 0.1f)
+    }
+
+    @Test fun moveToDestinationIsClampedInsideThePlayableArena() {
+        val sim = battle(
+            allies = listOf(fighter("a", BattleSide.ALLIED).copy(
+                movementSpeed = 6f,
+                decisionDelayMinMillis = 30_000L,
+                decisionDelayMaxMillis = 30_000L
+            )),
+            enemies = listOf(fighter("b", BattleSide.OPPOSING).copy(
+                movementSpeed = 0f,
+                decisionDelayMinMillis = 30_000L,
+                decisionDelayMaxMillis = 30_000L
+            )),
+            config = BattleConfiguration(defaultPaused = true, randomSeed = 17L)
+        )
+        sim.issueOrder("a", TrainerAction.MoveTo(0f, 100f))
+        sim.setPaused(false)
+        // Playable limit: arenaRadius minus the partner collision radius (default 8f - 0.45f).
+        val limit = 8f - 0.45f
+        until(sim, 15_000L) { it.alliedMembers.single().debug.decision == "Chegou ao ponto marcado." }
+        val position = sim.snapshot().alliedMembers.single().position
+        assertTrue("Destination escaped the playable arena: $position",
+            kotlin.math.hypot(position.x, position.z) <= limit + 0.001f)
+        assertEquals(0f, position.x, 0.1f)
+        assertEquals(limit, position.z, 0.1f)
+    }
+
+    @Test fun moveToRejectsANonFiniteDestination() {
+        val sim = battle()
+        val update = sim.issueOrder("a", TrainerAction.MoveTo(Float.NaN, 0f))
+        assertEquals(OrderStatus.FAILED, update.status)
+        assertEquals(OrderFailure.ORDER_INVALID, update.reasonCode)
+    }
+
+    @Test fun moveToKeepsWalkingWhileAutonomyWantsToAttack() {
+        // Default fighters own no techniques, so autonomy falls back to the basic attack and would
+        // otherwise discard the marked destination as soon as it starts an action.
+        val sim = battle(config = BattleConfiguration(defaultPaused = true, randomSeed = 23L))
+        val destination = BattlePosition(-4f, 3.5f)
+        val order = sim.issueOrder("a", TrainerAction.MoveTo(destination.x, destination.z))
+        assertEquals(OrderStatus.COMPLETED, order.status)
+        sim.setPaused(false)
+        until(sim, 12_000L) {
+            val decision = it.alliedMembers.single().debug.decision
+            decision == "Chegou ao ponto marcado." || it.result != null
+        }
+        val arrived = sim.snapshot().alliedMembers.single()
+        assertNull(sim.snapshot().result)
+        assertEquals("O parceiro desviou da caminhada por causa da autonomia.",
+            "Chegou ao ponto marcado.", arrived.debug.decision)
+        assertTrue("Partner stopped ${arrived.position.distanceTo(destination)} away from the marked point",
+            arrived.position.distanceTo(destination) <= 0.15f)
     }
 
     @Test fun activePhaseCannotBeCancelledByTrainer() {
@@ -449,7 +518,7 @@ class BattleSimulatorTest {
                     decisionDelayMaxMillis = 30_000L
                 )),
                 skills = GenericTechniqueCatalog.battleDefinitions,
-                config = BattleConfiguration(commandPoints = 100, defaultPaused = true)
+                config = BattleConfiguration(defaultPaused = true)
             )
             val targetId = if (technique.rangeProfile == TechniqueRangeProfile.SELF) null else "b"
 
@@ -509,32 +578,32 @@ class BattleSimulatorTest {
         }
     }
 
-    @Test fun reservationPreventsTwoAlliesSpendingTheSameCommandPoints() {
-        val costly = skill("costly").copy(commandPointCost = 20, energyCost = 40)
+    @Test fun reservationPreventsTwoAlliesSpendingTheSameEnergy() {
+        val costly = skill("costly").copy(energyCost = 40)
         val sim = battle(listOf(fighter("a", BattleSide.ALLIED, listOf("costly")), fighter("a2", BattleSide.ALLIED, listOf("costly"))),
-            skills = listOf(costly), config = BattleConfiguration(commandPoints = 25, defaultPaused = true))
+            skills = listOf(costly), config = BattleConfiguration(defaultPaused = true))
         assertEquals(OrderStatus.QUEUED, sim.issueOrder("a", TrainerAction.UseTechnique("costly", "b")).status)
-        assertEquals(OrderStatus.FAILED, sim.issueOrder("a2", TrainerAction.UseTechnique("costly", "b")).status)
-        assertEquals(20, sim.snapshot().reservedCommandPoints)
+        assertEquals(OrderStatus.QUEUED, sim.issueOrder("a2", TrainerAction.UseTechnique("costly", "b")).status)
+        assertEquals(40, sim.snapshot().alliedMembers.first { it.combatantId == "a" }.reservedEnergy)
+        assertEquals(40, sim.snapshot().alliedMembers.first { it.combatantId == "a2" }.reservedEnergy)
         sim.setPaused(false)
         runFor(sim, 34)
-        assertEquals(5, sim.snapshot().commandPoints)
-        assertEquals(0, sim.snapshot().reservedCommandPoints)
-        assertEquals(60, sim.snapshot().alliedMembers.first().energy)
+        assertEquals(60, sim.snapshot().alliedMembers.first { it.combatantId == "a" }.energy)
+        assertEquals(60, sim.snapshot().alliedMembers.first { it.combatantId == "a2" }.energy)
+        assertEquals(0, sim.snapshot().alliedMembers.sumOf { it.reservedEnergy })
     }
 
-    @Test fun innateSpecialRequiresItsOwnFullGaugeInsteadOfCommandPointsOrEnergy() {
+    @Test fun innateSpecialRequiresItsOwnFullGaugeInsteadOfEnergy() {
         val special = skill("innate", power = 120).copy(
             kind = TechniqueKind.SPECIAL,
-            energyCost = 0,
-            commandPointCost = 0
+            energyCost = 0
         )
         val attacker = fighter("a", BattleSide.ALLIED)
             .copy(maxEnergy = 0, specialTechniqueId = special.techniqueId)
         val sim = battle(
             allies = listOf(attacker),
             skills = listOf(special),
-            config = BattleConfiguration(commandPoints = 0, defaultPaused = true)
+            config = BattleConfiguration(defaultPaused = true)
         )
 
         val update = sim.issueOrder("a", TrainerAction.UseTechnique(special.techniqueId, "b"))
@@ -590,7 +659,6 @@ class BattleSimulatorTest {
             maxRange = 1.45f,
             rangeProfile = TechniqueRangeProfile.CLOSE,
             energyCost = 0,
-            commandPointCost = 0,
             startupMillis = 340L,
             criticalChance = 0f
         )
@@ -647,15 +715,13 @@ class BattleSimulatorTest {
     }
 
     @Test fun expiryReleasesResourcesEvenWhilePartnerIsDefending() {
-        val hit = skill().copy(energyCost = 80, commandPointCost = 20)
-        val sim = battle(listOf(fighter("a", BattleSide.ALLIED, listOf("hit"))), skills = listOf(hit),
-            config = BattleConfiguration(commandPoints = 30))
+        val hit = skill().copy(energyCost = 80)
+        val sim = battle(listOf(fighter("a", BattleSide.ALLIED, listOf("hit"))), skills = listOf(hit))
         sim.issueOrder("a", TrainerAction.Defend(2000))
         val waiting = sim.issueOrder("a", TrainerAction.UseTechnique("hit", "b"), lifetimeMillis = 200)
         assertEquals(80, sim.snapshot().alliedMembers.single().reservedEnergy)
         runFor(sim, 238)
         assertEquals(OrderStatus.EXPIRED, updates(sim, waiting.orderId).last().status)
-        assertEquals(0, sim.snapshot().reservedCommandPoints)
         assertEquals(0, sim.snapshot().alliedMembers.single().reservedEnergy)
         assertEquals(100, sim.snapshot().alliedMembers.single().energy)
     }
@@ -669,27 +735,6 @@ class BattleSimulatorTest {
         assertEquals(first.orderId, sim.snapshot().alliedMembers.single().currentOrderId)
         until(sim) { updates(sim, second.orderId).any { it.status == OrderStatus.COMPLETED } }
         assertEquals(OrderStatus.EXPIRED, updates(sim, first.orderId).last().status)
-    }
-
-    @Test fun supportIsRejectedWhilePausedAndWindowRemainsAvailable() {
-        val hit = skill()
-        val sim = battle(listOf(fighter("a", BattleSide.ALLIED, listOf("hit"))), skills = listOf(hit))
-        until(sim) { "a" in it.pendingSupportCombatantIds }
-        sim.setPaused(true)
-        assertEquals(OrderStatus.FAILED, sim.issueOrder("a", TrainerAction.Support).status)
-        runFor(sim, 3000)
-        sim.setPaused(false)
-        assertEquals(OrderStatus.COMPLETED, sim.issueOrder("a", TrainerAction.Support).status)
-        assertEquals(8, sim.snapshot().commandPoints)
-    }
-
-    @Test fun enemyAutomationCannotSpendTrainersCommandPoints() {
-        val costly = skill("costly", power = 300).copy(commandPointCost = 10)
-        val sim = battle(enemies = listOf(fighter("b", BattleSide.OPPOSING, listOf("costly"))),
-            skills = listOf(costly), config = BattleConfiguration(commandPoints = 50))
-        runFor(sim, 5000)
-        assertEquals(50, sim.snapshot().commandPoints)
-        assertTrue(sim.snapshot().recentEvents.filterIsInstance<BattleEvent.TechniqueStarted>().none { it.techniqueId == "costly" })
     }
 
     @Test fun stunFreezesEvenAnUninterruptibleStartup() {
@@ -730,7 +775,7 @@ class BattleSimulatorTest {
         assertThrows(IllegalArgumentException::class.java) { battle(skills = listOf(skill().copy(energyCost = -1))) }
         assertThrows(IllegalArgumentException::class.java) { battle(skills = listOf(skill().copy(maxRange = Float.NaN))) }
         assertThrows(IllegalArgumentException::class.java) { battle(allies = listOf(fighter("a", BattleSide.OPPOSING))) }
-        assertThrows(IllegalArgumentException::class.java) { battle(config = BattleConfiguration(maxCommandPoints = -1)) }
+        assertThrows(IllegalArgumentException::class.java) { battle(config = BattleConfiguration(arenaRadius = -1f)) }
     }
 
     @Test fun oneDefeatedPartnerDoesNotEndTheWholeTeamBattle() {

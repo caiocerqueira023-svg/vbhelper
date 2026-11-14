@@ -118,7 +118,7 @@ Análise do código em 12/10/2026. Base Git local: `42cdb22f`, incluindo o conte
 ### 15. Desbloqueio de comandos
 
 - **DW1:** Brains libera Attack, Moderate, Change, Distance, Defensive e seleção explícita dos golpes em faixas sucessivas.
-- **VBHelper:** oferece estratégias, foco, técnicas, defesa, aproximação/recuo e incentivo pela interface, sem portas de acesso por Brains. Existe infraestrutura de CP e incentivo (+8), mas o catálogo genérico atual mantém custo de CP padrão zero para técnicas.
+- **VBHelper:** oferece estratégias, foco, técnicas, defesa, aproximação/recuo e incentivo pela interface, sem portas de acesso por Brains. Não há CP nem incentivo: as técnicas custam apenas EN e as ordens são foco, defesa, movimento por toque na arena, itens, estratégia e especial.
 - **Impacto:** o treinador tem controle amplo desde o começo; não há o mesmo crescimento gradual de controle tático.
 - **Código:** [V-model] `TrainerAction`, [V-simulator] linhas 194–205, [V-catalog]; [D-setup].
 

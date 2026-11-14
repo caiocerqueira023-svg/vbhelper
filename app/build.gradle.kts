@@ -24,7 +24,10 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.github.nacabaro.vbhelper"
+        // Own install identity since Alpha 0.7.0 (ADR 0006): the app no longer updates or is
+        // updated by VBHelper (`com.github.nacabaro.vbhelper`). Existing VBHelper data is not
+        // inherited; Settings > Export/Import database moves a collection across.
+        applicationId = "com.tamerslab.vbhelper"
         minSdk = 28
         targetSdk = 37
         versionCode = 1
@@ -32,6 +35,11 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("boolean", "ONLINE_PVP_ENABLED", "true")
+        // AR battles are a developer-only option while the feature stabilises: the Radar
+        // preference and every AR entry point are hidden and disabled in release builds. Debug
+        // and integrityCheck builds keep it available (including the -PnonDebuggable Samsung
+        // workaround build above, which is still a debug *build type*).
+        buildConfigField("boolean", "AR_BATTLES_ENABLED", "true")
         // Phase 5.4 rollback switch: when false the battle screen keeps the
         // original 60 Hz full-snapshot Compose state path. Enable only after the
         // device Perfetto validation described in docs/performance/BASELINE.md.
@@ -57,6 +65,8 @@ android {
             matchingFallbacks += "debug"
         }
         release {
+            // AR battles are developer-only: no Radar toggle, no AR entry point in release.
+            buildConfigField("boolean", "AR_BATTLES_ENABLED", "false")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

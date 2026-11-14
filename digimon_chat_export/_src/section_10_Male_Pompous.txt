@@ -1,0 +1,163 @@
+===Pompous===
+{| class="table smt5"
+! colspan="4" |Dialogue
+!Outcome
+|-
+| colspan="5" align="center" | Look
+|-
+| colspan="4" |How, look into my eyes...
+|>Stare at them.<br>>Look away<br>>Roll your eyes back
+|-
+| colspan="3" |>Stare at them
+|I don't take kindly to that insolent look in your eyes... If you do not wish to die, then beg for forgiveness.
+|>>Offer Macca
+>>Put your guard up
+>>Faint
+|- 
+| colspan="3" |>>Offer Macca
+|Ah, so you know exactly how to seek forgiveness.
+|[BARGAIN PHASE]
+|- 
+| colspan="3" |>>Put your guard up
+|
+|
+|- 
+| colspan="3" |>>Faint
+|
+|
+|- 
+| colspan="3" |>Look away
+|
+|
+|- 
+| colspan="3" |>Roll your eyes back
+|
+|
+|- 
+| colspan="5" align="center" |Leave
+|-
+| colspan="4" |The demon is trying to leave... What will you do?
+|>Stop them<br>>Ignore them<br>>Smack them
+|-
+|>Stop them
+| colspan="3" |I'm afraid I'm quite busy. Now, if you'll excuse me...
+|[LEAVES]
+|-
+|>Ignore them
+| colspan="3" |
+|
+|-
+|>Smack them
+| colspan="3" |
+|
+|-
+| colspan="5" align="center" |New
+|-
+| colspan="4" |You're a new face in the netherworld, yes? Tell me, what kind of demon are you? (What response will you give the demon?)
+|>A friendly response<br>>A harsh response
+|-
+|>A friendly response
+| colspan="3" |You seem friendly enough on the outside, but what about your actual motives...? I believe you should show me a token of our newfound friendship.
+|[BARGAIN PHASE]
+|-
+|>A harsh response
+| colspan="3" |Such confidence in your own strength. But is it justified, I wonder? Let's compare the power of our '''Magic''', shall we? Try and move me using only your mind.
+|>You're on <br>>No way
+|-
+|>>You're on
+| colspan="3" |(You focused on the demon...)
+|[Magic stat is compared]<br>>Pass <br>>Fail
+|-
+|>>>Pass
+| colspan="3" |(The demon's right hand moved!)<br>Spectacular...! Allow me to join you, then.
+|[INSTANT RECRUIT]
+|-
+|>>>Fail
+| colspan="3" |
+|
+|-
+|>>No way
+| colspan="3" |
+|
+|-
+| colspan="5" align="center" |Heh heh heh...
+|-
+| colspan="4" |Heh heh heh... (The demon is laughing ominously... What will you do?)
+|>Laugh with them<br>>Watch them<br>>Talk to them
+|-
+|>Laugh with them
+| colspan="3" |What are you laughing at? Who do you think you are? 
+|>Your worst nightmare<br>>I'm a god<br>>I'm [Playername]
+|-
+|>>Your worst nightmare
+| colspan="3" |Well, well, well. I'm sure you imagine yourself to be quite a force of nature. Then, I'm sure you'll have no trouble producing proof of that?
+|[BARGAIN PHASE]
+|-
+|>>I'm a god
+| colspan="3" |
+|
+|-
+|>>I'm [Playername]
+| colspan="3" |
+|
+|-
+|>Watch them
+| colspan="3" |
+|
+|-
+|>Talk to them
+| colspan="3" |
+|
+|-
+| colspan="5" align="center" |Ignore
+|-
+| colspan="4" |The demon is pretending to ignore you... What will you do?
+|>Call out to them<br>>Do the same
+|-
+|>Call out to them
+| colspan="3" |So you want to speak to me that much, do you? I suppose it'd be best to oblige you...
+|[DIALOGUE SWITCH >> DANCE
+|-
+|>Do the same
+| colspan="3" |
+|
+|-
+| colspan="5" align="center" |Dance
+|-
+| colspan="4" |Come. Let us forget this fleeting world for a few beautiful moments, and dance together.
+|>All right<br>>No<br>>Let's skip to negotiation.
+|-
+|>All right
+| colspan="3" |Is your '''Magic''' powerful enough to keep up with my steps?<br>(You danced with the demon...)
+|[Magic stat is compared]<br>>Pass <br>>Fail
+|-
+|>>Pass
+| colspan="3" |(You managed to keep up!)<br>May we show as much grace together on the battlefield as we did in this dance
+|[INSTANT RECRUIT]
+|-
+|>>Fail
+| colspan="3" |
+|
+|-
+|>No
+| colspan="3" |
+|
+|-
+|>Let's skip to negotiation.
+| colspan="3" |
+|
+|-
+| colspan="5" align="center" |Quiz
+|-
+| colspan="4" |One grow so bored of these tawdry conversations over and over again. Perhaps we could try a change of pace. How about we play a little game?
+|[GUESS RANDOM MONSTER]<br>>Answer right<br>>Answer wrong
+|-
+| colspan="3" |>Answer right
+|Haha, yes! Well done indeed! In that case, I think I shall join you.
+|[INSTANT RECRUIT]
+|-
+| colspan="3" |>Answer wrong
+|
+|
+|-
+|}

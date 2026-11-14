@@ -1,0 +1,260 @@
+===Wise===
+{| class="table smt5"
+! colspan="4" |Dialogue
+!Outcome
+|-
+| colspan="5" align="center" |Trust
+|-
+| colspan="4" |I take it you rae the newcomer stirring up the netherworld. But I would be a fool to trust you with no record of your character.
+|>Fine by me.<br>>Please trust me.<br>>Like I can trust you.
+|-
+| colspan="3" |>Fine by me.
+|Are you truly so used to  lack of trust, boy...? That is... somewhat tragic. Very well, then. I shall take your measure here.
+|[DIALOGUE SWITCH]
+|-
+| colspan="3" |>Please trust me.
+|
+|
+|-
+| colspan="3" |>Like I can trust you.
+|
+|
+|-
+| colspan="5" align="center" |Life
+|-
+| colspan="4" |Tell me newcomer. What do you think of life in the netherworld?
+|>It's the best.<br>>It's the absolute worst.<br>>I want to go home.
+|-
+| colspan="3" |>It's the best.
+|It seems the netherworld's influence colors both you body and soul.
+|>That's right.
+>Not necessarily.
+>I'm still my own color.
+|-
+| colspan="3" |>>That's right.
+|Then surely you understand the formalities of the netherworld by now. Offer me your gifts.
+|[BARGAIN PHASE]
+|-
+| colspan="3" |>>Not necessarily.
+|Are you truly so blind to what you have become? How pitiful.
+|[ENEMY PHASE]
+|-
+| colspan="3" |>>I'm still my own color.
+|Empty words... Your color is blood-red, and you shall be drenched in it soon enough.
+|[ENEMY PHASE]
+|-
+| colspan="3" |>It's the absolute worst.
+|
+|
+|-
+| colspan="3" |>I want to go home.
+|
+|
+|-
+| colspan="5" align="center" |New
+|-
+| colspan="4" |You must be the new arrival I've heard about. What manner of demon are you, I wonder? (What response will you give the demon?)
+|>A friendly response.<br>>A harsh response
+|-
+| colspan="3" |>A friendly response.
+|You are weak the, then.
+|[TALK END, TURN USED]
+|-
+| colspan="3" |>A harsh response
+|
+|
+|-
+| colspan="5" align="center" |Guard up
+|-
+| colspan="4" |The demon isn't lowering their guard... What will you do?
+|>Bow your head.<br>>Fold your arms<br>>Offer your services
+|-
+| colspan="3" |>Bow your head.
+|You lower your head. What do you mean by this?
+|>I'm showing respect<br>>I'm scared.<br>>I don't want to die yet
+|-
+| colspan="3" |>>I'm showing respect
+|It is far too late for that.
+|[ENEMY PHASE]
+|-
+| colspan="3" |>>I'm scared.
+|THat is a natural reaction to a figure of great power. It is nothing to be ashamed of. Now, you must temper that fear into courage, and make it your ally.
+|[BARGAIN PHASE]
+|-
+| colspan="3" |>>I don't want to die yet
+|
+|
+|-
+| colspan="3" |>Fold your arms
+|
+|
+|-
+| colspan="3" |>Offer your services
+|
+|
+|-
+| colspan="5" align="center" |Fighting
+|-
+| colspan="4" |There is nothing to be gained from fighting.
+|>You're right.<br>>That's not true<br>>I LOVE a good fight!
+|-
+| colspan="3" |>You're right.
+|Then, why do you fight?
+|>I have something to protect.<br>>There's something I want.<br>>I want to stand above all others.
+|-
+| colspan="3" |>>I have something to protect.
+|
+|
+|-
+| colspan="3" |>>There's something I want.
+|If you desire something, fighting is hardly the only way to get it. Shall we try negotiating?
+|[BARGAIN PHASE]
+|-
+| colspan="3" |>>I want to stand above all others.
+|
+|
+|-
+| colspan="3" |>That's not true
+|
+|
+|-
+| colspan="3" |>I LOVE a good fight!
+|
+|
+|-
+| colspan="5" align="center" |Luck
+|-
+| colspan="4" |Let us see shose '''Luck''' the fates favor... Come, then. Draw a ticket.
+|>You're on.<br>>No way.
+|-
+| colspan="3" |>You're on. 
+|(You drew a ticket from the demon's lottery...)
+|[Luck stat between the 2 users is compared]<br>>Pass<br>>Fail
+|-
+| colspan="3" |>Pass
+|(You won!)<br>It appears luck is on your side.
+|[INSTANT RECRUIT]
+|-
+| colspan="3" |>Fail
+|
+|
+|-
+| colspan="3" |>No way
+|
+|
+|-
+| colspan="5" align="center" |Glaring
+|-
+| colspan="4" |(The demon is glaring at you... What will you do?)
+|>Glare back<br>>Smile at them.<br>>Prepare to strike.
+|-
+|rowspan="2"|'''>Glare back'''
+| colspan="3" |You dare look upon me with such insolence!?
+|[ENEMY PHASE]
+|-
+| colspan="3" |Pointless. You will need more than that to intimidate me... (The demon is still glaring at you.. What will you do?)
+|>Glare back<br>>Smile at them.<br>>Prepare to strike.
+|-
+| colspan="3" |>>Glare back
+|Enough!
+|[ENEMY PHASE]
+|-
+| colspan="3" |>>Smile at them.
+|
+|
+|-
+| colspan="3" |>>Prepare to strike.
+|
+|
+|-
+| colspan="3" |>Smile at them.
+|
+|
+|-
+| colspan="3" |>Prepare to strike.
+|
+|
+|-
+| colspan="5" align="center" |Leave
+|-
+| colspan="4" |(The demon is trying to leave... What will you do?)
+|>Stop them<br>>Watch them go<br>>Pray for their safety
+|-
+| colspan="3" |>Stop them
+|Hm? Oh, were you speaking to me?
+Such a slight must be redeemed. Let us speak
+|[DIALOGUE SWITCH >> Hair]
+|-
+| colspan="3" |>Watch them go
+|
+|
+|-
+| colspan="3" |>Pray for their safety
+|
+|
+|-
+| colspan="5" align="center" |Hair
+|-
+| colspan="4" |That long,blue hair of yours... It certainly catches the eye.
+|>Looks cool, right?<br>>Maintaining it is hard<br>>Don't wig out about it.
+|-
+| colspan="3" |>Looks cool, right?
+|
+|
+|-
+| colspan="3" |>Maintaining it is hard
+|Precisely why you deserve to be proud of it. Revel in the work you put in. Let us hope you put as much care into your proposals as you do your locks.
+|[BARGAIN PHASE]
+|-
+| colspan="3" |>Don't wig out about it.
+|
+|
+|-
+| colspan="5" align="center" |Ignore
+|-
+| colspan="4" |(The demon is pretending to ignore you... What will you do?)
+|>Call out quietly<br>>Call out loudly<br>>Threaten them harshly
+|-
+| colspan="3" |>Call out quietly
+|...As it happens, I was indeed exhausted by the chaos and noise of the world at large. For a gentle soul who would speak so softly, I will gladly make time.
+|[DIALOGUE SWITCH]
+|-
+| colspan="3" |>Call out loudly
+|
+|
+|-
+| colspan="3" |>Threaten them harshly
+|
+|
+|-
+| colspan="5" align="center" |Beckoning
+|-
+| colspan="4" |(The demon is beckoning you closer... What will you do?)
+|>Go closer<br>>Gesture back<br>>Raise your hands
+|-
+| colspan="3" |>Go closer
+|I trust you do not approach empty-handed.
+|[BARGAIN PHASE]
+|-
+| colspan="3" |>Gesture back
+|
+|
+|-
+| colspan="3" |>Raise your hands
+|
+|
+|-
+| colspan="5" align="center" |Quiz
+|-
+| colspan="4" |Let us not chat idly. I wish to gauge your knowledge. [GUESS RANDOM MONSTER]
+|>Pass<br>>Fail
+|-
+| colspan="3" |>Pass
+|So you do have some potential... Then perhaps it is worth following you.
+|[INSTANT RECRUIT]
+|-
+| colspan="3" |>Fail
+|
+|
+|-
+|}

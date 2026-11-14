@@ -167,7 +167,6 @@ object GenericTechniqueCatalog {
             displayName = "Ruptura inata",
             power = 82,
             energyCost = 0,
-            commandPointCost = 0,
             minRange = 3f,
             maxRange = 10.5f,
             rangeProfile = TechniqueRangeProfile.MEDIUM_LONG,

@@ -1,73 +1,25 @@
 package com.tamerslab.world.ui
 
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Tab
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import androidx.navigation.NavBackStackEntry
-import com.tamerslab.R
-import com.tamerslab.farm.ui.digifarm.DigifarmScreen
-import com.tamerslab.components.VitalTabs
-import com.tamerslab.ui.theme.TextSecondaryOnDark
-import com.tamerslab.ui.theme.VitalCyan
+import androidx.navigation.NavController
 
+/**
+ * Legacy `World` route alias.
+ *
+ * The Radar place is the only world surface now: the old Radar|Digifarm tab row and the retired
+ * multi-farm management surface are gone, so this alias simply opens the Radar world for restored
+ * back stacks and external deep links.
+ */
 @Composable
 fun WorldScreen(
     navController: NavController,
     worldEntry: NavBackStackEntry,
     onFullScreenBattleChanged: (Boolean) -> Unit = {}
 ) {
-    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
-    var legacyView by rememberSaveable { mutableStateOf(RadarLegacyView.NONE) }
-    var labelsPreferred by rememberSaveable { mutableStateOf(false) }
-    val incomingChallenge by remember(worldEntry) {
-        worldEntry.savedStateHandle.getStateFlow<String?>("radar-challenge",null)
-    }.collectAsStateWithLifecycle()
-    val incomingInteraction by remember(worldEntry) { worldEntry.savedStateHandle.getStateFlow<String?>("radar-interaction",null) }.collectAsStateWithLifecycle()
-    val incomingQuestTarget by remember(worldEntry) { worldEntry.savedStateHandle.getStateFlow<String?>("radar-quest-target",null) }.collectAsStateWithLifecycle()
-    LaunchedEffect(incomingChallenge,incomingInteraction,incomingQuestTarget) {
-        if(incomingChallenge!=null || incomingInteraction!=null || incomingQuestTarget!=null) selectedTab=0
-    }
-    when (selectedTab) {
-        0 -> RadarScreen(
-            navController = navController,
-            worldEntry = worldEntry,
-            selectedWorldTab = selectedTab,
-            onWorldTabSelected = { selectedTab = it },
-            onFullScreenBattleChanged = onFullScreenBattleChanged,
-            legacyView = legacyView,
-            onLegacyViewChanged = { legacyView = it },
-            labelsPreferred = labelsPreferred,
-            onLabelsPreferenceChanged = { labelsPreferred = it }
-        )
-        else -> DigifarmScreen(
-            navController = navController,
-            selectedWorldTab = selectedTab,
-            onWorldTabSelected = { selectedTab = it }
-        )
-    }
+    RadarScreen(
+        navController = navController,
+        worldEntry = worldEntry,
+        onFullScreenBattleChanged = onFullScreenBattleChanged
+    )
 }
-
-@Composable
-internal fun WorldSectionTabs(
-    selectedTab: Int,
-    onTabSelected: (Int) -> Unit
-) {
-    VitalTabs(selectedTab, listOf(stringResource(R.string.ui_world_radar_tab), stringResource(R.string.ui_digifarm_tab)), onTabSelected)
-}
-

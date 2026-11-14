@@ -23,15 +23,17 @@ currently being refactored for Alpha 0.7.0.
 |----------|-------|
 | Product name / launcher label | **Tamers Lab** |
 | Kotlin namespace | `com.tamerslab` |
-| `applicationId` | `com.github.nacabaro.vbhelper` (kept for upgrade continuity — [ADR 0001](docs/adr/0001-keep-application-id.md)) |
+| `applicationId` | `com.tamerslab.vbhelper` (own app identity since Alpha 0.7.0 — [ADR 0006](docs/adr/0006-own-application-id.md), superseding [ADR 0001](docs/adr/0001-keep-application-id.md)) |
 | Application class | `com.tamerslab.di.TamersLabApplication` |
 | Compose theme | `TamersLabTheme` |
 | Target release | Alpha 0.7.0 (`versionName` in [app/build.gradle.kts](app/build.gradle.kts)) |
 | SDKs | `compileSdk 37`, `minSdk 28`, `targetSdk 37` |
 | Room schema | 55 |
 
-The namespace and the installed package id intentionally differ. Existing users upgrade
-in place and keep their collection; do not "fix" the package id without reading the ADR.
+The namespace and the installed package id intentionally differ. This build is its own app: it
+does not install as, or receive updates as, VBHelper, and VBHelper releases are not updates of
+it. Data from an install that used the old `com.github.nacabaro.vbhelper` id is not inherited;
+move it with `Settings > Export database` then `Import database` ([ADR 0006](docs/adr/0006-own-application-id.md)).
 
 ## Modules
 
@@ -234,7 +236,8 @@ multi-game moves remain format-specific work. See
 
 ## How to set up
 
-1. Download the latest version for VB Arena APK from a trustworthy source. If your
+1. *(Optional — only needed if a future VB Arena release rotates the connection keys.)*
+   Download the latest version for VB Arena APK from a trustworthy source. If your
    download is a standalone APK, continue to step 2. Otherwise, if your download is an
    XAPK, do the following:
 
@@ -245,19 +248,29 @@ multi-game moves remain format-specific work. See
     2. Once the files are extracted, look for the VB arena APK. Copy it somewhere else,
        you will need it.
 
-2. Install an APK release for Tamers Lab. You will find the releases
-   [here](http://github.com/nacabaro/vbhelper/releases). Download the latest release and
-   install its APK.
+2. Install an APK release for Tamers Lab. Download the latest release from this project's
+   GitHub releases page
+   ([caiocerqueira023-svg/vbhelper releases](https://github.com/caiocerqueira023-svg/vbhelper/releases))
+   and install its APK.
 
-    For an existing installation, upgrade in place to retain your collection.
-    The current preserving migrations require no data reset; uninstalling or
-    clearing application data discards local records.
+    This is its own app: it installs next to VBHelper instead of updating it, and VBHelper
+    releases are not updates of it ([ADR 0006](docs/adr/0006-own-application-id.md)). For an
+    existing installation of *this* app, upgrade in place to retain your collection;
+    uninstalling or clearing application data discards local records.
 
-3. Import secrets in the app. These secrets will allow the app to talk to the watch. On
-   the main screen, click on the gear icon, then `Import secrets`.
+    Coming from the old `com.github.nacabaro.vbhelper` build (VBHelper or an earlier Tamers
+    Lab build), the new install starts empty. Open `Settings → Export database` in the old
+    app, then `Settings → Import database` in this one. Cards live in that database, so they
+    move with it; linked `.sav` saves are re-linked; watch secrets need no migration.
 
-    You will be prompted to choose a file. Choose the APK file that was previously
-    obtained.
+3. The connection secrets that let the app talk to the watch are **built in**. They were
+   extracted from the official VB Arena 2.1.0 release and the unit tests keep them honest
+   by regenerating the known watch test passwords, so a fresh install can scan a watch
+   immediately — no VB Arena APK needs to be downloaded or imported.
+
+    Importing secrets is still available and still wins over the built-in values, which is
+    what you use if a later Arena release changes the keys: main screen → gear icon →
+    `Import secrets`, then pick the APK obtained in step 1.
 
 4. Import cards for bracelet interaction and optional exact card-stat association. App
    partners can participate without a card; the bundled Dot library is available

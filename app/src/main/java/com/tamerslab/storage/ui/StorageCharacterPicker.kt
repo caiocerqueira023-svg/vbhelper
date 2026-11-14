@@ -12,10 +12,16 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -68,6 +74,7 @@ import com.tamerslab.components.TopBanner
 import com.tamerslab.components.VitalButton
 import com.tamerslab.components.motionEnabled
 import com.tamerslab.dtos.CharacterDtos
+import com.tamerslab.ui.theme.DeepPurpleBg
 import com.tamerslab.ui.theme.TextPrimaryOnDark
 import com.tamerslab.ui.theme.VitalCyan
 import com.tamerslab.utils.BitmapData
@@ -227,7 +234,10 @@ fun StorageCharacterPickerScreen(
     val visibleOptionCount = visibleCharacters.size + visibleSupplementalOptions.size
 
     Scaffold(
-        topBar = { TopBanner(text = title, onBackClick = onBack) }
+        topBar = { TopBanner(text = title, onBackClick = onBack) },
+        // Insets are owned by the host: the app shell already consumes them for routed screens, and
+        // the full-screen dialog below pads its own window instead.
+        contentWindowInsets = WindowInsets(0)
     ) { contentPadding ->
         Column(
             modifier = Modifier
@@ -458,23 +468,34 @@ fun StorageCharacterPickerDialog(
         properties = DialogProperties(
             dismissOnBackPress = true,
             dismissOnClickOutside = false,
-            usePlatformDefaultWidth = false
+            usePlatformDefaultWidth = false,
+            decorFitsSystemWindows = false,
         )
     ) {
+        // The dialog window is edge-to-edge and paints the palette's own opaque background: a
+        // transparent page here let the screen underneath (and the window dim) show through, which
+        // read as a wrongly darkened page in the two light palettes.
         Surface(
             modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
+            color = DeepPurpleBg,
         ) {
-            StorageCharacterPickerScreen(
-                characters = characters,
-                title = title,
-                emptyMessage = emptyMessage,
-                isLoading = isLoading,
-                supplementalOptions = supplementalOptions,
-                onBack = onDismiss,
-                onCharacterSelected = onCharacterSelected,
-                onSupplementalSelected = onSupplementalSelected
-            )
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .windowInsetsPadding(WindowInsets.safeDrawing.exclude(WindowInsets.ime))
+                    .imePadding(),
+            ) {
+                StorageCharacterPickerScreen(
+                    characters = characters,
+                    title = title,
+                    emptyMessage = emptyMessage,
+                    isLoading = isLoading,
+                    supplementalOptions = supplementalOptions,
+                    onBack = onDismiss,
+                    onCharacterSelected = onCharacterSelected,
+                    onSupplementalSelected = onSupplementalSelected
+                )
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿package com.tamerslab.farm.ui.home
+package com.tamerslab.farm.ui.home
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -78,6 +78,7 @@ import com.tamerslab.farm.FarmSpriteFilter
 import com.tamerslab.farm.ui.digifarm.FarmMemberOption
 import com.tamerslab.farm.ui.digifarm.FarmWorldResident
 import com.tamerslab.farm.ui.digifarm.FarmWorldSummary
+import com.tamerslab.storage.ui.StorageCharacterPickerDialog
 import com.tamerslab.ui.theme.SurfaceElevatedPurple
 import com.tamerslab.ui.theme.SurfaceStroke
 import com.tamerslab.ui.theme.TextMutedOnDark
@@ -363,7 +364,8 @@ fun FarmRosterSheet(
     onToggleMember: (characterId: Long, member: Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    // Members only, plus an explicit way in: the sheet never dumps the whole collection on the owner.
+    // Members only, plus the same full-screen partner picker the Arena uses for choosing a partner:
+    // adding someone to the island is a collection choice, not a different list to learn.
     val members = options.filter { it.isMember }
     val candidates = options.filterNot { it.isMember }
     val capacity = residentLimit.coerceAtMost(FarmWorldSummary.CAPACITY)
@@ -380,89 +382,71 @@ fun FarmRosterSheet(
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
-                text = stringResource(
-                    if (picking) R.string.home_roster_pick_title else R.string.home_roster_sheet_title
-                ),
+                text = stringResource(R.string.home_roster_sheet_title),
                 style = MaterialTheme.typography.titleMedium,
                 color = TextPrimaryOnDark,
                 modifier = Modifier.padding(bottom = 4.dp).semantics { heading() },
             )
-            if (picking) {
-                if (candidates.isEmpty()) {
-                    Text(
-                        text = stringResource(R.string.home_roster_pick_empty),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = TextMutedOnDark,
-                        modifier = Modifier.padding(vertical = 6.dp),
-                    )
-                } else {
-                    candidates.forEach { option ->
-                        MenuRow(
-                            icon = R.drawable.baseline_mood_24,
-                            label = option.name,
-                            detail = stringResource(R.string.home_roster_in_storage),
-                            tint = if (room > 0) TextSecondaryOnDark else TextMutedOnDark,
-                            onClick = {
-                                if (room > 0) onToggleMember(option.characterId, true)
-                            },
-                            trailingIcon = Icons.Rounded.Add.takeIf { room > 0 },
-                        )
-                    }
-                }
-                androidx.compose.material3.TextButton(
-                    onClick = { picking = false },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            // Quantity and membership live together: this is the one place that decides how the
+            // island is populated, so the limit, the artwork and the partner list never disagree.
+            FarmSettingsControls(
+                residentLimit = residentLimit,
+                shownCount = members.size,
+                candidateCount = options.size,
+                spriteFilter = spriteFilter,
+                onResidentLimitChange = onResidentLimitChange,
+                onSpriteFilterChange = onSpriteFilterChange,
+            )
+            Text(
+                text = stringResource(R.string.home_roster_members_title),
+                style = MaterialTheme.typography.labelLarge,
+                color = VitalCyan,
+                modifier = Modifier.padding(top = 10.dp),
+            )
+            members.forEach { option ->
+                MenuRow(
+                    icon = R.drawable.baseline_mood_24,
+                    label = option.name,
+                    detail = if (option.isActive) {
+                        stringResource(R.string.home_roster_active_partner)
+                    } else {
+                        stringResource(R.string.home_roster_in_farm)
+                    },
+                    tint = if (option.isActive) VitalCyan else TextSecondaryOnDark,
+                    onClick = {
+                        // The active partner always lives on the island.
+                        if (!option.isActive) onToggleMember(option.characterId, false)
+                    },
+                    trailingIcon = if (option.isActive) null else Icons.Rounded.Remove,
+                )
+            }
+            if (room > 0) {
+                VitalButton(
+                    onClick = { picking = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .padding(top = 8.dp),
+                    style = VitalButtonStyle.SECONDARY,
                 ) {
-                    Text(stringResource(R.string.home_roster_pick_back))
-                }
-            } else {
-                // Quantity and membership live together: this is the one place that decides how the
-                // island is populated, so the limit, the artwork and the partner list never disagree.
-                FarmSettingsControls(
-                    residentLimit = residentLimit,
-                    shownCount = members.size,
-                    candidateCount = options.size,
-                    spriteFilter = spriteFilter,
-                    onResidentLimitChange = onResidentLimitChange,
-                    onSpriteFilterChange = onSpriteFilterChange,
-                )
-                Text(
-                    text = stringResource(R.string.home_roster_members_title),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = VitalCyan,
-                    modifier = Modifier.padding(top = 10.dp),
-                )
-                members.forEach { option ->
-                    MenuRow(
-                        icon = R.drawable.baseline_mood_24,
-                        label = option.name,
-                        detail = if (option.isActive) {
-                            stringResource(R.string.home_roster_active_partner)
-                        } else {
-                            stringResource(R.string.home_roster_in_farm)
-                        },
-                        tint = if (option.isActive) VitalCyan else TextSecondaryOnDark,
-                        onClick = {
-                            // The active partner always lives on the island.
-                            if (!option.isActive) onToggleMember(option.characterId, false)
-                        },
-                        trailingIcon = if (option.isActive) null else Icons.Rounded.Remove,
-                    )
-                }
-                if (room > 0) {
-                    VitalButton(
-                        onClick = { picking = true },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 48.dp)
-                            .padding(top = 8.dp),
-                        style = VitalButtonStyle.SECONDARY,
-                    ) {
-                        Text(stringResource(R.string.home_roster_add_member))
-                    }
+                    Text(stringResource(R.string.home_roster_add_member))
                 }
             }
         }
+    }
+
+    if (picking) {
+        StorageCharacterPickerDialog(
+            characters = candidates.map { it.character },
+            title = stringResource(R.string.home_roster_add_member),
+            emptyMessage = stringResource(R.string.home_roster_pick_empty),
+            onDismiss = { picking = false },
+            onCharacterSelected = { characterId ->
+                if (room > 0) onToggleMember(characterId, true)
+                // Close on the last free slot; the island must never promise more than it can show.
+                if (room <= 1) picking = false
+            },
+        )
     }
 }
 

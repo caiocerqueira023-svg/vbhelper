@@ -1,0 +1,181 @@
+===Fatale===
+{| class="table smt5"
+! colspan="2" |Dialogue
+!Outcome
+|-
+| colspan="3" align="center" | Hair
+|-
+| colspan="2" |Your hair is so beautiful... Tell me, what is the secret to such beauty?
+|>I'll tell you<br>>Not telling<br>>It's not as beautiful as you.
+|-
+|>I'll tell you
+|All right, then. What is it?
+|>I don't really do anything<br>>Aogami might know.<br>>A hair-owing amount of care.
+|-
+|>>I don't really do anything
+|If that's true, it's only a matter of time before your hair's completely ruined! What a waste! I can't stand idly by! I have to look after it myself! 
+|[INSTANT RECRUIT]
+|-
+|>>Aogami might know.
+|
+|
+|-
+|>>A hair-owing amount of care.
+|
+|
+|-
+|>Not telling
+|
+|
+|-
+|>It's not as beautiful as you.
+|
+|
+|-
+| colspan="3" align="center" | Touch
+|-
+| colspan="2" |What? Just looking isn't enough? You can touch if you want.
+|>Try touching<br>>Put your guard up<br>>Stop at the last second
+|-
+|>Try touching
+|My, aren't you brave? I guess now you'll have to pay.
+|[BARGAIN PHASE]
+|-
+|>Put your guard up
+|
+|
+|-
+|>Stop at the last second
+|
+|
+|-
+| colspan="3" align="center" | Beckoning
+|-
+| colspan="2" |(The demon is gesturing for you to come closer... What will you do?)
+|>Go closer<br>>Gesture back<br>>Look away
+|-
+|>Go closer
+|Those greedy eyes... Nothing good can come of this! Stay away from me! 
+|[ENEMY PHASE]
+|-
+|>Gesture back
+|
+|
+|-
+|>Look away
+|
+|
+|-
+| colspan="3" colspan"5" align="center"| Recognize
+|-
+| colspan="2" |So you're [Playername]! I've heard rumors about you. Well, this is quite the development... Mayhap I could even be your ally...
+|[BARGAIN PHASE]
+|-
+| colspan="3" align="center" | Giggle
+|-
+|*giggle* *giggle*
+|(The demon is laughing... What will you do?)
+|>Laugh with them<br>>Shrug your shoulders<br>>Put your guard up
+|-
+|>Laugh with them
+|
+|
+|-
+|>Shrug your shoulders
+|
+|
+|-
+|>Put your guard up
+|Oh, is that really necessary? What's the matter?
+|>You hurt my feelings.<br>>Can't be too careful<br>>This is a courting pose.
+|-
+|>>You hurt my feelings.
+|...You're right. It was rude of me to suddenly laugh like that. Here, let's see if we can't reach an understanding.
+|[BARGAIN PHASE]
+|-
+|>>Can't be too careful
+|
+|
+|-
+|>>This is a courting pose.
+|
+|
+|-
+| colspan="3" colspan"5" align="center"| Disinterested
+|-
+| colspan="2" |(The demon looks disinterested... What will you do?)
+|>Dance<br>>Sing<br>>Flash some Macca
+|-
+|>Dance
+|(You tried dancing...) Oh my, how shallow...
+|[ENEMY PHASE]
+|-
+|>Sing.
+|(You tried singing...)
+|
+|-
+|>Flash some Macca
+|(You flashed some Macca at the demon...)
+|
+|-
+| colspan="3" align="center" | Relationship
+|-
+| colspan="2" |If I become yoru demon, what will become of our relationship?
+|>We'll be friends<br>>We'll be family<br>>We'll be lovers
+|-
+|>We'll be friends
+|Friends? Don't be ridiculous. You would be my servant. 
+|[ENEMY PHASE]
+|-
+|>We'll be family
+|
+|
+|-
+|>We'll be lovers
+|
+|
+|-
+| colspan="3" align="center" | Smells
+|-
+| colspan="2" |My, something smells... 
+|>It's me.<br>>It's you.<br>>It's a conspiracy.
+|-
+|>It's me.
+|
+|
+|-
+|>It's you.
+|
+|
+|-
+|>It's a conspiracy.
+|So you sense it too? Yes, we're being watched... Let's pretend we're together to avoid suspicion.
+|[BARGAIN PHASE]
+|-
+| colspan="3" align="center" | Quiz
+|-
+| colspan="2" |You aren't speaking to every single demon you happen across, are you? Let's see how well you can tell them apart!
+|[GUESS RANDOM MONSTER]<br>>Answer right<br>>Answer wrong
+|-
+|>Answer right
+|Ohh, wonderful! I want you to remember me just as vividly!
+|[INSTANT RECRUIT]
+|-
+|>Answer wrong
+|
+|
+|-
+| colspan="3" align="center" | New Moon
+|-
+| colspan="2" |
+|[RANDOM]
+|-
+|[GOOD OUTCOME]
+|
+|
+|-
+|[BAD OUTCOME]
+|
+|
+|-
+|}

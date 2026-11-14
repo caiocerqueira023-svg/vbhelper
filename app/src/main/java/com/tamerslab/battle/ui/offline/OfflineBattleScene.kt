@@ -233,6 +233,8 @@ class OfflineBattleSceneView(
     private var latestSnapshot: BattleSnapshot? = null
     private var desiredFighters: Map<String, BattleFighterPresentation> = emptyMap()
     private var latestSessionId: String? = null
+    /** Session the accepted [latestSnapshot] belongs to; guards the throttled-UI stale check. */
+    private var latestSnapshotSessionId: String? = null
     private var onAssetError: ((String) -> Unit)? = null
     private var onSceneReady: (() -> Unit)? = null
     private var onProjectionChanged: (() -> Unit)? = null
@@ -523,12 +525,22 @@ class OfflineBattleSceneView(
             sceneReadyNotified = false
         }
         latestSessionId = sessionId
+        if (changingSession) {
+            // Never compare a new session's elapsed time against the settled session it replaces.
+            latestSnapshot = null
+            latestSnapshotSessionId = null
+        }
         // The throttled Compose UI state can lag the full-rate scene channel; never
         // let an older simulation snapshot rewind the scene. Elapsed time is
-        // monotonic within one session (it only repeats while paused).
+        // monotonic within one session (it only repeats while paused), so the guard
+        // only applies when both snapshots belong to the same session.
         val staleFromThrottledUi = !changingSession && snapshot != null &&
-            latestSnapshot != null && snapshot.elapsedMillis < latestSnapshot!!.elapsedMillis
-        if (!staleFromThrottledUi) latestSnapshot = snapshot
+            latestSnapshotSessionId == sessionId && latestSnapshot != null &&
+            snapshot.elapsedMillis < latestSnapshot!!.elapsedMillis
+        if (!staleFromThrottledUi) {
+            latestSnapshot = snapshot
+            latestSnapshotSessionId = if (snapshot != null) sessionId else null
+        }
         desiredFighters = fighters
         desiredPreparedForms = preparedForms
         allowCinematicMotion = allowMotion
@@ -777,10 +789,7 @@ class OfflineBattleSceneView(
         val currentManifest = manifest ?: return null
         if (viewportWidth <= 0 || viewportHeight <= 0 || !arenaLoaded) return null
         return runCatching {
-            val view = viewer.camera.getViewMatrix(FloatArray(16))
-            val projection = viewer.camera.getProjectionMatrix(DoubleArray(16))
-            val projectionFloat = FloatArray(16) { projection[it].toFloat() }
-            Matrix.multiplyMM(viewProjection, 0, projectionFloat, 0, view, 0)
+            readViewProjection(viewProjection)
             Matrix.multiplyMV(clipPosition, 0, viewProjection, 0,
                 floatArrayOf(x * currentManifest.positionScale, y, z * currentManifest.positionScale, 1f), 0)
             if (clipPosition[3] <= 0f) return null
@@ -789,6 +798,89 @@ class OfflineBattleSceneView(
             if (ndcX !in -1.15f..1.15f || ndcY !in -1.15f..1.15f) return null
             (ndcX * 0.5f + 0.5f) * viewportWidth to (1f - (ndcY * 0.5f + 0.5f)) * viewportHeight
         }.getOrNull()
+    }
+
+    /**
+     * Picks the arena point under a tap, in simulator units ([BattlePosition] on the floor
+     * `y = 0`).
+     *
+     * [x] and [y] are pixels in this view's coordinate space (the [MotionEvent] system, i.e. what
+     * the Compose overlay under the same bounds reports). The camera's projection is short and
+     * perspective, and Filament 1.76.1 remaps depth, so raying the inverse matrix made far taps
+     * land closer than the player aimed. Instead the pick projects a grid of floor candidates with
+     * the exact forward matrix the projected HUD already uses and returns the candidate nearest to
+     * the tap, refined twice around the winner. What the player sees is what they get.
+     *
+     * Returns null when the scene/camera is not ready or when no floor point is on screen.
+     * Points outside the playable radius are not returned (the search is bounded to the arena).
+     * Main thread only: it reads the same camera state the frame callback writes.
+     */
+    fun pickArenaPoint(x: Float, y: Float): BattlePosition? {
+        if (released) return null
+        val currentManifest = manifest ?: return null
+        if (!arenaLoaded || viewportWidth <= 0 || viewportHeight <= 0) return null
+        if (!x.isFinite() || !y.isFinite()) return null
+        val radius = currentManifest.playableRadius
+        if (radius <= 0f) return null
+        var bestX = 0f
+        var bestZ = 0f
+        var bestDistanceSq = Float.MAX_VALUE
+        val steps = 24
+        val cell = radius * 2f / steps
+        for (i in 0..steps) {
+            for (j in 0..steps) {
+                val px = -radius + i * cell
+                val pz = -radius + j * cell
+                if (px * px + pz * pz > radius * radius) continue
+                val screen = projectBattlePosition(px, 0f, pz) ?: continue
+                val dx = screen.first - x
+                val dy = screen.second - y
+                val distanceSq = dx * dx + dy * dy
+                if (distanceSq < bestDistanceSq) {
+                    bestDistanceSq = distanceSq
+                    bestX = px
+                    bestZ = pz
+                }
+            }
+        }
+        if (bestDistanceSq == Float.MAX_VALUE) return null
+        var refine = cell
+        repeat(3) {
+            refine /= 4f
+            var nextX = bestX
+            var nextZ = bestZ
+            var nextDistanceSq = bestDistanceSq
+            for (i in -2..2) {
+                for (j in -2..2) {
+                    val px = (bestX + i * refine).coerceIn(-radius, radius)
+                    val pz = (bestZ + j * refine).coerceIn(-radius, radius)
+                    if (px * px + pz * pz > radius * radius) continue
+                    val screen = projectBattlePosition(px, 0f, pz) ?: continue
+                    val dx = screen.first - x
+                    val dy = screen.second - y
+                    val distanceSq = dx * dx + dy * dy
+                    if (distanceSq < nextDistanceSq) {
+                        nextDistanceSq = distanceSq
+                        nextX = px
+                        nextZ = pz
+                    }
+                }
+            }
+            if (nextDistanceSq < bestDistanceSq) {
+                bestDistanceSq = nextDistanceSq
+                bestX = nextX
+                bestZ = nextZ
+            }
+        }
+        return BattlePosition(bestX, bestZ)
+    }
+
+    /** Fills [out] with the camera's current column-major projection * view matrix. */
+    private fun readViewProjection(out: FloatArray) {
+        val view = viewer.camera.getViewMatrix(FloatArray(16))
+        val projection = viewer.camera.getProjectionMatrix(DoubleArray(16))
+        val projectionFloat = FloatArray(16) { projection[it].toFloat() }
+        Matrix.multiplyMM(out, 0, projectionFloat, 0, view, 0)
     }
 
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {

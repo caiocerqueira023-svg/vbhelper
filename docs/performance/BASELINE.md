@@ -48,15 +48,20 @@ Phase 0 `hs_err_pid20620.log` was a Gradle daemon native-memory failure on this 
 
 SDK layout here: `$env:LOCALAPPDATA\Android\Sdk` has `build-tools\36.0.0` and
 `platform-tools`, but neither is on `PATH` and `cmdline-tools` is not installed. Identity:
-`applicationId` is `com.github.nacabaro.vbhelper` while the Kotlin namespace is
+`applicationId` is `com.tamerslab.vbhelper` while the Kotlin namespace is
 `com.tamerslab`; the launcher is `com.tamerslab.MainActivity`. Resolve the component rather
 than hardcoding it, and never measure the `integrityCheck` variant (it appends
-`.integritycheck`).
+`.integritycheck` → `com.tamerslab.vbhelper.integritycheck`).
+
+> The values recorded in this document before 2026-11-14 were measured under the previous
+> `applicationId` (`com.github.nacabaro.vbhelper`). Only the installed package id changed
+> (ADR 0006); build type, device and workload are otherwise the same, so those numbers stay
+> the baseline. The commands below use the current id.
 
 ```powershell
 $env:PATH += ";$env:LOCALAPPDATA\Android\Sdk\platform-tools"
 adb devices -l
-adb shell cmd package resolve-activity --brief com.github.nacabaro.vbhelper
+adb shell cmd package resolve-activity --brief com.tamerslab.vbhelper
 ```
 
 ## 3. Budgets and current status
@@ -89,7 +94,7 @@ signed with the local debug key (TARGETS.md). Never report debug numbers as rele
 ### 4.1 Cold start (release, manual)
 
 ```powershell
-$pkg = "com.github.nacabaro.vbhelper"
+$pkg = "com.tamerslab.vbhelper"
 .\gradlew.bat :app:assembleRelease
 $apk = "app/build/outputs/apk/release/app-release-unsigned.apk"
 & "$env:LOCALAPPDATA\Android\Sdk\build-tools\36.0.0\apksigner.bat" sign `
@@ -261,7 +266,7 @@ Owner-reported clunky, low-framerate switching between Home and its places on th
 framestats, switch places a fixed number of times, then compute exactly as in §4.2:
 
 ```powershell
-$pkg = "com.github.nacabaro.vbhelper"
+$pkg = "com.tamerslab.vbhelper"
 adb shell dumpsys gfxinfo $pkg reset
 # Home -> Radar -> back -> Home -> Partners -> back -> Home -> Dex -> back -> Home -> Shop -> back
 adb shell dumpsys gfxinfo $pkg framestats > build-logs\perf\gfxinfo-place-switch.txt

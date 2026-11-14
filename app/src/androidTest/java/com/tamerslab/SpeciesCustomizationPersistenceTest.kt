@@ -32,7 +32,7 @@ class SpeciesCustomizationPersistenceTest {
             AppDatabase.MIGRATION_43_44, AppDatabase.MIGRATION_44_45, AppDatabase.MIGRATION_45_46, AppDatabase.MIGRATION_46_47,
             AppDatabase.MIGRATION_47_48, AppDatabase.MIGRATION_48_49, AppDatabase.MIGRATION_49_50, AppDatabase.MIGRATION_50_51,
             AppDatabase.MIGRATION_51_52, AppDatabase.MIGRATION_52_53, AppDatabase.MIGRATION_53_54,
-            AppDatabase.MIGRATION_54_55)
+            AppDatabase.MIGRATION_54_55, AppDatabase.MIGRATION_55_56)
         .openHelperFactory(PreservingMigrationFactory())
         .addCallback(IndividualIntegrity.callback).build()
 
@@ -191,7 +191,7 @@ class SpeciesCustomizationPersistenceTest {
         val profile = db.speciesProfileDao().getByCardCharacterId(100)!!
         assertEquals("dukemon", profile.appearanceKey)
         assertEquals("Legacy profile", profile.profileDescription)
-        assertEquals(55, db.openHelper.readableDatabase.version)
+        assertEquals(56, db.openHelper.readableDatabase.version)
         assertArrayEquals(byteArrayOf(1, 0), db.spriteDao().getForCharacter(100)!!.spriteIdle1)
         assertTrue(db.speciesCustomizationDao().getCatalog().isEmpty())
     }

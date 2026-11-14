@@ -1,0 +1,707 @@
+{
+  "schemaVersion": 1,
+  "lines": [
+    {
+      "id": "ev.battle_win.shared.1",
+      "event": "battle_win",
+      "text": "That was a good fight. You kept your head.",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.battle_win.1-4.1",
+      "event": "battle_win",
+      "types": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "text": "You checked on me before you cheered. That matters more than the win.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.battle_win.5-8.1",
+      "event": "battle_win",
+      "types": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "text": "We won because you didn't flinch. I'll remember that.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.battle_win.9-12.1",
+      "event": "battle_win",
+      "types": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "text": "Good call on the opening. The battle turned there.",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.battle_win.13-16.1",
+      "event": "battle_win",
+      "types": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "text": "We make a good team. I'm glad it was us.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.battle_loss.shared.1",
+      "event": "battle_loss",
+      "text": "We lost. Let's get somewhere safe and think.",
+      "moodDelta": -1
+    },
+    {
+      "id": "ev.battle_loss.1-4.1",
+      "event": "battle_loss",
+      "types": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "text": "You're hurt. Forget the fight and let me see.",
+      "moodDelta": -2
+    },
+    {
+      "id": "ev.battle_loss.5-8.1",
+      "event": "battle_loss",
+      "types": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "text": "We lost the round, not the war. Next time we go again.",
+      "moodDelta": -1
+    },
+    {
+      "id": "ev.battle_loss.9-12.1",
+      "event": "battle_loss",
+      "types": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "text": "We lost the data, not the lesson. I know what went wrong.",
+      "moodDelta": -1
+    },
+    {
+      "id": "ev.battle_loss.13-16.1",
+      "event": "battle_loss",
+      "types": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "text": "It's alright. We're still here, and that's enough for tonight.",
+      "moodDelta": 0
+    },
+    {
+      "id": "ev.injury.shared.1",
+      "event": "injury",
+      "text": "I'm still standing. Barely.",
+      "moodDelta": -1
+    },
+    {
+      "id": "ev.injury.1-4.1",
+      "event": "injury",
+      "types": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "text": "It hurts worse when you look worried. I'll be fine, really.",
+      "moodDelta": -1
+    },
+    {
+      "id": "ev.injury.5-8.1",
+      "event": "injury",
+      "types": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "text": "A scratch. Next time I'll block it.",
+      "moodDelta": -1
+    },
+    {
+      "id": "ev.injury.9-12.1",
+      "event": "injury",
+      "types": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "text": "I'll heal slower than I'd like. Don't rush me.",
+      "moodDelta": -2
+    },
+    {
+      "id": "ev.injury.13-16.1",
+      "event": "injury",
+      "types": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "text": "Don't fuss. I just need a quiet minute.",
+      "moodDelta": -1
+    },
+    {
+      "id": "ev.heal.shared.1",
+      "event": "heal",
+      "text": "The pain's gone. That's a strange feeling.",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.heal.1-4.1",
+      "event": "heal",
+      "types": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "text": "You stayed while I recovered. Thank you.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.heal.5-8.1",
+      "event": "heal",
+      "types": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "text": "Good as new. Let's move before something else happens.",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.heal.9-12.1",
+      "event": "heal",
+      "types": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "text": "Recovery is its own lesson. I'll remember how this felt.",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.heal.13-16.1",
+      "event": "heal",
+      "types": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "text": "Feeling better already. Mostly because you're here.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.evolution.shared.1",
+      "event": "evolution",
+      "text": "I changed. It feels bigger than I expected.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.evolution.1-4.1",
+      "event": "evolution",
+      "types": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "text": "I grew, and you were the first one I wanted to show.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.evolution.5-8.1",
+      "event": "evolution",
+      "types": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "text": "Look at me now! Let's test this new strength.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.evolution.9-12.1",
+      "event": "evolution",
+      "types": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "text": "A new shape, a new set of limits. I'll learn them.",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.evolution.13-16.1",
+      "event": "evolution",
+      "types": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "text": "I'm different, but I'm still me. You'll help me remember that?",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.degeneration.shared.1",
+      "event": "degeneration",
+      "text": "I'm smaller again. It's strange, being back here.",
+      "moodDelta": -1
+    },
+    {
+      "id": "ev.degeneration.1-4.1",
+      "event": "degeneration",
+      "types": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "text": "Don't look so sad. I'm still me, just fewer pieces.",
+      "moodDelta": -1
+    },
+    {
+      "id": "ev.degeneration.5-8.1",
+      "event": "degeneration",
+      "types": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "text": "One step back. I'll climb it again.",
+      "moodDelta": -1
+    },
+    {
+      "id": "ev.degeneration.9-12.1",
+      "event": "degeneration",
+      "types": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "text": "Everything I learned is still here. The shape doesn't matter.",
+      "moodDelta": 0
+    },
+    {
+      "id": "ev.degeneration.13-16.1",
+      "event": "degeneration",
+      "types": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "text": "I'll need help with small things for a while. Is that okay?",
+      "moodDelta": -1
+    },
+    {
+      "id": "ev.milestone.shared.1",
+      "event": "milestone",
+      "text": "We've come a long way. I can feel it.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.milestone.1-4.1",
+      "event": "milestone",
+      "types": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "text": "Look how far we've come together. I'm proud of us.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.milestone.5-8.1",
+      "event": "milestone",
+      "types": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "text": "That's a mark worth making. Let's make another.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.milestone.9-12.1",
+      "event": "milestone",
+      "types": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "text": "A milestone is only a marker. The road continues.",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.milestone.13-16.1",
+      "event": "milestone",
+      "types": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "text": "We should celebrate. Properly, with everyone.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.quest_offer.shared.1",
+      "event": "quest_offer",
+      "text": "There's work worth doing, if you're willing.",
+      "moodDelta": 0
+    },
+    {
+      "id": "ev.quest_offer.1-4.1",
+      "event": "quest_offer",
+      "types": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "text": "Someone needs help. That's reason enough, isn't it?",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.quest_offer.5-8.1",
+      "event": "quest_offer",
+      "types": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "text": "A challenge. Say the words and I'll be beside you.",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.quest_offer.9-12.1",
+      "event": "quest_offer",
+      "types": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "text": "The details matter on this one. Let me read them again.",
+      "moodDelta": 0
+    },
+    {
+      "id": "ev.quest_offer.13-16.1",
+      "event": "quest_offer",
+      "types": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "text": "If people are counting on us, we should go. Together.",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.quest_complete.shared.1",
+      "event": "quest_complete",
+      "text": "It's done. Let's take a moment before the next road.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.quest_complete.1-4.1",
+      "event": "quest_complete",
+      "types": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "text": "We helped someone today. I won't forget their face.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.quest_complete.5-8.1",
+      "event": "quest_complete",
+      "types": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "text": "A clean finish. That's what I call a good fight.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.quest_complete.9-12.1",
+      "event": "quest_complete",
+      "types": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "text": "Every step worked. Good planning, Tamer.",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.quest_complete.13-16.1",
+      "event": "quest_complete",
+      "types": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "text": "I'm proud of what we did. And I'm glad we did it as a team.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.item_found.shared.1",
+      "event": "item_found",
+      "text": "Look at this. The road keeps giving.",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.item_found.1-4.1",
+      "event": "item_found",
+      "types": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "text": "Someone must have lost this. Should we try to return it?",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.item_found.5-8.1",
+      "event": "item_found",
+      "types": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "text": "Useful. We'll put it to work.",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.item_found.9-12.1",
+      "event": "item_found",
+      "types": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "text": "Worth more than it looks. I'd keep it close.",
+      "moodDelta": 0
+    },
+    {
+      "id": "ev.item_found.13-16.1",
+      "event": "item_found",
+      "types": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "text": "Finders keepers, unless the others need it more.",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.diary.shared.1",
+      "event": "diary",
+      "text": "I wrote today down so we don't forget it.",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.diary.1-4.1",
+      "event": "diary",
+      "types": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "text": "I wrote about the kind thing you did. Just in case you forget.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.diary.5-8.1",
+      "event": "diary",
+      "types": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "text": "I wrote about the fight. It was a good one.",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.diary.9-12.1",
+      "event": "diary",
+      "types": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "text": "I wrote down what we learned. Future us will thank us.",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.diary.13-16.1",
+      "event": "diary",
+      "types": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "text": "I wrote about the quiet parts. Those are my favorite.",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.wild_depart.shared.1",
+      "event": "wild_depart",
+      "text": "That wild one left. Some roads aren't meant to cross.",
+      "moodDelta": -1
+    },
+    {
+      "id": "ev.wild_depart.1-4.1",
+      "event": "wild_depart",
+      "types": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "text": "They looked frightened when they left. I hope they're okay.",
+      "moodDelta": -1
+    },
+    {
+      "id": "ev.wild_depart.5-8.1",
+      "event": "wild_depart",
+      "types": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "text": "They made their choice. I won't chase it.",
+      "moodDelta": -1
+    },
+    {
+      "id": "ev.wild_depart.9-12.1",
+      "event": "wild_depart",
+      "types": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "text": "We'll mark their trail and see if it loops back.",
+      "moodDelta": 0
+    },
+    {
+      "id": "ev.wild_depart.13-16.1",
+      "event": "wild_depart",
+      "types": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "text": "It's quieter now. I don't like it.",
+      "moodDelta": -2
+    },
+    {
+      "id": "ev.recruit_join.shared.1",
+      "event": "recruit_join",
+      "text": "A new contact in the Wild tab. The circle grows.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.recruit_join.1-4.1",
+      "event": "recruit_join",
+      "types": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "text": "They trusted us. Let's be worthy of it.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.recruit_join.5-8.1",
+      "event": "recruit_join",
+      "types": [
+        5,
+        6,
+        7,
+        8
+      ],
+      "text": "A new ally! I like our odds better already.",
+      "moodDelta": 2
+    },
+    {
+      "id": "ev.recruit_join.9-12.1",
+      "event": "recruit_join",
+      "types": [
+        9,
+        10,
+        11,
+        12
+      ],
+      "text": "A useful friendship. Let's not waste it.",
+      "moodDelta": 1
+    },
+    {
+      "id": "ev.recruit_join.13-16.1",
+      "event": "recruit_join",
+      "types": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "text": "The more, the warmer. Let's welcome them properly.",
+      "moodDelta": 2
+    }
+  ]
+}

@@ -1,73 +1,74 @@
-﻿package com.tamerslab.settings.ui
+package com.tamerslab.settings.ui
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.Switch
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.tamerslab.components.TopBanner
+import com.tamerslab.R
+import com.tamerslab.audio.AppMusicController
+import com.tamerslab.chat.ChatApiProvider
+import com.tamerslab.chat.DigimonPersonaBuilder
+import com.tamerslab.components.BackgroundMusicControlPanel
 import com.tamerslab.components.LabeledSwitchRow
+import com.tamerslab.components.TopBanner
 import com.tamerslab.components.VitalSectionBar
 import com.tamerslab.components.cyberFrame
-import androidx.compose.foundation.background
-import androidx.compose.foundation.selection.selectable
-import com.tamerslab.components.BackgroundMusicControlPanel
-import com.tamerslab.audio.AppMusicController
 import com.tamerslab.navigation.AppRoute
-import com.tamerslab.navigation.NavigationItems
+import com.tamerslab.settings.data.DEFAULT_ROLEPLAY_TEMPERATURE
+import com.tamerslab.settings.ui.dialogs.LanguageDialog
 import com.tamerslab.settings.ui.dialogs.LlmSettingsDialog
 import com.tamerslab.settings.ui.dialogs.PromptTemplateDialog
-import com.tamerslab.settings.ui.dialogs.LanguageDialog
-import com.tamerslab.chat.DigimonPersonaBuilder
-import com.tamerslab.R
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.TextButton
+import com.tamerslab.species.SpritePreference
+import com.tamerslab.species.ui.card.CardBatchImportPanel
 import com.tamerslab.ui.theme.AppFont
-import com.tamerslab.ui.theme.appFontFamily
-import com.tamerslab.chat.ChatApiProvider
-import com.tamerslab.settings.data.DEFAULT_ROLEPLAY_TEMPERATURE
-import com.tamerslab.ui.theme.VitalCyan
-import com.tamerslab.ui.theme.SurfaceStroke
 import com.tamerslab.ui.theme.TextPrimaryOnDark
 import com.tamerslab.ui.theme.TextSecondaryOnDark
-import com.tamerslab.species.ui.card.CardBatchImportPanel
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import com.tamerslab.ui.theme.VitalCyan
+import com.tamerslab.ui.theme.appFontFamily
 
-
+/**
+ * Settings is ordered the way a setup-first app is scanned: resources the app needs, then how it
+ * looks and sounds, then who is using it, then its collections and companion surfaces, then data,
+ * then the developer switch, and finally app information. Each section header is the grouping
+ * boundary; rows and section chrome are unchanged.
+ */
 @Composable
 fun SettingsScreen(
     navController: NavController,
@@ -101,8 +102,9 @@ fun SettingsScreen(
     val spritePreference by settingsScreenController.spritePreference.collectAsStateWithLifecycle()
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showFontDialog by remember { mutableStateOf(false) }
+    var showTamerNameDialog by remember { mutableStateOf(false) }
     var showRestoreConfirmation by remember { mutableStateOf(false) }
-    var showSpeciesLibrary by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    var showSpeciesLibrary by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -124,6 +126,7 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 24.dp)
         ) {
+            // 1. What the app needs to talk to the watch and read cards.
             SettingsSection(title = stringResource(R.string.settings_section_nfc))
             SettingsEntry(
                 title = stringResource(R.string.settings_import_apk_title),
@@ -141,7 +144,11 @@ fun SettingsScreen(
             }
             CardBatchImportPanel(cardImports, settingsScreenController::stopCardImport,
                 settingsScreenController::dismissCardImportResult)
+            LabeledSwitchRow(stringResource(R.string.ui_ask_card_origin), promptOriginAtImport,
+                settingsScreenController::setPromptOriginAtImportTime, Modifier.padding(horizontal = 16.dp),
+                description = stringResource(R.string.ui_card_origin_toggle_description))
 
+            // 2. How the app looks and sounds.
             SettingsSection(title = stringResource(R.string.settings_section_appearance))
             AppThemePicker(currentTheme, settingsScreenController::setAppTheme)
             SettingsEntry(
@@ -150,6 +157,7 @@ fun SettingsScreen(
             ) {
                 showFontDialog = true
             }
+
             SettingsSection(title = stringResource(R.string.immersion_audio))
             BackgroundMusicControlPanel(
                 musicController = musicController,
@@ -158,99 +166,101 @@ fun SettingsScreen(
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
+            // 3. Who is using the app.
             SettingsSection(title = stringResource(R.string.immersion_tamer_preferences))
             SettingsEntry(
-                title = stringResource(R.string.ui_language),
-                description = when (currentLanguage) {
-                    "en" -> "English"
-                    "pt-BR" -> "Português (Brasil)"
-                    "ja" -> "æ—¥æœ¬èªž"
-                    else -> stringResource(R.string.immersion_system_language)
-                }
-            ) {
-                showLanguageDialog = true
-            }
-            var tamerName by remember(currentTamerName) { mutableStateOf(currentTamerName) }
-            OutlinedTextField(
-                value = tamerName,
-                onValueChange = { tamerName = it },
-                label = { Text(stringResource(R.string.ui_tamer_name)) },
-                supportingText = { Text(stringResource(R.string.ui_tamer_name_help)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
-            )
-            SettingsEntry(
-                title = stringResource(R.string.ui_save_tamer_name),
+                title = stringResource(R.string.ui_tamer_name),
                 description = stringResource(
                     R.string.ui_current_name,
                     currentTamerName.ifBlank { stringResource(R.string.ui_not_defined) }
                 )
             ) {
-                settingsScreenController.saveTamerName(tamerName)
+                showTamerNameDialog = true
             }
-            SettingsSection(title = stringResource(R.string.settings_section_llm_chat))
             SettingsEntry(
-                title = stringResource(R.string.settings_configure_llm_title),
-                description = stringResource(R.string.settings_configure_llm_desc)
+                title = stringResource(R.string.ui_language),
+                description = when (currentLanguage) {
+                    "en" -> "English"
+                    "pt-BR" -> "Português (Brasil)"
+                    "ja" -> "日本語"
+                    else -> stringResource(R.string.immersion_system_language)
+                }
             ) {
-                settingsScreenController.onClickConfigureLlm()
+                showLanguageDialog = true
             }
+
+            // 4. What the collection is made of.
+            SettingsSection(title = stringResource(R.string.ui_species_section))
+            SettingsEntry(title = stringResource(R.string.species_library), description = stringResource(R.string.species_library_hint)) {
+                showSpeciesLibrary = true
+            }
+            Text(stringResource(R.string.sprite_preference_note), style = MaterialTheme.typography.bodySmall,
+                color = TextSecondaryOnDark, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+            SpritePreferenceOption(
+                title = stringResource(R.string.sprite_preference_vb_title),
+                description = stringResource(R.string.sprite_preference_vb_description),
+                selected = spritePreference == SpritePreference.VB_FIRST,
+                onSelect = { settingsScreenController.setSpritePreference(SpritePreference.VB_FIRST) })
+            SpritePreferenceOption(
+                title = stringResource(R.string.sprite_preference_dot_title),
+                description = stringResource(R.string.sprite_preference_dot_description),
+                selected = spritePreference == SpritePreference.DOT_FIRST,
+                onSelect = { settingsScreenController.setSpritePreference(SpritePreference.DOT_FIRST) })
+
+            // 5. Companion knowledge and its connection.
+            SettingsSection(title = stringResource(R.string.settings_section_llm_chat))
             SettingsEntry(
                 title = stringResource(R.string.ui_lorebook_title),
                 description = stringResource(R.string.ui_lorebook_description)
             ) {
                 navController.navigate(AppRoute.Lorebook)
             }
-
-            SettingsSection(title = stringResource(R.string.ui_species_section))
-            SettingsEntry(title = stringResource(R.string.species_library), description = stringResource(R.string.species_library_hint)) {
-                showSpeciesLibrary = true
+            if (debugSettings.enabled && debugSettings.legacyLlmChat) {
+                SettingsEntry(
+                    title = stringResource(R.string.settings_configure_llm_title),
+                    description = stringResource(R.string.settings_configure_llm_desc)
+                ) {
+                    settingsScreenController.onClickConfigureLlm()
+                }
             }
-            LabeledSwitchRow(stringResource(R.string.ui_ask_card_origin), promptOriginAtImport,
-                settingsScreenController::setPromptOriginAtImportTime, Modifier.padding(horizontal = 16.dp),
-                description = stringResource(R.string.ui_card_origin_toggle_description))
 
-            SettingsSection(title = stringResource(R.string.sprite_preference_section))
-            Text(stringResource(R.string.sprite_preference_note), style = MaterialTheme.typography.bodySmall,
-                color = TextSecondaryOnDark, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
-            SpritePreferenceOption(
-                title = stringResource(R.string.sprite_preference_vb_title),
-                description = stringResource(R.string.sprite_preference_vb_description),
-                selected = spritePreference == com.tamerslab.species.SpritePreference.VB_FIRST,
-                onSelect = { settingsScreenController.setSpritePreference(com.tamerslab.species.SpritePreference.VB_FIRST) })
-            SpritePreferenceOption(
-                title = stringResource(R.string.sprite_preference_dot_title),
-                description = stringResource(R.string.sprite_preference_dot_description),
-                selected = spritePreference == com.tamerslab.species.SpritePreference.DOT_FIRST,
-                onSelect = { settingsScreenController.setSpritePreference(com.tamerslab.species.SpritePreference.DOT_FIRST) })
+            // 6. Records maintenance before developer tooling.
+            SettingsSection(title = stringResource(R.string.settings_section_data))
+            SettingsEntry(
+                title = stringResource(R.string.settings_export_data_title),
+                description = stringResource(R.string.settings_export_data_desc)
+            ) {
+                settingsScreenController.onClickOpenDirectory()
+            }
+            SettingsEntry(
+                title = stringResource(R.string.settings_import_data_title),
+                description = stringResource(R.string.settings_import_data_desc)
+            ) {
+                showRestoreConfirmation = true
+            }
 
+            // 7. Developer machinery: one master switch, subordinate controls only while enabled.
             SettingsSection(title = stringResource(R.string.settings_section_debug))
-            Row(Modifier.fillMaxWidth().heightIn(min = 48.dp)
-                .semantics(mergeDescendants = true) {}
-                .toggleable(value = debugSettings.enabled, role = Role.Switch,
-                    onValueChange = settingsScreenController::setDebugEnabled)
-                .padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f).padding(end = 12.dp)) {
-                    Text(stringResource(R.string.immersion_debug_title), style = MaterialTheme.typography.titleSmall)
-                    Text(stringResource(R.string.immersion_debug_description), style = MaterialTheme.typography.bodySmall,
-                        color = TextSecondaryOnDark)
-                }
-                Switch(checked = debugSettings.enabled, onCheckedChange = null)
-            }
+            DebugSwitchRow(
+                title = stringResource(R.string.immersion_debug_title),
+                description = stringResource(R.string.immersion_debug_description),
+                checked = debugSettings.enabled,
+                onCheckedChange = settingsScreenController::setDebugEnabled
+            )
             if (debugSettings.enabled) {
-                Row(Modifier.fillMaxWidth().heightIn(min = 48.dp)
-                    .semantics(mergeDescendants = true) {}
-                    .toggleable(value = debugSettings.instantScan, role = Role.Switch,
-                        onValueChange = settingsScreenController::setDebugInstantScan)
-                    .padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f).padding(end = 12.dp)) {
-                        Text(stringResource(R.string.settings_debug_instant_scan_title),
-                            style = MaterialTheme.typography.titleSmall)
-                        Text(stringResource(R.string.settings_debug_instant_scan_description),
-                            style = MaterialTheme.typography.bodySmall, color = TextSecondaryOnDark)
-                    }
-                    Switch(checked = debugSettings.instantScan, onCheckedChange = null)
-                }
+                LabeledSwitchRow(
+                    stringResource(R.string.settings_debug_legacy_llm_title),
+                    debugSettings.legacyLlmChat,
+                    settingsScreenController::setDebugLegacyLlm,
+                    Modifier.padding(horizontal = 16.dp),
+                    description = stringResource(R.string.settings_debug_legacy_llm_description)
+                )
+                DebugSwitchRow(
+                    title = stringResource(R.string.settings_debug_instant_scan_title),
+                    description = stringResource(R.string.settings_debug_instant_scan_description),
+                    checked = debugSettings.instantScan,
+                    onCheckedChange = settingsScreenController::setDebugInstantScan
+                )
                 SettingsEntry(title = stringResource(R.string.ui_personality_prompt),
                     description = stringResource(R.string.ui_edit_prompt_description)) {
                     settingsScreenController.onClickConfigurePromptTemplate()
@@ -265,6 +275,7 @@ fun SettingsScreen(
                 }
             }
 
+            // 8. App information.
             SettingsSection(title = stringResource(R.string.settings_section_about))
             SettingsEntry(
                 title = stringResource(R.string.settings_credits_title),
@@ -282,26 +293,23 @@ fun SettingsScreen(
                 )
                 context.startActivity(browserIntent)
             }
-
-            SettingsSection(title = stringResource(R.string.settings_section_data))
-            SettingsEntry(
-                title = stringResource(R.string.settings_export_data_title),
-                description = stringResource(R.string.settings_export_data_desc)
-            ) {
-                settingsScreenController.onClickOpenDirectory()
-            }
-            SettingsEntry(
-                title = stringResource(R.string.settings_import_data_title),
-                description = stringResource(R.string.settings_import_data_desc)
-            ) {
-                showRestoreConfirmation = true
-            }
         }
     }
 
     if (showSpeciesLibrary) com.tamerslab.components.SpeciesPickerDialog(
         speciesNames = emptyList(), onDismiss = { showSpeciesLibrary = false }, onSpeciesSelected = {},
         editOnSelect = true, title = stringResource(R.string.species_library))
+
+    if (showTamerNameDialog) {
+        TamerNameDialog(
+            currentName = currentTamerName,
+            onSave = {
+                showTamerNameDialog = false
+                settingsScreenController.saveTamerName(it)
+            },
+            onDismiss = { showTamerNameDialog = false }
+        )
+    }
 
     if (showRestoreConfirmation) AlertDialog(
         onDismissRequest = { showRestoreConfirmation = false },
@@ -372,7 +380,7 @@ fun SettingsScreen(
                 Column(Modifier.verticalScroll(rememberScrollState())) {
                     AppFont.entries.forEach { appFont ->
                         Row(
-                            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+                            verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .selectable(selected = currentFont == appFont, role = Role.RadioButton, onClick = {
@@ -400,6 +408,60 @@ fun SettingsScreen(
                 }
             }
         )
+    }
+}
+
+/**
+ * The Tamer name is edited in a dialog, like the language and font choices, instead of as an inline
+ * field plus a separate save row in the middle of the list.
+ */
+@Composable
+private fun TamerNameDialog(
+    currentName: String,
+    onSave: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var name by remember(currentName) { mutableStateOf(currentName) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.ui_tamer_name)) },
+        text = {
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                singleLine = true,
+                supportingText = { Text(stringResource(R.string.ui_tamer_name_help)) },
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(name) }) { Text(stringResource(R.string.ui_save)) }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.ui_cancel)) }
+        }
+    )
+}
+
+@Composable
+private fun DebugSwitchRow(
+    title: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit
+) {
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 48.dp)
+            .semantics(mergeDescendants = true) {}
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onCheckedChange)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(Modifier.weight(1f).padding(end = 12.dp)) {
+            Text(title, style = MaterialTheme.typography.titleSmall)
+            Text(description, style = MaterialTheme.typography.bodySmall, color = TextSecondaryOnDark)
+        }
+        Switch(checked = checked, onCheckedChange = null)
     }
 }
 
@@ -476,6 +538,3 @@ private fun SpritePreferenceOption(title: String, description: String, selected:
         }
     }
 }
-
-
-

@@ -102,6 +102,35 @@ class SpriteExtrusionGlbTest {
         assertEquals(2, document.getJSONArray("textures").length())
     }
 
+    /**
+     * The drop shadow must stay a blended, *lit* material.
+     *
+     * With the pinned gltfio 1.76.1 an unlit blended primitive of this generated asset never
+     * reaches the color buffer on the SM-A346M (it renders as nothing), which is exactly how the
+     * old contact shadow silently disappeared. Enabling lighting on that one material fixes the
+     * blend path; its albedo is black, so the quad still renders as a shadow.
+     */
+    @Test
+    fun dropShadowUsesBlendedLightingMaterialSoItActuallyRenders() {
+        val bytes = SpriteExtrusionGlb.build(
+            mapOf("idle" to ResidentFrameImage(intArrayOf(0xFFFFFFFF.toInt()), 1, 1))
+        )
+        val header = ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN)
+        header.position(12)
+        val jsonLength = header.int
+        header.int
+        val document = JSONObject(String(bytes, 20, jsonLength, Charsets.UTF_8).trim())
+        val materials = document.getJSONArray("materials")
+        val shadow = (0 until materials.length())
+            .map { materials.getJSONObject(it) }
+            .single { it.getString("name") == "contact_shadow" }
+        assertEquals("BLEND", shadow.getString("alphaMode"))
+        assertTrue("drop shadow must not be unlit", !shadow.has("extensions"))
+        val factor = shadow.getJSONObject("pbrMetallicRoughness").getJSONArray("baseColorFactor")
+        assertEquals(0.0, factor.getDouble(0), 1e-6)
+        assertTrue(factor.getDouble(3) > 0.3)
+    }
+
     @Test
     fun identicalPoseImagesReuseOneMeshAndTexture() {
         val frame = ResidentFrameImage(

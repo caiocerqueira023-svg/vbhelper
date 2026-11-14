@@ -556,10 +556,11 @@ non-usable partners are excluded.
 - Empty state: with no active partner and no favourites, Home shows "No partner in the Digifarm yet"
   with a direct route to Storage.
 
-**Deliberately left alone:** the legacy farm tables, the World-tab DigifarmScreen, farm group chats
-and the DigiLine farm threads. They are no longer reachable from Home and no longer drive the home
-surface, but removing stored data or the routes is a separate, riskier change that the owner did not
-ask for. Migration/deletion should be an explicit follow-up if wanted.
+**Follow-up completed (2026-11-07):** the owner asked for the visible leftovers to go. The routes and
+screens are now removed as well — DigiLine's farm threads, `FarmGroupScreen`, the World-tab
+`DigifarmScreen` (and with it the Radar|Digifarm tabs on the legacy `World` alias) and the Storage farm
+captions are gone. The legacy farm tables and their data are still left untouched, as decided here;
+only the UI surfaces were retired.
 
 **Verification on device (Galaxy A34, Android 15):** roster resolves 12/12 (active partner plus
 favourites); the residents' extruded meshes build; the island animates (≈68 mean absolute pixel

@@ -5,7 +5,7 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 
 /** The installed application package id (the namespace is `com.tamerslab`). */
-internal const val TARGET_PACKAGE = "com.github.nacabaro.vbhelper"
+internal const val TARGET_PACKAGE = "com.tamerslab.vbhelper"
 
 /**
  * Best-effort UI journeys shared by baseline-profile generation and the

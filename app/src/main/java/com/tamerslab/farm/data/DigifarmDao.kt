@@ -13,10 +13,8 @@ import com.tamerslab.domain.digifarm.FarmReadState
 import com.tamerslab.domain.digifarm.FarmRelationship
 import com.tamerslab.domain.digifarm.FarmMemory
 import com.tamerslab.domain.digifarm.FarmResident
-import com.tamerslab.dtos.DigilineFarmThread
 import com.tamerslab.dtos.DigilineStorageThread
 import com.tamerslab.dtos.FarmResidentWithDetails
-import com.tamerslab.dtos.FarmAssignment
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -73,9 +71,6 @@ interface DigifarmDao {
 
     @Query("SELECT uc.id FROM UserCharacter uc JOIN FarmResident fr ON fr.individualId = uc.individualId")
     fun observeResidentCharacterIds(): Flow<List<Long>>
-
-    @Query("SELECT uc.id AS characterId, f.id AS farmId, f.name AS farmName FROM FarmResident fr JOIN Farm f ON f.id = fr.farmId JOIN UserCharacter uc ON uc.individualId = fr.individualId WHERE f.archivedAt IS NULL")
-    fun observeAssignments(): Flow<List<FarmAssignment>>
 
     @Query("SELECT * FROM FarmResident WHERE farmId = :farmId")
     suspend fun getResidentEntities(farmId: String): List<FarmResident>
@@ -168,9 +163,9 @@ interface DigifarmDao {
         SELECT uc.id AS characterId, uc.individualId AS individualId,
                di.nickname AS nickname, sp.speciesName AS speciesName,
                s.spriteIdle1 AS spriteIdle, s.width AS spriteWidth, s.height AS spriteHeight,
-               (SELECT content FROM ChatMessageEntity cm WHERE cm.individualId = uc.individualId ORDER BY cm.id DESC LIMIT 1) AS lastMessage,
-               (SELECT timestamp FROM ChatMessageEntity cm WHERE cm.individualId = uc.individualId ORDER BY cm.id DESC LIMIT 1) AS lastTimestamp,
-               (SELECT COUNT(*) FROM ChatMessageEntity cm WHERE cm.individualId = uc.individualId AND cm.role = 'assistant' AND cm.isRead = 0) AS unreadCount
+               (SELECT content FROM ChatMessageEntity cm WHERE cm.individualId = uc.individualId AND cm.kind IS NOT NULL ORDER BY cm.id DESC LIMIT 1) AS lastMessage,
+               (SELECT timestamp FROM ChatMessageEntity cm WHERE cm.individualId = uc.individualId AND cm.kind IS NOT NULL ORDER BY cm.id DESC LIMIT 1) AS lastTimestamp,
+               (SELECT COUNT(*) FROM ChatMessageEntity cm WHERE cm.individualId = uc.individualId AND cm.role = 'assistant' AND cm.kind IS NOT NULL AND cm.isRead = 0) AS unreadCount
         FROM UserCharacter uc
         JOIN DigimonIndividual di ON di.individualId = uc.individualId
         JOIN CardCharacter cc ON cc.id = uc.charId
@@ -181,18 +176,4 @@ interface DigifarmDao {
         """
     )
     fun observeStorageThreads(): Flow<List<DigilineStorageThread>>
-
-    @Query(
-        """
-        SELECT f.id AS farmId, f.name AS farmName,
-               (SELECT COUNT(*) FROM FarmResident fr WHERE fr.farmId = f.id) AS residentCount,
-               (SELECT body FROM FarmMessage fm WHERE fm.farmId = f.id ORDER BY fm.sequence DESC LIMIT 1) AS lastMessage,
-               (SELECT timestamp FROM FarmMessage fm WHERE fm.farmId = f.id ORDER BY fm.sequence DESC LIMIT 1) AS lastTimestamp,
-               MAX(0, (SELECT COALESCE(MAX(sequence), 0) FROM FarmMessage fm WHERE fm.farmId = f.id) -
-                      COALESCE((SELECT lastReadSequence FROM FarmReadState rs WHERE rs.farmId = f.id), 0)) AS unreadCount
-        FROM Farm f WHERE f.archivedAt IS NULL
-        ORDER BY COALESCE(lastTimestamp, f.createdAt) DESC
-        """
-    )
-    fun observeFarmThreads(): Flow<List<DigilineFarmThread>>
 }

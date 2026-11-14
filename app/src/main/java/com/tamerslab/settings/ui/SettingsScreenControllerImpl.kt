@@ -1,4 +1,4 @@
-﻿package com.tamerslab.settings.ui
+package com.tamerslab.settings.ui
 
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
@@ -55,6 +55,7 @@ class SettingsScreenControllerImpl(
     val debugSettings = debugSettingsRepository.state
     fun setDebugEnabled(enabled: Boolean) = debugSettingsRepository.setEnabled(enabled)
     fun setDebugInstantScan(enabled: Boolean) = debugSettingsRepository.setInstantScan(enabled)
+    fun setDebugLegacyLlm(enabled: Boolean) = debugSettingsRepository.setLegacyLlmChat(enabled)
     private val spritePreferences = com.tamerslab.di.AppServices.spritePreferenceRepository
     val spritePreference = spritePreferences.preference
     fun setSpritePreference(preference: com.tamerslab.species.SpritePreference) {

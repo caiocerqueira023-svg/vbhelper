@@ -19,6 +19,9 @@ import java.nio.charset.StandardCharsets
  */
 object TimeStrangerEdits {
     const val NAME_WINDOW_BYTES = 32
+
+    /** Personality byte offset from the record name offset, read by TimeStrangerSaveReader. */
+    const val PERSONALITY_OFFSET = 0xEE
     private const val MAX_NAME_BYTES = NAME_WINDOW_BYTES - 1
 
     fun renameIndividual(sourceBytes: ByteArray, recordKey: String, newNameBytes: ByteArray): ByteArray {
@@ -57,6 +60,89 @@ object TimeStrangerEdits {
         } finally {
             decoded.fill(0)
             plain.fill(0)
+        }
+    }
+
+    /**
+     * Writes one stored personality id (1..16) on one active party/bank record.
+     *
+     * Mirrors the rename safety contract: only the personality byte at `nameOffset + 0xEE`
+     * changes, the candidate is re-encoded with the game's own container codec and re-read,
+     * and every other byte of the document must be identical to the source. Farm records and
+     * inactive/needs-review records are refused because only active party/bank records were
+     * validated for edits. The caller retains the journal, backup and readback duties; this
+     * method writes no files.
+     */
+    fun setPersonality(sourceBytes: ByteArray, recordKey: String, nativePersonalityId: Int): ByteArray {
+        require(sourceBytes.size == TimeStrangerSaveReader.FILE_BYTES) { "Not a Time Stranger document" }
+        require(nativePersonalityId in 1..16) { "Personality id must be 1..16" }
+        val observation = TimeStrangerSaveReader().read(sourceBytes)
+        val record = observation.records.singleOrNull { it.recordKey == recordKey }
+            ?: throw IllegalArgumentException("No record $recordKey in this document")
+        require(record.container != SaveContainer.FARM) { "Farm records are outside transfer scope" }
+        require(record.membership == RecordMembership.ACTIVE_RECORD) { "Only active party/bank records are editable" }
+        require(record.personalityId != nativePersonalityId) {
+            "Record $recordKey already stores personality $nativePersonalityId"
+        }
+
+        val decoded = TimeStrangerContainer.decode(sourceBytes)
+        val plain = decoded.copyOf()
+        try {
+            val offset = recordKey.substringAfter(':').toInt()
+            val personalityOffset = offset + 4 + PERSONALITY_OFFSET
+            require(personalityOffset in plain.indices) { "Personality byte is out of range" }
+            require((plain[personalityOffset].toInt() and 255) == record.personalityId) {
+                "Personality byte changed since the record was read"
+            }
+            plain[personalityOffset] = nativePersonalityId.toByte()
+
+            val candidate = TimeStrangerContainer.encode(plain)
+            verifyPersonalityEdit(sourceBytes, candidate, personalityOffset, nativePersonalityId, record)
+            plain.fill(0)
+            return candidate
+        } finally {
+            decoded.fill(0)
+            plain.fill(0)
+        }
+    }
+
+    /** The candidate must differ only at the personality byte and re-read with the new value. */
+    private fun verifyPersonalityEdit(
+        sourceBytes: ByteArray,
+        candidate: ByteArray,
+        personalityOffset: Int,
+        expectedPersonalityId: Int,
+        sourceRecord: ObservedDigimon
+    ) {
+        val sourceDecoded = TimeStrangerContainer.decode(sourceBytes)
+        val candidateDecoded = TimeStrangerContainer.decode(candidate)
+        try {
+            for (index in candidateDecoded.indices) {
+                if (index == personalityOffset) continue
+                check(candidateDecoded[index] == sourceDecoded[index]) {
+                    "Candidate changed a byte outside the personality field at 0x${index.toString(16)}"
+                }
+            }
+        } finally {
+            sourceDecoded.fill(0)
+            candidateDecoded.fill(0)
+        }
+
+        val reread = TimeStrangerSaveReader().read(candidate)
+        val updated = reread.records.singleOrNull { it.recordKey == sourceRecord.recordKey }
+            ?: throw IllegalStateException("Candidate lost record ${sourceRecord.recordKey}")
+        check(updated.personalityId == expectedPersonalityId) {
+            "Candidate re-read personality ${updated.personalityId}, expected $expectedPersonalityId"
+        }
+        check(updated.membership == RecordMembership.ACTIVE_RECORD) {
+            "Candidate re-read is not an active record"
+        }
+        check(updated.container == sourceRecord.container) { "Candidate re-read changed container" }
+        check(updated.storedName == sourceRecord.storedName &&
+            updated.nativeSpeciesId == sourceRecord.nativeSpeciesId &&
+            updated.level == sourceRecord.level &&
+            updated.identityCandidate == sourceRecord.identityCandidate) {
+            "Candidate re-read changed record fields"
         }
     }
 

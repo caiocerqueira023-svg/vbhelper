@@ -1,4 +1,4 @@
-﻿package com.tamerslab.farm.ui.digiline
+package com.tamerslab.farm.ui.digiline
 
 import androidx.compose.foundation.Image
 import com.tamerslab.navigation.AppRoute
@@ -60,7 +60,6 @@ import com.tamerslab.components.CollectionRefreshNotice
 import com.tamerslab.di.TamersLabApplication
 import com.tamerslab.dtos.CharacterDtos
 import com.tamerslab.farm.ui.digiline.DigilinePin
-import com.tamerslab.dtos.DigilineFarmThread
 import com.tamerslab.dtos.DigilineStorageThread
 import com.tamerslab.dtos.DigilineWildThread
 import com.tamerslab.navigation.NavigationItems
@@ -80,10 +79,9 @@ fun DigilineScreen(navController: NavController) {
     val repository = app.container.digifarmRepository
     val storageLoad = rememberCollectionLoad(repository to "stored") { repository.observeStorageThreads() }
     val wildLoad = rememberCollectionLoad(repository to "wild") { repository.observeWildThreads() }
-    val farmsLoad = rememberCollectionLoad(repository to "farms") { repository.observeFarmThreads() }
     val storage = storageLoad.data.orEmpty()
     val wild = wildLoad.data.orEmpty()
-    val farms = farmsLoad.data.orEmpty()
+    val legacyLlmEnabled = com.tamerslab.components.rememberDebugSettings().legacyLlmEnabled
     var tab by rememberSaveable { mutableIntStateOf(0) }
     // One-shot pin from Home: the conversation of the partner the visitor was just looking at.
     var pinnedId by remember { mutableStateOf<Long?>(null) }
@@ -101,8 +99,7 @@ fun DigilineScreen(navController: NavController) {
         topBar = {
             Column {
                 TopBanner(text = stringResource(R.string.nav_digiline))
-                VitalTabs(tab, listOf(stringResource(R.string.ui_digiline_storage), stringResource(R.string.ui_digiline_wild),
-                    stringResource(R.string.ui_digiline_farms)), { tab = it })
+                VitalTabs(tab, listOf(stringResource(R.string.ui_digiline_storage), stringResource(R.string.ui_digiline_wild)), { tab = it })
             }
         },
         contentWindowInsets = WindowInsets.statusBars
@@ -112,7 +109,7 @@ fun DigilineScreen(navController: NavController) {
                 .fillMaxSize()
                 .padding(top = padding.calculateTopPadding())
         ) {
-            val activeLoad = when (tab) { 0 -> storageLoad; 1 -> wildLoad; else -> farmsLoad }
+            val activeLoad = if (tab == 0) storageLoad else wildLoad
             if (!CollectionStatePanel(activeLoad)) Column(Modifier.fillMaxSize()) {
             CollectionRefreshNotice(activeLoad)
             when (tab) {
@@ -142,11 +139,8 @@ fun DigilineScreen(navController: NavController) {
                         navController.navigate(AppRoute.Chat(thread.characterId))
                     }
                 }
-                1 -> WildThreadList(wild, stringResource(R.string.ui_digiline_empty_wild)) { thread ->
+                1 -> WildThreadList(wild, stringResource(R.string.ui_digiline_empty_wild), legacyLlmEnabled) { thread ->
                     navController.navigate(AppRoute.WildContact(thread.individualId, thread.cardCharacterId))
-                }
-                else -> FarmThreadList(farms, stringResource(R.string.ui_digiline_empty_farms)) { thread ->
-                    navController.navigate(AppRoute.FarmGroup(thread.farmId))
                 }
             }
             }
@@ -170,25 +164,19 @@ private fun ThreadList(items: List<DigilineStorageThread>, empty: String, onClic
 }
 
 @Composable
-private fun WildThreadList(items: List<DigilineWildThread>, empty: String, onClick: (DigilineWildThread) -> Unit) {
+private fun WildThreadList(items: List<DigilineWildThread>, empty: String, legacyLlmEnabled: Boolean, onClick: (DigilineWildThread) -> Unit) {
     if (items.isEmpty()) return EmptyList(empty)
     LazyColumn(Modifier.fillMaxSize()) {
         items(items, key = { it.individualId }) { item ->
             ThreadRow(item.speciesName ?: "Digimon",
                  item.lastMessage,
                 item.unreadCount, null, 0, 0,
-                reading = stringResource(R.string.audit_trust_reading, item.trust,
-                    com.tamerslab.components.rapportSummary(item.trust))) { onClick(item) }
-        }
-    }
-}
-
-@Composable
-private fun FarmThreadList(items: List<DigilineFarmThread>, empty: String, onClick: (DigilineFarmThread) -> Unit) {
-    if (items.isEmpty()) return EmptyList(empty)
-    LazyColumn(Modifier.fillMaxSize()) {
-        items(items, key = { it.farmId }) { item ->
-            ThreadRow(item.farmName, item.lastMessage ?: stringResource(R.string.ui_digiline_resident_count, item.residentCount), item.unreadCount, null, 0, 0) { onClick(item) }
+                reading = if (legacyLlmEnabled) {
+                    stringResource(R.string.audit_trust_reading, item.trust,
+                        com.tamerslab.components.rapportSummary(item.trust))
+                } else {
+                    null
+                }) { onClick(item) }
         }
     }
 }

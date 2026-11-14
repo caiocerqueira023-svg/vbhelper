@@ -78,6 +78,7 @@ class IndividualPersistenceTest {
             AppDatabase.MIGRATION_52_53,
             AppDatabase.MIGRATION_53_54,
             AppDatabase.MIGRATION_54_55,
+            AppDatabase.MIGRATION_55_56,
         )
         .openHelperFactory(PreservingMigrationFactory())
         .addCallback(IndividualIntegrity.callback).build()
@@ -591,7 +592,7 @@ class IndividualPersistenceTest {
         assertEquals("1stmaru", db.digimonIndividualDao().getIndividual(individual)?.nickname)
         assertEquals(1, db.chatDao().getMessagesSync(individual).size)
         assertEquals(individual, db.watchTransferDao().get("old-token")?.individualId)
-        assertEquals(55, db.openHelper.writableDatabase.version)
+        assertEquals(56, db.openHelper.writableDatabase.version)
     }
 
     @Test fun missingMigrationFailsWithoutErasingCharacters() {
@@ -641,7 +642,7 @@ class IndividualPersistenceTest {
         db.close()
 
         db = open()
-        assertEquals(55, db.openHelper.writableDatabase.version)
+        assertEquals(56, db.openHelper.writableDatabase.version)
         assertEquals(2, count("WildRelationship"))
         assertNull(db.wildRelationshipDao().get(first)?.contactUnlockedAt)
         assertNotNull(db.wildRelationshipDao().get(second)?.contactUnlockedAt)

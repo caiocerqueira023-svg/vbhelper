@@ -1,4 +1,4 @@
-﻿package com.tamerslab.ui
+package com.tamerslab.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Surface
@@ -167,6 +167,15 @@ class UiRefinementsTest {
     private class FakeChat(private val fail: Boolean = false) : ChatScreenController {
         override fun getHistory(characterId: Long): Flow<List<ChatMessageEntity>> = flowOf(emptyList())
         override fun getMood(characterId: Long) = flowOf(50)
+        override fun getScene(characterId: Long): Flow<com.tamerslab.digiline.gateway.DigilineScene?> = flowOf(null)
+        override fun ensureScene(characterId: Long, onResult: (Result<Unit>) -> Unit) = onResult(Result.success(Unit))
+        override fun chooseSceneOption(characterId: Long, optionId: String, onResult: (Result<Unit>) -> Unit) = onResult(Result.success(Unit))
+        override fun dismissScene(characterId: Long, onResult: (Result<Unit>) -> Unit) = onResult(Result.success(Unit))
+        override fun getPersonalitySyncState(characterId: Long): Flow<com.tamerslab.chat.ui.PersonalitySyncUiState> =
+            flowOf(com.tamerslab.chat.ui.PersonalitySyncUiState.NONE)
+        override fun isShiftNoticePending(characterId: Long, onResult: (Boolean) -> Unit) = onResult(false)
+        override fun markShiftNoticeShown(characterId: Long) {}
+        override fun isLegacyLlmEnabled(): Boolean = true
         override fun sendMessage(characterId: Long, text: String, onResult: (Result<String>) -> Unit) {
             onResult(if (fail) Result.failure(IllegalStateException("internal implementation detail")) else Result.success("reply"))
         }

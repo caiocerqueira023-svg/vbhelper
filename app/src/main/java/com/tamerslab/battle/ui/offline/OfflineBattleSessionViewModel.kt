@@ -190,7 +190,14 @@ class OfflineBattleSessionViewModel : ViewModel() {
 
     /** Rematches reuse the prepared assets, but selection authorization is always checked afresh. */
     private fun installWarm(context: Context, sessionId: String, presentation: TrainingBattlePresentation) {
-        _state.value = _state.value.copy(sessionId = sessionId, loading = true, error = null)
+        // Reset the visible session instead of copying the settled one: keeping the old snapshot
+        // and fighters under a new sessionId lets the renderer read a future-looking elapsed time
+        // and reject every new snapshot (fighters stay hidden at the last battle's positions).
+        _state.value = OfflineBattleSessionState(
+            sessionId = sessionId,
+            loading = true,
+            assetGeneration = assetGeneration,
+        )
         loadingJob = scope.launch {
             var candidateLease: AutoCloseable? = null
             try {

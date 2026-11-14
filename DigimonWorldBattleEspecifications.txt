@@ -3012,6 +3012,11 @@ Características:
 
 ### 4.10 Support e Command Points atuais
 
+> **Nota de atualização (07/11/2026):** este bloco descreve o estado histórico da especificação. O CP,
+> o comando Support/incentivo, a janela de incentivo e o custo de CP das técnicas foram removidos do
+> app; a banda de comando virou um deck fixo 3×3 e os vitais do parceiro ocupam o espaço do antigo
+> instrumento de CP. O que segue fica como registro da decisão original, não como comportamento atual.
+
 O sistema atual:
 
 * começa com `0` Command Points;

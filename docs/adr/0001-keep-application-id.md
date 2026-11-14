@@ -1,11 +1,17 @@
 # ADR 0001: Keep `applicationId` `com.github.nacabaro.vbhelper`
 
-- **Status:** Accepted
+- **Status:** Superseded by [ADR 0006](0006-own-application-id.md) (2026-11-14)
 - **Date:** 2026-10-31
 - **Target:** Alpha 0.7.0
 - **Context:** Phase 1.2 package/product rename; recorded for Phase 6.4
 - **Related:** [REFACTORING_PLAN.md](../../REFACTORING_PLAN.md) (Decisions Summary),
   [TARGETS.md](../refactor/TARGETS.md), [ADR 0002](0002-hardware-module-merge.md)
+
+> **Superseded.** The owner chose a separate install identity
+> (`com.tamerslab.vbhelper`) so the app is no longer installed as, or updated by, VBHelper.
+> The analysis and the revisit conditions below remain the record of why the old decision
+> was made; see [ADR 0006](0006-own-application-id.md) for the current value, the accepted
+> data consequence and the export/import migration path.
 
 ## Context
 

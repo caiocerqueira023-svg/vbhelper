@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "generatedBy": "tools/digiline/build_packs.py",
+  "sourceFile": "app/src/main/assets/species_chat_examples.json",
+  "catalogFile": "app/src/main/assets/species_catalog.json",
+  "matchingRule": "normalized characterId or speciesName against catalog name/id/aliases; MANUAL_ALIASES for romanization variants",
+  "totalChatEntries": 268,
+  "matchedCount": 263,
+  "unmatchedCount": 5,
+  "unmatched": [
+    {
+      "characterId": "PICKLEMON",
+      "speciesName": "PICKLEMON",
+      "normalizedKey": "picklemon",
+      "reason": "no corresponding species exists in app species_catalog.json"
+    },
+    {
+      "characterId": "YUNIMON",
+      "speciesName": "YUNIMON",
+      "normalizedKey": "yunimon",
+      "reason": "no corresponding species exists in app species_catalog.json"
+    },
+    {
+      "characterId": "RAPIDMON",
+      "speciesName": "RAPIDMON",
+      "normalizedKey": "rapidmon",
+      "reason": "catalog only has Rapidmon Armor / Rapidmon Perfect / X-Antibody variants; base form is ambiguous"
+    },
+    {
+      "characterId": "JUSTIMON",
+      "speciesName": "JUSTIMON",
+      "normalizedKey": "justimon",
+      "reason": "catalog only has Justimon(Accel Arm)/Blitz Arm/Critical Arm variants; base form is ambiguous"
+    },
+    {
+      "characterId": "MAGNAGARURUMON_SEPARATION",
+      "speciesName": "MAGNAGARURUMON SEPARATION",
+      "normalizedKey": "magnagarurumonseparation",
+      "reason": "catalog has no 'Separation' variant; base Magna Garurumon would misstate the form"
+    }
+  ],
+  "duplicateMappings": [],
+  "manualAliases": {
+    "aegiochusmonholly": "aegiochusmonholy",
+    "atlurkabuterimon": "atlurkabuterimonblue",
+    "beelzemonbm": "beelzebumonblastmode",
+    "belphemonrm": "belphemonragemode",
+    "belphemonsm": "belphemonsleepmode",
+    "chronomon": "chronomonholymode",
+    "chronomondestroy": "chronomondestroymode",
+    "duftmonlm": "duftmonleopardmode",
+    "dukemoncm": "dukemoncrimsonmode",
+    "imperialdramonfm": "imperialdramonfightermode",
+    "lucemonfm": "lucemonfalldownmode",
+    "lucemonsm": "lucemonsatanmode",
+    "megagrowlmon": "megalogrowmon",
+    "miragegaogamonbm": "miragegaogamonburstmode",
+    "ravemonbm": "ravemonburstmode",
+    "rosemonbm": "rosemonburstmode",
+    "ultimatebrakimon": "ultimatebrachimon",
+    "undeadplutomon": "zombieplutomon"
+  },
+  "manualAliasNotes": {
+    "aegiochusmonholly": "double-L spelling variant of catalog Aegiochusmon(Holy)",
+    "atlurkabuterimon": "catalog splits Blue/Red; classic Blue variant used",
+    "beelzemonbm": "alternate romanization of Beelzebumon; BM = Blast Mode",
+    "belphemonrm": "RM = Rage Mode",
+    "belphemonsm": "SM = Sleep Mode",
+    "chronomon": "catalog has Holy Mode / Destroy Mode; base name mapped to Holy Mode",
+    "chronomondestroy": "catalog Chronomon Destroy Mode",
+    "duftmonlm": "LM = Leopard Mode",
+    "dukemoncm": "CM = Crimson Mode",
+    "imperialdramonfm": "FM = Fighter Mode",
+    "lucemonfm": "FM = Falldown Mode",
+    "lucemonsm": "SM = Satan Mode",
+    "megagrowlmon": "alternate romanization of catalog Megalo Growmon",
+    "miragegaogamonbm": "BM = Burst Mode",
+    "ravemonbm": "alternate romanization of Ravmon; BM = Burst Mode",
+    "rosemonbm": "BM = Burst Mode",
+    "ultimatebrakimon": "alternate spelling of catalog Ultimate Brachimon",
+    "undeadplutomon": "alternate form name for catalog Zombie Plutomon"
+  }
+}

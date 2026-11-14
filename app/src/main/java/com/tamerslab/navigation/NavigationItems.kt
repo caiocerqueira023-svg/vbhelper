@@ -1,4 +1,4 @@
-﻿package com.tamerslab.navigation
+package com.tamerslab.navigation
 
 import com.tamerslab.R
 import androidx.annotation.DrawableRes
@@ -141,12 +141,6 @@ sealed class NavigationItems(
         AppRoute.Digiline,
         R.drawable.baseline_mood_24,
         R.string.nav_digiline
-    )
-
-    object FarmGroup : NavigationItems(
-        AppRoute.FarmGroup(""),
-        R.drawable.baseline_mood_24,
-        R.string.ui_digifarm_group
     )
 
     object WildContact : NavigationItems(

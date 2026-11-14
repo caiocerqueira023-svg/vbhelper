@@ -70,7 +70,6 @@ class GenericTechniqueCatalogTest {
         assertEquals(TechniqueRangeProfile.MEDIUM_LONG, special.rangeProfile)
         assertEquals(TechniqueImpactShape.AROUND_TARGET, special.impactShape)
         assertEquals(0, special.energyCost)
-        assertEquals(0, special.commandPointCost)
         assertTrue(special.hitCount > 1)
     }
 
@@ -107,6 +106,16 @@ class GenericTechniqueCatalogTest {
         assertEquals(listOf("decode_paralysis"), statusIds("generic_precision_contact_orb"))
         assertEquals(listOf("decode_noise"), statusIds("generic_tempo_total_overload"))
         assertEquals(listOf("decode_liquid_crystalization"), statusIds(GenericTechniqueCatalog.specialTechniqueId))
+    }
+
+    @Test
+    fun everyCatalogTechniqueHasALocaleAwareDisplayName() {
+        val missing = (GenericTechniqueCatalog.definitions.map { it.techniqueId } +
+            GenericTechniqueCatalog.legacyBattleDefinitions.map { it.techniqueId })
+            .distinct()
+            .filter { com.tamerslab.battle.ui.offline.techniqueNameRes(it) == null }
+
+        assertTrue("Catalog techniques without a localized battle name: $missing", missing.isEmpty())
     }
 
     @Test

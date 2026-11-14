@@ -1,0 +1,1349 @@
+{
+  "meta": {
+    "name": "DigiLine quiz time — Digimon questions",
+    "game": "Digimon Story: Cyber Sleuth - Complete Edition",
+    "sourceGuide": "GameFAQs — DigiLine Quiz Guide (PC) by GStelar04, v1.1 (2023-10-30)",
+    "sourceUrls": [
+      "https://gamefaqs.gamespot.com/pc/268807-digimon-story-cyber-sleuth-complete-edition/faqs/78530/cyber-sleuth-quiz-answers",
+      "https://gamefaqs.gamespot.com/pc/268807-digimon-story-cyber-sleuth-complete-edition/faqs/78530/hackers-memory-quiz-answers"
+    ],
+    "filter": "Only questions from the guide's 'Digimon Questions' sections; Real Life and Game Questions sections were excluded.",
+    "questionCount": 94,
+    "counts": {
+      "cyberSleuth": 54,
+      "hackersMemory": 40
+    },
+    "schema": {
+      "id": "cs_01..cs_54 | hm_01..hm_40",
+      "number": "question number from in-game code order (first text variation)",
+      "question": "question as shown in game, line wraps joined",
+      "answers": "3 multiple-choice answers, in A/B/C order",
+      "correctLetter": "A, B or C",
+      "correctIndex": "0-based index into answers",
+      "correctAnswerText": "answer text as listed in the guide's 'Real Answer' column"
+    },
+    "notes": [
+      "The guide states all text was ripped from the game files and shows the first 'variation'; alternate in-game wordings are not covered.",
+      "CS Digimon Q39 carries a stray '*1*' note marker in the guide (likely a bugged-question note) which was removed from the question text.",
+      "This JSON is a data compilation of the quiz questions/answers for modding use; question text remains property of Bandai Namco."
+    ]
+  },
+  "questions": [
+    {
+      "id": "cs_01",
+      "game": "Cyber Sleuth",
+      "number": 1,
+      "question": "Quiz time! Omnimon ____ can Digivolve from BlackWarGreymon. What goes in ____?",
+      "answers": [
+        "Black!",
+        "Zwart!",
+        "Sloppy Mode!"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Zwart!"
+    },
+    {
+      "id": "cs_02",
+      "game": "Cyber Sleuth",
+      "number": 2,
+      "question": "Quiz time! How many Digimon in the Royal Knights, guardians of the Digital World?",
+      "answers": [
+        "13!",
+        "Should be 14.",
+        "15, maybe?"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "13!"
+    },
+    {
+      "id": "cs_03",
+      "game": "Cyber Sleuth",
+      "number": 3,
+      "question": "Quiz time! How many virus type Digimon are currently in the Royal Knights?",
+      "answers": [
+        "Two!",
+        "Five!",
+        "All of the Royal Knights!"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Two!"
+    },
+    {
+      "id": "cs_04",
+      "game": "Cyber Sleuth",
+      "number": 4,
+      "question": "Quiz time! What is Gallantmon's special move where he lunges with a spear?",
+      "answers": [
+        "Royal jelly!",
+        "Lightning Joust, maybe?",
+        "Bifrost."
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Lightning Joust, maybe?"
+    },
+    {
+      "id": "cs_05",
+      "game": "Cyber Sleuth",
+      "number": 5,
+      "question": "Quiz time! What is the name of Craniamon's spear?",
+      "answers": [
+        "Muspelheimr...",
+        "Gram!",
+        "Claiomh Solais."
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Claíomh Solais."
+    },
+    {
+      "id": "cs_06",
+      "game": "Cyber Sleuth",
+      "number": 6,
+      "question": "Quiz time! How many feet does Kentaurosmon have?",
+      "answers": [
+        "Four.",
+        "Six, I think.",
+        "Eight!"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Six, I think."
+    },
+    {
+      "id": "cs_07",
+      "game": "Cyber Sleuth",
+      "number": 7,
+      "question": "Quiz time! What type is the Royal Knight Examon?",
+      "answers": [
+        "Free type",
+        "Virus type?",
+        "Data type!"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Data type!"
+    },
+    {
+      "id": "cs_08",
+      "game": "Cyber Sleuth",
+      "number": 8,
+      "question": "Quiz time! What generation is the Royal Knight Alphamon?",
+      "answers": [
+        "In-training, maybe?",
+        "Mega, I think?",
+        "Armor!"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Mega, I think?"
+    },
+    {
+      "id": "cs_09",
+      "game": "Cyber Sleuth",
+      "number": 9,
+      "question": "Quiz time! In Gankoomon's special move \"Quake! Blast! Fire! ___!,\" what is ___?",
+      "answers": [
+        "Father!",
+        "Mama!",
+        "G... Grandpa!?"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Father!"
+    },
+    {
+      "id": "cs_10",
+      "game": "Cyber Sleuth",
+      "number": 10,
+      "question": "Quiz time! Which Digimon Digivolves to Magnamon: Dorumon, Lalamon or Veemon?",
+      "answers": [
+        "Dorumon!",
+        "Lalamon!",
+        "Veemon!"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Veemon!"
+    },
+    {
+      "id": "cs_11",
+      "game": "Cyber Sleuth",
+      "number": 11,
+      "question": "Quiz time! Which Royal Knight Digimon can change to Leopard Mode?",
+      "answers": [
+        "Leopardmon, maybe?",
+        "Magnamon, I think.",
+        "Ophanimon!"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Leopardmon, maybe?"
+    },
+    {
+      "id": "cs_12",
+      "game": "Cyber Sleuth",
+      "number": 12,
+      "question": "Quiz time! Which Digimon uses Dragon's Roar, an energy-shooting special move?",
+      "answers": [
+        "Craniamon, right?",
+        "Titamon, I think.",
+        "Dynasmon, I'm sure of it."
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Dynasmon, I'm sure of it."
+    },
+    {
+      "id": "cs_13",
+      "game": "Cyber Sleuth",
+      "number": 13,
+      "question": "Quiz time! The vaccine type Royal Knights wearing capes are Alphamon and who?",
+      "answers": [
+        "Gallantmon, perhaps?",
+        "Leopardmon, I think.",
+        "Omnimon, for sure"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Omnimon, for sure"
+    },
+    {
+      "id": "cs_14",
+      "game": "Cyber Sleuth",
+      "number": 14,
+      "question": "Quiz time! Which Digimon uses a 4-bladed special move called Spiral Masquerade?",
+      "answers": [
+        "Crusadermon!",
+        "UlforceVeedramon?",
+        "Kentaurosmon, yeah!"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Crusadermon!"
+    },
+    {
+      "id": "cs_15",
+      "game": "Cyber Sleuth",
+      "number": 15,
+      "question": "Quiz time! Which swift Royal Knight Digimon dons Blue Digizoid armor?",
+      "answers": [
+        "Should be Examon!",
+        "UlforceVeedramon, right?",
+        "Magnamon, maybe."
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "UlforceVeedramon, right?"
+    },
+    {
+      "id": "cs_16",
+      "game": "Cyber Sleuth",
+      "number": 16,
+      "question": "Quiz time! Which Digimon is nicknamed the \"Demon of the Deep Forest\"?",
+      "answers": [
+        "Impmon?",
+        "GranKuwagamon!",
+        "Woodmon!"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "GranKuwagamon!"
+    },
+    {
+      "id": "cs_17",
+      "game": "Cyber Sleuth",
+      "number": 17,
+      "question": "Quiz time! Which Digimon transforms its hands into axes called Bunny Blades?",
+      "answers": [
+        "Antylamon... right?",
+        "Probably Vikemon.",
+        "It's Silphymon!"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Antylamon... right?"
+    },
+    {
+      "id": "cs_18",
+      "game": "Cyber Sleuth",
+      "number": 18,
+      "question": "Quiz time! Which Digimon is bipedal: Wormmon, ToyAgumon or Armadillomon?",
+      "answers": [
+        "Wormmon!",
+        "ToyAgumon!",
+        "Armadillomon!"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "ToyAgumon!"
+    },
+    {
+      "id": "cs_19",
+      "game": "Cyber Sleuth",
+      "number": 19,
+      "question": "Quiz time! Which Digimon usually has a Holy Ring attached to their tail?",
+      "answers": [
+        "Togemon!",
+        "Growlmon?",
+        "Gatomon, yeah!"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Gatomon, yeah!"
+    },
+    {
+      "id": "cs_20",
+      "game": "Cyber Sleuth",
+      "number": 20,
+      "question": "Quiz time! Which Digimon has a flower on its head: Sukamon, Palmon or Woodmon?",
+      "answers": [
+        "Definitely Sukamon!",
+        "Palmon, of course!",
+        "No doubt it's Woodmon."
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Palmon, of course!"
+    },
+    {
+      "id": "cs_21",
+      "game": "Cyber Sleuth",
+      "number": 21,
+      "question": "Quiz time! Which looks like a teddy bear: Lilamon, Monzaemon or Guilmon?",
+      "answers": [
+        "Lilamon!",
+        "Monzaemon!",
+        "Guilmon!"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Monzaemon!"
+    },
+    {
+      "id": "cs_22",
+      "game": "Cyber Sleuth",
+      "number": 22,
+      "question": "Quiz time! Which has wings on its back: Infermon, Garudamon or Gotsumon?",
+      "answers": [
+        "Infermon, right?",
+        "Garudamon!",
+        "Maybe it's Gotsumon."
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Garudamon!"
+    },
+    {
+      "id": "cs_23",
+      "game": "Cyber Sleuth",
+      "number": 23,
+      "question": "Quiz time! Which in-training Digimon has a black, fuzzy exterior?",
+      "answers": [
+        "Botamon",
+        "Motimon?",
+        "Kuramon, I bet!"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Botamon"
+    },
+    {
+      "id": "cs_24",
+      "game": "Cyber Sleuth",
+      "number": 24,
+      "question": "Quiz time! Which Digimon has an M on its forehead?",
+      "answers": [
+        "Machinedramon",
+        "MarineAngemon",
+        "Wanyamon"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Wanyamon"
+    },
+    {
+      "id": "cs_25",
+      "game": "Cyber Sleuth",
+      "number": 25,
+      "question": "Quiz time! What do the characters on MetalEtemon's chest mean?",
+      "answers": [
+        "\"Invincible\"",
+        "\"Strongest\"",
+        "\"Instant Kill\""
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "\"Strongest\""
+    },
+    {
+      "id": "cs_26",
+      "game": "Cyber Sleuth",
+      "number": 26,
+      "question": "Quiz time! Which Digimon uses two shotguns as weapons?",
+      "answers": [
+        "MirageGaogamon",
+        "GroundLocomon!",
+        "Beelzemon?"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Beelzemon?"
+    },
+    {
+      "id": "cs_27",
+      "game": "Cyber Sleuth",
+      "number": 27,
+      "question": "Quiz time! Which one looks like a tree: Sunflowmon, Cherrymon or Kuzuhamon?",
+      "answers": [
+        "Sunflowmon!",
+        "Cherrymon!",
+        "Kuzuhamon!"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Cherrymon!"
+    },
+    {
+      "id": "cs_28",
+      "game": "Cyber Sleuth",
+      "number": 28,
+      "question": "Quiz time! Which is an armor Digimon: WarGreymon, Boltmon or Flamedramon?",
+      "answers": [
+        "WarGreymon!",
+        "Boltmon",
+        "Flamedramon?"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Flamedramon?"
+    },
+    {
+      "id": "cs_29",
+      "game": "Cyber Sleuth",
+      "number": 29,
+      "question": "Quiz time! Which Digimon uses Taoist arts and Amethyst Mandala special move?",
+      "answers": [
+        "Taomon!",
+        "Leomon!",
+        "Sakuyamon!"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Sakuyamon!"
+    },
+    {
+      "id": "cs_30",
+      "game": "Cyber Sleuth",
+      "number": 30,
+      "question": "Quiz time! What special move cleaves in two with Knightmon's longsword?",
+      "answers": [
+        "Strike Sword",
+        "Frozen Yogurt Sword",
+        "Berserk Sword"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Berserk Sword"
+    },
+    {
+      "id": "cs_31",
+      "game": "Cyber Sleuth",
+      "number": 31,
+      "question": "Quiz time! Which of these is Crowmon's special move?",
+      "answers": [
+        "Savage Emperor?",
+        "Average Emperor?",
+        "Beverage Emperor?"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Savage Emperor?"
+    },
+    {
+      "id": "cs_32",
+      "game": "Cyber Sleuth",
+      "number": 32,
+      "question": "Quiz time! Which Digimon uses Unidentified Flying Kiss special move?",
+      "answers": [
+        "Frigimon",
+        "Vademon!",
+        "LadyDevimon?"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Vademon!"
+    },
+    {
+      "id": "cs_33",
+      "game": "Cyber Sleuth",
+      "number": 33,
+      "question": "Quiz time! Which part of Reppamon's body takes the shape of a blade?",
+      "answers": [
+        "Its right leg",
+        "Its tail?",
+        "Its beard!"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Its tail?"
+    },
+    {
+      "id": "cs_34",
+      "game": "Cyber Sleuth",
+      "number": 34,
+      "question": "Quiz time! Which Digimon uses the special move Poop Dunk?",
+      "answers": [
+        "Nanimon!",
+        "Digitamamon?",
+        "Kuwagamon"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Nanimon!"
+    },
+    {
+      "id": "cs_35",
+      "game": "Cyber Sleuth",
+      "number": 35,
+      "question": "Quiz time! Which red in-training Digimon uses Bubble Blow on its enemies?",
+      "answers": [
+        "Pabumon!",
+        "Punimon.",
+        "Meramon?"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Punimon."
+    },
+    {
+      "id": "cs_36",
+      "game": "Cyber Sleuth",
+      "number": 36,
+      "question": "Quiz time! Which Digimon mutated from a computer virus created on Halloween?",
+      "answers": [
+        "Yokomon?",
+        "Rapidmon?",
+        "Pumpkinmon?"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Pumpkinmon?"
+    },
+    {
+      "id": "cs_37",
+      "game": "Cyber Sleuth",
+      "number": 37,
+      "question": "Quiz time! What baby bird Digimon enjoys pecking Tanemon on the head?",
+      "answers": [
+        "Bukamon!",
+        "Biyomon!",
+        "AeroVeedramon!"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Biyomon!"
+    },
+    {
+      "id": "cs_38",
+      "game": "Cyber Sleuth",
+      "number": 38,
+      "question": "Quiz time! What Mega puppet Digimon is made from the body a cursed Cherrymon?",
+      "answers": [
+        "Clockmon!",
+        "Puppetmon?",
+        "GrapLeomon"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Puppetmon?"
+    },
+    {
+      "id": "cs_39",
+      "game": "Cyber Sleuth",
+      "number": 39,
+      "question": "Quiz time! What do you call a mind-controlled Digimon with dark red eyes?",
+      "answers": [
+        "Devimon!",
+        "LadyDevimon!",
+        "Creepymon"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Devimon!"
+    },
+    {
+      "id": "cs_40",
+      "game": "Cyber Sleuth",
+      "number": 40,
+      "question": "Quiz time! Which 6-winged Digimon uses the special move Heaven's Knuckle?",
+      "answers": [
+        "Lucemon?",
+        "Angemon",
+        "Angewomon?"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Angemon"
+    },
+    {
+      "id": "cs_41",
+      "game": "Cyber Sleuth",
+      "number": 41,
+      "question": "Quiz time! What Diaboromon special move shoots energy balls from his chest?",
+      "answers": [
+        "Spider Shooter!",
+        "Catastrophe Cannon!",
+        "Atomic Blaster!"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Catastrophe Cannon!"
+    },
+    {
+      "id": "cs_42",
+      "game": "Cyber Sleuth",
+      "number": 42,
+      "question": "Quiz time! What impish fairy Digimon holds its beloved spear \"Fairy Tale\"?",
+      "answers": [
+        "Piximon!",
+        "Seraphimon!",
+        "Boltmon!"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Piximon!"
+    },
+    {
+      "id": "cs_43",
+      "game": "Cyber Sleuth",
+      "number": 43,
+      "question": "Quiz time! What Digimon wants to get stronger out of esteem for Gankoomon?",
+      "answers": [
+        "Wizardmon?",
+        "Starmon...",
+        "Hackmon?"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Hackmon?"
+    },
+    {
+      "id": "cs_44",
+      "game": "Cyber Sleuth",
+      "number": 44,
+      "question": "Quiz time! Who has a silver body, white wings, and the move Disaster Blaster?",
+      "answers": [
+        "Shakkoumon?",
+        "Hououmon!",
+        "Lotosmon"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Shakkoumon?"
+    },
+    {
+      "id": "cs_45",
+      "game": "Cyber Sleuth",
+      "number": 45,
+      "question": "Quiz time! Which Digimon has no sword: Leopardmon, Minervamon or Veedramon?",
+      "answers": [
+        "Leopardmon...",
+        "Minervamon?",
+        "Veedramon!"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Veedramon!"
+    },
+    {
+      "id": "cs_46",
+      "game": "Cyber Sleuth",
+      "number": 46,
+      "question": "Quiz time! What does ore Digimon Gotsumon's special move, Rock Fist, do?",
+      "answers": [
+        "Shoots crystals from its head!",
+        "Produces and hurls a massive crystal!",
+        "Furiously wails on a guitar!"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Shoots crystals from its head!"
+    },
+    {
+      "id": "cs_47",
+      "game": "Cyber Sleuth",
+      "number": 47,
+      "question": "Quiz time! What is lilac-themed Lilamon's special move, Lila Shower?",
+      "answers": [
+        "Shoots flower-shaped energy bullets!",
+        "Heals allies with absorbed sunlight!",
+        "Shoots a thin beam from its hands!"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Shoots a thin beam from its hands!"
+    },
+    {
+      "id": "cs_48",
+      "game": "Cyber Sleuth",
+      "number": 48,
+      "question": "Quiz time! Which machine Digimon is seen as strongest in the Digital World?",
+      "answers": [
+        "MetalGarurumon!",
+        "WarGrowlmon",
+        "Machinedramon"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Machinedramon"
+    },
+    {
+      "id": "cs_49",
+      "game": "Cyber Sleuth",
+      "number": 49,
+      "question": "Quiz time! What is the nickname for the gigantic bird Digimon Aquilamon?",
+      "answers": [
+        "Gentleman of the Desert?",
+        "Great Eagle of the Desert...",
+        "Demon of the Desert?"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Great Eagle of the Desert..."
+    },
+    {
+      "id": "cs_50",
+      "game": "Cyber Sleuth",
+      "number": 50,
+      "question": "Quiz time! What is the name of the blade held by cyborg Digimon Ravemon?",
+      "answers": [
+        "Raven King!",
+        "Goblin King!",
+        "Yaksha King!"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Raven King!"
+    },
+    {
+      "id": "cs_51",
+      "game": "Cyber Sleuth",
+      "number": 51,
+      "question": "Quiz time! Who is the beastman-like Digimon wearing a long coat?",
+      "answers": [
+        "Gargomon?",
+        "Kyubimon!",
+        "BanchoLeomon?"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "BanchoLeomon?"
+    },
+    {
+      "id": "cs_52",
+      "game": "Cyber Sleuth",
+      "number": 52,
+      "question": "Quiz time! What Terriermon special move creates a small tornado with its ears?",
+      "answers": [
+        "Terrier Tornado",
+        "Meteor Wing?",
+        "Destruction Grenade!"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Terrier Tornado"
+    },
+    {
+      "id": "cs_53",
+      "game": "Cyber Sleuth",
+      "number": 53,
+      "question": "Quiz time! Togemon's special move is \"Needle ___.\" What goes in ___?",
+      "answers": [
+        "...Ricochet?",
+        "...Spray?",
+        "...Shake?"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "...Spray?"
+    },
+    {
+      "id": "cs_54",
+      "game": "Cyber Sleuth",
+      "number": 54,
+      "question": "Quiz time! Who is the undead Digimon king born from a nasty computer virus?",
+      "answers": [
+        "Paildramon",
+        "Myotismon?",
+        "Datamon?"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Myotismon?"
+    },
+    {
+      "id": "hm_01",
+      "game": "Hacker's Memory",
+      "number": 1,
+      "question": "Quiz time! What kind of Digimon is Gabumon?",
+      "answers": [
+        "Beast",
+        "Reptile",
+        "Dinosaur"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Reptile"
+    },
+    {
+      "id": "hm_02",
+      "game": "Hacker's Memory",
+      "number": 2,
+      "question": "Quiz time! Which of the following are not in the Olympos XII?",
+      "answers": [
+        "Crescemon",
+        "Dianamon",
+        "Merukimon"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Crescemon"
+    },
+    {
+      "id": "hm_03",
+      "game": "Hacker's Memory",
+      "number": 3,
+      "question": "Quiz time! Which has more horns, Lopmon or Terriermon?",
+      "answers": [
+        "Lopmon",
+        "Terriermon",
+        "They both have the same number"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Lopmon"
+    },
+    {
+      "id": "hm_04",
+      "game": "Hacker's Memory",
+      "number": 4,
+      "question": "Quiz time! What is the name of the lance wielded by Gallantmon Crimson Mode?",
+      "answers": [
+        "Lightning Joust",
+        "Gungnir",
+        "Blutgang"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Gungnir"
+    },
+    {
+      "id": "hm_05",
+      "game": "Hacker's Memory",
+      "number": 5,
+      "question": "Quiz time! What is the name of Slayerdramon's sword?",
+      "answers": [
+        "Laevateinn",
+        "Balmung",
+        "Fragarach"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Fragarach"
+    },
+    {
+      "id": "hm_06",
+      "game": "Hacker's Memory",
+      "number": 6,
+      "question": "Quiz time! How many drills does Brakedramon have on its body?",
+      "answers": [
+        "4",
+        "6",
+        "8"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "6"
+    },
+    {
+      "id": "hm_07",
+      "game": "Hacker's Memory",
+      "number": 7,
+      "question": "Quiz time! What type is Arcadiamon (In-Training)?",
+      "answers": [
+        "Data type",
+        "Virus Type",
+        "Free type"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Free type"
+    },
+    {
+      "id": "hm_08",
+      "game": "Hacker's Memory",
+      "number": 8,
+      "question": "Quiz time! What is the name of Valkyrimon's golden bird?",
+      "answers": [
+        "Freyr",
+        "Frey",
+        "Hououmon"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Freyr"
+    },
+    {
+      "id": "hm_09",
+      "game": "Hacker's Memory",
+      "number": 9,
+      "question": "Quiz time! Which move capitalizes on Turuiemon great leaping power?",
+      "answers": [
+        "Samurai Fist",
+        "Bunny Fist",
+        "Ninja Fist"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Ninja Fist"
+    },
+    {
+      "id": "hm_10",
+      "game": "Hacker's Memory",
+      "number": 10,
+      "question": "Quiz time! Which Digimon does NOT have wings?",
+      "answers": [
+        "GoldNumemon",
+        "PlatinumNumemon",
+        "BlackKingNumemon"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "BlackKingNumemon"
+    },
+    {
+      "id": "hm_11",
+      "game": "Hacker's Memory",
+      "number": 11,
+      "question": "Quiz time! Titamon's Zanjintou sword is carved from the bones of which Digimon?",
+      "answers": [
+        "SkullGreymon",
+        "Coelamon",
+        "Meteormon"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "SkullGreymon"
+    },
+    {
+      "id": "hm_12",
+      "game": "Hacker's Memory",
+      "number": 12,
+      "question": "Quiz time! Which Digimon is also known as the Depraved Monk of the Deep?",
+      "answers": [
+        "Neptunemon",
+        "Dragomon",
+        "ShogunGekomon"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Dragomon"
+    },
+    {
+      "id": "hm_13",
+      "game": "Hacker's Memory",
+      "number": 13,
+      "question": "Quiz time! Which of the following walks on two legs?",
+      "answers": [
+        "Monochromon",
+        "Triceramon",
+        "Groundramon"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Triceramon"
+    },
+    {
+      "id": "hm_14",
+      "game": "Hacker's Memory",
+      "number": 14,
+      "question": "Quiz time! Which of the following has the most wings?",
+      "answers": [
+        "Varodurumon",
+        "Goldramon",
+        "Magnadramon"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Magnadramon"
+    },
+    {
+      "id": "hm_15",
+      "game": "Hacker's Memory",
+      "number": 15,
+      "question": "Quiz time! Which of the following does NOT wear a scarf?",
+      "answers": [
+        "PileVolcamon",
+        "Lekismon",
+        "Pandamon"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Lekismon"
+    },
+    {
+      "id": "hm_16",
+      "game": "Hacker's Memory",
+      "number": 16,
+      "question": "Quiz time! Which Puppet Digimon is secretly jealous of Monzaemon?",
+      "answers": [
+        "Pumpkinmon",
+        "Pandamon",
+        "Etemon"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Pandamon"
+    },
+    {
+      "id": "hm_17",
+      "game": "Hacker's Memory",
+      "number": 17,
+      "question": "Quiz time! Which Digimon has a heart on its chest?",
+      "answers": [
+        "Monzaemon",
+        "MarineAngemon",
+        "Gabumon"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "MarineAngemon"
+    },
+    {
+      "id": "hm_18",
+      "game": "Hacker's Memory",
+      "number": 18,
+      "question": "Quiz time! What does Mushroomon have on its gloves?",
+      "answers": [
+        "Skull and crossbones",
+        "Mushroom",
+        "X"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Skull and crossbones"
+    },
+    {
+      "id": "hm_19",
+      "game": "Hacker's Memory",
+      "number": 19,
+      "question": "Quiz time! Which can fly, Monodramon or Dracomon?",
+      "answers": [
+        "Monodramon",
+        "Dracomon",
+        "Neither"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Neither"
+    },
+    {
+      "id": "hm_20",
+      "game": "Hacker's Memory",
+      "number": 20,
+      "question": "Quiz time! What color are KingEtemon's gloves and boots?",
+      "answers": [
+        "Red",
+        "Blue",
+        "Yellow"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Blue"
+    },
+    {
+      "id": "hm_21",
+      "game": "Hacker's Memory",
+      "number": 21,
+      "question": "Quiz time! What is the name of the motorcycle-type machine Beelzemon rides?",
+      "answers": [
+        "Cerberus",
+        "Bahamut",
+        "Behemoth"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Behemoth"
+    },
+    {
+      "id": "hm_22",
+      "game": "Hacker's Memory",
+      "number": 22,
+      "question": "Quiz time! Which of the following is NOT an Undead?",
+      "answers": [
+        "Matadormon",
+        "Phantomon",
+        "Myotismon"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Phantomon"
+    },
+    {
+      "id": "hm_23",
+      "game": "Hacker's Memory",
+      "number": 23,
+      "question": "Quiz time! Which of the following is the lowest level?",
+      "answers": [
+        "Icemon",
+        "Gatomon",
+        "Renamon"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Renamon"
+    },
+    {
+      "id": "hm_24",
+      "game": "Hacker's Memory",
+      "number": 24,
+      "question": "Quiz time! Which of the following does NOT carry a spear?",
+      "answers": [
+        "Piximon",
+        "Sistermon Blanc",
+        "SkullSatamon"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "SkullSatamon"
+    },
+    {
+      "id": "hm_25",
+      "game": "Hacker's Memory",
+      "number": 25,
+      "question": "Quiz time! What is the name of the pair of swords wielded by Grademon.",
+      "answers": [
+        "Souken Transcendent Swords",
+        "Souken Gold Swords",
+        "Souken Gradalpha"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Souken Gradalpha"
+    },
+    {
+      "id": "hm_26",
+      "game": "Hacker's Memory",
+      "number": 26,
+      "question": "Quiz time! What effect does GranDracmon's voice have?",
+      "answers": [
+        "Sleep",
+        "Charm",
+        "Curse"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Charm"
+    },
+    {
+      "id": "hm_27",
+      "game": "Hacker's Memory",
+      "number": 27,
+      "question": "Quiz time! Which number does Duramon's Blinded attack carve into the enemy?",
+      "answers": [
+        "20",
+        "25",
+        "99"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "20"
+    },
+    {
+      "id": "hm_28",
+      "game": "Hacker's Memory",
+      "number": 28,
+      "question": "Quiz time! Which Mega Digimon is known as the \"King of Bugs\"?",
+      "answers": [
+        "MegaKabuterimon",
+        "HerculesKabuterimon",
+        "TyrantKabuterimon"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "TyrantKabuterimon"
+    },
+    {
+      "id": "hm_29",
+      "game": "Hacker's Memory",
+      "number": 29,
+      "question": "Quiz time! What color is the blade on BaoHuckmon's tail?",
+      "answers": [
+        "Black",
+        "Red",
+        "White"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Red"
+    },
+    {
+      "id": "hm_30",
+      "game": "Hacker's Memory",
+      "number": 30,
+      "question": "Quiz time! Clockmon can freely advance and rewind time during which period?",
+      "answers": [
+        "1000 and 2000",
+        "1900 and 1999",
+        "2001 and 2099"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "1900 and 1999"
+    },
+    {
+      "id": "hm_31",
+      "game": "Hacker's Memory",
+      "number": 31,
+      "question": "Quiz time! Which weapon is stuck in Pumpkinmon's head?",
+      "answers": [
+        "Axe",
+        "Knife",
+        "Ouryuken"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Axe"
+    },
+    {
+      "id": "hm_32",
+      "game": "Hacker's Memory",
+      "number": 32,
+      "question": "Quiz time! Which of the following Digimon uses Oriental martial arts?",
+      "answers": [
+        "Agunimon",
+        "Lobomon",
+        "Susanomon"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Agunimon"
+    },
+    {
+      "id": "hm_33",
+      "game": "Hacker's Memory",
+      "number": 33,
+      "question": "Quiz time! Which Beast Humanoid Digimon uses the Fist of the Beast King attack?",
+      "answers": [
+        "Leopardmon",
+        "WereGarurumon",
+        "Leomon"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Leomon"
+    },
+    {
+      "id": "hm_34",
+      "game": "Hacker's Memory",
+      "number": 34,
+      "question": "Quiz time! Which Digimon looks almost exactly the same as Frigimon?",
+      "answers": [
+        "MudFrigimon",
+        "Golemon",
+        "Gotsumon"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "MudFrigimon"
+    },
+    {
+      "id": "hm_35",
+      "game": "Hacker's Memory",
+      "number": 35,
+      "question": "Quiz time! Which Hybrid Digimon carries the Ryugonken sword?",
+      "answers": [
+        "Gaiomon",
+        "Susanomon",
+        "KaiserGreymon"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "KaiserGreymon"
+    },
+    {
+      "id": "hm_36",
+      "game": "Hacker's Memory",
+      "number": 36,
+      "question": "Quiz time! Which Mythical Animal Digimon Digivolves into Gryphonmon?",
+      "answers": [
+        "HippoGryphonmon",
+        "Unimon",
+        "Garudamon"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "HippoGryphonmon"
+    },
+    {
+      "id": "hm_37",
+      "game": "Hacker's Memory",
+      "number": 37,
+      "question": "Quiz time! What does DemiDevimon throw during its Demi Darts special move?",
+      "answers": [
+        "Black arrow",
+        "Thin beam",
+        "Syringe"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Syringe"
+    },
+    {
+      "id": "hm_38",
+      "game": "Hacker's Memory",
+      "number": 38,
+      "question": "Quiz time! Which Digimon was born when lots of Diaboromon were fused?",
+      "answers": [
+        "Creepymon",
+        "Arcadiamon (Ultra)",
+        "Armageddemon"
+      ],
+      "correctLetter": "C",
+      "correctIndex": 2,
+      "correctAnswerText": "Armageddemon"
+    },
+    {
+      "id": "hm_39",
+      "game": "Hacker's Memory",
+      "number": 39,
+      "question": "Quiz time! What is the alias by which Rapidmon is also known?",
+      "answers": [
+        "Light Speed Archer",
+        "Keen Hound",
+        "Swift Hunter"
+      ],
+      "correctLetter": "B",
+      "correctIndex": 1,
+      "correctAnswerText": "Keen Hound"
+    },
+    {
+      "id": "hm_40",
+      "game": "Hacker's Memory",
+      "number": 40,
+      "question": "Quiz time! What does Ankylomon have on the end of its tail?",
+      "answers": [
+        "Iron ball",
+        "Axe",
+        "Drill"
+      ],
+      "correctLetter": "A",
+      "correctIndex": 0,
+      "correctAnswerText": "Iron ball"
+    }
+  ]
+}

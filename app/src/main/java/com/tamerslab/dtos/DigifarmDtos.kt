@@ -68,18 +68,3 @@ data class DigilineWildThread(
     val lastTimestamp: Long?,
     val unreadCount: Int
 )
-
-data class DigilineFarmThread(
-    val farmId: String,
-    val farmName: String,
-    val residentCount: Int,
-    val lastMessage: String?,
-    val lastTimestamp: Long?,
-    val unreadCount: Int
-)
-
-data class FarmAssignment(
-    val characterId: Long,
-    val farmId: String,
-    val farmName: String
-)

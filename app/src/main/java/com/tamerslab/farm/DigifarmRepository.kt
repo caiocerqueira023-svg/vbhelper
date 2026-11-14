@@ -40,10 +40,8 @@ class DigifarmRepository(private val db: AppDatabase) {
     fun observeResidents(farmId: String): Flow<List<FarmResidentWithDetails>> = dao.observeResidents(farmId)
     fun observeResidentIds(): Flow<List<String>> = dao.observeResidentIds()
     fun observeResidentCharacterIds(): Flow<List<Long>> = dao.observeResidentCharacterIds()
-    fun observeAssignments() = dao.observeAssignments()
     fun observeMessages(farmId: String, limit: Int = 50): Flow<List<FarmMessage>> = dao.observeMessages(farmId, limit)
     fun observeStorageThreads() = dao.observeStorageThreads()
-    fun observeFarmThreads() = dao.observeFarmThreads()
     fun observeWildThreads() = db.wildRelationshipDao().observeUnlocked()
     suspend fun residentsSnapshot(farmId: String) = db.withTransaction {
         val eligibility = db.participation?.snapshot()

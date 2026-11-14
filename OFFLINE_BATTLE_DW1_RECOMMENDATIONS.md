@@ -455,7 +455,7 @@ Complexidade é relativa ao código atual: **baixa**, **média** ou **alta**. N�
 
 **Prioridade:** P2 · **Complexidade:** média · **Referência:** DW1 + adaptação.
 
-- **Implementar:** interface centrada em Your Call, Attack, Moderate, Distance, Defensive, Change, itens e finisher. Definir como CP, incentivo, Blast, FORM, DUO e Jogress são exibidos ou habilitados nesse perfil.
+- **Implementar:** interface centrada em Your Call, Attack, Moderate, Distance, Defensive, Change, itens e finisher. Definir como Blast, FORM, DUO e Jogress são exibidos ou habilitados nesse perfil (CP e incentivo foram removidos do app).
 - **Prós:** reduz a distância de linguagem e fluxo em relação ao DW1, mesmo mantendo o motor capaz de recursos adicionais.
 - **Contras:** reduz destaque das funcionalidades próprias do VBHelper; opções inconsistentes entre modos podem exigir onboarding.
 - **Depende:** 01, 19, 21 e 38–39; a regra de pausa tática deve ser uma escolha explícita da experiência.

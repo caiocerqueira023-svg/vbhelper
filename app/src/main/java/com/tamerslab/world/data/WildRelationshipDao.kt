@@ -12,6 +12,10 @@ import kotlinx.coroutines.flow.Flow
 interface WildRelationshipDao {
     @Query("UPDATE WildRelationship SET contactUnlockedAt = COALESCE(contactUnlockedAt, :now), updatedAt = :now WHERE individualId = :individualId")
     suspend fun unlockQuestContact(individualId: String, now: Long)
+
+    /** Removes a joined DigiLine contact without deleting the legacy relationship row (authored DEPART). */
+    @Query("UPDATE WildRelationship SET contactUnlockedAt = NULL, updatedAt = :now WHERE individualId = :individualId")
+    suspend fun clearQuestContact(individualId: String, now: Long)
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(relationship: WildRelationship)
 
@@ -39,9 +43,9 @@ interface WildRelationshipDao {
         SELECT wr.individualId AS individualId, wr.cardCharacterId AS cardCharacterId,
                wr.speciesNameSnapshot AS speciesName, wr.trust AS trust,
                wr.recruitmentState AS recruitmentState,
-               (SELECT content FROM ChatMessageEntity cm WHERE cm.individualId = wr.individualId ORDER BY cm.id DESC LIMIT 1) AS lastMessage,
-               (SELECT timestamp FROM ChatMessageEntity cm WHERE cm.individualId = wr.individualId ORDER BY cm.id DESC LIMIT 1) AS lastTimestamp,
-               (SELECT COUNT(*) FROM ChatMessageEntity cm WHERE cm.individualId = wr.individualId AND cm.role = 'assistant' AND cm.isRead = 0) AS unreadCount
+               (SELECT content FROM ChatMessageEntity cm WHERE cm.individualId = wr.individualId AND cm.kind IS NOT NULL ORDER BY cm.id DESC LIMIT 1) AS lastMessage,
+               (SELECT timestamp FROM ChatMessageEntity cm WHERE cm.individualId = wr.individualId AND cm.kind IS NOT NULL ORDER BY cm.id DESC LIMIT 1) AS lastTimestamp,
+               (SELECT COUNT(*) FROM ChatMessageEntity cm WHERE cm.individualId = wr.individualId AND cm.role = 'assistant' AND cm.kind IS NOT NULL AND cm.isRead = 0) AS unreadCount
         FROM WildRelationship wr
         WHERE wr.contactUnlockedAt IS NOT NULL AND wr.recruitmentState != 'RECRUITED'
         ORDER BY COALESCE(lastTimestamp, wr.updatedAt) DESC

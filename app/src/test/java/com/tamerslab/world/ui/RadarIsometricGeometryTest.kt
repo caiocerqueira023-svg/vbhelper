@@ -380,4 +380,39 @@ class RadarIsometricGeometryTest {
         assertTrue(halfWidthAtRim < 1.0)
         assertEquals(1.0 / RADAR_ISO_FIT_MARGIN, halfWidthAtRim, 0.02)
     }
+
+    @Test
+    fun groundPhaseSlidesThePlateOppositeToThePlayersTravel() {
+        val anchor = com.tamerslab.world.GeoPoint(-12.0, -38.0)
+        // Standing still: the authored grid keeps its phase.
+        val still = radarIsometricGroundPhase(anchor, anchor)
+        assertEquals(0f, still.x, 1e-6f)
+        assertEquals(0f, still.z, 1e-6f)
+        // Walking east slides the ground west (negative x); north slides it south (positive z, because
+        // north is -Z on the plate). The rate is one metre of ground per metre walked near the anchor.
+        val east = radarIsometricGroundPhase(anchor, RadarWorldGeometry.offset(anchor, 0.0, 5.0))
+        assertEquals(-5f, east.x, 0.02f)
+        assertEquals(0f, east.z, 0.02f)
+        val north = radarIsometricGroundPhase(anchor, RadarWorldGeometry.offset(anchor, 5.0, 0.0))
+        assertEquals(0f, north.x, 0.02f)
+        assertEquals(5f, north.z, 0.02f)
+    }
+
+    @Test
+    fun groundPhaseFoldsIntoHalfAGridCellSoThePlateNeverRunsOut() {
+        val anchor = com.tamerslab.world.GeoPoint(25.0, 12.0)
+        val cell = RADAR_ISO_GRID_CELL_METERS
+        // Three quarters of a cell east wraps to the opposite quarter: the pattern is periodic, so the
+        // jump is exactly one authored cell and the finite floor never slides away.
+        val east = radarIsometricGroundPhase(anchor, RadarWorldGeometry.offset(anchor, 0.0, cell * 0.75))
+        assertEquals((cell * -0.75 + cell).toFloat(), east.x, 0.05f)
+        assertTrue(abs(east.x) <= (cell / 2).toFloat() + 0.01f)
+        // A full cell of travel returns the grid to its starting phase.
+        val fullCell = radarIsometricGroundPhase(anchor, RadarWorldGeometry.offset(anchor, cell, cell))
+        assertEquals(0f, fullCell.x, 0.05f)
+        assertEquals(0f, fullCell.z, 0.05f)
+        assertThrows(IllegalArgumentException::class.java) {
+            radarIsometricGroundPhase(anchor, anchor, gridCellMeters = 0.0)
+        }
+    }
 }

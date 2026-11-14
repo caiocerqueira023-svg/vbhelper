@@ -86,7 +86,6 @@ data class BattleStatistics(
     val damagePrevented: Int = 0,
     val healingDone: Int = 0,
     val ordersCompleted: Int = 0,
-    val supportCommands: Int = 0,
     val itemsUsed: Int = 0,
     val projectilesHit: Int = 0,
     val projectilesMissed: Int = 0,
@@ -104,8 +103,6 @@ data class BattleConfiguration(
     val lineupRowSpacing: Float = 1.65f,
     val lineupDepthRatio: Float = 0.38f,
     val minimumLineupDepth: Float = 1.2f,
-    val commandPoints: Int = 0,
-    val maxCommandPoints: Int = 100,
     val decisionIntervalMillis: Long = 200L,
     val defaultPaused: Boolean = false,
     val randomSeed: Long = 1L,
@@ -136,7 +133,12 @@ sealed interface TrainerAction {
     data class ChangeStrategy(val strategy: BattleStrategy) : TrainerAction
     data object MoveCloser : TrainerAction
     data object KeepDistance : TrainerAction
-    data object Support : TrainerAction
+    /**
+     * Sends the partner to a manually marked point on the arena floor (game-space units).
+     * Immediate trainer action: it never enters the order queue and the destination is
+     * clamped to the playable arena radius by the simulator.
+     */
+    data class MoveTo(val x: Float, val z: Float) : TrainerAction
     /** Confirms the Blast timing while the actor's special is in STARTUP; never queued. */
     data class ConfirmBlastTiming(
         val fusionResult: String? = null,
@@ -163,9 +165,6 @@ object OrderFailure {
     const val NOT_ALLIED = "not_allied"
     const val PARTNER_DEFEATED = "partner_defeated"
     const val BAD_LIFETIME = "bad_lifetime"
-    const val SUPPORT_PAUSED = "support_paused"
-    const val SUPPORT_NO_WINDOW = "support_no_window"
-    const val SUPPORT_WINDOW_EXPIRED = "support_window_expired"
     const val BLAST_PAUSED = "blast_paused"
     const val BLAST_NO_WINDOW = "blast_no_window"
     const val BLAST_WINDOW_CLOSED = "blast_window_closed"
@@ -280,16 +279,12 @@ data class BattleSnapshot(
     val elapsedMillis: Long,
     val isPaused: Boolean,
     val pauseReason: String?,
-    val commandPoints: Int,
-    val maxCommandPoints: Int,
     val alliedMembers: List<CombatantSnapshot>,
     val opposingMembers: List<CombatantSnapshot>,
-    val pendingSupportCombatantIds: Set<String>,
     val result: BattleResult?,
     val recentEvents: List<BattleEvent>,
     /** Total emitted events; lets observers deduplicate the bounded recentEvents tail. */
     val eventCount: Long = 0,
-    val reservedCommandPoints: Int = 0,
     val projectiles: List<ProjectileSnapshot> = emptyList(),
     val trainingItems: List<BattleItemSnapshot> = emptyList(),
     val statistics: BattleStatistics = BattleStatistics(),
@@ -302,7 +297,6 @@ data class BattleSnapshot(
     /** Presentation effects through this event were already shown by a completed cinematic. */
     val lastFinisherEventCount: Long = 0L,
     val opposingItems: List<BattleItemSnapshot> = emptyList(),
-    val opposingCommandPoints: Int = 0,
     val alliedItemCooldownMillis: Long = 0L,
     val opposingItemCooldownMillis: Long = 0L,
 )
@@ -335,8 +329,6 @@ sealed interface BattleEvent {
     data class TechniqueMissed(val combatantId: String, val techniqueId: String, val reason: String) : BattleEvent
     data class StatusApplied(val combatantId: String, val statusId: String) : BattleEvent
     data class CombatantDefeated(val combatantId: String) : BattleEvent
-    data class SupportWindowOpened(val combatantId: String, val expiresAtMillis: Long) : BattleEvent
-    data class SupportSucceeded(val combatantId: String, val commandPointsGained: Int) : BattleEvent
     data class ItemUsed(val combatantId: String, val targetId: String, val itemId: String, val amount: Int) : BattleEvent
     data class ProjectileLaunched(val projectileId: Long, val ownerId: String, val techniqueId: String) : BattleEvent
     data class ProjectileMissed(val projectileId: Long, val techniqueId: String) : BattleEvent

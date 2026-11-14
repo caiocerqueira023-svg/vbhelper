@@ -1,6 +1,7 @@
 package com.tamerslab.farm.ui.digifarm
 
 import androidx.compose.runtime.State
+import com.tamerslab.dtos.CharacterDtos
 import com.tamerslab.farm.FARM_MAX_RESIDENTS
 import com.tamerslab.farm.FarmSpriteFilter
 
@@ -24,19 +25,63 @@ data class FarmWorldResident(
     val artwork: FarmArtwork,
 )
 
-/** Animation frames the diorama can draw; filled from VB or Dot artwork depending on the filter. */
+/**
+ * Every animation frame a resident can draw: the full pose set a VB Digimon ships with.
+ *
+ * The frames mirror the twelve-pose `Sprite` columns except attack/dodge, which stay battle-only.
+ * Dot artwork can legitimately repeat frames (Dot sets resolve walk_1/walk_2 to idle frames and may
+ * reuse idle for run); the renderer dedupes identical frames into a single extruded mesh.
+ */
 data class FarmArtwork(
     val idle1: ByteArray,
     val idle2: ByteArray,
     val walk1: ByteArray,
     val walk2: ByteArray,
+    val run1: ByteArray,
+    val run2: ByteArray,
     val train1: ByteArray,
     val train2: ByteArray,
     val happy: ByteArray,
     val sleep: ByteArray,
     val width: Int,
     val height: Int,
-)
+) {
+    /**
+     * Identity of the whole frame set; the diorama rebuilds extruded models only when this changes.
+     * [ByteArray] equality is identity-based, so a content mix is what the renderer can key on.
+     */
+    val contentKey: Int
+        get() {
+            var result = 1
+            result = 31 * result + idle1.contentHashCode()
+            result = 31 * result + idle2.contentHashCode()
+            result = 31 * result + walk1.contentHashCode()
+            result = 31 * result + walk2.contentHashCode()
+            result = 31 * result + run1.contentHashCode()
+            result = 31 * result + run2.contentHashCode()
+            result = 31 * result + train1.contentHashCode()
+            result = 31 * result + train2.contentHashCode()
+            result = 31 * result + happy.contentHashCode()
+            result = 31 * result + sleep.contentHashCode()
+            result = 31 * result + width
+            result = 31 * result + height
+            return result
+        }
+
+    /** Width/height clamped to the renderer's legal extrusion range (0.5..1.8). */
+    val bodyAspect: Float
+        get() = if (width <= 0 || height <= 0) {
+            1f
+        } else {
+            (width.toFloat() / height).coerceIn(0.5f, 1.8f)
+        }
+
+    /** Half the rendered body width in farm world units, used by resident collision. */
+    val bodyRadius: Float get() = bodyAspect * 0.5f * FARM_RESIDENT_HEIGHT_UNITS
+}
+
+/** Rendered height of an extruded resident in Digifarm scene units (must match Digifarm3dViewport). */
+const val FARM_RESIDENT_HEIGHT_UNITS = 0.13f
 
 data class FarmWorldSummary(
     val residents: List<FarmWorldResident> = emptyList(),
@@ -89,4 +134,6 @@ data class FarmMemberOption(
     val name: String,
     val isMember: Boolean,
     val isActive: Boolean,
+    /** Full sprite data, so the roster can open the Storage partner picker for adding a member. */
+    val character: CharacterDtos.CharacterWithSprites,
 )

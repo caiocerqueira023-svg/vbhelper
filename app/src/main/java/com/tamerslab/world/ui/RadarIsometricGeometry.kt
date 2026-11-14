@@ -2,6 +2,8 @@ package com.tamerslab.world.ui
 
 import com.tamerslab.rendering.sprite3d.MAX_CAMERA_ASSISTED_RELATIVE_YAW
 import com.tamerslab.rendering.sprite3d.cameraAssistedSpriteYaw
+import com.tamerslab.world.GeoPoint
+import com.tamerslab.world.RadarWorldGeometry
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -99,6 +101,16 @@ internal const val RADAR_ISO_MAX_PITCH_DEGREES = 60f
 /** Zoom envelope: 0.5× is the widest view, 4× the closest. */
 internal const val RADAR_ISO_MIN_ZOOM = 0.5f
 internal const val RADAR_ISO_MAX_ZOOM = 4f
+
+/**
+ * Conversation framing: a smaller virtual plate makes the pinned camera move physically closer to
+ * the focused wild Digimon during an overworld negotiation, so the token fills a readable part of
+ * the screen while the world stays visible around it.
+ */
+internal const val RADAR_ISO_FOCUS_PLATE_RADIUS_UNITS = 2.2f
+
+/** Lower, more eye-level pitch used for the conversation framing (the token faces the camera). */
+internal const val RADAR_ISO_CONVERSATION_PITCH_DEGREES = 23f
 
 /**
  * Visible radar radius at the neutral zoom, in real-world metres: 200 m by default, 400 m at the
@@ -363,3 +375,31 @@ internal fun radarIsometricPlateAssetScale(
 internal fun radarIsometricVisibleRadiusMeters(zoom: Float): Double =
     RADAR_ISO_VISIBLE_RADIUS_AT_ZOOM_ONE_METERS /
         zoom.coerceIn(RADAR_ISO_MIN_ZOOM, RADAR_ISO_MAX_ZOOM).toDouble()
+
+/**
+ * Ground scroll phase for the isometric radar, in north-up scene metres.
+ *
+ * The partner token stays at the plate centre, so walking is only visible if the authored ground
+ * slides the other way - the way the legacy 2D radar scrolls its grid under the centred marker. The
+ * phase is measured from the first player fix, folded to half a grid cell ([RADAR_ISO_GRID_CELL_METERS])
+ * so the finite authored floor never slides out from under the camera, and returned in north-up scene
+ * axes (east = +x, north = -Z) ready for [radarIsometricRotate] to apply the compass heading.
+ */
+internal fun radarIsometricGroundPhase(
+    anchor: GeoPoint,
+    player: GeoPoint,
+    gridCellMeters: Double = RADAR_ISO_GRID_CELL_METERS,
+): RadarScenePoint {
+    require(gridCellMeters.isFinite() && gridCellMeters > 0.0) { "Grid cell must be positive." }
+    val relative = RadarWorldGeometry.relative(anchor, player)
+    return RadarScenePoint(
+        x = foldToHalfCell(-relative.eastMeters, gridCellMeters),
+        z = foldToHalfCell(relative.northMeters, gridCellMeters),
+    )
+}
+
+/** Folds a distance into [-cell/2, cell/2] so the ground phase stays one cell from its anchor. */
+internal fun foldToHalfCell(meters: Double, cellMeters: Double): Float {
+    val wrapped = meters - cellMeters * Math.round(meters / cellMeters)
+    return wrapped.toFloat()
+}

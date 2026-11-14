@@ -44,7 +44,7 @@ private fun topLevelRoute(destination: NavDestination?, previous: NavDestination
     destination.hasRoute<AppRoute.TechniqueLoadout>() || destination.hasRoute<AppRoute.Adventure>() -> AppRoute.Storage
     destination.hasRoute<AppRoute.WorldChat>() || destination.hasRoute<AppRoute.WorldConversation>() ||
         destination.hasRoute<AppRoute.WorldRecruits>() -> AppRoute.World
-    destination.hasRoute<AppRoute.WildContact>() || destination.hasRoute<AppRoute.FarmGroup>() -> AppRoute.Digiline
+    destination.hasRoute<AppRoute.WildContact>() -> AppRoute.Digiline
     destination.hasRoute<AppRoute.ApplyItem>() -> AppRoute.Items(ItemsDestination.TAB_MINE)
     destination.hasRoute<AppRoute.Credits>() || destination.hasRoute<AppRoute.Lorebook>() ||
         destination.hasRoute<AppRoute.Viewer>() -> AppRoute.Settings

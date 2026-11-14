@@ -34,6 +34,5 @@ fun RadarPlaceScreen(
         onLabelsPreferenceChanged = { labelsPreferred = it },
         arPreferred = arPreferred,
         onArPreferenceChanged = { arPreferred = it },
-        showSectionTabs = false,
     )
 }

@@ -5,12 +5,21 @@ import com.tamerslab.hardware.nfc.CryptographicTransformer
 import com.tamerslab.hardware.nfc.data.DeviceType
 import com.tamerslab.security.proto.Secrets
 import com.tamerslab.security.proto.Secrets.HmacKeys
-import kotlinx.coroutines.flow.single
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 
 class DataStoreSecretsRepository(
     private val secretsDataStore: DataStore<Secrets>,
+    private val bundledSecrets: Secrets? = BundledSecrets.value,
 ): SecretsRepository {
-    override val secretsFlow = secretsDataStore.data
+    /**
+     * Emits the stored secrets, falling back to [bundledSecrets] while the store is still empty
+     * or incomplete. Imported secrets always take precedence, so a manual import still overrides
+     * the baked-in values (e.g. after Bandai rotates the keys).
+     */
+    override val secretsFlow = secretsDataStore.data.map { stored ->
+        if (stored.isMissingSecrets()) bundledSecrets ?: stored else stored
+    }
 
     override suspend fun updateSecrets(secrets: Secrets) {
         secretsDataStore.updateData {
@@ -19,7 +28,7 @@ class DataStoreSecretsRepository(
     }
 
     override suspend fun getSecrets(): Secrets {
-        return secretsFlow.single()
+        return secretsFlow.first()
     }
 }
 

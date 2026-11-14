@@ -1,4 +1,4 @@
-﻿package com.tamerslab.navigation
+package com.tamerslab.navigation
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -23,9 +23,6 @@ sealed interface AppRoute {
     @Serializable @SerialName("Viewer") data object Viewer : AppRoute
     @Serializable @SerialName("Adventure") data object Adventure : AppRoute
     @Serializable @SerialName("Credits") data object Credits : AppRoute
-
-    @Serializable @SerialName("FarmGroup")
-    data class FarmGroup(val farmId: String) : AppRoute
 
     @Serializable @SerialName("WorldConversation")
     data class WorldConversation(val interactionId: String) : AppRoute

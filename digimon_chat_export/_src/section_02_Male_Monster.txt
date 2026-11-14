@@ -1,0 +1,442 @@
+===Monster===
+{| class="table smt5"
+! colspan="4" |Dialogue
+!Outcome
+|-
+| colspan="5" align="center" |Man-stink
+|-
+| colspan="4" |thERE's A hUMan sCeNt oN YA. you GOT ThE mAN-stink. whY's THAt, buDDy...?
+|>I'm human.<br>>I ate a human.<br>>I saw humans around.
+|-
+| width="15%" rowspan="2"|>I'm human. (RANDOM)
+| colspan="3" |EeeHeEeE! thEn i'm GONna eAt yA!
+|[ENEMY PHASE]
+|-
+| colspan="3" |EEHEeee...? wHAT THE hELL's A huMan DoINg hEre?
+|>Hunting Demons.<br>>Moving in.<br>>Tourism.
+|-
+| colspan="2" width="30%" |>>Hunting demons.
+| colspan="2" |So HEY, WhaT DO YoU AcTUAlLY Do With THE DemoNS you KILL?
+|>Taxidermy.<br>>I eat them.<br>>Use them for research.
+|-
+| colspan="3" width="45%" | >>>Taxidermy.
+|No WAY I'm GOnna be thE InTEriOR dEcOratiNg fOr sOme cHUmp-ass HuMan'S ROoM!
+|[ENEMY PHASE]
+|-
+| colspan="3" |>>>I eat them.
+|iF YOu'rE HUman, theN EaT YoUr MAss-pRoDUcED HuMaN SLOP!
+|[TALK END, TURN USED]
+|-
+| colspan="3" |>>>Use them for research.
+|EeHEE! YOU DUmbAsS huMaNs AnD YouR TiNy braiNs, AlwAys waSTiNG TiME puzZlINg OveR USelEss ShIt!<br>AlL YoU goTtA Do Is ASk fOR a dEMON's kNOWLedGE! MUcH EasIER!
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>>Moving in.
+| colspan="2" |firST yOU dEsTROy THE hUmAN wOrLd'S EnVIronmeNT, AND nOW YoU'rE GoNNA MesS WiTH oUrs!?<br>FuCK OFF, bUDDy! GO die iN YOur OwN RuIned worLd, yOu GODDAmN ParaSITE!
+|[LEAVES]
+|-
+| colspan="2" |>>Tourism.
+| colspan="2" |eEhee! WEll, heRE, TAKe a souVEnir!
+|[GIVES ITEM, LEAVES]
+|-
+|>I ate a human.
+| colspan="3" |eEheE! ReALLy!?<br>hoW Was iT? taSTed DElicioUS, RIGhT?
+|>Pretty tasty.<br>>They tasted awful.<br>>Good flavor notes, and finely aged.
+|-
+| colspan="2" |>>Pretty tasty.
+| colspan="2" |EeHEe! i wAnnA EaT A hUmAn ToO!<br>bUt IF i JUSt eAt YOU, ThAt's PROBably closE ENouGH!
+|[ENEMY PHASE]
+|-
+| colspan="2" |>>They tasted awful.
+| colspan="2" |woW, buddy, yoU'VE goT sHiT tAsTes! eaT ThiS INstead!
+|[GIVES ITEM, LEAVES]
+|-
+| colspan="2" |>>Good flavor notes, and finely aged.
+| colspan="2" |
+|
+|-
+|>I saw humans around.
+| colspan="3" | SO ThAt'S it! eeHeE! wheRE Are theY!? 
+(The demon went to look for humans... They came back after a short while!)
+you MaDe tHat ShiT UP! how dare yOu!
+|[ENEMY PHASE]
+|-
+| colspan="5" align="center" |Ignore
+|-
+| colspan="4" |The demon is pretending to ignore you... What will you do?
+|>Call out to them<br>>Do the same
+|-
+|>Call out to them
+| colspan="3" |The demon is still pretending to ignore you... What will you do?
+|>Call out to them<br>>Put your guard up
+|-
+| colspan="2" |>>Call out to them
+| colspan="2" |The demon is STILL pretending to ignore you... What will you do?
+|>Call out to them<br>>Ambush them
+|-
+| rowspan="2" |>>>Call out to them
+| colspan="3" |woW, YoU rEallY wANT mE On YOuR sIde, HuH!?<br>ToUGH SHit!
+|[ENEMY PHASE]
+|-
+| colspan="3" |woW, YoU rEallY wANT mE On YOuR sIde, HuH!?<br>bAH, Fine! WE'lL SeE How It GOeS, jusT tHis ONce!
+|[INSTANT RECRUIT]
+|-
+| colspan="2" rowspan="2" |>>>Ambush them (RANDOM)
+| colspan="2" |eEHEEEe! wAIt! DOn'T Kill mE! pLEaSE!<br>i'LL EvEN JOin you! So yOU DOn't miNd SPaRINg mE, RIght?
+|[INSTANT RECRUIT]
+|-
+| colspan="2" |aAaAAaaAHeEe
+The demon fled
+|[LEAVES]
+|-
+| rowspan="2" |>>Put your guard up
+| colspan="3" |EEhEe, caLM doWN...! fInE, We can tALk BUSiNEsS!
+|[BARGAIN PHASE]
+|-
+| colspan="3" |EehEE! THiS is a WASTE OF TimE!
+|[ENEMY PHASE]
+|-
+|>Do the same
+| colspan="3" |hMph! iGNORIn' Me, EH? I SEe HOW iT IS!
+|[DIALOGUE SWITCH >> CHUMP]
+|-
+| colspan="5" align="center" |Beckoning
+|-
+| colspan="4" |The demon is beckoning you closer... What will you do?
+|>Go closer<br>>Gesture back<br>>Shoo them away
+|-
+| rowspan="2" |>Go closer (RANDOM)
+| colspan="3" |EeheEEEE!
+|[ENEMY PHASE]
+|-
+| colspan="3" |GeT! OUT! sOme! prESENTs! NOW!
+|[BARGAIN PHASE]
+|-
+| rowspan="3" |>Gesture back (RANDOM)
+| colspan="3" |eEheE! You'RE IN A GeNErOUs moOD, Huh?
+|[BARGAIN PHASE]
+|-
+| colspan="3" |EeHeE! yOu'Re in A CHAtTy mooD, HUh?
+|[DIALOGUE SWITCH]
+|-
+| colspan="3" |dumbasS! That's HOw You GeT yOuRSELF KiLLeD!
+|[ENEMY PHASE]
+|-
+| rowspan="3" |>Shoo them away (RANDOM)
+| colspan="3" |yOu ThinK yoU caN sHoO me aWay!? LIkE i'M soMe KInda buG!?<br>yOu dON't GeT RID of me tHat EASY! If YoU WanNA StOP me BuZzin', THen shOw ME some InCEntIvE!
+|[BARGAIN PHASE]
+|-
+| colspan="3" |yOu ThinK yoU caN sHoO me aWay!? LIkE i'M soMe KInda buG!?<br>OH, i Can daNCE likE A fLy! But I'Ll StINg like A real BASTArD WASP!
+|[ENEMY PHASE]
+|-
+| colspan="3" |(The demon ledt, downcast...)
+|[LEAVES]
+|-
+| colspan="5" align="center" |Leave
+|-
+| colspan="4" |The demon is trying to leave... What will you do?
+|>Stop them<br>>Ignore them<br>>Make a sad face
+|-
+|>Stop them
+| colspan="3" |Ugh, stoP AnnoYiNG Me! IF you wAnT mY TImE, IT'S GonNa COst yA!
+|[BARGAIN PHASE]
+|-
+|>Ignore them
+| colspan="3" |The demon left...<br>...except now it's coming back...?<br>HECk, It'S NIcE bEIng In THe spOTlight! YOU WAnNa TaLK a LiTTLe MorE?
+|[DIALOGUE SWITCH]
+|-
+|>Make a sad face
+| colspan="3" |YOU looK Like A beGGAR!
+|[GIVES MACCA, LEAVES]
+|-
+| colspan="5" align="center" |Hair
+|-
+| colspan="4" |DAnG, yOU'VE goT lOng hAiR! eeHEEE! whY'S Your hAiR SO lOnG?
+|>It's a curse.<br>>To strangle you with.<br>>Gets me out of hairy situations.
+|-
+|rowspan="2"|>It's a curse.
+| colspan="3" |oOH, dID you Say cuRSe? I lOVE A Good CUrSe!<br>YoU got ANy mOre CooL CursES? i waNna See!
+|[BARGAIN PHASE]
+|-
+| colspan="3" |WhOA, wAntMe TO get rID oF THaT CursE For ya? WE jUST gOtTa cHOp oFf ThE haIR! AND tHE HEas's pRoBABIY CuRSed BY NOw, so WE'll CHoP That OfF toO!
+|[ENEMY PHASE]
+|-
+|>To strangle you with.
+| colspan="3" |eeheE, Go AheaD And try It, AsSHoLe!<br>IF i EVER JoiN ya, I'lL sTAB YoU In ThE BaCK mYselF!
+|[BARGAIN PHASE]
+|-
+|>Get's me out of hairy situations
+| colspan="3" |oH, gREat, We Got A cOMEdIAn! A bAD comEDiAn!
+I Didn'T come HerE for yOUR sTUPid jokeS!
+I Came HEre fOR Some preSENTs! OfFeRInGs! DEligHts!
+|[BARGAIN PHASE]
+|-
+| colspan="5" align="center" |Want
+|-
+| colspan="4" | The demon seems to want something... What will you do?
+|>Dance<br>>Sing<br>>Flash some Macca
+|-
+|>Dance
+| colspan="3" |You tried dancing...<br>eEhee! HeY, YoU'Re PReTty sLICk AFteR ALL! tHAT WAs Some gOOD sHIT!
+|[BARGAIN PHASE]
+|-
+|>Sing
+| colspan="3" |You tried singing...<br>WHoa! yOu goT a ReAl PrETTy VOicE, yOU Know thAt?
+|[BARGAIN PHASE]
+|-
+|>Flash some Macca
+| colspan="3" |You flashed some Macca at the demon...<br>eEhEEEE! gImme gIMMe gimme!
+|[ENEMY PHASE]
+|-
+| colspan="5" align="center" |Guard up
+|-
+| colspan="4" |(The demon has their guard up... What will you do?)
+|>Motion for peace<br>>Put your guard up
+|-
+| rowspan="2" |>Motion for peace (RANDOM)
+| colspan="3" |BLEH! gUESs I coULD jUst kILL you IF You StArt mOUThIN' OFF...<br>fINE! you WanNa TALk? LEt'S tALK!
+|[DIALOGUE SWITCH >> FORTUNETELLING]
+|-
+| colspan="3" |SUre! I alwaYs Get Real pEAcefuL AftEr I KILL!
+|[ENEMY PHASE]
+|-
+| rowspan="2" |>Put your guard up (RANDOM)
+| colspan="3" |AW Ya scAred? afrAid? WEak-Ass DEMon!
+|[TALK END, TURN USED]
+|-
+| colspan="3" |eeheE...? hey, yOu DOn't haVE TO KILL me!<br>JUSt tAkE tHis AND WE'Re SQUarE, OkAy?
+|[GIVES MACCA, LEAVES]
+|-
+| colspan="5" align="center" |Join
+|-
+| colspan="4" |So HEY, if I JOin YoU, WHAT ArE YOu gonna dO WiTH ME...?
+|>I'll put you to work.<br>>I'll lock you up.<br>>I'll use you in fusion.
+|-
+|>I'll put you to work.
+| colspan="3" |EeheEHEE! noT GOnNA thRow me OUT aS cANNOn fodDEr, ArE yA?<br>BEttEr Be careFUL, Or i mIGHT Just puT YOU in the LInE of fIre!
+|[BARGAIN PHASE]
+|-
+|>I'll lock you up.
+| colspan="3" |
+|
+|-
+|I'll use you in fusion.
+| colspan="3" |
+|
+|-
+| colspan="5" align="center" |Smell blood
+|-
+| colspan="4" |EehEeHEEHEE! I SmEll blOoD! BLood!
+|>Laugh with them<br>>Sniff the air<br>>Stay silent
+|-
+|>Laugh with them
+| colspan="3" |EEHEe... You GET It, rIght? you LovE THE FEELInG oF GetTINg SPLaTteReD wIth blOOD, too!
+|>I do.<br>>I don't get it.<br>>Those stains are tough to get out.
+|-
+| colspan="2" |>>I do.
+| colspan="2" |You DoN'T get it! yOU're TALkiN' ouT YOuR ass! You don't uNdERstaNd Me!
+|[TALK END, TURN USED]
+|-
+|rowspan="2"|>>I don't get it.
+| colspan="3" |UGH, so yOu're jusT AnOthER gOody-TWO-shOes! yOU MAke ME Sick!
+|[ENEMY PHASE]
+|-
+| colspan="3" |you saY That, bUt i KNow whaT You reAlLY arE. TheRe's somEthIN' dARK behind thAT preTtY faCe. reEeAaAL DARk.<br>IT's Okay. YOu DoN't hAVE To HIDe it! I miGHT evEN hELp yA!
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>>Those stains are tough to get out.
+| colspan="2" |EehEe, Uh... gOod pOint.<br>heY if I jOIn Ya, You WoULdN'T mINd GIVin' Me a qUicK RINsE, would Ya?
+|[BARGAIN PHASE]
+|-
+|>Sniff the air
+| colspan="3" |YeaH, gET A Good whiff OF thAT... ThAT's wHat surVIVaL oF tHE FiTTEsT sMelLs LiKe...
+|>It smells great.<br>>I think that's just your stink.<br>>I prefer the smell of barbecue.
+|-
+| colspan="2" |>>It smells great.
+| colspan="2" |StiLL, iT's NOT THe BEST-sMellin' thING AROuND.<br>aFtEr all, i loVe tHe SmELL Of PReSeNtS FoR me eveN mORE!
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>>I think that's just your stink.
+| colspan="2" |eEhee! yEah, YOu CAn Tell, RIgHT? I sMeLL JUSt hOW a deMon lOrD SHoULd!<br>C'MOn, thE biG stiNky Demon lOrd's HunGRy For TREASURE! BrIng oUT yoUR ofFerINGs!
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>>I prefer the smell of barbecue.
+| colspan="2" |YoU'rE GEtTin' DiSTrActeD, man!
+TAkE This SERiOuSlY!
+hERe, If you'RE HUNGRY, eaT this!
+|[GIVES ITEM, LEAVES]
+|-
+|>Stay silent
+| colspan="3" |I dUNNO hoW YOU caN act sO coOL AND cOMPosED. dOESn'T ThIS SmElL GET You wORKEd UP? DON'T ya FeEl thE rUsH!?
+|>Not really.
+>I don't smell any blood.
+>The stench paralyzed me.
+|-
+| colspan="2" |>>Not really
+| colspan="2" |MaN... yoU'Re USeD to bEiNG SurRounDEd by BlOoD, huh? YoU CAn'T EVen SMELL IT aNyMoRe...
+tCh... ThiS Guy mIght bE evEn MORe iNSANE THAN mE. betTER JUst neGOtiatE AND GEt tHIS over WIth...
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>>I don't smell any blood.
+| colspan="2" |Ah, SHIt! I WAs SMELLin' My oWN fart THE whoLE TiME! GoD, thaT'S SO EmbaRRasSiNg! i'll NeveR LIvE it DoWN!
+|[LEAVES]
+|-
+| colspan="2" |>>The stench paralyzed me.
+| colspan="2" |uH-oh, yOu'rE LOokIN' PREtTY GREEn In The faCE... iCK, gET AwAY froM me! If YOu'RE GOnNa Bard, AT lEASt Don'T BaRF ON me! (The demon fled in a hurray... THey dropped something on their way out!)
+|[GIVES ITEM, LEAVES]
+|-
+| colspan="5" align="center" |Eat
+|-
+| colspan="4" |yOU LOOK REAl tASTy. MinD If i EaT yA?
+|>It'll probably be disgusting.<br>>Try a bite.<br>>You look tastier.
+|-
+| rowspan="2" |>It'll probably be disgusting.(RANDOM)
+| colspan="3" |eehEe? WELL, I GUESS YOu dO StiLL SEeM grEEN Around THE eDges. pRETTy UnriPe.<br>gUEsS I'LL Join YA, anD wAIt uNtil yOU're riPe enouGh tO eat!
+|[BARGAIN PHASE] 
+|-
+| colspan="3" |uGh! weLL, i'M nOt gONna jOIn sOMEONE wHo DOEsn'T eveN TastW GOOD!
+|[ENEMY PHASE]
+|-
+| rowspan="2" |>Try a bite. (RANDOM)
+| colspan="3" |IT wAS A JOKe, YOu idIOT!
+|[TALK END, TURN USED]
+|-
+| colspan="3" |eEhEE! wherE DO yOu WaNt me tO StART?
+|>My head<br>>My hand.<br>>My leg.
+|-
+| colspan="2" |>>My head.
+| colspan="2" |But IF I bItE yOur heAD Off, i'Ll have to eAt tHE REsT of YoU HeRE! I'm nOT caRryiNG yOUR coRpsE AROund!<br>uGH, I'Ll JuSt TAKe tHe wHole BODY tO GO. i'LL eAT yOu wHEn We GeT back tO MY plaCE.
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>>My hand.
+| colspan="2" |yEeSH, yoUR hAnD LOoKs sO boNY! yOU goT Any musCLe in tHEre?
+|[DIALOGUE SWITCH >> HANDSHAKE]
+|-
+| colspan="3" |>>My leg.
+|I cAn't do thAT iF WE'Re ABOut tO neGOtIaTE!<br>...caUsE thEN yOu woUlDn'T haVE A LEg TO sTAnD On! EeheE hee Hee HEe!
+|[BARGAIN PHASE]
+|-
+|>You look tastier.
+| colspan="3" |UH... YoU PRObAblY doN't WAnNa Eat Me. thE fOod POISoning Would pRoBaBLy kiLL Ya. mESsY WAy TO go OuT.<br>IT'd be mUcH EaSiEr iF I jUST kIlL YOU right hErE!
+|[ENEMY PHASE]
+|-
+| colspan="5" align="center" |Handshake
+|-
+| colspan="4" |C'mOn, ShAKe My HANd! and puT sOmE ooMPh InTo It! GImMe ALL thE '''POweR''' yOU goT...!
+|>You're on.<br>>No way.
+|-
+|>You're on.
+| colspan="3" |(You and the demon shook hands with a ferocious grip...)
+|[Strength stat between the 2 users is compared]
+|-
+| colspan="2" |[USER STRENGTH IS HIGHER]
+| colspan="2" |(...The demon couldn't take it, and pulled their hand away!)<br>aLL RigHT AlrEAdy! YeESh, yOU GoT A GRiP liKe A VisE!<br>bUT Hey, GOtTa Say i'M iMPressED! i'LL JOIN UP WITH YOu!
+|[INSTANT RECRUIT]
+|-
+|>No way.
+| colspan="3" |wHat, yoU dOn't wANnA SHAke? FInE, I GeT it...
+|[TALK END, TURN ISN'T USED]
+|-
+| colspan="5" align="center" |Chump
+|-
+| colspan="4" |lOoK HeRe, chUMp! dON'T yOU KNoW WHO I aM!?
+|>[DEMON].<br>>Master [DEMON].<br>>Kid [DEMON].
+|-
+|>[DEMON].
+| colspan="3" |ThAT's MASTER [DEMON] to YoU! DIdN't ANyoNE evEr TeaCH YOU to taLK WITh resPECT, ShiTLips!?
+|[TALK END, TURN USED]
+|-
+|rowspan="2"|>Master [DEMON].
+| colspan="3" |ThaT'S EMPEROR [DEMON] to yOU! i eat "MaSTerS" FOr bReaKfAsT!
+|[TALK END, TURN USED]
+|-
+| colspan="3" |I CAn HEAr the sArCasm, wise-aSS!
+|[ENEMY PHASE]
+|-
+|>Kid [DEMON].
+| colspan="3" |A NICkNAMe!? doN'T talk LiKe YoU kNow ME!
+|[ENEMY PHASE]
+|-
+| colspan="5" align="center" |Approaching
+|-
+| colspan="4" |(The demon is approaching... What will you do?)
+|>Stop them<br>>Glare at them<br>>Keep calm
+|-
+|>Stop them
+| colspan="3" |GETtiNG cOld FeEt? aRE YA THAT scAREd oF me?
+|>I am.<br>>You're cute.<br>>You're funny.
+|-
+|rowspan="2"|>>I am.
+| colspan="3" |EEheE! eeheEheehEEheE! (The demon left, laughing, heartily...)
+|[LEAVES]
+|-
+| colspan="3" |but Ya sTilL tAlKeD To mE! and THaT TakES gutS bUDdy!
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>>You're cute.
+| colspan="2" |WHoA, YOU tHink I'M CUte? MAYbE THIS is MY biG BREAk! i cAn fInalLY BE AN iDOl!<br>wELL, IF i'm An idoL, YoU goTTA wOrShiP Me! leT'S see SOmE giftS!
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>>You're funny.
+| colspan="2" |yoU tHiNk I'm fUnNy!? MAN, YouR lifE mUSt Be BORINg AS HELL!<br>i'LL END IT fOR Ya!
+|[ENEMY PHASE]
+|-
+|>Glare at them
+| colspan="3" |YoU lOoKIN' at me...?<br>I tHinK YOU oUgHTa hAvE a LittLE mORe rESPEcT! noW let's SeE sOmE ofFEriNgS!
+|[BARGAIN PHASE]
+|-
+|>Keep calm
+| colspan="3" |EeHEe... thEre WE gO! Now LEt's hAVE ourSELVeS A LITtle chaT!
+|[DIALOGUE SWITCH]
+|-
+| colspan="5" align="center" |Fortunetelling
+|-
+| colspan="4" |eEHeehee... how AbOut I tELL yOuR FutuRE?
+|>Sure.<br>>I'll make my own future.<br>>I have no future.
+|-
+|>Sure.
+| colspan="3" |eEheeHEe... LET'S Take A LOOk...<br>...hEE? WHAt the hEll'S ThIS LIgHT!? cAn't sEe a DAmN thiNg...!
+|[DIALOGUE SWITCH >> WHO]
+|-
+| colspan="5" align="center" |Who
+|-
+| colspan="4"|WhO tHe heLL arE YOu!?
+|>I'm a god.<br>>I'm a student.<br>>I'm a protagonist.
+|-
+|>I'm a god.
+| colspan="3" |wEll, I sUrE DoN't rECOGNIZe ya! yOu neW To tHe whOLE "God" biZ?<br>wELL, YOu'Re Not GOnNa get mY WOrshIp for freE! LeT'S see sOMe MiRAClES! ProVide for ME, DIPshiT!
+|[BARGAIN PHASE]
+|-
+| colspan="5" align="center" |Quiz
+|-
+| colspan="4" |gOD, yoU'Re SO ANnoying! JUst sHut uP ANd LiSTeN! IT'S poP qUiZ tIME!
+|[GUESS RANDOM MONSTER]
+> Answer right
+> Answer wrong
+|-
+|> Answer right
+| colspan="3" | eeHEheHe... hEY, yOU'Re NoT aS sTUPiD as yA LOOk! i THink i'LL jOIn YOu!
+|[INSTANT RECRUIT]
+|-
+|> Answer wrong
+| colspan="3" |
+|[LEAVES]
+|-
+| colspan="5" align="center" |Full Moon
+|-
+| colspan="4" |eEHEe! See THAt MoONLight SHiNIn' DOwn!? MAKeS ME fEeL LikE A KInG! a demOn kiNG!
+|[RANDOM]
+|-
+|[GOOD OUTCOME]
+| colspan="3" |(The demon seems to be in good spirits. Could this be due to the '''full moon'''...?)<br>yOu waNt Me on Your SIDE, EH? SURe, I'm ActUalLY feeLIn' kINdA GenEROUS! EehEE!
+|[BARGAIN PHASE]
+|-
+|[BAD OUTCOME]
+| colspan="3" |LeT's SEe hOW yOUr BLoOD SpARkleS In THE mOonLIgHt!
+|[ENEMY PHASE]
+|-
+| colspan="5" align="center" |New Moon
+|-
+| colspan="4" |EEHEe... WHere'd the MooN go...? No, nOT yOU, IdIot! i'm LoOkin' for thE MooN!<br>(It's no use! Could this be due to the '''new moon'''...?)
+|[ENEMY PHASE]
+|}

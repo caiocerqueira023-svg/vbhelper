@@ -1,5 +1,11 @@
 # Batalha offline 3D — plano de implementação
 
+> **Status update (07/11/2026): superseded nos pontos de CP e incentivo.** O Command Points, o comando
+> Support/incentivo e o instrumento de CP foram removidos do app; a banda de comando virou um deck
+> fixo 3×3 (três técnicas equipadas / itens, especial, estratégia / foco, defesa, mover) e os vitais do
+> parceiro ocupam o espaço do antigo medidor. Registros de CP/reservas abaixo descrevem o estado
+> histórico do plano, não o comportamento atual.
+
 Data: 23–24/09/2026. Estado: **overhaul implementado; compilação, testes JVM e integração Android aprovados**.
 
 O usuário autorizou a implementação, a revisão e o overhaul após relatar câmera fora da arena e combates de um segundo.

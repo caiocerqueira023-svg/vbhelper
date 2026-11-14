@@ -64,7 +64,6 @@ fun placeOf(destination: NavDestination?): NavigationItems? = when {
     destination.hasRoute<AppRoute.Battles>() || destination.hasRoute<AppRoute.TechniqueLoadout>() ->
         NavigationItems.Battles
     destination.hasRoute<AppRoute.Digiline>() ||
-        destination.hasRoute<AppRoute.FarmGroup>() ||
         destination.hasRoute<AppRoute.Chat>() -> NavigationItems.Digiline
     destination.hasRoute<AppRoute.Items>() || destination.hasRoute<AppRoute.ApplyItem>() -> NavigationItems.Items
     destination.hasRoute<AppRoute.Storage>() ||

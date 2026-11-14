@@ -1,4 +1,4 @@
-﻿package com.tamerslab.chat.ui
+package com.tamerslab.chat.ui
 
 import android.content.ClipData
 import com.tamerslab.navigation.AppRoute
@@ -97,6 +97,15 @@ fun ChatScreen(
 
     val messages by chatScreenController.getHistory(characterId).collectAsStateWithLifecycle(emptyList())
     val mood by chatScreenController.getMood(characterId).collectAsStateWithLifecycle(50)
+    val scene by chatScreenController.getScene(characterId).collectAsStateWithLifecycle(null)
+    val syncState by chatScreenController.getPersonalitySyncState(characterId)
+        .collectAsStateWithLifecycle(PersonalitySyncUiState.NONE)
+    val legacyLlmEnabled = chatScreenController.isLegacyLlmEnabled()
+    var showShiftNotice by rememberSaveable(characterId) { mutableStateOf(false) }
+    LaunchedEffect(characterId) { chatScreenController.ensureScene(characterId) { } }
+    LaunchedEffect(characterId) {
+        chatScreenController.isShiftNoticePending(characterId) { pending -> if (pending) showShiftNotice = true }
+    }
     var input by rememberSaveable(characterId) { mutableStateOf("") }
     var requestState by remember { mutableStateOf<RequestState<Unit>>(RequestState.Idle) }
     val sending = requestState is RequestState.Loading
@@ -131,15 +140,31 @@ fun ChatScreen(
         ) {
             if (!usable) Text(stringResource(R.string.participation_inactive_hint),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (!WindowInsets.isImeVisible) ChatStatusPanel(
+            // The exact bond/mood reading is a Debug instrument; normal DigiLine chat stays authored.
+            if (debugSettings.enabled && !WindowInsets.isImeVisible) ChatStatusPanel(
                 label = stringResource(R.string.ui_chat_mood_title, mood),
                 value = mood,
                 summary = com.tamerslab.components.moodSummary(mood)
             )
+            if (syncState == PersonalitySyncUiState.PENDING) {
+                Text(
+                    text = stringResource(R.string.digiline_sync_pending),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else if (syncState == PersonalitySyncUiState.UNAVAILABLE) {
+                Text(
+                    text = stringResource(R.string.digiline_sync_unavailable),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             ChatHistoryPanel(
                 isEmpty = messages.isEmpty(),
-                emptyMessage = stringResource(R.string.ui_chat_empty),
+                emptyMessage = stringResource(
+                    if (legacyLlmEnabled) R.string.ui_chat_empty else R.string.digiline_chat_empty
+                ),
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
@@ -182,7 +207,7 @@ fun ChatScreen(
                                 },
                                 modifier = Modifier.fillMaxWidth()
                             ) { Text(stringResource(R.string.ui_copy)) }
-                            if (message.role == "user") {
+                            if (message.role == "user" && legacyLlmEnabled) {
                                 VitalButton(
                                     enabled = !sending && usable,
                                     onClick = {
@@ -214,29 +239,77 @@ fun ChatScreen(
                 )
             }
 
-            ChatComposer(
-                value = input,
-                onValueChange = { input = it },
-                placeholder = stringResource(R.string.ui_chat_placeholder),
-                sendLabel = stringResource(R.string.ui_send),
-                sending = sending,
-                enabled = usable,
-                errorMessage = error,
-                errorActionLabel = stringResource(R.string.ui_settings),
-                onErrorAction = { navController.navigate(com.tamerslab.navigation.AppRoute.Settings) },
-                onSend = {
-                    val text = input
-                    requestState = RequestState.Loading
-                    chatScreenController.sendMessage(characterId, text) { result ->
-                        requestState = result.fold({ RequestState.Success(Unit) },
-                            { RequestState.Failure(resources.getString(R.string.app_chat_failed), it) })
-                        result.onSuccess {
-                            if (input == text) input = ""
+            scene?.let { activeScene ->
+                DigilineSceneCard(
+                    scene = activeScene,
+                    enabled = usable && !sending,
+                    onOptionSelected = { optionId ->
+                        requestState = RequestState.Loading
+                        chatScreenController.chooseSceneOption(characterId, optionId) { result ->
+                            requestState = result.fold(
+                                { RequestState.Success(Unit) },
+                                { RequestState.Failure(resources.getString(R.string.app_chat_failed), it) }
+                            )
+                        }
+                    },
+                    onDismiss = { chatScreenController.dismissScene(characterId) { } }
+                )
+            }
+
+            if (legacyLlmEnabled) {
+                ChatComposer(
+                    value = input,
+                    onValueChange = { input = it },
+                    placeholder = stringResource(R.string.ui_chat_placeholder),
+                    sendLabel = stringResource(R.string.ui_send),
+                    sending = sending,
+                    enabled = usable,
+                    errorMessage = error,
+                    errorActionLabel = stringResource(R.string.ui_settings),
+                    onErrorAction = { navController.navigate(com.tamerslab.navigation.AppRoute.Settings) },
+                    onSend = {
+                        val text = input
+                        requestState = RequestState.Loading
+                        chatScreenController.sendMessage(characterId, text) { result ->
+                            requestState = result.fold({ RequestState.Success(Unit) },
+                                { RequestState.Failure(resources.getString(R.string.app_chat_failed), it) })
+                            result.onSuccess {
+                                if (input == text) input = ""
+                            }
                         }
                     }
-                }
-            )
+                )
+            } else if (scene == null && error == null) {
+                Text(
+                    text = stringResource(R.string.digiline_idle_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else if (error != null) {
+                Text(
+                    text = error,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
         }
+    }
+
+    if (showShiftNotice) {
+        AlertDialog(
+            onDismissRequest = {
+                chatScreenController.markShiftNoticeShown(characterId)
+                showShiftNotice = false
+            },
+            title = { Text(stringResource(R.string.digiline_shift_notice_title)) },
+            text = { Text(stringResource(R.string.digiline_shift_notice_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    chatScreenController.markShiftNoticeShown(characterId)
+                    showShiftNotice = false
+                }) { Text(stringResource(R.string.ui_ok)) }
+            }
+        )
     }
 }
 

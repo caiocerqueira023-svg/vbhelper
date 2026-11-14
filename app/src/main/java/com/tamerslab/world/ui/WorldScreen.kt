@@ -109,6 +109,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavController
 import androidx.navigation.NavBackStackEntry
+import com.tamerslab.BuildConfig
 import com.tamerslab.R
 import com.tamerslab.ar.ArAvailability
 import com.tamerslab.ar.ArBattleContent
@@ -200,8 +201,6 @@ private const val RADAR_RING_INTERVAL_METERS = 200
 fun RadarScreen(
     navController: NavController,
     worldEntry: NavBackStackEntry,
-    selectedWorldTab: Int = 0,
-    onWorldTabSelected: (Int) -> Unit = {},
     onFullScreenBattleChanged: (Boolean) -> Unit = {},
     /** Radar renderer; the isometric world is the default and the legacy views are Debug-only. */
     legacyView: RadarLegacyView = RadarLegacyView.NONE,
@@ -211,8 +210,6 @@ fun RadarScreen(
     /** "AR battles" radar preference, hoisted/persisted like the legacy view choice. */
     arPreferred: Boolean = false,
     onArPreferenceChanged: (Boolean) -> Unit = {},
-    /** The legacy World route still shows Radar|Digifarm tabs floating over the radar world. */
-    showSectionTabs: Boolean = true
 ) {
     val context = LocalContext.current
     val resources = LocalResources.current
@@ -235,8 +232,14 @@ fun RadarScreen(
     val currentPitch by rememberUpdatedState(cameraPitch)
     var showEntityLabels by rememberSaveable { mutableStateOf(labelsPreferred) }
     LaunchedEffect(showEntityLabels) { onLabelsPreferenceChanged(showEntityLabels) }
-    var arBattleEnabled by rememberSaveable { mutableStateOf(arPreferred) }
-    LaunchedEffect(arBattleEnabled) { onArPreferenceChanged(arBattleEnabled) }
+    // AR battles are a developer-only option (see AR_BATTLES_ENABLED in build.gradle.kts): the
+    // preference is hidden and forced off when the build does not enable it.
+    val arBattlesAvailable = BuildConfig.AR_BATTLES_ENABLED
+    var arBattleEnabled by rememberSaveable { mutableStateOf(arPreferred && arBattlesAvailable) }
+    LaunchedEffect(arBattleEnabled, arBattlesAvailable) {
+        if (!arBattlesAvailable) arBattleEnabled = false
+        onArPreferenceChanged(arBattleEnabled)
+    }
     var fpProjection by remember { mutableStateOf(emptyList<RadarProjection>()) }
     var firstPersonViewportWidth by remember { mutableIntStateOf(0) }
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -418,6 +421,129 @@ fun RadarScreen(
     val currentBiomeFlow = remember { app.container.worldRepository.currentBiome }
     val currentBiome by currentBiomeFlow.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
+
+    // ------------------------------------------------------------ in-world conversations
+    // Wild negotiations happen over the radar: the isometric camera eases in on the Digimon and the
+    // authored card appears over the world, instead of leaving the map for the DigiLine chat screen.
+    var overworldConversation by remember { mutableStateOf<OverworldConversation?>(null) }
+    var overworldScene by remember { mutableStateOf<com.tamerslab.digiline.gateway.DigilineScene?>(null) }
+    var overworldBusy by remember { mutableStateOf(false) }
+    var overworldError by remember { mutableStateOf<String?>(null) }
+    var conversationRadarHeading by remember { mutableFloatStateOf(0f) }
+    // Failed overworld negotiations hand the encounter to the battle renderer after the overlay
+    // leaves; the id is the bridge because beginRadarBattle is declared further down the screen.
+    var negotiationBattleSpawnId by remember { mutableStateOf<String?>(null) }
+
+    fun finishOverworldConversation(refreshPopulation: Boolean = true) {
+        val target = overworldConversation ?: return
+        overworldConversation = null
+        overworldScene = null
+        overworldBusy = false
+        overworldError = null
+        scope.launch(Dispatchers.IO) {
+            target.privateChatId?.let { id ->
+                try {
+                    app.container.worldRepository.interactions.finishPrivateChat(id, target.individualId)
+                } catch (_: Exception) {
+                    // The encounter may already be gone; leaving the conversation must still finish.
+                }
+            }
+            try {
+                if (refreshPopulation) ecosystem.refreshPopulation()
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    fun startOverworldConversation(individualId: String, cardCharacterId: Long, name: String) {
+        if (overworldConversation != null) return
+        overworldScene = null
+        overworldError = null
+        overworldBusy = true
+        negotiationBattleSpawnId = null
+        conversationRadarHeading = radarHeading
+        overworldConversation = OverworldConversation(individualId, cardCharacterId, name)
+    }
+
+    fun chooseOverworldOption(optionId: String) {
+        val target = overworldConversation ?: return
+        scope.launch {
+            overworldBusy = true
+            val result = withContext(Dispatchers.IO) {
+                app.container.digilineGateway.choose(target.individualId, optionId)
+            }
+            overworldBusy = false
+            when (result) {
+                is com.tamerslab.digiline.gateway.DigilineResult.Scene -> overworldScene = result.scene
+                is com.tamerslab.digiline.gateway.DigilineResult.Closed -> finishOverworldConversation()
+                is com.tamerslab.digiline.gateway.DigilineResult.Error -> overworldError = result.message
+            }
+        }
+    }
+
+    fun continueOverworldConversation() {
+        val target = overworldConversation ?: return
+        val joined = overworldScene?.outcomeKey == "JOIN"
+        val fought = overworldScene?.outcomeKey == "FIGHT"
+        scope.launch {
+            withContext(Dispatchers.IO) {
+                try {
+                    app.container.digilineGateway.dismiss(target.individualId)
+                } catch (_: Exception) {
+                }
+            }
+            // A fight starts after the overlay leaves; defer the population refresh so the wild
+            // spawn is still available for the battle handoff.
+            finishOverworldConversation(refreshPopulation = !fought)
+            if (joined) context.showAppFeedback(R.string.digiline_outcome_join)
+            if (fought) negotiationBattleSpawnId = target.individualId
+        }
+    }
+
+    suspend fun loadOverworldScene(target: OverworldConversation) {
+        overworldBusy = true
+        overworldError = null
+        val result = withContext(Dispatchers.IO) {
+            app.container.digilineGateway.ensureScene(target.individualId, wild = true)
+        }
+        overworldBusy = false
+        when (result) {
+            is com.tamerslab.digiline.gateway.DigilineResult.Scene -> overworldScene = result.scene
+            is com.tamerslab.digiline.gateway.DigilineResult.Closed -> finishOverworldConversation()
+            is com.tamerslab.digiline.gateway.DigilineResult.Error -> overworldError = result.message
+        }
+    }
+
+    fun retryOverworldConversation() {
+        val target = overworldConversation ?: return
+        scope.launch { loadOverworldScene(target) }
+    }
+
+    LaunchedEffect(overworldConversation?.individualId) {
+        val target = overworldConversation ?: return@LaunchedEffect
+        val chatId = withContext(Dispatchers.IO) {
+            try {
+                app.container.worldRepository.interactions
+                    .beginPrivateChat("overworld-surface:${java.util.UUID.randomUUID()}", target.individualId)?.id
+            } catch (_: Exception) {
+                null
+            }
+        }
+        if (overworldConversation?.individualId == target.individualId) {
+            overworldConversation = target.copy(privateChatId = chatId)
+        }
+        loadOverworldScene(target)
+    }
+
+    LaunchedEffect(overworldConversation?.individualId) {
+        val id = overworldConversation?.individualId ?: return@LaunchedEffect
+        app.container.digilineGateway.observeScene(id).collect { scene ->
+            if (scene != null && overworldConversation?.individualId == id) {
+                overworldScene = scene
+            }
+        }
+    }
+
     LaunchedEffect(showDebugSpawnPicker, debugSpawnPickerAttempt, debugSettings.enabled) {
         if (!showDebugSpawnPicker || !debugSettings.enabled) return@LaunchedEffect
         debugSpawnCharacters = null
@@ -579,6 +705,10 @@ fun RadarScreen(
                     app.container.worldRepository.resolveSpawnBiome(fix.position)
                 }
                 val current = ecosystem.snapshot.value
+                // The biome is a reading of where the player is, not an outcome of the spawn refresh:
+                // publish it as soon as it resolves so the top cluster can show it even if the region
+                // command below is rejected or the spawn refresh fails.
+                app.container.worldRepository.publishSpawnBiome(biome)
                 if (current.leaseEpoch != epoch) return@launch
                 val result = withContext(Dispatchers.IO) {
                     // Build the command stamp at submission time: the biome lookup above is a long
@@ -594,7 +724,6 @@ fun RadarScreen(
                 }
                 if (result is RadarCommandResult.Applied) {
                     lastPopulationPosition = result.value
-                    app.container.worldRepository.publishSpawnBiome(biome)
                 } else if (result is RadarCommandResult.Failed) populationRefreshFailed = true
             } catch (cancelled: CancellationException) {
                 throw cancelled
@@ -908,7 +1037,9 @@ fun RadarScreen(
      */
     fun beginRadarBattle(spawn: WorldDtos.SpawnWithDetails) {
         if (preparingSpawnId != null || battleActive || arStageVisible) return
-        if (!arBattleEnabled || checkArAvailability(context) == ArAvailability.UNSUPPORTED) {
+        if (!arBattlesAvailable || !arBattleEnabled ||
+            checkArAvailability(context) == ArAvailability.UNSUPPORTED
+        ) {
             startRadarBattle(spawn)
             return
         }
@@ -917,6 +1048,20 @@ fun RadarScreen(
         arPlacement = null
         arAvailability = null
         arStageVisible = true
+    }
+
+    // Dx2-style consequence: a negotiation that ends in FIGHT is not just a closed card — the
+    // encounter becomes the battle the player was trying to talk their way out of.
+    LaunchedEffect(negotiationBattleSpawnId, spawns, battleActive, arStageVisible) {
+        val individualId = negotiationBattleSpawnId ?: return@LaunchedEffect
+        if (battleActive || arStageVisible) return@LaunchedEffect
+        val spawn = spawns.firstOrNull { it.individualId == individualId }
+        if (spawn == null) {
+            negotiationBattleSpawnId = null
+            return@LaunchedEffect
+        }
+        negotiationBattleSpawnId = null
+        beginRadarBattle(spawn)
     }
 
     /** Placement confirmed: start the battle while keeping the same AR stage mounted for BATTLE. */
@@ -1027,6 +1172,10 @@ fun RadarScreen(
     // System back while scanning must leave the AR stage instead of popping the radar destination
     // (which would otherwise leave the full-screen chrome flagged as active).
     BackHandler(enabled = arStageVisible && !battleActive) { cancelArStage() }
+    // System back leaves an in-world conversation before it leaves the Radar destination.
+    BackHandler(enabled = overworldConversation != null && !overworldBusy) {
+        continueOverworldConversation()
+    }
 
     Box(Modifier.fillMaxSize()) {
             val onBattleRendererCreated: () -> Unit = { battleRendererPresent.set(true) }
@@ -1455,10 +1604,10 @@ fun RadarScreen(
                         snapshot = worldSnapshot,
                         presentations = presentations,
                         playerSprite = playerSprite,
-                        heading = radarHeading,
+                        heading = if (overworldConversation != null) conversationRadarHeading else radarHeading,
                         zoom = zoom,
                         active = radarResumed && !battleActive && !arStageVisible && pendingBattleEventId == null,
-                        motion = allowMotion,
+                        motion = allowMotion && overworldConversation == null,
                         onProjection = { isoProjection = it },
                         onFailure = { isoFailed = true; legacyName = RadarLegacyView.NONE.name },
                         onCreated = { isometricRendererPresent.set(true) },
@@ -1468,6 +1617,7 @@ fun RadarScreen(
                             }
                         },
                         pitchDegrees = RADAR_ISO_PITCH_DEGREES,
+                        conversationFocusId = overworldConversation?.individualId,
                         rings = emptyList(),
                         modifier = Modifier.fillMaxSize(),
                     )
@@ -1607,14 +1757,11 @@ fun RadarScreen(
                 }
             }
 
-            if (showSectionTabs) {
-                Box(Modifier.align(Alignment.TopCenter).padding(top = 96.dp)) {
-                    WorldSectionTabs(selectedTab = selectedWorldTab, onTabSelected = onWorldTabSelected)
-                }
-            }
-
             RadarTopChrome(
                 cardinal = cardinalLabel,
+                biomeText = currentBiome
+                    .takeIf { it != WorldBiome.NULL }
+                    ?.let { stringResource(R.string.ui_world_biome_label, it.displayName()) },
                 onBack = { navController.popBackStack() },
                 onOptions = { showRadarOptions = true },
                 onSpawnSettings = { showWorldSpawnSettings = true },
@@ -1681,6 +1828,7 @@ fun RadarScreen(
         onLabelsChange = { showEntityLabels = it },
         arBattlesEnabled = arBattleEnabled,
         onArBattlesChange = { arBattleEnabled = it },
+        arBattlesAvailable = arBattlesAvailable,
         debugEnabled = debugEnabled,
         legacyView = effectiveLegacy,
         onLegacyViewChange = { legacy ->
@@ -1737,7 +1885,10 @@ fun RadarScreen(
                                 }.getOrThrow()
                             }
                             selectedEncounterId = null
-                            navController.navigate(AppRoute.WildContact(chatTarget.first, chatTarget.second))
+                            val name = spawns.firstOrNull { it.individualId == chatTarget.first }?.speciesName
+                                ?: selectedEncounterName
+                                ?: "Digimon"
+                            startOverworldConversation(chatTarget.first, chatTarget.second, name)
                         } catch (cancelled: CancellationException) {
                             throw cancelled
                         } catch (failure: Exception) {
@@ -1789,6 +1940,18 @@ fun RadarScreen(
                         }
                     }
                 }
+            )
+        }
+
+        overworldConversation?.let { conversation ->
+            OverworldNegotiationOverlay(
+                conversation = conversation,
+                scene = overworldScene,
+                busy = overworldBusy,
+                error = overworldError,
+                onChoose = { optionId -> chooseOverworldOption(optionId) },
+                onContinue = { continueOverworldConversation() },
+                onRetry = { retryOverworldConversation() },
             )
         }
     }

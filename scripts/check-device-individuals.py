@@ -11,7 +11,7 @@ ADB = Path.home() / "AppData/Local/Android/Sdk/platform-tools/adb.exe"
 OUT = ROOT / "app/build/identity-device-check"
 OUT.mkdir(parents=True, exist_ok=True)
 payload = subprocess.run([
-    str(ADB), "exec-out", "run-as", "com.github.nacabaro.vbhelper", "tar", "cf", "-",
+    str(ADB), "exec-out", "run-as", "com.tamerslab.vbhelper", "tar", "cf", "-",
     "databases/internalDb", "databases/internalDb-wal",
 ], check=True, capture_output=True).stdout
 with tarfile.open(fileobj=io.BytesIO(payload)) as archive:

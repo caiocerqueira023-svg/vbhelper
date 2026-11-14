@@ -7,7 +7,7 @@ import org.junit.Test
 
 class BattleFinisherTest {
     private val special = TechniqueDefinition("special", "Base Special", TechniqueKind.SPECIAL, 100,
-        energyCost = 30, commandPointCost = 5, maxRange = 30f, startupMillis = 340,
+        energyCost = 30, maxRange = 30f, startupMillis = 340,
         activeMillis = 68, recoveryMillis = 204, cooldownMillis = 680, criticalChance = 0f)
     private val slow = TechniqueDefinition("slow", "Suspended attack", TechniqueKind.MELEE, 10,
         maxRange = 30f, startupMillis = 2_000, activeMillis = 68, recoveryMillis = 204,
@@ -21,10 +21,10 @@ class BattleFinisherTest {
         movementSpeed = 0f, techniqueIds = listOf("slow"), specialTechniqueId = "special",
         decisionDelayMinMillis = 150_000, decisionDelayMaxMillis = 150_000)
 
-    private fun simulator(partner: Boolean = false, kill: Boolean = false, commandPoints: Int = 100,
+    private fun simulator(partner: Boolean = false, kill: Boolean = false,
         configurePartner: (CombatantDefinition) -> CombatantDefinition = { it },
         lead: (CombatantDefinition) -> CombatantDefinition = { it }): BattleSimulator = BattleSimulator(
-        BattleConfiguration(commandPoints = commandPoints, randomSeed = 903),
+        BattleConfiguration(randomSeed = 903),
         BattleTeam("allies", BattleSide.ALLIED, buildList {
             add(lead(fighter("a", BattleSide.ALLIED)))
             if (partner) add(configurePartner(fighter("p", BattleSide.ALLIED)))
@@ -105,14 +105,12 @@ class BattleFinisherTest {
         val orderId = open(sim)
         val startup = sim.snapshot()
         assertEquals(470, startup.alliedMembers.single().energy)
-        assertEquals(95, startup.commandPoints)
         confirm(sim)
         val launched = sim.snapshot()
         assertEquals(BattleFinisherPhase.FOCUS, launched.finisher!!.phase)
         assertEquals(0L, launched.finisher!!.elapsedMillis)
         assertTrue(launched.pendingBlastTiming.isEmpty())
         assertEquals(startup.alliedMembers.single().energy, launched.alliedMembers.single().energy)
-        assertEquals(startup.commandPoints, launched.commandPoints)
         assertEquals(0, launched.alliedMembers.single().specialCharge)
         assertEquals(1, launched.statistics.specialsUsed)
         assertEquals(OrderFailure.BLAST_NO_WINDOW,
@@ -145,7 +143,6 @@ class BattleFinisherTest {
         assertNull(restored.alliedMembers.single().activeTechniqueId)
         assertEquals(0, restored.alliedMembers.single().specialCharge)
         assertEquals(470, restored.alliedMembers.single().energy)
-        assertEquals(95, restored.commandPoints)
         assertEquals(1, restored.recentEvents.filterIsInstance<BattleEvent.BlastFormStarted>().size)
         assertEquals(1, restored.recentEvents.filterIsInstance<BattleEvent.BlastFormEnded>().size)
         assertEquals(1, restored.recentEvents.filterIsInstance<BattleEvent.OrderChanged>()
@@ -162,7 +159,7 @@ class BattleFinisherTest {
         val projectile = TechniqueDefinition("projectile", "Projectile", TechniqueKind.PROJECTILE, 10,
             maxRange = 30f, startupMillis = 34, activeMillis = 34, recoveryMillis = 34,
             projectileSpeed = 0.01f, projectileLifetimeMillis = 20_000, criticalChance = 0f)
-        val sim = BattleSimulator(BattleConfiguration(commandPoints = 100),
+        val sim = BattleSimulator(BattleConfiguration(),
             BattleTeam("allies", BattleSide.ALLIED, listOf(fighter("a", BattleSide.ALLIED),
                 fighter("p", BattleSide.ALLIED).copy(techniqueIds = listOf("poison", "projectile", "slow"),
                     specialTechniqueId = null, initialEnergy = 100))),
@@ -333,14 +330,12 @@ class BattleFinisherTest {
         assertEquals(1, sim.snapshot().statistics.specialsHit)
     }
 
-    @Test fun duoPresentationDoesNotGrantMissingEnergyCommandPointsOrReadiness() {
-        listOf("energy", "command", "readiness").forEach { missing ->
-            val sim = simulator(partner = true, commandPoints = if (missing == "command") 5 else 100,
-                configurePartner = { partner -> when (missing) {
-                    "energy" -> partner.copy(initialEnergy = 0, energyRegenerationPerSecond = 0f)
-                    "readiness" -> partner.copy(techniqueIds = listOf("exhaust"), readinessRegenerationPerSecond = 0.01f)
-                    else -> partner
-                } })
+    @Test fun duoPresentationDoesNotGrantMissingEnergyOrReadiness() {
+        listOf("energy", "readiness").forEach { missing ->
+            val sim = simulator(partner = true, configurePartner = { partner ->
+                if (missing == "energy") partner.copy(initialEnergy = 0, energyRegenerationPerSecond = 0f)
+                else partner.copy(techniqueIds = listOf("exhaust"), readinessRegenerationPerSecond = 0.01f)
+            })
             charge(sim)
             if (missing == "readiness") {
                 sim.issueOrder("p", TrainerAction.UseTechnique("exhaust", "b"))

@@ -23,6 +23,7 @@ import com.tamerslab.di.TamersLabApplication
 import com.tamerslab.species.SpeciesCustomizationRepository
 import com.tamerslab.species.SpeciesEntryDto
 import com.tamerslab.ui.SpritePreviewPolicy
+import com.tamerslab.ui.theme.DeepPurpleBg
 import com.tamerslab.utils.BitmapData
 import com.tamerslab.utils.createARGBIntArray
 import kotlinx.coroutines.CancellationException
@@ -87,7 +88,9 @@ fun SpeciesCatalogEditorDialog(originalName: String?, onDismiss: () -> Unit, onS
     }
     Dialog(onDismissRequest = { if (!saving) onDismiss() }, properties = DialogProperties(
         usePlatformDefaultWidth = false, decorFitsSystemWindows = false, dismissOnClickOutside = false)) {
-        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        // Opaque palette page: a transparent dialog surface let the screen below and the window dim
+        // show through, which read as the wrong background in the two light palettes.
+        Surface(Modifier.fillMaxSize(), color = DeepPurpleBg) {
             Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.exclude(WindowInsets.ime)).imePadding()) {
                 TopBanner(stringResource(if (originalName == null || isCopy) R.string.species_add else R.string.species_edit),
                     onBackClick = { if (!saving) onDismiss() })

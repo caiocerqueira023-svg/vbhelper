@@ -93,7 +93,7 @@ import com.tamerslab.domain.digifarm.FarmResident
 import com.tamerslab.domain.digifarm.WildRelationship
 
 @Database(
-    version = 55,
+    version = 56,
     exportSchema = true,
     views = [com.tamerslab.domain.species.DisplaySprite::class],
     entities = [
@@ -202,7 +202,16 @@ import com.tamerslab.domain.digifarm.WildRelationship
         com.tamerslab.domain.transfer.PendingNativeProgress::class,
         com.tamerslab.domain.transfer.ProgressProjectionGuard::class,
         com.tamerslab.domain.transfer.GameEndpointPresence::class,
-        com.tamerslab.domain.identity.WatchRepresentationSnapshot::class
+        com.tamerslab.domain.identity.WatchRepresentationSnapshot::class,
+        com.tamerslab.digiline.data.DigilineProfileEntity::class,
+        com.tamerslab.digiline.data.DigilineQuestionRecordEntity::class,
+        com.tamerslab.digiline.data.DigilineQuizRecordEntity::class,
+        com.tamerslab.digiline.data.PersonalityTendencyEntity::class,
+        com.tamerslab.digiline.data.NativePersonalitySyncEntity::class,
+        com.tamerslab.digiline.data.DigilineNegotiationEntity::class,
+        com.tamerslab.digiline.data.DigilineNegotiationLogEntity::class,
+        com.tamerslab.digiline.data.WildPersuasionEntity::class,
+        com.tamerslab.digiline.data.DigilineEventRecordEntity::class
     ]
 )
 @TypeConverters(SpeciesProfileConverters::class, PersonalityConverters::class)
@@ -251,8 +260,14 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun nativeMaterializationDao(): com.tamerslab.transfer.data.NativeMaterializationDao
     abstract fun transferContinuityDao(): com.tamerslab.transfer.data.TransferContinuityDao
     abstract fun appPartnerStateDao(): com.tamerslab.storage.data.AppPartnerStateDao
+    abstract fun digilineDao(): com.tamerslab.digiline.data.DigilineDao
 
     companion object {
+        val MIGRATION_55_56 = object : Migration(55, 56) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                DigilineSchema.migrate(db)
+            }
+        }
         val MIGRATION_54_55 = object : Migration(54, 55) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 GameEndpointPresenceSchema.create(db)

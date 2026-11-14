@@ -1,4 +1,4 @@
-﻿package com.tamerslab.farm.ui.digifarm
+package com.tamerslab.farm.ui.digifarm
 
 import android.content.Context
 import android.os.Build
@@ -43,6 +43,8 @@ import com.tamerslab.rendering.SceneQuality
 import com.tamerslab.rendering.applyHybridSceneProfile
 import com.tamerslab.rendering.approachSceneAxis
 import com.tamerslab.rendering.sprite3d.ResidentFrameImage
+import com.tamerslab.rendering.sprite3d.ResidentGesture
+import com.tamerslab.rendering.sprite3d.ResidentPoseAnimation
 import com.tamerslab.rendering.sprite3d.cameraAssistedSpriteYaw
 import com.tamerslab.ui.theme.DeepPurpleBgAlt
 import com.tamerslab.ui.theme.AppTheme
@@ -63,13 +65,16 @@ import kotlin.random.Random
 /**
  * Full sprite set of one resident. Sent once per roster/art change —
  * never per animation tick — so the GL driver sees no create/destroy churn.
- * Pose keys: idle, idle2, walk, walk2.
+ * Pose keys: idle, idle2, walk, walk2, run, run2, train, train2, happy, sleep.
+ * Missing families are legitimate: the animation policy falls back to idle.
  */
 data class ResidentFrames(
     val id: String,
     val poses: Map<String, ResidentFrameImage>,
     val modelGlb: ByteArray,
     val setKey: String,
+    /** Width/height of the artwork, already clamped by the caller to the extrusion range. */
+    val bodyAspect: Float = 1f,
 )
 
 /** Persisted position; the renderer interpolates each confirmed simulation step. */
@@ -80,6 +85,13 @@ data class ResidentPose(
     val activity: String,
     val facingLeft: Boolean,
     val selected: Boolean,
+    /** Interpolation window for this movement step; 0 or ≤0 means use RESIDENT_STEP_NANOS. */
+    val stepMillis: Long = 1_100L,
+    /** True while the simulation is moving this resident at a jog/run tempo. */
+    val running: Boolean = false,
+    /** World point to keep facing while standing still (social beats); null keeps the travel heading. */
+    val faceX: Float? = null,
+    val faceZ: Float? = null,
 )
 
 internal fun prioritizeResidentLoads(
@@ -355,7 +367,8 @@ class Digifarm3dSceneView(
     private var pitchPhase = 0.0
     private var distancePhase = 0.0
     private var nextCutAtSeconds = AUTO_CUT_MIN_SECONDS
-    private var lastCutTier = -1
+    private var lastCutPitchTier = -1
+    private var lastCutDistanceTier = -1
 
     /** A drag/pinch suspends following until this instant (Q8: 5s), then it eases back (~600ms). */
 
@@ -450,11 +463,12 @@ class Digifarm3dSceneView(
             }
             loadNextResident()
             updateResidentMotion(frameTimeNanos)
+            separateOverlappingResidents()
             updateFollowTarget(frameTimeNanos)
             updateAutoCamera(frameTimeNanos)
             applyCamera()
             updateFloatingBlocks(frameTimeNanos)
-            updateResidentTransforms()
+            updateResidentTransforms(frameTimeNanos)
             viewer.render(frameTimeNanos)
             environmentThemes.onFrame(viewer.progress >= 1f)
             notifyCameraChangeIfMoved(frameTimeNanos)
@@ -507,10 +521,14 @@ class Digifarm3dSceneView(
         else SceneQuality.HIGH,
     )
 
-    /** Anything that visibly changes this frame: streaming, walking, or the camera catching up. */
+    /** Anything that visibly changes this frame: streaming, walking, a gesture, or the camera catching up. */
     private fun isAnimating(): Boolean {
         if (pendingFrames.isNotEmpty() || residentLoadQueue.isNotEmpty()) return true
-        for (entry in residents.values) if (entry.segmentActive) return true
+        for (entry in residents.values) {
+            if (entry.segmentActive) return true
+            // Hop/breath keep moving after the pose binds; reduced motion clears them on the next frame.
+            if (!reduceMotion && entry.gesture != ResidentGesture.NONE) return true
+        }
         val followed = followId?.let { residents[it] } ?: return false
         return kotlin.math.abs(followed.visualX - curTargetX) > 0.002f ||
             kotlin.math.abs(followed.visualZ - curTargetZ) > 0.002f
@@ -982,6 +1000,10 @@ class Digifarm3dSceneView(
         latestResidentPoses = poses
         for (pose in poses) {
             val entry = residents[pose.id] ?: continue
+            // Gait and social-beat inputs stay valid even on ticks where the resident does not move.
+            entry.running = pose.running
+            entry.faceX = pose.faceX
+            entry.faceZ = pose.faceZ
             if (!entry.hasVisualPosition) {
                 entry.visualX = pose.worldX
                 entry.visualZ = pose.worldZ
@@ -1003,6 +1025,9 @@ class Digifarm3dSceneView(
                         entry.segmentEndX = pose.worldX
                         entry.segmentEndZ = pose.worldZ
                         entry.segmentStartNanos = lastMotionFrameNanos.takeIf { it > 0L } ?: System.nanoTime()
+                        // The simulation hands one stride per beat (0.22 units), interpolated over the
+                        // pre-liveliness 1.1 s window; the walk/run pose cadence is fixed at 250/220 ms.
+                        entry.segmentNanos = resolveSegmentNanos(pose.stepMillis)
                         entry.segmentActive = true
                         entry.desiredYaw = atan2(-dz, dx)
                         val turn = atan2(
@@ -1019,6 +1044,14 @@ class Digifarm3dSceneView(
             entry.selected = pose.selected
         }
     }
+
+    /** Interpolation window for one step; a bad/missing hint can never teleport or stall a resident. */
+    private fun resolveSegmentNanos(stepMillis: Long): Long =
+        if (stepMillis > 0L) {
+            stepMillis.coerceIn(MIN_STEP_MILLIS, MAX_STEP_MILLIS) * 1_000_000L
+        } else {
+            RESIDENT_STEP_NANOS.toLong()
+        }
 
     /**
      * Projects a world point to view pixels. Returns null when the view has
@@ -1382,12 +1415,14 @@ class Digifarm3dSceneView(
         pitchPhase += deltaSeconds * 2.0 * PI / AUTO_PITCH_PERIOD_SECONDS
         distancePhase += deltaSeconds * 2.0 * PI / AUTO_DISTANCE_PERIOD_SECONDS
         val pitchCeiling = kotlin.math.min(framing.pitchMax, AUTO_PITCH_CEILING)
+        val closeFloor = kotlin.math.max(framing.distanceMin * 1.6f, framing.homeDistance * 0.5f)
+        val distanceTarget = (
+            driftDistanceCentre + AUTO_DISTANCE_AMPLITUDE * sin(distancePhase.toFloat())
+            ).coerceIn(closeFloor, framing.distanceMax)
         val pitchTarget = (
             driftPitchCentre + AUTO_PITCH_AMPLITUDE * sin(pitchPhase.toFloat())
             ).coerceIn(framing.pitchMin, pitchCeiling)
-        val distanceTarget = (
-            driftDistanceCentre + AUTO_DISTANCE_AMPLITUDE * sin(distancePhase.toFloat())
-            ).coerceIn(framing.distanceMin, framing.distanceMax)
+            .coerceAtLeast(floorLimitedPitch(distanceTarget))
 
         val ease = (1.0 - kotlin.math.exp(-AUTO_CAMERA_EASE_RESPONSE * deltaSeconds)).toFloat()
         camPitch += (pitchTarget - camPitch) * ease
@@ -1420,34 +1455,77 @@ class Digifarm3dSceneView(
         val direction = if (Random.nextBoolean()) 1f else -1f
         val yaw = camYaw + direction * turn
         camYaw = atan2(sin(yaw), cos(yaw))
-        // Cuts are drawn from three shot heights - near ground level, mid and high (still under the
-        // distortion ceiling) - and never repeat the previous tier, so the sequence keeps changing
-        // instead of always landing in the upper band.
+
+        // Shot height: low, mid and high, weighted so the grazing angles people like dominate and the
+        // steep one stays occasional. The previous tier is never repeated.
         val pitchCeiling = kotlin.math.min(framing.pitchMax, AUTO_PITCH_CEILING)
         val pitchFloor = framing.pitchMin
         val span = (pitchCeiling - pitchFloor).coerceAtLeast(0.06f)
-        var tier = Random.nextInt(3)
-        if (tier == lastCutTier) tier = (tier + 1 + Random.nextInt(2)) % 3
-        lastCutTier = tier
-        camPitch = when (tier) {
-            // Low: grazing angle, sprites at their most legible.
-            0 -> pitchFloor + Random.nextFloat() * (span * 0.18f)
-            // Mid: the everyday three-quarter view.
-            1 -> pitchFloor + span * (0.42f + Random.nextFloat() * 0.22f)
-            // High: the steepest the artwork tolerates.
-            else -> pitchCeiling - Random.nextFloat() * (span * 0.16f)
-        }
+        var tier = pickWeightedTier(PITCH_TIER_WEIGHTS)
+        if (tier == lastCutPitchTier) tier = pickWeightedTier(PITCH_TIER_WEIGHTS, exclude = tier)
+        lastCutPitchTier = tier
+
+        // Distance: a real close-up tier now sits in the rotation next to the mid and wide shots.
         val nearDistance = kotlin.math.max(framing.distanceMin * 2.0f, framing.homeDistance * 0.82f)
         val farDistance = kotlin.math.max(
             nearDistance + 0.4f,
             kotlin.math.min(framing.distanceMax, framing.homeDistance * 1.5f),
         )
-        camDist = nearDistance + Random.nextFloat() * (farDistance - nearDistance)
+        val closeDistance = kotlin.math.max(framing.distanceMin * 1.6f, framing.homeDistance * 0.55f)
+        var distanceTier = pickWeightedTier(DISTANCE_TIER_WEIGHTS)
+        if (distanceTier == lastCutDistanceTier) {
+            distanceTier = pickWeightedTier(DISTANCE_TIER_WEIGHTS, exclude = distanceTier)
+        }
+        lastCutDistanceTier = distanceTier
+        // A close-up never pairs with the steep angle: that reads as looking down at a wall.
+        if (distanceTier == 0 && tier == 2) tier = 1
+
+        camDist = when (distanceTier) {
+            0 -> closeDistance + Random.nextFloat() * AUTO_CLOSE_UP_SPAN
+            1 -> nearDistance + Random.nextFloat() * (farDistance - nearDistance) * 0.55f
+            else -> nearDistance + (farDistance - nearDistance) * (0.55f + Random.nextFloat() * 0.45f)
+        }
+        camPitch = when (tier) {
+            // Low: grazing angle, sprites at their most legible.
+            0 -> pitchFloor + Random.nextFloat() * (span * 0.20f)
+            // Mid: the everyday three-quarter view.
+            1 -> pitchFloor + span * (0.42f + Random.nextFloat() * 0.22f)
+            // High: the steepest the artwork tolerates.
+            else -> pitchCeiling - Random.nextFloat() * (span * 0.16f)
+        }
+        // Floor collision: never below the island surface for the distance that was just chosen.
+        camPitch = kotlin.math.max(camPitch, floorLimitedPitch(camDist))
+
         // The following drift restarts from the new shot, never easing back to the old one.
         driftPitchCentre = camPitch
         driftDistanceCentre = camDist
         pitchPhase = 0.0
         distancePhase = 0.0
+    }
+
+    /**
+     * Lowest elevation that keeps the lens above the island floor at [distance].
+     *
+     * The orbit's eye sits `distance * sin(pitch)` above the look-at point, so the floor is a function
+     * of the orbit radius: close orbits need a steeper angle than wide ones. Both the automatic shots
+     * and the rendering pass through this, which is what makes the camera "collide" with the terrain
+     * instead of sinking through it.
+     */
+    private fun floorLimitedPitch(distance: Float): Float =
+        kotlin.math.asin((CAMERA_FLOOR_CLEARANCE / distance.coerceAtLeast(0.01f)).coerceIn(0f, 1f))
+
+    /** Weighted pick over shot tiers; [exclude] keeps the previous tier out of the draw. */
+    private fun pickWeightedTier(weights: FloatArray, exclude: Int = -1): Int {
+        var total = 0f
+        for (index in weights.indices) if (index != exclude) total += weights[index]
+        if (total <= 0f) return 0
+        var roll = Random.nextFloat() * total
+        for (index in weights.indices) {
+            if (index == exclude) continue
+            roll -= weights[index]
+            if (roll <= 0f) return index
+        }
+        return weights.indices.last { it != exclude }
     }
 
     private fun scheduleNextCut() {
@@ -1456,9 +1534,12 @@ class Digifarm3dSceneView(
     }
 
     private fun applyCamera() {
-        val cp = cos(camPitch)
+        // Camera collision with the farm floor: the lens may never dip to or below the island surface,
+        // whatever the drift, a cut or a manual drag asked for.
+        val resolvedPitch = kotlin.math.max(camPitch, floorLimitedPitch(camDist))
+        val cp = cos(resolvedPitch)
         val ex = curTargetX + camDist * cp * sin(camYaw)
-        val ey = framing.targetY + camDist * sin(camPitch)
+        val ey = framing.targetY + camDist * sin(resolvedPitch)
         val ez = curTargetZ + camDist * cp * cos(camYaw)
         viewer.camera.lookAt(
             ex.toDouble(), ey.toDouble(), ez.toDouble(),
@@ -1534,6 +1615,18 @@ class Digifarm3dSceneView(
         var animationMode: String? = null,
         var animationFrame: Int = 0,
         var lastAnimationFrameNanos: Long = 0L,
+        /** Interpolation window of the current movement segment, in nanoseconds. */
+        var segmentNanos: Long = RESIDENT_STEP_NANOS.toLong(),
+        /** Width/height of the extruded artwork; drives the visual-separation radius. */
+        var bodyAspect: Float = 1f,
+        /** True while the simulation is moving this resident at a run tempo. */
+        var running: Boolean = false,
+        /** Social beat: world point to keep facing while standing still. */
+        var faceX: Float? = null,
+        var faceZ: Float? = null,
+        /** Vertical life layered over the pose: a happy hop or a sleeping breath. */
+        var gesture: ResidentGesture = ResidentGesture.NONE,
+        var gestureStartNanos: Long = 0L,
     )
 
     private fun createResident(set: ResidentFrames) {
@@ -1578,6 +1671,8 @@ class Digifarm3dSceneView(
             asset = asset,
             setKey = set.setKey,
             poseEntities = poseEntities,
+            // The caller clamps the aspect to the extrusion range; only reject garbage (NaN/≤0).
+            bodyAspect = set.bodyAspect.takeIf { it.isFinite() && it > 0f } ?: 1f,
         )
         residents[set.id] = entry
         bindPose(entry, "idle")
@@ -1617,8 +1712,9 @@ class Digifarm3dSceneView(
             if (!entry.hasVisualPosition) continue
             var walking = false
             if (entry.segmentActive) {
+                val segmentNanos = entry.segmentNanos.coerceAtLeast(MIN_SEGMENT_NANOS)
                 val progress = ((frameTimeNanos - entry.segmentStartNanos).toFloat() /
-                    RESIDENT_STEP_NANOS).coerceIn(0f, 1f)
+                    segmentNanos).coerceIn(0f, 1f)
                 entry.visualX = entry.segmentStartX + (entry.segmentEndX - entry.segmentStartX) * progress
                 entry.visualZ = entry.segmentStartZ + (entry.segmentEndZ - entry.segmentStartZ) * progress
                 walking = progress < 1f
@@ -1631,49 +1727,85 @@ class Digifarm3dSceneView(
                 )
                 entry.headingYaw += turn.coerceIn(-TURN_SPEED_RADIANS_PER_SECOND * dt,
                     TURN_SPEED_RADIANS_PER_SECOND * dt)
+            } else {
+                turnTowardFaceTarget(entry, dt)
             }
+            // Pre-liveliness behaviour: the walk pose only plays while a stride is being drawn, so the
+            // idle pose returns during the short foot-plant pause between strides — exactly how the
+            // old diorama read. There is no beat flicker because one stride fills 1.1 s.
             updateResidentAnimation(entry, walking, frameTimeNanos)
         }
     }
 
+    /**
+     * A social beat: while standing still the simulation can point a resident at its partner. The
+     * turn is slower than the travel turn and stops inside a small dead band, so the sprite settles
+     * on its partner instead of vibrating around the target.
+     */
+    private fun turnTowardFaceTarget(entry: ResidentEntry, dt: Float) {
+        val faceX = entry.faceX ?: return
+        val faceZ = entry.faceZ ?: return
+        val dx = faceX - entry.visualX
+        val dz = faceZ - entry.visualZ
+        if (dx * dx + dz * dz < STANDING_FACE_MIN_DISTANCE_SQ) return
+        val targetYaw = atan2(-dz, dx)
+        val turn = atan2(sin(targetYaw - entry.headingYaw), cos(targetYaw - entry.headingYaw))
+        if (kotlin.math.abs(turn) <= STANDING_FACE_DEADBAND_RADIANS) return
+        val maxTurn = STANDING_TURN_SPEED_RADIANS_PER_SECOND * dt
+        entry.headingYaw += turn.coerceIn(-maxTurn, maxTurn)
+    }
+
+    /**
+     * Binds the pose family chosen by [ResidentPoseAnimation] and cycles it at that family's fixed
+     * cadence (walk 250 ms, jog 220 ms, the same rhythm the diorama used before the resident-life
+     * pass). The stride timing lives in the simulation, which hands one 0.22-unit stride per beat and
+     * lets the renderer interpolate it over 1.1 s.
+     *
+     * A mode switch is `pose + gesture`: it rebinds the layer, resets the frame counter and starts the
+     * new gesture, so a hop can never keep running after its owner started walking, and the sleeping
+     * breath stops the moment the sleeper wakes up. Under reduced motion the residents are frozen on
+     * their idle art: no cycling, no gestures, and the same single bind for as long as the setting is
+     * on (the pose is snapshotted, not restarted, so a resident caught mid-walk just settles).
+     */
     private fun updateResidentAnimation(entry: ResidentEntry, walking: Boolean, frameTimeNanos: Long) {
-        val mode = when {
-            walking -> "walk"
-            entry.activity == "REST" -> "sleep"
-            entry.activity == "TRAIN" -> "train"
-            entry.activity == "PLAY" || entry.activity == "EAT" ||
-                entry.activity == "SOCIALIZE" -> "happy"
-            else -> "idle"
-        }
-        if (entry.animationMode != mode) {
-            entry.animationMode = mode
-            entry.animationFrame = 0
-            entry.lastAnimationFrameNanos = frameTimeNanos
-            bindPose(entry, mode)
+        if (reduceMotion) {
+            if (entry.animationMode != null) {
+                entry.animationMode = null
+                entry.animationFrame = 0
+                entry.lastAnimationFrameNanos = frameTimeNanos
+                entry.gesture = ResidentGesture.NONE
+                entry.gestureStartNanos = 0L
+                if ("idle" in entry.poseEntities) bindPose(entry, "idle")
+            }
             return
         }
-        val alternate = when (mode) {
-            "walk" -> "walk2"
-            "train" -> "train2"
-            "idle" -> "idle2"
-            "happy" -> "happy2"
-            else -> return
+        val choice = ResidentPoseAnimation.choice(
+            activity = entry.activity,
+            walking = walking,
+            running = entry.running,
+            availablePoses = entry.poseEntities.keys,
+        )
+        if (entry.animationMode != choice.pose || entry.gesture != choice.gesture) {
+            entry.animationMode = choice.pose
+            entry.animationFrame = 0
+            entry.lastAnimationFrameNanos = frameTimeNanos
+            entry.gesture = choice.gesture
+            entry.gestureStartNanos = if (choice.gesture == ResidentGesture.NONE) 0L else frameTimeNanos
+            bindPose(entry, choice.pose)
+            return
         }
-        val frameDuration = when (mode) {
-            "walk" -> WALK_FRAME_NANOS
-            "train" -> TRAIN_FRAME_NANOS
-            "happy" -> ACTION_FRAME_NANOS
-            else -> IDLE_FRAME_NANOS
-        }
+        val alternate = choice.alternate
+        if (choice.frameMillis <= 0L || alternate == null) return
+        val frameDuration = choice.frameMillis * 1_000_000L
         val elapsed = frameTimeNanos - entry.lastAnimationFrameNanos
         if (elapsed < frameDuration) return
         val frameSteps = (elapsed / frameDuration).toInt()
         entry.animationFrame = (entry.animationFrame + frameSteps) % 2
         entry.lastAnimationFrameNanos += frameSteps * frameDuration
-        bindPose(entry, if (entry.animationFrame == 0) mode else alternate)
+        bindPose(entry, if (entry.animationFrame == 0) choice.pose else alternate)
     }
 
-    private fun updateResidentTransforms() {
+    private fun updateResidentTransforms(frameTimeNanos: Long) {
         if (residents.isEmpty()) return
         val tm = engine.transformManager
         for (entry in residents.values) {
@@ -1691,17 +1823,108 @@ class Digifarm3dSceneView(
             if (lateral > FACING_FLIP_THRESHOLD) entry.mirrorSprite = true
             if (lateral < -FACING_FLIP_THRESHOLD) entry.mirrorSprite = false
             val visibleYaw = cameraAssistedSpriteYaw(entry.headingYaw, camYaw)
+            // Vertical life layered over the pose: a decaying hop for happy beats, a feet-planted
+            // breath for sleep. Reduced motion suppresses both (gestures are also cleared upstream).
+            var lift = 0f
+            var scaleY = 1f
+            if (!reduceMotion && entry.gesture != ResidentGesture.NONE) {
+                val elapsedSeconds =
+                    (frameTimeNanos - entry.gestureStartNanos).coerceAtLeast(0L) / 1_000_000_000f
+                when (entry.gesture) {
+                    ResidentGesture.HOP -> {
+                        if (elapsedSeconds < HOP_DURATION_SECONDS) {
+                            val decay = 1f - elapsedSeconds / HOP_DURATION_SECONDS
+                            lift = kotlin.math.abs(
+                                sin(elapsedSeconds * PI.toFloat() / HOP_STEP_SECONDS)
+                            ) * HOP_LIFT_UNITS * decay
+                        }
+                    }
+                    ResidentGesture.BREATHE -> {
+                        scaleY = 1f + BREATHE_AMPLITUDE *
+                            sin(elapsedSeconds * 2f * PI.toFloat() / BREATHE_PERIOD_SECONDS)
+                    }
+                    ResidentGesture.NONE -> Unit
+                }
+            }
             Matrix.setIdentityM(tmpMat, 0)
-            Matrix.translateM(tmpMat, 0, entry.visualX, islandFloatOffsetY, entry.visualZ)
+            Matrix.translateM(tmpMat, 0, entry.visualX, islandFloatOffsetY + lift, entry.visualZ)
             Matrix.rotateM(tmpMat, 0,
                 Math.toDegrees(visibleYaw.toDouble()).toFloat(), 0f, 1f, 0f)
             Matrix.scaleM(tmpMat, 0,
-                if (entry.mirrorSprite) -worldH else worldH, worldH, worldH)
+                if (entry.mirrorSprite) -worldH else worldH, worldH * scaleY, worldH)
             runCatching {
                 val instance = tm.getInstance(entry.asset.root)
                 if (instance != 0) tm.setTransform(instance, tmpMat)
             }
         }
+    }
+
+    /**
+     * Keeps the drawn sprites out of each other.
+     *
+     * Interpolation is per resident, so two collision-checked simulation paths can still *draw* one
+     * sprite inside another mid-step. This pass compares the visual positions against each resident's
+     * rendered half width (aspect × height) and pushes only the entries that are actually moving:
+     * two movers share the overlap, a mover against a planted resident takes the whole overlap, and
+     * two planted residents are left alone so idle frames never drift. It never touches worldX/Z —
+     * the simulation stays authoritative and the next interpolated frame starts from the truth.
+     */
+    private fun separateOverlappingResidents() {
+        if (residents.size < 2) return
+        val entries = residents.values.filter { it.hasVisualPosition }
+        if (entries.size < 2) return
+        repeat(VISUAL_SEPARATION_PASSES) {
+            var moved = false
+            for (i in entries.indices) {
+                val a = entries[i]
+                for (j in i + 1 until entries.size) {
+                    val b = entries[j]
+                    val minDistance = renderedHalfWidth(a) + renderedHalfWidth(b) +
+                        VISUAL_SEPARATION_PADDING
+                    val dx = b.visualX - a.visualX
+                    val dz = b.visualZ - a.visualZ
+                    val distanceSquared = dx * dx + dz * dz
+                    if (distanceSquared >= minDistance * minDistance) continue
+                    if (!a.segmentActive && !b.segmentActive) continue
+                    val distance = sqrt(distanceSquared)
+                    val nx: Float
+                    val nz: Float
+                    if (distance <= VISUAL_SEPARATION_EPSILON) {
+                        // Perfectly stacked: split along a stable axis instead of dividing by zero.
+                        nx = 1f
+                        nz = 0f
+                    } else {
+                        nx = dx / distance
+                        nz = dz / distance
+                    }
+                    val overlap = minDistance - distance
+                    val moveA: Float
+                    val moveB: Float
+                    if (a.segmentActive && b.segmentActive) {
+                        moveA = overlap * 0.5f
+                        moveB = overlap * 0.5f
+                    } else if (a.segmentActive) {
+                        moveA = overlap
+                        moveB = 0f
+                    } else {
+                        moveA = 0f
+                        moveB = overlap
+                    }
+                    a.visualX -= nx * moveA
+                    a.visualZ -= nz * moveA
+                    b.visualX += nx * moveB
+                    b.visualZ += nz * moveB
+                    moved = moved || moveA > 0f || moveB > 0f
+                }
+            }
+            if (!moved) return
+        }
+    }
+
+    /** Rendered half width of an extruded resident in world units (mirroring and gestures keep it). */
+    private fun renderedHalfWidth(entry: ResidentEntry): Float {
+        val height = if (entry.selected) SELECTED_HEIGHT else RESIDENT_HEIGHT
+        return entry.bodyAspect * 0.5f * height
     }
 
     private fun notifyCameraChangeIfMoved(frameTimeNanos: Long) {
@@ -1753,10 +1976,30 @@ class Digifarm3dSceneView(
         private const val RESIDENT_STEP_NANOS = 1_100_000_000f
         private const val TURN_SPEED_RADIANS_PER_SECOND = 12f
         private const val FACING_FLIP_THRESHOLD = 0.16f
-        private const val WALK_FRAME_NANOS = 250_000_000L
-        private const val TRAIN_FRAME_NANOS = 340_000_000L
-        private const val ACTION_FRAME_NANOS = 460_000_000L
-        private const val IDLE_FRAME_NANOS = 950_000_000L
+
+        /** Accepted interpolation window from a simulation step; the renderer owns the safe range. */
+        private const val MIN_STEP_MILLIS = 60L
+        private const val MAX_STEP_MILLIS = 2_000L
+        private const val MIN_SEGMENT_NANOS = MIN_STEP_MILLIS * 1_000_000L
+
+        /** Standing social turn: slower than travel, and it stops inside a small dead band. */
+        private const val STANDING_TURN_SPEED_RADIANS_PER_SECOND = 4.5f
+        private const val STANDING_FACE_DEADBAND_RADIANS = 0.05f
+        private const val STANDING_FACE_MIN_DISTANCE_SQ = 0.0004f
+
+        /** One decaying hop for happy beats (world units / seconds). */
+        private const val HOP_LIFT_UNITS = 0.014f
+        private const val HOP_DURATION_SECONDS = 1.5f
+        private const val HOP_STEP_SECONDS = 0.34f
+
+        /** Sleeping breath: feet planted, only the vertical scale moves (1.2% over 3.6s). */
+        private const val BREATHE_AMPLITUDE = 0.012f
+        private const val BREATHE_PERIOD_SECONDS = 3.6f
+
+        /** Visual separation: padding beyond the two half widths, and relaxation passes per frame. */
+        private const val VISUAL_SEPARATION_PADDING = 0.012f
+        private const val VISUAL_SEPARATION_PASSES = 2
+        private const val VISUAL_SEPARATION_EPSILON = 0.0001f
         private const val ISLAND_FLOAT_AMPLITUDE = 0.012f
         private const val ISLAND_FLOAT_SPEED = 0.52
         private const val GLOW_PULSE_SPEED = 1.15
@@ -1795,6 +2038,14 @@ private const val AUTO_PITCH_CEILING = 0.58f
 /** Drift envelope around the visitor's framing. */
 private const val AUTO_PITCH_AMPLITUDE = 0.12f
 private const val AUTO_DISTANCE_AMPLITUDE = 0.55f
+
+/** Shot tiers: low / mid / high heights, and close-up / mid / wide distances. */
+private val PITCH_TIER_WEIGHTS = floatArrayOf(0.50f, 0.32f, 0.18f)
+private val DISTANCE_TIER_WEIGHTS = floatArrayOf(0.45f, 0.33f, 0.22f)
+private const val AUTO_CLOSE_UP_SPAN = 0.45f
+
+/** How far above the island surface the lens must stay, in world units. */
+private const val CAMERA_FLOOR_CLEARANCE = 0.42f
 
 /** Hard cut cadence and how far the shot turns. */
 private const val AUTO_CUT_MIN_SECONDS = 14.0

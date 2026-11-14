@@ -1,5 +1,6 @@
 package com.tamerslab.components
 
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,11 +28,15 @@ import com.tamerslab.ui.theme.TextSecondaryOnDark
 /**
  * Page header for every screen that is not one of the full-bleed worlds.
  *
- * This is the same top-cluster type Home, the Radar place and the battle surface use, applied to a
- * page: a palette-resolved scrim instead of the old gradient shelf, one leading key, a left-aligned
- * title carrying a single quiet context line, cut-corner 48dp keys at the trailing edge, and one
- * hairline junction. The shell already insets non-Home screens, so the header reserves no system
- * insets of its own.
+ * It is the same top-cluster type Home, the Radar place and the battle surface use: a palette-resolved
+ * scrim instead of the old gradient shelf, a left-aligned title carrying one quiet context line, a
+ * single hairline junction and bare 48dp keys (icon only, no corner frame) like Home's HUD.
+ *
+ * The back key always owns the left edge. When a caller does not pass [onBackClick] the header uses the
+ * activity's back dispatcher, so it behaves exactly like the system back gesture for that screen
+ * (including screens with their own back handling). Every other action the header is given sits on the
+ * right, in the order below. The shell already insets non-Home screens, so the header reserves no
+ * system insets of its own.
  */
 @Composable
 fun TopBanner(
@@ -49,6 +54,10 @@ fun TopBanner(
     trailingAction: (@Composable () -> Unit)? = null,
     onTransferClick: (() -> Unit)? = null,
 ) {
+    val dispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+    val backAction: (() -> Unit)? = onBackClick
+        ?: dispatcher?.let { owner -> { owner.onBackPressed() } }
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -61,14 +70,13 @@ fun TopBanner(
                 .heightIn(min = 56.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            BannerLeadingKey(
-                onTransferClick = onTransferClick,
-                onScanDataClick = onScanDataClick,
-                onImportClick = onImportClick,
-                importEnabled = importEnabled,
-                onScanClick = onScanClick,
-                onBackClick = onBackClick,
-            )
+            if (backAction != null) {
+                HudKey(
+                    icon = R.drawable.baseline_arrow_back_24,
+                    description = stringResource(R.string.ui_back_icon),
+                    onClick = backAction,
+                )
+            }
             Column(
                 modifier = Modifier
                     .weight(1f)
@@ -94,84 +102,64 @@ fun TopBanner(
                     )
                 }
             }
-            BannerTrailingKey(
-                onGearClick = onGearClick,
-                onAdventureClick = onAdventureClick,
-                onModifyClick = onModifyClick,
-                trailingAction = trailingAction,
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                onTransferClick?.let {
+                    HudKey(
+                        icon = R.drawable.baseline_file_upload_24,
+                        description = stringResource(R.string.nav_transfer),
+                        onClick = it,
+                    )
+                }
+                onScanDataClick?.let {
+                    HudKey(
+                        icon = R.drawable.baseline_data_24,
+                        description = stringResource(R.string.digimon_scan_title),
+                        onClick = it,
+                    )
+                }
+                onImportClick?.let {
+                    HudKey(
+                        icon = R.drawable.baseline_file_upload_24,
+                        description = stringResource(R.string.cards_import),
+                        onClick = it,
+                        enabled = importEnabled,
+                    )
+                }
+                onScanClick?.let {
+                    HudKey(
+                        icon = R.drawable.baseline_nfc_24,
+                        description = stringResource(R.string.ui_scan),
+                        onClick = it,
+                    )
+                }
+                onModifyClick?.let {
+                    HudKey(
+                        icon = R.drawable.baseline_edit_24,
+                        description = stringResource(R.string.cards_edit),
+                        onClick = it,
+                    )
+                }
+                onAdventureClick?.let {
+                    HudKey(
+                        icon = R.drawable.baseline_fort_24,
+                        description = stringResource(R.string.ui_adventure),
+                        onClick = it,
+                    )
+                }
+                onGearClick?.let {
+                    HudKey(
+                        icon = R.drawable.baseline_settings_24,
+                        description = stringResource(R.string.ui_settings),
+                        onClick = it,
+                    )
+                }
+                trailingAction?.let { Box { it() } }
+            }
         }
         HudHairline()
-    }
-}
-
-@Composable
-private fun BannerLeadingKey(
-    onTransferClick: (() -> Unit)?,
-    onScanDataClick: (() -> Unit)?,
-    onImportClick: (() -> Unit)?,
-    importEnabled: Boolean,
-    onScanClick: (() -> Unit)?,
-    onBackClick: (() -> Unit)?,
-) {
-    when {
-        onTransferClick != null -> HudKey(
-            icon = R.drawable.baseline_file_upload_24,
-            description = stringResource(R.string.nav_transfer),
-            onClick = onTransferClick,
-        )
-        onScanDataClick != null -> HudKey(
-            icon = R.drawable.baseline_data_24,
-            description = stringResource(R.string.digimon_scan_title),
-            onClick = onScanDataClick,
-        )
-        onImportClick != null -> HudKey(
-            icon = R.drawable.baseline_file_upload_24,
-            description = stringResource(R.string.cards_import),
-            onClick = onImportClick,
-            enabled = importEnabled,
-        )
-        onScanClick != null -> HudKey(
-            icon = R.drawable.baseline_nfc_24,
-            description = stringResource(R.string.ui_scan),
-            onClick = onScanClick,
-        )
-        onBackClick != null -> HudKey(
-            icon = R.drawable.baseline_arrow_back_24,
-            description = stringResource(R.string.ui_back_icon),
-            onClick = onBackClick,
-        )
-    }
-}
-
-@Composable
-private fun BannerTrailingKey(
-    onGearClick: (() -> Unit)?,
-    onAdventureClick: (() -> Unit)?,
-    onModifyClick: (() -> Unit)?,
-    trailingAction: (@Composable () -> Unit)?,
-) {
-    val gap = Modifier.padding(start = 6.dp)
-    when {
-        onGearClick != null -> HudKey(
-            icon = R.drawable.baseline_settings_24,
-            description = stringResource(R.string.ui_settings),
-            onClick = onGearClick,
-            modifier = gap,
-        )
-        onAdventureClick != null -> HudKey(
-            icon = R.drawable.baseline_fort_24,
-            description = stringResource(R.string.ui_adventure),
-            onClick = onAdventureClick,
-            modifier = gap,
-        )
-        onModifyClick != null -> HudKey(
-            icon = R.drawable.baseline_edit_24,
-            description = stringResource(R.string.cards_edit),
-            onClick = onModifyClick,
-            modifier = gap,
-        )
-        trailingAction != null -> Box(gap) { trailingAction() }
     }
 }
 

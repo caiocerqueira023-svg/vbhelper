@@ -55,11 +55,20 @@ class ArenaPersistenceTest {
                 BattlePosition(0f, 0f), null, if (defeated) CombatantState.DEFEATED else CombatantState.IDLE,
                 def.strategy, null, emptyList(), emptyMap())
         }
-        return BattleSnapshot(34, false, null, 0, 100, members(spec.left, BattleSide.ALLIED, false),
-            members(spec.right, BattleSide.OPPOSING, true), emptySet(), BattleResult(BattleOutcome.ALLIED_VICTORY, 34, 1),
-            emptyList(), opposingItems = TamerBattleFactory.items(spec.right.members).map {
+        // Named arguments keep this fixture aligned with the final core snapshot contract,
+        // which no longer carries the retired command-economy fields.
+        return BattleSnapshot(
+            elapsedMillis = 34,
+            isPaused = false,
+            pauseReason = null,
+            alliedMembers = members(spec.left, BattleSide.ALLIED, false),
+            opposingMembers = members(spec.right, BattleSide.OPPOSING, true),
+            result = BattleResult(BattleOutcome.ALLIED_VICTORY, 34, 1),
+            recentEvents = emptyList(),
+            opposingItems = TamerBattleFactory.items(spec.right.members).map {
                 BattleItemSnapshot(it.itemId, it.displayName, it.quantity, 0)
-            })
+            }
+        )
     }
 
     @Test fun concurrentResultSettlementCreditsOneRewardAndCreatesNoOwnedDigimon() = runBlocking {

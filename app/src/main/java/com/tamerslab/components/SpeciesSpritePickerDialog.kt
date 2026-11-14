@@ -21,6 +21,7 @@ import com.tamerslab.R
 import com.tamerslab.di.TamersLabApplication
 import com.tamerslab.domain.species.LoadedSpriteChoice
 import com.tamerslab.species.CanonicalSpeciesCatalog
+import com.tamerslab.ui.theme.DeepPurpleBg
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -68,7 +69,9 @@ fun SpeciesSpritePickerDialog(speciesKey: String, selectedSprite: Int?, onDismis
         } finally { if (generation == request) loading = false }
     }
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
-        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+        // Opaque palette page: a transparent dialog surface let the screen below and the window dim
+        // show through, which read as the wrong background in the two light palettes.
+        Surface(Modifier.fillMaxSize(), color = DeepPurpleBg) {
             Column(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.exclude(WindowInsets.ime)).imePadding()) {
                 TopBanner(stringResource(R.string.species_choose_sprite), onBackClick = onDismiss)
                 VitalSearchField(query, { query = it }, stringResource(R.string.species_search_sprites), Modifier.padding(horizontal = 16.dp))

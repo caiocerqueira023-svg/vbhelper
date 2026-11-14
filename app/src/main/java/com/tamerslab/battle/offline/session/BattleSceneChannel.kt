@@ -54,7 +54,6 @@ object BattleSceneChannel {
         if (next.pauseReason != previous.pauseReason) return true
         if (next.finisher?.sequenceId != previous.finisher?.sequenceId) return true
         if (next.pendingBlastTiming != previous.pendingBlastTiming) return true
-        if (next.pendingSupportCombatantIds != previous.pendingSupportCombatantIds) return true
         return elapsedSinceUiSnapshotMillis >= UI_SNAPSHOT_INTERVAL_MILLIS
     }
 }

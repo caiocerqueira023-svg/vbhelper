@@ -1,0 +1,320 @@
+===Cute===
+{| class="table smt5"
+! colspan="4" |Dialogue
+!Outcome
+|-
+| colspan="5" align="center"|Approaching
+|-
+| colspan="4" |The demon is approaching...
+What will you do?
+|>Stop them
+>Glare at them
+
+>Keep calm
+|-
+|>Stop them
+| colspan="3" |Wait, are you shy? Aww, so cute!
+|[DIALOGUE SWITCH >> Doll]
+|-
+|>Glare at them
+| colspan="3" |
+|
+|-
+|>Keep calm
+| colspan="3" |
+|
+|-
+| colspan="5" align="center"|'''Fighting'''
+|-
+| colspan="4" |Hey, do you like to fight?
+|>I do.
+>I don't.
+
+> Don't care either way.
+|-
+|>>I do.
+| colspan="3" |But why? Wouldn't it be better if everyone got along?
+|>That's true.
+>That's not how it works. 
+
+>I'll think about it.
+|-
+|>>>That's true.
+| colspan="3" |Right? Let's all be friends! Well, I'm gonna go play at my friend's house.
+|[LEAVES]
+|-
+|>>>That's not how it works.
+| colspan="3" |Huh. I guess you have a point. There are some demons I really hate, too. Maybe if I joined you, I can kill them.
+|[BARGAIN PHASE]
+|-
+|>>>I'll think about it.
+| colspan="3" |
+|
+|-
+|>>I don't.
+| colspan="3" |
+|
+|-
+|>>Don't care either way.
+| colspan="3" |
+|
+|-
+| colspan="5" align="center"|Leave
+|-
+| colspan="4" |The demon is trying to leave... What will you do?
+|>Stop them
+>Let them
+
+>Make a sad face
+|-
+| colspan="2" |>Stop them
+| colspan="2" |Hee hee! If you say so!
+Then, let's talk!
+|[DIALOGUE SWITCH]
+|-
+| colspan="2" |>Let them
+| colspan="2" |
+|
+|-
+| colspan="2" |>Make a sad face.
+| colspan="2" |
+|
+|-
+| colspan="5" align="center"|Work
+|-
+| colspan="4" |So, what're you doing here?
+|>I'm working
+>I'm out having fun
+>I'm looking for a place to die
+|-
+| colspan="2" |>I'm working
+| colspan="2" |What kind of work?
+|>It's talking to girls.
+>It's gathering demonic allies.
+>It's killing demons.
+|-
+| colspan="2" |>>It's talking to girls
+| colspan="2" |That sounds kinda suspicious...
+Maybe you should switch jobs?
+Want me to help you turn things around?
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>>It's gathering demonic allies.
+| colspan="2" |Kinda like me! I'm gathering stuff too. Wanna know what? I'm collecting gifts from strangers! 
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>>>It's killing demons.
+| colspan="2" |
+|
+|-
+| colspan="2" |>I'm out having fun.
+| colspan="2" |
+|
+|-
+| colspan="2" |>I'm looking for a place to die.
+| colspan="2" |
+|
+|-
+| colspan="5" align="center" |Gazing
+|-
+| colspan="4" |(The demon is gazing expectantly at you... What will you do?)
+|>Dance<br>>Sing<br>>Flash some Macca
+|-
+| width=15% |>Dance
+| colspan="3" |(You tried dancing...)<br>You're a really really good dancer! I kinda wanna be your friend!
+|[BARGAIN PHASE]
+|-
+| width=15% |>Sing
+| colspan="3" |(You tried singing...)<br>You're a really great at singing! I kinda wanna be your friend!
+|[BARGAIN PHASE]
+|-
+| colspan="5" align="center"|Staring
+|-
+| colspan="4" |The demon is staring at you with an innocent look in in their eyes
+|>Smile
+>Offer your hand
+
+>Bow
+|-
+| colspan="2" |>Smile
+| colspan="2" |You're such a sucker. You'll never survive in the netherworld if you stay that.
+It kinda makes me worry about you, honestly.
+Do you want me to help you out?
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>Offer your hand
+| colspan="2" |Does that mean you want something from me?
+|>I want you to join me.
+>I want you to slap me.
+
+>Rock-paper-scissors.
+|-
+| colspan="2" |>>I want you to join me.
+| colspan="2" |Gosh, this is all so sudden... I dunno what to do... Here, maybe you can just take this instead?
+|[GIVES ITEM, LEAVES]
+|-
+| colspan="5" align="center"|Smiling
+|-
+| colspan="4" |The demon is smiling cheerfully... What will you do?
+|>Smile back
+>Laugh loudly
+>Glare at them
+|-
+| colspan="2" |>>Smile back
+| colspan="2" |Yuck. What a creeper...
+|[ENEMY PHASE]
+|-
+| colspan="2" |>>Laugh loudly
+| colspan="2" |
+|
+|-
+| colspan="5" align="center" |Hair
+|-
+| colspan="4" |Hey, why is your hair so long?
+|>You got a problem with that?<br>>I'm actually a girl.<br>>Because I never take "short cuts".
+|-
+|>You got a problem with that?
+| colspan="3" |No, why? It's just so pretty, you remind me of a doll.
+|[DIALOGUE SWITCH >> Doll]
+|-
+|>I'm actually a girl.
+| colspan="3" |Whaaat? You're not a long-haired heartthrob? Aw, that's a bummer...I'm gonna go home.
+|[LEAVES]
+|-
+|>Because I never take "short cuts".
+| colspan="3" |Booooooring. I'm gonna go home.
+|[LEAVES]
+|-
+| colspan="5" align="center"|Play
+|-
+| colspan="4" |If you were gonna be in a play, what role would you want to be?
+|>The lead.
+>Part of the ensemble.
+>The villian.
+|-
+| colspan="2" |>The Lead
+| colspan="2" |Mrrgh! I'm the lead! You' just some extra who gets killed off!
+|[ENEMY PHASE]
+|-
+| colspan="2" |>The villian
+| colspan="2" |Fiiine. Then, I guess I'll be supporting cast.
+|[BARGAIN PHASE]
+|-
+| colspan="5" align="center"|Catch
+|-
+| colspan="4" |Here I come! Make sure you catch me!
+|>Sure.
+>Please don't.
+>I'll take you down.
+|-
+|>Sure
+| colspan="3" |Yay! Also, by "catch me," I actually meant "give me something."
+|[BARGAIN PHASE]
+|-
+|>Please don't.
+|colspan="3" |...You won't catch me?
+|>>I can't trust you
+>>It's too sudden.
+|-
+|>>I can't trust you
+| colspan="3" |You can trust me, you know...I'll even join you!
+|[BARGAIN PHASE]
+|
+|-
+| colspan="5" align="center" align="center"|Doll
+|-
+| colspan="4" |Won't you be my doll?
+|>Sure.<br>>Depends on what you do for me.<br>>You should be MY doll.
+|-
+|>Sure.
+| colspan="3" |Really? Hmm, how should I play with you...?<br>Hey... Can I rip off your arms and legs?
+|>No.<br>>I'll rip yours off.
+|-
+| width=30% colspan="2" |>>No.
+| colspan="2" |Why, though?
+|>Because it's cruel.<br>>Because I'll die.<br>>No means no.
+|-
+| width=45% colspan="3" |>>>Because it's cruel.
+|But being cruel is so much fun... I love that feeling of breaking something so bad that it can never be fixed again.<br>If I can't rip off your limbs, can I maybe rip some things from your pockets?
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>Depends on what you do for me.
+| colspan="2" |You're pretty sassy for a doll...
+I'm gonna break you!
+|[ENEMY PHASE]
+|-
+| colspan="2" |>You should be MY doll.
+| colspan="2" |Wow, you think I'm that cute?
+Do you want me?
+|>I do
+> I don't
+
+> Is this entrapment?
+|-
+| colspan="2" |>>I do
+| colspan="2" |Hmm... what should I do?
+Can you come a little bit closer?
+|>Go closer
+>Wait and see
+|-
+| colspan="2" |>>>Go closer
+| colspan="2" |Haha, too bad!
+|[LEAVES]
+|-
+| colspan="2" |>>>Wait and see
+| colspan="2" |Ugh, don't just stand there! At least give me something!
+|[BARGAIN PHASE]
+|-
+| colspan="5" align="center"|Rock Paper Scissors
+|-
+| colspan="4" |Let's play rock-paper-scissors!
+I wanna know who's got better Luck.
+|>Sure.
+>No.
+|-
+|>>Sure
+| colspan="3" |You played rock-paper-scissors with the demon...
+|[Luck is compared]
+>Pass
+>Fail
+|-
+|>>>Pass
+|You won!
+| colspan="2" |Wooooow! Okay, you win! I'll join you.
+|[INSTANT RECRUIT]
+|-
+|>>No
+| colspan="3" |Yaww, okay then. Let's play next time!
+|[TALK END]
+|-
+| colspan="5" align="center"|Quiz
+|-
+| colspan="4" |'''Huh? You want to talk? That doesn't sound like much fun.'''
+'''How about we do a little quiz instead? Quizzes are super fun!'''
+|[GUESS RANDOM MONSTER]
+> Answer right
+
+> Answer wrong
+|-
+| colspan="2" |> Answer right
+| colspan="2" |
+|[INSTANT RECRUIT]
+|-
+| colspan="2" |> Answer wrong
+| colspan="2" |Bzzzt! Wrong!
+|[LEAVES]
+|-
+| colspan="5" align="center" |Full Moon
+|-
+| colspan="4" |
+|[RANDOM]
+|-
+|[GOOD OUTCOME]
+| colspan="3" |(The demon seems to be in good spirits. Could this be due to the '''full moon'''...?)<br>You want me to join you? Okay! But you gotta give me something first! It doesn't have to be big!
+|[BARGAIN PHASE]
+|-
+|[BAD OUTCOME]
+| colspan="3" |The moon i sall round and pretty! Ahahaha, so cute! Much cuter than you! I better soften you up!
+|[ENEMY PHASE]
+|-
+|}

@@ -1,4 +1,4 @@
-﻿package com.tamerslab.world.ui
+package com.tamerslab.world.ui
 
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -74,6 +74,8 @@ fun WorldChatScreen(
     var conversationReady by remember { mutableStateOf(false) }
     val messages by controller.getHistory(individualId).collectAsStateWithLifecycle(emptyList())
     val mood by controller.observeMood(individualId).collectAsStateWithLifecycle(initialValue = null)
+    val scene by controller.getScene(individualId).collectAsStateWithLifecycle(null)
+    val legacyLlmEnabled = controller.isLegacyLlmEnabled()
     val quests by controller.observeQuests(individualId).collectAsStateWithLifecycle(emptyList())
     val questByOfferMessage = remember(quests) {
         quests.mapNotNull { details ->
@@ -99,6 +101,7 @@ fun WorldChatScreen(
         // Entering the chat protects this encounter from distance-based eviction.
         controller.markInteracted(individualId)
         controller.prepareQuests(individualId)
+        controller.ensureScene(individualId) { }
     }
 
     LaunchedEffect(individualId,lifecycle) {
@@ -165,17 +168,21 @@ fun WorldChatScreen(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            mood?.takeIf { !WindowInsets.isImeVisible }?.let { moodValue ->
-                ChatStatusPanel(
-                    label = stringResource(R.string.ui_world_mood_label, moodValue),
-                    value = moodValue,
-                    summary = com.tamerslab.components.rapportSummary(moodValue)
-                )
+            if (legacyLlmEnabled) {
+                mood?.takeIf { !WindowInsets.isImeVisible }?.let { moodValue ->
+                    ChatStatusPanel(
+                        label = stringResource(R.string.ui_world_mood_label, moodValue),
+                        value = moodValue,
+                        summary = com.tamerslab.components.rapportSummary(moodValue)
+                    )
+                }
             }
 
             ChatHistoryPanel(
                 isEmpty = visibleMessages.isEmpty(),
-                emptyMessage = stringResource(R.string.ui_chat_empty),
+                emptyMessage = stringResource(
+                    if (legacyLlmEnabled) R.string.ui_chat_empty else R.string.digiline_chat_empty
+                ),
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
@@ -213,7 +220,7 @@ fun WorldChatScreen(
             }
 
             selectedMessage?.let { message ->
-                ChatMessageActionsDialog(message.content, visibleMessages.count { it.id > message.id }, message.role == "user", sending,
+                ChatMessageActionsDialog(message.content, visibleMessages.count { it.id > message.id }, message.role == "user" && legacyLlmEnabled, sending,
                     onDismiss = { selectedMessage = null }, onCopy = {
                         context.getSystemService(ClipboardManager::class.java)?.setPrimaryClip(ClipData.newPlainText("Digimon message", message.content))
                         selectedMessage = null
@@ -230,30 +237,51 @@ fun WorldChatScreen(
                     })
             }
 
-            ChatComposer(
-                value = input,
-                onValueChange = { input = it },
-                placeholder = stringResource(R.string.ui_chat_placeholder),
-                sendLabel = stringResource(R.string.ui_send),
-                sending = sending,
-                enabled = conversationReady,
-                errorMessage = error,
-                errorActionLabel = stringResource(R.string.ui_settings),
-                onErrorAction = { navController.navigate(AppRoute.Settings) },
-                onSend = {
-                    val text = input
-                    sending = true
-                    error = null
-                    controller.sendMessage(individualId, cardCharacterId, text,conversationId=conversationId) { result ->
-                        sending = false
-                        result.onSuccess { event ->
-                            if (event !is WildChatEvent.None) eventDialog = event
-                            if (input == text) input = ""
+            scene?.let { activeScene ->
+                com.tamerslab.chat.ui.DigilineSceneCard(
+                    scene = activeScene,
+                    enabled = conversationReady && !sending,
+                    onOptionSelected = { optionId ->
+                        sending = true
+                        error = null
+                        controller.chooseSceneOption(individualId, optionId) { result ->
+                            sending = false
+                            result.onFailure { error = resources.getString(R.string.app_chat_failed) }
                         }
-                        result.onFailure { error = resources.getString(R.string.app_chat_failed) }
+                    },
+                    onDismiss = { controller.dismissScene(individualId) { } }
+                )
+            }
+
+            if (legacyLlmEnabled) {
+                ChatComposer(
+                    value = input,
+                    onValueChange = { input = it },
+                    placeholder = stringResource(R.string.ui_chat_placeholder),
+                    sendLabel = stringResource(R.string.ui_send),
+                    sending = sending,
+                    enabled = conversationReady,
+                    errorMessage = error,
+                    errorActionLabel = stringResource(R.string.ui_settings),
+                    onErrorAction = { navController.navigate(AppRoute.Settings) },
+                    onSend = {
+                        val text = input
+                        sending = true
+                        error = null
+                        controller.sendMessage(individualId, cardCharacterId, text,conversationId=conversationId) { result ->
+                            sending = false
+                            result.onSuccess { event ->
+                                if (event !is WildChatEvent.None) eventDialog = event
+                                if (input == text) input = ""
+                            }
+                            result.onFailure { error = resources.getString(R.string.app_chat_failed) }
+                        }
                     }
-                }
-            )
+                )
+            } else if (scene == null && error != null) {
+                Text(error ?: "", style = androidx.compose.material3.MaterialTheme.typography.bodySmall,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.error)
+            }
         }
     }
 

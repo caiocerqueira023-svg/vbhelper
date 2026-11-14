@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "contentVersion": 4,
+  "locale": "en",
+  "files": {
+    "species": "species_questions.json",
+    "generic": "generic_questions.json",
+    "quiz": "quiz.json",
+    "negotiation": "negotiation.json",
+    "persuasion": "persuasion.json",
+    "events": "event_lines.json",
+    "lore": "lore_species.json"
+  }
+}

@@ -21,19 +21,23 @@ Related: [CHANGELOG.md](../../CHANGELOG.md),
       builds; confirm before tagging — Play would require an increment, a local
       `adb install -r` does not).
 - [x] `namespace = "com.tamerslab"` and `applicationId =
-      "com.github.nacabaro.vbhelper"` in the tree; the split is intentional
-      ([ADR 0001](../adr/0001-keep-application-id.md)).
+      "com.tamerslab.vbhelper"` in the tree; the split is intentional and the app is a
+      separate install identity, not a VBHelper update ([ADR 0006](../adr/0006-own-application-id.md)).
 - [x] Launcher label is `Tamers Lab` (`@string/app_name`); application class is
       `com.tamerslab.di.TamersLabApplication`; root project is `TamersLab`.
-- [ ] Verify the installed package still upgrades in place over the previous **released**
-      build (`adb install -r`) and that the label/launcher icon update without losing data.
-      (Smoke substitution: debug â†’ debug-key-signed release â†’ debug `adb install -r` on the
-      same `applicationId` succeeded with data preserved and launched; an actual
-      older-version upgrade is still untested.)
-- [x] Confirm no old `com.github.nacabaro` or `com.github.cfogrady` package names remain
-      in source, manifest, resources, tests, or ProGuard references. (Only the intentional
-      `applicationId` strings in `ExampleInstrumentedTest` and the benchmark package name
-      remain.)
+- [ ] Verify a fresh install lands as its own app next to VBHelper (no update prompt, both
+      apps coexist, uninstalling one leaves the other's data intact).
+- [ ] Verify `Settings → Export database` in the old `com.github.nacabaro.vbhelper` app and
+      `Settings → Import database` in the new one restores the collection, cards included,
+      and that linked `.sav` saves can be re-linked. (Not run: the identity change is build
+      configuration only.)
+- [ ] Verify upgrades still preserve data between releases of the new identity
+      (`adb install -r` on `com.tamerslab.vbhelper`). (The same-tree debug → debug-key-signed
+      release smoke was run under the previous identity; it must be repeated under this one.)
+- [x] Confirm no old `com.github.nacabaro` package names remain in source, manifest,
+      resources, tests, or ProGuard references. (The baseline-profile generator, the
+      macrobenchmark, `ExampleInstrumentedTest` and the device scripts now target
+      `com.tamerslab.vbhelper`; historical plan/log documents still mention the old id.)
 
 ## 2. Changelog and documentation
 
@@ -122,16 +126,24 @@ Run against the release candidate and record the exact commands/results:
 
 ## 7. Rename / WorkManager / upgrade smoke
 
-- [ ] Upgrade install over the previous **released** build with the same `applicationId`;
-      verify the collection, linked saves, imported secrets, settings, and theme survive.
-      (Only the same-tree debug â†’ debug-signed release â†’ debug `adb install -r` smoke has
-      been run; the older-version upgrade is still untested.)
-- [ ] Verify scheduled `WorldAfkWorker`/`WorkManager` jobs still run after the upgrade and
-      after a reboot; the rename must not orphan persisted worker class names.
+- [ ] Fresh install next to VBHelper: separate app, no update prompt, both coexist, and
+      uninstalling one leaves the other's data intact ([ADR 0006](../adr/0006-own-application-id.md)).
+- [ ] Migrate a collection from `com.github.nacabaro.vbhelper` with `Export database` →
+      `Import database`; confirm cards and individuals arrive and linked saves relink.
+- [ ] Upgrade install over the previous **released** build **of the new identity**
+      (`adb install -r` on `com.tamerslab.vbhelper`); verify the collection, linked saves,
+      imported secrets, settings, and theme survive. (No older-version upgrade has been run
+      under either identity yet.)
+- [ ] Verify scheduled `WorldAfkWorker`/`WorkManager` jobs still run after install/upgrade and
+      after a reboot; the identity change must not orphan persisted worker class names (the
+      worker names are class-based, so they follow the `com.tamerslab` namespace).
 - [ ] Verify deep links: `vbhelper://auth`, the localhost `:8080/authenticate` callback,
-      and the VitalWear `ACTION_SEND` import.
-- [ ] Verify the `FileProvider` authority still uses `${applicationId}.provider` and the
-      widget receiver (`DigimonWidgetProvider`) still updates.
+      and the VitalWear `ACTION_SEND` import. Note that `vbhelper://auth` is still registered
+      by VBHelper too, so with both apps installed Android may ask which app handles the
+      callback.
+- [ ] Verify the `FileProvider` authority resolves to `${applicationId}.provider` (now
+      `com.tamerslab.vbhelper.provider`) and the widget receiver (`DigimonWidgetProvider`)
+      still updates.
 - [ ] Verify backup/restore behavior and the data-extraction exclusions for secrets,
       tokens, LLM settings, and logs.
 

@@ -1,6 +1,11 @@
 package com.tamerslab.battle.ui.arena
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -37,6 +42,8 @@ import com.tamerslab.components.TopBannerAction
 import com.tamerslab.components.VitalTabs
 import com.tamerslab.components.VitalSearchField
 import com.tamerslab.components.InstrumentSpacing
+import com.tamerslab.components.motionEnabled
+import kotlin.math.abs
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,9 +54,38 @@ internal fun TamerArenaLobby(state: TamerArenaState, actions: ArenaUiActions,
     var editTeam by rememberSaveable { mutableStateOf(requireTeamConfirmation) }
     var filtersExpanded by rememberSaveable { mutableStateOf(false) }
     val rosterScroll = rememberLazyListState()
+    // The search and section bars yield to the roster the same way Storage's search bar does:
+    // scrolling down collapses them, scrolling up (or reaching the top) brings them back.
+    val allowMotion = motionEnabled()
+    var chromeVisible by rememberSaveable { mutableStateOf(true) }
+    var lastScrollPosition by remember { mutableIntStateOf(0) }
+    var downwardScrollDistance by remember { mutableIntStateOf(0) }
+    LaunchedEffect(rosterScroll) {
+        snapshotFlow { rosterScroll.firstVisibleItemIndex * 10_000 + rosterScroll.firstVisibleItemScrollOffset }
+            .collect { position ->
+                val delta = position - lastScrollPosition
+                if (delta > 0) {
+                    downwardScrollDistance += delta
+                    if (downwardScrollDistance >= 96) chromeVisible = false
+                } else if (delta < 0) {
+                    downwardScrollDistance = 0
+                    if (abs(delta) >= 12) chromeVisible = true
+                }
+                if (position == 0) {
+                    chromeVisible = true
+                    downwardScrollDistance = 0
+                }
+                lastScrollPosition = position
+            }
+    }
     val focusManager = LocalFocusManager.current
     val selected = state.resolver?.tamers?.firstOrNull { it.id == state.selectedTamerId }
     val bracket = state.activeRun?.takeIf { tab == 1 && selected == null }
+    // Entering the editor, a briefing or the bracket always gets the bars back.
+    LaunchedEffect(tab, editTeam, selected?.id, bracket?.id) {
+        chromeVisible = true
+        downwardScrollDistance = 0
+    }
     LaunchedEffect(query, series, availableOnly, state.stages, state.format) {
         rosterScroll.scrollToItem(0)
     }
@@ -74,9 +110,17 @@ internal fun TamerArenaLobby(state: TamerArenaState, actions: ArenaUiActions,
                         }, enabled = state.resolver != null && !state.loading && !state.busy)
                     }
                 }) else null)
-            if (!editTeam && selected == null && bracket == null) VitalTabs(tab,
-                listOf(stringResource(R.string.arena_tamers), stringResource(R.string.arena_tournaments), stringResource(R.string.arena_records)),
-                { editTeam = false; onTab(it) })
+            if (!editTeam && selected == null && bracket == null) {
+                AnimatedVisibility(
+                    visible = chromeVisible,
+                    enter = if (allowMotion) expandVertically() + fadeIn() else expandVertically(),
+                    exit = if (allowMotion) shrinkVertically() + fadeOut() else shrinkVertically(),
+                ) {
+                    VitalTabs(tab,
+                        listOf(stringResource(R.string.arena_tamers), stringResource(R.string.arena_tournaments), stringResource(R.string.arena_records)),
+                        { editTeam = false; onTab(it) })
+                }
+            }
             state.error?.takeIf { state.resolver != null }?.let { error ->
                 Surface(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                     color = MaterialTheme.colorScheme.errorContainer, shape = MaterialTheme.shapes.medium) {
@@ -109,37 +153,46 @@ internal fun TamerArenaLobby(state: TamerArenaState, actions: ArenaUiActions,
                             ArenaPresentation.roster(state, query, series, false)
                         }
                         val entries = if (availableOnly && state.teamReady) allEntries.filter { it.team != null } else allEntries
-                        Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                VitalSearchField(query, onQuery, stringResource(R.string.uniform_search_tamers),
-                                    Modifier.weight(1f).testTag("tamer-arena-search"), hint = stringResource(R.string.arena_search))
-                                IconToggleButton(checked = filtersExpanded, onCheckedChange = {
-                                    focusManager.clearFocus()
-                                    filtersExpanded = it
-                                }, modifier = Modifier.size(48.dp)) {
-                                    Icon(Icons.Outlined.FilterList, stringResource(R.string.arena_filters),
-                                        tint = if (filtersExpanded || series != null || availableOnly) MaterialTheme.colorScheme.primary
-                                            else MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                            }
-                            if (filtersExpanded) {
+                        AnimatedVisibility(
+                            visible = chromeVisible,
+                            enter = if (allowMotion) expandVertically() + fadeIn() else expandVertically(),
+                            exit = if (allowMotion) shrinkVertically() + fadeOut() else shrinkVertically(),
+                        ) {
+                            Column(
+                                Modifier.padding(horizontal = 16.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
                                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        ArenaSeriesFilter(state.resolver?.tamers?.map { it.series }?.distinct()?.sorted().orEmpty(), series, onSeries)
-                                        FilterChip(availableOnly, onClick = { onAvailableOnly(!availableOnly) },
-                                            label = { Text(stringResource(R.string.arena_ready_filter, allEntries.count { it.team != null })) },
-                                            leadingIcon = { if (availableOnly) Icon(Icons.Outlined.Check, null, Modifier.size(16.dp)) },
-                                            modifier = Modifier.heightIn(min = 48.dp).testTag("arena-ready-filter"))
-                                    }
-                                    IconButton(onClick = actions.onReload, enabled = !state.loading && !state.busy) {
-                                        Icon(Icons.Outlined.Refresh, stringResource(R.string.arena_reload))
+                                    VitalSearchField(query, onQuery, stringResource(R.string.uniform_search_tamers),
+                                        Modifier.weight(1f).testTag("tamer-arena-search"), hint = stringResource(R.string.arena_search))
+                                    IconToggleButton(checked = filtersExpanded, onCheckedChange = {
+                                        focusManager.clearFocus()
+                                        filtersExpanded = it
+                                    }, modifier = Modifier.size(48.dp)) {
+                                        Icon(Icons.Outlined.FilterList, stringResource(R.string.arena_filters),
+                                            tint = if (filtersExpanded || series != null || availableOnly) MaterialTheme.colorScheme.primary
+                                                else MaterialTheme.colorScheme.onSurfaceVariant)
                                     }
                                 }
-                                Text(stringResource(R.string.arena_roster_summary, entries.size), style = MaterialTheme.typography.labelMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                if (filtersExpanded) {
+                                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Row(Modifier.weight(1f).horizontalScroll(rememberScrollState()),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            ArenaSeriesFilter(state.resolver?.tamers?.map { it.series }?.distinct()?.sorted().orEmpty(), series, onSeries)
+                                            FilterChip(availableOnly, onClick = { onAvailableOnly(!availableOnly) },
+                                                label = { Text(stringResource(R.string.arena_ready_filter, allEntries.count { it.team != null })) },
+                                                leadingIcon = { if (availableOnly) Icon(Icons.Outlined.Check, null, Modifier.size(16.dp)) },
+                                                modifier = Modifier.heightIn(min = 48.dp).testTag("arena-ready-filter"))
+                                        }
+                                        IconButton(onClick = actions.onReload, enabled = !state.loading && !state.busy) {
+                                            Icon(Icons.Outlined.Refresh, stringResource(R.string.arena_reload))
+                                        }
+                                    }
+                                    Text(stringResource(R.string.arena_roster_summary, entries.size), style = MaterialTheme.typography.labelMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
                             }
                         }
                         if (entries.isEmpty()) CyberEmptyState(stringResource(R.string.arena_no_search_results), Modifier.weight(1f),

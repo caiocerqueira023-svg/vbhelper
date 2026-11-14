@@ -61,11 +61,12 @@ restated in [REFACTORING_PLAN.md](../REFACTORING_PLAN.md) and enforced by
 
 ## Architecture decisions (ADRs)
 
-- [ADR 0001: Keep `applicationId` `com.github.nacabaro.vbhelper`](adr/0001-keep-application-id.md)
+- [ADR 0001: Keep `applicationId` `com.github.nacabaro.vbhelper`](adr/0001-keep-application-id.md) — *superseded by ADR 0006*
 - [ADR 0002: Keep `hardware` and `hardware-dim` separate](adr/0002-hardware-module-merge.md)
 - [ADR 0003: Hard cutover to Koin](adr/0003-koin-dependency-injection.md)
 - [ADR 0004: Unified battle domain with offline/online split](adr/0004-unified-battle-domain.md)
 - [ADR 0005: Performance budgets and release gating](adr/0005-performance-budgets.md)
+- [ADR 0006: Own `applicationId` `com.tamerslab.vbhelper`](adr/0006-own-application-id.md)
 
 ## Refactor records
 

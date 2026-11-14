@@ -96,8 +96,9 @@ substitute for a test; cover both paths where practical.
   expose domain models, not Room entities.
 - Dependencies are resolved through Koin modules in `app/.../di/AppModule.kt`; add a
   binding and constructor injection rather than a new field on `DefaultAppContainer`.
-- Keep `applicationId = com.github.nacabaro.vbhelper` unless a clean-install release is
-  explicitly approved ([ADR 0001](docs/adr/0001-keep-application-id.md)).
+- Keep `applicationId = com.tamerslab.vbhelper` unless a new identity change is explicitly
+  approved; it is what makes this a separate app instead of a VBHelper update
+  ([ADR 0006](docs/adr/0006-own-application-id.md)).
 - Add dependencies only through `gradle/libs.versions.toml`, and consider APK size and
   startup impact.
 
@@ -122,7 +123,11 @@ enforced yet; the current numbers are in
 Never commit:
 
 - `secrets.pb`, imported NFC/LLM secrets, battle auth tokens, DataStore contents,
-  keystores, signing passwords, or mapping files containing private symbols;
+  keystores, signing passwords, or mapping files containing private symbols. The one
+  sanctioned exception is the reviewed, test-pinned derivation in
+  `app/src/main/java/com/tamerslab/security/BundledSecrets.kt`, which ships the watch
+  connection keys so a fresh install does not have to import them; do not add further
+  raw key material, `classes.dex`, or Arena APK contents to the tree;
 - companion pairing links/tokens, controlled-capture manifests, or captured save files;
 - retail DiM/BEM card dumps, real game saves/ROMs, or native record dumps;
 - Gradle daemon logs, `hs_err_pid*.log`, `replay_pid*.log`, `*.hprof`, APKs, or local

@@ -2,7 +2,6 @@ package com.tamerslab.components
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -34,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import com.tamerslab.home.ui.PartnerSlabAlpha
 import com.tamerslab.ui.theme.SceneTextShadow
 import com.tamerslab.ui.theme.SurfaceElevatedPurple
-import com.tamerslab.ui.theme.SurfaceStroke
 import com.tamerslab.ui.theme.TextPrimaryOnDark
 import com.tamerslab.ui.theme.VitalCyan
 
@@ -147,6 +145,11 @@ private fun hudKeyInk(active: Boolean, enabled: Boolean): Color = when {
     else -> TextPrimaryOnDark.copy(alpha = 0.92f)
 }
 
+/**
+ * A header key is the icon and its 48dp target only: no fill, no hairline stroke and no corner frame,
+ * exactly like Home's HUD keys. The cut-corner shape is still applied so the ripple stays inside the
+ * key's silhouette and the cyan ink marks the press.
+ */
 @Composable
 private fun HudKeySlot(
     description: String,
@@ -159,20 +162,12 @@ private fun HudKeySlot(
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val active = accent || pressed
-    val shape = CutCornerShape(HudKeyCorner)
     Box(
         modifier = modifier
             .size(HudKeySize)
-            .clip(shape)
-            .background(SurfaceElevatedPurple.copy(alpha = if (active) 0.95f else 0.70f))
-            .border(
-                width = 1.dp,
-                color = if (active) VitalCyan else SurfaceStroke.copy(alpha = 0.85f),
-                shape = shape,
-            )
+            .clip(CutCornerShape(HudKeyCorner))
             .clickable(
                 interactionSource = interaction,
-                indication = null,
                 enabled = enabled,
                 role = Role.Button,
                 onClick = onClick,

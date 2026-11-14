@@ -1,0 +1,61 @@
+===Tutorial Pixie===
+Tutorial Pixie always starts with the Introduction dialogue. She will always demand a single [[Life Stone]], after [[Aogami]] has prepared one for the protagonist in advance.
+
+{| class="table smt5"
+! colspan="4" |Dialogue
+!Outcome
+|-
+| colspan="5" align="center" |Introduction
+|-
+| colspan="4" |Whoa, he talked to me! Could this demon want me to join him...? Okay then, let's talk! I'm gonna ask you a question, so make sure you answer in a way that'd make me happy, okay?
+|[NEXT SECTION]
+|}
+
+{| class="table smt5"
+! colspan="4" |Dialogue
+!Outcome
+|-
+| colspan="5" align="center" |Cute
+|-
+| colspan="4" |So, do you think I'm cute?
+|>You're cute.<br>>Not really.<br>>I'm leaving.
+|-
+| width="15%" |>You're cute
+| colspan="3" |Ahaha! Thanks! Well then, lemme ask you one more question.
+|[SWITCH TO JOIN CONVERSATION]
+|-
+| width="15%" |>Not really.
+| colspan="3" |Grr, you're supposed to say that I'm cute! Okay, let's try one more time!
+|[REPEAT CONVERSATION]
+|-
+| width="15%" |>I'm leaving.
+| colspan="3" |C'mon, don't go. You gotta do this right! Okay, let's try one more time!
+|[REPEAT CONVERSATION]
+|}
+
+{| class="table smt5"
+! colspan="4" |Dialogue
+!Outcome
+|-
+| colspan="5" align="center" |Join
+|-
+| colspan="4" |Do you want me to join you?
+|>I do.<br>>I don't need you.<br>>I'm leaving.
+|-
+| width="15%" |>I do
+| colspan="3" |Gotcha! I wouldn't mind giving that a thought, y'know? But demons won't join you for free! You gotta give them all kinds of stuff, like items or Macca. I'm gonna tell you what I want, so make sure you give that to me!
+|[BARGAIN PHASE]
+|-
+|>I don't need you.
+| colspan="3" |You say that, but deep down, you need me, yeah? Okay, let's try one more time!
+|[REPEAT CONVERSATION]
+|-
+|>I'm leaving.
+| colspan="3" |C'mon, don't go. You gotta do this right! Okay, let's try one more time!
+|[REPEAT CONVERSATION]
+|}
+
+{{-}}
+{{SMT5}}
+
+[[Category:Shin Megami Tensei V]]

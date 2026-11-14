@@ -1,0 +1,583 @@
+===Rookie===
+{| class="table smt5"
+! colspan="3" |'''Dialogue'''
+!'''Outcome'''
+|-
+| colspan="4" align="center" |'''Beckoning'''
+|-
+| colspan="3" | '''The demon is beckoning you closer... What will you do?'''
+|>Move closer
+>Gesture back
+>Make a fist
+|-
+| colspan="2" | '''>Move closer'''
+|You're so gullible! Eat this!
+|[ENEMY PHASE]
+|-
+|rowspan = "3"|'''>Gesture back'''
+| colspan="2" | What, you wanna fight!?
+|[ENEMY PHASE]
+|-
+| colspan="2" | Ooh, What's this? Are you gonna gimme something?
+|[BARGAIN PHASE]
+|-
+| colspan="2" | I think you and me're gonna get along great!
+|[DIALOGUE SWITCH >> Gazing]
+|-
+| colspan="2" | '''>Make a fist'''
+|Roshambo! I threw paper, so I win! Loser gets to DIE!
+|[ENEMY PHASE]
+|-
+| colspan="4" align="center" |'''Coming'''
+|-
+| colspan="3" | '''Alright, outta my way! Comin' through!'''
+|>Ignore them
+>Show awe and respect
+
+>Trip them
+|-
+|'''>Ignore them'''
+| colspan="2" | Look at you, acting all high and mighty! Who do you think you are!?
+|>I'm a feudal lord.
+>I'm you.
+>I am the truth.
+|-
+|'''>>I'm a feudal lord.'''
+| colspan="2" | Aren't feudal lords those super important guys everybody pays taxes to...? Well, now it's your turn to pay up!
+|[ENEMY PHASE]
+|-
+|'''>>I'm you.'''
+| colspan="2" | uhh... You mean, like, "me," me? So I'm you, and you're me...? But you're you, and I'm... me?
+(The demon left in utter confusion...)
+|[LEAVES]
+|-
+|'''>I am the truth'''
+| colspan="2" | Nah, the truth is that I'm gonna mess you up!
+|[ENEMY PHASE]
+|-
+|'''>Show awe and respect'''
+| colspan="2" | Yeah, that's what I'm talking about! Now, present your offering, knave!
+|[BARGAIN PHASE]
+|-
+|>Trip them
+| colspan="2" | (You tried to trip the demon... But the demon dodged it!") Oho, nice try pal! It's gonna take more than that to fool me! Let's have a race to see which of us is '''faster!'''
+|>Sure
+> No
+|-
+|>>Sure
+| colspan="2" | (You raced the demon...)
+|[Agility stat between the 2 users is compared]
+>Pass 
+>Fail
+|-
+|>>>Pass
+| colspan="2" | (You won!) *gasp* *pant* Whoa, you're super fast...! Okay.. *pant* I'll... join you!
+|[INSTANT RECRUIT]
+|-
+|>>>Fail
+| colspan="2" |
+|
+|-
+|>> No
+| colspan="2" |
+|
+|-
+| colspan="4" |'''Bow'''
+|-
+| colspan="3"  align="center" | '''Hey, you! Bow before me!'''
+|>Bow your head
+>Look up
+>Ignore them
+|-
+|'''>Bow your head'''
+| colspan="2" |What's the matter? Going through something rough?
+|>My work is rough.<br>>This negotiation is rough.<br>>Your face is rough.
+|-
+|>>My work is rough.
+| colspan="2" |So, what kind of work do you do?
+|[DIALOGUE SWITCH >> Work]
+|-
+|>>This negotiation is rough.
+| colspan="2" |
+|
+|-
+|>>Your face is rough.
+| colspan="2" |
+|
+|-
+|'''>Look up'''
+| colspan="2" |
+|
+|-
+|'''>Ignore them'''
+| colspan="2" |
+|
+|-
+| colspan="4" align="center" |'''Gazing'''
+|-
+| colspan="3" | '''(The demon is gazing expectantly at you... What will you do?)'''
+|>Dance
+>Sing
+>Flash some Macca
+|-
+|'''>Dance'''
+| colspan="2" | (You tried dancing...)
+You dance like an octopus. 
+|[LEAVES]
+|-
+|rowspan = "2"|'''>Sing'''
+| colspan="2" | (You tried singing...)
+That song's so cool! You're just like I though you'd be!
+|[BARGAIN PHASE]
+|-
+| colspan="2" | Man, today's music sucks...
+|[ENEMY PHASE]
+|-
+|'''>Flash some Macca'''
+| colspan="2" |(You flashed some Macca at the demon...) Hehehe, looks like you get me! You're just like I thought you'd be! 
+|[BARGAIN PHASE]
+|-
+| colspan="4" align="center" |'''Pickle'''
+|-
+| colspan="3" | '''I'm in a real pickle here... Will you give me what I want?'''
+|>Sure
+>No
+>Sure, but not for free
+|-
+|'''>Sure'''
+| colspan="2" | For real? Boy, am I lucky! Well, okay, then! That head aint' gonna chop off itself! 
+|[ENEMY PHASE]
+|-
+|'''>No'''
+| colspan="2" |Cheapskate! You're not gonna get very far if you keep bein' stingy like that.
+|>Not my problem<br>>That'd be a problem
+|-
+| colspan="2" |>>Not my problem
+|Have you really given up on your future already? Get lost, loser.
+|[ENEMY PHASE]
+|-
+| colspan="2" |>>That'd be a problem
+|Then, I say you take your first step to makin' it big and see if you can get me to join you!
+|[BARGAIN PHASE]
+|-
+|'''>Sure, but not for free'''
+| colspan="2" |Then, I'll give you something too. What do you want? 
+|>A friend
+>Some time off.
+>Nothing
+|-
+|'''>>A friend'''
+| colspan="2" | I'll just give you this instead.
+|[GIVES ITEM, LEAVES]
+|-
+|rowspan="2" | '''>>Some time off.'''
+| colspan="2" | Great! you'll have loads of time off when you're DEAD!
+|[ENEMY PHASE]
+|-
+| colspan="2" | Are you that busy with work? So, what kind of work do you do?
+|[DIALOGUE SWITCH >> Work]
+|-
+|'''>>Nothing'''
+| colspan="2" |
+|
+|-
+| colspan="4" align="center" |'''Work'''
+|-
+| colspan="3" |Are you that busy with work? So, what kind of work do you do?
+|>Vanquishing demons.<br>>Exploring the netherworld.<br>>I'm a student.
+|-
+|rowspan="2"|'''>Vanquishing demons.'''
+| colspan="2" | Ack! um, um, please don't kill me! I'll negotiate! See!?
+|[BARGAIN PHASE]
+|-
+| colspan="2" | Seriously? Vanquishing? Who do you think you are, some kinda hero?
+|[ENEMY PHASE]
+|-
+|'''>Exploring the netherworld.'''
+| colspan="2" | I picked this up earlier, so use r it to help you with your job, okay?
+|[GIVES ITEM, LEAVES]
+|-
+|'''>I'm a student.'''
+| colspan="2" | Why're you here, then? What about your classes? *gasp* You're probably some kind of delinquent, aren't you!? Run awaaaaay!
+|[LEAVES]
+|-
+| colspan="4" align="center" |'''Gyahahahaha! Ahahahahahaha!'''
+|-
+| colspan="3" | '''Gyahahahaha! Ahahahahahaha! (The demon is laughing their head off... What will you do?)'''
+|>Laugh with them
+>Plug your ears
+>Put your guard up
+|-
+|'''>Laugh with them'''
+| colspan="2" | ...You're making fun of me, aren't you? Who do you think I am?
+|>Just another brat.
+>A reliable comrade.
+
+>Fusion material
+|-
+|'''>>Just another brat.'''
+| colspan="2" | I might not look it, but I'm way older than you! Now show some respect to your elder, boy!
+|>Fiiiiine.
+>You want your ass beat?
+>Go buy me a drink.
+|-
+|rowspan="2"|'''>>>Fiiiiine.'''
+| colspan="2" |Yeah, What's more like it! Now, gimme something good!
+|[BARGAIN PHASE]
+|-
+| colspan="2" |You're supposed to say, "Yes, Sir." Didn't anyone ever teach you manners?
+|[ENEMY PHASE]
+|-
+|'''>>>You want your ass beat?'''
+| colspan="2" |I'm sorry! Look, I'll give you this, so please forgive me.
+|[GIVES ITEM, LEAVES]
+|-
+|'''>>>Go buy me a drink.'''
+| colspan="2" |(The demon ran off to the nearby vending machine... And they never came back...)
+|[LEAVES]
+|-
+|'''>>A reliable comrade.'''
+| colspan="2" |
+|
+|-
+|'''>>Fusion material'''
+| colspan="2" |
+|
+|-
+|'''>Plug your ears'''
+| colspan="2" |
+|
+|-
+|'''>Put your guard up'''
+| colspan="2" |
+|
+|-
+| colspan="4" align="center" |'''Leave'''
+|-
+| colspan="3" |(The demon is trying to leave... What will you do?)
+|>Stop them
+>Let them go 
+>Smirk at them
+|-
+| colspan="2" |>Stop them
+|Good luck! I'm way too fast for you! 
+(The demon ran away! You chased after them!)
+|[Agility stat between the 2 users is compared]
+>Pass
+>Fail
+|-
+| colspan="2" |>>Pass
+|(You caught up with the demon!) *gasp* *pant* Whoa, you're super fast...! Okay... *pant* I'll... join you!
+|[INSTANT RECRUIT]
+|-
+| colspan="2" |>>Fail
+|(But you weren't fast enough to catch up...)
+|[LEAVES]
+|-
+| colspan="2" | >Let them go
+|C'mon, why you gotta be so mean!? Let's talk! Let's have a race to see which of us is '''faster'''!
+|>Sure.
+>No
+|-
+| colspan="2" | '''>>Sure'''
+|C'mon, why you gotta be so mean!? Let's talk!
+|[DIALOGUE SWITCH]
+|-
+| colspan="2" | '''>>No'''
+|Fiiiine. I'll let you off easy this time.
+|[TALK END, TURN ISN'T USED]
+|-
+| colspan="2" | >Smirk at them
+|
+|
+|-
+| colspan="4" align="center" |'''Crying'''
+|-
+| colspan="3" |Waaaah, waaaah...
+(The demon seems to be crying... What will you do?)
+|>Look on in concern
+>Leave them be
+>Smirk at them
+|-
+| colspan="2" |>Look on in concern
+|Why're you looking at me like that? I-I was just yawning! I mean, don't you yawn when you're sleepy?
+|>That's true.
+>I bite it back.
+>I just go to sleep
+|-
+| colspan="2" |>>That's true.
+|Right? Right? Okay, let's yawn together!
+|>Yawn
+>Don't yawn
+>Put your guard up
+|-
+| colspan="2" |>>>Yawn
+|Hey, don't yawn when we're talking Don't you know that's rude?
+|[TALK END, TURN USED]
+|-
+| colspan="2" |>>>Don't yawn
+|Can't you even play along just a little? Seriously, you're so lame.
+|[ENEMY PHASE]
+|-
+| colspan="2" |>>>Put your guard up
+|Aaaah! O-Okay, I'm awake! Oh well... I guess we could try talking...
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>>I bite it back.
+|It's not good to fight stuff like that, you know. I just kinda do it whenever I want. Hrgh, I can't hold bcak any longer! I'm gonna kill you!
+|[ENEMY PHASE]
+|-
+| colspan="2" |>>I just go to sleep
+|Ooh, I didn't think about that! I better go home and sleep, then.
+|[LEAVES]
+|-
+| colspan="2" |>Leave them be
+|
+|
+|-
+| colspan="2" |>Smirk at them
+|
+|
+|-
+| colspan="4" align="center" |'''Approaching'''
+|-
+| colspan="3" |(The demon is approaching... What will you do?)
+|>Stop them
+>Glare at them
+>Keep calm
+|-
+| colspan="2" |>Stop them
+|I just gotta see which of us is faster! All right, let's race! Three, two, one, GO!
+(You raced the demon...)
+|[Agility stat between the 2 users is compared] 
+>Pass
+>Fail
+|-
+| colspan="2" |>Pass
+|(You won!)
+
+|[INSTANT RECRUIT]
+|-
+| colspan="2" |>Fail
+|(You lost...)
+All right! Time for the lower to be punished!
+|[ENEMY PHASE]
+|-
+| colspan="2" |>Glare at them
+|
+|
+|-
+| colspan="2" |>Keep calm
+|
+|
+|-
+| colspan="4" align="center" |Human stink
+|-
+| colspan="3" |You stink like a human... I'm not supposed to talk to humans!
+|>I'm a god.<br>>I'm a student.<br>>I'm a protagonist.
+|-
+|>I'm a god.
+| colspan="2" |...Guess I'll leave an offering for you, then.
+|[GIVES ITEM, LEAVES]
+|-
+|>I'm a student.
+| colspan="2" |
+If you're really a demon, then I'm sure you'll be fine if I take a couple shots at ya!
+|[ENEMY PHASE]
+|-
+|>I'm a protagonist.
+| colspan="2" |Hmph, that's good for you, maybe, but that means you see me as some side-character wuss.
+|[ENEMY PHASE]
+|-
+| colspan="4" align="center" |Shake Hands
+|-
+| colspan="3" |I wanna get to know you better. How 'bout we shake hands?
+|>Sure.
+>Let's not.
+
+>Let's arm wrestle instead
+|-
+| colspan="2" | >Sure.
+|(You shook hands with the demon... A piece of paper was left in your hand. It says, "Too bad"!)
+|[ENEMY PHASE]
+|-
+| colspan="2" | >Let's not.
+|Then, how 'bout a friendly little fistfight!?
+|[ENEMY PHASE]
+|-
+| colspan="2" | >Let's arm wrestle instead.
+|I-I'm not really the best arm wrestler... Oh! I am pretty confident in my speed, though! All right, let's race! Three, two, one, GO!
+(You raced the demon...)
+|[Agility stat between the 2 users is compared]
+>Pass<br>>Fail
+|-
+| colspan="2" | >Pass
+|(You won!) *gasp* *pant* Whoa, you're super fast...! Okay.. *pant* I'll... join you!
+|[INSTANT RECRUIT]
+|-
+| colspan="2" | >Fail
+|
+|
+|-
+| colspan="4" align="center" colspan"5" | Recognize
+|-
+| colspan="3" |You're... [Playername]! I've heard all kinds of stuff about you! You're a baaad guy!
+|[ENEMY PHASE]
+|-
+| colspan="4" align="center" |Ignore
+|-
+| colspan="3" |The demon is pretending to ignore you... What will you do?
+|>Call out to them<br>>Glare at them
+|-
+|>Call out to them
+| colspan="2" |You really wanna talk, huh? Oh well, I guess I'll play along, then.
+|[DIALOGUE SWITCH >> New]
+|-
+|rowspan = "2"|>Glare at them
+| colspan="2" |C-C'mon, you don't gotta get angry... Fine, let's work it out.
+|[BARGAIN PHASE]
+|-
+| colspan="2" |You really think I'd listen to a jerk like you!?
+|[ENEMY PHASE]
+|-
+| colspan="4" align="center" |New
+|-
+| colspan="3" |You're new around here, huh? So what kinda demon are you? 
+(How will you respond?)
+|>Amicably
+>Aggressively
+|-
+| colspan="2" |>Amicably
+|Dude, that;s kinda creepy...
+|[TALK END, TURN USED]
+|-
+| colspan="2" |>Aggressively
+|Hrgh, he's scarier than I thought... Maybe I should just do what he says and try talkin' it out...
+|[BARGAIN PHASE]
+|-
+| colspan="4" align="center" |'''Listen'''
+|-
+| colspan="3" | Hmph! I don't have to listen to you
+|>Please listen to me.
+>Suit yourself.
+>Then, you talk.
+|-
+| colspan="2" |>Please listen to me.
+|Look, if you want to listen, then you know what to do! Hurray up and gimme the goods!
+|>Give them water<br>>Give them juice<br>>Give them alcohol
+|-
+| colspan="2" |>>Give them water
+|Just plain ol' water? Cheapskate.
+|[ENEMY PHASE]
+|-
+| colspan="2" |>>Give them juice
+|
+|
+|-
+| colspan="2" |>>Give them alcohol
+|
+|
+|-
+| colspan="2" |>Suit yourself.
+|
+|
+|-
+| colspan="2" |>Then, you talk.
+|Huh? You want me to start? Th-That's uhh... That's kinda sudden... I dunno what to talk about. M-Maybe next time, all right!?
+|[LEAVES]
+|-
+| colspan="4" align="center" |'''Hair'''
+|-
+| colspan="3" | '''Your hair's so long!'''
+|>Cool, huh?
+>I don't have time to get it cut
+
+>Yeah, yours doesn't even comp-hair
+|-
+|'''>Cool, huh?'''
+| colspan="2" | Uhhh, not really.
+|[TALK END, TURN USED]
+|-
+|'''>I don't have time to get it cut'''
+| colspan="2" |Maybe it's because you're busy with work? 
+|[DIALOGUE SWITCH >> Work]
+|-
+|'''>Yeah, yours doesn't even comp-hair'''
+| colspan="2" |Welp, time for me to go home.
+|[LEAVES]
+|-
+| colspan="4" align="center" |'''Guard up'''
+|-
+| colspan="3" |The demon has their guard up...
+What will you do?
+|>Ask them to lower their guard<br>>Put your guard up as well
+|-
+| colspan="2" |>Ask them to lower their guard
+|
+|
+|-
+| colspan="2" |>Put your guard up as well
+|Hey, I was just joking! Fine, we can talk! 
+|[DIALOGUE SWITCH >> Shake hands]
+|-
+| colspan="4" align="center" |'''Let go'''
+|-
+| colspan="3" |Please let me go! C'moooon!
+|>You can go<br>>No
+|-
+| colspan="2" |>You can go
+|Thanks, dude! Here's a little something for you!
+|[GIVES ITEM, LEAVES]
+|-
+| colspan="3" |>No
+|
+|-
+| colspan="4" align="center" |Trust
+|-
+| colspan="3" |You're new here, huh? I don't think I can trust you.
+|>That's fine<br>>Please trust me.<br>>I can't trust you either.
+|-
+| colspan="2" |>That's fine
+|C'mon, you should at least make SOME friends. Wanna talk about it?
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>Please trust me.
+|
+|
+|-
+| colspan="2" |>I can't trust you either.
+|
+|
+|-
+| colspan="4" align="center" |'''Quiz'''
+|-
+| colspan="3" | '''Dun duuun! you've been hit with a surprise quiz!'''
+|[GUESS RANDOM MONSTER]
+> Answer right
+> Answer wrong
+|-
+|'''>Answer right'''
+| colspan="2" | Wow, you're pretty good! I think I'll go ahead and join you.
+|[INSTANT RECRUIT]
+|-
+|'''>Answer wrong'''
+| colspan="2" |
+|[LEAVES]
+|-
+| colspan="4" align="center" |'''Waning gibbous'''
+|-
+| colspan="2" | [GOOD OUTCOME]
+|Hm-hmmm,hm-hmmmm! A bright moon's always more fun! (The demon seems to be in good spirits. Could it be because a '''full moon is near'''...?) You want me to join you? Okay, I'll help out by giving you a good price!
+|[BARGAIN PHASE] 
+|-
+| colspan="4" align="center" |'''Full Moon'''
+|-
+|'''[GOOD OUTCOME]'''
+| colspan="2" | The moon's sooo biiiiiig, the moon's so briiiiiiight! The world, the future, bright, bright, briiiight! (The demon seems to be in good spirits. Could this be due to the full moon...?)
+|
+|-
+| colspan="2" | '''[BAD OUTCOME]'''
+|Too bad it' lights out for you!
+|[ENEMY PHASE]
+|-
+|}

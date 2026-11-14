@@ -17,6 +17,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import retrofit2.HttpException
@@ -37,7 +38,9 @@ class ChatRepository(
     private val lorebookRepository: LorebookRepository,
     private val speciesRepository: SpeciesRepository,
     private val chatDao: ChatDao = database.chatDao(),
-    private val questRepository: com.tamerslab.quests.QuestRepository = com.tamerslab.quests.QuestRepository(database)
+    private val questRepository: com.tamerslab.quests.QuestRepository = com.tamerslab.quests.QuestRepository(database),
+    /** Legacy LLM chat is debug-only and sandboxed; normal gameplay must run fully offline. */
+    private val legacyLlmEnabled: () -> Boolean = { false }
 ) {
     class MissingApiKeyException : Exception("Chat API key is not configured.")
 
@@ -48,10 +51,18 @@ class ChatRepository(
 
     fun getHistory(characterId: Long): Flow<List<ChatMessageEntity>> =
         database.userCharacterDao().getIndividualId(characterId)
-            .flatMapLatest(chatDao::getMessages)
+            .flatMapLatest { chatDao.getMessages(it).map(::visibleHistory) }
 
     fun getHistoryForIndividual(individualId: String): Flow<List<ChatMessageEntity>> =
-        chatDao.getMessages(individualId)
+        chatDao.getMessages(individualId).map(::visibleHistory)
+
+    /**
+     * Normal play only shows authored DigiLine messages (kind != null). Messages from the legacy
+     * LLM era have no kind and stay hidden unless the debug legacy switch is on, so old generated
+     * conversations cannot leak into the new card-based UX.
+     */
+    private fun visibleHistory(messages: List<ChatMessageEntity>): List<ChatMessageEntity> =
+        if (legacyLlmEnabled()) messages else messages.filter { it.kind != null }
 
     fun observeMood(characterId: Long): Flow<Int> = database.userCharacterDao().observeMood(characterId)
 
@@ -60,9 +71,9 @@ class ChatRepository(
         chatDao.deleteFromMessage(individualId, messageId)
     }
 
-    suspend fun insertNotice(individualId: String, content: String) {
+    suspend fun insertNotice(individualId: String, content: String, kind: String = "system_notice") {
         chatDao.insertMessage(ChatMessageEntity(individualId = individualId, role = "notice",
-            content = content, timestamp = System.currentTimeMillis()))
+            content = content, timestamp = System.currentTimeMillis(), kind = kind))
     }
 
     data class PartnerContext(val cardCharacterId: Long, val cardName: String, val nickname: String?)
@@ -92,6 +103,15 @@ class ChatRepository(
         questActionHandler: (suspend (com.tamerslab.quests.QuestDialogueAction) -> com.tamerslab.quests.QuestActionResult)? = null
     ): WildChatResult {
         require(userText.isNotBlank() && userText.length <= 12000)
+        if (!legacyLlmEnabled()) {
+            return WildChatResult(
+                reply = com.tamerslab.chat.legacy.LegacyLlmFallbacks.line(
+                    com.tamerslab.chat.legacy.LegacyLlmFallbacks.Kind.WILD_REPLY,
+                    PromptLocalization.currentLanguageTag()
+                ),
+                moodDelta = null
+            )
+        }
         val participation = captureParticipation(individualId)
         questRepository.refreshGiver(individualId)
         val (systemPrompt, speciesName) = buildWildSystemPrompt(cardCharacterId, individualId)
@@ -251,6 +271,7 @@ class ChatRepository(
     }
 
     suspend fun reactToPendingBattles(individualId: String, cardCharacterId: Long) = battleReactionMutex.withLock {
+        if (!legacyLlmEnabled()) return@withLock
         val participation = captureParticipation(individualId)
         for(memory in database.worldChatMemoryDao().getPendingReactions(individualId)) {
             val (persona,species)=buildWildSystemPrompt(cardCharacterId,individualId)
@@ -335,6 +356,12 @@ class ChatRepository(
         cardCharacterId: Long,
         instruction: String
     ): String {
+        if (!legacyLlmEnabled()) {
+            return com.tamerslab.chat.legacy.LegacyLlmFallbacks.line(
+                com.tamerslab.chat.legacy.LegacyLlmFallbacks.Kind.EVENT,
+                PromptLocalization.currentLanguageTag()
+            )
+        }
         val participation = captureParticipation(individualId)
         val (systemPrompt, speciesName) = buildWildSystemPrompt(cardCharacterId, individualId)
         val enrichedSystemPrompt = withLorebookContext(systemPrompt, instruction, speciesName)
@@ -359,10 +386,12 @@ class ChatRepository(
     }
 
     fun getLatestAssistantMessage(individualId: String): Flow<ChatMessageEntity?> =
-        chatDao.getLatestAssistantMessage(individualId)
+        getHistoryForIndividual(individualId).map { history -> history.lastOrNull { it.role == "assistant" } }
 
     fun getLatestUnreadAssistantMessage(individualId: String): Flow<ChatMessageEntity?> =
-        chatDao.getLatestUnreadAssistantMessage(individualId)
+        getHistoryForIndividual(individualId).map { history ->
+            history.lastOrNull { it.role == "assistant" && !it.isRead }
+        }
 
     suspend fun markAssistantMessagesRead(characterId: Long) {
         val individualId = database.userCharacterDao().getCharacter(characterId).individualId
@@ -370,6 +399,12 @@ class ChatRepository(
     }
 
     suspend fun sendMessage(characterId: Long, userText: String): String {
+        if (!legacyLlmEnabled()) {
+            return com.tamerslab.chat.legacy.LegacyLlmFallbacks.line(
+                com.tamerslab.chat.legacy.LegacyLlmFallbacks.Kind.OWNED_REPLY,
+                PromptLocalization.currentLanguageTag()
+            )
+        }
         val preludeId = database.userCharacterDao().getCharacter(characterId).individualId
         val participation = captureParticipation(preludeId)
         questRepository.refreshPartner(preludeId)
@@ -413,6 +448,12 @@ class ChatRepository(
     }
 
     suspend fun resendMessage(characterId: Long, messageId: Long, userText: String): String {
+        if (!legacyLlmEnabled()) {
+            return com.tamerslab.chat.legacy.LegacyLlmFallbacks.line(
+                com.tamerslab.chat.legacy.LegacyLlmFallbacks.Kind.OWNED_REPLY,
+                PromptLocalization.currentLanguageTag()
+            )
+        }
         val (systemPrompt, individualId, speciesName) = buildSystemPromptAndIndividualId(characterId)
         val participation = captureParticipation(individualId)
         val original = chatDao.getMessagesSync(individualId)
@@ -429,6 +470,18 @@ class ChatRepository(
     }
 
     suspend fun triggerReaction(characterId: Long, eventDescription: String): String {
+        if (!legacyLlmEnabled()) {
+            val line = com.tamerslab.chat.legacy.LegacyLlmFallbacks.line(
+                com.tamerslab.chat.legacy.LegacyLlmFallbacks.Kind.EVENT,
+                PromptLocalization.currentLanguageTag()
+            )
+            runCatching {
+                val individualId = database.userCharacterDao().getCharacter(characterId).individualId
+                chatDao.insertMessage(ChatMessageEntity(individualId = individualId, role = "assistant",
+                    content = line, timestamp = System.currentTimeMillis()))
+            }
+            return line
+        }
         runCatching {
             val preludeId = database.userCharacterDao().getCharacter(characterId).individualId
             questRepository.refreshPartner(preludeId)
@@ -457,9 +510,16 @@ class ChatRepository(
     }
 
     /** Generates one public Digifarm turn without writing to private chat or changing real vitals/mood. */
-    suspend fun publicDialogueAvailable(): Boolean = !llmSettingsRepository.apiKey.first().isNullOrBlank()
+    suspend fun publicDialogueAvailable(): Boolean =
+        legacyLlmEnabled() && !llmSettingsRepository.apiKey.first().isNullOrBlank()
 
     suspend fun generateFarmReply(characterId: Long, farmContext: String, responseContract: String? = null): String {
+        if (!legacyLlmEnabled()) {
+            return com.tamerslab.chat.legacy.LegacyLlmFallbacks.line(
+                com.tamerslab.chat.legacy.LegacyLlmFallbacks.Kind.FARM,
+                PromptLocalization.currentLanguageTag()
+            )
+        }
         val (systemPrompt, individualId, speciesName) = buildSystemPromptAndIndividualId(characterId,includeBattleMemories=false)
         val participation = captureParticipation(individualId)
         val languageTag = PromptLocalization.currentLanguageTag()
@@ -499,6 +559,12 @@ class ChatRepository(
 
     /** Public wild personas resolved by permanent identity; never reads private history. */
     suspend fun generateRadarExchange(speakers: List<Pair<String, Long>>, context: String, contract: String): String {
+        if (!legacyLlmEnabled()) {
+            return com.tamerslab.chat.legacy.LegacyLlmFallbacks.line(
+                com.tamerslab.chat.legacy.LegacyLlmFallbacks.Kind.RADAR,
+                PromptLocalization.currentLanguageTag()
+            )
+        }
         val participation = speakers.firstOrNull()?.first?.let { captureParticipation(it) }
         speakers.forEach { participation?.requireIndividual(it.first) }
         val personas = speakers.map { (individualId, cardId) ->
@@ -514,10 +580,18 @@ class ChatRepository(
         return reply
     }
 
-    suspend fun generateRadarRecap(facts:String):String = requestCompletionWithoutPrivateHistory(
-        "Write a short read-only recap in ${PromptLocalization.currentLanguageTag()}. Use only the recorded public facts. " +
-            "Do not invent dialogue, quotations, challenges, participants or outcomes. Return plain text; this cannot trigger combat.",facts,
-        postInstruction = "Return only the requested factual plain-text recap. Do not write a character reply or new dialogue.")
+    suspend fun generateRadarRecap(facts:String):String {
+        if (!legacyLlmEnabled()) {
+            return facts + "\n" + com.tamerslab.chat.legacy.LegacyLlmFallbacks.line(
+                com.tamerslab.chat.legacy.LegacyLlmFallbacks.Kind.RECAP,
+                PromptLocalization.currentLanguageTag()
+            )
+        }
+        return requestCompletionWithoutPrivateHistory(
+            "Write a short read-only recap in ${PromptLocalization.currentLanguageTag()}. Use only the recorded public facts. " +
+                "Do not invent dialogue, quotations, challenges, participants or outcomes. Return plain text; this cannot trigger combat.",facts,
+            postInstruction = "Return only the requested factual plain-text recap. Do not write a character reply or new dialogue.")
+    }
 
     suspend fun clearHistory(characterId: Long) {
         val individualId = database.userCharacterDao().getCharacter(characterId).individualId

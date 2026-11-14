@@ -1,4 +1,4 @@
-﻿package com.tamerslab.storage.ui
+package com.tamerslab.storage.ui
 
 import android.util.Log
 import android.widget.Toast
@@ -113,10 +113,7 @@ fun StorageScreen(
     val awayCharacterIds = remember(awayCharacters) { awayCharacters.map { it.characterId }.toSet() }
     val awaySourceIds = remember(awayCharacters) { awayCharacters.associate { it.characterId to it.sourceId } }
     val sourceLabels = remember(linkedSources) { linkedSources.associate { it.source.sourceId to it.source.label } }
-    val farmAssignments by application.container.digifarmRepository.observeAssignments()
-        .collectAsStateWithLifecycle(initialValue = emptyList())
     val farmPreferences = remember(application) { FarmWorldPreferences(application.farmWorldStore) }
-    val farmByCharacter = remember(farmAssignments) { farmAssignments.associate { it.characterId to it.farmName } }
     val fallbackName = stringResource(R.string.widget_digimon_label)
 
     LaunchedEffect(Unit) {
@@ -593,17 +590,6 @@ fun StorageScreen(
                                         .clickable(onClick = openCharacter)
                                         .padding(horizontal = 4.dp, vertical = 2.dp)
                                 )
-                                farmByCharacter[character.id]?.let { farmName ->
-                                    Text(
-                                        text = stringResource(R.string.storage_in_digifarm, farmName),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = if (usable) VitalCyan else com.tamerslab.ui.theme.InactiveOutline,
-                                        textAlign = TextAlign.Center,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)
-                                    )
-                                }
                                 if (character.id in awayCharacterIds) {
                                     val sourceLabel = awaySourceIds[character.id]?.let(sourceLabels::get)
                                     Text(

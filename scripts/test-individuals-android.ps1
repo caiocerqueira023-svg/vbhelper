@@ -11,8 +11,8 @@ $integrityAdb = Join-Path $sdkRoot 'platform-tools/adb.exe'
 $aapt = (Get-ChildItem (Join-Path $sdkRoot 'build-tools') -Recurse -Filter aapt.exe |
     Sort-Object FullName -Descending | Select-Object -First 1).FullName
 $apks = @{
-    'app/build/outputs/apk/integrityCheck/app-integrityCheck.apk' = 'com.github.nacabaro.vbhelper.integritycheck'
-    'app/build/outputs/apk/androidTest/integrityCheck/app-integrityCheck-androidTest.apk' = 'com.github.nacabaro.vbhelper.integritycheck.test'
+    'app/build/outputs/apk/integrityCheck/app-integrityCheck.apk' = 'com.tamerslab.vbhelper.integritycheck'
+    'app/build/outputs/apk/androidTest/integrityCheck/app-integrityCheck-androidTest.apk' = 'com.tamerslab.vbhelper.integritycheck.test'
 }
 foreach ($entry in $apks.GetEnumerator()) {
     $badging = & $aapt dump badging $entry.Key
@@ -22,7 +22,7 @@ foreach ($entry in $apks.GetEnumerator()) {
     & $integrityAdb install -r $entry.Key
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
-$result = & $integrityAdb shell am instrument -w -r -e class com.github.nacabaro.vbhelper.IndividualPersistenceTest com.github.nacabaro.vbhelper.integritycheck.test/androidx.test.runner.AndroidJUnitRunner 2>&1
+$result = & $integrityAdb shell am instrument -w -r -e class com.tamerslab.IndividualPersistenceTest com.tamerslab.vbhelper.integritycheck.test/androidx.test.runner.AndroidJUnitRunner 2>&1
 $result | Set-Content 'app/build/identity-instrumentation.txt'
 $result | Select-String 'INSTRUMENTATION_STATUS: stack=|Tests run:|OK \(|FAILURES|INSTRUMENTATION_FAILED'
 if (-not ($result | Select-String 'OK \(\d+ tests?\)')) { exit 1 }

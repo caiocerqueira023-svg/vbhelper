@@ -1,0 +1,325 @@
+===Old Man===
+{| class="table smt5"
+! colspan="4" |'''Dialogue'''
+!'''Outcome'''
+|-
+| colspan="5" align="center"|'''Dropped'''
+|-
+| colspan="4" | '''To Tell ya the truth, I dropped somethin'...'''
+|>What did you drop?
+>I can help.
+>Just give up.
+|-
+|rowspan="2"|'''>What did you drop?'''
+| colspan="3" | I can't remember... Memories seem to drop right out of my head, these days. Hmm? Who am I again?
+|>[Demon's name]
+>[Playername]
+>No idea.
+|-
+| colspan="3" | I can't remember... Memories seem to drop right out of my head, these days. Hmm? Where do I live again?
+|>Right here
+>You don't have a home.
+>Somewhere in [Area]
+|-
+|'''>>[Demon's name]'''
+| colspan="3" | Ahh, now isn't that nostalgic ... They called me back in the worshipin' days. All right then. Offer up those gifts! Show me your faith, eh?
+|[BARGAIN PHASE]
+|-
+| colspan="3" |'''>>[Playername]'''
+|
+|
+|-
+| colspan="3" |'''>>No idea.'''
+|
+|
+|-
+| colspan="3" |'''>>Right here'''
+|You sayin' I live in yer demon stock? Just so ya know, I ain't joinin' for free. You gotta make me an offer.p those gifts! Show me your faith, eh?
+|[BARGAIN PHASE]
+|-
+| colspan="3" |'''>>You don't have a home.'''
+|
+|
+|-
+| colspan="3" |'''>>[Playername]'''
+|
+|
+|-
+| colspan="3" |'''>>Somewhere in [Area]'''
+|
+|
+|-
+| colspan="3" |'''>I can help.'''
+|
+|
+|-
+| colspan="3" |'''>Just give up.'''
+|
+|
+|-
+| colspan="5" align="center"|'''Let Go'''
+|-
+| colspan="4" | '''Do you think ya could just let me go?'''
+|>Let them go
+>Don't let them go
+|-
+| colspan="3" |>Let them go
+|Oh, thank ya... Well, while we're at it, mind keepin' a lonely old man company for a minute?
+|[DIALOGUE SWITCH]
+|-
+| colspan="3" |>Don't let them go
+|
+|
+|-
+| colspan="5" align="center"|'''Who Are You'''
+|-
+| colspan="4" | '''Who exactly are ya, huh?'''
+|>I'm [Playername]
+>I'm a god.
+>It's me!
+|-
+| colspan="3" |>I'm [Playername]
+|So yer [Playername], eh? Heard all kinds of rumors about ya. They say yer nothin' but trouble! And now yer gonna get it!
+|[ENEMY PHASE]
+|-
+| colspan="3" |>I'm a god.
+|
+|
+|-
+| colspan="3" |>It's me!
+|
+|-
+| colspan="5" align="center"|'''Kill Elderly'''
+|-
+| colspan="4" | '''Gotta ask ya... Does it hurt ya to kill the elderly, even just a little'''
+|>Not at all.
+>Yes it does.
+|-
+| colspan="3" |>Not at all.
+|I see, I see... Well, it wouldn't hurt me to kill you either boy!
+|[ENEMY PHASE]
+|-
+| colspan="3" |>Yes it does.
+|If it doesn't, then why do it?
+|>To survive
+>It's for the greater good.
+>For the world and its people.
+|-
+| colspan="3" |>>To survive
+|Well, whatever the reason, please don't kill the elderly. If livin's your goal, then this oughta help.
+|[GIVES ITEM, LEAVES]
+|-
+| colspan="3" |>>It's for the greater good.
+|Nothin' good comes from servin' the "greater good." That goes for both humans and demons... THese may be ramblin's of an old man, but keep that in mind, hm?
+|[LEAVES]
+|-
+| colspan="3" |>>For the world and its people.
+|
+|
+|-
+| colspan="5" align="center"|'''Grimace'''
+|-
+| colspan="4" | '''(The demon is grimacing... What will you do?)'''
+|>Bow politely
+>Speak sociably
+>Grimace back
+|-
+| colspan="3" |>Bow politely
+|Youngsters are so respectful these days. So, what're ya doin' here?
+|>I'm looking for allies.
+>I'm training.
+>Just hanging around.
+|-
+| colspan="3" |>>I'm looking for allies.
+|Yeah, well, I'm looking for someone to give me some gifts.
+|[BARGAIN PHASE]
+|-
+| colspan="3" |>>I'm training.
+|
+|
+|-
+| colspan="3" |>>Just hanging around.
+|
+|
+|-
+| colspan="3" |>Speak sociably
+|
+|
+|-
+| colspan="3" |>Grimace back
+|
+|
+|-
+| colspan="5" align="center"|'''Squats'''
+|-
+| colspan="4" | '''Nodbody's got more Vitality than I do. Think ya can beat me at squats?'''
+|>You're on.
+>No way.
+|-
+| colspan="3" |>You're on.
+|(You challenged the demon at squats...)
+|[Luck is compared]
+>Pass
+>Fail
+|-
+| colspan="3" |>>Pass
+|(You outlasted the demon!)
+<nowiki>*</nowiki>pant* <nowiki>*</nowiki>pant*  Oh no... my back.. and my heart... Look.. I'll join ya... Kust lemme take a little break first, whew...
+|[INSTANT RECRUIT]
+|-
+| colspan="3" |>>Fail
+|
+|
+|-
+| colspan="3" |>No way.
+|
+|
+|-
+| colspan="5" align="center"|'''Beckoning'''
+|-
+| colspan="4" | '''(The demon is gesturing for you to come closer... What will you do?)'''
+|>Move closer
+>Gesture back
+>Wave your hand
+|-
+| colspan="3" |>Move closer
+|Huh, Y'know, I actually don't recognize ya... Guess I had the wrong guy. Who exactly are ya, huh?
+|>I'm [Playername]
+>I'm a god.
+>It's me!
+|-
+| colspan="3" |>>I'm [Playername]
+|Ahh, I see. Hmm! Who am I again?
+|>[Demonname]
+>[Playername]
+>No idea
+|-
+| colspan="3" |>>>[Demonname]
+|No, no that name's not nearly interestin' enough. I'll take yours instead!
+|[ENEMY PHASE]
+|-
+| colspan="3" |>>>[Playername]
+|
+|
+|-
+| colspan="3" |>>>No idea
+|
+|
+|-
+| colspan="3" |>Wave your hand
+|
+|
+|-
+| colspan="5" align="center"|'''Leave'''
+|-
+| colspan="4" | '''(The demon is trying to leave... What will you do?)'''
+|>Stop them
+>Ignore them
+>Invite them to tea
+|-
+| colspan="3" |>Stop them
+|Sorry, but my back's all sorts of cocked up. If you'll excuse me...
+|[ENEMY PHASE]
+|-
+| colspan="3" |>Ignore them
+|Shame... Another tragic day for the elderly... 
+|[LEAVES]
+|-
+| colspan="3" |>Invite them to tea
+|
+|
+|-
+| colspan="5" align="center"|'''Ignore'''
+|-
+| colspan="4" | '''(The demon is pretending to ignore you... What will you do?)'''
+|>Quietly call out to them
+>Loudly call out to them
+|-
+| colspan="3" |>Quietly call out to them
+|So ya can manage a proper greeting, can ya? I'm impressed with the youth these days. I'd be even more impressed if ya could offer a gift or two.
+|[BARGAIN PHASE]
+|-
+| colspan="3" |>Loudly call out to them
+|
+|
+|-
+| colspan="3" |<<
+|
+|
+|-
+| colspan="5" align="center"|Approaching
+|-
+| colspan="4" |The demon is approaching... What will you do?
+|>Stop them
+>Glare at them
+>Keep calm
+|-
+| colspan="3" |<Stop them
+|My hearing's not so good, ya see. So I'm gonna just talk, and you answer in a nice loud voice, got it?
+|>Okay...
+>OKAY!!!
+>You're a real pain...
+|-
+| colspan="3" |>>Okay...
+|Don't look so depressed. What am I, a gravestone?
+|[ENEMY PHASE]
+|-
+| colspan="3" |>>OKAY!!!
+|
+|
+|-
+| colspan="3" |>>You're a real pain...
+|
+|
+|-
+| colspan="3" |>Glare at them
+|
+|
+|-
+| colspan="3" |>Keep calm
+|
+|
+|-
+| colspan="5" align="center"| Talking
+|-
+| colspan="4" |What's there to gain from talkin' to an old fart like me?
+|>I get to learn.<br>>A demon companion.<br>>It passes the time.
+|-
+| colspan="3" |>I get to learn.
+|Learnin' from yer elder... I like the sound of that! But I gotta ask, what's your reason?
+|>Survival.<br>>It benefits me.<br>>I don't have one.
+|-
+| colspan="3" |>>Survival.
+|Sounds like you got a rough life, eh? Not exactly the best for learnin'... How 'bout ya get me on yer side? Maybe give yourself a little leeway, hm?
+|[BARGAIN PHASE]
+|-
+| colspan="3" |>>It benefits me.
+|If there's anything' worth learnin', it's probably the age-old art of neotiatin'. Go on then, try me. It's a learnin' experience.
+|[BARGAIN PHASE]
+|-
+| colspan="3" |>>I don't have one.
+|
+|
+|-
+| colspan="3" |>A demon companion.
+|
+|
+|-
+| colspan="3" |>It passes the time.
+|
+|
+|-
+| colspan="5" align="center"| Quiz
+|-
+| colspan="4" |I been doin' these brain exercises lately. Gotta keep the ol' mind sharp so's I don't go senile, and all. Ypu're not losin' your edge yet either, are ya? I'd better test ya!
+|[GUESS RANDOM MONSTER]<br>>Answer right<br>>Answer wrong
+|-
+| colspan="3" |>Answer right
+|Yep, seems like yer sharp as a tack! Let's both keep at it and stay healthy, eh, m'boy?
+|[INSTANT RECRUIT]
+|-
+| colspan="3" |>Answer wrong
+|
+|
+|-
+|}

@@ -28,7 +28,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -56,8 +55,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -89,6 +86,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalResources
@@ -105,6 +103,16 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntOffset
+import com.tamerslab.battle.domain.TechniqueRangeProfile
+import com.tamerslab.ui.theme.BlastNeedle
+import com.tamerslab.ui.theme.BlastOutline
+import com.tamerslab.ui.theme.BlastProgress
+import com.tamerslab.ui.theme.BlastTarget
+import com.tamerslab.ui.theme.BlastTrack
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -155,7 +163,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.tamerslab.di.TamersLabApplication
 
-private enum class TrainingTacticalMenu { TECHNIQUES, ITEMS }
+private enum class TrainingTacticalMenu { ITEMS }
 
 @Composable
 fun OfflineTrainingBattleScreen(
@@ -195,6 +203,8 @@ fun OfflineTrainingBattleScreen(
     var sceneReady by remember(state.assetGeneration) { mutableStateOf(false) }
     var projectionRevision by remember { mutableIntStateOf(0) }
     var sceneGeneration by rememberSaveable(state.assetGeneration) { mutableIntStateOf(0) }
+    var moveArmed by rememberSaveable(state.sessionId) { mutableStateOf(false) }
+    var moveMarker by remember(state.sessionId) { mutableStateOf<Offset?>(null) }
     var blastPresence by remember(state.sessionId) { mutableStateOf<Set<String>?>(null) }
     var blastData by remember(state.sessionId) { mutableStateOf<com.tamerslab.battle.offline.data.BlastEvolutionData?>(null) }
     var blastOverlay by remember(state.sessionId) { mutableStateOf<BlastOverlay?>(null) }
@@ -254,7 +264,6 @@ fun OfflineTrainingBattleScreen(
         onDispose { viewModel.setPaused("scene", true) }
     }
     LaunchedEffect(state.sessionId, menu, tacticalMenuPause, showStrategyMenu, showExitDialog, manualPause, finisherActive) {
-        viewModel.setPaused("tech-menu", !finisherActive && menu == TrainingTacticalMenu.TECHNIQUES && tacticalMenuPause)
         viewModel.setPaused("item-menu", !finisherActive && menu == TrainingTacticalMenu.ITEMS && tacticalMenuPause)
         viewModel.setPaused("strategy-menu", !finisherActive && showStrategyMenu && tacticalMenuPause)
         viewModel.setPaused("exit-dialog", showExitDialog)
@@ -265,13 +274,29 @@ fun OfflineTrainingBattleScreen(
         commandFeedback = null
     }
 
-    fun issue(actor: String, action: TrainerAction, interrupt: Boolean = false) {
-        if (viewModel.state.value.snapshot?.finisher != null) return
-        val result = viewModel.issueOrder(actor, action, interrupt) ?: return
+    fun issue(actor: String, action: TrainerAction, interrupt: Boolean = false): OrderStatus? {
+        if (viewModel.state.value.snapshot?.finisher != null) return null
+        if (action !is TrainerAction.MoveTo) moveArmed = false
+        val result = viewModel.issueOrder(actor, action, interrupt) ?: return null
         feedbackRevision++
         commandFeedback = if (result.status == OrderStatus.FAILED) orderFailureText(resources, result)
         else if (result.status == OrderStatus.QUEUED) resources.getString(R.string.ui_battle_order_queued)
         else resources.getString(R.string.ui_battle_command_applied)
+        return result.status
+    }
+
+    fun useTechnique(index: Int) {
+        val ally = selectedAlly ?: return
+        val techniqueId = ally.techniqueIds.getOrNull(index) ?: return
+        val techniques = state.techniques.ifEmpty { TrainingBattleFactory.techniques }
+        val definition = techniques.firstOrNull { it.techniqueId == techniqueId }
+        issue(
+            ally.combatantId,
+            TrainerAction.UseTechnique(
+                techniqueId,
+                techniqueTargetFor(definition, ally.combatantId, selectedOpponent?.combatantId)
+            )
+        )
     }
 
     fun closeBlastOverlay() {
@@ -315,7 +340,8 @@ fun OfflineTrainingBattleScreen(
         showStrategyMenu = false
         showBattleDebug = false
         commandFeedback = null
-        viewModel.setPaused("tech-menu", false)
+        moveArmed = false
+        moveMarker = null
         viewModel.setPaused("item-menu", false)
         viewModel.setPaused("strategy-menu", false)
     }
@@ -352,21 +378,15 @@ fun OfflineTrainingBattleScreen(
     }
 
     fun closeTacticalMenu() {
-        when (menu) {
-            TrainingTacticalMenu.TECHNIQUES -> if (tacticalMenuPause) viewModel.setPaused("tech-menu", false)
-            TrainingTacticalMenu.ITEMS -> if (tacticalMenuPause) viewModel.setPaused("item-menu", false)
-            null -> Unit
-        }
+        if (menu != null && tacticalMenuPause) viewModel.setPaused("item-menu", false)
         menu = null
     }
 
-    fun openTacticalMenu(next: TrainingTacticalMenu) {
+    fun openTacticalMenu() {
         if (viewModel.state.value.snapshot?.finisher != null) return
         closeTacticalMenu()
-        menu = next
-        if (tacticalMenuPause) {
-            viewModel.setPaused(if (next == TrainingTacticalMenu.TECHNIQUES) "tech-menu" else "item-menu", true)
-        }
+        menu = TrainingTacticalMenu.ITEMS
+        if (tacticalMenuPause) viewModel.setPaused("item-menu", true)
     }
 
     fun requestExit() {
@@ -404,6 +424,11 @@ fun OfflineTrainingBattleScreen(
     val pauseEnabled = snapshot != null && snapshot.result == null && sceneReady &&
         rendererError == null && state.countdown == 0
     val commandsEnabled = pauseEnabled && !finisherActive
+    LaunchedEffect(moveArmed, commandsEnabled, manualPause, menu, showStrategyMenu, showExitDialog, blastOverlay, finisherActive) {
+        if (!commandsEnabled || manualPause || menu != null || showStrategyMenu || showExitDialog ||
+            blastOverlay != null || finisherActive
+        ) moveArmed = false
+    }
     val current = snapshot
     val statusLine = when {
         commandFeedback != null -> commandFeedback
@@ -475,7 +500,6 @@ fun OfflineTrainingBattleScreen(
                     sceneView = sceneView,
                     fighterScale = state.arenaManifest?.fighterScale ?: 1.65f,
                     fighters = state.fighters,
-                    selectedAlly = selectedAlly,
                     selectedOpponent = selectedOpponent,
                     topInset = topClusterInset,
                     bottomInset = commandBandInset,
@@ -508,6 +532,34 @@ fun OfflineTrainingBattleScreen(
                 )
             }
         }
+
+        ArenaMoveLayer(
+            visible = moveArmed && commandsEnabled && blastOverlay == null && snapshot?.result == null,
+            sceneView = sceneView,
+            onPick = { screenOffset ->
+                val point = sceneView?.pickArenaPoint(screenOffset.x, screenOffset.y)
+                if (point == null) {
+                    commandFeedback = resources.getString(R.string.ui_battle_move_invalid)
+                    feedbackRevision++
+                } else {
+                    val actorId = selectedAlly?.combatantId
+                    if (actorId != null) {
+                        val status = issue(actorId, TrainerAction.MoveTo(point.x, point.z))
+                        if (status != null && status != OrderStatus.FAILED) {
+                            commandFeedback = resources.getString(R.string.ui_battle_move_ordered)
+                            feedbackRevision++
+                            moveMarker = screenOffset
+                        }
+                    }
+                }
+                moveArmed = false
+            }
+        )
+        MoveTargetMarker(
+            marker = moveMarker,
+            allowMotion = allowMotion,
+            onFinished = { finished -> if (moveMarker == finished) moveMarker = null }
+        )
 
         // The result panel owns the settled battle; the live chrome steps aside so nothing
         // competes with the outcome and the reward content.
@@ -597,33 +649,36 @@ fun OfflineTrainingBattleScreen(
         // Commands cannot be issued once the battle settled: the band leaves the stage to the
         // result panel instead of showing inert keys under it.
         if (snapshot?.result == null) BattleCommandBand(
-            availableCommandPoints = ((current?.commandPoints ?: 0) -
-                (current?.reservedCommandPoints ?: 0)).coerceAtLeast(0),
-            maxCommandPoints = current?.maxCommandPoints ?: 0,
             selectedAlly = selectedAlly,
             selectedOpponent = selectedOpponent,
-            supportReady = current != null && !current.isPaused &&
-                selectedAlly?.combatantId?.let(current.pendingSupportCombatantIds::contains) == true,
-            commandsEnabled = commandsEnabled && blastOverlay == null,
-            feedback = commandFeedback
+            techniques = state.techniques.ifEmpty { TrainingBattleFactory.techniques },
+            feedback = if (moveArmed) stringResource(R.string.ui_battle_move_armed)
+            else commandFeedback
                 ?: current?.let { eventSummary(it, state.fighters, arena = arenaSession) }
                 ?: if (state.loading) stringResource(R.string.ui_battle_preparing_arena) else stringResource(R.string.ui_battle_deck_hint),
-            onFocus = { ally, target -> issue(ally, TrainerAction.FocusTarget(target)) },
-            onDefend = { ally -> issue(ally, TrainerAction.Defend(), true) },
-            onSupport = { ally -> issue(ally, TrainerAction.Support) },
-            onMove = { ally, away ->
-                issue(ally, if (away) TrainerAction.KeepDistance else TrainerAction.MoveCloser, true)
-            },
-            onSpecial = { ally, target ->
-                selectedAlly?.specialTechniqueId?.let { techniqueId ->
-                    issue(ally, TrainerAction.UseTechnique(techniqueId, target))
+            moveArmed = moveArmed,
+            commandsEnabled = commandsEnabled && blastOverlay == null,
+            onTechnique = { index -> useTechnique(index) },
+            onOpenItems = { openTacticalMenu() },
+            onSpecial = {
+                selectedAlly?.let { ally ->
+                    ally.specialTechniqueId?.let { techniqueId ->
+                        issue(ally.combatantId, TrainerAction.UseTechnique(techniqueId, selectedOpponent?.combatantId))
+                    }
                 }
             },
-            onOpenTechniques = { openTacticalMenu(TrainingTacticalMenu.TECHNIQUES) },
-            onOpenItems = { openTacticalMenu(TrainingTacticalMenu.ITEMS) },
             onOpenStrategies = {
                 if (viewModel.state.value.snapshot?.finisher == null) showStrategyMenu = true
             },
+            onFocus = {
+                val allyId = selectedAlly?.combatantId
+                val targetId = selectedOpponent?.combatantId
+                if (allyId != null && targetId != null) issue(allyId, TrainerAction.FocusTarget(targetId))
+            },
+            onDefend = {
+                selectedAlly?.combatantId?.let { issue(it, TrainerAction.Defend(), true) }
+            },
+            onArmMove = { moveArmed = !moveArmed },
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .onSizeChanged { commandBandHeightPx = it.height }
@@ -654,7 +709,7 @@ fun OfflineTrainingBattleScreen(
             text = {
                 Column(Modifier.heightIn(max = 540.dp).verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("CP ${snapshot.commandPoints}/${snapshot.maxCommandPoints} · reservado ${snapshot.reservedCommandPoints} · projéteis ${snapshot.projectiles.size} · eventos ${snapshot.eventCount}",
+                    Text("Projéteis ${snapshot.projectiles.size} · eventos ${snapshot.eventCount}",
                          style = MaterialTheme.typography.bodySmall)
                     Text("Regras v${snapshot.rulesetVersion}", style = MaterialTheme.typography.bodySmall)
                     members.forEach { member ->
@@ -716,18 +771,6 @@ fun OfflineTrainingBattleScreen(
     }
 
     when (if (finisherActive) null else menu) {
-        TrainingTacticalMenu.TECHNIQUES -> TechniquesDialog(
-            snapshot = snapshot,
-            selectedAlly = selectedAlly,
-            selectedOpponent = selectedOpponent,
-            tacticalPauseEnabled = tacticalMenuPause,
-            onTechnique = { technique, actor, target ->
-                issue(actor, TrainerAction.UseTechnique(technique.techniqueId, target))
-                closeTacticalMenu()
-            },
-            onDismiss = ::closeTacticalMenu,
-            catalog = state.techniques.ifEmpty { TrainingBattleFactory.techniques },
-        )
         TrainingTacticalMenu.ITEMS -> ItemsDialog(
             snapshot = snapshot,
             selectedAlly = selectedAlly,
@@ -765,7 +808,8 @@ fun OfflineTrainingBattleScreen(
 /**
  * Radar encounter battle. The Radar place stays full-bleed from the encounter through the fight:
  * the same floating top cluster, projected combatant HUD and command band used by the Arena battle.
- * The AR stage keeps the established square scanning/battle layout and is intentionally untouched.
+ * The AR stage keeps its square scanning viewport; in battle it now shares the same command band
+ * and tap-to-move layer as the Radar fight.
  */
 @Composable
 fun WorldRadarBattleContent(
@@ -818,6 +862,8 @@ fun WorldRadarBattleContent(
     var rendererError by remember(sceneStateKey) { mutableStateOf<String?>(null) }
     var commandFeedback by remember(state.sessionId) { mutableStateOf<String?>(null) }
     var feedbackRevision by remember { mutableIntStateOf(0) }
+    var moveArmed by rememberSaveable(state.sessionId) { mutableStateOf(false) }
+    var moveMarker by remember(state.sessionId) { mutableStateOf<Offset?>(null) }
     var projectionRevision by remember(sceneStateKey) { mutableIntStateOf(0) }
     var blastPresence by remember(state.sessionId) { mutableStateOf<Set<String>?>(null) }
     var blastData by remember(state.sessionId) { mutableStateOf<com.tamerslab.battle.offline.data.BlastEvolutionData?>(null) }
@@ -866,7 +912,6 @@ fun WorldRadarBattleContent(
         snapshot?.result?.outcome?.let(onOutcome)
     }
     LaunchedEffect(state.sessionId, battleActive, menu, tacticalMenuPause, showStrategyMenu, showExitDialog, manualPause, finisherActive) {
-        viewModel.setPaused("tech-menu", battleActive && !finisherActive && menu == TrainingTacticalMenu.TECHNIQUES && tacticalMenuPause)
         viewModel.setPaused("item-menu", battleActive && !finisherActive && menu == TrainingTacticalMenu.ITEMS && tacticalMenuPause)
         viewModel.setPaused("strategy-menu", battleActive && !finisherActive && showStrategyMenu && tacticalMenuPause)
         viewModel.setPaused("exit-dialog", battleActive && showExitDialog)
@@ -892,13 +937,14 @@ fun WorldRadarBattleContent(
         onDispose { viewModel.setPaused("scene", true) }
     }
 
-    fun issue(actor: String, action: TrainerAction, interrupt: Boolean = false) {
-        if (viewModel.state.value.snapshot?.finisher != null) return
+    fun issue(actor: String, action: TrainerAction, interrupt: Boolean = false): OrderStatus? {
+        if (viewModel.state.value.snapshot?.finisher != null) return null
         if(allies.firstOrNull { it.combatantId==actor }?.sourceCharacterId==null) {
             commandFeedback=resources.getString(com.tamerslab.R.string.ui_world_wild_autonomous)
-            return
+            return null
         }
-        val update = viewModel.issueOrder(actor, action, interrupt) ?: return
+        if (action !is TrainerAction.MoveTo) moveArmed = false
+        val update = viewModel.issueOrder(actor, action, interrupt) ?: return null
         feedbackRevision++
         commandFeedback = if (update.status == OrderStatus.FAILED) orderFailureText(resources, update)
         else if (update.status == OrderStatus.QUEUED) {
@@ -906,6 +952,28 @@ fun WorldRadarBattleContent(
         } else {
             resources.getString(R.string.ui_battle_command_applied)
         }
+        return update.status
+    }
+
+    fun useTechnique(index: Int) {
+        val ally = selectedAlly ?: return
+        val techniqueId = ally.techniqueIds.getOrNull(index) ?: return
+        val techniques = state.techniques.ifEmpty { TrainingBattleFactory.techniques }
+        val definition = techniques.firstOrNull { it.techniqueId == techniqueId }
+        issue(
+            ally.combatantId,
+            TrainerAction.UseTechnique(
+                techniqueId,
+                techniqueTargetFor(definition, ally.combatantId, selectedOpponent?.combatantId)
+            )
+        )
+    }
+
+    LaunchedEffect(moveArmed, battleActive, sceneReady, rendererError, manualPause, menu, showStrategyMenu, showExitDialog, blastOverlay, finisherActive, snapshot?.result) {
+        if (!battleActive || !sceneReady || rendererError != null || manualPause || menu != null ||
+            showStrategyMenu || showExitDialog || blastOverlay != null || finisherActive ||
+            snapshot?.result != null
+        ) moveArmed = false
     }
 
     LaunchedEffect(feedbackRevision) {
@@ -915,7 +983,6 @@ fun WorldRadarBattleContent(
 
     fun closeMenu() {
         menu = null
-        viewModel.setPaused("tech-menu", false)
         viewModel.setPaused("item-menu", false)
     }
 
@@ -1097,6 +1164,9 @@ fun WorldRadarBattleContent(
         val configuration = LocalConfiguration.current
         val compactLandscape = battleActive &&
             configuration.screenWidthDp > configuration.screenHeightDp
+        val worldPauseEnabled = battleActive && snapshot != null && snapshot.result == null && sceneReady &&
+            rendererError == null && state.countdown == 0
+        val worldCommandsEnabled = worldPauseEnabled && !finisherActive
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -1225,6 +1295,33 @@ fun WorldRadarBattleContent(
                                 rewardContent = rewardContent,
                                 projectionVersion = { projectionRevision },
                             )
+                            ArenaMoveLayer(
+                                visible = moveArmed && worldCommandsEnabled && blastOverlay == null && snapshot?.result == null,
+                                sceneView = sceneView,
+                                onPick = { screenOffset ->
+                                    val point = sceneView?.pickArenaPoint(screenOffset.x, screenOffset.y)
+                                    if (point == null) {
+                                        commandFeedback = resources.getString(R.string.ui_battle_move_invalid)
+                                        feedbackRevision++
+                                    } else {
+                                        val actorId = selectedAlly?.combatantId
+                                        if (actorId != null) {
+                                            val status = issue(actorId, TrainerAction.MoveTo(point.x, point.z))
+                                            if (status != null && status != OrderStatus.FAILED) {
+                                                commandFeedback = resources.getString(R.string.ui_battle_move_ordered)
+                                                feedbackRevision++
+                                                moveMarker = screenOffset
+                                            }
+                                        }
+                                    }
+                                    moveArmed = false
+                                }
+                            )
+                            MoveTargetMarker(
+                                marker = moveMarker,
+                                allowMotion = allowMotion,
+                                onFinished = { finished -> if (moveMarker == finished) moveMarker = null }
+                            )
                         } else if (!arStageActive) {
                             radarViewport()
                         }
@@ -1233,80 +1330,87 @@ fun WorldRadarBattleContent(
             }
 
             if (battleActive) {
-                val worldPauseEnabled = snapshot != null && snapshot.result == null && sceneReady &&
-                    rendererError == null && state.countdown == 0
-                val worldCommandsEnabled = worldPauseEnabled && !finisherActive
                 if (!compactLandscape) {
                     Box(Modifier.fillMaxWidth().height(12.dp))
                 }
                 Column(
-                    Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState())
-                        .testTag("world-radar-command-deck"),
+                    Modifier.fillMaxWidth().weight(1f, fill = false).verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(if (compactLandscape) 4.dp else 6.dp)
                 ) {
-                        BattleCommandDeckHeader(
-                            availableCommandPoints = ((snapshot?.commandPoints ?: 0) -
-                                (snapshot?.reservedCommandPoints ?: 0)).coerceAtLeast(0),
-                            maxCommandPoints = snapshot?.maxCommandPoints ?: 0,
-                            commandsEnabled = worldPauseEnabled,
-                            manuallyPaused = manualPause,
-                            tacticalMenuPause = tacticalMenuPause,
-                            onToggleManualPause = { manualPause = !manualPause },
-                            onToggleTacticalPause = { tacticalMenuPause = !tacticalMenuPause }
-                        )
-                        BattleCommandBar(
-                            selectedAlly = selectedAlly,
-                            selectedOpponent = selectedOpponent,
-                            availableCommandPoints = ((snapshot?.commandPoints ?: 0) -
-                                (snapshot?.reservedCommandPoints ?: 0)).coerceAtLeast(0),
-                            supportReady = snapshot != null && !snapshot.isPaused &&
-                                selectedAlly?.combatantId?.let(snapshot.pendingSupportCombatantIds::contains) == true,
-                            commandsEnabled = worldCommandsEnabled && blastOverlay == null,
-                            onFocus = { ally, target -> issue(ally, TrainerAction.FocusTarget(target)) },
-                            onDefend = { ally -> issue(ally, TrainerAction.Defend(), true) },
-                            onSupport = { ally -> issue(ally, TrainerAction.Support) },
-                            onMove = { ally, away ->
-                                issue(ally, if (away) TrainerAction.KeepDistance else TrainerAction.MoveCloser, true)
-                            },
-                            onSpecial = { ally, target ->
-                                selectedAlly?.specialTechniqueId?.let { techniqueId ->
-                                    issue(ally, TrainerAction.UseTechnique(techniqueId, target))
-                                }
-                            },
-                            onOpenTechniques = {
-                                if (viewModel.state.value.snapshot?.finisher == null) {
-                                    menu = TrainingTacticalMenu.TECHNIQUES
-                                    if (tacticalMenuPause) viewModel.setPaused("tech-menu", true)
-                                }
-                            },
-                            onOpenItems = {
-                                if (viewModel.state.value.snapshot?.finisher == null) {
-                                    menu = TrainingTacticalMenu.ITEMS
-                                    if (tacticalMenuPause) viewModel.setPaused("item-menu", true)
-                                }
-                            },
-                            onOpenStrategies = {
-                                if (viewModel.state.value.snapshot?.finisher == null) showStrategyMenu = true
-                            }
-                        )
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                    Row(
+                        Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        VitalButton(
+                            onClick = { manualPause = !manualPause },
+                            enabled = worldCommandsEnabled,
+                            modifier = Modifier.heightIn(min = 48.dp)
                         ) {
                             Text(
-                                text = commandFeedback ?: snapshot?.let { eventSummary(it, state.fighters, radar = true) }
-                                    ?: resources.getString(R.string.ui_battle_preparing),
-                                color = TextSecondaryOnDark,
-                                style = MaterialTheme.typography.labelSmall,
+                                stringResource(if (manualPause) R.string.ui_battle_training_continue else R.string.ui_battle_pause),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f)
+                                style = MaterialTheme.typography.labelSmall
                             )
-                            VitalButton(onClick = ::requestExit, modifier = Modifier.heightIn(min = 48.dp)) {
-                                Text(stringResource(R.string.ui_battle_training_exit))
-                            }
                         }
+                        VitalButton(
+                            onClick = { tacticalMenuPause = !tacticalMenuPause },
+                            enabled = worldCommandsEnabled,
+                            contentColor = if (tacticalMenuPause) VitalCyan else TextPrimaryOnDark,
+                            modifier = Modifier.heightIn(min = 48.dp)
+                        ) {
+                            Text(
+                                stringResource(R.string.ui_battle_tactics_state, if (tacticalMenuPause) "ON" else "OFF"),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                style = MaterialTheme.typography.labelSmall
+                            )
+                        }
+                        Spacer(Modifier.weight(1f))
+                        VitalButton(onClick = ::requestExit, modifier = Modifier.heightIn(min = 48.dp)) {
+                            Text(stringResource(R.string.ui_battle_training_exit))
+                        }
+                    }
+                    BattleCommandBand(
+                        selectedAlly = selectedAlly,
+                        selectedOpponent = selectedOpponent,
+                        techniques = state.techniques.ifEmpty { TrainingBattleFactory.techniques },
+                        feedback = if (moveArmed) stringResource(R.string.ui_battle_move_armed)
+                        else commandFeedback
+                            ?: snapshot?.let { eventSummary(it, state.fighters, radar = true) }
+                            ?: resources.getString(R.string.ui_battle_preparing),
+                        moveArmed = moveArmed,
+                        commandsEnabled = worldCommandsEnabled && blastOverlay == null,
+                        onTechnique = { index -> useTechnique(index) },
+                        onOpenItems = {
+                            if (viewModel.state.value.snapshot?.finisher == null) {
+                                menu = TrainingTacticalMenu.ITEMS
+                                if (tacticalMenuPause) viewModel.setPaused("item-menu", true)
+                            }
+                        },
+                        onSpecial = {
+                            selectedAlly?.let { ally ->
+                                ally.specialTechniqueId?.let { techniqueId ->
+                                    issue(ally.combatantId, TrainerAction.UseTechnique(techniqueId, selectedOpponent?.combatantId))
+                                }
+                            }
+                        },
+                        onOpenStrategies = {
+                            if (viewModel.state.value.snapshot?.finisher == null) showStrategyMenu = true
+                        },
+                        onFocus = {
+                            val allyId = selectedAlly?.combatantId
+                            val targetId = selectedOpponent?.combatantId
+                            if (allyId != null && targetId != null) issue(allyId, TrainerAction.FocusTarget(targetId))
+                        },
+                        onDefend = {
+                            selectedAlly?.combatantId?.let { issue(it, TrainerAction.Defend(), true) }
+                        },
+                        onArmMove = { moveArmed = !moveArmed },
+                        modifier = Modifier.fillMaxWidth(),
+                        testTag = "world-radar-command-deck"
+                    )
                 }
             }
         }
@@ -1353,7 +1457,6 @@ fun WorldRadarBattleContent(
                                 sceneView = sceneView,
                                 fighterScale = state.arenaManifest?.fighterScale ?: 1.65f,
                                 fighters = state.fighters,
-                                selectedAlly = selectedAlly,
                                 selectedOpponent = selectedOpponent,
                                 topInset = radarTopInset,
                                 bottomInset = radarBandInset,
@@ -1386,6 +1489,34 @@ fun WorldRadarBattleContent(
                             )
                         }
                     }
+
+                    ArenaMoveLayer(
+                        visible = moveArmed && radarCommandsEnabled && blastOverlay == null && snapshot?.result == null,
+                        sceneView = sceneView,
+                        onPick = { screenOffset ->
+                            val point = sceneView?.pickArenaPoint(screenOffset.x, screenOffset.y)
+                            if (point == null) {
+                                commandFeedback = resources.getString(R.string.ui_battle_move_invalid)
+                                feedbackRevision++
+                            } else {
+                                val actorId = selectedAlly?.combatantId
+                                if (actorId != null) {
+                                    val status = issue(actorId, TrainerAction.MoveTo(point.x, point.z))
+                                    if (status != null && status != OrderStatus.FAILED) {
+                                        commandFeedback = resources.getString(R.string.ui_battle_move_ordered)
+                                        feedbackRevision++
+                                        moveMarker = screenOffset
+                                    }
+                                }
+                            }
+                            moveArmed = false
+                        }
+                    )
+                    MoveTargetMarker(
+                        marker = moveMarker,
+                        allowMotion = allowMotion,
+                        onFinished = { finished -> if (moveMarker == finished) moveMarker = null }
+                    )
 
                     // The result panel owns the settled battle; the live chrome steps aside.
                     if (snapshot?.result == null) {
@@ -1447,43 +1578,41 @@ fun WorldRadarBattleContent(
                     // Commands cannot be issued once the battle settled: the band leaves the
                     // stage to the result panel instead of showing inert keys under it.
                     if (snapshot?.result == null) BattleCommandBand(
-                        availableCommandPoints = ((snapshot?.commandPoints ?: 0) -
-                            (snapshot?.reservedCommandPoints ?: 0)).coerceAtLeast(0),
-                        maxCommandPoints = snapshot?.maxCommandPoints ?: 0,
                         selectedAlly = selectedAlly,
                         selectedOpponent = selectedOpponent,
-                        supportReady = snapshot != null && !snapshot.isPaused &&
-                            selectedAlly?.combatantId?.let(snapshot.pendingSupportCombatantIds::contains) == true,
-                        commandsEnabled = radarCommandsEnabled && blastOverlay == null,
-                        feedback = commandFeedback
+                        techniques = state.techniques.ifEmpty { TrainingBattleFactory.techniques },
+                        feedback = if (moveArmed) stringResource(R.string.ui_battle_move_armed)
+                        else commandFeedback
                             ?: snapshot?.let { eventSummary(it, state.fighters, radar = true) }
                             ?: resources.getString(R.string.ui_battle_preparing),
-                        onFocus = { ally, target -> issue(ally, TrainerAction.FocusTarget(target)) },
-                        onDefend = { ally -> issue(ally, TrainerAction.Defend(), true) },
-                        onSupport = { ally -> issue(ally, TrainerAction.Support) },
-                        onMove = { ally, away ->
-                            issue(ally, if (away) TrainerAction.KeepDistance else TrainerAction.MoveCloser, true)
-                        },
-                        onSpecial = { ally, target ->
-                            selectedAlly?.specialTechniqueId?.let { techniqueId ->
-                                issue(ally, TrainerAction.UseTechnique(techniqueId, target))
-                            }
-                        },
-                        onOpenTechniques = {
-                            if (viewModel.state.value.snapshot?.finisher == null) {
-                                menu = TrainingTacticalMenu.TECHNIQUES
-                                if (tacticalMenuPause) viewModel.setPaused("tech-menu", true)
-                            }
-                        },
+                        moveArmed = moveArmed,
+                        commandsEnabled = radarCommandsEnabled && blastOverlay == null,
+                        onTechnique = { index -> useTechnique(index) },
                         onOpenItems = {
                             if (viewModel.state.value.snapshot?.finisher == null) {
                                 menu = TrainingTacticalMenu.ITEMS
                                 if (tacticalMenuPause) viewModel.setPaused("item-menu", true)
                             }
                         },
+                        onSpecial = {
+                            selectedAlly?.let { ally ->
+                                ally.specialTechniqueId?.let { techniqueId ->
+                                    issue(ally.combatantId, TrainerAction.UseTechnique(techniqueId, selectedOpponent?.combatantId))
+                                }
+                            }
+                        },
                         onOpenStrategies = {
                             if (viewModel.state.value.snapshot?.finisher == null) showStrategyMenu = true
                         },
+                        onFocus = {
+                            val allyId = selectedAlly?.combatantId
+                            val targetId = selectedOpponent?.combatantId
+                            if (allyId != null && targetId != null) issue(allyId, TrainerAction.FocusTarget(targetId))
+                        },
+                        onDefend = {
+                            selectedAlly?.combatantId?.let { issue(it, TrainerAction.Defend(), true) }
+                        },
+                        onArmMove = { moveArmed = !moveArmed },
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
                             .onSizeChanged { radarBandHeightPx = it.height },
@@ -1521,17 +1650,6 @@ fun WorldRadarBattleContent(
     }
 
     when (if (battleActive && !finisherActive) menu else null) {
-        TrainingTacticalMenu.TECHNIQUES -> TechniquesDialog(
-            snapshot = snapshot,
-            selectedAlly = selectedAlly,
-            selectedOpponent = selectedOpponent,
-            tacticalPauseEnabled = tacticalMenuPause,
-            onTechnique = { technique, actor, target ->
-                issue(actor, TrainerAction.UseTechnique(technique.techniqueId, target))
-                closeMenu()
-            },
-            onDismiss = ::closeMenu
-        )
         TrainingTacticalMenu.ITEMS -> ItemsDialog(
             snapshot = snapshot,
             selectedAlly = selectedAlly,
@@ -1619,7 +1737,6 @@ private fun BoxScope.WorldRadarBattleHud(
                 sceneView = sceneView,
                 fighterScale = fighterScale,
                 fighters = fighters,
-                selectedAlly = selectedAlly,
                 selectedOpponent = selectedOpponent,
                 projectionVersion = projectionVersion
             )
@@ -1992,7 +2109,6 @@ private fun BoxScope.BattleArenaStatusOverlay(
     sceneView: OfflineBattleSceneView?,
     fighterScale: Float,
     fighters: Map<String, BattleFighterPresentation>,
-    selectedAlly: CombatantSnapshot?,
     selectedOpponent: CombatantSnapshot?,
     projectionVersion: () -> Int = { 0 }
 ) {
@@ -2052,12 +2168,6 @@ private fun BoxScope.BattleArenaStatusOverlay(
             )
         }
     }
-    selectedAlly?.let { partner ->
-        PartnerArenaHud(
-            fighter = partner,
-            modifier = Modifier.align(Alignment.BottomStart).padding(8.dp)
-        )
-    }
 }
 
 @Composable
@@ -2088,223 +2198,6 @@ private fun EnemySceneHealthBar(
                     )
                     .background(BattleEnemyHealth)
             )
-        }
-    }
-}
-
-@Composable
-private fun PartnerArenaHud(fighter: CombatantSnapshot, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .semantics(mergeDescendants = true) { contentDescription = fighter.displayName }
-            .width(184.dp)
-            .padding(horizontal = 7.dp, vertical = 5.dp)
-            .testTag("offline-battle-player-hud"),
-        verticalArrangement = Arrangement.spacedBy(3.dp)
-    ) {
-        ArenaHudBar("HP", fighter.health, fighter.maxHealth, VitalCyan)
-        ArenaHudBar("MP", fighter.energy, fighter.maxEnergy, VitalPurpleBright)
-        if (fighter.specialTechniqueId != null) {
-            ArenaHudBar("ESP", fighter.specialCharge, fighter.maxSpecialCharge, VitalYellow)
-        }
-    }
-}
-
-@Composable
-private fun ArenaHudBar(label: String, value: Int, maximum: Int, color: Color) {
-    Row(
-        Modifier.fillMaxWidth().heightIn(min = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Text(
-            label,
-            color = color,
-            style = MaterialTheme.typography.labelSmall.hud().copy(
-                fontWeight = FontWeight.Black,
-                fontFeatureSettings = "tnum"
-            ),
-            maxLines = 1,
-            softWrap = false
-        )
-        Box(Modifier.weight(1f).height(5.dp).background(BattleTrack.copy(alpha = 0xD0 / 255f), CutCornerShape(1.dp))) {
-            Box(
-                Modifier.fillMaxHeight()
-                    .fillMaxWidth((value.toFloat() / maximum.coerceAtLeast(1)).coerceIn(0f, 1f))
-                    .background(color, CutCornerShape(1.dp))
-            )
-        }
-        Text(
-            "$value/$maximum",
-            modifier = Modifier.widthIn(min = 56.dp),
-            color = TextPrimaryOnDark,
-            style = MaterialTheme.typography.labelSmall.hud().copy(
-                fontWeight = FontWeight.Bold,
-                fontFeatureSettings = "tnum"
-            ),
-            maxLines = 1,
-            softWrap = false,
-            overflow = TextOverflow.Clip,
-            textAlign = TextAlign.End
-        )
-    }
-}
-
-@Composable
-private fun BattleCommandDeckHeader(
-    availableCommandPoints: Int,
-    maxCommandPoints: Int,
-    commandsEnabled: Boolean,
-    manuallyPaused: Boolean,
-    tacticalMenuPause: Boolean,
-    onToggleManualPause: () -> Unit,
-    onToggleTacticalPause: () -> Unit
-) {
-    Row(
-        Modifier.fillMaxWidth().heightIn(min = 48.dp).testTag("offline-battle-command-header"),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp)
-    ) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text(
-                    stringResource(R.string.ui_battle_deck_commands),
-                    color = TextPrimaryOnDark,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold
-                )
-                Text(
-                    "CP $availableCommandPoints/${maxCommandPoints.coerceAtLeast(0)}",
-                    color = VitalCyan,
-                    style = MaterialTheme.typography.labelMedium.hud().copy(fontFeatureSettings = "tnum"),
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            LinearProgressIndicator(
-                progress = {
-                    if (maxCommandPoints <= 0) 0f
-                    else availableCommandPoints.toFloat() / maxCommandPoints.toFloat()
-                },
-                modifier = Modifier.fillMaxWidth().height(3.dp),
-                color = VitalCyan,
-                trackColor = SurfaceStroke.copy(alpha = 0.45f)
-            )
-        }
-        VitalButton(
-            onClick = onToggleManualPause,
-            enabled = commandsEnabled,
-            modifier = Modifier.width(72.dp).heightIn(min = 48.dp),
-            contentColor = if (manuallyPaused) VitalCyan else TextPrimaryOnDark,
-            contentPadding = PaddingValues(horizontal = 4.dp)
-        ) {
-            Text(
-                if (manuallyPaused) stringResource(R.string.ui_battle_training_continue) else stringResource(R.string.ui_battle_pause),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.labelSmall
-            )
-        }
-        VitalButton(
-            onClick = onToggleTacticalPause,
-            enabled = commandsEnabled,
-            modifier = Modifier.width(86.dp).heightIn(min = 48.dp),
-            contentColor = if (tacticalMenuPause) VitalCyan else TextPrimaryOnDark,
-            contentPadding = PaddingValues(horizontal = 4.dp)
-        ) {
-            Text(
-                stringResource(R.string.ui_battle_tactics_state, if (tacticalMenuPause) "ON" else "OFF"),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.labelSmall
-            )
-        }
-    }
-}
-
-@Composable
-private fun BattleCommandBar(
-    selectedAlly: CombatantSnapshot?,
-    selectedOpponent: CombatantSnapshot?,
-    commandHeight: androidx.compose.ui.unit.Dp = 48.dp,
-    availableCommandPoints: Int,
-    supportReady: Boolean,
-    commandsEnabled: Boolean,
-    onFocus: (String, String) -> Unit,
-    onDefend: (String) -> Unit,
-    onSupport: (String) -> Unit,
-    onMove: (String, Boolean) -> Unit,
-    onSpecial: (String, String?) -> Unit,
-    onOpenTechniques: () -> Unit,
-    onOpenItems: () -> Unit,
-    onOpenStrategies: () -> Unit
-) {
-    val alive = commandsEnabled && selectedAlly != null && selectedAlly.health > 0
-    val targetAlive = commandsEnabled && selectedOpponent != null && selectedOpponent.health > 0
-    val special = selectedAlly?.specialTechniqueId?.let { specialId ->
-        TrainingBattleFactory.techniques.firstOrNull { it.techniqueId == specialId }
-    }
-    val availableSpecialCharge = selectedAlly?.let {
-        (it.specialCharge - it.reservedSpecialCharge).coerceAtLeast(0)
-    } ?: 0
-    val specialReady = alive && targetAlive && special != null &&
-        availableSpecialCharge >= selectedAlly.maxSpecialCharge &&
-        selectedAlly.energy - selectedAlly.reservedEnergy >= special.energyCost &&
-        (selectedAlly.cooldownsMillis[special.techniqueId] ?: 0) == 0L
-    val deck = battleCommandDeck(
-        BattleCommandAvailability(
-            partnerReady = alive,
-            targetReady = targetAlive,
-            supportReady = supportReady && commandsEnabled,
-            specialReady = specialReady
-        )
-    )
-    val allyId = selectedAlly?.combatantId
-    val targetId = selectedOpponent?.combatantId
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val columns = if (maxWidth >= 560.dp) 9 else 3
-        Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
-            deck.chunked(columns).forEach { rowItems ->
-                CommandRow {
-                    rowItems.forEach { item ->
-                        val label = when (item.slot) {
-                            BattleCommandSlot.TECHNIQUES -> stringResource(R.string.ui_battle_cmd_techniques)
-                            BattleCommandSlot.ITEMS -> stringResource(R.string.ui_battle_cmd_items)
-                            BattleCommandSlot.DEFEND -> stringResource(R.string.ui_battle_cmd_defend)
-                            BattleCommandSlot.SUPPORT -> stringResource(R.string.ui_battle_cmd_support, availableCommandPoints)
-                            BattleCommandSlot.SPECIAL -> if (specialReady) stringResource(R.string.ui_battle_cmd_special_ready) else {
-                                val maximum = selectedAlly?.maxSpecialCharge?.coerceAtLeast(1) ?: 100
-                                val visibleCharge = selectedAlly?.specialCharge ?: 0
-                                stringResource(R.string.ui_battle_cmd_special_charging, visibleCharge * 100 / maximum)
-                            }
-                            BattleCommandSlot.FOCUS -> stringResource(R.string.ui_battle_cmd_focus)
-                            BattleCommandSlot.STRATEGY -> stringResource(R.string.ui_battle_cmd_strategy)
-                            BattleCommandSlot.MOVE_CLOSER -> stringResource(R.string.ui_battle_cmd_approach)
-                            BattleCommandSlot.KEEP_DISTANCE -> stringResource(R.string.ui_battle_cmd_keep_distance)
-                        }
-                        CommandButton(
-                            label = label,
-                            enabled = item.enabled,
-                            primary = item.slot == BattleCommandSlot.TECHNIQUES,
-                            height = commandHeight
-                        ) {
-                            when (item.slot) {
-                                BattleCommandSlot.TECHNIQUES -> onOpenTechniques()
-                                BattleCommandSlot.ITEMS -> onOpenItems()
-                                BattleCommandSlot.DEFEND -> allyId?.let(onDefend)
-                                BattleCommandSlot.SUPPORT -> allyId?.let(onSupport)
-                                BattleCommandSlot.SPECIAL -> allyId?.let { onSpecial(it, targetId) }
-                                BattleCommandSlot.FOCUS -> if (allyId != null && targetId != null) {
-                                    onFocus(allyId, targetId)
-                                }
-                                BattleCommandSlot.STRATEGY -> onOpenStrategies()
-                                BattleCommandSlot.MOVE_CLOSER -> allyId?.let { onMove(it, false) }
-                                BattleCommandSlot.KEEP_DISTANCE -> allyId?.let { onMove(it, true) }
-                            }
-                        }
-                    }
-                    repeat(columns - rowItems.size) { Spacer(Modifier.weight(1f)) }
-                }
-            }
         }
     }
 }
@@ -2375,6 +2268,8 @@ private fun BlastTimingOverlay(
     }
     Box(
         modifier.fillMaxSize()
+            .zIndex(20f)
+            .testTag("offline-battle-blast-overlay")
             .background(Color.Black.copy(alpha = 0.42f))
             .clickable(
                 enabled = inputEnabled && !executing,
@@ -2384,48 +2279,28 @@ private fun BlastTimingOverlay(
         contentAlignment = Alignment.Center
     ) {
         if (!executing) {
-            CyberPanel(
-                modifier = Modifier
-                    .widthIn(max = 360.dp)
-                    .padding(horizontal = 20.dp),
-                active = true,
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 18.dp)
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 18.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
-                ) {
-                    Text(
-                        specialName,
-                        color = VitalYellow,
-                        fontWeight = FontWeight.Black,
-                        style = MaterialTheme.typography.titleLarge,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center
-                    )
-                    BlastGaugeRing(progress = needle.value, modifier = Modifier.size(220.dp))
-                    Text(
-                        stringResource(R.string.ui_battle_blast_aim_red),
-                        color = TextPrimaryOnDark,
-                        style = MaterialTheme.typography.labelLarge
-                    )
-                    Button(
-                        onClick = { stop() },
-                        enabled = inputEnabled,
-                        modifier = Modifier.fillMaxWidth(0.85f).heightIn(min = 52.dp).testTag("offline-battle-blast-confirm"),
-                        shape = CutCornerShape(6.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = com.tamerslab.ui.theme.BlastControl,
-                            contentColor = com.tamerslab.ui.theme.OnBlastControl)
-                    ) {
-                        Text(
-                            stringResource(R.string.ui_battle_blast_stop),
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
-                }
+                BlastCommandDial(
+                    progress = needle.value,
+                    specialName = specialName,
+                    commandLabel = stringResource(R.string.ui_battle_blast_command_label),
+                    modifier = Modifier
+                        .fillMaxWidth(0.92f)
+                        .widthIn(max = 340.dp)
+                        .aspectRatio(1f)
+                )
+                Spacer(Modifier.height(14.dp))
+                Text(
+                    stringResource(R.string.ui_battle_blast_instruction),
+                    color = TextPrimaryOnDark,
+                    style = MaterialTheme.typography.labelLarge,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    modifier = Modifier.widthIn(max = 320.dp)
+                )
             }
         } else {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
@@ -2462,62 +2337,174 @@ private fun BlastTimingOverlay(
     }
 }
 
+
+/**
+ * Decode command-instrument timing dial: a dark technical ring with yellow progress arc, red
+ * target arc, tick marks and a needle, with the ordered move's name set in the centre like the
+ * reference command wheel. Total touch area remains the whole overlay (the ring is not a hit target).
+ */
 @Composable
-private fun BlastGaugeRing(progress: Float, modifier: Modifier = Modifier) {
-    val outline = com.tamerslab.ui.theme.BlastOutline
-    val track = com.tamerslab.ui.theme.BlastTrack
-    val target = com.tamerslab.ui.theme.BlastTarget
-    val fill = com.tamerslab.ui.theme.BlastProgress
-    val needle = com.tamerslab.ui.theme.BlastNeedle
-    Canvas(modifier) {
-        val stroke = size.minDimension * 0.11f
-        val radius = size.minDimension / 2f - stroke
-        val center = Offset(size.width / 2f, size.height / 2f)
-        val frame = Size(radius * 2f, radius * 2f)
-        val frameTopLeft = Offset(center.x - radius, center.y - radius)
-        drawArc(
-            color = outline,
-            startAngle = 0f,
-            sweepAngle = 360f,
-            useCenter = false,
-            topLeft = Offset(center.x - radius - stroke * 0.9f, center.y - radius - stroke * 0.9f),
-            size = Size((radius + stroke * 0.9f) * 2f, (radius + stroke * 0.9f) * 2f),
-            style = Stroke(width = stroke * 0.22f)
-        )
-        drawArc(
-            color = track,
-            startAngle = 0f,
-            sweepAngle = 360f,
-            useCenter = false,
-            topLeft = frameTopLeft,
-            size = frame,
-            style = Stroke(width = stroke)
-        )
-        val redStart = -90f + BLAST_RED_ZONE_START * 360f
-        drawArc(
-            color = target,
-            startAngle = redStart,
-            sweepAngle = 360f - BLAST_RED_ZONE_START * 360f,
-            useCenter = false,
-            topLeft = frameTopLeft,
-            size = frame,
-            style = Stroke(width = stroke)
-        )
-        drawArc(
-            color = fill,
-            startAngle = -90f,
-            sweepAngle = (progress.coerceIn(0f, 1f) * 360f),
-            useCenter = false,
-            topLeft = frameTopLeft,
-            size = frame,
-            style = Stroke(width = stroke)
-        )
-        val angleRad = Math.toRadians((-90.0 + progress.coerceIn(0f, 1f) * 360.0)).toFloat()
-        val tip = Offset(
-            center.x + radius * kotlin.math.cos(angleRad),
-            center.y + radius * kotlin.math.sin(angleRad)
-        )
-        drawCircle(color = needle, radius = stroke * 0.5f, center = tip)
+private fun BlastCommandDial(
+    progress: Float,
+    specialName: String,
+    commandLabel: String,
+    modifier: Modifier = Modifier,
+) {
+    val outlineColor = BlastOutline
+    val trackColor = BlastTrack
+    val targetColor = BlastTarget
+    val progressColor = BlastProgress
+    val needleColor = BlastNeedle
+    val clamped = progress.coerceIn(0f, 1f)
+    Box(modifier, contentAlignment = Alignment.Center) {
+        Canvas(Modifier.fillMaxSize()) {
+            val dialCenter = center
+            val stroke = size.minDimension * 0.105f
+            val outerRadius = size.minDimension / 2f - stroke * 0.3f
+            val radius = outerRadius - stroke * 0.55f
+            val frameSize = Size(radius * 2f, radius * 2f)
+            val frameTopLeft = Offset(dialCenter.x - radius, dialCenter.y - radius)
+            // Outer instrumentation: two hairlines and a ring of 48 ticks.
+            drawCircle(
+                color = outlineColor.copy(alpha = 0.55f),
+                radius = outerRadius,
+                center = dialCenter,
+                style = Stroke(width = 1.5.dp.toPx())
+            )
+            drawCircle(
+                color = outlineColor.copy(alpha = 0.3f),
+                radius = outerRadius - stroke * 0.2f,
+                center = dialCenter,
+                style = Stroke(width = 1.dp.toPx())
+            )
+            val tickCount = 48
+            for (index in 0 until tickCount) {
+                val angle = Math.toRadians(index * 360.0 / tickCount - 90.0)
+                val cosA = kotlin.math.cos(angle).toFloat()
+                val sinA = kotlin.math.sin(angle).toFloat()
+                val inner = outerRadius - stroke * 0.38f
+                val outer = outerRadius - stroke * 0.06f
+                drawLine(
+                    color = outlineColor.copy(alpha = 0.42f),
+                    start = Offset(dialCenter.x + cosA * inner, dialCenter.y + sinA * inner),
+                    end = Offset(dialCenter.x + cosA * outer, dialCenter.y + sinA * outer),
+                    strokeWidth = 1.dp.toPx()
+                )
+            }
+            // Dark technical plate under the label.
+            drawCircle(
+                color = trackColor.copy(alpha = 0.66f),
+                radius = radius - stroke * 1.05f,
+                center = dialCenter
+            )
+            drawCircle(
+                color = outlineColor.copy(alpha = 0.5f),
+                radius = radius - stroke * 1.05f,
+                center = dialCenter,
+                style = Stroke(width = 1.dp.toPx())
+            )
+            drawCircle(
+                color = outlineColor.copy(alpha = 0.22f),
+                radius = radius - stroke * 1.7f,
+                center = dialCenter,
+                style = Stroke(width = 1.dp.toPx())
+            )
+            // Inner machined gear: short radial spokes on the plate rim.
+            val gearTicks = 24
+            for (index in 0 until gearTicks) {
+                val angle = Math.toRadians(index * 360.0 / gearTicks - 90.0)
+                val cosA = kotlin.math.cos(angle).toFloat()
+                val sinA = kotlin.math.sin(angle).toFloat()
+                val inner = radius - stroke * 1.7f
+                val outer = radius - stroke * 1.2f
+                drawLine(
+                    color = outlineColor.copy(alpha = 0.18f),
+                    start = Offset(dialCenter.x + cosA * inner, dialCenter.y + sinA * inner),
+                    end = Offset(dialCenter.x + cosA * outer, dialCenter.y + sinA * outer),
+                    strokeWidth = 1.dp.toPx()
+                )
+            }
+            // Neutral track, red target arc and yellow progress arc, exactly on the same swept path.
+            drawArc(
+                color = trackColor,
+                startAngle = -90f,
+                sweepAngle = 360f,
+                useCenter = false,
+                topLeft = frameTopLeft,
+                size = frameSize,
+                style = Stroke(width = stroke)
+            )
+            val targetStart = -90f + BLAST_RED_ZONE_START * 360f
+            drawArc(
+                color = targetColor,
+                startAngle = targetStart,
+                sweepAngle = 360f - BLAST_RED_ZONE_START * 360f,
+                useCenter = false,
+                topLeft = frameTopLeft,
+                size = frameSize,
+                style = Stroke(width = stroke)
+            )
+            drawArc(
+                color = progressColor,
+                startAngle = -90f,
+                sweepAngle = clamped * 360f,
+                useCenter = false,
+                topLeft = frameTopLeft,
+                size = frameSize,
+                style = Stroke(width = stroke)
+            )
+            // Segment cuts every 30° read the arcs as a command wheel instead of a plain gauge.
+            for (segment in 0 until 12) {
+                val angle = Math.toRadians(segment * 30.0 - 90.0)
+                val cosA = kotlin.math.cos(angle).toFloat()
+                val sinA = kotlin.math.sin(angle).toFloat()
+                val inner = radius - stroke * 0.48f
+                val outer = radius + stroke * 0.48f
+                drawLine(
+                    color = trackColor.copy(alpha = 0.9f),
+                    start = Offset(dialCenter.x + cosA * inner, dialCenter.y + sinA * inner),
+                    end = Offset(dialCenter.x + cosA * outer, dialCenter.y + sinA * outer),
+                    strokeWidth = 1.5.dp.toPx()
+                )
+            }
+            // Needle at the live sweep position.
+            val needleAngle = Math.toRadians(-90.0 + clamped * 360.0)
+            val cosN = kotlin.math.cos(needleAngle).toFloat()
+            val sinN = kotlin.math.sin(needleAngle).toFloat()
+            val needleInner = radius - stroke * 1.05f
+            val needleOuter = radius + stroke * 1.1f
+            drawLine(
+                color = needleColor,
+                start = Offset(dialCenter.x + cosN * needleInner, dialCenter.y + sinN * needleInner),
+                end = Offset(dialCenter.x + cosN * needleOuter, dialCenter.y + sinN * needleOuter),
+                strokeWidth = 2.5.dp.toPx(),
+                cap = StrokeCap.Round
+            )
+            drawCircle(color = outlineColor.copy(alpha = 0.75f), radius = 2.5.dp.toPx(), center = dialCenter)
+        }
+        Column(
+            modifier = Modifier.widthIn(max = 170.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
+            Text(
+                specialName.uppercase(),
+                color = VitalYellow,
+                fontWeight = FontWeight.Black,
+                style = MaterialTheme.typography.titleLarge.hud(),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                commandLabel.uppercase(),
+                color = TextSecondaryOnDark,
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.labelSmall.hud().copy(letterSpacing = 3.sp),
+                maxLines = 1,
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
 
@@ -2554,6 +2541,72 @@ private fun resolveTapFusion(
     return TapFusion(choice, special)
 }
 
+/** Target for a direct technique key: self for heals/self-range, the opponent otherwise. */
+private fun techniqueTargetFor(
+    technique: TechniqueDefinition?,
+    allyId: String,
+    opponentId: String?
+): String? {
+    val targetsSelf = technique?.let {
+        it.kind == TechniqueKind.HEAL || it.rangeProfile == TechniqueRangeProfile.SELF
+    } ?: false
+    return if (targetsSelf) allyId else opponentId
+}
+
+/**
+ * Transparent, arm-only arena surface for tap-to-move. Declared after the scene but before the
+ * top cluster and the command band, so those keep receiving their taps; it reports the local tap
+ * offset so the caller can project it through [OfflineBattleSceneView.pickArenaPoint].
+ */
+@Composable
+private fun ArenaMoveLayer(
+    visible: Boolean,
+    sceneView: OfflineBattleSceneView?,
+    onPick: (Offset) -> Unit,
+) {
+    if (!visible) return
+    Box(
+        Modifier
+            .fillMaxSize()
+            .testTag("offline-battle-move-layer")
+            .pointerInput(sceneView) {
+                detectTapGestures { offset -> onPick(offset) }
+            }
+    )
+}
+
+/** Transient cyan marker at a tapped arena point; fades out without leaving a 3D decal. */
+@Composable
+private fun MoveTargetMarker(
+    marker: Offset?,
+    allowMotion: Boolean,
+    onFinished: (Offset) -> Unit,
+) {
+    if (marker == null) return
+    val alpha = remember(marker) { Animatable(1f) }
+    LaunchedEffect(marker, allowMotion) {
+        if (allowMotion) {
+            alpha.animateTo(0f, tween(600, easing = FastOutSlowInEasing))
+        } else {
+            delay(600)
+        }
+        onFinished(marker)
+    }
+    Box(
+        Modifier
+            .offset {
+                IntOffset(
+                    (marker.x - 7.dp.toPx()).roundToInt(),
+                    (marker.y - 7.dp.toPx()).roundToInt()
+                )
+            }
+            .size(14.dp)
+            .graphicsLayer { this.alpha = alpha.value }
+            .background(VitalCyan, CutCornerShape(2.dp))
+            .border(1.dp, TextPrimaryOnDark.copy(alpha = 0.75f), CutCornerShape(2.dp))
+    )
+}
+
 /** Localized line for a failed order; falls back to the sim's raw reason. */
 private fun orderFailureText(resources: android.content.res.Resources, update: OrderUpdate): String {
     val res = when (update.reasonCode) {
@@ -2567,9 +2620,6 @@ private fun orderFailureText(resources: android.content.res.Resources, update: O
         OrderFailure.NOT_ALLIED -> R.string.ui_battle_order_err_not_allied
         OrderFailure.PARTNER_DEFEATED -> R.string.ui_battle_order_err_partner_defeated
         OrderFailure.BAD_LIFETIME -> R.string.ui_battle_order_err_bad_lifetime
-        OrderFailure.SUPPORT_PAUSED -> R.string.ui_battle_order_err_support_paused
-        OrderFailure.SUPPORT_NO_WINDOW -> R.string.ui_battle_order_err_support_no_window
-        OrderFailure.SUPPORT_WINDOW_EXPIRED -> R.string.ui_battle_order_err_support_window_expired
         OrderFailure.FOCUS_NO_TARGET -> R.string.ui_battle_order_err_focus_no_target
         OrderFailure.ORDER_QUEUE_FULL -> R.string.ui_battle_order_err_order_queue_full
         OrderFailure.BAD_DEFEND_DURATION -> R.string.ui_battle_order_err_bad_defend_duration
@@ -2597,34 +2647,7 @@ private fun orderFailureText(resources: android.content.res.Resources, update: O
     return res?.let { resources.getString(it) } ?: resources.getString(R.string.immersion_order_failed)
 }
 
-@Composable
-private fun CommandRow(content: @Composable RowScope.() -> Unit) {    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp),
-        verticalAlignment = Alignment.CenterVertically, content = content)
-}
 
-@Composable
-private fun RowScope.CommandButton(
-    label: String,
-    enabled: Boolean = true,
-    primary: Boolean = false,
-    height: androidx.compose.ui.unit.Dp = 48.dp,
-    onClick: () -> Unit
-) {
-    VitalButton(
-        onClick = onClick,
-        enabled = enabled,
-        style = if (primary) VitalButtonStyle.PRIMARY else VitalButtonStyle.SECONDARY,
-        modifier = Modifier.weight(1f).heightIn(min = height).testTag("offline-battle-command-slot")
-    ) {
-        Text(
-            label,
-            fontWeight = if (primary) FontWeight.Bold else FontWeight.SemiBold,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.labelSmall
-        )
-    }
-}
 
 @Composable
 private fun StrategyDialog(
@@ -2699,61 +2722,6 @@ private fun StrategyDialog(
     }
 }
 
-@Composable
-private fun TechniquesDialog(
-    snapshot: BattleSnapshot?,
-    selectedAlly: CombatantSnapshot?,
-    selectedOpponent: CombatantSnapshot?,
-    tacticalPauseEnabled: Boolean,
-    onTechnique: (TechniqueDefinition, String, String?) -> Unit,
-    onDismiss: () -> Unit,
-    catalog: List<TechniqueDefinition> = TrainingBattleFactory.techniques,
-) {
-    if (selectedAlly == null) return
-    TacticalDialogFrame(title = stringResource(R.string.ui_battle_techniques_title, selectedAlly.displayName), onDismiss = onDismiss) {
-        Text(if (tacticalPauseEnabled) stringResource(R.string.ui_battle_tactical_pause_on) else stringResource(R.string.ui_battle_tactical_pause_off), color = VitalCyan,
-            style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(bottom = 5.dp))
-        val equippedIds = selectedAlly.techniqueIds
-        catalog.filter { it.techniqueId in equippedIds }.forEach { technique ->
-            val isHeal = technique.kind == TechniqueKind.HEAL
-            val targetsSelf = isHeal || technique.rangeProfile == com.tamerslab.battle.domain.TechniqueRangeProfile.SELF
-            val targetId = if (targetsSelf) selectedAlly.combatantId else selectedOpponent?.combatantId
-            val ready = (selectedAlly.cooldownsMillis[technique.techniqueId] ?: 0L) <= 0L
-            val hasResources = selectedAlly.energy - selectedAlly.reservedEnergy >= technique.energyCost &&
-                ((snapshot?.commandPoints ?: 0) - (snapshot?.reservedCommandPoints ?: 0)) >= technique.commandPointCost
-            VitalButton(
-                onClick = { targetId?.let { onTechnique(technique, selectedAlly.combatantId, it) } },
-                enabled = selectedAlly.health > 0 && targetId != null && ready && hasResources,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 58.dp),
-                style = VitalButtonStyle.SECONDARY
-            ) {
-                Column(Modifier.fillMaxWidth()) {
-                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(battleTechniqueName(technique.techniqueId, technique.displayName), color = TextPrimaryOnDark, fontWeight = FontWeight.SemiBold)
-                        Text("${technique.energyCost} EN",
-                            color = VitalCyan, style = MaterialTheme.typography.labelSmall)
-                    }
-                    Text(
-                        text = when {
-                            !ready -> stringResource(R.string.ui_battle_cooldown, "%.1f".format((selectedAlly.cooldownsMillis[technique.techniqueId] ?: 0) / 1000f))
-                            !hasResources -> stringResource(R.string.ui_battle_no_resources)
-                            isHeal -> stringResource(R.string.ui_battle_heal_target, selectedAlly.displayName, technique.healPower)
-                            else -> stringResource(R.string.ui_battle_tech_target, selectedOpponent?.displayName ?: stringResource(R.string.ui_battle_no_target), technique.minRange, technique.maxRange, technique.power)
-                        },
-                        color = TextSecondaryOnDark, style = MaterialTheme.typography.labelSmall,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis
-                    )
-                    TechniqueStatusBadges(
-                        technique = technique,
-                        modifier = Modifier.padding(top = 5.dp),
-                        enabled = selectedAlly.health > 0 && targetId != null && ready && hasResources
-                    )
-                }
-            }
-        }
-        VitalButton(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.ui_battle_training_resume)) }
-    }
-}
 
 @Composable
 private fun ItemsDialog(
@@ -2861,8 +2829,6 @@ private fun eventSummary(snapshot: BattleSnapshot, fighters: Map<String, BattleF
         is BattleEvent.BlastJogressStarted -> stringResource(R.string.ui_battle_feed_jogress, name(event.leadId), name(event.partnerId), event.resultSpecies)
         is BattleEvent.BlastJogressEnded -> stringResource(R.string.ui_battle_feed_ongoing)
         is BattleEvent.ItemUsed -> stringResource(R.string.ui_battle_feed_item, name(event.combatantId), name(event.targetId), event.amount)
-        is BattleEvent.SupportSucceeded -> stringResource(R.string.ui_battle_feed_support, name(event.combatantId), event.commandPointsGained)
-        is BattleEvent.SupportWindowOpened -> stringResource(R.string.ui_battle_feed_support_window, name(event.combatantId), ((event.expiresAtMillis - snapshot.elapsedMillis).coerceAtLeast(0L) / 1_000f).roundToInt())
         is BattleEvent.CombatantDefeated -> stringResource(R.string.ui_battle_feed_defeated, name(event.combatantId))
         is BattleEvent.OrderChanged -> {
             val update = event.update
@@ -2920,7 +2886,6 @@ private fun itemDescription(item: BattleItemDefinition): String = when (item.kin
 
 @Composable
 private fun pauseReasonLabel(reason: String?): String = when (reason) {
-    "tech-menu" -> stringResource(R.string.ui_battle_training_pause_reason_tech)
     "item-menu" -> stringResource(R.string.ui_battle_training_pause_reason_item)
     "exit-dialog" -> stringResource(R.string.ui_battle_training_pause_reason_exit)
     "background" -> stringResource(R.string.ui_battle_training_pause_reason_background)

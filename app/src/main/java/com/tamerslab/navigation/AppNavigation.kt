@@ -108,7 +108,6 @@ import com.tamerslab.world.ui.WorldChatScreen
 import com.tamerslab.world.ui.WorldConversationScreen
 import com.tamerslab.world.ui.WorldChatScreenControllerImpl
 import com.tamerslab.farm.ui.digiline.DigilineScreen
-import com.tamerslab.farm.ui.digiline.FarmGroupScreen
 import com.tamerslab.quests.ui.QuestScreen
 import com.tamerslab.dtos.WorldDtos
 import com.tamerslab.components.RouteArrival
@@ -152,17 +151,18 @@ fun AppNavigation(
     val tabSwipeThresholdPx = with(LocalDensity.current) { 96.dp.toPx() }
     val allowMotion = motionEnabled()
     // The farm is not a destination, so a route transition cannot move it: it is the depth layer the
-    // places sit over. Leaving Home it stays fully composited and pushes in under the arriving place
-    // (which itself only fades), and it is dropped only once that place is fully opaque, so the world
-    // is never cut out from under a half-transparent screen. Coming back is the same layer settling
-    // forward again while the place dissolves away.
+    // places sit over. Destination pages are transparent over the global device pattern, so while the
+    // change runs the farm *is* the arriving page's background - it crossfades with the page instead
+    // of being cut, or the background swaps abruptly the moment the transition ends.
     val farmAlpha = remember { Animatable(if (isFarmHome) 1f else 0f) }
     LaunchedEffect(isFarmHome) {
-        if (isFarmHome) {
-            farmAlpha.snapTo(1f)
+        if (!allowMotion) {
+            farmAlpha.snapTo(if (isFarmHome) 1f else 0f)
         } else {
-            delay(if (allowMotion) FARM_HANDOFF_MS else REDUCED_HANDOFF_MS)
-            farmAlpha.snapTo(0f)
+            farmAlpha.animateTo(
+                targetValue = if (isFarmHome) 1f else 0f,
+                animationSpec = tween(durationMillis = FARM_BACKGROUND_FADE_MS, easing = FastOutSlowInEasing),
+            )
         }
     }
     val farmDepth by animateFloatAsState(
@@ -394,9 +394,6 @@ fun AppNavigation(
             }
             composable<AppRoute.Digiline> { DigilineScreen(navController) }
             composable<AppRoute.Quests> { QuestScreen(navController) }
-            composable<AppRoute.FarmGroup> { entry ->
-                FarmGroupScreen(navController, entry.toRoute<AppRoute.FarmGroup>().farmId)
-            }
             composable<AppRoute.WorldConversation> { entry ->
                 WorldConversationScreen(navController, entry.toRoute<AppRoute.WorldConversation>().interactionId)
             }
@@ -625,13 +622,10 @@ internal fun routeExitMotion(
 }
 
 /**
- * How long the farm surface stays composited after Home is left. It has to outlive the arriving
- * place's own fade (220 ms), otherwise the world cuts out from under a half-transparent screen.
+ * How long the farm background layer takes to crossfade with the global device pattern when Home is
+ * left or entered. It trails the page transition slightly so the background never swaps in one frame.
  */
-private const val FARM_HANDOFF_MS = 280L
-
-/** Reduced motion still holds the world through the short crossfade instead of cutting it. */
-private const val REDUCED_HANDOFF_MS = 90L
+private const val FARM_BACKGROUND_FADE_MS = 240
 
 /** How far the farm pushes in while Home is left; returning retreats from the same depth. */
 private const val FARM_DEPTH = 1.05f

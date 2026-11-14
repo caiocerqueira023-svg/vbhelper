@@ -25,7 +25,7 @@ controls against the current tree.
 | Backup/device-transfer exclusions | `backup_rules.xml` and `data_extraction_rules.xml` exclude `datastore/secrets.pb`, `battle_auth_preferences.preferences_pb`, `llm_settings.preferences_pb`, `logs/` | Verified |
 | FileProvider not exported | Manifest: `${applicationId}.provider`, `android:exported="false"`, `grantUriPermissions="true"`, scoped `provider_paths.xml` | Verified |
 | Exported components are intentional | Manifest: `MainActivity` exported (launcher; `vbhelper://auth` VIEW; localhost/127.0.0.1:8080 `/authenticate` VIEW; VitalWear `ACTION_SEND` import) and `DigimonWidgetProvider` exported (APPWIDGET_UPDATE only). No other exported components. | Verified; residual risks below |
-| No committed secrets/keystores | No `secrets.pb`, `*.jks`, or `*.keystore` under the repository outside build output; backup rules exclude the secret stores | Verified |
+| No committed secrets/keystores | No `secrets.pb`, `*.jks`, or `*.keystore` under the repository outside build output; backup rules exclude the secret stores. One deliberate exception exists: `security/BundledSecrets.kt` carries the VB Arena 2.1.0 connection keys (residual risk 7). | Verified, with documented exception |
 | No secret-bearing log statements found | Static scan of `app/src/main/java` for `Log.*`/`println` with token/secret/password/card/decrypt patterns | No matches that log secret material; see noise note |
 | Online PVP is feature-gated | `BuildConfig.ONLINE_PVP_ENABLED` via `battle/online/OnlineBattleFeature` | Verified |
 | Auth tokens not in cloud backup | Excluded in both backup rule files | Verified |
@@ -49,6 +49,15 @@ controls against the current tree.
    (paths, frame numbers, character ids, error messages). They do not contain secrets,
    tokens, or save bytes, but they are unpolished and should move to Timber or be
    removed in a cleanup pass.
+7. **Vendor connection keys committed (product decision, 2026-11-14).** The AES key, the
+   two 4-bit substitution ciphers and the VBDM/VBC/BE HMAC key pairs extracted from the
+   official VB Arena 2.1.0 APK now ship in `security/BundledSecrets.kt` so users no longer
+   have to import them. They are Bandai's material, not this project's credentials: every
+   Tamers Lab APK exposes them, this project cannot rotate them, and redistributing them
+   may be a licensing concern for the official app's owner. A future Arena release that
+   changes the keys needs a new Tamers Lab release or a manual import to override them.
+   The values are pinned by `BundledSecretsTest`, which regenerates the known watch test
+   passwords.
 
 ## Sign-off
 

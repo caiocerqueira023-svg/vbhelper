@@ -12,7 +12,6 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -79,11 +78,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.tamerslab.R
+import com.tamerslab.battle.domain.TechniqueDefinition
+import com.tamerslab.battle.domain.TechniqueKind
+import com.tamerslab.battle.domain.TechniqueRangeProfile
 import com.tamerslab.battle.offline.core.BattleOutcome
 import com.tamerslab.battle.offline.core.BattleSnapshot
 import com.tamerslab.battle.offline.core.BattleStatistics
 import com.tamerslab.battle.offline.core.CombatantSnapshot
-import com.tamerslab.battle.offline.data.TrainingBattleFactory
 import com.tamerslab.components.CyberPanel
 import com.tamerslab.components.VitalButton
 import com.tamerslab.components.VitalButtonStyle
@@ -278,22 +279,15 @@ private fun BattleChromeKey(
     content: @Composable () -> Unit,
 ) {
     val interaction = remember { MutableInteractionSource() }
-    val pressed by interaction.collectIsPressedAsState()
-    val active = accent || pressed
     val shape = CutCornerShape(BattleKeyCorner)
     Box(
         modifier = modifier
             .size(48.dp)
             .clip(shape)
-            .background(SurfaceElevatedPurple.copy(alpha = if (active) 0.92f else 0.66f))
-            .border(
-                width = 1.dp,
-                color = if (active) VitalCyan else SurfaceStroke.copy(alpha = 0.85f),
-                shape = shape
-            )
+            // Bare key, like Home's HUD: the icon and its 48dp target, no fill and no hairline frame.
+            // The cut-corner shape only bounds the press ripple; cyan marks the active state.
             .clickable(
                 interactionSource = interaction,
-                indication = null,
                 enabled = enabled,
                 role = Role.Button,
                 onClick = onClick
@@ -309,10 +303,10 @@ private fun BattleChromeKey(
 // ---------------------------------------------------------------------------------------------
 
 private val enemyPlateWidth = 116.dp
-private val allyStripWidth = 228.dp
 
 /**
- * Projected enemy name + health plates and the selected partner's vitals strip.
+ * Projected enemy name + health plates. The selected partner's vitals live in the command band's
+ * header, so nothing floats over the arena besides the opposing plates and their target hairline.
  * Everything floats in the scene, anchored to the projected fighter bounds.
  */
 @Composable
@@ -321,7 +315,6 @@ fun BoxScope.BattleCombatantHud(
     sceneView: OfflineBattleSceneView?,
     fighterScale: Float,
     fighters: Map<String, BattleFighterPresentation>,
-    selectedAlly: CombatantSnapshot?,
     selectedOpponent: CombatantSnapshot?,
     topInset: Dp = BattleTopClusterReserved,
     bottomInset: Dp = 0.dp,
@@ -389,16 +382,6 @@ fun BoxScope.BattleCombatantHud(
             )
         }
     }
-
-    selectedAlly?.let { partner ->
-        PartnerVitalsStrip(
-            fighter = partner,
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(start = 12.dp, bottom = bottomInset + 8.dp)
-                .width(allyStripWidth)
-        )
-    }
 }
 
 @Composable
@@ -464,81 +447,86 @@ private fun BoxScope.EnemyPlate(
     }
 }
 
+/**
+ * The partner's instruments, in the header slot the dead Command Points meter used to occupy:
+ * three compact readings over their own hairline tracks. The scene keeps its full height and the
+ * arena is no longer covered by a floating strip.
+ */
 @Composable
-private fun PartnerVitalsStrip(fighter: CombatantSnapshot, modifier: Modifier = Modifier) {
+private fun PartnerVitalsBand(fighter: CombatantSnapshot) {
     val description = buildString {
         append(fighter.displayName)
         append(" · HP ").append(fighter.health).append('/').append(fighter.maxHealth)
         append(" · MP ").append(fighter.energy).append('/').append(fighter.maxEnergy)
         append(" · ESP ").append(fighter.specialCharge).append('/').append(fighter.maxSpecialCharge)
     }
-    Surface(
-        modifier = modifier
-            .semantics(mergeDescendants = true) { contentDescription = description }
-            .testTag("offline-battle-player-hud"),
-        color = SurfaceElevatedPurple.copy(alpha = PartnerSlabAlpha),
-        shape = CutCornerShape(BattleKeyCorner),
-        border = BorderStroke(1.dp, SurfaceStroke.copy(alpha = 0.85f))
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("offline-battle-partner-vitals")
+            .semantics(mergeDescendants = true) { contentDescription = description },
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Column(
-            Modifier.padding(horizontal = 10.dp, vertical = 7.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            Text(
-                fighter.displayName,
-                color = TextPrimaryOnDark,
-                style = MaterialTheme.typography.labelMedium.hud(),
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+        BattleVitalInstrument("HP", fighter.health, fighter.maxHealth, VitalCyan, Modifier.weight(1f))
+        BattleVitalInstrument("MP", fighter.energy, fighter.maxEnergy, VitalPurpleBright, Modifier.weight(1f))
+        if (fighter.specialTechniqueId != null) {
+            BattleVitalInstrument(
+                "ESP",
+                fighter.specialCharge,
+                fighter.maxSpecialCharge,
+                VitalYellow,
+                Modifier.weight(1f)
             )
-            BattleVitalsBar("HP", fighter.health, fighter.maxHealth, VitalCyan)
-            BattleVitalsBar("MP", fighter.energy, fighter.maxEnergy, VitalPurpleBright)
-            if (fighter.specialTechniqueId != null) {
-                BattleVitalsBar("ESP", fighter.specialCharge, fighter.maxSpecialCharge, VitalYellow)
-            }
         }
     }
 }
 
 @Composable
-private fun BattleVitalsBar(label: String, value: Int, maximum: Int, color: Color) {
-    Row(
-        Modifier.fillMaxWidth().heightIn(min = 16.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp)
-    ) {
-        Text(
-            label,
-            color = color,
-            style = MaterialTheme.typography.labelSmall.hud().copy(
-                fontWeight = FontWeight.Black,
-                fontFeatureSettings = "tnum"
-            ),
-            maxLines = 1,
-            softWrap = false
-        )
-        Box(Modifier.weight(1f).height(5.dp).background(BattleTrack.copy(alpha = 0.8f), CutCornerShape(1.dp))) {
+private fun BattleVitalInstrument(
+    label: String,
+    value: Int,
+    maximum: Int,
+    color: Color,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text(
+                label,
+                color = color,
+                style = MaterialTheme.typography.labelSmall.hud().copy(
+                    fontWeight = FontWeight.Black,
+                    fontFeatureSettings = "tnum"
+                ),
+                maxLines = 1,
+                softWrap = false
+            )
+            Text(
+                "$value/${maximum.coerceAtLeast(1)}",
+                color = TextPrimaryOnDark,
+                style = MaterialTheme.typography.labelSmall.hud().copy(
+                    fontWeight = FontWeight.Bold,
+                    fontFeatureSettings = "tnum"
+                ),
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Clip
+            )
+        }
+        Box(Modifier.fillMaxWidth().height(3.dp), contentAlignment = Alignment.BottomStart) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .height(2.dp)
+                    .background(BattleTrack.copy(alpha = 0.8f), CutCornerShape(1.dp))
+            )
             Box(
                 Modifier
                     .fillMaxWidth((value.toFloat() / maximum.coerceAtLeast(1)).coerceIn(0f, 1f))
-                    .height(5.dp)
+                    .height(2.dp)
                     .background(color, CutCornerShape(1.dp))
             )
         }
-        Text(
-            "$value/$maximum",
-            modifier = Modifier.widthIn(min = 56.dp),
-            color = TextPrimaryOnDark,
-            style = MaterialTheme.typography.labelSmall.hud().copy(
-                fontWeight = FontWeight.Bold,
-                fontFeatureSettings = "tnum"
-            ),
-            maxLines = 1,
-            softWrap = false,
-            overflow = TextOverflow.Clip,
-            textAlign = TextAlign.End
-        )
     }
 }
 
@@ -547,72 +535,78 @@ private fun BattleVitalsBar(label: String, value: Int, maximum: Int, color: Colo
 // ---------------------------------------------------------------------------------------------
 
 private val battleCommandOrder = listOf(
-    BattleCommandSlot.TECHNIQUES,
+    BattleCommandSlot.TECHNIQUE_1,
+    BattleCommandSlot.TECHNIQUE_2,
+    BattleCommandSlot.TECHNIQUE_3,
     BattleCommandSlot.ITEMS,
-    BattleCommandSlot.STRATEGY,
-    BattleCommandSlot.DEFEND,
-    BattleCommandSlot.SUPPORT,
     BattleCommandSlot.SPECIAL,
-    BattleCommandSlot.FOCUS,
-    BattleCommandSlot.MOVE_CLOSER,
-    BattleCommandSlot.KEEP_DISTANCE,
-)
-
-private val menuCommandSlots = setOf(
-    BattleCommandSlot.TECHNIQUES,
-    BattleCommandSlot.ITEMS,
     BattleCommandSlot.STRATEGY,
+    BattleCommandSlot.FOCUS,
+    BattleCommandSlot.DEFEND,
+    BattleCommandSlot.MOVE,
 )
 
 /**
- * One floating command band: command points, the selected partner, a quiet event line and nine
- * stable cut-corner keys grouped as menus, orders and movement. Replaces the old half-screen deck.
+ * One floating command instrument: the selected partner's name and HP/MP/ESP instruments where the
+ * dead Command Points meter used to sit, one quiet event line, and a fixed 3×3 deck. Row one is the
+ * partner's three equipped techniques; row two Items / Special / Strategy; row three Focus / Defend /
+ * Move. Move arms a one-tap arena destination instead of opening a menu, and unavailable keys stay
+ * visible so muscle memory survives every combat state.
  */
 @Composable
 fun BattleCommandBand(
-    availableCommandPoints: Int,
-    maxCommandPoints: Int,
     selectedAlly: CombatantSnapshot?,
     selectedOpponent: CombatantSnapshot?,
-    supportReady: Boolean,
-    commandsEnabled: Boolean,
+    techniques: List<TechniqueDefinition>,
     feedback: String,
-    onFocus: (String, String) -> Unit,
-    onDefend: (String) -> Unit,
-    onSupport: (String) -> Unit,
-    onMove: (String, Boolean) -> Unit,
-    onSpecial: (String, String?) -> Unit,
-    onOpenTechniques: () -> Unit,
+    moveArmed: Boolean,
+    commandsEnabled: Boolean,
+    onTechnique: (Int) -> Unit,
     onOpenItems: () -> Unit,
+    onSpecial: () -> Unit,
     onOpenStrategies: () -> Unit,
+    onFocus: () -> Unit,
+    onDefend: () -> Unit,
+    onArmMove: () -> Unit,
     modifier: Modifier = Modifier,
     testTag: String = "offline-battle-touch-deck",
 ) {
     val alive = commandsEnabled && selectedAlly != null && selectedAlly.health > 0
     val targetAlive = commandsEnabled && selectedOpponent != null && selectedOpponent.health > 0
-    val special = selectedAlly?.specialTechniqueId?.let { specialId ->
-        TrainingBattleFactory.techniques.firstOrNull { it.techniqueId == specialId }
+    val equippedTechniques = selectedAlly?.techniqueIds.orEmpty().mapNotNull { id ->
+        techniques.firstOrNull { it.techniqueId == id }
+    }
+    val techniqueReady = (0 until 3).map { index ->
+        val technique = equippedTechniques.getOrNull(index) ?: return@map false
+        val selfOrSupport = technique.rangeProfile == TechniqueRangeProfile.SELF ||
+            technique.kind == TechniqueKind.HEAL || technique.kind == TechniqueKind.SUPPORT
+        val targetOk = if (selfOrSupport) alive else targetAlive
+        alive && targetOk &&
+            (selectedAlly?.cooldownsMillis?.get(technique.techniqueId) ?: 0L) == 0L &&
+            ((selectedAlly?.energy ?: 0) - (selectedAlly?.reservedEnergy ?: 0)) >= technique.energyCost
+    }
+    val special = selectedAlly?.specialTechniqueId?.let { id ->
+        techniques.firstOrNull { it.techniqueId == id }
     }
     val availableSpecialCharge = selectedAlly?.let {
         (it.specialCharge - it.reservedSpecialCharge).coerceAtLeast(0)
     } ?: 0
-    val specialReady = alive && targetAlive && special != null &&
+    val specialReady = alive && special != null &&
         availableSpecialCharge >= selectedAlly.maxSpecialCharge &&
         selectedAlly.energy - selectedAlly.reservedEnergy >= special.energyCost &&
-        (selectedAlly.cooldownsMillis[special.techniqueId] ?: 0L) == 0L
+        (selectedAlly.cooldownsMillis[special.techniqueId] ?: 0L) == 0L &&
+        (special.healPower > 0 || targetAlive)
     val deck = battleCommandDeck(
         BattleCommandAvailability(
             partnerReady = alive,
             targetReady = targetAlive,
-            supportReady = supportReady && commandsEnabled,
-            specialReady = specialReady
+            techniqueReady = techniqueReady,
+            specialReady = specialReady,
+            moveArmed = moveArmed,
         )
     ).associateBy { it.slot }
-    val allyId = selectedAlly?.combatantId
-    val targetId = selectedOpponent?.combatantId
     val configuration = LocalConfiguration.current
     val compactHeight = configuration.screenHeightDp < 520
-    val landscape = configuration.screenWidthDp > configuration.screenHeightDp
 
     Box(
         modifier
@@ -662,23 +656,8 @@ fun BattleCommandBand(
                 } else {
                     Spacer(Modifier.weight(1f))
                 }
-                Text(
-                    "CP $availableCommandPoints/${maxCommandPoints.coerceAtLeast(0)}",
-                    color = VitalCyan,
-                    style = MaterialTheme.typography.labelMedium.hud().copy(fontFeatureSettings = "tnum"),
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1
-                )
             }
-            LinearProgressIndicator(
-                progress = {
-                    if (maxCommandPoints <= 0) 0f
-                    else availableCommandPoints.toFloat() / maxCommandPoints.toFloat()
-                },
-                modifier = Modifier.fillMaxWidth().height(3.dp),
-                color = VitalCyan,
-                trackColor = SurfaceStroke.copy(alpha = 0.45f)
-            )
+            selectedAlly?.let { PartnerVitalsBand(it) }
             Row(
                 Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -705,62 +684,114 @@ fun BattleCommandBand(
                         .semantics { liveRegion = LiveRegionMode.Polite }
                 )
             }
-            BoxWithConstraints(Modifier.fillMaxWidth()) {
-                val columns = when {
-                    landscape && maxWidth >= 560.dp -> 9
-                    landscape && maxWidth >= 420.dp -> 5
-                    maxWidth >= 560.dp -> 5
-                    else -> 3
-                }
-                val keyHeight = 48.dp
-                Column(verticalArrangement = Arrangement.spacedBy(if (compactHeight) 4.dp else 6.dp)) {
-                    battleCommandOrder.chunked(columns).forEach { rowSlots ->
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Column(
+                    Modifier.widthIn(max = 520.dp).fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(if (compactHeight) 4.dp else 6.dp)
+                ) {
+                    battleCommandOrder.chunked(3).forEach { rowSlots ->
                         Row(
                             Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(if (compactHeight) 4.dp else 6.dp)
                         ) {
                             rowSlots.forEach slotLoop@{ slot ->
                                 val item = deck[slot] ?: return@slotLoop
-                                val label = when (slot) {
-                                    BattleCommandSlot.TECHNIQUES -> stringResource(R.string.ui_battle_cmd_techniques)
-                                    BattleCommandSlot.ITEMS -> stringResource(R.string.ui_battle_cmd_items)
-                                    BattleCommandSlot.DEFEND -> stringResource(R.string.ui_battle_cmd_defend)
-                                    BattleCommandSlot.SUPPORT -> stringResource(R.string.ui_battle_cmd_support, availableCommandPoints)
-                                    BattleCommandSlot.SPECIAL -> if (specialReady) {
-                                        stringResource(R.string.ui_battle_cmd_special_ready)
-                                    } else {
-                                        val maximum = selectedAlly?.maxSpecialCharge?.coerceAtLeast(1) ?: 100
-                                        val visibleCharge = selectedAlly?.specialCharge ?: 0
-                                        stringResource(R.string.ui_battle_cmd_special_charging, visibleCharge * 100 / maximum)
-                                    }
-                                    BattleCommandSlot.FOCUS -> stringResource(R.string.ui_battle_cmd_focus)
-                                    BattleCommandSlot.STRATEGY -> stringResource(R.string.ui_battle_cmd_strategy)
-                                    BattleCommandSlot.MOVE_CLOSER -> stringResource(R.string.ui_battle_cmd_approach)
-                                    BattleCommandSlot.KEEP_DISTANCE -> stringResource(R.string.ui_battle_cmd_keep_distance)
-                                }
-                                val menu = slot in menuCommandSlots
-                                BattleCommandKey(
-                                    label = if (menu) "$label ›" else label,
-                                    enabled = item.enabled,
-                                    primary = slot == BattleCommandSlot.TECHNIQUES,
-                                    menu = menu,
-                                    height = keyHeight,
-                                    onClick = {
-                                        when (slot) {
-                                            BattleCommandSlot.TECHNIQUES -> onOpenTechniques()
-                                            BattleCommandSlot.ITEMS -> onOpenItems()
-                                            BattleCommandSlot.DEFEND -> allyId?.let(onDefend)
-                                            BattleCommandSlot.SUPPORT -> allyId?.let(onSupport)
-                                            BattleCommandSlot.SPECIAL -> allyId?.let { onSpecial(it, targetId) }
-                                            BattleCommandSlot.FOCUS -> if (allyId != null && targetId != null) onFocus(allyId, targetId)
-                                            BattleCommandSlot.STRATEGY -> onOpenStrategies()
-                                            BattleCommandSlot.MOVE_CLOSER -> allyId?.let { onMove(it, false) }
-                                            BattleCommandSlot.KEEP_DISTANCE -> allyId?.let { onMove(it, true) }
+                                val keyHeight = 48.dp
+                                when (slot) {
+                                    BattleCommandSlot.TECHNIQUE_1,
+                                    BattleCommandSlot.TECHNIQUE_2,
+                                    BattleCommandSlot.TECHNIQUE_3 -> {
+                                        val index = slot.ordinal
+                                        val technique = equippedTechniques.getOrNull(index)
+                                        val displayName = technique?.let {
+                                            battleTechniqueName(it.techniqueId, it.displayName)
                                         }
+                                        BattleCommandKey(
+                                            label = displayName ?: "—",
+                                            subLabel = technique?.let {
+                                                stringResource(R.string.ui_battle_cost_energy, it.energyCost)
+                                            },
+                                            enabled = item.enabled && technique != null,
+                                            accent = false,
+                                            height = keyHeight,
+                                            contentDescription = if (technique != null && displayName != null) {
+                                                stringResource(
+                                                    R.string.ui_battle_cmd_technique_description,
+                                                    displayName,
+                                                    technique.energyCost
+                                                )
+                                            } else {
+                                                null
+                                            },
+                                            onClick = { onTechnique(index) }
+                                        )
                                     }
-                                )
+
+                                    BattleCommandSlot.ITEMS -> BattleCommandKey(
+                                        label = "${stringResource(R.string.ui_battle_cmd_items)} ›",
+                                        enabled = item.enabled,
+                                        accent = false,
+                                        height = keyHeight,
+                                        onClick = onOpenItems
+                                    )
+
+                                    BattleCommandSlot.SPECIAL -> BattleCommandKey(
+                                        label = if (specialReady) {
+                                            stringResource(R.string.ui_battle_cmd_special_ready)
+                                        } else {
+                                            val maximum = selectedAlly?.maxSpecialCharge?.coerceAtLeast(1) ?: 100
+                                            val visibleCharge = selectedAlly?.specialCharge ?: 0
+                                            stringResource(
+                                                R.string.ui_battle_cmd_special_charging,
+                                                visibleCharge * 100 / maximum
+                                            )
+                                        },
+                                        enabled = item.enabled,
+                                        accent = item.enabled && specialReady,
+                                        accentColor = VitalYellow,
+                                        height = keyHeight,
+                                        onClick = onSpecial
+                                    )
+
+                                    BattleCommandSlot.STRATEGY -> BattleCommandKey(
+                                        label = "${stringResource(R.string.ui_battle_cmd_strategy)} ›",
+                                        enabled = item.enabled,
+                                        accent = false,
+                                        height = keyHeight,
+                                        onClick = onOpenStrategies
+                                    )
+
+                                    BattleCommandSlot.FOCUS -> BattleCommandKey(
+                                        label = stringResource(R.string.ui_battle_cmd_focus),
+                                        enabled = item.enabled,
+                                        accent = false,
+                                        height = keyHeight,
+                                        onClick = onFocus
+                                    )
+
+                                    BattleCommandSlot.DEFEND -> BattleCommandKey(
+                                        label = stringResource(R.string.ui_battle_cmd_defend),
+                                        enabled = item.enabled,
+                                        accent = false,
+                                        height = keyHeight,
+                                        onClick = onDefend
+                                    )
+
+                                    BattleCommandSlot.MOVE -> BattleCommandKey(
+                                        label = stringResource(R.string.ui_battle_cmd_move),
+                                        enabled = item.enabled,
+                                        accent = moveArmed,
+                                        height = keyHeight,
+                                        contentDescription = if (moveArmed) {
+                                            stringResource(R.string.ui_battle_move_armed)
+                                        } else {
+                                            null
+                                        },
+                                        onClick = onArmMove
+                                    )
+                                }
                             }
-                            repeat(columns - rowSlots.size) { Spacer(Modifier.weight(1f)) }
+                            repeat(3 - rowSlots.size) { Spacer(Modifier.weight(1f)) }
                         }
                     }
                 }
@@ -769,57 +800,85 @@ fun BattleCommandBand(
     }
 }
 
+/**
+ * Bare command key, per the cross-screen instrument vocabulary: no fill, no angular frame and no
+ * border at rest. The key is a 48dp target carrying only its label; a 1dp hairline under the target
+ * separates it from the row below, and an accent tint marks the live Special/Move states.
+ */
 @Composable
 private fun RowScope.BattleCommandKey(
     label: String,
     enabled: Boolean,
-    primary: Boolean,
-    menu: Boolean,
     height: Dp,
+    accent: Boolean = false,
+    subLabel: String? = null,
+    contentDescription: String? = null,
+    accentColor: Color = VitalCyan,
     onClick: () -> Unit,
 ) {
-    Surface(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = Modifier
+    val description = contentDescription ?: label
+    val hairline = when {
+        accent -> accentColor.copy(alpha = 0.85f)
+        enabled -> SurfaceStroke.copy(alpha = 0.55f)
+        else -> SurfaceStroke.copy(alpha = 0.28f)
+    }
+    val labelColor = when {
+        accent -> accentColor
+        enabled -> TextPrimaryOnDark
+        else -> TextSecondaryOnDark.copy(alpha = 0.68f)
+    }
+    Column(
+        Modifier
             .weight(1f)
-            .heightIn(min = height)
-            .testTag("offline-battle-command-slot"),
-        shape = CutCornerShape(BattleKeyCorner),
-        color = when {
-            primary -> VitalPurpleBright
-            menu -> SurfaceDeepPurple.copy(alpha = 0.92f)
-            else -> SurfaceDeepPurple.copy(alpha = 0.82f)
-        },
-        contentColor = if (primary) OnVitalPrimary else TextPrimaryOnDark,
-        border = BorderStroke(
-            1.dp,
-            when {
-                primary -> VitalCyan.copy(alpha = 0.65f)
-                enabled -> SurfaceStroke.copy(alpha = 0.85f)
-                else -> SurfaceStroke.copy(alpha = 0.45f)
-            }
-        )
+            .testTag("offline-battle-command-slot")
+            .semantics { this.contentDescription = description }
     ) {
-        // Wrap the label instead of fillMaxSize(): with heightIn(min) a fillMaxSize child would
-        // expand to the parent's maximum height and stretch the key across the whole arena.
         Box(
             Modifier
                 .fillMaxWidth()
                 .heightIn(min = height)
-                .padding(horizontal = 4.dp, vertical = 4.dp),
+                .clip(CutCornerShape(BattleKeyCorner))
+                .clickable(
+                    enabled = enabled,
+                    role = Role.Button,
+                    onClick = onClick
+                )
+                .padding(horizontal = 4.dp, vertical = 3.dp),
             contentAlignment = Alignment.Center
         ) {
-            Text(
-                label,
-                color = if (primary) OnVitalPrimary else if (enabled) TextPrimaryOnDark else TextSecondaryOnDark,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = if (primary) FontWeight.Bold else FontWeight.SemiBold,
-                maxLines = 2,
-                textAlign = TextAlign.Center,
-                overflow = TextOverflow.Ellipsis
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    label,
+                    color = labelColor,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = if (accent) FontWeight.Bold else FontWeight.SemiBold,
+                    maxLines = 2,
+                    textAlign = TextAlign.Center,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (!subLabel.isNullOrBlank()) {
+                    Text(
+                        subLabel,
+                        color = TextSecondaryOnDark.copy(alpha = if (enabled) 0.9f else 0.55f),
+                        style = MaterialTheme.typography.labelSmall,
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        softWrap = false,
+                        overflow = TextOverflow.Clip,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            }
         }
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(1.dp)
+                .background(hairline)
+        )
     }
 }
 
@@ -1108,7 +1167,6 @@ fun BattleResultPanel(
                         R.string.ui_battle_result_stats,
                         statistics.healingDone,
                         statistics.ordersCompleted,
-                        statistics.supportCommands,
                         statistics.itemsUsed,
                         statistics.projectilesHit,
                         statistics.projectilesHit + statistics.projectilesMissed

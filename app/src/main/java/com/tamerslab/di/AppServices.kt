@@ -26,6 +26,8 @@ object AppServices {
     val spriteRepository get() = container.spriteRepository
     val storageRepository get() = container.storageRepository
     val worldInteractionOrchestrator get() = container.worldInteractionOrchestrator
+    val ownedDigilineRepository get() = container.ownedDigilineRepository
+    val digilineGateway get() = container.digilineGateway
     val worldRepository get() = container.worldRepository
     val arenaRosterGateway get() = GlobalContext.get().get<com.tamerslab.domain.repository.ArenaRosterGateway>()
     val battleUseCase get() = GlobalContext.get().get<com.tamerslab.domain.usecase.BattleUseCase>()

@@ -205,14 +205,22 @@ Controles Material usam cantos chanfrados em uma escala de 4dp a 18dp. Painéis 
 ### Cross-screen instrument vocabulary
 
 Home, the Radar place and the battle surface are the binding top-chrome reference
-compositions: a palette-resolved scrim instead of a shelf, one leading 48dp cut-corner
-key, a left-aligned title with a single quiet context line, trailing cut-corner keys
-closed by a hairline stroke (cyan only while pressed), and one junction line. Every
-other screen's header is that same type (`TopBanner`); no screen keeps a separate pill,
-shelf or centered toolbar. Storage, species-information cards and the rich Tamer Arena
-briefing remain binding reference compositions for content: preserve their information,
-expressive cues and emojis, their square technical panels, complete fact rows and
-consistent action priorities rather than introducing separate card systems.
+compositions: a palette-resolved scrim instead of a shelf, a left-aligned title with a
+single quiet context line, one junction line, and bare 48dp keys - icon and target only,
+no fill, no hairline stroke and no cut-corner frame, as Home's HUD already had. The back
+key always owns the left edge (in battle it is the exit key); every other action sits on
+the right. Every other screen's header is that same type (`TopBanner`), and when a screen
+does not pass its own back callback the header uses the activity back dispatcher, so it
+matches the system back gesture. No screen keeps a separate pill, shelf or centered
+toolbar. Storage, species-information cards and the rich Tamer Arena briefing remain
+binding reference compositions for content: preserve their information, expressive cues
+and emojis, their square technical panels, complete fact rows and consistent action
+priorities rather than introducing separate card systems.
+
+Full-screen pickers and editors that open as dialogs (`StorageCharacterPickerDialog`, the species
+sprite picker and the species catalog editor) are pages, not see-through overlays: their window is
+edge-to-edge and paints the palette's own opaque background, so the window dim can never darken a page
+in the two light palettes. Insets are handled by the dialog wrapper, not by the page header.
 
 - `VitalTabs` owns native tab semantics, cyan/palette-resolved selected text and
   the shared full-width signal line across Items, DigiLine, World, Arena and loadout.
@@ -231,8 +239,9 @@ consistent action priorities rather than introducing separate card systems.
   cropping the entire tile. Equipment catalogs remain next to selected slots;
   Blast/Jogress have a clearly labeled sibling tab without losing any options.
 
-The Tamer chooser remains a single flat scrolling list. Search stays visible;
-series/availability filters and reload expand from a labeled filter control.
+The Tamer chooser remains a single flat scrolling list. The search field and the section tabs collapse
+while the roster is scrolled down and return on any upward scroll or at the top, the same way Storage's
+search bar behaves; series/availability filters and reload expand from a labeled filter control.
 Arena entry first opens the same team-setup screen available from the header,
 so the player can confirm or change their Digimon, format and difficulty.
 "Use this setup" proceeds to browsing; the confirmed state survives returning
@@ -393,22 +402,37 @@ it instead of framing it. The compact bottom navigation is retired; navigation h
   orbit turns slowly around the followed partner (~70s per revolution) while elevation and distance
   drift on incommensurate periods (~47s and ~71s), so the island is never seen from one fixed angle.
   Elevation stays under ~33 degrees because higher angles foreshorten the extruded sprite artwork.
-  Every 14-26s the shot cuts abruptly to another side, height and distance instead of drifting there;
-  cuts are drawn from three heights (grazing, three-quarter, and the steepest the artwork allows) and
-  never repeat the previous one, so the sequence includes the low angles too.
+  Every 14-26s the shot cuts abruptly to another side, height and distance instead of drifting there.
+  Cuts draw from three heights (grazing, three-quarter, and the steepest the artwork allows) with the
+  grazing angles weighted most common and the steep one occasional, and from three distances
+  including a true close-up band; the previous tier is never repeated, and a close-up never pairs with
+  the steep angle. The lens is floor-limited: its elevation is raised automatically whenever the orbit
+  radius would put it at or below the island surface, so neither a cut, the drift nor a manual drag can
+  sink the camera through the farm.
   After a touch the drift re-bases on the visitor's framing rather than easing back into the previous
   loop, so manual camera work is respected; reduced motion disables the drift and the cuts entirely. The followed resident stays between 30% and 52% of viewport height
   so the bottom chrome never covers it.
+- **Lighting is baked, the shadow is real.** The island and its voxel blocks are authored
+  emission-baked (`emissiveTexture` with a black base color) and the residents are unlit extruded
+  pixel art, on purpose: the farm is a flat 2.5D diorama, not a lit scene. A full key/fill/rim +
+  image-based-ambient rig was prototyped and rejected because it changed the art direction; the farm
+  keeps its authored look. The one lighting-shaped thing that survived is the residents' ground drop
+  shadow, which is what makes them sit on the grass. It is a blended ground quad under the feet
+  (1.24 x 0.92 local units, black, 66% alpha, soft radial falloff) whose material is deliberately
+  **lit** rather than unlit: with gltfio 1.76.1 an unlit blended primitive of the generated resident
+  GLB never reaches the color buffer, which is why the old contact shadow was invisible. A pixel test
+  in `SpriteExtrusionGlbTest` pins that combination.
 - **Frame budget:** rendering pauses when a place covers Home or the app leaves the foreground, runs
   at 30fps idle and 60fps during interaction, and honours reduced motion by stopping the island bob,
-  glow pulse and pose cycling.
+  glow pulse and pose cycling and freezing the residents to their staged tableau.
 - **Transitions:** Home is a place, not the first tab of a pager, so it never slides sideways. The farm
-  is the depth layer: leaving it, the outgoing chrome fades in 150 ms and the arriving place lifts ~2%
-  of the window height as it dissolves (220 ms fade / 320 ms travel), while the world holds full
-  opacity and pushes in 1 → 1.05 over 280 ms - the surface is dropped only once the place is opaque,
-  so the world is never cut out from under a half-transparent screen. Returning reverses it: the place
-  sinks ~2% and dissolves (220/240 ms), the world settles 1.05 → 1 over 360 ms, and Home's chrome lands
-  40 ms behind it so arrival reads as returning to the world. The farm's frame loop pauses the moment
+  is the depth layer, and the arriving pages are transparent over the global device pattern, so while
+  the change runs the farm *is* that page's background: leaving it, the outgoing chrome fades in 150 ms,
+  the arriving place lifts ~2% of the window height as it dissolves (220 ms fade / 320 ms travel), and
+  the world pushes in 1 → 1.05 while it crossfades into the device pattern over 240 ms - never a
+  one-frame background cut at the end of the transition. Returning reverses it: the place sinks ~2% and
+  dissolves (220/240 ms), the world settles 1.05 → 1 and fades back in over 240 ms, and Home's chrome
+  lands 40 ms behind it so arrival reads as returning to the world. The farm's frame loop pauses the moment
   it is left, so a route change never renders two 3D scenes. Routes that touch neither Home nor the
   primary row keep a crossfade; reduced motion removes the scale and the lift and leaves ~90 ms fades.
   The shell and the destination are two independent layers: the farm keeps the window's full bounds
@@ -416,14 +440,48 @@ it instead of framing it. The compact bottom navigation is retired; navigation h
   swapchain, and only the destination takes the system-bar and IME insets. Arrived collection grids do
   not replay their per-card entrance on top of the page transition; items that appear later (scrolling,
   later pages) still animate in.
-- **Content rule — the diorama is not a simulation:** there is exactly one home farm. It shows the
-  active partner plus the stored favourites, up to twelve, rotating at random when the favourites
-  exceed that. Nothing on the island writes progress, consumes time or asks for care. Residents run
-  their own rhythms rather than one shared clock — each wanders, rests, trains, plays or idles on its
-  own timing — and pairs walk up to each other, face, share a celebration and drift apart so the
-  island reads as a living group. Tapping one offers only the camera or a chat. Farm
-  creation, switching, needs, activities, grouping and autonomous farm dialogue are retired from the
-  home surface; their stored data is left untouched rather than migrated or deleted.
+- **Roster and additions:** the "who is here" sheet lists the members and their state next to the limit
+  and artwork controls; adding someone opens the **same full-screen Storage partner picker the Arena
+  uses** (search, filters, sort, sprite grid) instead of a bespoke list, so choosing a partner is one
+  learned surface across the app.
+- **Content rule — the diorama is a living tableau, not a simulation:** there is exactly one home farm.
+  It shows the active partner plus the stored favourites, up to twelve, rotating at random when the
+  favourites exceed that. Nothing on the island writes progress, consumes time or asks for care.
+  One cosmetic cast (`FarmDioramaSimulation`) drives everybody on a single clock, using each VB
+  Digimon's complete pose set: idle breathing, walking, jogging, working out, a happy beat and sleep.
+  **Walking keeps the pre-liveliness rhythm the owner preferred:** the walk pose uses the artwork's
+  walk frames and the jog pose its run frames, one stride covers 0.22 world units and is interpolated
+  over 1.1 s, and the next stride starts after a 1.15-1.6 s beat — so each step lands, the sprite rests
+  on the pause for a moment and then steps again, exactly like the old diorama. The walk pose cycles
+  every 250 ms and the jog every 220 ms; there is no step bob and no speed-derived cadence. A jog uses
+  the same rhythm family with a longer stride (0.32 units) and a shorter 0.8 s window, so it reads
+  faster without strobing.
+  **Pacing is probabilistic, not directed.** When a resident finishes what it was doing it rolls once
+  for its next beat: 49% stands, 42% walks, and the remaining ~9% is split between a rare jog, a
+  workout, a happy beat, a nap and going to greet a neighbour. There is no global cycle, no schedule
+  and no cap on how many residents may do the same thing at once — the odds are the whole director, so
+  the cast cannot synchronise into a show and most of the time the island is simply residents standing
+  and walking about. Held beats last seconds (standing 2.5-8 s), while the deliberate ones are held
+  longer: a workout lasts 10-20 s and a nap 30-60 s, so when one happens it is a visible state rather
+  than a blink.
+  **Greetings are the rarest roll (~0.8%) and are held longer:** one resident walks over to a standing
+  neighbour, they face each other for 6-9 s and then drift apart, so a greeting reads as a small event
+  instead of constant background behaviour.
+  **Nothing replays.** The cast is seeded with fresh entropy every time it is created (app start or
+  roster change) and every resident owns its own random stream; the partner of a greeting is picked
+  uniformly at random among everyone in reach, not always the nearest. A fixed seed exists only as a
+  constructor parameter for tests, never in the app.
+  **Body collision is real:** each resident is a circle the width of its extruded artwork plus a
+  margin; walkers are pushed around planted neighbours (a resident that has just arrived counts as a
+  mover for that step) and the renderer adds a final movers-only visual-separation pass over the
+  interpolated positions, so two sprites can never be drawn inside each other and a sleeping resident
+  is never nudged. Tapping one offers only the camera or a chat. Under reduced motion the island
+  freezes to its staged tableau: no walking, social beats, bobbing or pose cycling.
+  Farm creation, switching, needs, activities, grouping and autonomous farm dialogue remain retired
+  from the home surface; their stored data is left untouched rather than migrated or deleted. The rest
+  of the app no longer exposes the old multi-farm UI either: DigiLine lists only Storage and Wild Ones
+  (no farm-group section), Storage never captions a partner with a farm name, and the legacy `World`
+  alias opens the Radar world without the Radar|Digifarm tabs or the retired farm-management screen.
 
 Place destinations keep the instrument TopBanner and their own back behaviour; leaving a place
 returns to the farm, which remains the single entry point for the collection and the menu. The
@@ -453,7 +511,16 @@ Oxanium labels, cyan for live signals, no nested cards).
   follows a pinch smoothly without rebuilding textures or waiting for the zoom to settle. There is no
   glow or halo, and the ring is always behind the Digimon standing on it.
   The plate turns with the compass heading so the screen stays north-up and the partner stays planted
-  at the centre.
+  at the centre. Walking is visible on screen because the plate also **slides opposite to the player's
+  real travel**, exactly like the legacy 2D radar's scrolling grid: the phase is anchored to the first
+  location fix, converted at the plate's linear metre scale (one authored cell =
+  `RADAR_ISO_GRID_CELL_METERS`), folded to half a cell so the finite authored floor never runs out, and
+  rotated with the compass like every other plate element. The slide is filtered against GPS wander with
+  a time constant that grows with the reported fix accuracy (0.35 s + 0.08 s per metre, so a 10 m fix
+  follows in ~1.15 s) and fixes coarser than 30 m hold the grid entirely, so standing still does not
+  shake the world. Because the authored world grid is a translucent mesh and now slides under the ground
+  markings, the metre-ring decal and the interaction ring claim late Filament render priorities (5 and
+  6, where 7 renders last) instead of relying on depth sorting.
 - **Cardboard sprites:** wild Digimon use the farm/battle cardboard treatment: the extruded slab turns
   toward its real-world travel heading and is camera-assisted so it is never edge-on and mostly faces
   the camera (the radar clamps the assist to ±15°, tighter than the farm, because the radar camera is
@@ -480,10 +547,13 @@ Oxanium labels, cyan for live signals, no nested cards).
   the plate edge into the page. The
   plate floor itself is enlarged so the ground continues past the grid at every zoom and camera
   angle; no horizon or floor edge is visible.
-- **Chrome:** a detached top cluster (48dp back key, "Radar · NW" in HUD ink, options key, plus the
-  spawn-settings key while Debug is on) over a single top scrim, and one bottom signal band holding
-  the nearby count, the zoom keys and, only while the state is not ready, one status line with its
-  recovery action. No panel wraps the world, and no permanent toggle rows exist.
+- **Chrome:** a detached top cluster (48dp back key, "Radar · NW" in HUD ink, one quiet context line
+  with the resolved surroundings, options key, plus the spawn-settings key while Debug is on) over a
+  single top scrim, and one bottom signal band holding the nearby count, the zoom keys and, only while
+  the state is not ready, one status line with its recovery action. The surroundings line is the
+  OpenStreetMap biome readout ("Surroundings: Park"); while the lookup is Null it is simply absent, so
+  unavailable map data never invents surroundings. No panel wraps the world, and no permanent toggle
+  rows exist.
 - **Options sheet:** labels, AR battles, spawn/DIM settings (Debug) and the legacy renderers live in
   one `ModalBottomSheet`. The legacy 2D radar and the first-person radar remain in the codebase and
   are selectable there only while the master Debug switch is on; they are instruments, not a second
@@ -599,6 +669,18 @@ Moldura técnica quadrada para painéis de vitais, itens e Digimon. Os quatro ca
 
 Home mood cards show only the short qualitative summary, without a numeric score, so they follow the neighboring stat cards' compact rhythm. Trust/rapport retains its summary and exact everyday reading independently of DigiLine message previews. Other farm-care values remain in normal Details. Combat stats, requirements, rewards, and recovery stay directly usable. Summaries derive from stored state and never alter simulation or social decisions.
 
+### Settings
+
+Settings is scanned in setup order rather than in the order features were built: Watch
+connection, Card archive (import plus the card-origin prompt), Appearance, Sound, Tamer
+profile and preferences (Tamer name and application language), Species (catalog plus the
+VB-first/Dot-first artwork priority), Communication (research notes, and the DigiLine
+connection while Debug and legacy chat are on), Backup and restore, Debug mode with its
+subordinate controls only while enabled, and finally About and credits. Sections are the
+grouping boundary; rows keep the cut-corner cyber-frame entry and the `VitalSectionBar`
+header unchanged. Single-value editors (Tamer name, app font, application language) open a
+dialog from their row instead of living inline in the list.
+
 ### Debug
 
 A default-off master Debug switch in Settings applies in every build. Diagnostic dialogs, technical editors (raw prompts, tuning, species overrides, retrieval priority), forced spawns, distance bypass, accelerated scans, sprite inspection, and technical failure details appear only while enabled. Disabling revokes overrides immediately, closes diagnostic surfaces, and rejects stale callbacks without deleting progress or personal data.
@@ -675,33 +757,45 @@ A default-off master Debug switch in Settings applies in every build. Diagnostic
   pause key.
 - **Combatant HUD.** Opposing Digimon carry projected name+HP plates above their bodies (enemy red, a
   cyan hairline on the selected target, collision-aware so 2v2 and the top cluster never overlap). The
-  selected partner's vitals are a floating HP/MP/ESP strip bottom-left above the command band, with its
-  name; the scene remains the selection surface (tap a fighter, or the existing accessibility actions).
-  Values come from the battle snapshot only; the HUD never invents state.
-- **Command band.** One bottom band over its own scrim holds the CP instrument, the selected partner's
-  name, one polite live event/feedback line and nine 48dp cut-corner keys grouped as menus
-  (Techniques ›, Items ›, Strategy ›), orders (Defend, Support, Special) and movement (Focus, Approach,
-  Fall back). Menu keys read as openers through their chevron, Techniques keeps the primary fill, and
-  disabled keys stay visible so muscle memory survives every combat state. Portrait uses three columns;
-  wide windows and landscape use five columns in two rows. Pause lives in the top cluster; the former
-  standing "Tactics ON/OFF" toggle is now the tactical-pause switch inside the pause panel, default on,
-  preserving the old pause-while-choosing behavior.
+  selected partner has no floating vitals strip: HP/MP/ESP live in the command band's header, so the
+  arena is never covered by partner chrome. The scene remains the selection surface (tap a fighter, or
+  the existing accessibility actions). Values come from the battle snapshot only; the HUD never invents
+  state.
+- **Command band.** One bottom band over its own scrim is the trainer's single instrument, inheriting
+  Re:Digitize Decode's fixed command grammar. Its header row holds the selected partner's name and
+  compact HP/MP/ESP readings over hairline tracks — the space the retired CP meter used to waste — then
+  one polite live event/feedback line and a fixed 3×3 deck of nine bare 48dp keys — no fill and no
+angular frame, each key settled by a 1dp hairline separation — row one is the
+  partner's three equipped techniques (name, EN cost and live availability), row two Items ›, Special
+  and Strategy ›, row three Focus, Defend and Move. Unavailable keys stay visible so muscle memory
+  survives every combat state; the deck is always three columns, capped at 520dp and centred on wide
+  windows, and grows with the system font scale. **Move** arms a one-tap destination: the band asks for
+  an arena point, the next touch on the scene is unprojected to the playable floor and issued as a
+  move order (the core clamps it to the arena radius); pause, result, a menu or any other order disarms
+  it. The former Support/cheer command and its CP grant no longer exist. Pause lives in the top cluster;
+  the former standing "Tactics ON/OFF" toggle is now the tactical-pause switch inside the pause panel,
+  default on, preserving the old pause-while-choosing behavior.
 - **States.** The countdown floats over the live scene; loading/transforming is one compact banner with
   a hairline progress instead of a card that owns the window; pause opens a scrimmed technical panel
   with resume, the tactical-pause switch and exit; exit keeps its native confirmation dialog; the Blast
-  timing overlay dims the scene and keeps its gauge and Stop affordance; finisher titles sit below the
-  top cluster while commands remain visible but inert and pause/exit stay reachable; once a battle
-  settles the live chrome (top cluster, command band, projected HUD and effects) steps aside so the
-  result and the Radar rewards own the surface, floating over the still-visible arena with 48dp
-  actions. Error/retry is one line in the band's language with technical details behind Debug.
+  timing overlay is a Decode-style command dial — a dark technical ring with tick marks, a yellow
+  progress arc, a red target arc and a needle, with the ordered move's name and a small BLAST label set
+  in the centre, plus one instruction line — and any touch on the screen answers it, with no Stop
+  button; finisher titles sit below the top cluster while commands remain
+  visible but inert and pause/exit stay reachable; once a battle settles the live chrome (top cluster,
+  command band, projected HUD and effects) steps aside so the result and the Radar rewards own the
+  surface, floating over the still-visible arena with 48dp actions. Error/retry is one line in the
+  band's language with technical details behind Debug.
 - **Radar continuity.** The Radar battle no longer falls back to a square viewport: the Radar world is
   full-bleed before the encounter, the arena replaces it in the same frame, and leaving returns to the
-  Radar place. The AR stage keeps its established square scanning/battle layout and transparency
-  contract — it is the explicit legacy exception rather than a second battle design.
+  Radar place. The AR stage keeps its established square scanning/battle layout — it is the explicit
+  legacy exception rather than a second battle design — but shares the same command deck and partner
+  instruments.
 - **Motion and adaptation.** Band and scrims use the HUD ink and soft shadows; health changes are
-  instant while the scene owns the motion; reduced motion removes the remaining fades; portrait,
-  landscape and wide windows share one structure; every saved palette resolves through the theme roles,
-  and the light palettes keep the scrims' contrast.
+  instant while the scene owns the motion; reduced motion removes the remaining fades (the timing
+  challenge itself stays functional input); portrait, landscape and wide windows share one structure;
+  every saved palette resolves through the theme roles, and the light palettes keep the scrims'
+  contrast.
 
 ## Source-mode native acceptance boundary
 

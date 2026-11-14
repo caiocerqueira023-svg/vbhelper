@@ -108,11 +108,28 @@ class QuestRepository(private val db: AppDatabase, private val currency: Currenc
                 closeUnmaterializedFollowUpsLocked(individualId, QuestFollowUpBlock.GIVER_JOINED)
                 return@withTransaction
             }
-            if ((giver.contactUnlockedAt == null && giver.trust <= 75) ||
-                dao.unfinishedTargetCount(individualId) > 0) return@withTransaction
-            val recruiting = giver.trust >= 100 || giver.recruitmentState == "PENDING_RECRUITMENT"
+            val persuasion = db.digilineDao().wildPersuasion(individualId)
+            val contactJoined = giver.contactUnlockedAt != null || giver.trust > 75 || persuasion != null
+            if (!contactJoined || dao.unfinishedTargetCount(individualId) > 0) return@withTransaction
+            // D6: trust no longer drives recruitment. The authored persuasion arc (DigiLine v2) is the gate;
+            // the legacy trust path stays only so pre-migration saves can still offer their quest once.
+            val recruiting = persuasion?.questOfferState == "PENDING" ||
+                giver.recruitmentState == "PENDING_RECRUITMENT" ||
+                (persuasion == null && giver.trust >= 100)
             val before = dao.forGiver(individualId)
-            if (recruiting && before.none { it.category == QuestCategory.RECRUITMENT }) createOffer(giver, true, before.size)
+            val otherOffered = db.digilineDao().wildPersuasionsInQuestState("OFFERED")
+                .filter { it.wildIndividualId != individualId }
+                .any { other ->
+                    db.questDao().forGiver(other.wildIndividualId).any {
+                        it.category == QuestCategory.RECRUITMENT && it.state == QuestState.OFFERED
+                    }
+                }
+            if (recruiting && !otherOffered && before.none { it.category == QuestCategory.RECRUITMENT }) {
+                val created = createOffer(giver, true, before.size)
+                if (created != null && persuasion != null) {
+                    db.digilineDao().upsertWildPersuasion(persuasion.copy(questOfferState = "OFFERED"))
+                }
+            }
             materializeFollowUpsLocked(giver)
             val previous = dao.forGiver(individualId)
             if (!recruiting && dao.pendingFollowUps(individualId).isEmpty() &&
@@ -477,6 +494,11 @@ class QuestRepository(private val db: AppDatabase, private val currency: Currenc
                         currentPhase = QuestSteps.nextPhase(dao.objectives(quest.id)) ?: quest.currentPhase,
                         phaseStartedAt = clock(), acceptedAt = clock(), finishedAt = null, revision = quest.revision + 1)
                     check(dao.updateQuest(accepted) == 1)
+                    if (quest.category == QuestCategory.RECRUITMENT) {
+                        db.digilineDao().wildPersuasion(giverId)?.let {
+                            db.digilineDao().upsertWildPersuasion(it.copy(questOfferState = "ACCEPTED"))
+                        }
+                    }
                     if (partner != null) refreshPartnerLocked(accepted, partner) else progress.refreshLocked(accepted.id, clock())
                     QuestActionResult(quest.id, action.type, "Quest accepted. New accomplishments count from now; watch progress updates on NFC return.")
                 }
@@ -486,6 +508,12 @@ class QuestRepository(private val db: AppDatabase, private val currency: Currenc
                         finishedAt = clock(), revision = quest.revision + 1,
                         followUpClosed = quest.followUpTemplateId != null, followUpBlock = if (quest.followUpTemplateId != null) QuestFollowUpBlock.DECLINED else quest.followUpBlock)) == 1)
                     dao.voidTokens(quest.id)
+                    if (quest.category == QuestCategory.RECRUITMENT) {
+                        // Re-open the DigiLine persuasion queue: the contact may offer the quest again later.
+                        db.digilineDao().wildPersuasion(giverId)?.let {
+                            db.digilineDao().upsertWildPersuasion(it.copy(questOfferState = "PENDING"))
+                        }
+                    }
                     QuestActionResult(quest.id, action.type, "Quest closed without a trust penalty. Delivered items are not returned.")
                 }
                 QuestActionType.SKIP_FOLLOW_UP -> {

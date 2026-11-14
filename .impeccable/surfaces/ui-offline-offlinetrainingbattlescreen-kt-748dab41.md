@@ -5,6 +5,13 @@ primary_target: "app/src/main/java/com/tamerslab/battle/ui/offline/OfflineTraini
 related_targets: ["app/src/main/java/com/tamerslab/battle/ui/offline/BattleChrome.kt"]
 ---
 
+---
+version: 1
+slug: "ui-offline-offlinetrainingbattlescreen-kt-748dab41"
+primary_target: "app/src/main/java/com/tamerslab/battle/ui/offline/OfflineTrainingBattleScreen.kt"
+related_targets: ["app/src/main/java/com/tamerslab/battle/ui/offline/BattleChrome.kt"]
+---
+
 # Battle screen
 
 ## Scope and mode
@@ -20,22 +27,28 @@ Filament), code-led.
 ## Audience, job, constraints
 
 Existing Tamers Lab players fighting in the Colosseum or in a Radar encounter. They need to read the
-matchup and both sides' vitals at a glance, issue orders with one thumb, and watch the arena carry the
-hits. Constraints: 48dp targets, safe-area insets, one Filament engine per screen with the scene never
-remounted mid-session, snapshot-only HUD, pause-reason keys fixed by the session API, reduced motion,
-TalkBack semantics and test tags, every saved palette. The AR stage keeps its established square
-scanning/battle layout.
+matchup and their partner's vitals at a glance, issue orders with one thumb, and watch the arena carry
+the hits. Constraints: 48dp targets, safe-area insets, one Filament engine per screen with the scene
+never remounted mid-session, snapshot-only HUD, pause-reason keys fixed by the session API, reduced
+motion, TalkBack semantics and test tags, every saved palette. The AR stage keeps its established square
+scanning/battle layout and inherits the same command vocabulary.
 
 ## Chosen direction
 
 The fight is the world, not a page about it: one full-bleed arena with floating chrome (top cluster +
-combatant HUD + bottom command band) in the Radar place's vocabulary, replacing the page gutter,
-bordered 1:1 viewport and half-screen command slab. The Radar battle keeps the Radar world full-bleed
-through the encounter, the arena replacing it in the same frame, and returns to the Radar place; AR is
-the explicit legacy exception.
+enemy plates + one bottom command instrument) in the Radar place's vocabulary. The bottom instrument
+replaces the dead Command Points meter with the partner's own instruments and reorganizes the ten
+origins of trainer input into a fixed 3×3 deck borrowed from Re:Digitize Decode's command wheel and
+timing panel: the partner's three equipped techniques on the top row, then Items / Special / Strategy,
+then Focus / Defend / Move. Move is a modal one-tap gesture: arm it, then touch any point of the arena
+to send the partner there. There is no floating vitals strip over the scene; HP, MP and ESP live in the
+band header where the CP instrument used to be. The special/Blast timing is a Decode-style command
+dial — dark technical ring, yellow progress arc, red target arc, ticks and needle, the ordered move's
+name and a small BLAST label in the centre — and any touch on the screen answers it.
 
-**Memorable moment:** the encounter sheet closes and the Radar world becomes the arena in the same
-full-bleed frame — chrome swapping in, no drop into a square window.
+**Memorable moment:** the band becomes the partner's instrument panel — vitals and the 3×3 command deck
+occupying the space the dead CP meter wasted — and the Blast timing resolves with one touch anywhere,
+landing the red line like the Decode panel.
 
 ## Unresolved
 
@@ -43,37 +56,44 @@ full-bleed frame — chrome swapping in, no drop into a square window.
   reviewed, not rebuilt.
 - The finisher movie/camera sequence is kept as authored; only its captions and surrounding chrome are
   re-fitted.
-- The scenario invariant "the scene never remounts mid-session" is now enforced structurally: the battle
-  scene is hoisted out of the radar/battle branch, so Compose cannot recreate the Filament engine
-  mid-fight (Radar battles used to crash natively at the countdown). A settled battle also hands the
-  surface to the result panel: the live top cluster, command band and projected HUD step aside. Both are
-  recorded in `TESTING.md` (Radar battle crash fix) and `DESIGN.md` (Battle screen → States).
+- The scenario invariant "the scene never remounts mid-session" remains: the battle scene stays hoisted
+  out of the radar/battle branch, and a settled battle hands the surface to the result panel (live top
+  cluster, command band and projected HUD step aside). This is recorded in `TESTING.md` and
+  `DESIGN.md` (Battle screen → States).
+- Move is accepted only inside the arena's playable bounds; taps on horned/outside regions clamp to the
+  playable radius. The destination has no persistent 3D marker in this pass; feedback is the band line
+  and the partner's own movement.
 - Device captures, TalkBack and font-scale acceptance are recorded in TESTING.md after the final gate.
 
 ## Direction contract
 
-THESIS: The fight is the world, not a page about it — one full-bleed arena with floating battle chrome;
-it refuses the 16dp page gutter, the bordered 1:1 viewport and the half-screen command slab that made
-battle read as an embedded widget.
+THESIS: The fight is the world, and the trainer's hand is one instrument — a fixed 3×3 command deck
+inheriting Re:Digitize Decode's command-wheel and timing-panel grammar; it refuses the floating vitals
+strip that hid the arena and refuses a meter (CP) that never gated anything.
 
-OWN-WORLD: Tamers Lab dark roxo/ciano over the authored Colosseum / Radar arena environment theme: the
-scene fills the window under soft top and bottom scrims; chrome in HUD ink (`TextPrimaryOnDark`,
-Oxanium roles, 1dp/3dp soft shadow) with 48dp cut-corner keys, `SurfaceStroke` hairlines, `VitalCyan`
-for live/selected and CP, `VitalYellow` for special, red only for enemy health; square technical
-panels for pause/result, never rounded cards floating over the scene; no glow.
+OWN-WORLD: Tamers Lab dark roxo/ciano over the authored Colosseum / Radar arena environment theme: HUD
+ink (`TextPrimaryOnDark`, Oxanium roles, 1dp/3dp soft shadow), bare 48dp keys with a 1dp hairline
+under each, `SurfaceStroke`
+hairlines, `VitalCyan` for live/selected, `VitalPurpleBright` for MP, `VitalYellow` for Special/ESP and
+the Blast target line, red only for enemy health and the timing target; one slab over its own scrim;
+no glow, no nested cards, no rounded card floating over the scene.
 
-STORY: A player enters from the Arena briefing or a Radar encounter; in Radar the world they were
-already in becomes the arena. They read the matchup and both sides' vitals at a glance, spend CP
-through a compact deck, watch the scene carry the hits, and the result lands over the same world
-without ever returning to a framed page.
+STORY: A player enters from the Arena briefing or a Radar encounter; they read the matchup, their
+partner's HP/MP/ESP in the band header, tap one of three equipped moves or Items/Special/Strategy,
+Focus, Defend, or arm Move and touch the arena; the scene carries the hits; the Blast timing is
+answered by touching anywhere as the bar crosses the red line; the result lands over the same world.
 
-FIRST VIEWPORT: Edge-to-edge arena under the safe area. Top scrim: 48dp exit/back key left, the
-matchup "AGUMON vs GABUMON" in HUD ink with one quiet context line under it, 48dp pause key (Debug and
-recenter keys beside it) right. Core: the arena with projected enemy name+HP plates, cyan hairline on
-the selected target, the selected partner's HP/MP/ESP strip bottom-left above the band. Bottom: one
-full-width command band over its own scrim — CP instrument, nine cut-corner 48dp keys grouped
-menus/orders/movement, one quiet event line; safe-area inset respected. No page padding, no viewport
-border, no shelf wrapping the arena.
+FIRST VIEWPORT: Edge-to-edge arena under the safe area. Top scrim: 48dp exit/back key left, matchup
+"AGUMON vs GABUMON" with one quiet context line, 48dp pause key (recenter/Debug beside it) right. Core:
+arena with projected enemy name+HP plates and the cyan selected-target hairline; no partner vitals
+overlay. Bottom: one full-width band over its own scrim — header row with partner name and compact
+HP/MP/ESP instruments, one quiet feedback line, then a fixed 3×3 grid of bare 48dp keys, each settled
+by a 1dp hairline: row 1
+three equipped technique keys (name + EN cost + state), row 2 Items / Special / Strategy, row 3 Focus /
+Defend / Move; safe-area inset respected. The Blast timing overlay is a Decode-style command dial with
+a dark technical ring, tick marks, a yellow progress arc, a red target arc and a needle, the ordered
+move's name and a small BLAST label in the centre, and one instruction line; it has no Stop button —
+the whole screen is the input.
 
 FORM: Surface-scope structure 1 of 3 (single-world overlay), brief-pinned by the owner: full-bleed
 arena + floating chrome. seed: none (unavailable).

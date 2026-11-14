@@ -3,26 +3,31 @@ package com.tamerslab.battle.ui.offline
 /**
  * Stable positions for the lower battle command surface.
  *
- * Decode's two-screen layout is useful here because unavailable actions do not
- * disappear: muscle memory survives every combat state and team formation.
+ * The deck inherits Re:Digitize Decode's fixed command grammar: the partner's three
+ * equipped techniques on the first row, Items / Special / Strategy on the second,
+ * and Focus / Defend / Move on the third. Unavailable actions never disappear, so
+ * muscle memory survives every combat state and team formation.
  */
 internal enum class BattleCommandSlot {
-    TECHNIQUES,
+    TECHNIQUE_1,
+    TECHNIQUE_2,
+    TECHNIQUE_3,
     ITEMS,
-    DEFEND,
-    SUPPORT,
     SPECIAL,
-    FOCUS,
     STRATEGY,
-    MOVE_CLOSER,
-    KEEP_DISTANCE
+    FOCUS,
+    DEFEND,
+    MOVE
 }
 
 internal data class BattleCommandAvailability(
     val partnerReady: Boolean,
     val targetReady: Boolean,
-    val supportReady: Boolean,
-    val specialReady: Boolean
+    /** Exactly three entries; false/hidden techniques keep their position but stay inert. */
+    val techniqueReady: List<Boolean>,
+    val specialReady: Boolean,
+    /** Highlights the Move key while the player is choosing an arena destination. */
+    val moveArmed: Boolean = false,
 )
 
 internal data class BattleCommandDeckItem(
@@ -33,16 +38,22 @@ internal data class BattleCommandDeckItem(
 internal fun battleCommandDeck(
     availability: BattleCommandAvailability
 ): List<BattleCommandDeckItem> = listOf(
-    BattleCommandDeckItem(BattleCommandSlot.TECHNIQUES, availability.partnerReady),
+    techniqueSlot(BattleCommandSlot.TECHNIQUE_1, availability, 0),
+    techniqueSlot(BattleCommandSlot.TECHNIQUE_2, availability, 1),
+    techniqueSlot(BattleCommandSlot.TECHNIQUE_3, availability, 2),
     BattleCommandDeckItem(BattleCommandSlot.ITEMS, availability.partnerReady),
-    BattleCommandDeckItem(BattleCommandSlot.DEFEND, availability.partnerReady),
-    BattleCommandDeckItem(BattleCommandSlot.SUPPORT, availability.supportReady),
-    BattleCommandDeckItem(BattleCommandSlot.SPECIAL, availability.specialReady),
-    BattleCommandDeckItem(
-        BattleCommandSlot.FOCUS,
-        availability.partnerReady && availability.targetReady
-    ),
+    BattleCommandDeckItem(BattleCommandSlot.SPECIAL, availability.partnerReady && availability.specialReady),
     BattleCommandDeckItem(BattleCommandSlot.STRATEGY, availability.partnerReady),
-    BattleCommandDeckItem(BattleCommandSlot.MOVE_CLOSER, availability.partnerReady),
-    BattleCommandDeckItem(BattleCommandSlot.KEEP_DISTANCE, availability.partnerReady)
+    BattleCommandDeckItem(BattleCommandSlot.FOCUS, availability.partnerReady && availability.targetReady),
+    BattleCommandDeckItem(BattleCommandSlot.DEFEND, availability.partnerReady),
+    BattleCommandDeckItem(BattleCommandSlot.MOVE, availability.partnerReady)
+)
+
+private fun techniqueSlot(
+    slot: BattleCommandSlot,
+    availability: BattleCommandAvailability,
+    index: Int
+): BattleCommandDeckItem = BattleCommandDeckItem(
+    slot = slot,
+    enabled = availability.partnerReady && availability.techniqueReady.getOrElse(index) { false }
 )

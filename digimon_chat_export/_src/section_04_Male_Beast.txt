@@ -1,0 +1,384 @@
+===Beast===
+{| class="table smt5"
+! colspan="2" |Dialogue
+!Outcome
+|-
+| colspan="3" align="center"|Approaching
+|-
+| colspan="2" |The demon is approaching... What will you do?
+|>Stop them
+>Glare at them
+>Keep calm
+|-
+|>Stop them
+|YOU GUARD YOUR TERRITORY WELL...
+FAIR ENOUGH
+|[DIALOGUE SWITCH >> Kill]
+|-
+|rowspan="2"|>Glare at them
+|
+|[DIALOGUE SWITCH >> Eyes]
+|-
+|(The demon is glaring back... What will you do?)
+|>Glare harder<br>>Intimidate them<br>>Look away
+|-
+|>>Glare harder
+|(The demon suddenly attacked!)
+|[ENEMY PHASE]
+|-
+|>>Intimidate them
+|
+|
+|-
+|>>Look away
+|
+|
+|-
+|>Keep calm
+|
+|
+|-
+| colspan="3" align="center"| Kill
+|-
+| colspan="2" |DOES IT HURT YOU TO KILL BEASTS?
+|>No
+>Yes
+|-
+|>No
+|SO YOU WANT TO KILL THAT MUCH...
+WHY DO YOU DO IT?
+|>It's the law of the jungle.
+>Because I need to eat.
+>For the thrill of the hunt
+|-
+|>>It's the law of the jungle.
+|YOU RESPECT THE ONES YOU KILL...
+THAT IS THE LAW OF THE JUNGLE
+SHOW RESPECT TO ME, AND GIVE ME YOUR OFFERINGS!
+|[BARGAIN PHASE]
+|-
+|>>Because I need to eat.
+|EATING ONLY MEAT IS NOT HEALTHY. YOU NEED A BALANCED DIET.
+|[LEAVES]
+|-
+|>>For the thrill of the hunt
+|ONLY BECAUSE YOU ARE THE PREDATOR. IT IS NOT THRILLING FOR THE PREY.
+|[ENEMY PHASE]
+|-
+|>Yes
+|
+|
+|-
+| colspan="3" align="center"| Guard up
+|-
+| colspan="2" |The demon has their guard up... What will you do?
+|>Motion for peace
+>Put your guard up
+|-
+|>Motion for peace
+|YOU DO NOT UNDERSTAND THE LAW OF THE JUNGLE... WHAT NA AMATEUR.
+|[LEAVES]
+|-
+|rowspan="2"|>Put your guard up
+|WHY MUST WE FIGHT! LET US TALK IN PEACE, AWOOOO! 
+|[DIALOUGE SWITCH]
+|-
+|A BATTLE IT IS, THEN!
+|[TALK END, TURN ISN'T USED]
+|-
+| colspan="3" align="center"|Human
+|-
+| colspan="2" |YOU SMELL LIKE A HUMAN...
+ARE YOU A HUMAN?
+|>Yeah.
+>I have human friends.
+>I ate some human food
+|-
+|>Yeah
+|HUMANS ALWAYS WORRY. THIER BRAINS GET IN THE WAY ALL THE TIME.
+MAYBE YOU SHOULD THROW YOUR BRAIN AWAY
+|>You're right
+>I can't
+>Throw it away where?
+|-
+|>>You're right
+|HERE, GET RID OF YOUR BRAIN. USE THIS INSTEAD. YOU WILL ENJOY LIFE A LOT MORE.
+|[GIVES ITEM, LEAVES]
+|-
+|>>I can't
+|
+|
+|-
+|>>Throw it away where?
+|
+|
+|-
+|>I have human friends.
+|
+|
+|-
+|>I ate some human food
+|
+|
+|-
+| colspan="3" align="center"|Trust
+|-
+| colspan="2" |NEVER SEEN A DEMON LIKE YOU. YOU ARE NOT ONE OF US. CANNOT TRUST YOU
+|>That's fine.
+>Please trust me.
+>I can't trust you either
+|-
+|>That's fine.
+|LONE DEMONS DO NOT LAST LONG.
+GOOD LUCK...
+|[LEAVES]
+|-
+|>Please trust me.
+|MAYBE. NOT SURE... LET'S TALK FIRST.
+|[DIALOGUE SWITCH >> Power]
+|-
+|>I can't trust you either
+|
+|
+|-
+| colspan="3" align="center"|Recognized
+|-
+| colspan="2" |SO YOU ARE [Playername]...
+I HEARD ABOUT YOU.
+|(RANDOM)
+>Bad omen
+>Jungle law
+|-
+|>Bad omen
+|THEY SAY YO ARE A BAD OMEN! BAD THINGS FOLLOW YOU! STAY AWAY FROM ME!
+|[LEAVES]
+|-
+| >Jungle law
+|THEY SAY YOU DO NOT FOLLOW THE LAW OF THE JUNGLE! YOU DIE NOW!
+|[ENEMY PHASE]
+|-
+| colspan="3" align="center"|Power
+|-
+| colspan="2" |DO YOU WANT POWER?
+|>Yes.
+>No.
+>I want all the power.
+|-
+|>>Yes.
+| colspan="1" |THEN, TAKE MY HAND...
+|>Take their hand
+>Hold out your own hand
+>Point out that it's a paw
+|-
+|>>Take their hand
+| colspan="1" | YOUR HAND IS SO DIRTY... YOU NEED TO LEARN BASIC HYGIENE!
+|[TALK END, TURN USED]
+|-
+|>>Hold out your own hand
+| colspan="1" | AWOOOO! (The demon shook your hand. ...But it was a feint! The demon attacked!)
+|[ENEMY PHASE]
+|-
+|>>Point out that it's a paw
+| colspan="1" | YOU FIGURED IT OUT. YOU'VE BEEN WELL-TRAINED.
+|[BARGAIN PHASE]
+|-
+|>No
+| colspan="1" | THEN, WHAT IS IT YOU WANT?
+|>I want food.<br>>I want a rest.<br>>I want love.
+|-
+|>>I want food.
+| colspan="1" | YOU HUNGRY? I HAVE JUST THE THING! LET'S HAVE A SPEED-EATING CONTEST! I WANT TO TEST YOUR '''AGILITY'''! (The demon challenged you to a speed eating contest!)
+|[Agility stat between the 2 users is compared]<br>Pass<br>>Fail
+|-
+|>>Pass
+| colspan="1" | (You won!) YOU ARE SO FAST! I WILL FOLLOW YOU!
+|[INSTANT RECRUIT]
+|-
+|>>Fail
+| colspan="1" |
+|
+|-
+|>>I want a rest.
+| colspan="1" | >
+|
+|-
+|>I want love.
+| colspan="1" | >
+|
+|-
+|>I want all the power.
+| colspan="1" | >
+|
+|-
+| colspan="3" align="center" |Leave
+|-
+| colspan="2" |The demon is trying to leave... What will you do?
+|>Stop them<br>>Ignore them<br>>Sit down
+|-
+|>Stop them
+| YOU WANT TO GIVE ME SOMETHING TASTY? OKAY, THEN WE SHOULD TALK...
+|[DIALOGUE SWITCH]
+|-
+|>Ignore them
+|SO I DO NOT MATTER TO YOU AT ALL? WHO DO YOU THINK YOU ARE!?
+|>I'm me.<br>>I'm a god.<br>>I'm [Playername]
+|-
+|>>I'm me.
+|I AM ALSO ME! BUT WHY IS THERE TWO OF ME...? OH NO! TOO SCARY!
+|[LEAVES]
+|-
+|>>I'm a god.
+|
+|
+|-
+|>>I'm [Playername]
+|
+|
+|-
+|>Sit down
+|
+|
+|-
+| colspan="3" align="center" |Eyes
+|-
+| colspan="2" |THAT LOOK IN YOUR EYES... WHAT IS REFLECTED THERE?
+|>Firey determination<br>>An ice-cold heart<br>>A need for sleep
+|-
+|>Firey determination
+| colspan="1" | FIRE BURNS ALL. IT IS A POWER OF RUIN... YOU ARE NOT SAFE TO BE NEAR.
+|[LEAVES]
+|-
+|>An ice-cold heart
+| colspan="1" |YOUR EYES ARE SO COLD... THEN YOU CAN FREEZE TO DEATH!
+|[ENEMY PHASE]
+|-
+|>A need for sleep
+| colspan="1" |NOOO! DO NOT GO TO SLEEP! VERY BAD STATUS EFFECT! I'LL WAKE YOU UP!
+|[ENEMY PHASE]
+|-
+| colspan="3" align="center"| Speed-eating contest
+|-
+| colspan="2" |I WANT TO TEST YOUR '''AGILITY''' ... TIME FOR A SPEED-EATING CONTEST!
+|>You're on
+>No way
+|-
+|>You're on
+| colspan="1" | (You wolfed you food down as fast as you could...)
+|[Agility stat between the 2 users is compared]
+>Pass
+>Fail
+|-
+|>>Pass
+| colspan="1" | (You won!) YOU ARE SO FAST! I WILL FOLLOW YOU!
+|[INSTANT RECRUIT]
+|-
+|>>Fail
+| colspan="1" |
+|
+|-
+|>No way
+| colspan="1" |
+|
+|-
+| colspan="3" align="center"| Gazing
+|-
+| colspan="2" |(The demon is gazing expectantly at you... What will you do?)
+|>Dance<br>>Sing<br>>Flash some Macca
+|-
+|>Dance
+| colspan="1" | (You tried dancing...) YOUR MOVEMENTS SHALE THE SKIES AND EARTH! GOOD DANCING! VERY GOOD!
+|[BARGAIN PHASE]
+|-
+|>Sing
+| colspan="1" | 
+|
+|-
+|>Flash some Macca
+| colspan="1" | 
+|
+|-
+| colspan="3" align="center"| Hair
+|-
+| colspan="2" |YOUR HAIR IS SO LONG! WHY?
+|>It's fashionable<br>>To look intimidaing<br>>It puts me a "cut" above.
+|-
+|>It's fashionable
+| colspan="1" | HEH! NOT SO FAST... I AM BETTER-LOOKING THAN YOU! THAT MEANS YOU HAVE TO GIVE ME A PRIZE!
+|[BARGAIN PHASE]
+|-
+|>To look intimidaing
+| colspan="1" | THAT IS NOT SCARY... IT IS STYLISH! I WISH MY FUR COULD BE LIKE THAT. 
+|[BARGAIN PHASE]
+|-
+|>It puts me a "cut" above.
+| colspan="1" | "CUT"... LIKE A HAIRCUT! OH, I GET IT NOW! YOU ARE STUPID
+|[ENEMY PHASE]
+|-
+| colspan="3" align="center"| Dig
+|-
+| colspan="2" |YOU, DIG HERE! DIG QUICK!
+|>Try digging<br>>Don't dig<br>>Don't dig
+|-
+|>Try digging
+| colspan="1" | (You tried digging...) HMM, NOTHING... BAD LUCK, I THINK. I LEAVE NOW. REMEMBER TO REFILL THE HOLE... 
+|[ENEMY PHASE]
+|-
+|>Don't dig
+| colspan="1" | 
+|
+|-
+|>Don't dig
+| colspan="1" | 
+|
+|-
+| colspan="3" align="center"| Die
+|-
+| colspan="2" |ARE YOU SCARED TO DIE?
+|>Yes<br>>No<br>>I want to die.
+|-
+|>Yes
+| colspan="1" | I AM AFRAID TOO... THAT MEANS WE SHOULD HELP EACH OTHER.
+|[BARGAIN PHASE]
+|-
+|>No
+| colspan="1" | THEN I CAN KILL YOU WITH NO REGRETS!
+|[ENEMY PHASE]
+|-
+|>I want to die.
+| colspan="1" | 
+|
+|-
+| colspan="3" align="center"|New
+|-
+| colspan="2" |NEVER SEEN A DEMON LIKE YOU. SEEM STRANGE. VERY STRANGE. (What response will you give the demon?)
+|>A friendly response<br>>A harsh response
+|-
+|>A friendly response
+|YOU ARE NOT SO BAD. TELL ME MORE THINGS.
+|[DIALOGUE SWITCH >> Hair]
+|-
+|>A harsh response
+|YOU'RE A BEAST TOO!? WE SHOULD TALK THINGS OUT MORE!
+|[BARGAIN PHASE]
+|-
+| colspan="3" align="center"|Quiz
+|-
+| colspan="2" |YOU MUST KNOW ABOUT DEMONS TO SURVIVE IN THE NETHERWORLD... I WILL TEST HOW MUCH YOU KNOW!
+|[GUESS RANDOM MONSTER]
+>Answer right
+>Answer wrong
+|-
+|>Answer right
+| colspan="1" |YOU WILL SURVIVE! I WILL JOIN YOU!
+|[INSTANT RECRUIT]
+|-
+|>Answer wrong
+| colspan="1" |
+|
+|-
+| colspan="3" align="center" |New moon
+|-
+| colspan="2" |IF THE MOON DIES, WILL WE DIE TOO? I AM SCARED... (It's no use! Could this be due to the '''new moon'''?)
+|[TALK END, TURN USED]
+|-
+|}

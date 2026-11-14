@@ -114,6 +114,10 @@ internal fun RadarIsometricViewport(
     onReleased: () -> Unit,
     onCreated: () -> Unit = {},
     pitchDegrees: Float = RADAR_ISO_PITCH_DEGREES,
+    /** When set, the camera eases in on this wild Digimon for an in-world conversation. */
+    conversationFocusId: String? = null,
+    /** Optional pitch override for the conversation framing; defaults to a low eye-level angle. */
+    conversationPitchDegrees: Float? = RADAR_ISO_CONVERSATION_PITCH_DEGREES,
     rings: List<RadarRingMark> = emptyList(),
     onRingLabels: (List<RadarRingLabel>) -> Unit = {},
     modifier: Modifier = Modifier,
@@ -153,6 +157,8 @@ internal fun RadarIsometricViewport(
                     active = active,
                     motion = motion,
                     pitchDegrees = pitchDegrees,
+                    conversationFocusId = conversationFocusId,
+                    conversationPitchDegrees = conversationPitchDegrees,
                     rings = rings,
                     project = onProjection,
                     ringProject = onRingLabels,
@@ -205,6 +211,15 @@ internal class RadarIsometricSceneView(
     private val ambientTransform = FloatArray(16)
     private var lastAmbientScale = Float.NaN
     private var lastAmbientHeading = Float.NaN
+    // Ground scroll: the partner token stays at the plate centre, so walking is only visible if the
+    // authored ground slides the other way, exactly like the legacy 2D radar's grid. The phase is
+    // anchored to the first player fix and folded to half a grid cell, so the finite plate never
+    // slides out from under the camera and a long walk cannot run out of ground.
+    private var groundAnchor: GeoPoint? = null
+    private var groundSmoothedMeters: RadarScenePoint? = null
+    private var groundPhaseMeters = RadarScenePoint(0f, 0f)
+    private var lastGroundOffsetX = Float.NaN
+    private var lastGroundOffsetZ = Float.NaN
 
     private var active = true
     private var motion = true
@@ -215,6 +230,19 @@ internal class RadarIsometricSceneView(
     private var lastFrameNanos = 0L
     private var cameraPose = radarIsometricCamera(RADAR_ISO_PLATE_RADIUS_UNITS)
     private var cameraAspect = RADAR_ISO_REFERENCE_ASPECT_RATIO
+
+    // In-world conversation framing: the camera eases from the radar overview to a close, low-angle
+    // shot of one wild Digimon, which stands facing the camera. Kept separate from cameraPose so the
+    // regular projection/culling math stays untouched.
+    private var conversationFocusId: String? = null
+    private var conversationPitchDegrees: Float = RADAR_ISO_CONVERSATION_PITCH_DEGREES
+    private var conversationFocusPoint: RadarScenePoint? = null
+    private var lastFrameDeltaSeconds = 1f / 60f
+    private var cameraEyeX = Float.NaN
+    private var cameraEyeY = Float.NaN
+    private var cameraEyeZ = Float.NaN
+    private var cameraTargetX = Float.NaN
+    private var cameraTargetZ = Float.NaN
 
     private var snapshot = EcosystemSnapshot()
     private var wanted = emptyList<RadarPresentation>()
@@ -344,6 +372,8 @@ internal class RadarIsometricSceneView(
         active: Boolean,
         motion: Boolean,
         pitchDegrees: Float,
+        conversationFocusId: String? = null,
+        conversationPitchDegrees: Float? = RADAR_ISO_CONVERSATION_PITCH_DEGREES,
         rings: List<RadarRingMark>,
         project: (List<RadarProjection>) -> Unit,
         ringProject: (List<RadarRingLabel>) -> Unit,
@@ -356,6 +386,9 @@ internal class RadarIsometricSceneView(
         this.project = project
         this.ringProject = ringProject
         this.rings = rings
+        this.conversationFocusId = conversationFocusId
+        this.conversationPitchDegrees = (conversationPitchDegrees ?: RADAR_ISO_CONVERSATION_PITCH_DEGREES)
+            .coerceIn(20f, RADAR_ISO_MAX_PITCH_DEGREES)
         this.pitchDegrees = pitchDegrees.coerceIn(RADAR_ISO_MIN_PITCH_DEGREES, RADAR_ISO_MAX_PITCH_DEGREES)
         cameraPose = radarIsometricCamera(
             plateRadiusUnits = RADAR_ISO_PLATE_RADIUS_UNITS,
@@ -516,11 +549,21 @@ internal class RadarIsometricSceneView(
             ((now - lastFrameNanos).coerceAtLeast(0L) / 1_000_000_000.0).toFloat().coerceIn(0f, 0.1f)
         }
         lastFrameNanos = now
+        lastFrameDeltaSeconds = deltaSeconds
         displayedVisibleRadius = if (motion) {
             approachSceneAxis(displayedVisibleRadius, targetVisibleRadius, deltaSeconds.toDouble(), 9.0)
         } else {
             targetVisibleRadius
         }
+        val player = radarPlayerPosition(snapshot)
+        // Resolve the conversation subject every frame so the camera tracks it even if it drifts.
+        conversationFocusPoint = conversationFocusId?.let { focusId ->
+            player?.let { origin ->
+                wanted.firstOrNull { it.individual.individualId == focusId }
+                    ?.let { wildPlacement(it, origin, now).point }
+            }
+        }
+        updateGroundPhase(player, snapshot.playerFix?.accuracyMeters, deltaSeconds)
         applyCamera()
         applyAmbientTransform(force = false)
         loadNextAsset()
@@ -533,7 +576,6 @@ internal class RadarIsometricSceneView(
             }
             requested.remove(id)
         }
-        val player = radarPlayerPosition(snapshot)
         if (now - lastProjection >= PROJECTION_INTERVAL_NANOS) {
             lastProjection = now
             projectActors(now)
@@ -541,10 +583,12 @@ internal class RadarIsometricSceneView(
         if (player != null) {
             wanted.forEach { item ->
                 val asset = meshes[item.individual.individualId] ?: return@forEach
+                val isConversationFocus = item.individual.individualId == conversationFocusId
                 // Visibility is decided by the projected billboard, not by the visible-radius value:
                 // while zooming (or in the viewport corners) a Digimon can still be on screen even
-                // when its radial distance is already outside the current radius.
-                if (item.individual.individualId !in onScreenIds) {
+                // when its radial distance is already outside the current radius. The conversation
+                // subject is always placed: the cinematic camera frames it directly.
+                if (!isConversationFocus && item.individual.individualId !in onScreenIds) {
                     hideWildActor(asset)
                 } else {
                     val placement = wildPlacement(item, player, now)
@@ -569,13 +613,54 @@ internal class RadarIsometricSceneView(
         // angle; the far plane must cover it instead of clipping the ground near the horizon.
         viewer.cameraNear = RADAR_ISO_CAMERA_NEAR
         viewer.cameraFar = RADAR_ISO_CAMERA_FAR
+
+        val focusPoint = conversationFocusPoint.takeIf { conversationFocusId != null }
+        val desired = if (focusPoint != null) {
+            val focusPose = radarIsometricCamera(
+                plateRadiusUnits = RADAR_ISO_FOCUS_PLATE_RADIUS_UNITS,
+                pitchDegrees = conversationPitchDegrees,
+                aspectRatio = cameraAspect,
+            )
+            floatArrayOf(
+                focusPoint.x,
+                focusPose.eyeY,
+                focusPoint.z + focusPose.eyeZ,
+                focusPoint.x,
+                focusPoint.z,
+            )
+        } else {
+            val pose = radarIsometricCamera(
+                plateRadiusUnits = RADAR_ISO_PLATE_RADIUS_UNITS,
+                pitchDegrees = pitchDegrees,
+                aspectRatio = cameraAspect,
+            )
+            floatArrayOf(0f, pose.eyeY, pose.eyeZ, 0f, 0f)
+        }
+
+        if (cameraEyeX.isNaN()) {
+            cameraEyeX = desired[0]
+            cameraEyeY = desired[1]
+            cameraEyeZ = desired[2]
+            cameraTargetX = desired[3]
+            cameraTargetZ = desired[4]
+        } else {
+            // Exponential ease so entering/leaving the conversation is a camera move, not a cut.
+            val alpha = (1.0 - exp(-lastFrameDeltaSeconds.coerceIn(0f, 0.1f) / 0.15f)).toFloat()
+                .coerceIn(0f, 1f)
+            cameraEyeX += (desired[0] - cameraEyeX) * alpha
+            cameraEyeY += (desired[1] - cameraEyeY) * alpha
+            cameraEyeZ += (desired[2] - cameraEyeZ) * alpha
+            cameraTargetX += (desired[3] - cameraTargetX) * alpha
+            cameraTargetZ += (desired[4] - cameraTargetZ) * alpha
+        }
+
         viewer.camera.lookAt(
-            cameraPose.eyeX.toDouble(),
-            cameraPose.eyeY.toDouble(),
-            cameraPose.eyeZ.toDouble(),
+            cameraEyeX.toDouble(),
+            cameraEyeY.toDouble(),
+            cameraEyeZ.toDouble(),
+            cameraTargetX.toDouble(),
             0.0,
-            cameraPose.targetY.toDouble(),
-            0.0,
+            cameraTargetZ.toDouble(),
             0.0,
             1.0,
             0.0,
@@ -583,22 +668,82 @@ internal class RadarIsometricSceneView(
     }
 
     /**
-     * Rotates and scales the authored plate. Rotation follows the compass so the grid turns with the
-     * cardinal ring; scale follows the (eased) visible radius so one authored grid cell always reads
-     * as [RADAR_ISO_GRID_CELL_METERS] real metres.
+     * Rotates and scales the authored plate and slides it opposite to the player's travel, the way the
+     * legacy 2D radar scrolls its grid under the centred marker. Rotation follows the compass so the
+     * grid turns with the cardinal ring; scale follows the (eased) visible radius so one authored grid
+     * cell always reads as [RADAR_ISO_GRID_CELL_METERS] real metres.
      */
     private fun applyAmbientTransform(force: Boolean) {
         val asset = ambientAsset ?: return
         if (ambientRootInstance == 0) return
         val scale = radarIsometricPlateAssetScale(displayedVisibleRadius, RADAR_ISO_PLATE_RADIUS_UNITS)
         val rotation = radarIsometricWorldRotation(heading)
-        if (!force && scale == lastAmbientScale && rotation == lastAmbientHeading) return
+        // The ground offset is kept as a fraction of one real grid cell, then expressed in the current
+        // plate units: that keeps its phase correct while the plate re-scales for zoom.
+        val unitsPerMeter = radarIsometricPlateUnitsPerMeter(displayedVisibleRadius)
+        val northUpOffset = RadarScenePoint(
+            x = groundPhaseMeters.x * unitsPerMeter,
+            z = groundPhaseMeters.z * unitsPerMeter,
+        )
+        val ground = radarIsometricRotate(northUpOffset, heading)
+        if (!force && scale == lastAmbientScale && rotation == lastAmbientHeading &&
+            ground.x == lastGroundOffsetX && ground.z == lastGroundOffsetZ
+        ) {
+            return
+        }
         lastAmbientScale = scale
         lastAmbientHeading = rotation
+        lastGroundOffsetX = ground.x
+        lastGroundOffsetZ = ground.z
         Matrix.setIdentityM(ambientTransform, 0)
+        // Translation last so it lands in scene units after the plate's own rotate + scale.
+        Matrix.translateM(ambientTransform, 0, ground.x, 0f, ground.z)
         Matrix.rotateM(ambientTransform, 0, rotation, 0f, 1f, 0f)
         Matrix.scaleM(ambientTransform, 0, scale, scale, scale)
         engine.transformManager.setTransform(ambientRootInstance, ambientTransform)
+    }
+
+    /**
+     * Keeps the ground phase anchored to the player's first fix and moves it opposite to their real
+     * travel, with a low-pass filter that scales with the reported fix accuracy.
+     *
+     * A GPS fix wanders by its accuracy when the player stands still, and the isometric plate is a
+     * real-metre reference, so feeding raw fixes to it turns a standing player into a shaking grid.
+     * The filter has a 0.35 s base time constant plus 0.08 s per metre of reported accuracy (a 10 m
+     * fix follows with ~1.15 s), which averages the wander away while walking still reads within a
+     * step or two. Fixes coarser than [GROUND_HOLD_ACCURACY_METERS] hold the grid entirely instead of
+     * pretending to fine movement; the geometry layer then folds the smoothed travel to half a cell.
+     */
+    private fun updateGroundPhase(player: GeoPoint?, accuracyMeters: Float?, deltaSeconds: Float) {
+        if (player == null) return
+        val anchor = groundAnchor ?: player.also { groundAnchor = it }
+        val relative = RadarWorldGeometry.relative(anchor, player)
+        val target = RadarScenePoint(
+            x = (-relative.eastMeters).toFloat(),
+            z = relative.northMeters.toFloat(),
+        )
+        val smoothed = groundSmoothedMeters ?: target.also { groundSmoothedMeters = it }
+        val accuracy = (accuracyMeters ?: 0f).coerceAtLeast(0f)
+        if (accuracy > GROUND_HOLD_ACCURACY_METERS) {
+            groundPhaseMeters = foldGroundPhase(smoothed)
+            return
+        }
+        val tau = GROUND_FOLLOW_TAU_SECONDS + accuracy * GROUND_TAU_PER_ACCURACY_METER
+        val alpha = (1.0 - exp(-deltaSeconds.coerceIn(0f, 0.1f) / tau)).toFloat().coerceIn(0f, 1f)
+        val next = RadarScenePoint(
+            x = smoothed.x + (target.x - smoothed.x) * alpha,
+            z = smoothed.z + (target.z - smoothed.z) * alpha,
+        )
+        groundSmoothedMeters = next
+        groundPhaseMeters = foldGroundPhase(next)
+    }
+
+    private fun foldGroundPhase(smoothed: RadarScenePoint): RadarScenePoint {
+        val cell = RADAR_ISO_GRID_CELL_METERS
+        return RadarScenePoint(
+            x = foldToHalfCell(smoothed.x.toDouble(), cell),
+            z = foldToHalfCell(smoothed.z.toDouble(), cell),
+        )
     }
 
     /** Uploads the player token first, then the nearest pending Digimon. */
@@ -763,9 +908,12 @@ internal class RadarIsometricSceneView(
             }
         }
         track.worldPosition = placement.worldPosition
+        // During an overworld conversation the subject stands and faces the camera, like the farm's
+        // idle residents: travel bearings would otherwise leave it turned away from the player.
+        val facingCamera = id == conversationFocusId
         val orientation = radarCardboardOrientation(
             worldBearingDegrees = Math.toDegrees(track.headingBearing.toDouble()).toFloat(),
-            hasTravel = track.hasTravel,
+            hasTravel = track.hasTravel && !facingCamera,
             compassHeadingDegrees = heading,
             previousMirror = track.mirror,
             flipThreshold = CARDROARD_FACING_FLIP_THRESHOLD,
@@ -952,6 +1100,10 @@ internal class RadarIsometricSceneView(
         for (entity in asset.entities) {
             val instance = engine.renderableManager.getInstance(entity)
             if (instance == 0) continue
+            // The authored world grid is a translucent mesh too, so Filament depth-sorts the two. Now
+            // that the plate slides under the ring, that sort key flips with the walking direction; a
+            // late render priority keeps the ring above the grid no matter where the plate has moved.
+            engine.renderableManager.setPriority(instance, RING_DECAL_PRIORITY)
             for (primitive in 0 until engine.renderableManager.getPrimitiveCount(instance)) {
                 decal.materials += engine.renderableManager.getMaterialInstanceAt(instance, primitive)
             }
@@ -1042,8 +1194,12 @@ internal class RadarIsometricSceneView(
         val rootInstance = manager.getInstance(asset.root)
         if (rootInstance == 0) return
         val diameter = RADAR_ISO_PLATE_RADIUS_UNITS * 2f
+        // Same rule as the interaction ring: clear the authored grid at every zoom, otherwise the
+        // metre rings sink under its lines once the plate scales up.
+        val gridY = RADAR_ISO_AUTHORED_GRID_HEIGHT_UNITS *
+            radarIsometricPlateAssetScale(displayedVisibleRadius, RADAR_ISO_PLATE_RADIUS_UNITS)
         Matrix.setIdentityM(tmpMatrix, 0)
-        Matrix.translateM(tmpMatrix, 0, 0f, RING_GROUND_Y_UNITS, 0f)
+        Matrix.translateM(tmpMatrix, 0, 0f, gridY + RING_DECAL_LIFT_UNITS, 0f)
         Matrix.rotateM(tmpMatrix, 0, radarIsometricWorldRotation(heading), 0f, 1f, 0f)
         Matrix.rotateM(tmpMatrix, 0, -90f, 1f, 0f, 0f)
         Matrix.scaleM(tmpMatrix, 0, diameter, diameter, diameter)
@@ -1057,6 +1213,10 @@ internal class RadarIsometricSceneView(
         resources.loadResources(asset)
         asset.releaseSourceData()
         viewer.scene.addEntities(asset.entities)
+        for (entity in asset.entities) {
+            val instance = engine.renderableManager.getInstance(entity)
+            if (instance != 0) engine.renderableManager.setPriority(instance, RING_GROUND_PRIORITY)
+        }
         ringGroundAsset = asset
     }
 
@@ -1393,7 +1553,21 @@ internal class RadarIsometricSceneView(
         const val RING_GROUND_TEXTURE_SIZE = 1024
         const val RING_GROUND_HALO_PX = 9f
         const val RING_GROUND_CORE_PX = 1.3f
-        const val RING_GROUND_Y_UNITS = 0.02f
+        /**
+         * Filament priorities: 4 is the default and 7 renders last. The authored world grid is a
+         * translucent mesh, so the ground markings are given a late priority to stay above it.
+         */
+        const val RING_GROUND_PRIORITY = 5
+        const val RING_DECAL_PRIORITY = 6
+        /**
+         * Ground-follow low-pass: a GPS fix wanders by its accuracy while the player stands still and
+         * the plate is a real-metre reference, so the filter's time constant grows with the reported
+         * accuracy instead of turning that wander into a shaking grid.
+         */
+        const val GROUND_FOLLOW_TAU_SECONDS = 0.35f
+        const val GROUND_TAU_PER_ACCURACY_METER = 0.08f
+        /** Coarser than this, a fix is not allowed to move the ground at all. */
+        const val GROUND_HOLD_ACCURACY_METERS = 30f
         const val RING_LABEL_BEARING_DEGREES = 55.0
         const val RING_LABEL_HEIGHT_UNITS = 0.03f
 

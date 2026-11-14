@@ -79,7 +79,7 @@ The plan has more work than a single Alpha release should block on. Phase 0 fina
 | Delivery | Trunk-based, task-sized PRs, release after each phase; no phase-long branches | Avoids branch rot and conflicts with active feature work |
 | Module READMEs | All product modules (5 after merge; 6 if the `hardware-dim` fallback is retained) | Onboarding; architecture decisions; public API surface |
 | Documentation | ADRs for key decisions + a docs index; reduce reliance on the 200 KB `TESTING.md` | Future developers need the "why", not only the history |
-| applicationId | Keep `com.github.nacabaro.vbhelper` for upgrade continuity; revisit only at a clean-install boundary | `applicationId` changes break updates and existing installs; namespace rename is internal |
+| applicationId | Kept `com.github.nacabaro.vbhelper` for upgrade continuity during the refactor; **superseded 2026-11-14 by [ADR 0006](docs/adr/0006-own-application-id.md)**: current value is `com.tamerslab.vbhelper` (separate app, no VBHelper update coupling) | `applicationId` changes break updates and existing installs; namespace rename is internal |
 | Estimation | Base estimate + 20–30% contingency + spike budget; re-estimate after Phase 1 | Hardware/device work is the most likely underestimate |
 
 ---
@@ -348,7 +348,7 @@ TamersLab/
 |------|------------|
 | Package rename breaks git history | Use `git mv`; tag the pre-rename commit; rely on rename detection; do not rewrite history unless necessary |
 | Package rename breaks persisted/reflective names | Run the rename checklist (WorkManager workers, manifest components, deep links, Gson/type tokens, protobuf, `BuildConfig`, ProGuard); test an upgrade install |
-| `applicationId` change breaks upgrades | Keep `com.github.nacabaro.vbhelper` by default; treat any change as a clean-install boundary with explicit approval |
+| `applicationId` change breaks upgrades | Keep `com.github.nacabaro.vbhelper` by default; treat any change as a clean-install boundary with explicit approval. **Boundary crossed 2026-11-14:** owner approved a separate identity, `com.tamerslab.vbhelper` ([ADR 0006](docs/adr/0006-own-application-id.md)) |
 | Hardware merge blocked by Lombok/commons-io/slf4j | Spike first; if Android packaging fails, keep `hardware-dim` as a JVM module behind a `hardware` API facade; do not force one module |
 | Koin migration breaks runtime DI | Hard cutover: no new dependencies in `DefaultAppContainer`; module-graph test; migrate module-by-module |
 | Two DI systems drift | Remove or freeze `DefaultAppContainer` by the end of Phase 2; track any remaining adapter as a follow-up |

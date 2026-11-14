@@ -23,5 +23,8 @@ data class ChatMessageEntity(
     val role: String, // "user" | "assistant"
     val content: String,
     val timestamp: Long,
-    val isRead: Boolean = false
+    val isRead: Boolean = false,
+    // DigiLine v2 (schema 56): nullable card metadata; null for legacy free-text rows.
+    val kind: String? = null,
+    val payloadJson: String? = null,
 )

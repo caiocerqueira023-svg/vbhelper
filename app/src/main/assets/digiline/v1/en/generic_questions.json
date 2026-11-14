@@ -1,0 +1,6149 @@
+{
+  "schemaVersion": 1,
+  "questions": [
+    {
+      "id": "gen.1.1",
+      "askerTypes": [
+        1,
+        2
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "When I do something kind, do you want me to say it out loud or let it show quietly?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Tell me out loud. I like knowing what you feel.",
+          "reaction": "Then I'll say it, even when my voice wobbles.",
+          "moodDelta": 1,
+          "shift": {
+            "1": 2,
+            "2": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Actions are enough. I'll remember what you did.",
+          "reaction": "Good. My promises are quieter than my words.",
+          "moodDelta": 1,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "c",
+          "text": "Do whatever feels natural. I'll notice either way.",
+          "reaction": "That takes the pressure off. Thanks.",
+          "moodDelta": 0,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.3.1",
+      "askerTypes": [
+        3,
+        4
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "If I saw you about to try something risky, should I speak up straight away or wait until you ask?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Wait a little. Let me learn from my own mistakes.",
+          "reaction": "I'll try to be worth the room you give me.",
+          "moodDelta": 1,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Speak up. I'd rather hear a warning too early than too late.",
+          "reaction": "Then I'll keep my warnings honest and quick.",
+          "moodDelta": 1,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "c",
+          "text": "Depends on the risk. Use your judgment.",
+          "reaction": "I'll judge the danger, not the person.",
+          "moodDelta": 0,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.5.1",
+      "askerTypes": [
+        5,
+        6
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "What should I do with my energy when a plan falls apart?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Throw it into the next plan. Don't let the fire go out.",
+          "reaction": "Right. The fire is mine to keep, not the plan's.",
+          "moodDelta": 1,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Steady yourself first, then pick the action that matters most.",
+          "reaction": "Steady, then decisive. I can do that.",
+          "moodDelta": 1,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Take a breath and see what's actually left to save.",
+          "reaction": "Counting what remains sounds better than counting what's lost.",
+          "moodDelta": 0,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.7.1",
+      "askerTypes": [
+        7,
+        8
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "There's a shortcut through the ruins. Everyone says it's risky. What do you think?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Take it. A risk we choose is better than a delay we regret.",
+          "reaction": "Then let's move before the hesitation catches up.",
+          "moodDelta": 1,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Let's scout it first. I want to know what we're betting on.",
+          "reaction": "Smart. I'd rather win the bet than survive it.",
+          "moodDelta": 1,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "The long road is fine if the shortcut is a guess.",
+          "reaction": "Then I'll keep my pace easy and my eyes open.",
+          "moodDelta": 0,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.9.1",
+      "askerTypes": [
+        9,
+        10
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "When I'm hiding something, do you want the truth right away or a chance to work it out?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Give me a moment. I'd rather understand than pry.",
+          "reaction": "You always give me room to find my own words.",
+          "moodDelta": 1,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Let me guess for a while. Half the fun is the puzzle.",
+          "reaction": "Then I'll drop a hint that's almost fair.",
+          "moodDelta": 1,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Just tell me the part I need to know.",
+          "reaction": "Plain and useful. I can live with that.",
+          "moodDelta": 0,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.11.1",
+      "askerTypes": [
+        11,
+        12
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "We have one afternoon and two places we could be. How should we decide?",
+      "options": [
+        {
+          "id": "a",
+          "text": "List what we'd gain from each. The right choice usually shows in the details.",
+          "reaction": "Details it is. I'll bring the list.",
+          "moodDelta": 1,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Pick the one that helps the bigger plan, even if it's less fun.",
+          "reaction": "The bigger plan thanks you, even if my feet don't.",
+          "moodDelta": 1,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Flip a coin and see which result disappoints me.",
+          "reaction": "Clever. Even a coin can reveal what we want.",
+          "moodDelta": 0,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.13.1",
+      "askerTypes": [
+        13,
+        14
+      ],
+      "core": "AMICABILITY",
+      "stageTier": 1,
+      "prompt": "A stranger offers us a good deal at a fair price. Do we take it?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Take it. Good timing is worth as much as good intentions.",
+          "reaction": "Then I'll shake on it before the moment cools.",
+          "moodDelta": 1,
+          "shift": {
+            "13": 2,
+            "14": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "b",
+          "text": "Take it, but ask how they're doing first. Good deals can be friendly.",
+          "reaction": "A fair deal between friends is the best kind.",
+          "moodDelta": 1,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Only if we understand what they get out of it.",
+          "reaction": "No invisible hooks. Agreed.",
+          "moodDelta": 0,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.15.1",
+      "askerTypes": [
+        15,
+        16
+      ],
+      "core": "AMICABILITY",
+      "stageTier": 1,
+      "prompt": "Nobody's talking on the way home. Should we fill the silence?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Yes. Words keep the long road short.",
+          "reaction": "Then I'll start with the smallest story I know.",
+          "moodDelta": 1,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "b",
+          "text": "No. Sometimes quiet is the kindest company.",
+          "reaction": "Then I'll walk beside you and let the road talk.",
+          "moodDelta": 1,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Ask one small question and see what happens.",
+          "reaction": "One question, no pressure. I like the odds.",
+          "moodDelta": 0,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.1.2",
+      "askerTypes": [
+        1,
+        16
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "I helped someone today, but I'm not sure I did the right thing. Do you want to hear the details?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Yes. Tell me the small parts too. They matter.",
+          "reaction": "The small parts are the ones I kept replaying.",
+          "moodDelta": 1,
+          "shift": {
+            "1": 2,
+            "2": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Only if it's still sitting heavy on you. I can listen.",
+          "reaction": "It is. Thanks for noticing without making me say it.",
+          "moodDelta": 1,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Wait until you've rested. The story will be clearer then.",
+          "reaction": "Good idea. Tired memories lie a little.",
+          "moodDelta": 0,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.2.1",
+      "askerTypes": [
+        2,
+        15
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "I promised two people things I can't do at the same time. What now?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Keep the promise to whoever truly needs you, and explain it honestly to the other.",
+          "reaction": "Honest and hard. I'll do it before the day runs out.",
+          "moodDelta": 1,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Talk to both together. Most problems shrink when everyone's in the room.",
+          "reaction": "Everyone in the room. Yes, that's better than whispering.",
+          "moodDelta": 1,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Ask for a day. Promises made in a rush are still promises.",
+          "reaction": "One day to make it right. That's fair.",
+          "moodDelta": 0,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.3.2",
+      "askerTypes": [
+        3,
+        14
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "Someone in our group keeps making the same mistake. How should I bring it up?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Wait for a calm moment and assume they can learn.",
+          "reaction": "Calm and patient. You make correction sound survivable.",
+          "moodDelta": 1,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Bring it up gently and offer to help fix it.",
+          "reaction": "Offer help first. Then the mistake is small.",
+          "moodDelta": 1,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Say it plainly, but once. Repeating it just makes people guard their backs.",
+          "reaction": "Once, clearly, and then move on. Agreed.",
+          "moodDelta": 0,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.4.1",
+      "askerTypes": [
+        4,
+        13
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "There's a chance to gain something, but it means splitting the group for a while.",
+      "options": [
+        {
+          "id": "a",
+          "text": "Don't split. Whatever we gain isn't worth a gap in our watch.",
+          "reaction": "Then the watch stays whole. I'd rather be careful than lucky.",
+          "moodDelta": 1,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Take the chance. A short split is a small price for a real gain.",
+          "reaction": "I'll take the chance, and I'll bring back more than I cost.",
+          "moodDelta": 1,
+          "shift": {
+            "13": 2,
+            "14": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Only split if both halves can reach each other quickly.",
+          "reaction": "Short leash, long gain. That's a trade I can make.",
+          "moodDelta": 0,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.5.2",
+      "askerTypes": [
+        5,
+        12
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "We could finish a task tonight or do it properly tomorrow.",
+      "options": [
+        {
+          "id": "a",
+          "text": "Tonight. Momentum is worth more than a perfect plan.",
+          "reaction": "Then I'll keep the momentum warm until the last step.",
+          "moodDelta": 1,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Tomorrow. A rushed finish usually costs more than it saves.",
+          "reaction": "Tomorrow, properly. I can be patient for one night.",
+          "moodDelta": 1,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Tonight, if we fix the goal before we start.",
+          "reaction": "A fixed goal makes the long night worth it.",
+          "moodDelta": 0,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.6.1",
+      "askerTypes": [
+        6,
+        11
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "I noticed a lie in what our contact said. Should I call it out?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Yes. Say it openly and let them answer for it.",
+          "reaction": "Then I'll say it to their face, not behind their back.",
+          "moodDelta": 1,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Not yet. Note the details first and catch the whole pattern.",
+          "reaction": "Pattern first. One lie is a thread, not a net.",
+          "moodDelta": 1,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Ask one careful question and watch whether the story holds.",
+          "reaction": "One question, then listen. I can do that.",
+          "moodDelta": 0,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.7.2",
+      "askerTypes": [
+        7,
+        10
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "A puzzle has three solutions. One is fast, one is clever, one is safe.",
+      "options": [
+        {
+          "id": "a",
+          "text": "Fast. If we hesitate, the puzzle wins.",
+          "reaction": "Fast it is. I'll be the one who moves first.",
+          "moodDelta": 1,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Clever. Winning without sweating is still winning.",
+          "reaction": "Then watch me win this one with a smile.",
+          "moodDelta": 1,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Safe first. We can always come back for the other two.",
+          "reaction": "Safe now, clever later. Fine by me.",
+          "moodDelta": 0,
+          "shift": {
+            "1": 2,
+            "2": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.8.1",
+      "askerTypes": [
+        8,
+        9
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "I want to try a new way of fighting. It could fail badly.",
+      "options": [
+        {
+          "id": "a",
+          "text": "Try it in a real fight. A new way only counts once it's tested.",
+          "reaction": "Then I'll test it where it counts and take the bruises.",
+          "moodDelta": 1,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Try it slowly first. Understanding beats surprise.",
+          "reaction": "Slow and certain. I'll learn it before I trust it.",
+          "moodDelta": 1,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Try it, but tell me the first sign of failure.",
+          "reaction": "I'll call the warning before the mistake spreads.",
+          "moodDelta": 0,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.1.3",
+      "askerTypes": [
+        1,
+        9
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "When I feel strongly about something, I can't always explain why. Do you want the reason or the feeling first?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The feeling first. Reasons can wait.",
+          "reaction": "Then here's the feeling: I trust you with it.",
+          "moodDelta": 1,
+          "shift": {
+            "1": 2,
+            "2": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "The reason, slowly. Then the feeling will make sense.",
+          "reaction": "Slowly, then. I'll untangle it for you.",
+          "moodDelta": 1,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Both, in whatever order comes out.",
+          "reaction": "Fair. Strong feelings make their own order.",
+          "moodDelta": 0,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.2.2",
+      "askerTypes": [
+        2,
+        10
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "I know where the missing piece is. I could tell you now or lead you there myself.",
+      "options": [
+        {
+          "id": "a",
+          "text": "Lead. But tell me if I can help carry it.",
+          "reaction": "Lead the way? I like that you'll help carry it.",
+          "moodDelta": 1,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Tell me a riddle and let me find it. That's more fun.",
+          "reaction": "A riddle it is. You'll hate how easy it is.",
+          "moodDelta": 1,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Just the direction. I'd rather find the rest.",
+          "reaction": "Direction only. Then the finding is yours.",
+          "moodDelta": 0,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.3.3",
+      "askerTypes": [
+        3,
+        11
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "Two of our friends are arguing. One is wrong and doesn't know it.",
+      "options": [
+        {
+          "id": "a",
+          "text": "Let them finish first. Being wrong out loud is part of learning.",
+          "reaction": "You'd let someone finish being wrong. That's rarer than it should be.",
+          "moodDelta": 1,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Point out the exact contradiction. Vague corrections help nobody.",
+          "reaction": "Exact contradiction, no sarcasm. I can do that.",
+          "moodDelta": 1,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Ask them what they actually want. Arguments hide that.",
+          "reaction": "The want under the argument. That's the real target.",
+          "moodDelta": 0,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.4.2",
+      "askerTypes": [
+        4,
+        12
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "We can leave the camp early or finish one last useful thing.",
+      "options": [
+        {
+          "id": "a",
+          "text": "Leave early. A safe walk beats a useful delay.",
+          "reaction": "Safe walk. I'll carry the useful thing tomorrow.",
+          "moodDelta": 1,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Finish it. Timing is part of the plan, not an accident.",
+          "reaction": "Finish it, then move. Understood.",
+          "moodDelta": 1,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Leave early only if the thing can wait for us.",
+          "reaction": "Then we check whether it can wait. Practical.",
+          "moodDelta": 0,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.5.3",
+      "askerTypes": [
+        5,
+        13
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "A deal is fair, but only slightly. Do we shake hands?",
+      "options": [
+        {
+          "id": "a",
+          "text": "No. I'd rather earn something worth being proud of.",
+          "reaction": "Then we earn it properly. I'll take the longer road.",
+          "moodDelta": 1,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Yes. Slightly fair is still fair, and the door is open.",
+          "reaction": "The door is open. Let's not pretend fair is a trap.",
+          "moodDelta": 1,
+          "shift": {
+            "13": 2,
+            "14": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Ask for one better term. It costs nothing to try.",
+          "reaction": "One better term. If they refuse, we still know them better.",
+          "moodDelta": 0,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.6.2",
+      "askerTypes": [
+        6,
+        14
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "I'm about to admit a mistake in front of everyone. Say something first?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Go ahead. Owning it is braver than hiding it.",
+          "reaction": "Then I'll own it with my chin up.",
+          "moodDelta": 1,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "I'll stand beside you while you say it.",
+          "reaction": "You standing there will make it half as loud.",
+          "moodDelta": 1,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Say it once, clearly, and don't apologize twice.",
+          "reaction": "Once, clearly. Then we move on.",
+          "moodDelta": 0,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.7.3",
+      "askerTypes": [
+        7,
+        15
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "There's a strange noise past the ridge. Do we investigate?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Yes. Standing here guessing is worse.",
+          "reaction": "Then let's stop guessing and start walking.",
+          "moodDelta": 1,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Yes, but let's bring the others. Stories are better shared.",
+          "reaction": "The others make everything less strange.",
+          "moodDelta": 1,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Check from a distance first. Curiosity can wait a minute.",
+          "reaction": "A minute of watching before a step. Sensible.",
+          "moodDelta": 0,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.8.2",
+      "askerTypes": [
+        8,
+        16
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "A frightened wild Digimon is blocking the path. How do we get through?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Walk forward calmly. Most threats fold when they meet resolve.",
+          "reaction": "Calm and forward. I won't rush the fear.",
+          "moodDelta": 1,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Give it room and speak softly. Fear needs space to settle.",
+          "reaction": "Space, soft words, time. I can wait.",
+          "moodDelta": 1,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Find another way around and leave it be.",
+          "reaction": "Another way is fine. No need to win a pointless fight.",
+          "moodDelta": 0,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.1.4",
+      "askerTypes": [
+        1,
+        8
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "I want to do something bold tomorrow. Would you come with me?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Of course. I'd follow you anywhere, you know that.",
+          "reaction": "Then I'll make sure bold turns out to be worth it.",
+          "moodDelta": 1,
+          "shift": {
+            "1": 2,
+            "2": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Only if we plan the bold part together.",
+          "reaction": "Together, then. Bold is better with a plan.",
+          "moodDelta": 1,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Tell me the plan first. I'll decide after.",
+          "reaction": "Fair. I'd rather earn the yes than assume it.",
+          "moodDelta": 0,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.2.3",
+      "askerTypes": [
+        2,
+        7
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "I could rush ahead to warn them, or stay and finish the work here.",
+      "options": [
+        {
+          "id": "a",
+          "text": "Stay. Finish what you promised, then we'll go together.",
+          "reaction": "Then I'll finish it and keep my promise honest.",
+          "moodDelta": 1,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Rush ahead. Warnings lose value with every minute.",
+          "reaction": "Then I'll move fast and make every minute count.",
+          "moodDelta": 1,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Send word somehow and keep working.",
+          "reaction": "A message and steady hands. I like both.",
+          "moodDelta": 0,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.3.4",
+      "askerTypes": [
+        3,
+        6
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "Someone insulted our group. Do I answer with words or silence?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Silence, then work. Results answer louder than insults.",
+          "reaction": "Then I'll let the work do the talking.",
+          "moodDelta": 1,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Words, clearly and once. Let them know where the line is.",
+          "reaction": "Once, clearly. They'll remember the line.",
+          "moodDelta": 1,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Ask what they hope to gain. Insults usually have a reason.",
+          "reaction": "The reason under the insult. I'll look there.",
+          "moodDelta": 0,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.4.3",
+      "askerTypes": [
+        4,
+        5
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "The weather looks bad. Do we risk the pass or turn back?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Turn back. There's no shame in surviving a storm.",
+          "reaction": "Then we live to cross it another day. Good.",
+          "moodDelta": 1,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Push through. If we turn back now, we'll doubt ourselves for a week.",
+          "reaction": "Then I'll push first and doubt later.",
+          "moodDelta": 1,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Watch the sky for an hour, then choose.",
+          "reaction": "An hour of watching beats a day of regret.",
+          "moodDelta": 0,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.9.2",
+      "askerTypes": [
+        9,
+        16
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "I think I understand why the village is anxious. Do you want to hear my guess?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Yes. Say it plainly and we'll test it together.",
+          "reaction": "Plainly, then. And we test it before we trust it.",
+          "moodDelta": 1,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Yes, but let's ask them first. Guesses can bruise.",
+          "reaction": "Ask first. A guess can be gentle when it's curious.",
+          "moodDelta": 1,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Hold it until we have one more fact.",
+          "reaction": "One more fact. Patience makes better answers.",
+          "moodDelta": 0,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.10.1",
+      "askerTypes": [
+        10,
+        15
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "I could tell the story of how we met, or keep it for a quieter night.",
+      "options": [
+        {
+          "id": "a",
+          "text": "Keep it. A story gains flavor when it's rare.",
+          "reaction": "Then I'll keep it safe and warm for later.",
+          "moodDelta": 1,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Tell it now. Everyone's here and listening.",
+          "reaction": "Then gather close. I'll tell it properly.",
+          "moodDelta": 1,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Tell the short version and save the rest.",
+          "reaction": "Short now, long later. A fair bargain.",
+          "moodDelta": 0,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.11.2",
+      "askerTypes": [
+        11,
+        14
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "I noticed our host is nervous. Should I ask about it?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Ask directly, but name the detail that gave it away.",
+          "reaction": "The exact detail. Then they'll know I paid attention.",
+          "moodDelta": 1,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Ask gently, without making it a test.",
+          "reaction": "Gently, then. Nerves don't deserve an interrogation.",
+          "moodDelta": 1,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Wait. Nervousness often solves itself.",
+          "reaction": "Waiting costs nothing. I'll keep an eye out.",
+          "moodDelta": 0,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.12.1",
+      "askerTypes": [
+        12,
+        13
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "There's one reward left and two ways to earn it.",
+      "options": [
+        {
+          "id": "a",
+          "text": "Take the way that also helps later. Rewards should compound.",
+          "reaction": "Compound it. I like rewards that grow.",
+          "moodDelta": 1,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Take the faster way. A reward in hand beats a story about one.",
+          "reaction": "In hand, then. Stories can wait.",
+          "moodDelta": 1,
+          "shift": {
+            "13": 2,
+            "14": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Split the effort and see which way is honest.",
+          "reaction": "Split and watch. Honest paths usually show themselves.",
+          "moodDelta": 0,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.1.5",
+      "askerTypes": [
+        1,
+        5
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "There's a storm rolling in and a shortcut that saves us half a day. Should we take it?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Ask who pays if it goes wrong. If it's only us, go; if not, stay.",
+          "reaction": "That's a fair test. I'll use it every time.",
+          "moodDelta": 1,
+          "shift": {
+            "1": 2,
+            "2": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Stand where it matters and don't apologize for it.",
+          "reaction": "Then I'll plant my feet and make the reason clear.",
+          "moodDelta": 1,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Watch, learn, and move when the pattern is clear.",
+          "reaction": "I'll watch until the moment shows itself.",
+          "moodDelta": 0,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.2.4",
+      "askerTypes": [
+        2,
+        6
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "I froze during the last fight. How do I make sure it doesn't happen again?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Only take the risk that lets everyone walk home after. I can wait.",
+          "reaction": "Then I'll count the people before I count the danger.",
+          "moodDelta": 1,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Go. A choice you keep avoiding becomes a fear you keep carrying.",
+          "reaction": "Then I'll go, and carry the fear behind me.",
+          "moodDelta": 1,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Whatever you choose, don't choose it alone. We'll share the risk.",
+          "reaction": "Then it's half as heavy already.",
+          "moodDelta": 0,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.3.5",
+      "askerTypes": [
+        3,
+        7
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "Everyone else is retreating. Do we hold the line or fall back with them?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Only take the risk that lets everyone walk home after. I can wait.",
+          "reaction": "Then I'll count the people before I count the danger.",
+          "moodDelta": 1,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Go. A choice you keep avoiding becomes a fear you keep carrying.",
+          "reaction": "Then I'll go, and carry the fear behind me.",
+          "moodDelta": 1,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Whatever you choose, don't choose it alone. We'll share the risk.",
+          "reaction": "Then it's half as heavy already.",
+          "moodDelta": 0,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.4.4",
+      "askerTypes": [
+        4,
+        8
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "I want to try something I've never done before. How do I know if I'm ready?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Ask who pays if it goes wrong. If it's only us, go; if not, stay.",
+          "reaction": "That's a fair test. I'll use it every time.",
+          "moodDelta": 1,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Stand where it matters and don't apologize for it.",
+          "reaction": "Then I'll plant my feet and make the reason clear.",
+          "moodDelta": 1,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Whatever you choose, don't choose it alone. We'll share the risk.",
+          "reaction": "Then it's half as heavy already.",
+          "moodDelta": 0,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.9.3",
+      "askerTypes": [
+        9,
+        13
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "A stranger needs help across a flooded road. How much risk is too much?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Watch, learn, and move when the pattern is clear.",
+          "reaction": "I'll watch until the moment shows itself.",
+          "moodDelta": 1,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Ask the others what they can carry before you decide.",
+          "reaction": "Everyone carries something. That's how we get through.",
+          "moodDelta": 1,
+          "shift": {
+            "13": 2,
+            "14": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Ask who pays if it goes wrong. If it's only us, go; if not, stay.",
+          "reaction": "That's a fair test. I'll use it every time.",
+          "moodDelta": 0,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.10.2",
+      "askerTypes": [
+        10,
+        14
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "I keep hesitating before the first step. What would you have me do?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Watch, learn, and move when the pattern is clear.",
+          "reaction": "I'll watch until the moment shows itself.",
+          "moodDelta": 1,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Whatever you choose, don't choose it alone. We'll share the risk.",
+          "reaction": "Then it's half as heavy already.",
+          "moodDelta": 1,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Only take the risk that lets everyone walk home after. I can wait.",
+          "reaction": "Then I'll count the people before I count the danger.",
+          "moodDelta": 0,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.11.3",
+      "askerTypes": [
+        11,
+        15
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "The plan says wait, but my instincts say move. Which should I trust?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Watch, learn, and move when the pattern is clear.",
+          "reaction": "I'll watch until the moment shows itself.",
+          "moodDelta": 1,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Whatever you choose, don't choose it alone. We'll share the risk.",
+          "reaction": "Then it's half as heavy already.",
+          "moodDelta": 1,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Stand where it matters and don't apologize for it.",
+          "reaction": "Then I'll plant my feet and make the reason clear.",
+          "moodDelta": 0,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.12.2",
+      "askerTypes": [
+        12,
+        16
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "If the fight looks unwinnable, should I still stand my ground?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Watch, learn, and move when the pattern is clear.",
+          "reaction": "I'll watch until the moment shows itself.",
+          "moodDelta": 1,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Ask the others what they can carry before you decide.",
+          "reaction": "Everyone carries something. That's how we get through.",
+          "moodDelta": 1,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Go. A choice you keep avoiding becomes a fear you keep carrying.",
+          "reaction": "Then I'll go, and carry the fear behind me.",
+          "moodDelta": 0,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.1.6",
+      "askerTypes": [
+        1,
+        9
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "One of our friends is pretending not to be hurt. Should I say something?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Be gentle and patient. The right moment usually arrives on its own.",
+          "reaction": "Then I'll be patient for both of us.",
+          "moodDelta": 1,
+          "shift": {
+            "1": 2,
+            "2": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Watch first. Hurt has a shape, and the shape tells you what's needed.",
+          "reaction": "I'll look before I speak. That feels fair.",
+          "moodDelta": 1,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Speak up. Silence lets hurt grow roots.",
+          "reaction": "Then I'll say something, even if it shakes.",
+          "moodDelta": 0,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.2.5",
+      "askerTypes": [
+        2,
+        10
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "When I'm upset, do you want me to talk about it or sit quietly?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Be gentle and patient. The right moment usually arrives on its own.",
+          "reaction": "Then I'll be patient for both of us.",
+          "moodDelta": 1,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Ask one careful question instead of guessing.",
+          "reaction": "One good question. That I can manage.",
+          "moodDelta": 1,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Speak up. Silence lets hurt grow roots.",
+          "reaction": "Then I'll say something, even if it shakes.",
+          "moodDelta": 0,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.3.6",
+      "askerTypes": [
+        3,
+        11
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "Someone needs comfort and I don't know the right words. What should I do?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Sit with them first. Comfort isn't words, it's presence.",
+          "reaction": "Presence. I can do that better than words.",
+          "moodDelta": 1,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Ask one careful question instead of guessing.",
+          "reaction": "One good question. That I can manage.",
+          "moodDelta": 1,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Say the plain thing: I'm here, and you don't have to be okay.",
+          "reaction": "I'd want someone to say that to me.",
+          "moodDelta": 0,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.4.5",
+      "askerTypes": [
+        4,
+        12
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "I want to help, but I might be in the way. How do I tell?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Be gentle and patient. The right moment usually arrives on its own.",
+          "reaction": "Then I'll be patient for both of us.",
+          "moodDelta": 1,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Ask one careful question instead of guessing.",
+          "reaction": "One good question. That I can manage.",
+          "moodDelta": 1,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Say the plain thing: I'm here, and you don't have to be okay.",
+          "reaction": "I'd want someone to say that to me.",
+          "moodDelta": 0,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.5.4",
+      "askerTypes": [
+        5,
+        13
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "Is it better to cheer someone up or let them be sad for a while?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Speak up. Silence lets hurt grow roots.",
+          "reaction": "Then I'll say something, even if it shakes.",
+          "moodDelta": 1,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Say the plain thing: I'm here, and you don't have to be okay.",
+          "reaction": "I'd want someone to say that to me.",
+          "moodDelta": 1,
+          "shift": {
+            "13": 2,
+            "14": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Watch first. Hurt has a shape, and the shape tells you what's needed.",
+          "reaction": "I'll look before I speak. That feels fair.",
+          "moodDelta": 0,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.6.3",
+      "askerTypes": [
+        6,
+        14
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "I forgot to ask how you were doing today. Does that matter?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Speak up. Silence lets hurt grow roots.",
+          "reaction": "Then I'll say something, even if it shakes.",
+          "moodDelta": 1,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Say the plain thing: I'm here, and you don't have to be okay.",
+          "reaction": "I'd want someone to say that to me.",
+          "moodDelta": 1,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Be gentle and patient. The right moment usually arrives on its own.",
+          "reaction": "Then I'll be patient for both of us.",
+          "moodDelta": 0,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.7.4",
+      "askerTypes": [
+        7,
+        15
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "A stranger looks lost and scared. Do I approach or keep my distance?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Stand in front of them if they need shielding.",
+          "reaction": "Shielding is simple. I understand simple.",
+          "moodDelta": 1,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Say the plain thing: I'm here, and you don't have to be okay.",
+          "reaction": "I'd want someone to say that to me.",
+          "moodDelta": 1,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Sit with them first. Comfort isn't words, it's presence.",
+          "reaction": "Presence. I can do that better than words.",
+          "moodDelta": 0,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.8.3",
+      "askerTypes": [
+        8,
+        16
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "How do I comfort someone without making it about me?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Speak up. Silence lets hurt grow roots.",
+          "reaction": "Then I'll say something, even if it shakes.",
+          "moodDelta": 1,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Say the plain thing: I'm here, and you don't have to be okay.",
+          "reaction": "I'd want someone to say that to me.",
+          "moodDelta": 1,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Be gentle and patient. The right moment usually arrives on its own.",
+          "reaction": "Then I'll be patient for both of us.",
+          "moodDelta": 0,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.1.7",
+      "askerTypes": [
+        1,
+        13
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "We could start the long job today or rest first and begin tomorrow. Which is better?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Take care of the people doing the work before the work itself.",
+          "reaction": "People before the task. Understood.",
+          "moodDelta": 1,
+          "shift": {
+            "1": 2,
+            "2": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Ask what everyone needs, then time it around that.",
+          "reaction": "Timing around people. That's kinder.",
+          "moodDelta": 1,
+          "shift": {
+            "13": 2,
+            "14": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Find the one decision that makes the rest easier.",
+          "reaction": "One decision. That's a relief.",
+          "moodDelta": 0,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.2.6",
+      "askerTypes": [
+        2,
+        14
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "I keep changing the plan every time something goes wrong. How do I stop?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Take care of the people doing the work before the work itself.",
+          "reaction": "People before the task. Understood.",
+          "moodDelta": 1,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Tell the others the plan and let them help hold it.",
+          "reaction": "Shared plans don't slip as easily.",
+          "moodDelta": 1,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Write the steps down. A plan you can see is easier to fix.",
+          "reaction": "On paper it can't hide from me.",
+          "moodDelta": 0,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.3.7",
+      "askerTypes": [
+        3,
+        15
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "How do I decide which task actually matters most?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Take care of the people doing the work before the work itself.",
+          "reaction": "People before the task. Understood.",
+          "moodDelta": 1,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Ask what everyone needs, then time it around that.",
+          "reaction": "Timing around people. That's kinder.",
+          "moodDelta": 1,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Don't wait for perfect conditions. They never arrive.",
+          "reaction": "Then I'll go with good enough and make it better.",
+          "moodDelta": 0,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.4.6",
+      "askerTypes": [
+        4,
+        16
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "A good chance appears early, but we're not ready. Do we take it?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Take care of the people doing the work before the work itself.",
+          "reaction": "People before the task. Understood.",
+          "moodDelta": 1,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Ask what everyone needs, then time it around that.",
+          "reaction": "Timing around people. That's kinder.",
+          "moodDelta": 1,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Find the one decision that makes the rest easier.",
+          "reaction": "One decision. That's a relief.",
+          "moodDelta": 0,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.9.4",
+      "askerTypes": [
+        9,
+        5
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "What should I do when the plan needs more time than we have?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Find the one decision that makes the rest easier.",
+          "reaction": "One decision. That's a relief.",
+          "moodDelta": 1,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Pick the choice you'd defend tomorrow, and start moving.",
+          "reaction": "Then I'll move, and answer for it tomorrow.",
+          "moodDelta": 1,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Tell the others the plan and let them help hold it.",
+          "reaction": "Shared plans don't slip as easily.",
+          "moodDelta": 0,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.10.3",
+      "askerTypes": [
+        10,
+        6
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "Is it better to finish one thing well or start three things at once?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Find the one decision that makes the rest easier.",
+          "reaction": "One decision. That's a relief.",
+          "moodDelta": 1,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Pick the choice you'd defend tomorrow, and start moving.",
+          "reaction": "Then I'll move, and answer for it tomorrow.",
+          "moodDelta": 1,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Tell the others the plan and let them help hold it.",
+          "reaction": "Shared plans don't slip as easily.",
+          "moodDelta": 0,
+          "shift": {
+            "13": 2,
+            "14": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.11.4",
+      "askerTypes": [
+        11,
+        7
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "How far ahead should I be looking when the road keeps changing?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Find the one decision that makes the rest easier.",
+          "reaction": "One decision. That's a relief.",
+          "moodDelta": 1,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Don't wait for perfect conditions. They never arrive.",
+          "reaction": "Then I'll go with good enough and make it better.",
+          "moodDelta": 1,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Ask what everyone needs, then time it around that.",
+          "reaction": "Timing around people. That's kinder.",
+          "moodDelta": 0,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.12.3",
+      "askerTypes": [
+        12,
+        8
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "The others want to move now, but the timing feels wrong. What do I say?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Find the one decision that makes the rest easier.",
+          "reaction": "One decision. That's a relief.",
+          "moodDelta": 1,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Don't wait for perfect conditions. They never arrive.",
+          "reaction": "Then I'll go with good enough and make it better.",
+          "moodDelta": 1,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Rest matters too. A tired road is a longer road.",
+          "reaction": "Then I'll rest without feeling guilty.",
+          "moodDelta": 0,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.1.8",
+      "askerTypes": [
+        1,
+        5
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "I broke something and nobody knows. Should I say it was me?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Think about who it protects before you speak.",
+          "reaction": "Then I'll check the harm first.",
+          "moodDelta": 1,
+          "shift": {
+            "1": 2,
+            "2": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Say it plainly. The truth is worth the discomfort.",
+          "reaction": "Then I'll say it and take the sting.",
+          "moodDelta": 1,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Wait for the right moment, but don't bury it.",
+          "reaction": "Timing, not hiding. Fair.",
+          "moodDelta": 0,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.2.7",
+      "askerTypes": [
+        2,
+        6
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "A friend asks if their work is good. It isn't. What do I say?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Think about who it protects before you speak.",
+          "reaction": "Then I'll check the harm first.",
+          "moodDelta": 1,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Say it plainly. The truth is worth the discomfort.",
+          "reaction": "Then I'll say it and take the sting.",
+          "moodDelta": 1,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Say it while you're standing next to them, not across the room.",
+          "reaction": "Beside them, not above them.",
+          "moodDelta": 0,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.3.8",
+      "askerTypes": [
+        3,
+        7
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "I don't know the answer. Is it better to guess or admit it?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Tell the truth gently. Hard words can still have soft edges.",
+          "reaction": "Gentle and honest. I'll try both.",
+          "moodDelta": 1,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Own the mistake before anyone has to ask.",
+          "reaction": "Before they ask. Yes.",
+          "moodDelta": 1,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Ask what they need to hear before you decide how to say it.",
+          "reaction": "Their need first. That's a good habit.",
+          "moodDelta": 0,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.4.7",
+      "askerTypes": [
+        4,
+        8
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "Someone told me a secret I shouldn't have. Do I pass it on?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Tell the truth gently. Hard words can still have soft edges.",
+          "reaction": "Gentle and honest. I'll try both.",
+          "moodDelta": 1,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Say it plainly. The truth is worth the discomfort.",
+          "reaction": "Then I'll say it and take the sting.",
+          "moodDelta": 1,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Ask what they need to hear before you decide how to say it.",
+          "reaction": "Their need first. That's a good habit.",
+          "moodDelta": 0,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.9.5",
+      "askerTypes": [
+        9,
+        13
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "How do I tell you the truth when I'm afraid it'll disappoint you?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Be exact. A vague truth just moves the confusion.",
+          "reaction": "Exact, not cruel. Got it.",
+          "moodDelta": 1,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Ask what they need to hear before you decide how to say it.",
+          "reaction": "Their need first. That's a good habit.",
+          "moodDelta": 1,
+          "shift": {
+            "13": 2,
+            "14": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Think about who it protects before you speak.",
+          "reaction": "Then I'll check the harm first.",
+          "moodDelta": 0,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.10.4",
+      "askerTypes": [
+        10,
+        14
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "Is a kind lie ever better than a hard truth?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Wait for the right moment, but don't bury it.",
+          "reaction": "Timing, not hiding. Fair.",
+          "moodDelta": 1,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Ask what they need to hear before you decide how to say it.",
+          "reaction": "Their need first. That's a good habit.",
+          "moodDelta": 1,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Think about who it protects before you speak.",
+          "reaction": "Then I'll check the harm first.",
+          "moodDelta": 0,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.11.5",
+      "askerTypes": [
+        11,
+        15
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "I made a promise I can't keep. What now?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Be exact. A vague truth just moves the confusion.",
+          "reaction": "Exact, not cruel. Got it.",
+          "moodDelta": 1,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Say it while you're standing next to them, not across the room.",
+          "reaction": "Beside them, not above them.",
+          "moodDelta": 1,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Say it plainly. The truth is worth the discomfort.",
+          "reaction": "Then I'll say it and take the sting.",
+          "moodDelta": 0,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.12.4",
+      "askerTypes": [
+        12,
+        16
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "The others believe something wrong. Do I correct them?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Wait for the right moment, but don't bury it.",
+          "reaction": "Timing, not hiding. Fair.",
+          "moodDelta": 1,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Ask what they need to hear before you decide how to say it.",
+          "reaction": "Their need first. That's a good habit.",
+          "moodDelta": 1,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Say it plainly. The truth is worth the discomfort.",
+          "reaction": "Then I'll say it and take the sting.",
+          "moodDelta": 0,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.1.9",
+      "askerTypes": [
+        1,
+        6
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "The others have known each other longer than they've known me. How do I fit in?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Give the care first and the seat will follow.",
+          "reaction": "Care first. I can do that.",
+          "moodDelta": 1,
+          "shift": {
+            "1": 2,
+            "2": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Stand beside them even when it's inconvenient.",
+          "reaction": "Inconvenient is when it counts.",
+          "moodDelta": 1,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Talk to them directly. Friendship can survive one hard conversation.",
+          "reaction": "One conversation. I can manage that.",
+          "moodDelta": 0,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.2.8",
+      "askerTypes": [
+        2,
+        7
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "I like being alone sometimes. Does that make me a bad friend?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Give the care first and the seat will follow.",
+          "reaction": "Care first. I can do that.",
+          "moodDelta": 1,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Stand beside them even when it's inconvenient.",
+          "reaction": "Inconvenient is when it counts.",
+          "moodDelta": 1,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Honesty about the drift is better than guessing.",
+          "reaction": "Ask instead of guessing. Fair.",
+          "moodDelta": 0,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.3.9",
+      "askerTypes": [
+        3,
+        8
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "A friend is drifting away. Should I chase them or let them go?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Give the care first and the seat will follow.",
+          "reaction": "Care first. I can do that.",
+          "moodDelta": 1,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Say the awkward thing out loud. Silence keeps the gap open.",
+          "reaction": "Then I'll speak and survive the awkward.",
+          "moodDelta": 1,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Honesty about the drift is better than guessing.",
+          "reaction": "Ask instead of guessing. Fair.",
+          "moodDelta": 0,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.4.8",
+      "askerTypes": [
+        4,
+        5
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "How do I join a group without making it awkward?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Be patient. Belonging grows slower than it arrives.",
+          "reaction": "Then I'll stop rushing it.",
+          "moodDelta": 1,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Say the awkward thing out loud. Silence keeps the gap open.",
+          "reaction": "Then I'll speak and survive the awkward.",
+          "moodDelta": 1,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Ask them to include the next person, and to be included yourself.",
+          "reaction": "Ask to be included. That's not weakness.",
+          "moodDelta": 0,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.9.6",
+      "askerTypes": [
+        9,
+        14
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "Someone in the group keeps excluding me. What should I say?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Watch how the group works before you work out your place.",
+          "reaction": "Watch, then step in. Good.",
+          "moodDelta": 1,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Ask them to include the next person, and to be included yourself.",
+          "reaction": "Ask to be included. That's not weakness.",
+          "moodDelta": 1,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Stand beside them even when it's inconvenient.",
+          "reaction": "Inconvenient is when it counts.",
+          "moodDelta": 0,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.10.5",
+      "askerTypes": [
+        10,
+        15
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "I don't know what to give a friend. What matters most?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Watch how the group works before you work out your place.",
+          "reaction": "Watch, then step in. Good.",
+          "moodDelta": 1,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Ask them to include the next person, and to be included yourself.",
+          "reaction": "Ask to be included. That's not weakness.",
+          "moodDelta": 1,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Stand beside them even when it's inconvenient.",
+          "reaction": "Inconvenient is when it counts.",
+          "moodDelta": 0,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.11.6",
+      "askerTypes": [
+        11,
+        16
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "How do you apologize so it lands honestly?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Honesty about the drift is better than guessing.",
+          "reaction": "Ask instead of guessing. Fair.",
+          "moodDelta": 1,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Talk to them directly. Friendship can survive one hard conversation.",
+          "reaction": "One conversation. I can manage that.",
+          "moodDelta": 1,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Stand beside them even when it's inconvenient.",
+          "reaction": "Inconvenient is when it counts.",
+          "moodDelta": 0,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.12.5",
+      "askerTypes": [
+        12,
+        13
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "Is it better to have a few close friends or many easy ones?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Honesty about the drift is better than guessing.",
+          "reaction": "Ask instead of guessing. Fair.",
+          "moodDelta": 1,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Ask them to include the next person, and to be included yourself.",
+          "reaction": "Ask to be included. That's not weakness.",
+          "moodDelta": 1,
+          "shift": {
+            "13": 2,
+            "14": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Say the awkward thing out loud. Silence keeps the gap open.",
+          "reaction": "Then I'll speak and survive the awkward.",
+          "moodDelta": 0,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.1.10",
+      "askerTypes": [
+        1,
+        10
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "I'm becoming someone I don't recognize. Is that bad?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Grow at your own speed. I'd rather have you whole than fast.",
+          "reaction": "Whole over fast. That's a promise I can keep.",
+          "moodDelta": 1,
+          "shift": {
+            "1": 2,
+            "2": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Compare who you were to who you chose to become.",
+          "reaction": "Chosen, not drifted. That matters.",
+          "moodDelta": 1,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Don't shrink to fit what others expected.",
+          "reaction": "Then I'll stand taller, not smaller.",
+          "moodDelta": 0,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.2.9",
+      "askerTypes": [
+        2,
+        11
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "How do I know if I'm growing or just getting older?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Keep the gentle parts. They're worth carrying forward.",
+          "reaction": "The gentle parts stay. Good.",
+          "moodDelta": 1,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Notice what caused the change. Understanding keeps it from controlling you.",
+          "reaction": "Cause first, fear later. Got it.",
+          "moodDelta": 1,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Talk it through with us. Change is lighter when it's shared.",
+          "reaction": "Shared change. I like that better.",
+          "moodDelta": 0,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.3.10",
+      "askerTypes": [
+        3,
+        12
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "I want to change something about myself. Where do I start?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Grow at your own speed. I'd rather have you whole than fast.",
+          "reaction": "Whole over fast. That's a promise I can keep.",
+          "moodDelta": 1,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Compare who you were to who you chose to become.",
+          "reaction": "Chosen, not drifted. That matters.",
+          "moodDelta": 1,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Let the people who love you meet the new version.",
+          "reaction": "Then I'll introduce them properly.",
+          "moodDelta": 0,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.4.9",
+      "askerTypes": [
+        4,
+        9
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "What should I keep from who I used to be?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Grow at your own speed. I'd rather have you whole than fast.",
+          "reaction": "Whole over fast. That's a promise I can keep.",
+          "moodDelta": 1,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Notice what caused the change. Understanding keeps it from controlling you.",
+          "reaction": "Cause first, fear later. Got it.",
+          "moodDelta": 1,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Talk it through with us. Change is lighter when it's shared.",
+          "reaction": "Shared change. I like that better.",
+          "moodDelta": 0,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.5.5",
+      "askerTypes": [
+        5,
+        14
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "Others expect me to stay the same. Can I disappoint them?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Take the first step before you can talk yourself out of it.",
+          "reaction": "First step first. I'll go.",
+          "moodDelta": 1,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Let the people who love you meet the new version.",
+          "reaction": "Then I'll introduce them properly.",
+          "moodDelta": 1,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Compare who you were to who you chose to become.",
+          "reaction": "Chosen, not drifted. That matters.",
+          "moodDelta": 0,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.6.4",
+      "askerTypes": [
+        6,
+        15
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "How do I change without losing what you like about me?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Take the first step before you can talk yourself out of it.",
+          "reaction": "First step first. I'll go.",
+          "moodDelta": 1,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Talk it through with us. Change is lighter when it's shared.",
+          "reaction": "Shared change. I like that better.",
+          "moodDelta": 1,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Compare who you were to who you chose to become.",
+          "reaction": "Chosen, not drifted. That matters.",
+          "moodDelta": 0,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.7.5",
+      "askerTypes": [
+        7,
+        16
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "A change would make life harder for a while. Is it worth it?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Don't shrink to fit what others expected.",
+          "reaction": "Then I'll stand taller, not smaller.",
+          "moodDelta": 1,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Talk it through with us. Change is lighter when it's shared.",
+          "reaction": "Shared change. I like that better.",
+          "moodDelta": 1,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Notice what caused the change. Understanding keeps it from controlling you.",
+          "reaction": "Cause first, fear later. Got it.",
+          "moodDelta": 0,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.8.4",
+      "askerTypes": [
+        8,
+        13
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "What if I grow in a direction you didn't expect?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Don't shrink to fit what others expected.",
+          "reaction": "Then I'll stand taller, not smaller.",
+          "moodDelta": 1,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Talk it through with us. Change is lighter when it's shared.",
+          "reaction": "Shared change. I like that better.",
+          "moodDelta": 1,
+          "shift": {
+            "13": 2,
+            "14": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Notice what caused the change. Understanding keeps it from controlling you.",
+          "reaction": "Cause first, fear later. Got it.",
+          "moodDelta": 0,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.1.11",
+      "askerTypes": [
+        1,
+        14
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "Someone keeps pushing my patience. How do I push back?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Stay calm and assume they can learn. Only raise your voice for a real line.",
+          "reaction": "Calm first. Loud only for what matters.",
+          "moodDelta": 1,
+          "shift": {
+            "1": 2,
+            "2": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Keep the relationship bigger than the argument.",
+          "reaction": "Then I'll fight for the friendship, not the win.",
+          "moodDelta": 1,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Defend your side, but only where the line actually is.",
+          "reaction": "Then I'll stand at the line, not past it.",
+          "moodDelta": 0,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.2.10",
+      "askerTypes": [
+        2,
+        15
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "Two friends are arguing and both want me on their side. What do I do?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Leave room for them to be wrong without being humiliated.",
+          "reaction": "Dignity for them too. Fair.",
+          "moodDelta": 1,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Keep the relationship bigger than the argument.",
+          "reaction": "Then I'll fight for the friendship, not the win.",
+          "moodDelta": 1,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Defend your side, but only where the line actually is.",
+          "reaction": "Then I'll stand at the line, not past it.",
+          "moodDelta": 0,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.3.11",
+      "askerTypes": [
+        3,
+        16
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "When should I compromise and when should I hold firm?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Stay calm and assume they can learn. Only raise your voice for a real line.",
+          "reaction": "Calm first. Loud only for what matters.",
+          "moodDelta": 1,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Ask what both sides need, then see if one answer covers it.",
+          "reaction": "One answer for both. Worth looking for.",
+          "moodDelta": 1,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Say it once, clearly, and don't back away from it.",
+          "reaction": "Once, clearly. Done.",
+          "moodDelta": 0,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.4.10",
+      "askerTypes": [
+        4,
+        13
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "Someone insulted you in front of me. How should I respond?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Leave room for them to be wrong without being humiliated.",
+          "reaction": "Dignity for them too. Fair.",
+          "moodDelta": 1,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Ask what both sides need, then see if one answer covers it.",
+          "reaction": "One answer for both. Worth looking for.",
+          "moodDelta": 1,
+          "shift": {
+            "13": 2,
+            "14": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Name the facts, not the person.",
+          "reaction": "Facts, not names. I can do that.",
+          "moodDelta": 0,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.9.7",
+      "askerTypes": [
+        9,
+        6
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "A boundary I set is being ignored. Do I repeat it or leave?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Name the facts, not the person.",
+          "reaction": "Facts, not names. I can do that.",
+          "moodDelta": 1,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Say it once, clearly, and don't back away from it.",
+          "reaction": "Once, clearly. Done.",
+          "moodDelta": 1,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Keep the relationship bigger than the argument.",
+          "reaction": "Then I'll fight for the friendship, not the win.",
+          "moodDelta": 0,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.10.6",
+      "askerTypes": [
+        10,
+        7
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "How do I disagree without turning it into a fight?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Name the facts, not the person.",
+          "reaction": "Facts, not names. I can do that.",
+          "moodDelta": 1,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Say it once, clearly, and don't back away from it.",
+          "reaction": "Once, clearly. Done.",
+          "moodDelta": 1,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Leave room for them to be wrong without being humiliated.",
+          "reaction": "Dignity for them too. Fair.",
+          "moodDelta": 0,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.11.7",
+      "askerTypes": [
+        11,
+        8
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "Is walking away from an argument weak?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Name the facts, not the person.",
+          "reaction": "Facts, not names. I can do that.",
+          "moodDelta": 1,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Defend your side, but only where the line actually is.",
+          "reaction": "Then I'll stand at the line, not past it.",
+          "moodDelta": 1,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Stay calm and assume they can learn. Only raise your voice for a real line.",
+          "reaction": "Calm first. Loud only for what matters.",
+          "moodDelta": 0,
+          "shift": {
+            "1": 2,
+            "2": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.12.6",
+      "askerTypes": [
+        12,
+        5
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "What do I do when I'm the one who was wrong in the fight?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Name the facts, not the person.",
+          "reaction": "Facts, not names. I can do that.",
+          "moodDelta": 1,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Defend your side, but only where the line actually is.",
+          "reaction": "Then I'll stand at the line, not past it.",
+          "moodDelta": 1,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Ask what both sides need, then see if one answer covers it.",
+          "reaction": "One answer for both. Worth looking for.",
+          "moodDelta": 0,
+          "shift": {
+            "13": 2,
+            "14": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.1.12",
+      "askerTypes": [
+        1,
+        6
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "What should I try to learn first about this world?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Learn about what you care for. Care makes curiosity last.",
+          "reaction": "Care behind the curiosity. Got it.",
+          "moodDelta": 1,
+          "shift": {
+            "1": 2,
+            "2": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Try the thing. You learn more from one attempt than ten warnings.",
+          "reaction": "Then I'll attempt it, and learn from the bruises.",
+          "moodDelta": 1,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Swap what you know with me. That's a fair trade.",
+          "reaction": "A fair trade. I'll go first.",
+          "moodDelta": 0,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.2.11",
+      "askerTypes": [
+        2,
+        7
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "I hate getting things wrong. How do I practice without dreading it?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Learn about what you care for. Care makes curiosity last.",
+          "reaction": "Care behind the curiosity. Got it.",
+          "moodDelta": 1,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Ask the brave question, not the safe one.",
+          "reaction": "The brave question. I'll ask it.",
+          "moodDelta": 1,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Start with the basics and let them stack. Speed comes later.",
+          "reaction": "Basics first, speed later. Fine.",
+          "moodDelta": 0,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.3.12",
+      "askerTypes": [
+        3,
+        8
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "Should I ask more questions or trust what I already know?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Learn about what you care for. Care makes curiosity last.",
+          "reaction": "Care behind the curiosity. Got it.",
+          "moodDelta": 1,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Ask the brave question, not the safe one.",
+          "reaction": "The brave question. I'll ask it.",
+          "moodDelta": 1,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Test what you think you know. That's how wrong turns into right.",
+          "reaction": "Test it. That makes the knowing real.",
+          "moodDelta": 0,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.4.11",
+      "askerTypes": [
+        4,
+        5
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "There's something I don't understand about you. Is it okay to ask?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Be patient with mistakes. They're the tuition, not the failure.",
+          "reaction": "Tuition, not failure. I like that.",
+          "moodDelta": 1,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Try the thing. You learn more from one attempt than ten warnings.",
+          "reaction": "Then I'll attempt it, and learn from the bruises.",
+          "moodDelta": 1,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Learn beside someone. It's easier to stay curious together.",
+          "reaction": "Then let's learn it side by side.",
+          "moodDelta": 0,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.9.8",
+      "askerTypes": [
+        9,
+        14
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "How do I learn faster without skipping the basics?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Test what you think you know. That's how wrong turns into right.",
+          "reaction": "Test it. That makes the knowing real.",
+          "moodDelta": 1,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Swap what you know with me. That's a fair trade.",
+          "reaction": "A fair trade. I'll go first.",
+          "moodDelta": 1,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Try the thing. You learn more from one attempt than ten warnings.",
+          "reaction": "Then I'll attempt it, and learn from the bruises.",
+          "moodDelta": 0,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.10.7",
+      "askerTypes": [
+        10,
+        15
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "What do I do when I discover I've been wrong for a long time?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Test what you think you know. That's how wrong turns into right.",
+          "reaction": "Test it. That makes the knowing real.",
+          "moodDelta": 1,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Learn beside someone. It's easier to stay curious together.",
+          "reaction": "Then let's learn it side by side.",
+          "moodDelta": 1,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Try the thing. You learn more from one attempt than ten warnings.",
+          "reaction": "Then I'll attempt it, and learn from the bruises.",
+          "moodDelta": 0,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.11.8",
+      "askerTypes": [
+        11,
+        16
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "Do I need to understand something before I try it?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Test what you think you know. That's how wrong turns into right.",
+          "reaction": "Test it. That makes the knowing real.",
+          "moodDelta": 1,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Swap what you know with me. That's a fair trade.",
+          "reaction": "A fair trade. I'll go first.",
+          "moodDelta": 1,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Try the thing. You learn more from one attempt than ten warnings.",
+          "reaction": "Then I'll attempt it, and learn from the bruises.",
+          "moodDelta": 0,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.12.7",
+      "askerTypes": [
+        12,
+        13
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "Which is better: a wide look or a deep one?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Test what you think you know. That's how wrong turns into right.",
+          "reaction": "Test it. That makes the knowing real.",
+          "moodDelta": 1,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Swap what you know with me. That's a fair trade.",
+          "reaction": "A fair trade. I'll go first.",
+          "moodDelta": 1,
+          "shift": {
+            "13": 2,
+            "14": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Try the thing. You learn more from one attempt than ten warnings.",
+          "reaction": "Then I'll attempt it, and learn from the bruises.",
+          "moodDelta": 0,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.1.13",
+      "askerTypes": [
+        1,
+        7
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "How do I keep going when the job is boring and long?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Do the part that helps a person, not just the part that finishes the job.",
+          "reaction": "People in the work. I'll remember that.",
+          "moodDelta": 1,
+          "shift": {
+            "1": 2,
+            "2": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Finish what you started, even when it stopped being exciting.",
+          "reaction": "Then I'll finish it, boring or not.",
+          "moodDelta": 1,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Do the necessary thing first, and the impressive thing after.",
+          "reaction": "Necessary first. Clear.",
+          "moodDelta": 0,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.2.12",
+      "askerTypes": [
+        2,
+        8
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "What's the difference between duty and habit?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Do the part that helps a person, not just the part that finishes the job.",
+          "reaction": "People in the work. I'll remember that.",
+          "moodDelta": 1,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Say no when the yes would break you. That's a kind of courage too.",
+          "reaction": "Refusing takes nerve. I'll practice it.",
+          "moodDelta": 1,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Do the necessary thing first, and the impressive thing after.",
+          "reaction": "Necessary first. Clear.",
+          "moodDelta": 0,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.3.13",
+      "askerTypes": [
+        3,
+        5
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "Should I do what's needed or what I'm good at?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Do the part that helps a person, not just the part that finishes the job.",
+          "reaction": "People in the work. I'll remember that.",
+          "moodDelta": 1,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Say no when the yes would break you. That's a kind of courage too.",
+          "reaction": "Refusing takes nerve. I'll practice it.",
+          "moodDelta": 1,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Do it together, and it stops feeling like a duty.",
+          "reaction": "Together makes it lighter.",
+          "moodDelta": 0,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.4.12",
+      "askerTypes": [
+        4,
+        6
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "I'm tired of being reliable. Is that okay?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Do the part that helps a person, not just the part that finishes the job.",
+          "reaction": "People in the work. I'll remember that.",
+          "moodDelta": 1,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Say no when the yes would break you. That's a kind of courage too.",
+          "reaction": "Refusing takes nerve. I'll practice it.",
+          "moodDelta": 1,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Share the burden out loud. Silent duty builds resentments.",
+          "reaction": "Then I'll say it before it builds.",
+          "moodDelta": 0,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.9.9",
+      "askerTypes": [
+        9,
+        15
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "How do I refuse extra work without letting the others down?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Measure the job by what it's for, not by who notices.",
+          "reaction": "The purpose, not the praise.",
+          "moodDelta": 1,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Do it together, and it stops feeling like a duty.",
+          "reaction": "Together makes it lighter.",
+          "moodDelta": 1,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Finish what you started, even when it stopped being exciting.",
+          "reaction": "Then I'll finish it, boring or not.",
+          "moodDelta": 0,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.10.8",
+      "askerTypes": [
+        10,
+        16
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "What does it mean to do a job properly?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Do the necessary thing first, and the impressive thing after.",
+          "reaction": "Necessary first. Clear.",
+          "moodDelta": 1,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Share the burden out loud. Silent duty builds resentments.",
+          "reaction": "Then I'll say it before it builds.",
+          "moodDelta": 1,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Take the breaks you need. Unrest makes bad work.",
+          "reaction": "Breaks without guilt. Got it.",
+          "moodDelta": 0,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.11.9",
+      "askerTypes": [
+        11,
+        13
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "When is it right to put down the work and be still?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Measure the job by what it's for, not by who notices.",
+          "reaction": "The purpose, not the praise.",
+          "moodDelta": 1,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Share the burden out loud. Silent duty builds resentments.",
+          "reaction": "Then I'll say it before it builds.",
+          "moodDelta": 1,
+          "shift": {
+            "13": 2,
+            "14": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Say no when the yes would break you. That's a kind of courage too.",
+          "reaction": "Refusing takes nerve. I'll practice it.",
+          "moodDelta": 0,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.12.8",
+      "askerTypes": [
+        12,
+        14
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "If nobody notices me doing the work, why do it?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Measure the job by what it's for, not by who notices.",
+          "reaction": "The purpose, not the praise.",
+          "moodDelta": 1,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Share the burden out loud. Silent duty builds resentments.",
+          "reaction": "Then I'll say it before it builds.",
+          "moodDelta": 1,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Say no when the yes would break you. That's a kind of courage too.",
+          "reaction": "Refusing takes nerve. I'll practice it.",
+          "moodDelta": 0,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.1.14",
+      "askerTypes": [
+        1,
+        11
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "I don't know how to rest without feeling lazy. Help?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Rest is part of caring for yourself. You don't have to earn it.",
+          "reaction": "Then I'll rest without earning it.",
+          "moodDelta": 1,
+          "shift": {
+            "1": 2,
+            "2": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Notice what drained you. Rest works better when it targets the cause.",
+          "reaction": "Target the cause. Yes.",
+          "moodDelta": 1,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Let the others carry the watch. That's what a group is for.",
+          "reaction": "Then I'll let them carry it tonight.",
+          "moodDelta": 0,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.2.13",
+      "askerTypes": [
+        2,
+        12
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "How do I tell if I need rest or if I'm giving up?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Let me look after something while you recover. That's fair.",
+          "reaction": "Then I'll let you, this once.",
+          "moodDelta": 1,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Sleep, food, quiet. Recovery is a routine, not a mood.",
+          "reaction": "A routine. I can follow a routine.",
+          "moodDelta": 1,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Ask for help. It's braver than pretending.",
+          "reaction": "Then I'll ask, even if my voice cracks.",
+          "moodDelta": 0,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.3.14",
+      "askerTypes": [
+        3,
+        9
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "The others are still working. Can I stop for a while?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Let me look after something while you recover. That's fair.",
+          "reaction": "Then I'll let you, this once.",
+          "moodDelta": 1,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Notice what drained you. Rest works better when it targets the cause.",
+          "reaction": "Target the cause. Yes.",
+          "moodDelta": 1,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Let the others carry the watch. That's what a group is for.",
+          "reaction": "Then I'll let them carry it tonight.",
+          "moodDelta": 0,
+          "shift": {
+            "13": 2,
+            "14": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.4.13",
+      "askerTypes": [
+        4,
+        10
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "What's the best way to recover after a hard fight?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Let me look after something while you recover. That's fair.",
+          "reaction": "Then I'll let you, this once.",
+          "moodDelta": 1,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Sleep, food, quiet. Recovery is a routine, not a mood.",
+          "reaction": "A routine. I can follow a routine.",
+          "moodDelta": 1,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "c",
+          "text": "Ask for help. It's braver than pretending.",
+          "reaction": "Then I'll ask, even if my voice cracks.",
+          "moodDelta": 0,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.5.6",
+      "askerTypes": [
+        5,
+        15
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "I can't sleep. What should I do with a night like this?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Stop before you fall down. That's not giving up, that's reloading.",
+          "reaction": "Reloading. I can call it that.",
+          "moodDelta": 1,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Let the others carry the watch. That's what a group is for.",
+          "reaction": "Then I'll let them carry it tonight.",
+          "moodDelta": 1,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Sleep, food, quiet. Recovery is a routine, not a mood.",
+          "reaction": "A routine. I can follow a routine.",
+          "moodDelta": 0,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.6.5",
+      "askerTypes": [
+        6,
+        16
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "Is it weak to ask for help when I'm worn out?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Stop before you fall down. That's not giving up, that's reloading.",
+          "reaction": "Reloading. I can call it that.",
+          "moodDelta": 1,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Rest near us. You don't have to be alone to recover.",
+          "reaction": "Near you. That helps more than sleep.",
+          "moodDelta": 1,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Rest is part of caring for yourself. You don't have to earn it.",
+          "reaction": "Then I'll rest without earning it.",
+          "moodDelta": 0,
+          "shift": {
+            "1": 2,
+            "2": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.7.6",
+      "askerTypes": [
+        7,
+        13
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "How do I make sure a rest actually refills me?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Stop before you fall down. That's not giving up, that's reloading.",
+          "reaction": "Reloading. I can call it that.",
+          "moodDelta": 1,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Let the others carry the watch. That's what a group is for.",
+          "reaction": "Then I'll let them carry it tonight.",
+          "moodDelta": 1,
+          "shift": {
+            "13": 2,
+            "14": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Notice what drained you. Rest works better when it targets the cause.",
+          "reaction": "Target the cause. Yes.",
+          "moodDelta": 0,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.8.5",
+      "askerTypes": [
+        8,
+        14
+      ],
+      "core": "VALOR",
+      "stageTier": 1,
+      "prompt": "What do I do with the guilt of resting while others wait?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Stop before you fall down. That's not giving up, that's reloading.",
+          "reaction": "Reloading. I can call it that.",
+          "moodDelta": 1,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "b",
+          "text": "Rest near us. You don't have to be alone to recover.",
+          "reaction": "Near you. That helps more than sleep.",
+          "moodDelta": 1,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Sleep, food, quiet. Recovery is a routine, not a mood.",
+          "reaction": "A routine. I can follow a routine.",
+          "moodDelta": 0,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.1.15",
+      "askerTypes": [
+        1,
+        15
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "Something I cared about is gone. What do I do with the empty space?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Be sad as long as you need. I'll sit with you through it.",
+          "reaction": "Then I won't hurry my grief.",
+          "moodDelta": 1,
+          "shift": {
+            "1": 2,
+            "2": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Say goodbye together. It's easier than doing it alone.",
+          "reaction": "Together, then. Yes.",
+          "moodDelta": 1,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Face the loss. Running from it just makes it longer.",
+          "reaction": "Then I'll turn and face it.",
+          "moodDelta": 0,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.2.14",
+      "askerTypes": [
+        2,
+        16
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "How do I say goodbye properly?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Take the soft memories first. The hard ones can wait.",
+          "reaction": "Soft memories first. That's kind.",
+          "moodDelta": 1,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Say goodbye together. It's easier than doing it alone.",
+          "reaction": "Together, then. Yes.",
+          "moodDelta": 1,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Carry what you must, then put it down when you can.",
+          "reaction": "Carry, then put down. Understood.",
+          "moodDelta": 0,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.3.15",
+      "askerTypes": [
+        3,
+        13
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "Should I keep holding on to what I've lost?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Be sad as long as you need. I'll sit with you through it.",
+          "reaction": "Then I won't hurry my grief.",
+          "moodDelta": 1,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Tell the people still here what you lost. Memory shared is lighter.",
+          "reaction": "Then I'll tell you about it.",
+          "moodDelta": 1,
+          "shift": {
+            "13": 2,
+            "14": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Carry what you must, then put it down when you can.",
+          "reaction": "Carry, then put down. Understood.",
+          "moodDelta": 0,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.4.14",
+      "askerTypes": [
+        4,
+        14
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "I failed people who counted on me. How do I carry that?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Take the soft memories first. The hard ones can wait.",
+          "reaction": "Soft memories first. That's kind.",
+          "moodDelta": 1,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Say goodbye together. It's easier than doing it alone.",
+          "reaction": "Together, then. Yes.",
+          "moodDelta": 1,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Face the loss. Running from it just makes it longer.",
+          "reaction": "Then I'll turn and face it.",
+          "moodDelta": 0,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.9.10",
+      "askerTypes": [
+        9,
+        7
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "When is it time to let a grudge go?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Name what's gone, then name what's left.",
+          "reaction": "The left side of the list. I'll look there.",
+          "moodDelta": 1,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Face the loss. Running from it just makes it longer.",
+          "reaction": "Then I'll turn and face it.",
+          "moodDelta": 1,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Take the soft memories first. The hard ones can wait.",
+          "reaction": "Soft memories first. That's kind.",
+          "moodDelta": 0,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.10.9",
+      "askerTypes": [
+        10,
+        8
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "What do I tell someone who is about to lose something?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A grudge is a thing you carry. Ask whether it's still useful.",
+          "reaction": "Useful or heavy. Good question.",
+          "moodDelta": 1,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Face the loss. Running from it just makes it longer.",
+          "reaction": "Then I'll turn and face it.",
+          "moodDelta": 1,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Say goodbye together. It's easier than doing it alone.",
+          "reaction": "Together, then. Yes.",
+          "moodDelta": 0,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.11.10",
+      "askerTypes": [
+        11,
+        5
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "Is it okay to be sad for a long time?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Name what's gone, then name what's left.",
+          "reaction": "The left side of the list. I'll look there.",
+          "moodDelta": 1,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Carry what you must, then put it down when you can.",
+          "reaction": "Carry, then put down. Understood.",
+          "moodDelta": 1,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Tell the people still here what you lost. Memory shared is lighter.",
+          "reaction": "Then I'll tell you about it.",
+          "moodDelta": 0,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.12.9",
+      "askerTypes": [
+        12,
+        6
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "How do I remember without letting the memory weigh me down?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Name what's gone, then name what's left.",
+          "reaction": "The left side of the list. I'll look there.",
+          "moodDelta": 1,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Face the loss. Running from it just makes it longer.",
+          "reaction": "Then I'll turn and face it.",
+          "moodDelta": 1,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Be sad as long as you need. I'll sit with you through it.",
+          "reaction": "Then I won't hurry my grief.",
+          "moodDelta": 0,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.1.16",
+      "askerTypes": [
+        1,
+        7
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "We did something good today. Should we celebrate or keep moving?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Celebrate by giving something back. Joy grows when it's shared.",
+          "reaction": "Then I'll share the day.",
+          "moodDelta": 1,
+          "shift": {
+            "1": 2,
+            "2": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Use the win as fuel. A good day should carry you into the next.",
+          "reaction": "Fuel for the next road. Got it.",
+          "moodDelta": 1,
+          "shift": {
+            "7": 2,
+            "8": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Small and large wins both count. Marking them keeps you honest.",
+          "reaction": "Mark them all. Fine by me.",
+          "moodDelta": 0,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.2.15",
+      "askerTypes": [
+        2,
+        8
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "How do I thank you properly for everything?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Be kind to whoever helped you. Gratitude is a debt worth paying.",
+          "reaction": "Then I'll pay it properly.",
+          "moodDelta": 1,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Celebrate loud and honest. You earned it.",
+          "reaction": "Then I'll cheer with my whole chest.",
+          "moodDelta": 1,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Small and large wins both count. Marking them keeps you honest.",
+          "reaction": "Mark them all. Fine by me.",
+          "moodDelta": 0,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.3.16",
+      "askerTypes": [
+        3,
+        5
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "I don't know how to enjoy things. Can you teach me?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Celebrate by giving something back. Joy grows when it's shared.",
+          "reaction": "Then I'll share the day.",
+          "moodDelta": 1,
+          "shift": {
+            "3": 2,
+            "4": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Celebrate loud and honest. You earned it.",
+          "reaction": "Then I'll cheer with my whole chest.",
+          "moodDelta": 1,
+          "shift": {
+            "5": 2,
+            "6": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Gather everyone who helped and say their names out loud.",
+          "reaction": "Names out loud. They'll like that.",
+          "moodDelta": 0,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.4.15",
+      "askerTypes": [
+        4,
+        6
+      ],
+      "core": "PHILANTHROPY",
+      "stageTier": 1,
+      "prompt": "Other people cheer louder than me. Am I doing it wrong?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Be kind to whoever helped you. Gratitude is a debt worth paying.",
+          "reaction": "Then I'll pay it properly.",
+          "moodDelta": 1,
+          "shift": {
+            "4": 2,
+            "1": 1
+          },
+          "tone": "compassion"
+        },
+        {
+          "id": "b",
+          "text": "Celebrate loud and honest. You earned it.",
+          "reaction": "Then I'll cheer with my whole chest.",
+          "moodDelta": 1,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        },
+        {
+          "id": "c",
+          "text": "Gather everyone who helped and say their names out loud.",
+          "reaction": "Names out loud. They'll like that.",
+          "moodDelta": 0,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.9.11",
+      "askerTypes": [
+        9,
+        15
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "What should we do to mark a milestone?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Small and large wins both count. Marking them keeps you honest.",
+          "reaction": "Mark them all. Fine by me.",
+          "moodDelta": 1,
+          "shift": {
+            "9": 2,
+            "10": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Make it about everyone, not just the result.",
+          "reaction": "Then the celebration belongs to all of us.",
+          "moodDelta": 1,
+          "shift": {
+            "15": 2,
+            "16": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Celebrate loud and honest. You earned it.",
+          "reaction": "Then I'll cheer with my whole chest.",
+          "moodDelta": 0,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.10.10",
+      "askerTypes": [
+        10,
+        16
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "How do I show gratitude without making it awkward?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Small and large wins both count. Marking them keeps you honest.",
+          "reaction": "Mark them all. Fine by me.",
+          "moodDelta": 1,
+          "shift": {
+            "10": 2,
+            "11": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Gather everyone who helped and say their names out loud.",
+          "reaction": "Names out loud. They'll like that.",
+          "moodDelta": 1,
+          "shift": {
+            "16": 2,
+            "13": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Celebrate by giving something back. Joy grows when it's shared.",
+          "reaction": "Then I'll share the day.",
+          "moodDelta": 0,
+          "shift": {
+            "2": 2,
+            "3": 1
+          },
+          "tone": "compassion"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.11.11",
+      "askerTypes": [
+        11,
+        13
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "Is it selfish to be happy when others are still hurting?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Small and large wins both count. Marking them keeps you honest.",
+          "reaction": "Mark them all. Fine by me.",
+          "moodDelta": 1,
+          "shift": {
+            "11": 2,
+            "12": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Gather everyone who helped and say their names out loud.",
+          "reaction": "Names out loud. They'll like that.",
+          "moodDelta": 1,
+          "shift": {
+            "13": 2,
+            "14": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Celebrate loud and honest. You earned it.",
+          "reaction": "Then I'll cheer with my whole chest.",
+          "moodDelta": 0,
+          "shift": {
+            "6": 2,
+            "7": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    },
+    {
+      "id": "gen.12.10",
+      "askerTypes": [
+        12,
+        14
+      ],
+      "core": "WISDOM",
+      "stageTier": 1,
+      "prompt": "Should I celebrate small wins or save it for big ones?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Notice exactly what worked, and thank the reason.",
+          "reaction": "The reason, not just the result.",
+          "moodDelta": 1,
+          "shift": {
+            "12": 2,
+            "9": 1
+          },
+          "tone": "insight"
+        },
+        {
+          "id": "b",
+          "text": "Make it about everyone, not just the result.",
+          "reaction": "Then the celebration belongs to all of us.",
+          "moodDelta": 1,
+          "shift": {
+            "14": 2,
+            "15": 1
+          },
+          "tone": "friendship"
+        },
+        {
+          "id": "c",
+          "text": "Celebrate loud and honest. You earned it.",
+          "reaction": "Then I'll cheer with my whole chest.",
+          "moodDelta": 0,
+          "shift": {
+            "8": 2,
+            "5": 1
+          },
+          "tone": "courage"
+        }
+      ],
+      "tags": [
+        "generic"
+      ]
+    }
+  ]
+}

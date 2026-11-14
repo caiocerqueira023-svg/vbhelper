@@ -39,7 +39,7 @@ class WorldEcosystemPersistenceTest {
             AppDatabase.MIGRATION_43_44, AppDatabase.MIGRATION_44_45, AppDatabase.MIGRATION_45_46, AppDatabase.MIGRATION_46_47,
             AppDatabase.MIGRATION_47_48, AppDatabase.MIGRATION_48_49, AppDatabase.MIGRATION_49_50, AppDatabase.MIGRATION_50_51,
             AppDatabase.MIGRATION_51_52, AppDatabase.MIGRATION_52_53, AppDatabase.MIGRATION_53_54,
-            AppDatabase.MIGRATION_54_55)
+            AppDatabase.MIGRATION_54_55, AppDatabase.MIGRATION_55_56)
         .openHelperFactory(PreservingMigrationFactory())
         .addCallback(IndividualIntegrity.callback)
         .build().also { db = it }
@@ -137,7 +137,7 @@ class WorldEcosystemPersistenceTest {
         database.openHelper.writableDatabase.query("SELECT individualId FROM UserCharacter").use {
             assertTrue(it.moveToFirst()); assertEquals("recruited", it.getString(0))
         }
-        assertEquals(55, database.openHelper.writableDatabase.version)
+        assertEquals(56, database.openHelper.writableDatabase.version)
         database.openHelper.writableDatabase.query("PRAGMA foreign_key_check").use { assertEquals(0, it.count) }
         assertCheckpointRoundTrip(database)
     }
@@ -160,7 +160,7 @@ class WorldEcosystemPersistenceTest {
         assertEquals(999L, session.tickRemainderMillis)
         assertEquals(WorldPauseReason.PLAYER_BATTLE, session.pauseReason)
         assertTrue(database.worldInteractionDao().getOpenInteractions().isEmpty())
-        assertEquals(55, database.openHelper.writableDatabase.version)
+        assertEquals(56, database.openHelper.writableDatabase.version)
         database.openHelper.writableDatabase.query("PRAGMA foreign_key_check").use { assertEquals(0, it.count) }
     }
 
@@ -180,7 +180,7 @@ class WorldEcosystemPersistenceTest {
     @Test fun migrationFrom29AddsDurableMemoriesWithoutChangingExistingConversations() = runBlocking {
         createVersion(29)
         val database=open()
-        assertEquals(55, database.openHelper.writableDatabase.version)
+        assertEquals(56, database.openHelper.writableDatabase.version)
         assertEquals("private-wild",database.chatDao().getMessagesSync("wild").single().content)
         assertEquals(82,database.wildRelationshipDao().get("wild")!!.trust)
         assertTrue(database.worldChatMemoryDao().getMemories("wild").isEmpty())

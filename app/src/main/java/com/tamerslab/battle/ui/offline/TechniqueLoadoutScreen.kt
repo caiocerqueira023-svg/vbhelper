@@ -289,7 +289,7 @@ fun TechniqueLoadoutScreen(
                     Column(Modifier.padding(12.dp)) {
                         Text(stringResource(R.string.ui_battle_loadout_fixed_special), color = VitalPurpleBright, style = MaterialTheme.typography.labelSmall)
                         Text(speciesSpecialName ?: special.displayName, color = TextPrimaryOnDark, fontWeight = FontWeight.SemiBold)
-                        Text(stringResource(R.string.ui_battle_loadout_cost, special.energyCost, special.commandPointCost),
+                        Text(stringResource(R.string.ui_battle_loadout_cost, special.energyCost),
                             color = TextSecondaryOnDark, style = MaterialTheme.typography.bodySmall)
                         TechniqueStatusBadges(special, modifier = Modifier.padding(top = 6.dp))
                     }

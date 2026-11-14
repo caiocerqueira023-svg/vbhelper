@@ -1,0 +1,346 @@
+===Jack Bros===
+{| class="table smt5"
+! colspan="4" |Dialogue
+!Outcome
+|-
+| colspan="5" align="center"| Ignore
+|-
+| colspan="4" |The demon is pretending to ignore you... What will you do?
+|>Call out to them
+>Glare at them
+|-
+|rowspan="2"|'''>Call out to them'''
+| colspan="3" |You re-hee-ally wanna talk, ho? Aww, okay. Then, let's talk, ho!
+|[DIALOGUE SWITCH]
+|-
+| colspan="3" |I was just thinking whether I should negot-hee-ate or not. But never mind, ho. We're done hee-re.
+|[LEAVES]
+|-
+| colspan="3" |>Glare at them
+|Did you really think threats would work on me, ho?
+|[ENEMY PHASE]
+|-
+| colspan="5" align="center"| Gazing
+|-
+| colspan="4" |(The demon is gazing expectantly at you... What will you do?)
+|>Dance
+>Sing
+>Flash some Macca
+|-
+| colspan="3" |>Dance
+|(You tried dancing) 
+That dance is enough to put me to slee-hee-p. Really not feelin' it, ho.
+|[LEAVES]
+|-
+|rowspan = "2"|>Sing
+| colspan="3" |(You tried singing...) Hey, you can really si-hee-ng! Funky style, but I like it, ho!
+|[BARGAIN PHASE]
+|-
+| colspan="3" |(You tried singing...) What a bo-ho-ring song. Really not feelin' it, ho.
+|[ENEMY PHASE]
+|-
+| colspan="3" |>Flash some Macca
+|(You flashed some Macca at the demon...) Oho, lookin' to do business, hee? Sure, let's cut a deal, ho!
+|[BARGAIN PHASE]
+|-
+| colspan="5" align="center"| Race
+|-
+| colspan="4" |Let's have a race, ho! We're gonna see which of us is '''faster''', ho!
+|>Sure.
+>No way.
+|-
+| colspan="3" |Sure
+|(You raced the demon...)
+|[Agility stat between the 2 users is compared]
+|-
+| colspan="3" |[USER AGILITY IS HIGHER]
+|(You won!)
+Heeho... Heeho... That's some serious spee-hee-d! All right... I'm all yours, ho!
+|[INSTANT RECRUIT]
+|-
+| colspan="3" |[USER AGILITY IS LOWER]
+|(You lost)
+|
+|-
+| colspan="3" |No way.
+|
+|-
+| colspan="5" align="center"| Leave
+|-
+| colspan="4" |The demon is trying to leave... What will you do?
+|>Stop them
+>Leave them be
+>Smirk at them
+|-
+| colspan="3" |>Stop them
+|It's no use, no! You'll never catch me, ho!
+(The demon ran away! You chased after them!)
+|[Agility stat between the 2 users is compared]
+>Pass<br>>Fail
+|-
+| colspan="3" | >>Pass
+|(You caught up with the demon!) Talk about spee-hee-d, no! How 'bout I join you, ho!?
+|[INSTANT RECRUIT]
+|-
+| colspan="3" |>>Fail
+|
+|[LEAVES]
+|-
+| colspan="3" |>Leave them be
+|What's with the cold shoulder, hee? C'mon, let's talk, ho!
+|[DIALOGUE SWITCH]
+|-
+| colspan="3" |>Smirk at them
+|Hee-ho, hee-ho? DO you maybe have something for me, ho?
+|[BARGAIN PHASE]
+|-
+| colspan="5" align="center"| Pet
+|-
+| colspan="4" |I'll let you pet my head, ho!
+|>Hell yeah!
+>I'll pass.
+|-
+| colspan="3" |>Hell yeah!
+|Glad to hear you're so enthusi-hee-astic, ho! Well then, why don't you come closer, ho?
+|>Okay<br>>You come closer to me.
+|-
+| colspan="3" |>>Okay
+|Hee-ho? What, got noth-hee-ng to offer, ho? I don't do this for free-hee, ho. 
+|[BARGAIN PHASE]
+|-
+| colspan="3" |>>You come closer to me.
+|
+|
+|-
+| colspan="3" |>>I'll pass.
+|No nee-hee-d to be modest, ho! Pet me all you want!
+|>Okay.
+>Actually, I'll pass.
+|-
+| colspan="3" |>Okay.
+|(You patted the demon to your heart's content...) E-hee-asy there, ho! You're wearing me out! Phew... Now that that's over and done with, you better make it up to me, ho! 
+|[BARGAIN PHASE]
+|-
+| colspan="3" |>>Actually, I'll pass.
+|You've hurt my fee-hee-lings, ho! I'm gonna re-hee-tire from the industry!
+|>Do whatever you want.
+>Won't you reconsider?
+>What about income?
+|-
+| colspan="3" |>>>Do whatever you want.
+|([Demonname] retired from the industry...)
+|[ENEMY PHASE]
+|-
+| colspan="3" |>>>Won't you reconsider?
+|I just want a normal, pea-hee-ceful life, ho...
+|[LEAVES]
+|-
+| colspan="3" |>>>What about income?
+|I-I didn't think about that, ho... Guess I'll just have to cle-hee-an you out and make do for now, ho!
+|[ENEMY PHASE]
+|-
+| colspan="5" align="center"|Shake Hands
+|-
+| colspan="4" |I've been mea-hee-ning to get to know you better! Put 'er there, ho!
+|>Sure.<br>>Let's not.<br>>Let's arm wrestle instead
+|-
+| colspan="3" |>Sure.
+|(You shook hands with the demon... A piece of paper was left in your hand. It says, "Sucker!")
+|[TALK END, TURN USED]
+|-
+| colspan="3" |>Let's not.
+|Do you have a heart of stone or something? Who wouldn't wanna shake hands with me, ho!? Maybe this will get you to open up, ho. 
+|[GIVES ITEM, LEAVES]
+|-
+| colspan="3" |>Let's not.
+|
+|
+|-
+| colspan="3" |>Let's arm wrestle instead
+|I-I'm not re-hee-ally the best arm wrestler... OH, I know! How about a test of '''speed''', ho? Let's have a race, ho! Heehohoooo! (You raced the demon...)
+|[Agility stat between the 2 users is compared]
+|-
+| colspan="3" |[USER AGILITY IS HIGHER]
+|(You won!)
+Heeho... Heeho... That's some serious spee-hee-d! All right... I'm all yours, ho!
+|[INSTANT RECRUIT]
+|-
+| colspan="3" |[USER AGILITY IS LOWER]
+|(You lost...)
+|
+|-
+| colspan="5" align="center"| Approaching 
+|-
+| colspan="4" |(The demon is approaching...What will you do?)
+|>Stop them<br>>Glare at them<br>>Keep calm
+|-
+| colspan="3" |>Stop them
+|Are you wary of me-hee? Are you that scared, ho?
+|>I am<br>>You're adorable.<br>>You stink.
+|-
+| colspan="3" |>>I am
+|Heehoho... I'm not as popular a mascot as I used to be, ho... 
+|[ENEMY PHASE]
+|-
+| colspan="3" |>>You're adorable.
+|That's right, ho! I am adorable! And since I'm so cute, you better pay your respects, ho. I'm taking G-hee-I-F-Ts! 
+|[BARGAIN PHASE]
+|-
+| colspan="3" |>>You stink.
+|
+|
+|-
+| colspan="3" |>Glare at them
+|
+|
+|-
+| colspan="3" |>Keep calm
+|
+|
+|-
+| colspan="5" align="center"| Help
+|-
+| colspan="4" |Someth-hee-ng I can help you with, ho?
+|>Join me<br>>Help me massacre demons<br>>Let's play togehter.
+|-
+| colspan="3" |>Join me
+|So sincere, ho! But sorry, I'm a little pre-hee-occupied at the moment, ho. Is there anyth-hee-ng else I can help you with, ho?
+|>Join me<br>>Help me massacre demons<br>>Let's play togehter.
+|-
+| colspan="3" |>>Join me
+|Like I just said, no can do, ho. Is there anyth-hee-ng else I can help you with, ho?
+|>Join me<br>>Help me massacre demons<br>>Let's play togehter.
+|-
+| colspan="3" |>>>Join me
+|You sure are persistent, hee. We've gotten ourselves into an infinite loop now, so be careful, ho. Is there anyth-hee-ng else I can help you with, ho?
+|>Join me<br>>Help me massacre demons<br>>Let's play togehter.
+|-
+| colspan="3" |>>>>Join me
+|You sure are persistent, hee. We've gotten ourselves into an infinite loop now, so be careful, ho. Guess I'll have to break us free, ho!
+|[ENEMY PHASE]
+|-
+| colspan="3" |>>>>Help me massacre demons
+|
+|
+|-
+| colspan="3" |>>>>Let's play together.
+|
+|
+|-
+| colspan="3" |>>>Help me massacre demons
+|
+|
+|-
+| colspan="3" |>>>Let's play togehter.
+|
+|
+|-
+| colspan="3" |>>Help me massacre demons
+|
+|
+|-
+| colspan="3" |>>Let's play togehter.
+|
+|
+|-
+| colspan="3" |>Help me massacre demons
+|
+|
+|-
+| colspan="3" |>Let's play togehter.
+|
+|
+|-
+| colspan="5" align="center"|Pose 
+|-
+| colspan="4" |(The demon is striking a pose... What will you do?)
+|>Strike the same pose<br>>Leave them be<br>>Strike a more fierce pose
+|-
+| colspan="3" |>Strike the same pose
+|Re-hee-ally? Strikin' the same pose... Are you messing with me, ho?
+|>I am<br>>Of course not.
+|-
+| colspan="3" |>>I am.
+|O-ho! You've got some nerve, hee! I hope you're only just messing around... I don't wanna die, ho! 
+|[LEAVES]
+|-
+| colspan="3" |>>Of course not.
+|Oh, then, do you mayb-hee wanna become the newest member of our idol group, ho?
+|>That's right<br>>Absolutely not
+|-
+| colspan="3" |>>>That's right
+|Hee-ho! But we won't go e-hee-asy on you, even if you are a newcomer! Pre-hee-pare yourself, ho!
+|[ENEMY PHASE]
+|-
+| colspan="3" |>>>Absolutely not
+|
+|
+|-
+| colspan="3" |>Leave them be
+|
+|
+|-
+| colspan="3" |>Strike a more fierce pose
+|
+|
+|-
+| colspan="5" align="center"|Guard up 
+|-
+| colspan="4" |(The demon has their guard up... What will you do?)
+|>Ask them to lower their guard<br>>Put your guard up as well
+|-
+| colspan="3" |>Ask them to lower their guard
+|Well, okay, hee. We can chat for a bit, ho.
+|[DIALOGUE SWITCH]
+|-
+| colspan="3" |>Put your guard up as well
+|
+|
+|-
+| colspan="5" align="center"|Look 
+|-
+| colspan="4" |Hee-ho! Take a good look at me, ho!
+|>Take a good look<br>>Look up<br>>Look around
+|-
+| colspan="3" |>Take a good look
+|(You took a good look at the demon...) How about it, ho? Pretty ne-hee-at, huh? 
+|>Most definitely<br>>Not at all<br>>I'll be leaving now.
+|-
+| colspan="3" |>>Most definitely
+|Glad to hear it, ho! Because it's the last thi-hee-ng you ever see, ho!
+|[ENEMY PHASE]
+|-
+| colspan="3" |>>Not at all
+|
+|
+|-
+| colspan="3" |>>I'll be leaving now.
+|
+|
+|-
+| colspan="3" |>Look up
+|
+|
+|-
+| colspan="3" |>Look around
+|
+|
+|-
+| colspan="5" align="center"| Waning gibbous
+|-
+| colspan="3" |[GOOD OUTCOME]
+| (The demon seems to be in good spirits. Could it be because a '''full moon is near'''...?) You want me to join you, ho? Lucly you, I'm pretty che-hee-ap right now, ho!
+|[BARGAIN PHASE]
+|-
+| colspan="5" align="center"| New Moon
+|-
+| colspan="3" |[GOOD OUTCOME]
+|
+|
+|-
+| colspan="3" |[BAD OUTCOME]
+|Hee ho ho.. The moon disappeared, hee. Looks like the future's gone dark too, ho.
+(It's no use! Could this be due to the new moon...?
+|[ENEMY PHASE]
+|-
+|}

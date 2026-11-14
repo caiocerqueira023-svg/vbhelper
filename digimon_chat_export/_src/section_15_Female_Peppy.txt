@@ -1,0 +1,349 @@
+===Peppy===
+{| class="table smt5"
+! colspan="3" |Dialogue
+!Outcome
+|-
+| colspan="4" align="center" | Texting
+|-
+| colspan="3" |How about we see who's better at texting? You versus me! The '''fastest''' texter wins.
+|>Sure<br>>No way
+|-
+| colspan="2" |>Sure
+|(You texted as fast as your fingers would allow...)
+|[Agility stat between the 2 users is compared]<br>>Pass<br>>Fail
+|-
+| colspan="2" |>>Pass
+|
+|[INSTANT RECRUIT]
+|-
+| colspan="2" |>>Fail
+|(You lost...) You're so slow! Are you like, the slowest texter in the netherworld? Why don't you just die?
+|[ENEMY PHASE]
+|-
+| colspan="2" |>No way
+|
+|
+|-
+| colspan="4" align="center" | Hair
+|-
+| colspan="3" |Y'know... Your hair's, like, actually pretty impressive. 
+|>I know, right?<br>>Impressive how?<br>>Well, I AM a bigwig.
+|-
+| colspan="2" |>I know, right?
+|Totally! Okay, you're gonna giveme something, right? Since I buttered you up and all?
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>Impressive how?
+|
+|
+|-
+| colspan="2" |>Well, I AM a bigwig.
+|
+|
+|-
+| colspan="4" align="center" | Guard up
+|-
+| colspan="3" |(The demon has their guard up... What will you do?)
+|>Motion for peace<br>>Put your guard up
+|-
+| colspan="2" |>Motion for peace
+|I guess that's fair. It's not like you're waving your sword around or anything.
+|[DIALOGUE SWITCH >> Work]
+|-
+| colspan="2" |>Put your guard up
+|Ugh, are you trying to look cool? Such a poser.
+|[TALK END, TURN ISN'T USED]
+|-
+| colspan="4" align="center" | Work
+|-
+| colspan="3" |So, what're you doing here?
+|>Looking for demonic allies<br>>Training<br>>Working for Macca.
+|-
+| colspan="2" |>Looking for demonic allies
+|So you wanted to find me out here? 
+|>I did.<br>>Not really.<br>>I wish we hadn't met.
+|-
+| colspan="2" |>>I did.
+|Yeah, you say that, but I bet you don't care. As long as they join you, you'll take any demon.
+|[ENEMY PHASE]
+|-
+| colspan="2" |>>Not really.
+|Yokes. Do you think you sound cool?
+|[ENEMY PHASE]
+|-
+| colspan="2" |>>I wish we hadn't met.
+|Same here. 
+|[ENEMY PHASE]
+|-
+| colspan="2" |>Training
+|Is that... fun?
+|>It is.<br>>It isn't.<br>>That's not the point.
+|-
+| colspan="2" |>>It is.
+|...Guys like you are SO annoying!
+|[ENEMY PHASE]
+|-
+| colspan="2" |>>It isn't.
+|
+|
+|-
+| colspan="2" |>>That's not the point.
+|
+|
+|-
+| colspan="2" |>Working for Macca.
+|
+|
+|-
+| colspan="4" align="center" | Bored
+|-
+| colspan="3" |The demon looks bored... What will you do?
+|>Dance<br>>Sing<br>>Flash some Macca
+|-
+| colspan="2" |>Dance
+|(You tried dancing...) Yikes. Stop ceepin'.
+|[ENEMY PHASE]
+|-
+| colspan="2" |>Sing
+|
+|
+|-
+| colspan="2" |>Flash some Macca
+|
+|
+|-
+| colspan="4" align="center" | Trust
+|-
+| colspan="3" |You're new around here, huh? It's kinda cool, but also kinda sketch. I dunno if I can trust you. 
+|>It's fine<br>>Please trust me<br>>Like I can trust you.
+|-
+| colspan="2" |>It's fine
+|Uh, whoa. That's inda hardcore... Not a lot of guys like you around these days. Actually, you seem kinda chill... Why don't we chat for a bit?
+|[DIALOGUE SWITCH >> Texting]
+|-
+| colspan="2" |>Please trust me
+|I mean, hello? We're both demons here? I dunno if we could ever trust each other. Just forget that part and give me something. Presents don't lie, after all.
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>Like I can trust you.
+|
+|
+|-
+| colspan="4" align="center" | Fate
+|-
+| colspan="3" |Hey. You think us meeting like this was fate?
+|>It was<br>>It was a coincidence<br>>Conspiracy. The Syndicate's behind it.
+|-
+| colspan="2" |>It was
+|I dunno if I'm feeling it yet... but a couple offerings might make it a little more special for me... 
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>It was a coincidence
+|Wow. You suck at talking to girls.
+|TALK END, TURN USED]
+|-
+| colspan="2" |>Conspiracy. The Syndicate's behind it.
+|You're being targeted by the Syndicate? Plot twist: I'm the Syndicate assassin! Dun dun dun!
+|[ENEMY PHASE]
+|-
+| colspan="4" align="center" | Ahahahahaha...!
+|-
+| colspan="3" |Yeah... Yeah! I know, right!? Ahahahahaha...! (The demon's full attention is on their phone... What will you do?)
+|>Chide them<br>>Wait patiently<br>>Chat with Aogami instead
+|-
+|>Chide them
+| colspan="2" |Huh? What're you pointing at my phone for? You want to use it or something? How about we see who's better at texting? C'mon! '''Fastest''' texter wins! Okay, GO! (You texted as fast as your fingers would allow...)
+|[Agility stat between the 2 users is compared]<br>>Pass<br>>Fail
+|-
+| colspan="2" |>>Pass
+|(You won!) Wow, ypu're fast! Are you, like, the fastest texter in the netherworld? I'm coming with!
+|[INSTANT RECRUIT]
+|-
+| colspan="2" |>>Fail
+|(You lost...)
+|
+|-
+|>Wait patiently
+| colspan="2" |
+|
+|-
+|>Chat with Aogami instead
+| colspan="2" |
+|
+|-
+| colspan="4" align="center" | Leave
+|-
+| colspan="3" |(The demon is trying to leave... What will you do?) 
+|>Stop them<br>>Ignore them<br>>Put your guard up
+|-
+| colspan="2" |>Stop them
+|I seriously don't have time for this. Later.
+|[LEAVES]
+|-
+| colspan="2" |>Ignore them
+|Uh, helloooo? I'm about to leave here! You gonna do anything about it?
+|>Stop them<br>>Ignore them<br>>Put your guard up
+|-
+| colspan="2" |>>Stop them
+|
+|
+|-
+| colspan="2" |>>Ignore them
+|You little...! (The demon left in a huff...)
+|[LEAVES]
+|-
+| colspan="2" |>>Put your guard up
+|
+|
+|-
+| colspan="2" |>Put your guard up
+|
+|
+|-
+| colspan="4" align="center" | Beckoning
+|-
+| colspan="3" |(The demon is beckoning you closer... What will you do?) 
+|>Go closer<br>>Gesture back<br>>Spread your arms
+|-
+| colspan="2" |>Go closer
+|Aw, you're so honest about what you want! ...So how about it? Were you scared?
+|>I was<br>>No<br>>I was happy
+|-
+| colspan="2" |>>I was
+|I totally get it. That's exactly what I'm talking about. I love when guys are honest with me. C'mon, how about we be a little MORE honest about what we want here?
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>>No
+|
+|
+|-
+| colspan="2" |>>I was happy
+|
+|
+|-
+| colspan="2" |>Gesture back
+|
+|
+|-
+| colspan="2" |>Spread your arms
+|
+|
+|-
+| colspan="4" align="center" | Let go
+|-
+| colspan="3" |Come on. You can let me go, right? 
+|>Sure<br>>No<br>>Yeah, I'd rather go myself
+|-
+| colspan="2" |>Sure
+|Wow, that easy? You really don't care that much, huh...?
+|[LEAVES]
+|-
+| colspan="2" |>No
+|
+|
+|-
+| colspan="2" |>Yeah, I'd rather go myself
+|
+|
+|-
+| colspan="4" align="center" | Approaching
+|-
+| colspan="3" |(The demon is approaching... What will you do?)
+|>Stop them<br>>Glare at them<br>>Keep calm
+|-
+| colspan="2" |>Stop them
+|Oh god, I know what comes next. "You'll get hurt if you get too close to me"? That line is so cliche. Besides, YOU'RE the one who's gonna get hurt!
+|[ENEMY PHASE]
+|-
+| colspan="2" |>Glare at them
+|>Yeah...<br>>I love talking to girls<br>>Are you even a "girl" anymore?
+|-
+| colspan="2" |>>Yeah...
+|Huh? So what, this is like... practice for you? I so don't wanna do that for free. Gimme something.
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>>I love talking to girls
+|
+|
+|-
+| colspan="2" |>>Are you even a "girl" anymore?
+|
+|
+|-
+| colspan="2" |>Keep calm
+|
+|
+|-
+| colspan="4" align="center" | Fun
+|-
+| colspan="3" |Hey... You wanna have a little fun together?
+|>Sure<br>>No<br>>Doing what?
+|-
+| colspan="2" |>Sure
+|Yay! How about we see who's better at texting? C'mon! '''Fastest''' texter wins! Okay, GO! (You texted as fast as your fingers would allow...)
+|[Agility stat between the 2 users is compared]<br>>Pass<br>>Fail
+|-
+| colspan="2" |>>Pass
+|(You won!) Wow, ypu're fast! Are you, like, the fastest texter in the netherworld? I'm coming with!
+|[INSTANT RECRUIT]
+|-
+| colspan="2" |>>Fail
+|(You lost...)
+|
+|-
+|-
+| colspan="2" |>No
+|
+|
+|-
+| colspan="2" |>Doing what?
+|
+|
+|-
+| colspan="4" align="center" | Join
+|-
+| colspan="3" |So, what happens if I do join you? What would we do together?
+|>I'd train you to be strong<br>>I'll use you for fusions<br>>I haven't thought about it.
+|-
+|rowspan = "2"|>I'd train you to be strong [RANDOM]
+| colspan="2" |So what, that's what I am to you? A little trainable monster you can keep in your pocket? Is that all you think demons are?
+|[ENEMY PHASE]
+|-
+| colspan="2" |So what happens when I can't get any stronger?
+|>Then it's over between us<br>>We'll be together forever.
+|-
+| colspan="2" |>>Then it's over between us
+|Why waste time? I say it's over NOW.
+|[ENEMY PHASE]
+|-
+| colspan="2" |>>We'll be together forever.
+|
+|
+|-
+| colspan="2" |>I'll use you for fusions
+|
+|
+|-
+| colspan="2" |>I haven't thought about it.
+|
+|
+|-
+| colspan="4" align="center" | Waning gibbous
+|-
+|[GOOD OUTCOME]
+| colspan="2" |The moon's all bright! Let's get hyped! (The demon seems to be in good spirits. Could this be due to the full moon...?)
+|[BARGAIN PHASE]
+|-
+| colspan="4" align="center" | Full moon
+|-
+|[GOOD OUTCOME]
+| colspan="2" |Hey, stud! It's a full moon out there! Who's ready to PARTYYY!? (The demon seems to be in good spirits. Could this be due to the full moon...?) So yu want me to come with Then I'm gonna need a little something for the road, right?
+|[BARGAIN PHASE]
+|-
+| colspan="4" align="center" | New moon
+|-
+| colspan="3" |ugh. First the moon goes all dark, and now I'm all depressed. This sucks. 
+(It's no use! Could this be due to the new moon?)
+|[TALK END, TURN USED]
+|-
+|}

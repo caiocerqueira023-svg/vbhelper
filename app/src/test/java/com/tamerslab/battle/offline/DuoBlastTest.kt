@@ -266,9 +266,9 @@ class DuoBlastTest {
             blastFormSpecies = form
         )
         fun snapshotWith(form: String?) = BattleSnapshot(
-            elapsedMillis = 0, isPaused = false, pauseReason = null, commandPoints = 0,
-            maxCommandPoints = 100, alliedMembers = listOf(member("ally:a", form)),
-            opposingMembers = emptyList(), pendingSupportCombatantIds = emptySet(),
+            elapsedMillis = 0, isPaused = false, pauseReason = null,
+            alliedMembers = listOf(member("ally:a", form)),
+            opposingMembers = emptyList(),
             result = null, recentEvents = emptyList()
         )
         val base = mapOf("ally:a" to presentation("ally:a", "Agumon", "base"))

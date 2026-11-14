@@ -151,8 +151,8 @@ private val RadarChipCorner = 6.dp
 
 /**
  * The top cluster: a soft scrim carrying one 48dp back key, the place label ("Radar · NW", the
- * cardinal rendered in cyan as passed by the caller) and, at the right, the options key plus the
- * spawn-settings key while the master Debug switch is on.
+ * cardinal rendered in cyan as passed by the caller), one quiet biome context line underneath, and,
+ * at the right, the options key plus the spawn-settings key while the master Debug switch is on.
  *
  * There is no shelf, no box and no toolbar: contrast comes from the scrim, a single hairline and HUD
  * ink with a soft shadow, exactly like Home's floating status zone. Consumes the status-bar inset.
@@ -165,6 +165,7 @@ internal fun RadarTopChrome(
     onSpawnSettings: () -> Unit,
     debugEnabled: Boolean,
     modifier: Modifier = Modifier,
+    biomeText: String? = null,
 ) {
     val shadow = radarHudShadow()
     Column(
@@ -186,30 +187,43 @@ internal fun RadarTopChrome(
                 description = stringResource(R.string.ui_back_icon),
                 onClick = onBack,
             )
-            Row(
+            Column(
                 modifier = Modifier
                     .weight(1f)
                     .padding(start = 10.dp, end = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
+                verticalArrangement = Arrangement.spacedBy(1.dp),
             ) {
-                Text(
-                    text = stringResource(R.string.nav_radar),
-                    style = MaterialTheme.typography.titleMedium.copy(shadow = shadow),
-                    color = TextPrimaryOnDark,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-                Text(
-                    // The cardinal is a localized N/NE/... passed by the caller; an uncalibrated
-                    // compass keeps the slot honest with an em dash instead of inventing north.
-                    text = cardinal?.let { "· $it" } ?: "· —",
-                    style = MaterialTheme.typography.labelLarge.copy(shadow = shadow),
-                    color = VitalCyan,
-                    maxLines = 1,
-                    softWrap = false,
-                    modifier = Modifier.padding(start = 6.dp),
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = stringResource(R.string.nav_radar),
+                        style = MaterialTheme.typography.titleMedium.copy(shadow = shadow),
+                        color = TextPrimaryOnDark,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    Text(
+                        // The cardinal is a localized N/NE/... passed by the caller; an uncalibrated
+                        // compass keeps the slot honest with an em dash instead of inventing north.
+                        text = cardinal?.let { "· $it" } ?: "· —",
+                        style = MaterialTheme.typography.labelLarge.copy(shadow = shadow),
+                        color = VitalCyan,
+                        maxLines = 1,
+                        softWrap = false,
+                        modifier = Modifier.padding(start = 6.dp),
+                    )
+                }
+                // The resolved world biome, in the same quiet context-line role battle uses. It stays
+                // absent while the lookup is Null, so an unavailable map never invents surroundings.
+                biomeText?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.labelMedium.copy(shadow = shadow),
+                        color = TextSecondaryOnDark,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
             RadarChromeKey(
                 icon = Icons.Rounded.Tune,
@@ -619,6 +633,8 @@ internal fun RadarOptionsSheet(
     onLabelsChange: (Boolean) -> Unit,
     arBattlesEnabled: Boolean,
     onArBattlesChange: (Boolean) -> Unit,
+    /** Developer-only: AR battles are hidden when the build does not enable them. */
+    arBattlesAvailable: Boolean = false,
     debugEnabled: Boolean,
     legacyView: RadarLegacyView,
     onLegacyViewChange: (RadarLegacyView) -> Unit,
@@ -654,13 +670,15 @@ internal fun RadarOptionsSheet(
                     onCheckedChange = onLabelsChange,
                 )
             }
-            RadarOptionSection(title = stringResource(R.string.ui_world_options_battles)) {
-                LabeledSwitchRow(
-                    label = stringResource(R.string.ar_battle_toggle),
-                    checked = arBattlesEnabled,
-                    onCheckedChange = onArBattlesChange,
-                    description = stringResource(R.string.ar_battle_toggle_description),
-                )
+            if (arBattlesAvailable) {
+                RadarOptionSection(title = stringResource(R.string.ui_world_options_battles)) {
+                    LabeledSwitchRow(
+                        label = stringResource(R.string.ar_battle_toggle),
+                        checked = arBattlesEnabled,
+                        onCheckedChange = onArBattlesChange,
+                        description = stringResource(R.string.ar_battle_toggle_description),
+                    )
+                }
             }
             if (debugEnabled) {
                 RadarOptionSection(title = stringResource(R.string.ui_world_options_legacy)) {
@@ -948,15 +966,10 @@ private fun RadarChromeKey(
         modifier = modifier
             .size(RadarKeySize)
             .clip(shape)
-            .background(SurfaceElevatedPurple.copy(alpha = if (pressed) 0.95f else 0.70f))
-            .border(
-                width = 1.dp,
-                color = if (pressed) VitalCyan else SurfaceStroke.copy(alpha = 0.85f),
-                shape = shape,
-            )
+            // Bare key, like Home's HUD: the icon and its 48dp target, no fill and no hairline frame.
+            // The cut-corner shape only bounds the press ripple; cyan marks the press.
             .clickable(
                 interactionSource = interaction,
-                indication = null,
                 role = Role.Button,
                 onClick = onClick,
             )

@@ -43,4 +43,7 @@ interface AppContainer {
         get() = digifarmRepository.conversationOwner(chatRepository)
     val worldEcosystemCoordinator: WorldEcosystemCoordinator
     val worldInteractionOrchestrator: com.tamerslab.world.ecosystem.WorldInteractionOrchestrator
+    val digilineContentProvider: com.tamerslab.digiline.content.DigilineContentProvider
+    val ownedDigilineRepository: com.tamerslab.digiline.data.OwnedDigilineRepository
+    val digilineGateway: com.tamerslab.digiline.gateway.DigilineGateway
 }

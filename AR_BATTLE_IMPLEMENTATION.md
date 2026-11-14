@@ -11,7 +11,16 @@ and a placement model; there is no second battle renderer.
 
 ## Implementation status
 
-Source implementation is complete on the uncommitted working tree. The pure placement/
+**Developer-only option.** AR battles are gated by the build-time
+`BuildConfig.AR_BATTLES_ENABLED` flag: `true` for the `debug` and `integrityCheck` build
+types (including the `-PnonDebuggable` Samsung workaround build) and `false` for `release`.
+Release builds hide the Radar **"AR battles"** preference and force the AR flow off before
+any entry point is reached, so production users cannot start an AR battle. The AR code and
+the optional `com.google.ar:core` dependency are still compiled into release (unreachable);
+moving the `com.tamerslab.ar` package to the debug source set is a follow-up if the
+dependency should disappear from production APKs entirely.
+
+Source implementation is complete on the working tree. The pure placement/
 camera maths has JVM unit-test coverage and the full unit suite is run as part of the
 verification recorded below. On-device acceptance is owned by the Lead; the verified device
 evidence available at hand-off is recorded below (transparent Filament over the live camera,
@@ -33,10 +42,12 @@ No database schema change was made. No permission was added beyond `CAMERA`. ARC
 
 ## Product behaviour
 
-- **Opt-in.** The radar view preferences card has a **"AR battles"** switch
-  (`ar_battle_toggle`) with a one-line description. It is off by default, saved with the
-  other radar view preferences (same `rememberSaveable` pattern as 2D/first-person and
-  entity labels), and does not affect anything until a battle is started manually.
+- **Opt-in (developer builds only).** The radar view preferences card has a **"AR battles"**
+  switch (`ar_battle_toggle`) with a one-line description, shown only when
+  `BuildConfig.AR_BATTLES_ENABLED` is true (debug/integrityCheck builds). It is off by
+  default, saved with the other radar view preferences (same `rememberSaveable` pattern as
+  2D/first-person and entity labels), and does not affect anything until a battle is started
+  manually.
 - **Encounter → AR scanner.** With the switch on, tapping **Battle** on a radar encounter
   card does not start the fight immediately. The existing square battle viewport becomes the
   AR stage: live camera feed, outlined detected horizontal planes and a centre reticle.
@@ -614,13 +625,13 @@ Prerequisites: authorized ADB device with ARCore installed (`adb devices`), Andr
 `%LOCALAPPDATA%\Android\Sdk` (ADB is not on `PATH` on this machine).
 
 ```powershell
-# install the debug build (applicationId com.github.nacabaro.vbhelper)
+# install the debug build (applicationId com.tamerslab.vbhelper)
 # -PnonDebuggable avoids the Samsung/ARCore debuggable-build tracking bug (see above)
 .\gradlew.bat :app:installDebug -PnonDebuggable --console=plain
 
 # launch the app
 & "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" shell am start `
-    -n com.github.nacabaro.vbhelper/com.tamerslab.MainActivity
+    -n com.tamerslab.vbhelper/com.tamerslab.MainActivity
 ```
 
 Then:
@@ -644,12 +655,12 @@ Debug diagnostics/preview activities (debug builds only):
 
 ```powershell
 & "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" shell am start `
-    -n com.github.nacabaro.vbhelper/com.tamerslab.ar.ArDiagnosticsActivity
+    -n com.tamerslab.vbhelper/com.tamerslab.ar.ArDiagnosticsActivity
 # camera feed + plane outlines + tap hit marker + tracking HUD + translucent Filament sprite
 & "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" exec-out screencap -p > ar_diagnostics.png
 
 & "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" shell am start `
-    -n com.github.nacabaro.vbhelper/com.tamerslab.ar.ArStagePreviewActivity
+    -n com.tamerslab.vbhelper/com.tamerslab.ar.ArStagePreviewActivity
 # the real ArBattleStage in SCANNING (placement UI + permission/install cards), with a
 # "simulate confirm" row and a callback log overlay; no radar battle needed
 ```

@@ -19,6 +19,6 @@ class ExampleInstrumentedTest {
     fun useAppContext() {
         // Context of the app under test.
         val appContext = InstrumentationRegistry.getInstrumentation().targetContext
-        assertEquals("com.github.nacabaro.vbhelper.integritycheck", appContext.packageName)
+        assertEquals("com.tamerslab.vbhelper.integritycheck", appContext.packageName)
     }
 }

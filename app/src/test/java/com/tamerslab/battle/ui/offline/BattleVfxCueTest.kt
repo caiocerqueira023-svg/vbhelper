@@ -11,11 +11,8 @@ class BattleVfxCueTest {
         elapsedMillis = 1_000L,
         isPaused = false,
         pauseReason = null,
-        commandPoints = 0,
-        maxCommandPoints = 100,
         alliedMembers = emptyList(),
         opposingMembers = emptyList(),
-        pendingSupportCombatantIds = emptySet(),
         result = null,
         recentEvents = events,
         eventCount = eventCount

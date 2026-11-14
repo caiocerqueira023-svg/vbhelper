@@ -94,9 +94,6 @@ class TamerTrainerController(private val side: BattleSide, private val policy: T
                 }
             }
         }
-        team.firstOrNull { it.combatantId in snapshot.pendingSupportCombatantIds }?.let {
-            decisions += TrainerDecision(it.combatantId, TrainerAction.Support)
-        }
         return decisions
     }
 }

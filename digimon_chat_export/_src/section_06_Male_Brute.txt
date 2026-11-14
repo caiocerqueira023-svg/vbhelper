@@ -1,0 +1,203 @@
+===Brute===
+
+{| class="table smt5"
+! colspan="3" |Dialogue
+!Outcome
+|-
+| colspan="4" align="center" |Approaching
+|-
+| colspan="3" |The demon is approaching..
+What will you do?
+|>Stop them
+>Glare at them
+
+>Keep calm
+|-
+|>Stop them
+| colspan="2" |Eager to get down to business, are we?
+Today's youth are so impatient.
+First, you ought to know who you're dealing with.
+|[DIALOGUE SWITCH]
+|-
+|>Glare at them
+| colspan="2" |Heheh... I want to know what you're really like beneath that prickly exterior. You're that new demon, aren't you? Just who are you supposed to be?
+(What response will you give the demon?)
+|>A friendly response
+>A harsh response
+|-
+|>>A friendly response
+| colspan="2" |Good, good. Seems like you know your place. All right, we'll talk.
+|[BARGAIN PHASE]
+|-
+| colspan="4" align="center"|Guard
+|-
+| colspan="3" |The demon has their guard up...
+What will you do?
+|>Motion for peace
+>Put your guard up
+|-
+| colspan="2" |>Motion for peace
+|You want to speak with me, eh, boy? All right...
+|[DIALOGUE SWITCH]
+|-
+| colspan="2" |>Put your guard up
+|Now now, aggression will get you nowhere with me.
+You ought to use your head.
+|[DIALOGUE SWITCH]
+|-
+| colspan="4" align="center"|Bored
+|-
+| colspan="3" |The demon looks bored... What will you do?
+|>Dance
+>Sing
+>Flash some Macca
+|-
+|>Dance
+| colspan="2" |(You tried dancing...) I'd rather not watch you flailing about.
+|[LEAVES]
+|-
+|>Sing
+| colspan="2" |(You tried singing...) Such a clear, un fettered voice... Not bad, boy.
+|[BARGAIN PHASE]
+|-
+|>Flash some Macca
+| colspan="2" |
+|
+|-
+|>
+| colspan="2" |
+|
+|-
+| colspan="4" align="center"|Hair
+|-
+| colspan="3" |I must say, I find your hair quite captivating.
+It's completely stolen my gaze.
+|>How about I steal your heart?<br>>It's hard to maintain, though.<br>>Would you say it makes the "cut"?
+|-
+| colspan="2" |>How about I steal your heart?
+|Don't be so full of yourself.
+If you want to steal my heart, give me something with actual substance.
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>It's hard to maintain, though.
+|Is it now? Tell me, what's so inconvenient about it?
+|>It gets messy.<br>>It makes my head feel heavy.<br>>I get mistaken for a lady.
+|-
+| colspan="2" |>>It gets messy.
+|That does sound quite annoying. In fact, I've been annoyed ever since you started talking to me.
+|[ENEMY PHASE]
+|-
+| colspan="2" |>>It makes my head feel heavy.
+|Just think of it  the weight of your destiny and deal with it.
+|[ENEMY PHASE]
+|-
+| colspan="2" |>>I get mistaken for a lady.
+|
+|
+|-
+| colspan="2" |>Would you say it makes the "cut"?
+|
+|
+|-
+| colspan="4" align="center"|Cute
+|-
+| colspan="3" |You're a cute one, boy. Would you like me to take care of you?
+|>That would be nice
+>Thanks, but no thanks.
+>I don't need pampering
+|-
+| colspan="2" |>That would be nice
+|Oh, there there...
+Now rest forever in Mother's arms!
+|[ENEMY PHASE]
+|-
+|
+|
+|
+|
+|-
+| colspan="4" align="center"|Fuss
+|-
+| colspan="3" |Hmph, you're certainly a noisy one. Why do you fuss about like this? What is it you want?
+|>Be my demon.<br>>I'm here to talk.<br>>I'm not making any fuss.
+|-
+| width="15%" |>Be my demon.
+| colspan="2" |Joining you means betraying my own kind.<br>Have you the guts to turn against your own friends, if it came down to it?
+|>I'd do it if need be.<br>>I could never.<br>>I'd find a way around it.
+|-
+| colspan="2" width="30%" |>>I'd do it if need be.
+|You're that determined? Seems I've mistaken you for a carefree child...<br>That changes things. You hereby have my attention.
+|[BARGAIN PHASE]
+|-
+| colspan="2" width="30%" |>>I could never.
+|That;s what I though. Me, I'd stab anyone in the back if it meant my survival. Are you ready to pay that price?
+|[BARGAIN PHASE]
+|-
+| colspan="2" width="30%" |>>I'd find a way around it.
+|
+|
+|-
+| colspan="2" width="15%" |>I'm here to talk.
+|
+|
+|-
+| colspan="2" width="15%" |>I'm not making any fuss.
+|
+|
+|-
+| colspan="4" align="center"|Magic
+|-
+| colspan="3" |Let's see if you know Magic as well as I do.
+Try and solve my riddle.
+|>You're on.
+>No thanks
+|-
+| colspan="2" |>You're on.
+|(You tried solving the demon's riddle...)
+|[Magic stat is compared]
+>Pass
+>Fail
+|-
+| colspan="2" |>>Pass
+|(...and puzzled it out!) Impressive. Mayhap I'd it right in as one of your own.
+|[INSTANT RECRUIT]
+|-
+| colspan="2" |>>Fail
+|
+|
+|-
+| colspan="2" |>No thanks
+|
+|
+|-
+| colspan="4" align="center"|Beckoning
+|-
+| colspan="3" |(The demon is beckoning you closer... What will you do?)
+|>Go closer<br>>Gesture back<br>>Look away
+|-
+| colspan="2" |>Go closer
+|Ah, so you wish to give your heart over to me? Then, prove you can obey me.
+|[BARGAIN PHASE]
+|-
+| colspan="2" |>Gesture back
+|
+|
+|-
+| colspan="2" |>Look away
+|
+|
+|-
+| colspan="4" align="center"|Recognize
+|-
+| colspan="3" |So you're [Playername]... I've heard rumors about you.
+|[RANDOM]<br>>Troublemaker<br>>Ally
+|-
+| colspan="2" |>Troublemaker
+|They say you're a real troublemaker! I ought to end you right here!
+|[ENEMY PHASE]
+|-
+| colspan="2" |>Ally
+|Well, this is quite the development... Mayhap I could even be your ally...
+|[BARGAIN PHASE]
+|-
+|}

@@ -11,6 +11,40 @@ tree; it is not a release announcement and does not claim a verified green build
 
 ### Added
 
+- **Connection secrets now ship with the app.** The AES key, the two 4-bit substitution ciphers and
+  the VBDM/VBC/BE HMAC key pairs used to authenticate with the watch are baked into the build
+  (extracted from the official VB Arena 2.1.0 base APK), so a fresh install can scan a watch without
+  downloading the Arena APK and running `Import secrets`. They live in
+  `security/BundledSecrets.kt` as the fallback of `DataStoreSecretsRepository`, and
+  `BundledSecretsTest` pins them by regenerating the known watch test passwords (`be29a87e`,
+  `a71dfb22`, `6ea33673`). A manual import in Settings still overrides the built-in values, which is
+  the path to use if a future Arena release rotates the keys. The commit also fixes
+  `SecretsRepository.getSecrets()`, which called `single()` on the never-completing DataStore flow
+  and could hang if it were ever called.
+
+- **The Home Digifarm now lives with each resident's full VB pose set.** Residents breathe on idle,
+  stroll with the walk frames, jog with the run frames, work out, sleep occasionally, and pairs walk up
+  to each other, turn face to face and share a happy beat before drifting apart. Walking keeps the
+  diorama's pre-liveliness rhythm that the owner preferred: one 0.22-unit stride interpolated over
+  1.1 s, a short foot-plant pause before the next stride, the walk pose cycling every 250 ms (jog 220
+  ms), and no step bob. Pacing is probabilistic rather than directed: every finished beat rolls once
+  for the next behaviour,
+  with standing (49%) and walking (42%) dominating and a rare jog, workout, happy beat, nap or greeting
+  making up the rest — no global cycle, schedule or cap on how many residents may do the same thing at
+  once, so most of the time the island simply stands and walks about. Workouts and naps are held longer
+  than the other beats (10-20 s and 30-60 s), so when one happens it is a state you can actually see.
+  Greetings are the rarest roll
+  (0.8%) and are held longer (6-9 s face to face), so an interaction is a small event instead of
+  constant background behaviour. The cast seeds itself with fresh entropy on every creation, every
+  resident owns its own random stream and greeting partners are picked uniformly at random, so no
+  session replays the same show. Body collision models each
+  resident as a circle the width of its extruded artwork: walkers are pushed around planted neighbours
+  and the renderer adds a movers-only visual separation pass, so sprites can never be drawn passing
+  through each other and a sleeping resident is never nudged. The roster resolves the complete
+  twelve-pose artwork from the `DisplaySprite` view (or the bundled Dot set) instead of faking walk and
+  happy with four stored frames, keeps the legacy four-frame fallback for partial data, and freezes to
+  a staged tableau under reduced motion. Implementation and unit-test evidence live in `TESTING.md`.
+
 - **Home ↔ place transitions are animated instead of cut.** Choosing a place from the farm now
   dissolves the outgoing chrome while the place lifts and fades over the world; the farm itself holds
   the screen as a depth layer, pushing in slightly and staying composited until the new screen is
@@ -126,7 +160,10 @@ tree; it is not a release announcement and does not claim a verified green build
   (Filament 1.76.1 `ModelViewer` is opaque by default) so the fight composites over the live
   camera. Scale plans (`Auto`/`Tabletop`/`Room`/`Open space`) map the 16-unit radar arena to
   0.9–8 m, chosen automatically from the detected surface, and an "AR battles" radar
-  preference enables the mode. Placement and battle share one ARCore session and one
+  preference enables the mode. **AR battles are a developer-only option**: the preference and
+  every AR entry point are gated by the build-time `AR_BATTLES_ENABLED` flag (true for
+  debug/integrityCheck builds, false for release, so production builds hide and disable the
+  mode). Placement and battle share one ARCore session and one
   Filament engine; unsupported devices, a missing ARCore runtime or a denied camera
   permission fall back to the normal Coliseum battle. Radar commands now submit with the
   latest command stamp so ordinary GPS updates no longer cancel interactions as stale
@@ -134,16 +171,110 @@ tree; it is not a release announcement and does not claim a verified green build
   host, 44 JVM maths tests (`ArMathTest`, `ArBattleScaleTest`, `ArBattleCameraTest`) and
   `AR_BATTLE_IMPLEMENTATION.md`; camera permission plus an optional ARCore manifest entry.
 
+### Removed
+
+- **Command Points and the Support/incentive command are gone.** The trainer-shared CP pool never
+  gated a production technique (every catalog cost was zero) and the cheer window only fed it, so the
+  resource, its snapshot fields, events, statistics, failure codes, HUD instrument, loadout cost,
+  strings, tests and documentation references were removed together. Checkpoints keep
+  `formatVersion = 1`: Gson ignores the old `commandPoints`/`maxCommandPoints` keys and the NPC replay
+  never read CP, so active battles and existing saves load unchanged. The partner's HP/MP/ESP readings
+  now occupy the header space the CP instrument used to consume.
+
 ### Changed
+
+- **Settings is ordered and grouped like a setup flow; every option is unchanged.** Sections now
+  run Watch connection → Card archive (import plus the card-origin prompt) → Appearance → Sound →
+  Tamer profile and preferences → Species (catalog plus the VB-first/Dot-first artwork priority) →
+  Communication (research notes, and DigiLine while Debug and legacy chat are on) → Backup and
+  restore → Debug mode → About and credits. The card-origin toggle moved next to card import,
+  research notes and the DigiLine connection left the Tamer section, backup/restore moved above
+  Debug and About, the redundant "Digimon graphics" header folded into Species, and the Tamer name
+  is edited from its row in a dialog like the font and language instead of an inline field plus a
+  separate save row. Row, section and dialog visuals are unchanged.
+
+- **The app is now its own installed app, not a VBHelper update.** `applicationId` moved from
+  `com.github.nacabaro.vbhelper` to `com.tamerslab.vbhelper` ([ADR 0006](docs/adr/0006-own-application-id.md),
+  superseding ADR 0001), so installing this build no longer replaces or updates VBHelper and an
+  upstream VBHelper release is no longer offered as an update here. The two apps install side by
+  side. Consequence: a new install does not inherit the old app's local data - move a collection
+  with `Settings > Export database` in the old app, then `Settings > Import database` in this one
+  (cards live in that database; linked `.sav` saves are relinked; watch secrets ship with the
+  build). The `integrityCheck` variant is `com.tamerslab.vbhelper.integritycheck`, and the
+  baseline-profile generator, macrobenchmark, instrumentation package assertion and device scripts
+  were retargeted. This is a build-configuration change: no APK was built or installed for it in
+  this pass.
+
+- **The Digifarm keeps its baked, unlit look; the only thing lighting left behind is a real drop
+  shadow.** The island and its voxel blocks are authored emission-baked and the residents are unlit
+  extruded pixel art, so a key/fill/rim rig plus image-based ambient was built, reviewed on the
+  SM-A346M, and reverted: it read as a different game rather than as the same farm lit better. What
+  stayed is the ground shadow each resident was always supposed to have - and that shadow had in fact
+  never rendered. With the pinned gltfio 1.76.1 an **unlit** blended primitive of the generated
+  resident GLB never reaches the color buffer; the contact shadow is now a blended **lit** material
+  whose albedo is black, so it renders as a clean alpha-blended shadow with no lighting dependency.
+  The quad is larger and softer than the old hidden one (1.24 x 0.92 local units, 66% alpha, softer
+  falloff), so a resident visibly sits on the grass. A JVM test pins the blend/lighting combination so
+  the shadow cannot silently disappear again.
+- **The last visible remnants of the retired multi-farm system are gone.** DigiLine no longer has a
+  "Farms" tab (it lists only Storage and Wild Ones), Storage no longer captions a partner with the farm
+  it lives on, and the farm-group chat route/screen, the old `DigifarmScreen` (create another,
+  archive, needs, transfer) and the Radar|Digifarm tabs on the legacy `World` route were deleted. The
+  `World` alias now opens the Radar world directly. Stored farm data and tables are untouched; only
+  the exposed UI was retired.
+- **The battle command band is a fixed 3×3 instrument after Re:Digitize Decode.** The float
+  disappears: row one is the partner's three equipped techniques (name plus EN cost and live
+  availability), row two Items / Special / Strategy, row three Focus / Defend / Move. Move arms a
+  one-tap arena destination (move-to-point via the scene's unpick) instead of opening a menu, and the
+  selected partner's vitals were folded into the band header so nothing floats over the arena. The
+  special/Blast timing is a Decode-style command dial with a dark technical ring, a yellow progress arc,
+  a red target arc, ticks and a needle, the ordered move's name in the centre, and a full-screen tap as
+  the only input (no Stop button). The nine deck keys are bare HUD keys — no fill and no angular
+  frame, each settled by a 1dp hairline — matching the bare-key instrument vocabulary of the top
+  cluster. The same deck is shared by training/Arena, Radar and the AR stage.
+
+- **The Radar ground scrolls as you walk.** The active partner still stays planted at the plate centre,
+  but the authored grid now slides opposite to the player's real travel, the way the legacy 2D radar
+  scrolls its grid under the centred marker: the phase is anchored to the first location fix, expressed
+  at the plate's linear metre scale (one authored cell = 60 m), folded to half a cell so the finite
+  authored floor never runs out, and rotated with the compass like the plate and the tokens. The slide
+  is low-pass filtered with a time constant scaled by the reported GPS accuracy (0.35 s + 0.08 s per
+  metre; coarser than 30 m the grid holds still), so standing in place does not shake the ground.
+  Because the authored world grid is a translucent mesh that now slides under the ground markings, the
+  metre-ring decal and the interaction ring were given late Filament render priorities (5 and 6) so the
+  ring stays above the grid instead of flipping under it as the plate moves. The mapping is covered by
+  two `RadarIsometricGeometryTest` cases (direction/rate and the half-cell fold). Slide rate follows
+  real metres, so it is subtle at the widest zoom and strongest when zoomed in — same as the 2D radar.
+
+- **Home ↔ place background now crossfades instead of cutting.** The destination pages are transparent
+  over the global device pattern, so during a change the farm layer *is* the arriving page's
+  background. It used to be held opaque and dropped at the end of the transition, which made the
+  background swap abruptly; it now pushes in while dissolving into the device pattern over 240 ms on the
+  way out, and settles back while fading in over 240 ms on the way home.
+- **Tamer Arena lobby bars collapse on scroll.** The search field and the Tamers/Tournaments/Records
+  section tabs slide up while the opponent roster is scrolled down and return on any upward scroll or at
+  the top, mirroring Storage's search bar; entering the team editor, a briefing or the bracket restores
+  them. Reduced motion keeps the same behavior without the expand/fade animation.
+
+- **Digifarm roster adds members through the shared partner picker.** The "In the Digifarm" sheet still
+  lists current members beside the resident-limit and artwork controls, but "Add member" now opens the
+  same full-screen Storage partner picker the Arena uses for choosing a partner — search, filters, sort
+  and the sprite grid — instead of the sheet's bespoke candidate list. The picked partner lands on the
+  island immediately, the picker stays open while there is free capacity, and it closes on the last
+  slot. `FarmMemberOption` now carries the stored character so the roster can hand the picker real
+  sprite data. (Native capture pending a connected device.)
 
 - **One top-header type across the app.** Every boxed screen header now uses the same top-cluster
   material as Home, the Radar place and the battle surface instead of the old filled gradient banner:
-  a palette-resolved scrim, one leading 48dp cut-corner key, a left-aligned title with a single quiet
-  context line, trailing cut-corner keys with a hairline stroke (cyan only while pressed) and one
-  junction line. The shared primitives live in `components/HudChrome.kt`; `TopBanner` keeps its API,
-  its action priority, labels and semantics, so no call site changed. Tokens resolve through the
-  selected palette, including the light Arena and Digimon.net themes. Native captures are pending a
-  connected device.
+  a palette-resolved scrim, a left-aligned title with a single quiet context line, one junction line,
+  and bare 48dp keys — icon and target only, no fill, no hairline stroke and no cut-corner frame, the
+  way Home's HUD keys already were. The back key always owns the left edge (the battle header's left
+  key is its exit action); every other action the header was given now sits on the right instead of
+  split across both sides, and when a screen passes no back callback the header uses the activity back
+  dispatcher so it behaves like the system back gesture. The shared primitives live in
+  `components/HudChrome.kt`; `TopBanner` keeps its API, labels and semantics, so no call site changed.
+  Tokens resolve through the selected palette, including the light Arena and Digimon.net themes.
+  Native captures are pending a connected device.
 - **Place switching is lighter on mid-range hardware.** The transition is unchanged in shape, but the
   work that ran inside it is not: collection cards no longer re-decode their sprite on every arrival
   and on every idle-frame swap (a content-keyed, 16 MiB decoded-sprite cache now serves them), a
@@ -165,8 +296,10 @@ tree; it is not a release announcement and does not claim a verified green build
 - **Package and product rebrand.** Kotlin packages and namespace are `com.tamerslab`; the
   launcher label is **Tamers Lab**, the root Gradle project is `TamersLab`, and the
   application class/theme are `TamersLabApplication` / `TamersLabTheme`. The
-  `applicationId` remains `com.github.nacabaro.vbhelper` for upgrade continuity (see
-  [ADR 0001](docs/adr/0001-keep-application-id.md)).
+  `applicationId` remained `com.github.nacabaro.vbhelper` for upgrade continuity during the
+  refactor (see [ADR 0001](docs/adr/0001-keep-application-id.md)); that decision was later
+  superseded by [ADR 0006](docs/adr/0006-own-application-id.md), which gives the app its own
+  `com.tamerslab.vbhelper` identity — see the "Changed" entry above.
 - **Feature-based package layout.** `battle`, `farm`, `transfer`, `chat`, `species`,
   `world`, `storage`, `home`, `items`, `settings`, `adventure`, and `quests`, plus shared
   `data`, `domain`, `ui`, `rendering`, `companion`, `di`, `navigation`, `security`,
@@ -244,8 +377,35 @@ tree; it is not a release announcement and does not claim a verified green build
   place row's DigiLine key now opens the Dex, and the partner slab's chat key opens the whole DigiLine
   list with the active partner's conversation pinned first.
 
+- **Cinematic camera: close-ups and floor collision.** Cuts now include a close-up distance band, the
+  grazing angles are weighted more common than the steep one, and the lens is floor-limited so no cut,
+  drift or manual drag can put it at or below the island surface.
+
 ### Fixed
 
+- **Farm walking restored to the diorama's pre-liveliness rhythm.** The resident-life pass had replaced
+  the old stride rhythm with continuous movement at a fixed cadence; after device feedback the owner
+  asked for the earlier feel back, with the correct frames (walk frames on the walk pose, run frames on
+  the jog). `FarmDioramaSimulation` now walks in the old strides again — 0.22 world units interpolated
+  over 1.1 s, then a 1.15-1.6 s beat before the next one, which leaves the short foot-plant pause the
+  old island had — and jogs in longer 0.32-unit strides over 0.8 s. The renderer cycles the walk pose at
+  a fixed 250 ms and the jog at 220 ms; the speed-derived cadence, the beat latch and the step bob from
+  the previous passes are gone. A jog can no longer strobe because one stride fills the whole
+  interpolation window.
+- **The Radar's biome readout is visible again.** The OpenStreetMap biome system was still resolving and
+  still biased spawn attributes, but its only UI was a 10sp label inside the legacy 2D radar, which is
+  reachable only while the master Debug switch is on — the isometric redesign dropped the display. The
+  floating top cluster now carries the same localized "Surroundings: …" line under "Radar · NW" (absent
+  while the lookup is Null, so unavailable map data never invents surroundings), and `WorldScreen`
+  publishes the resolved biome as soon as the lookup returns instead of only after a successful region
+  command, so a rejected/stale spawn refresh no longer leaves the readout empty.
+- **Full-screen pickers and editors no longer darken the page in the light palettes.** The Arena
+  "Choose partner" picker, the species sprite picker and the species catalog editor painted a
+  transparent dialog surface (`colorScheme.background` is transparent in this theme, so the global
+  device pattern can show through normal pages), which let the screen underneath and the dialog window
+  dim show through and made the whole page read as a darker theme. Their windows are now edge-to-edge
+  and paint the palette's own opaque page background, with the wrapper handling the system-bar/IME
+  insets, so light palettes stay light and dark ones stay dark.
 - **Radar encounters no longer crash a few seconds into the battle.** The Radar battle's Filament
   scene is hoisted to the root of the Radar battle surface so Compose can never replace the
   `AndroidView` mid-fight: the previous layout branch was re-composed at the countdown, destroying and
