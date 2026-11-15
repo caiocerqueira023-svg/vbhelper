@@ -88,14 +88,16 @@ class FarmArtworkTest {
 
     @Test
     fun bodyRadiusIsPositiveAndProportionalToAspect() {
-        assertEquals(0.13f, FARM_RESIDENT_HEIGHT_UNITS, 1e-6f)
+        // Residents render 30% smaller than the original 0.13-unit framing (owner request). The
+        // collision radius follows the same height, so no other constant has to change with it.
+        assertEquals(0.091f, FARM_RESIDENT_HEIGHT_UNITS, 1e-6f)
 
         val square = artwork(width = 40, height = 40)
-        assertEquals(0.065f, square.bodyRadius, 1e-6f)
+        assertEquals(0.5f * FARM_RESIDENT_HEIGHT_UNITS, square.bodyRadius, 1e-6f)
         assertTrue("collision radius must be positive", square.bodyRadius > 0f)
 
         val tall = artwork(width = 40, height = 80)
-        assertEquals(0.0325f, tall.bodyRadius, 1e-6f)
+        assertEquals(0.25f * FARM_RESIDENT_HEIGHT_UNITS, tall.bodyRadius, 1e-6f)
         assertTrue("clamped tall body keeps a positive radius", tall.bodyRadius > 0f)
 
         val wide = artwork(width = 28, height = 20)

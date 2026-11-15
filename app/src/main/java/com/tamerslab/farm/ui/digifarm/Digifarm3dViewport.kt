@@ -34,7 +34,9 @@ import com.google.android.filament.gltfio.UbershaderProvider
 import com.google.android.filament.utils.ModelViewer
 import com.tamerslab.farm.FarmCameraState
 import com.tamerslab.farm.map.Digifarm3dAssetCatalog
+import com.tamerslab.rendering.CubeVolume
 import com.tamerslab.rendering.HybridSceneKind
+import com.tamerslab.rendering.separateCubeVolumes
 import com.tamerslab.rendering.SceneFrameBudget
 import com.tamerslab.rendering.SceneFrameInputs
 import com.tamerslab.rendering.SceneFramePacer
@@ -110,14 +112,11 @@ internal fun prioritizeResidentLoads(
  * them *up* the screen, which is what the farm-home framing needs because the bottom ~184dp of the
  * viewport is covered by the partner slab and the place dock.
  *
- * Height estimate for the hard contract "the followed resident sits between 30% and 52% of viewport
- * height" (PRESENTATION_REDESIGN_PLAN Â§5.2), with a 50mm lens on Filament's 24mm sensor
- * (vertical FOV = 2*atan(12/50) â‰ˆ 26.9°):
- *  - [Home]: targetY âˆ’0.12 at ~3.2 units puts the feet 0.12 above the aim â†’ atan(0.12/3.2) â‰ˆ 2.15°
- *    â‰ˆ 8% of the height above centre â†’ feet at ~42%, head (0.14 higher) at ~34%. Inside 30–52%.
- *  - [World]: targetY âˆ’0.05 at 3.86 â†’ feet ~47%, head ~53%: too low once bottom chrome exists, which
- *    is why the legacy World tab keeps it and the home does not.
- * The device capture pass must confirm these numbers on the A34; they are geometry, not taste.
+ * The resident artwork and the orbit distances are scaled by the same factor (0.7 x the original
+ * framing, i.e. the residents are 30% smaller): the followed resident keeps the same on-screen height,
+ * while the island - whose world size is unchanged - reads larger. Aim heights and the near plane are
+ * scaled with them so the composition is identical, only bigger. The floor-collision clearance is kept
+ * close to an absolute world distance instead, because the island itself did not shrink.
  */
 data class FarmFraming(
     val targetY: Float,
@@ -132,14 +131,14 @@ data class FarmFraming(
     companion object {
         /** World tab: byte-for-byte the framing that shipped, so that surface does not change. */
         val World = FarmFraming(
-            targetY = -0.05f,
+            targetY = -0.035f,
             homeYaw = 0f,
             homePitch = 0.30f,
-            homeDistance = 3.86f,
+            homeDistance = 2.70f,
             pitchMin = 0.18f,
             pitchMax = 1.22f,
-            distanceMin = 1.2f,
-            distanceMax = 4.8f,
+            distanceMin = 0.84f,
+            distanceMax = 3.36f,
         )
 
         /**
@@ -147,16 +146,16 @@ data class FarmFraming(
          * as a habitat rather than a close-up (owner request: default zoom further away).
          */
         val Home = FarmFraming(
-            targetY = -0.12f,
+            targetY = -0.084f,
             homeYaw = 0f,
             homePitch = 0.42f,
-            homeDistance = 4.20f,
+            homeDistance = 2.94f,
             pitchMin = 0.18f,
             pitchMax = 1.10f,
-            distanceMin = 1.2f,
+            distanceMin = 0.84f,
             // Owner request: the maximum zoom-out has to reach well beyond the old default so the whole
-            // habitat can be taken in (the camera far plane is 20 units, so this stays safe).
-            distanceMax = 8.0f,
+            // habitat can be taken in; it scales with the rest of the closer framing.
+            distanceMax = 5.60f,
         )
     }
 }
@@ -410,6 +409,12 @@ class Digifarm3dSceneView(
         val amplitude: Float,
         val angularSpeed: Double,
         val phase: Double,
+        /** Mesh half extents; the cube meshes are origin-centred and unscaled in world space. */
+        val halfExtents: FloatArray,
+        /** Resting world centre: group translation + cube translation (both pure translations). */
+        val baseCentre: FloatArray,
+        /** Index into [floatingBlocks] of the group this cube is parented to. */
+        val groupId: Int,
     )
 
     private data class FloatingIsland(
@@ -430,6 +435,7 @@ class Digifarm3dSceneView(
     private var pulsingGlows: List<PulsingGlow> = emptyList()
     private var islandFloatOffsetY = 0f
     private var floatingStartNanos = 0L
+    private val tmpCubeBox = com.google.android.filament.Box()
 
     // One generated GLB per resident contains the activity and walking poses plus a
     // contact shadow. Pose changes toggle renderable layers without rebuilding.
@@ -604,7 +610,9 @@ class Digifarm3dSceneView(
         engine = Engine.create()
         val helper = UiHelper(UiHelper.ContextErrorPolicy.DONT_CHECK)
         viewer = ModelViewer(this, engine, helper, null)
-        environmentThemes = EnvironmentThemeController(context, engine, initialTheme)
+        environmentThemes = EnvironmentThemeController(
+            context, engine, initialTheme, emissionPeakCeiling = FARM_EMISSION_PEAK_CEILING,
+        )
         viewer.view.applyHybridSceneProfile(HybridSceneKind.DIGIFARM)
         val backdrop = Colors.toLinear(
             Colors.RgbType.SRGB,
@@ -801,6 +809,10 @@ class Digifarm3dSceneView(
                     continue
                 }
                 val blockBase = manager.getTransform(blockTransform, FloatArray(16))
+                val renderable = engine.renderableManager.getInstance(blockEntity)
+                val halfExtents: FloatArray
+                val pickedBox = if (renderable != 0) engine.renderableManager.getAxisAlignedBoundingBox(renderable, tmpCubeBox) else null
+                halfExtents = if (pickedBox != null) tmpCubeBox.halfExtent else floatArrayOf(0.05f, 0.05f, 0.05f)
                 val ordinal = cubes.size
                 cubes += FloatingCube(
                     blockTransform,
@@ -809,6 +821,13 @@ class Digifarm3dSceneView(
                     0.018f + (ordinal % 5) * 0.0035f,
                     1.7 + (ordinal % 6) * 0.13,
                     ordinal * 1.37,
+                    halfExtents,
+                    floatArrayOf(
+                        base[12] + blockBase[12],
+                        base[13] + blockBase[13],
+                        base[14] + blockBase[14],
+                    ),
+                    groups.size - 1,
                 )
             }
         }
@@ -866,12 +885,54 @@ class Digifarm3dSceneView(
             island.animated[13] = island.base[13] + islandFloatOffsetY
             manager.setTransform(island.transformInstance, island.animated)
         }
+        resolveFloatingCubeCollisions()
         pulsingGlows.forEach { glow ->
             val pulse = (0.5 + 0.5 * sin(elapsed * GLOW_PULSE_SPEED + glow.phase)).toFloat()
             val strength = GLOW_BASE_INTENSITY + glow.amplitude * pulse
             if (!environmentThemes.updateEmission(glow.material, strength)) {
                 glow.material.setParameter("emissiveFactor", strength, strength, strength)
             }
+        }
+    }
+
+    /**
+     * Keeps the floating cubes from intersecting each other.
+     *
+     * Every cube bobs on its own phase while its group bobs as a whole, so a stacked pair can drift
+     * into each other. The animated world centre is composed from the known parent chain (group
+     * translation + cube translation), overlapping pairs are separated along their least-penetration
+     * axis, and the correction is written back into the cube's animated translation. The correction is
+     * recomputed from the authored bob every frame, so the motion stays smooth and never accumulates
+     * drift.
+     */
+    private fun resolveFloatingCubeCollisions() {
+        if (floatingCubes.size < 2) return
+        val manager = engine.transformManager
+        val volumes = ArrayList<CubeVolume>(floatingCubes.size)
+        for (cube in floatingCubes) {
+            val group = floatingBlocks.getOrNull(cube.groupId)
+            val groupX = if (group != null) group.animated[12] - group.base[12] else 0f
+            val groupY = if (group != null) group.animated[13] - group.base[13] else 0f
+            val groupZ = if (group != null) group.animated[14] - group.base[14] else 0f
+            volumes += CubeVolume(
+                floatArrayOf(
+                    cube.baseCentre[0] + groupX + (cube.animated[12] - cube.base[12]),
+                    cube.baseCentre[1] + groupY + (cube.animated[13] - cube.base[13]),
+                    cube.baseCentre[2] + groupZ + (cube.animated[14] - cube.base[14]),
+                ),
+                cube.halfExtents,
+            )
+        }
+        if (volumes.size < 2) return
+        val displacements = separateCubeVolumes(volumes)
+        for (index in floatingCubes.indices) {
+            val displacement = displacements[index]
+            if (displacement[0] == 0f && displacement[1] == 0f && displacement[2] == 0f) continue
+            val cube = floatingCubes[index]
+            cube.animated[12] += displacement[0]
+            cube.animated[13] += displacement[1]
+            cube.animated[14] += displacement[2]
+            manager.setTransform(cube.transformInstance, cube.animated)
         }
     }
 
@@ -1964,12 +2025,12 @@ class Digifarm3dSceneView(
 
         /** Flattened lens for the oblique 2.5D look (default ModelViewer is 28mm). */
         private const val DIGIFARM_FOCAL_MM = 50f
-        private const val DIGIFARM_NEAR = 0.5f
+        private const val DIGIFARM_NEAR = 0.35f
         private const val DIGIFARM_FAR = 20f
 
         /** Extruded resident height in world units; the island is ~1.9 wide. */
-        private const val RESIDENT_HEIGHT = 0.13f
-        private const val SELECTED_HEIGHT = 0.15f
+        private const val RESIDENT_HEIGHT = 0.091f
+        private const val SELECTED_HEIGHT = 0.105f
         private const val MAX_INTERPOLATED_STEP_SQ = 0.35f * 0.35f
         private const val MIN_MOVEMENT_DISTANCE = 0.0002f
         private const val MIN_MOVEMENT_DISTANCE_SQ = MIN_MOVEMENT_DISTANCE * MIN_MOVEMENT_DISTANCE
@@ -1997,13 +2058,19 @@ class Digifarm3dSceneView(
         private const val BREATHE_PERIOD_SECONDS = 3.6f
 
         /** Visual separation: padding beyond the two half widths, and relaxation passes per frame. */
-        private const val VISUAL_SEPARATION_PADDING = 0.012f
+        private const val VISUAL_SEPARATION_PADDING = 0.0084f
         private const val VISUAL_SEPARATION_PASSES = 2
         private const val VISUAL_SEPARATION_EPSILON = 0.0001f
         private const val ISLAND_FLOAT_AMPLITUDE = 0.012f
         private const val ISLAND_FLOAT_SPEED = 0.52
         private const val GLOW_PULSE_SPEED = 1.15
         private const val GLOW_BASE_INTENSITY = 1.08f
+
+        /**
+         * The farm's floor and cube accents are theme-tinted emissive surfaces, so their pulse may
+         * reach the dark-theme envelope in the light palettes as well and bloom there too.
+         */
+        private const val FARM_EMISSION_PEAK_CEILING = 1.62f
         private val BLOCKS_PER_GROUP = intArrayOf(3, 3, 2, 2, 2, 2)
 
         // Orbit around the single island. Elevation stays above the horizon.
@@ -2011,15 +2078,7 @@ class Digifarm3dSceneView(
 private const val SETTLE_WINDOW_NANOS = 1_200_000_000L
 
 private const val TARGET_X = 0f
-        private const val TARGET_Y = -0.05f
         private const val TARGET_Z = 0f
-        private const val HOME_YAW = 0f
-        private const val HOME_PITCH = 0.30f
-        private const val HOME_DIST = 3.86f
-        private const val PITCH_MIN = 0.18f
-        private const val PITCH_MAX = 1.22f
-        private const val DIST_MIN = 1.2f
-        private const val DIST_MAX = 4.8f
         private const val FOLLOW_RESPONSE = 8.0
 
 /** Cinematic camera: orbit speed, drift periods and how long a touch parks the motion. */
@@ -2042,10 +2101,10 @@ private const val AUTO_DISTANCE_AMPLITUDE = 0.55f
 /** Shot tiers: low / mid / high heights, and close-up / mid / wide distances. */
 private val PITCH_TIER_WEIGHTS = floatArrayOf(0.50f, 0.32f, 0.18f)
 private val DISTANCE_TIER_WEIGHTS = floatArrayOf(0.45f, 0.33f, 0.22f)
-private const val AUTO_CLOSE_UP_SPAN = 0.45f
+private const val AUTO_CLOSE_UP_SPAN = 0.32f
 
 /** How far above the island surface the lens must stay, in world units. */
-private const val CAMERA_FLOOR_CLEARANCE = 0.42f
+private const val CAMERA_FLOOR_CLEARANCE = 0.30f
 
 /** Hard cut cadence and how far the shot turns. */
 private const val AUTO_CUT_MIN_SECONDS = 14.0
@@ -2070,7 +2129,7 @@ private const val AUTO_CUT_MAX_TURN_RADIANS = 2.6f
         private const val DOUBLE_TAP_NANOS = 300_000_000L
 
         /** Sprite height used to build the tap hit box: the extruded resident is ~0.13 units tall. */
-        private const val RESIDENT_TAP_HEAD_Y = 0.16f
+        private const val RESIDENT_TAP_HEAD_Y = 0.112f
 
         /** Never make a resident harder to hit than this, regardless of how far the camera is. */
         private const val TAP_MIN_RADIUS_DP = 26f

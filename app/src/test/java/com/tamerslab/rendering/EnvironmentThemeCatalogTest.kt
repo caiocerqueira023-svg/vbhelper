@@ -112,6 +112,20 @@ class EnvironmentThemeCatalogTest {
         }
     }
 
+    @Test fun farmGlowKeepsDarkThemePeaksInLightThemes() {
+        // The farm's floor and cubes are theme-tinted, so their pulse is allowed past the white-surface
+        // ceiling: it must stay smooth, but it has to reach HDR levels that bloom.
+        for (theme in listOf(AppTheme.VB_ARENA, AppTheme.DIGIMON_NET)) {
+            val values = (0..30).map { sceneEmissionStrength(theme, 1f + it / 10f, peakCeiling = 1.62f) }
+            assertTrue(values.all { it >= 1f && it <= 1.62f })
+            assertTrue(values.zipWithNext().all { (a, b) -> b > a })
+            assertTrue("farm pulse never reaches bloom: ${values.last()}", values.last() > 1.3f)
+        }
+        // The default ceiling is unchanged for every other environment.
+        assertEquals(1f, sceneEmissionStrength(AppTheme.VB_ARENA, 1f), 0f)
+        assertTrue(sceneEmissionStrength(AppTheme.VB_ARENA, 3f) < 1.15f)
+    }
+
     @Test fun lightThemePulsesStaySmoothWithoutWashingOutWhiteSurfaces() {
         for (theme in listOf(AppTheme.VB_HELPER, AppTheme.VB_LAB)) {
             assertEquals(2.13f, sceneEmissionStrength(theme, 2.13f), 0f)

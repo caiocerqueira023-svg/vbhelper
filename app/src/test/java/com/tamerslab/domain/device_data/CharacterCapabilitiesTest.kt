@@ -69,6 +69,19 @@ class CharacterCapabilitiesTest {
         assertEquals(200L, capabilities.slotId)
     }
 
+    @Test fun cardLessExportTargetIsNotAPhysicalSlot() {
+        // Materialization may record a catalog definition as the export target while no real
+        // DIM/BEM is associated; that must keep demanding a conversion instead of enabling a send.
+        val capabilities = CharacterCapabilities(
+            definition = catalogDefinition(),
+            exportTarget = catalogDefinition(id = 300),
+        )
+        assertTrue(capabilities.needsAssociation)
+        assertFalse(capabilities.hasPhysicalSlot)
+        assertNull(capabilities.slotId)
+        assertNull(capabilities.transferFormat)
+    }
+
     @Test fun missingDefinitionYieldsNoSlotAndNoAssociationDemand() {
         val capabilities = CharacterCapabilities(definition = null)
         assertTrue(capabilities.needsAssociation)

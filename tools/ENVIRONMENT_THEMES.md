@@ -23,15 +23,71 @@ Their embedded PNGs are the provenance of the generated rasters. The generator
 records the original GLB SHA-256, material name, theme, texture channel and original
 sampler in `app/src/main/assets/environment_themes/manifest.json`. PNG filenames
 are their own SHA-256 hashes, allowing shared texture payloads to be deduplicated.
-The initial pack contains **43 PNGs serving 48 channel/theme bindings**.
+The initial pack contains **43 PNGs serving 56 channel/theme bindings**.
 
 VB Helper texture payloads are byte-identical copies of the originals. Alternative
 palettes preserve image dimensions and every alpha byte. Digifarm recoloring is
-restricted to the original `wireframe_tiles()` cell mask, leaving surrounding jade
-turf and stone accents untouched. Cliff/Colosseum structural textures retain their
-source luminance detail; cube panels and dome energy receive curated theme colors.
-No original GLB, geometry, source archive, camera manifest, or sprite asset is
-rewritten.
+restricted to the original `wireframe_tiles()` cell mask, leaving the grass and stone
+accents untouched. Cliff/Colosseum structural textures retain their source luminance
+detail; cube panels and dome energy receive curated theme colors. No original GLB,
+geometry, source archive, camera manifest, or sprite asset is rewritten.
+
+## Island surface and cliff depth
+
+`tools/digifarm/build_reference_textures.py` builds the island's **top** from the
+original Links farm ground as a **tile mosaic**: the floor is cut into large 16px pieces (a
+2x2 block of the authored cells, so the source's tile seams stay visible inside each piece),
+and the pieces are laid out in contiguous regions like the reference floor - broad patches
+of one tile, occasional warm path tiles, long runs of the same piece, mirrored/flipped for
+variety.
+The mosaic is then pulled onto the Tamers Lab accent's low-saturation hue (other palettes
+derive their own at build time), keeping most of the tile variation. On the exposed cells (`wireframe_tiles()`) the
+texture paints a near-black void carrying **one continuous bright square grid**. The *same*
+`wireframe_tiles()` mask drives the texture and the per-palette recolor, which keeps the
+farm **monochromatic**: the turf is derived at build time from the theme's `energy` accent
+(low saturation, dark value) and the grid uses that same accent at full strength - the
+very color the voxel blocks already use for their edges - so grass, patches and cubes are
+one hue per theme. The authored cliff texture is unchanged, except that its strata
+highlight rows are drawn in the authored accent; the generator lifts those rows to the
+theme's `energy` accent for the other palettes (they are the only strongly blue pixels, so
+they can be masked without touching the rim ramp). The rebuild reproduces the packaged
+`island_side.png` bytes verbatim.
+
+The farm's emissive materials keep the dark-theme baseline in the light palettes too (0.94x
+instead of the 0.75x used by white arena surfaces), and the Digifarm viewport passes a
+higher light-theme pulse ceiling (1.62) into `EnvironmentThemeController`, so the floor and
+cube accents bloom in every theme. The trim on the baseline means only bright lines reach
+the bloom range, which keeps the floor's color saturated instead of washing it out.
+
+`build_assets.py` splits the cliff into two materials, because it is a one-sided skirt
+that fades to transparent at its foot: the upper 48% (fully opaque in the authored art)
+uses `island_side_rim_baked`, the same cliff image declared as an alpha-masked
+(`alphaMode: MASK`) material. Rendering in the opaque pass makes those bands **write
+depth**, so the near side of the island occludes the inside of the far side that used to
+show through it; the fading foot keeps the blended material and its transparency. The
+masked bands use `alphaCutoff = 0.25`, not 0.5: the authored strata lines are drawn at
+alpha 110/150 and a 0.5 cutoff silently dropped the 110 rows, which made the island's
+side lines read as broken aliasing. `validate_asset.py` pins the cutoff for that reason.
+
+Measured on the shipped geometry (offline ray/triangle check at five camera yaws, layers
+more than 2cm apart): 100% of the double-layer cliff pixels showed through before, the
+masked upper bands hide ~70% of them, and the rest sit in the heavily faded foot where
+both layers are already nearly transparent. A previous inset "interior lining" was
+removed: it outlived the fading foot and read as a dark shadow hanging under the island.
+
+Reproduce the asset (the generator reproduces the packaged cliff and voxel textures byte for
+byte, so "the sides stay unchanged" is verifiable, not a promise):
+
+```powershell
+# once: unpack the reference archive next to the source FBX
+#   <reference zip> -> build/digifarm_src/Digi-Farm/farm_01.fbx + farm_base_tex01.png
+py -3 -B tools/digifarm/build_reference_textures.py --dst build/digifarm_src/Digi-Farm `
+    --source-archive "<reference zip>"
+blender -b --python tools/digifarm/build_assets.py -- `
+    --source-root build/digifarm_src --output-dir app/src/main/assets/digifarm/3d
+py -3 -B tools/digifarm/validate_asset.py app/src/main/assets/digifarm/3d/digi_farm_3d.glb
+py -3 -B tools/build_environment_themes.py
+```
 
 Run the generator again after changing an environment GLB or the palette config.
 `--check` rejects stale source hashes, changed default pixels, alpha/sampler drift,

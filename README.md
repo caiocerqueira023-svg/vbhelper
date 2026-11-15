@@ -268,9 +268,10 @@ multi-game moves remain format-specific work. See
    by regenerating the known watch test passwords, so a fresh install can scan a watch
    immediately — no VB Arena APK needs to be downloaded or imported.
 
-    Importing secrets is still available and still wins over the built-in values, which is
-    what you use if a later Arena release changes the keys: main screen → gear icon →
-    `Import secrets`, then pick the APK obtained in step 1.
+    Re-importing connection data is a developer fallback for a later Arena release that
+    rotates the keys: enable `Debug` in Settings, then use `Watch connection → Import watch
+    connection data` and pick the APK obtained in step 1. Imported data still wins over the
+    built-in values.
 
 4. Import cards for bracelet interaction and optional exact card-stat association. App
    partners can participate without a card; the bundled Dot library is available

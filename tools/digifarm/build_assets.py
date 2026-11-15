@@ -80,6 +80,10 @@ def build_island(o, tex_dir):
     mesh.materials.clear()
     mesh.materials.append(emission_mat('island_top_baked', tex_dir / 'island_top.png'))
     mesh.materials.append(emission_mat('island_side_baked', tex_dir / 'island_side.png'))
+    # Same cliff image, but the fully opaque upper half is rendered as an alpha-masked
+    # (opaque-pass) material so it writes depth: that hides the far side of the skirt
+    # that used to show through the near side on the island's flanks.
+    mesh.materials.append(emission_mat('island_side_rim_baked', tex_dir / 'island_side.png'))
 
     bm = bmesh.new()
     bm.from_mesh(mesh)
@@ -140,13 +144,17 @@ def build_island(o, tex_dir):
         rings.append(ring)
 
     n = len(loop)
+    # The upper 48% of the cliff is fully opaque in the authored texture; those bands use
+    # the depth-writing masked material, the fading foot keeps the blended one.
+    rim_bands = 3
     for ring_index in range(len(rings) - 1):
         upper, lower = rings[ring_index], rings[ring_index + 1]
         upper_depth, lower_depth = profile[ring_index][0], profile[ring_index + 1][0]
+        band_material = 3 if ring_index < rim_bands else 1
         for i in range(n):
             j = (i + 1) % n
             face = bm.faces.new((upper[i], lower[i], lower[j], upper[j]))
-            face.material_index = 1
+            face.material_index = band_material
             mapping = {
                 upper[i]: (lengths[i] / perimeter, 1 - upper_depth),
                 lower[i]: (lengths[i] / perimeter, 1 - lower_depth),
@@ -261,6 +269,25 @@ def finalize_glb(path):
             pbr['baseColorTexture'] = {'index': texture['index']}
             pbr['baseColorFactor'] = [1, 1, 1, 1]
             material['alphaMode'] = 'BLEND'
+        elif material.get('name') == 'island_side_rim_baked':
+            texture = material.get('emissiveTexture')
+            if texture is None:
+                raise RuntimeError('Cliff rim texture missing')
+            # Opaque upper cliff bands: an alpha-masked material so they render in the
+            # opaque pass and write depth (the near side then occludes the far side).
+            rim_texture = doc['textures'][texture['index']]
+            source_sampler = doc['samplers'][rim_texture['sampler']]
+            rim_sampler = dict(source_sampler, wrapS=10497, wrapT=33071)
+            doc['samplers'].append(rim_sampler)
+            rim_texture['sampler'] = len(doc['samplers']) - 1
+            pbr = material.setdefault('pbrMetallicRoughness', {})
+            pbr['baseColorTexture'] = {'index': texture['index']}
+            pbr['baseColorFactor'] = [1, 1, 1, 1]
+            material['alphaMode'] = 'MASK'
+            # The cliff's strata lines are authored semi-transparent (alpha 110/150). A 0.5
+            # cutoff erased them, which made the side lines read as broken/aliased; 0.25 still
+            # rejects nothing but genuinely clear texels (the masked bands never go below 110).
+            material['alphaCutoff'] = 0.25
     encoded = json.dumps(doc, separators=(',', ':')).encode()
     encoded += b' ' * (-len(encoded) % 4)
     offset = 20 + json_len

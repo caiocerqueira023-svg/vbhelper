@@ -1,8 +1,8 @@
-"""Digifarm textures: original atlas detail, jade grass and violet digital sections.
+"""Digifarm textures: the original Links ground with simple square wireframe patches.
 
 Outputs (POT sizes for mipmaps):
-- island_top.png 512x512: tinted original grass tiles under the existing
-  broken black/violet wire grid sections.
+- island_top.png 512x512: the original farm atlas grass, tiled as authored, with the
+  exposed cells drawn as a dark void carrying one continuous bright square grid.
 - island_side.png 256x256: original side-atlas detail tinted by the existing
   mauve gradient, strata and transparent cliff-foot fade.
 - voxel_block_dark/lit.png 128x128: two dark violet grid panels for the
@@ -10,6 +10,7 @@ Outputs (POT sizes for mipmaps):
 Usage: py tools/digifarm/build_reference_textures.py --dst DIR
 """
 import argparse
+import math
 import colorsys
 from io import BytesIO
 import random
@@ -20,7 +21,7 @@ from PIL import Image, ImageDraw, ImageOps
 
 SEED = 7
 TOP_SIZE = 512
-TOP_PITCH = 12
+TOP_PITCH = 8
 SIDE = 256
 BLOCK_SIZE = 128
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -28,15 +29,23 @@ DEFAULT_SOURCE_ARCHIVE = (
     PROJECT_ROOT / "DigifarmAssets" / "Mobile - Digimon Links - Maps - Digi-Farm.zip"
 )
 SOURCE_ATLAS_ENTRY = "Digi-Farm/farm_base_tex01.png"
-# These original atlas areas are the green surface and side-material UV regions
-# used by the supplied Farm FBX. Only the source detail is sampled; the runtime
-# wireframe patches and mauve side treatment remain authored below.
+# The authored farm grass tile and the earth band used for the cliff.
 GRASS_ATLAS_REGION = (0, 0, 96, 96)
-# A continuous earth band from the original island edge. The broader UV area
-# also contains grass, sand and water blocks; stretching that whole area over
-# the cliff creates hard rectangular seams around the island.
+# Floor mosaic: the atlas' authored 8px ground tiles are arranged the way the reference farm's
+# floor is - broad tone regions, soft clumps and a few warm accent tiles - instead of a repeated
+# grid. The warm tiles come from the atlas path band.
+# The reference floor uses large pieces cut straight from the atlas (16px = a 2x2 block of the
+# authored cells), laid out in contiguous regions like the hand-made reference floor.
+GRASS_TILE = 16
+ACCENT_ATLAS_REGION = (96, 0, 224, 96)
+LAWN_REGIONS = 70
+LAWN_REGION_MIN = 6
+LAWN_REGION_MAX = 64
+ACCENT_PATCHES = 12
 SIDE_ATLAS_REGION = (384, 400, 512, 448)
-CURRENT_GRASS = (112, 169, 137)
+# Exposed cells: a plain dark square per cell with a bright square wireframe on top.
+PANEL_VOID = (13, 9, 24)
+WIRE_SQUARE = (186, 160, 255)
 
 
 def load_original_atlas(source_archive: Path) -> Image.Image:
@@ -44,28 +53,6 @@ def load_original_atlas(source_archive: Path) -> Image.Image:
     with zipfile.ZipFile(source_archive) as archive:
         with Image.open(BytesIO(archive.read(SOURCE_ATLAS_ENTRY))) as image:
             return image.convert("RGB")
-
-
-def colorize_grass(source: Image.Image) -> Image.Image:
-    """Retain original tile shading while matching the current jade tone."""
-    target_h, target_l, target_s = colorsys.rgb_to_hls(
-        *(channel / 255 for channel in CURRENT_GRASS)
-    )
-    source_lightness = [
-        colorsys.rgb_to_hls(*(channel / 255 for channel in pixel))[1]
-        for pixel in source.getdata()
-    ]
-    median_lightness = statistics.median(source_lightness)
-    tinted = []
-    for pixel in source.getdata():
-        lightness = colorsys.rgb_to_hls(*(channel / 255 for channel in pixel))[1]
-        lightness = max(.25, min(.78, target_l + (lightness - median_lightness) * .72))
-        tinted.append(tuple(round(channel * 255) for channel in colorsys.hls_to_rgb(
-            target_h, lightness, target_s
-        )))
-    output = Image.new("RGB", source.size)
-    output.putdata(tinted)
-    return output
 
 
 def tile_mirrored(source: Image.Image, size: tuple[int, int]) -> Image.Image:
@@ -105,56 +92,146 @@ def wireframe_tiles() -> set[tuple[int, int]]:
     return exposed
 
 
-def island_top(atlas: Image.Image) -> Image.Image:
+# Authored farm tint: a desaturated Tamers Lab violet, i.e. the theme's cube/patch accent
+# at low saturation. The default theme has no runtime recolor, so baking it here keeps the
+# whole farm monochromatic there too; every other theme derives its grass from its own
+# accent at build time.
+GRASS_AUTHORED_HUE = 0.717
+GRASS_AUTHORED_SAT = 0.34
+GRASS_AUTHORED_LIGHTNESS = 0.30
+
+
+def _atlas_tiles(atlas: Image.Image, region: tuple[int, int, int, int], warm_only: bool = False):
+    """Every authored ground tile of one atlas region, sorted by mean luminance."""
+    area = atlas.crop(region)
+    tiles = []
+    for ty in range(0, area.height - GRASS_TILE + 1, GRASS_TILE):
+        for tx in range(0, area.width - GRASS_TILE + 1, GRASS_TILE):
+            cell = area.crop((tx, ty, tx + GRASS_TILE, ty + GRASS_TILE))
+            pixels = list(cell.getdata())
+            count = len(pixels)
+            red = sum(pixel[0] for pixel in pixels) / count
+            green = sum(pixel[1] for pixel in pixels) / count
+            blue = sum(pixel[2] for pixel in pixels) / count
+            if warm_only and not (red > blue + 12 and red > green - 6):
+                continue
+            luminance = 0.2126 * red + 0.7152 * green + 0.0722 * blue
+            tiles.append((luminance, cell))
+    tiles.sort(key=lambda entry: entry[0])
+    return tiles
+
+
+def _lawn_field(atlas: Image.Image) -> Image.Image:
+    """Lay the authored ground tiles out like the reference floor's hand-made regions.
+
+    The reference farm is not a per-tile mix: it is large contiguous blocks of one ground tile -
+    broad patches of a lighter or darker green, a few warm path tiles, and long runs of the same
+    tile - at a piece size much larger than the source cells. This seeds organic regions, grows
+    each into a contiguous block of one variant, and pastes the pieces 1:1.
+    """
     rng = random.Random(SEED)
-    grass = colorize_grass(atlas.crop(GRASS_ATLAS_REGION))
-    img = tile_mirrored(grass, (TOP_SIZE, TOP_SIZE))
-    px = img.load()
-    # Retain the existing per-tile tone variation over the original texture.
-    for ty in range(0, TOP_SIZE, TOP_PITCH):
-        for tx in range(0, TOP_SIZE, TOP_PITCH):
-            j = rng.randint(-6, 6)
-            for y in range(ty, min(ty + TOP_PITCH, TOP_SIZE)):
-                for x in range(tx, min(tx + TOP_PITCH, TOP_SIZE)):
-                    r, g, b = px[x, y]
-                    px[x, y] = tuple(max(0, min(255, c + j)) for c in (r, g, b))
+    variants = _atlas_tiles(atlas, GRASS_ATLAS_REGION)
+    accents = _atlas_tiles(atlas, ACCENT_ATLAS_REGION, warm_only=True)
+    if len(variants) < 12:
+        raise ValueError("Original farm atlas ground tiles not found")
+    cells = TOP_SIZE // GRASS_TILE
+    base = variants[len(variants) // 2][1]
+    layout = [[base] * cells for _ in range(cells)]
+
+    def grow(origin_x: int, origin_y: int, tile: Image.Image, size: int) -> None:
+        seen = {(origin_x, origin_y)}
+        layout[origin_y][origin_x] = tile
+        frontier = [(origin_x, origin_y)]
+        while frontier and len(seen) < size:
+            x, y = frontier[rng.randrange(len(frontier))]
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                nx, ny = x + dx, y + dy
+                if not (0 <= nx < cells and 0 <= ny < cells) or (nx, ny) in seen:
+                    continue
+                if rng.random() > 0.72:
+                    continue
+                seen.add((nx, ny))
+                layout[ny][nx] = tile
+                frontier.append((nx, ny))
+                if len(seen) >= size:
+                    break
+
+    for _ in range(LAWN_REGIONS):
+        grow(
+            rng.randrange(cells), rng.randrange(cells),
+            variants[rng.randrange(len(variants))][1],
+            rng.randint(LAWN_REGION_MIN, LAWN_REGION_MAX),
+        )
+    for _ in range(ACCENT_PATCHES if accents else 0):
+        grow(
+            rng.randrange(cells), rng.randrange(cells),
+            accents[rng.randrange(len(accents))][1],
+            rng.randint(2, 9),
+        )
+
+    field = Image.new("RGB", (TOP_SIZE, TOP_SIZE))
+    for ty in range(cells):
+        for tx in range(cells):
+            tile = layout[ty][tx]
+            roll = rng.random()
+            if roll < 0.10:
+                tile = ImageOps.mirror(tile)
+            elif roll < 0.20:
+                tile = ImageOps.flip(tile)
+            field.paste(tile, (tx * GRASS_TILE, ty * GRASS_TILE))
+    return field
+
+
+def _monochrome_grass(image: Image.Image) -> Image.Image:
+    """Flatten the Links grass into one desaturated accent tone.
+
+    The atlas grass is a patchwork of mint, olive and dark tiles; at the island's size those
+    steps read as a loud checkerboard. Hue and saturation become the authored accent's
+    low-saturation version, and only a sixth of each pixel's lightness deviation survives,
+    so the tile bevel and grain remain as faint texture inside a single tone.
+    """
+    pixels = [colorsys.rgb_to_hls(*(channel / 255 for channel in pixel)) for pixel in image.getdata()]
+    median_lightness = statistics.median(entry[1] for entry in pixels)
+    output = Image.new("RGB", image.size)
+    flattened = []
+    for _hue, lightness, _saturation in pixels:
+        flattened.append(tuple(round(channel * 255) for channel in colorsys.hls_to_rgb(
+            GRASS_AUTHORED_HUE,
+            max(0.16, min(0.46, GRASS_AUTHORED_LIGHTNESS
+                           + (lightness - median_lightness) * 0.62)),
+            GRASS_AUTHORED_SAT,
+        )))
+    output.putdata(flattened)
+    return output
+
+
+def island_top(atlas: Image.Image | None = None) -> Image.Image:
+    """The original Links farm ground, with simple square wireframe patches on top."""
+    if atlas is None:
+        raise ValueError("island_top needs the original farm atlas")
+    img = _monochrome_grass(_lawn_field(atlas))
     d = ImageDraw.Draw(img, "RGBA")
-    # Quiet tonal variation keeps the turf alive without competing with sprites.
-    for _ in range(12):
-        cx, cy = rng.randint(0, TOP_SIZE), rng.randint(0, TOP_SIZE)
-        rx, ry = rng.randint(40, 110), rng.randint(30, 80)
-        d.ellipse([cx - rx, cy - ry, cx + rx, cy + ry], fill=(81, 145, 116, 100))
-    # Sparse cool stone accents echo the app's violet surfaces.
-    for _ in range(46):
-        tx = rng.randrange(0, TOP_SIZE // TOP_PITCH) * TOP_PITCH
-        ty = rng.randrange(0, TOP_SIZE // TOP_PITCH) * TOP_PITCH
-        d.rectangle([tx, ty, tx + TOP_PITCH - 1, ty + TOP_PITCH - 1], fill=(178, 178, 197))
-    # Crisp grid lines.
-    for i in range(0, TOP_SIZE + 1, TOP_PITCH):
-        d.line([(i, 0), (i, TOP_SIZE)], fill=(79, 128, 105), width=1)
-        d.line([(0, i), (TOP_SIZE, i)], fill=(79, 128, 105), width=1)
-    # The reference has missing, gridded terrain at its edges. Keep the
-    # Digimon's central stage green and expose only irregular outer patches.
     exposed = wireframe_tiles()
+    pitch = TOP_PITCH
     for tx, ty in exposed:
-        x, y = tx * TOP_PITCH, ty * TOP_PITCH
-        tone = ((tx * 11 + ty * 7) % 4) * 2
-        d.rectangle((x, y, x + TOP_PITCH - 1, y + TOP_PITCH - 1),
-                    fill=(13 + tone, 9 + tone, 25 + tone))
-        grid = (105, 72, 170) if (tx + 2 * ty) % 7 else (154, 119, 230)
-        d.line((x, y, x + TOP_PITCH - 1, y), fill=grid, width=2)
-        d.line((x, y, x, y + TOP_PITCH - 1), fill=grid, width=2)
-    # A brighter broken seam marks where digital substrate meets living turf.
+        x, y = tx * pitch, ty * pitch
+        d.rectangle((x, y, x + pitch - 1, y + pitch - 1), fill=PANEL_VOID)
+    # One continuous square grid across the whole exposed area. The wire cells are
+    # coarser than the patch mask cells so the grid reads as a digital mesh at the
+    # island's scale instead of a fine fabric.
+    grid = pitch * 2
     for tx, ty in exposed:
-        x, y = tx * TOP_PITCH, ty * TOP_PITCH
-        if (tx - 1, ty) not in exposed:
-            d.line((x, y, x, y + TOP_PITCH - 1), fill=(139, 92, 246), width=2)
-        if (tx + 1, ty) not in exposed:
-            d.line((x + TOP_PITCH - 1, y, x + TOP_PITCH - 1, y + TOP_PITCH - 1), fill=(139, 92, 246), width=2)
-        if (tx, ty - 1) not in exposed:
-            d.line((x, y, x + TOP_PITCH - 1, y), fill=(139, 92, 246), width=2)
-        if (tx, ty + 1) not in exposed:
-            d.line((x, y + TOP_PITCH - 1, x + TOP_PITCH - 1, y + TOP_PITCH - 1), fill=(139, 92, 246), width=2)
+        x, y = tx * pitch, ty * pitch
+        right = x + pitch - 1
+        bottom = y + pitch - 1
+        if x % grid == 0:
+            d.line((x, y, x, bottom), fill=WIRE_SQUARE)
+        if (x + pitch) % grid == 0:
+            d.line((right, y, right, bottom), fill=WIRE_SQUARE)
+        if y % grid == 0:
+            d.line((x, y, right, y), fill=WIRE_SQUARE)
+        if (y + pitch) % grid == 0:
+            d.line((x, bottom, right, bottom), fill=WIRE_SQUARE)
     return img
 
 
@@ -213,7 +290,7 @@ def island_side(atlas: Image.Image) -> Image.Image:
     for frac in (0.15, 0.25, 0.35):
         y = int(frac * SIDE)
         d.line([(0, y), (SIDE, y)], fill=(91, 72, 110, 150), width=2)
-        d.line([(0, y + 2), (SIDE, y + 2)], fill=(170, 150, 189, 110), width=1)
+        d.line([(0, y + 2), (SIDE, y + 2)], fill=(176, 146, 252, 110), width=1)
     # Speckle above the fade zone.
     rng = random.Random(SEED)
     for _ in range(900):
@@ -236,7 +313,7 @@ def main():
     island_side(atlas).save(dst / "island_side.png")
     voxel_block(False).save(dst / "voxel_block_dark.png")
     voxel_block(True).save(dst / "voxel_block_lit.png")
-    print("wrote original-atlas jade grass, mauve cliff, and unchanged violet blocks")
+    print("wrote original-grass island top, mauve cliff and unchanged violet blocks")
 
 
 if __name__ == "__main__":

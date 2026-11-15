@@ -55,7 +55,8 @@ controls against the current tree.
    have to import them. They are Bandai's material, not this project's credentials: every
    Tamers Lab APK exposes them, this project cannot rotate them, and redistributing them
    may be a licensing concern for the official app's owner. A future Arena release that
-   changes the keys needs a new Tamers Lab release or a manual import to override them.
+   changes the keys needs a new Tamers Lab release, or the Debug-only `Watch connection →
+   Import watch connection data` fallback in Settings to override them.
    The values are pinned by `BundledSecretsTest`, which regenerates the known watch test
    passwords.
 

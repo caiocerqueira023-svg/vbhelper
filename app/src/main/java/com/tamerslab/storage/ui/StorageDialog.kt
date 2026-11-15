@@ -116,14 +116,21 @@ fun StorageDialog(
         try {
         val loaded = withContext(Dispatchers.IO) {
             val loadedCharacter = storageRepository.getSingleCharacter(characterId)
-            val loadedCardName = application.container.db.cardDao()
+            val storedRow = application.container.db.userCharacterDao().getCharacter(characterId)
+            val definitionCardName = application.container.db.cardDao()
                 .getCardByCharacterIdSync(loadedCharacter.id)?.name.orEmpty()
+            // A catalog/game partner has no card of its own; the exact DIM/BEM slot recorded for
+            // bracelet export is the card its individual information must show.
+            val assignedCardName = storedRow.exportCardCharacterId
+                ?.let { application.container.db.characterDao().getById(it) }
+                ?.cardId?.let { application.container.db.cardDao().getCardById(it)?.name }
+                .orEmpty()
             val loadedSpeciesProfile = speciesRepository
                 .getProfileForCharacter(loadedCharacter.charId)
             val loadedPersonality = storageRepository.getOrCreatePersonality(characterId)
             LoadedStorageCharacter(
                 character = loadedCharacter,
-                cardName = loadedCardName,
+                cardName = definitionCardName.ifBlank { assignedCardName },
                 speciesProfile = loadedSpeciesProfile,
                 personality = loadedPersonality
             )

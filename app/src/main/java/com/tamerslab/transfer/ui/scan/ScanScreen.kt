@@ -1,5 +1,6 @@
-﻿package com.tamerslab.transfer.ui.scan
+package com.tamerslab.transfer.ui.scan
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.LaunchedEffect
@@ -74,7 +75,14 @@ fun ScanScreen(
                     nfcCharacter = scanScreenController.characterToNfc(characterId)
                 } catch (cancelled: kotlinx.coroutines.CancellationException) {
                     throw cancelled
-                } catch (failure: Exception) {
+                } catch (fatal: VirtualMachineError) {
+                    // Out of memory / stack exhaustion: never pretend this is a recoverable payload.
+                    throw fatal
+                } catch (failure: Throwable) {
+                    // Building the outgoing payload must not kill the app: the screen already offers
+                    // Retry, so any missing card entry, unresolved export slot or malformed row is
+                    // reported as a recoverable preparation failure instead of a process crash.
+                    Log.e("SCAN_PREPARE", "Could not prepare character $characterId for transfer", failure)
                     withContext(Dispatchers.Main) {
                         feedbackMessage = resources.getString(R.string.app_transfer_prepare_failed)
                         feedbackRequiresSettings = false
@@ -105,7 +113,8 @@ fun ScanScreen(
             onCancel = {
                 writingScreen = false
                 finish()
-            }
+            },
+            showHeader = !embedded
         )
     } else if (readingScreen) {
         ReadingScreen(
@@ -117,7 +126,8 @@ fun ScanScreen(
             onComplete = {
                 readingScreen = false
                 finish()
-            }
+            },
+            showHeader = !embedded
         )
     } else {
         ChooseConnectOption(

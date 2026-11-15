@@ -7,6 +7,9 @@
     <string name="transfer_open_options">Opções de transferência</string>
     <string name="transfer_device_hint">Receba de um relógio ou escolha um parceiro disponível para enviar. Prepare aqui uma representação compatível quando necessário.</string>
     <string name="transfer_choose_outgoing">Escolher parceiro para enviar</string>
+    <string name="transfer_outgoing_partner">Parceiro para envio</string>
+    <string name="transfer_change_partner">Alterar</string>
+    <string name="transfer_receive_only_short">Apenas receber</string>
     <string name="transfer_outgoing_unavailable">Parceiro indisponível — escolha outro</string>
     <string name="transfer_receive_only">Apenas receber — sem parceiro para enviar</string>
     <string name="transfer_no_outgoing">Nenhum parceiro disponível para enviar. Ainda é possível receber.</string>

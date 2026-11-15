@@ -37,7 +37,6 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.navigation.NavController
 import com.tamerslab.R
 import com.tamerslab.components.CyberEmptyState
 import com.tamerslab.components.CyberPanel
@@ -66,9 +65,9 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 
-/** Read-only Transfer hub: linked saves show their latest persisted rosters and capabilities. */
+/** Read-only save list: linked saves show their latest persisted rosters and capabilities. */
 @Composable
-fun TransferScreen(navController: NavController, showHeader: Boolean = true) {
+fun TransferScreen(showHeader: Boolean = true) {
     val context = LocalContext.current
     val application = context.applicationContext as TamersLabApplication
     val repository = remember { application.container.linkedGameSaves }
@@ -248,7 +247,6 @@ fun TransferScreen(navController: NavController, showHeader: Boolean = true) {
                     CyberEmptyState(
                         stringResource(R.string.transfer_empty),
                         Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                        title = stringResource(R.string.transfer_linked_saves),
                     )
                 }
             } else {
@@ -309,27 +307,6 @@ fun TransferScreen(navController: NavController, showHeader: Boolean = true) {
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                         Text(draft.sourceLabel)
                     }
-                }
-            }
-            item {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    VitalSectionHeader(title = stringResource(R.string.transfer_watch_section))
-                    Text(
-                        stringResource(R.string.transfer_watch_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    VitalButton(
-                        onClick = {
-                            navController.navigate(
-                                 com.tamerslab.navigation.TransferNavigation.route(
-                                     com.tamerslab.navigation.TransferSection.DEVICES))
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    ) { Text(stringResource(R.string.transfer_open_watch)) }
                 }
             }
         }

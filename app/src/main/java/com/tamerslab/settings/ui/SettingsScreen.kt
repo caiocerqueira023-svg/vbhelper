@@ -126,13 +126,17 @@ fun SettingsScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(bottom = 24.dp)
         ) {
-            // 1. What the app needs to talk to the watch and read cards.
-            SettingsSection(title = stringResource(R.string.settings_section_nfc))
-            SettingsEntry(
-                title = stringResource(R.string.settings_import_apk_title),
-                description = stringResource(R.string.settings_import_apk_desc)
-            ) {
-                settingsScreenController.onClickImportApk()
+            // 1. What the app needs to read cards. Watch connection data ships with the build
+            // (BundledSecrets); re-importing it only matters if a future Arena release rotates the
+            // keys, so that fallback stays behind Debug like the rest of the developer tooling.
+            if (debugSettings.enabled) {
+                SettingsSection(title = stringResource(R.string.settings_section_nfc))
+                SettingsEntry(
+                    title = stringResource(R.string.settings_import_apk_title),
+                    description = stringResource(R.string.settings_import_apk_desc)
+                ) {
+                    settingsScreenController.onClickImportApk()
+                }
             }
 
             SettingsSection(title = stringResource(R.string.settings_section_dim_bem))

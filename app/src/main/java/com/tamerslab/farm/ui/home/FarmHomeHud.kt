@@ -660,7 +660,8 @@ private fun menuEntries(navController: NavController): List<MenuEntry> {
         primary(NavigationItems.Items),
         primary(NavigationItems.Adventure),
         MenuEntry(R.string.nav_transfer, R.drawable.baseline_nfc_24) {
-            navController.navigate(TransferNavigation.route(TransferSection.DEVICES))
+            // The overall Transfer tab; the Vital Bracelet pane is reached from its origins list.
+            navController.navigate(TransferNavigation.route())
         },
         primary(NavigationItems.Lorebook),
         primary(NavigationItems.Viewer),

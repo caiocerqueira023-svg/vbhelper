@@ -422,6 +422,42 @@ it instead of framing it. The compact bottom navigation is retired; navigation h
   **lit** rather than unlit: with gltfio 1.76.1 an unlit blended primitive of the generated resident
   GLB never reaches the color buffer, which is why the old contact shadow was invisible. A pixel test
   in `SpriteExtrusionGlbTest` pins that combination.
+- **The island is the original Links farm ground, patched with a digital grid.** Its top is built
+  by `tools/digifarm/build_reference_textures.py` from the source atlas: the floor is cut into large
+  16px pieces (a 2x2 block of the authored cells, so the source's own tile seams stay visible inside each
+  piece) and the pieces are laid out in contiguous regions like the reference farm's hand-made floor -
+  broad patches of one tile, a few warm path tiles, long runs of the same piece - then the mosaic is
+  pulled onto the theme's accent hue at low saturation, keeping most of the tile variation. The exposed cells (`wireframe_tiles()`) are a near-black void carrying one continuous
+  bright square grid. The farm is deliberately
+  **monochromatic**: the turf is the theme's `energy` accent at low saturation and a dark value, and
+  the grid uses the same `energy` accent at full strength - the very color the voxel blocks already
+  use for their edges - so grass, patches and floating cubes are one hue per theme (violet, cyan,
+  green, blue) and the scene shows only that hue plus the near-black substrate. The cliff keeps
+  its authored texture and its transparent foot, and the hollow see-through on the flanks is gone:
+  the upper 48% of the cliff is opaque in the authored art anyway, so those bands render alpha-masked
+  in the opaque pass and write depth, which makes the near side occlude the inside of the far side
+  that used to show through (about 70% of the artifact, measured offline with a ray/triangle check).
+  An earlier inset "interior lining" was removed: it outlived the fading foot and read as a dark
+  shadow hanging under the island. The cliff's authored strata highlights (the light lines near the
+  rim) are lifted to the same `energy` accent, so the island's side lines read like the cubes.
+- **The floating voxel cubes collide with each other.** The authored rest boxes do not overlap, but
+  each cube bobs with its own amplitude, speed and phase on top of its group's bob, so a stacked pair
+  drifts up to ~26mm into itself - the clipping the farm showed. A per-frame solver builds each
+  cube's animated world centre from the known parent chain (group translation + cube translation; the
+  cubes are origin-centred and unscaled) and separates every overlapping pair along the axis of least
+  penetration, half to each plus a 2mm pad, in four passes so stacked chains settle. Corrections are
+  recomputed from the authored bob every frame, so motion stays smooth and never drifts. The pure
+  solver is `CubeCollision.kt`; `FloatingCubeLayoutTest` replays the real fourteen-cube layout and
+  asserts no frame ever intersects (it also asserts the unsolved bob *does* overlap, so the case cannot
+  silently go stale). Note: do not read `TransformManager.getWorldTransform` here - inside the frame's
+  transform transaction it returns identity for these children, which is why an earlier version never
+  saw the real cubes.
+- **The farm's floor and cube accents bloom in every theme.** The authored emissive pulse reaches the
+  dark-theme envelope (up to ~2.1x) and light palettes previously compressed it to 1.15, so only the
+  dark themes glowed. The Digifarm's emissive materials are theme-tinted surfaces rather than white
+  ones, so its controller is allowed a higher light-theme pulse ceiling (1.62) while the light-theme
+  emissive gain is trimmed to 0.94: the floor's body stays saturated and only its bright lines climb
+  into the bloom range, so the glow matches the dark themes without washing the colors out.
 - **Frame budget:** rendering pauses when a place covers Home or the app leaves the foreground, runs
   at 30fps idle and 60fps during interaction, and honours reduced motion by stopping the island bob,
   glow pulse and pose cycling and freezing the residents to their staged tableau.
@@ -643,8 +679,15 @@ without preview/confirmation/mapping/APP-creation screens. Internal backup, pref
 journaling and persistence verification do not become extra routine user steps. Use
 short in-flight/result feedback and never present a copy as an actual native move.
 Keep management, historical reports and native review under secondary menu actions.
-Bracelet preparation/receive/send belongs to its row in the same list. Active NFC
-work locks page/partner changes; prepared payloads follow the selected partner.
+Bracelet preparation/receive/send belongs to its row in the same list, and the Home
+transfer action opens that overall list - not the bracelet pane. Inside the destination the
+hub owns the single TopBanner for every page, including the embedded NFC steps: a step that
+runs in the hub renders its name as an in-flow `VitalSectionHeader` and offers its own
+explicit exit instead of adding a second header (standalone `ScanScreen` keeps its own
+banner). The hub keeps a small page back-stack, so Back returns to the page that opened the
+current one instead of jumping home. The outgoing partner is one card (label, partner or
+"Receive only", Change) and the chooser is a radio list, not a row of text buttons. Active
+NFC work locks page/partner changes; prepared payloads follow the selected partner.
 Storage shortcuts carry partner context. Native change review does not award app growth.
 
 ### Universal participation and cosmetic preferences
@@ -671,15 +714,16 @@ Home mood cards show only the short qualitative summary, without a numeric score
 
 ### Settings
 
-Settings is scanned in setup order rather than in the order features were built: Watch
-connection, Card archive (import plus the card-origin prompt), Appearance, Sound, Tamer
-profile and preferences (Tamer name and application language), Species (catalog plus the
-VB-first/Dot-first artwork priority), Communication (research notes, and the DigiLine
-connection while Debug and legacy chat are on), Backup and restore, Debug mode with its
-subordinate controls only while enabled, and finally About and credits. Sections are the
-grouping boundary; rows keep the cut-corner cyber-frame entry and the `VitalSectionBar`
-header unchanged. Single-value editors (Tamer name, app font, application language) open a
-dialog from their row instead of living inline in the list.
+Settings is scanned in setup order rather than in the order features were built: Card archive
+(import plus the card-origin prompt), Appearance, Sound, Tamer profile and preferences (Tamer
+name and application language), Species (catalog plus the VB-first/Dot-first artwork priority),
+Communication (research notes, and the DigiLine connection while Debug and legacy chat are on),
+Backup and restore, Debug mode with its subordinate controls only while enabled, and finally
+About and credits. Watch connection data ships with the build, so its import is a Debug-only
+fallback for a future key rotation rather than an everyday row. Sections are the grouping
+boundary; rows keep the cut-corner cyber-frame entry and the `VitalSectionBar` header unchanged.
+Single-value editors (Tamer name, app font, application language) open a dialog from their row
+instead of living inline in the list.
 
 ### Debug
 

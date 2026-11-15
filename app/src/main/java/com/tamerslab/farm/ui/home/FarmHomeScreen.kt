@@ -113,7 +113,8 @@ fun FarmHomeScreen(
             bits = bits,
             onFarmClick = { showRoster = true },
             onTransferClick = {
-                navController.navigate(TransferNavigation.route(TransferSection.DEVICES))
+                // The overall Transfer tab: origins list first, the Vital Bracelet is one row there.
+                navController.navigate(TransferNavigation.route())
             },
 
             onSettingsClick = { navController.navigatePrimary(NavigationItems.Settings) },

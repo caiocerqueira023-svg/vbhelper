@@ -1,4 +1,4 @@
-﻿package com.tamerslab.transfer.ui.scan.screens
+package com.tamerslab.transfer.ui.scan.screens
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -20,7 +20,8 @@ import com.tamerslab.R
 fun ReadingScreen(
     scanScreenController: ScanScreenController,
     onCancel: () -> Unit,
-    onComplete: () -> Unit
+    onComplete: () -> Unit,
+    showHeader: Boolean = true,
 ) {
     val secrets by scanScreenController.secretsFlow.collectAsStateWithLifecycle(null)
 
@@ -90,16 +91,21 @@ fun ReadingScreen(
             },
             onClickCancel = {
                 onCancel()
-            }
+            },
+            showHeader = showHeader
         )
     }
 
     if (readingScreen) {
-        ActionScreen(topBannerText = stringResource(R.string.reading_character_title),) {
-            readingScreen = false
-            scanScreenController.cancelRead()
-            onCancel()
-        }
+        ActionScreen(
+            topBannerText = stringResource(R.string.reading_character_title),
+            onClickCancel = {
+                readingScreen = false
+                scanScreenController.cancelRead()
+                onCancel()
+            },
+            showHeader = showHeader,
+        )
     } else if (cardSelectScreen) {
         ChooseCard(
             cards = cardsRead!!,
@@ -108,7 +114,9 @@ fun ReadingScreen(
                 scanScreenController.flushCharacter(card.id)
                 isDoneReadingCharacter = false
                 readingScreen = true
-            }
+            },
+            showHeader = showHeader,
+            onCancel = onCancel,
         )
     }
 }

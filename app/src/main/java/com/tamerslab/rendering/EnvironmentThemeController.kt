@@ -17,13 +17,25 @@ import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import kotlin.math.exp
 
-/** Preserve the dark-theme envelope; smoothly compress HDR peaks on light surfaces. */
-internal fun sceneEmissionStrength(theme: AppTheme, strength: Float): Float =
+/**
+ * Preserve the dark-theme envelope; smoothly compress HDR peaks on light surfaces.
+ *
+ * [peakCeiling] is the highest value a light palette's pulse may reach (1.15 by default, which keeps
+ * white arena surfaces from washing out). Scenes whose emissive surfaces are theme-tinted - the
+ * Digifarm floor and cubes - pass a higher ceiling so their glow survives in the light palettes too.
+ */
+internal fun sceneEmissionStrength(theme: AppTheme, strength: Float, peakCeiling: Float = 1.15f): Float =
     if (theme.palette.isDark || strength <= 1f) strength
-    else 1f + .15f * (1.0 - exp(1.0 - strength)).toFloat()
+    else 1f + (peakCeiling - 1f) * (1.0 - exp(1.0 - strength)).toFloat()
 
 /** Scene-owned GPU resources. Decode on a worker; bind only on Filament's owning/main thread. */
-internal class EnvironmentThemeController(context: Context, private val engine: Engine, initialTheme: AppTheme) {
+internal class EnvironmentThemeController(
+    context: Context,
+    private val engine: Engine,
+    initialTheme: AppTheme,
+    /** Highest HDR pulse value a light palette may reach; see [sceneEmissionStrength]. */
+    private val emissionPeakCeiling: Float = 1.15f,
+) {
     private val assets = context.applicationContext.assets
     private val handler = Handler(Looper.getMainLooper())
     private val worker = Executors.newSingleThreadExecutor()
@@ -84,7 +96,7 @@ internal class EnvironmentThemeController(context: Context, private val engine: 
         if (released) return false
         val variant = activeVariants[material.nativeObject] ?: return false
         val e = variant.emission
-        val envelope = sceneEmissionStrength(appliedTheme ?: requestedTheme, strength)
+        val envelope = sceneEmissionStrength(appliedTheme ?: requestedTheme, strength, emissionPeakCeiling)
         material.setParameter("emissiveFactor", e[0] * envelope, e[1] * envelope, e[2] * envelope)
         return true
     }

@@ -7,6 +7,9 @@
     <string name="transfer_open_options">Transfer options</string>
     <string name="transfer_device_hint">Receive from a watch, or choose an available outgoing partner. Prepare a compatible bracelet representation here when required.</string>
     <string name="transfer_choose_outgoing">Choose outgoing partner</string>
+    <string name="transfer_outgoing_partner">Outgoing partner</string>
+    <string name="transfer_change_partner">Change</string>
+    <string name="transfer_receive_only_short">Receive only</string>
     <string name="transfer_outgoing_unavailable">Selected partner unavailable — choose another</string>
     <string name="transfer_receive_only">Receive only — no outgoing partner</string>
     <string name="transfer_no_outgoing">No available outgoing partner. Receiving remains available.</string>

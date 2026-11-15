@@ -49,9 +49,19 @@ def inspect_glb(raw):
     assert not any('Colosseum' in name or 'Stadium' in name for name in names), names
     materials = {material.get('name'): material for material in doc['materials']}
     assert set(materials) == {
-        'island_top_baked', 'island_side_baked',
+        'island_top_baked', 'island_side_baked', 'island_side_rim_baked',
         'voxel_block_dark_baked', 'voxel_block_lit_baked',
     }, materials.keys()
+    # The opaque upper cliff bands must render in the opaque pass (alpha mask, depth write)
+    # so the near side of the island hides the far side that used to show through.
+    rim = materials['island_side_rim_baked']
+    assert rim.get('alphaMode') == 'MASK', 'Upper cliff bands must be alpha-masked'
+    # The authored strata lines are semi-transparent (alpha 110/150); a higher cutoff would
+    # eat them and the island's side lines would read as broken aliasing.
+    assert rim.get('alphaCutoff') == 0.25, rim
+    assert 'baseColorTexture' in rim['pbrMetallicRoughness'], 'Upper cliff needs the alpha source'
+    island_primitives = doc['meshes'][doc['nodes'][0]['mesh']]['primitives']
+    assert len(island_primitives) == 3, island_primitives
     for side_name in ('island_side_baked',):
         side = materials[side_name]
         assert side.get('alphaMode') == 'BLEND', f'{side_name} must blend'
@@ -66,7 +76,7 @@ def inspect_glb(raw):
         alpha = image.getchannel('A')
         assert alpha.getextrema() == (0, 255), f'{side_name} needs alpha range'
         assert alpha.crop((0, image.height - 20, image.width, image.height)).getextrema() == (0, 0), f'{side_name} foot must disappear'
-    print(f'OK: {len(raw)} bytes, {len(names)} nodes, 6 group pivots, 14 independent cubes, 4 materials, transparent cliff foot, V clamp')
+    print(f'OK: {len(raw)} bytes, {len(names)} nodes, 6 group pivots, 14 independent cubes, 5 materials, masked upper cliff, transparent cliff foot, V clamp')
 
 
 def main():

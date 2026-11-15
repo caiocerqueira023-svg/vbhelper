@@ -81,7 +81,7 @@ data class FarmArtwork(
 }
 
 /** Rendered height of an extruded resident in Digifarm scene units (must match Digifarm3dViewport). */
-const val FARM_RESIDENT_HEIGHT_UNITS = 0.13f
+const val FARM_RESIDENT_HEIGHT_UNITS = 0.091f
 
 data class FarmWorldSummary(
     val residents: List<FarmWorldResident> = emptyList(),

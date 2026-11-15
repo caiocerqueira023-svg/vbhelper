@@ -14,23 +14,32 @@ class ReactionRepository(
 ) {
     private val gson = Gson()
 
+    /**
+     * Best-effort baseline captured before an export so a returning partner can be compared.
+     * A missing baseline only skips that comparison ([evaluateAndReact] returns early), therefore
+     * this must never block, fail or crash the transfer itself.
+     */
     suspend fun snapshotBeforeSendingToWatch(characterId: Long) {
-        val character = database.userCharacterDao().getCharacter(characterId)
-        val characterInfo = database.userCharacterDao().getCharacterInfo(characterId)
-        database.digimonStateSnapshotDao().upsert(
-            DigimonStateSnapshot(
-                individualId = character.individualId,
-                stage = characterInfo.stage,
-                mood = character.mood,
-                vitalPoints = character.vitalPoints,
-                trophies = character.trophies,
-                totalBattlesWon = character.totalBattlesWon,
-                totalBattlesLost = character.totalBattlesLost,
-                injuryStatus = character.injuryStatus.name,
-                specialMissionsJson = gson.toJson(currentMissionsFor(characterId)),
-                capturedAt = System.currentTimeMillis()
+        runCatching {
+            val character = database.userCharacterDao().getCharacter(characterId)
+            val characterInfo = database.userCharacterDao().getCharacterInfo(characterId)
+            database.digimonStateSnapshotDao().upsert(
+                DigimonStateSnapshot(
+                    individualId = character.individualId,
+                    stage = characterInfo.stage,
+                    mood = character.mood,
+                    vitalPoints = character.vitalPoints,
+                    trophies = character.trophies,
+                    totalBattlesWon = character.totalBattlesWon,
+                    totalBattlesLost = character.totalBattlesLost,
+                    injuryStatus = character.injuryStatus.name,
+                    specialMissionsJson = gson.toJson(currentMissionsFor(characterId)),
+                    capturedAt = System.currentTimeMillis()
+                )
             )
-        )
+        }.onFailure {
+            Timber.w(it, "Could not snapshot the state before sending character $characterId to the watch")
+        }
     }
 
     suspend fun evaluateAndReact(characterId: Long) {

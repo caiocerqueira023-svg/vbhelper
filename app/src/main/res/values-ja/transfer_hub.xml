@@ -7,6 +7,9 @@
     <string name="transfer_open_options">転送オプション</string>
     <string name="transfer_device_hint">ウォッチから受信するか、送信できるパートナーを選んでください。必要な互換表現もここで準備できます。</string>
     <string name="transfer_choose_outgoing">送信するパートナーを選ぶ</string>
+    <string name="transfer_outgoing_partner">送信するパートナー</string>
+    <string name="transfer_change_partner">変更</string>
+    <string name="transfer_receive_only_short">受信のみ</string>
     <string name="transfer_outgoing_unavailable">選択したパートナーは利用できません — 選び直してください</string>
     <string name="transfer_receive_only">受信のみ — 送信するパートナーなし</string>
     <string name="transfer_no_outgoing">送信できるパートナーはいません。受信は利用できます。</string>

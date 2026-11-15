@@ -183,6 +183,48 @@ tree; it is not a release announcement and does not claim a verified green build
 
 ### Changed
 
+- **The floating voxel cubes collide with each other, and the farm glows the same in every theme.**
+  The cubes bob with independent amplitudes, speeds and phases on top of their group's bob, so a
+  stacked pair drifts up to ~26mm into itself - the clipping the farm showed. A per-frame solver now
+  composes each cube's animated world centre from the known parent chain (group + cube translation; the
+  cubes are origin-centred and unscaled), separates overlapping pairs along their axis of least
+  penetration (half each, 2mm pad, four passes) and rebuilds from the authored bob every frame.
+  `FloatingCubeLayoutTest` replays the real fourteen-cube layout and asserts no frame intersects, and
+  also asserts the unsolved bob does overlap so the case cannot silently go stale. Reading
+  `TransformManager.getWorldTransform` inside the frame's transform transaction returns identity for
+  these children, which is why the first attempt had no effect. Separately, the
+  farm's emissive floor and cube accents used to bloom only in the dark palettes: light palettes
+  compressed the pulse to 1.15, so the glow vanished. The Digifarm now keeps a 0.94 emissive baseline
+  in light themes and its controller is allowed a 1.62 pulse ceiling, so the glow matches the dark
+  themes while the floor's body stays saturated - only its bright lines enter the bloom range.
+- **The Digifarm island keeps the original Links ground and no longer looks hollow through its own
+  cliff.** The top is built from the source atlas again (`tools/digifarm/build_reference_textures.py`):
+  the floor is cut into large 16px pieces (a 2x2 block of the authored cells, keeping the source's own
+  tile seams inside each piece), and the pieces are laid out in contiguous regions like the reference
+  floor - broad patches of one tile, occasional warm path tiles, long runs of the same piece, mirrored
+  or flipped for variety, never a per-tile mix. The mosaic is pulled onto the Tamers Lab accent's low-saturation hue (other
+  palettes derive their own at build time) while keeping most of the tile variation. The
+  irregular exposed cells are a near-black void carrying **one continuous bright square grid**. The
+  farm is now **monochromatic per theme**: the turf is derived from that theme's `energy` accent at low
+  saturation and a dark value, the grid uses the same accent at full strength (the color the voxel
+  blocks already use for their edges), and the cliff's authored strata highlights - the light lines
+  near the rim - are lifted to that accent too, so grass, patches, cubes and side lines are one hue
+  per theme (violet, cyan, green, blue). The rest of each palette is untouched.
+  The cliff is a one-sided skirt that fades to transparent at its foot, so a low camera used to see the
+  inside of the far wall through the near one on the island's flanks. The upper 48% of the cliff is
+  fully opaque in the authored art, so those bands now render as an alpha-masked material in the opaque
+  pass and **write depth**: the near side occludes the inside of the far side (about 70% of the
+  artifact, measured offline with a ray/triangle check at five camera yaws), while the fading foot keeps
+  its blend and its transparency. An intermediate inset "interior lining" was removed because it
+  outlived the fading foot and read as a dark shadow hanging under the island.
+  `validate_asset.py` pins the five-material set, the masked upper-cliff material and the three island
+  primitives; `tools/ENVIRONMENT_THEMES.md` documents the reproduce steps.
+- **"Import watch connection data" is Debug-only.** The connection keys ship in the build
+  (`security/BundledSecrets.kt`), so a normal install never needs that row; re-importing is only the
+  fallback for a future VB Arena release that rotates the keys. It now renders under
+  `Watch connection` only while Debug mode is enabled, so the everyday Settings list starts with
+  Card archive. The import itself is unchanged and still overrides the built-in values.
+
 - **Settings is ordered and grouped like a setup flow; every option is unchanged.** Sections now
   run Watch connection → Card archive (import plus the card-origin prompt) → Appearance → Sound →
   Tamer profile and preferences → Species (catalog plus the VB-first/Dot-first artwork priority) →
@@ -382,6 +424,47 @@ tree; it is not a release announcement and does not claim a verified green build
   drift or manual drag can put it at or below the island surface.
 
 ### Fixed
+
+- **The Transfer tab reads as one destination again.** The Home transfer action (header key and
+  menu entry) opened the Vital Bracelet pane directly; it now opens the overall Transfer tab with the
+  origins list first, and the bracelet is one row there. Inside the tab, the embedded watch steps used
+  to render their own `TopBanner` under the hub's banner - the reported "two headers on one screen" -
+  so `ActionScreen`, `ReadCharacterScreen`, `WriteCardScreen`, `WriteCharacterScreen` and `ChooseCard`
+  now take `showHeader` and, when embedded, render their name as an in-flow section heading with the
+  exit the dropped banner used to carry (Cancel) instead. The hub also keeps a page back-stack (Back
+  returns to the page that opened the current one rather than jumping to the list), the "Manage saves"
+  page no longer pushes a second Transfer destination from its watch block (that block is gone; the
+  bracelet row in the origins list is the one entry point), and its empty state no longer repeats the
+  "Linked saves" heading that the section header above already shows. The outgoing-partner control is
+  now one card (label, partner or "Receive only", Change) with a radio-list chooser, and the options
+  menu states the current page and carries the same icons as the rows it mirrors. Unit tests green;
+  verified on the SM-A346M at 1080x2340 (origins list, watch pane, chooser dialog, embedded write
+  step).
+
+- **The bracelet send screen no longer crashes for a partner with an assigned DIM/BEM.** Captured from
+  the owner's SM-A346M: `java.lang.IllegalStateException: Cannot access database on the main thread` at
+  `CardDao_Impl.getCardById` ← `ScanRepository.getCardDetails`. The send-confirmation screens collect
+  that flow from Compose, so its builder ran on the main thread, and the blocking
+  `CardDao.getCardById`/`getCardByCharacterIdSync` methods threw there. It only executed for a partner
+  with an export target, i.e. a catalog/game-origin partner after a compatible-DiM conversion;
+  watch-origin partners took the Room-managed flow path and never hit it. The builder now runs on
+  `Dispatchers.IO`, and it resolves to a neutral empty card instead of collecting a single-result query
+  that can legitimately have no row.
+- **Preparation for a physical watch is recoverable.** Any failure while building the outgoing payload is
+  logged as `SCAN_PREPARE` and reported through the existing "could not be prepared" panel with its Retry
+  action instead of taking the process down (fatal VM errors are still rethrown), and the pre-export
+  reaction baseline is best-effort because a missing baseline only skips the later comparison.
+- **A recorded export target that is not a real DIM/BEM no longer enables a send that cannot be
+  written.** Materialization can point `exportCardCharacterId` at a card-independent definition while
+  no physical slot is associated; bracelet capabilities now only count a card-backed slot, so the
+  transfer screen offers the compatible-DiM conversion instead of showing a usable "send" that fails
+  during preparation.
+- **The individual information shows the DiM/BEM a converted partner is exported through.** A
+  catalog/game-origin partner has no card of its own, so the Storage detail line (and the Debug card
+  field of its info editor) stayed blank even after a DIM/BEM was assigned. It now falls back to the
+  exact slot recorded for bracelet export: on the owner's device the "Marcos" record now reads
+  `Metal Mamemon · 10 NuMetalEmpire`, and the same conversion renders the write-card screen
+  ("You will need 10 NuMetalEmpire card") instead of crashing.
 
 - **Farm walking restored to the diorama's pre-liveliness rhythm.** The resident-life pass had replaced
   the old stride rhythm with continuous movement at a fixed cadence; after device feedback the owner

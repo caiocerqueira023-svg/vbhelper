@@ -1,4 +1,4 @@
-﻿package com.tamerslab.transfer.ui.scan.screens
+package com.tamerslab.transfer.ui.scan.screens
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -22,6 +22,7 @@ fun WritingScreen(
     nfcCharacter: NfcCharacter,
     onComplete: () -> Unit,
     onCancel: () -> Unit,
+    showHeader: Boolean = true,
 ) {
     val secrets by scanScreenController.secretsFlow.collectAsStateWithLifecycle(null)
 
@@ -79,7 +80,7 @@ fun WritingScreen(
 
     if (!writingScreen) {
         writing = false
-        WriteCardScreen (
+        WriteCardScreen(
             characterId = characterId,
             onClickCancel = {
                 scanScreenController.cancelRead()
@@ -87,17 +88,22 @@ fun WritingScreen(
             },
             onClickConfirm = {
                 writingScreen = true
-            }
+            },
+            showHeader = showHeader
         )
     } else if (!isDoneSendingCard) {
         writing = true
-        ActionScreen( topBannerText = stringResource(R.string.sending_card_title)) {
-            scanScreenController.cancelRead()
-            onCancel()
-        }
+        ActionScreen(
+            topBannerText = stringResource(R.string.sending_card_title),
+            onClickCancel = {
+                scanScreenController.cancelRead()
+                onCancel()
+            },
+            showHeader = showHeader,
+        )
     } else if (!writingConfirmScreen) {
         writing = false
-        WriteCharacterScreen (
+        WriteCharacterScreen(
             characterId = characterId,
             onClickCancel = {
                 scanScreenController.cancelRead()
@@ -105,15 +111,20 @@ fun WritingScreen(
             },
             onClickConfirm = {
                 writingConfirmScreen = true
-            }
+            },
+            showHeader = showHeader
         )
     } else if (!isDoneWritingCharacter) {
         writing = true
-        ActionScreen(topBannerText = stringResource(R.string.writing_character_action_title)) {
-            isDoneSendingCard = false
-            scanScreenController.cancelRead()
-            onCancel()
-        }
+        ActionScreen(
+            topBannerText = stringResource(R.string.writing_character_action_title),
+            onClickCancel = {
+                isDoneSendingCard = false
+                scanScreenController.cancelRead()
+                onCancel()
+            },
+            showHeader = showHeader,
+        )
     }
 
     var completedWriting by remember { mutableStateOf(false) }

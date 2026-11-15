@@ -28,21 +28,26 @@ data class CharacterCapabilities(
     /** No physical slot of its own; it needs one before it can be written to a watch. */
     val isCatalogPartner: Boolean get() = definition?.cardId == null
 
-    /** The loaded DIM/BEM slot a watch payload is written from, if any. */
-    val slot: CardCharacter? get() = exportTarget ?: definition?.takeIf { it.cardId != null }
+    /**
+     * The loaded DIM/BEM slot a watch payload is written from, if any. An export target that is
+     * itself a card-independent definition is not a slot: it can be recorded by materialization
+     * while no real DIM/BEM is associated, and it must never enable a send that cannot be written.
+     */
+    val slot: CardCharacter? get() =
+        exportTarget?.takeIf { it.cardId != null } ?: definition?.takeIf { it.cardId != null }
 
     val hasPhysicalSlot: Boolean get() = slot != null
 
     val slotId: Long? get() = slot?.id
 
     /** Needs an exact DIM/BEM association before it can be sent to a real watch. */
-    val needsAssociation: Boolean get() = definition?.cardId == null && exportTarget == null
+    val needsAssociation: Boolean get() = definition?.cardId == null && slot == null
 
     /** Whether the outgoing payload is a BE (BEM) or VB (DIM) shape. */
     val isBem: Boolean get() = when {
-        exportTarget != null -> exportCardIsBem
-        definition?.cardId != null -> definitionCardIsBem
-        else -> false
+        slot == null -> false
+        slot === exportTarget -> exportCardIsBem
+        else -> definitionCardIsBem
     }
 
     /** The transfer format implied by the backing slot; null when no slot exists yet. */
