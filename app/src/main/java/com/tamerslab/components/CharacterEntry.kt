@@ -397,7 +397,9 @@ fun SpecialMissionsEntry(
     specialMission: SpecialMissions,
     modifier: Modifier = Modifier,
     onClickMission: (Long) -> Unit = {  },
-    onClickCollect: (Long) -> Unit = {  }
+    onClickCollect: (Long) -> Unit = {  },
+    onClickAssign: (Int) -> Unit = {  },
+    canAssign: Boolean = false,
 ) {
     val textValue = when (specialMission.missionType) {
         SpecialMission.Type.NONE -> stringResource(R.string.special_mission_none)
@@ -470,15 +472,22 @@ fun SpecialMissionsEntry(
         else -> Triple(MaterialTheme.colorScheme.surfaceContainerHighest, TextMutedOnDark, false)
     }
 
+    // An empty slot that this host can fill tells the visitor what tapping it will do.
+    val emptySlotHint = stringResource(R.string.home_special_mission_slot_empty)
+    val detailText = if (specialMission.status == SpecialMission.Status.UNAVAILABLE && canAssign) {
+        emptySlotHint
+    } else {
+        completion
+    }
+
     Card(
         modifier = modifier,
         shape = MaterialTheme.shapes.medium,
-        onClick = if (specialMission.status == SpecialMission.Status.COMPLETED) {
-            { onClickCollect(specialMission.id) }
-        } else if (specialMission.status == SpecialMission.Status.UNAVAILABLE) {
-            { }
-        } else {
-            { onClickMission(specialMission.id) }
+        onClick = when {
+            specialMission.status == SpecialMission.Status.COMPLETED -> { { onClickCollect(specialMission.id) } }
+            specialMission.status == SpecialMission.Status.UNAVAILABLE ->
+                if (canAssign) { { onClickAssign(specialMission.watchId) } } else { { } }
+            else -> { { onClickMission(specialMission.id) } }
         },
         colors = CardDefaults.cardColors(
             containerColor = containerColor
@@ -518,7 +527,7 @@ fun SpecialMissionsEntry(
                     color = contentColor,
                 )
                 Text(
-                    text = completion,
+                    text = detailText,
                     fontFamily = MaterialTheme.typography.titleSmall.fontFamily,
                     color = contentColor.copy(alpha = 0.8f),
                 )

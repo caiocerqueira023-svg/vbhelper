@@ -1,0 +1,12 @@
+<resources>
+    <string name="home_special_mission_assign_title">スペシャルミッションを設定</string>
+    <string name="home_special_mission_assign_slot">%1$sスロット · インベントリから選択してください。</string>
+    <string name="home_special_mission_assign_empty">このスロット用のスペシャルミッションがありません。スペシャルミッションはアイテムストアやクエストで入手できます。</string>
+    <string name="home_special_mission_slot_empty">タップして設定</string>
+    <string name="home_special_mission_assigned">スペシャルミッションを設定しました</string>
+    <string name="home_special_mission_equip">設定</string>
+    <string name="special_mission_slot_steps">歩数</string>
+    <string name="special_mission_slot_vitals">バイタル</string>
+    <string name="special_mission_slot_battles">バトル</string>
+    <string name="special_mission_slot_wins">勝利</string>
+</resources>

@@ -1,0 +1,14 @@
+<resources>
+    <string name="items_category_training">トレーニング</string>
+    <string name="items_category_evolution">進化</string>
+    <string name="items_category_vitals">バイタル</string>
+    <string name="items_category_missions">スペシャルミッション</string>
+    <string name="items_quantity_badge">×%1$d</string>
+    <string name="items_store_affordable">%2$d個中%1$d個購入可能</string>
+    <string name="items_open_store">アイテムストアを開く</string>
+    <string name="items_store_empty">ストアにアイテムがありません</string>
+    <string name="items_not_affordable">ビットが足りません</string>
+    <plurals name="items_kind_count">
+        <item quantity="other">%1$d種類</item>
+    </plurals>
+</resources>

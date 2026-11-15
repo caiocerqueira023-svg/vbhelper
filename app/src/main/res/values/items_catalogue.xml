@@ -1,0 +1,15 @@
+<resources>
+    <string name="items_category_training">Training</string>
+    <string name="items_category_evolution">Evolution</string>
+    <string name="items_category_vitals">Vitals</string>
+    <string name="items_category_missions">Special missions</string>
+    <string name="items_quantity_badge">×%1$d</string>
+    <string name="items_store_affordable">%1$d of %2$d affordable</string>
+    <string name="items_open_store">Open items store</string>
+    <string name="items_store_empty">Nothing in the store yet</string>
+    <string name="items_not_affordable">Not enough bits</string>
+    <plurals name="items_kind_count">
+        <item quantity="one">%1$d kind</item>
+        <item quantity="other">%1$d kinds</item>
+    </plurals>
+</resources>

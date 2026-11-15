@@ -1,0 +1,12 @@
+<resources>
+    <string name="home_special_mission_assign_title">Assign special mission</string>
+    <string name="home_special_mission_assign_slot">%1$s slot · choose one from your inventory.</string>
+    <string name="home_special_mission_assign_empty">No special mission items for this slot. Special missions come from the items store or completed quests.</string>
+    <string name="home_special_mission_slot_empty">Tap to assign</string>
+    <string name="home_special_mission_assigned">Special mission assigned</string>
+    <string name="home_special_mission_equip">Equip</string>
+    <string name="special_mission_slot_steps">Steps</string>
+    <string name="special_mission_slot_vitals">Vitals</string>
+    <string name="special_mission_slot_battles">Battles</string>
+    <string name="special_mission_slot_wins">Wins</string>
+</resources>

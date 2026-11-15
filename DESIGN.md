@@ -235,9 +235,17 @@ in the two light palettes. Insets are handled by the dialog wrapper, not by the 
 - Primary task actions use `VitalButtonStyle.PRIMARY`; navigation/management use
   secondary or text actions; destructive operations retain error styling and
   their actual confirmation/transaction behavior.
-- Item proportions apply to the artwork well; labels grow and wrap instead of
-  cropping the entire tile. Equipment catalogs remain next to selected slots;
-  Blast/Jogress have a clearly labeled sibling tab without losing any options.
+- **Items is a grouped catalogue, not a wall of tiles.** Two tabs (My items / Items store). Owned
+  items are sectioned by function - Training, Evolution, Vitals, Special missions - and the quest
+  battle stock is the last section of My items rather than a third tab. Each entry is a compact
+  instrument row: a 44dp framed glyph well, a two-line name that reserves both lines, the effect
+  glyph, and the one number that matters for that list (owned count, stock, or store price, with an
+  unaffordable price in the error colour). Special-mission entries take the full row because their
+  names carry a goal and a window; the store keeps one wallet strip above the same sections. The item
+  dialog repeats the row's grammar - framed glyph, name, family, owned count, description, cost - with
+  one primary action (Use / Purchase) and a quiet Cancel. Labels grow and wrap instead of cropping
+  the tile; equipment catalogs remain next to selected slots, and Blast/Jogress still have a labeled
+  sibling tab without losing any options.
 
 The Tamer chooser remains a single flat scrolling list. The search field and the section tabs collapse
 while the roster is scrolled down and return on any upward scroll or at the top, the same way Storage's
@@ -394,6 +402,11 @@ it instead of framing it. The compact bottom navigation is retired; navigation h
   overlap and never leave a gap; the row is fully gone by the time the sheet reaches Half. Half and
   expanded are non-modal and reuse the existing partner-overview modules unchanged; only expanded
   scrims. Back collapses Expanded -> Half -> Peek before the system leaves the app.
+- **Special mission slots:** the four mission rows in the partner overview are actionable in
+  place. An empty slot says "Tap to assign" and opens the assignment list, which offers only the
+  owned items that fill that slot (steps, vitals, battles, wins) so a pick can never land in another
+  slot; a running mission opens removal, and a completed one collects its reward. Assigning consumes
+  one item through the same gameplay path as the Items tab, so Home and Items never diverge.
 - **Gesture ownership:** the slab claims its drag area above the navigation-bar strip with
   `systemGestureExclusion`, so pulling the sheet up is never read as the system Home gesture. Drags
   on the 3D surface belong to the camera; drags on chrome belong to the sheet; nothing else.

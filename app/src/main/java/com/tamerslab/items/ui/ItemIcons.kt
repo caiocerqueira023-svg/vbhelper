@@ -2,6 +2,13 @@ package com.tamerslab.items.ui
 
 import com.tamerslab.R
 
+/**
+ * The glyph for an authored `itemIcon` index.
+ *
+ * 1-5 are the stat trainings, 6/7 the evolution and limit timers, 8 vitals, and 9-16 the special
+ * missions (step, vital, battle and win goals). Missions used to fall through to the question mark,
+ * which made half of the catalogue look unreadable.
+ */
 fun getIconResource(index: Int): Int {
     return when (index) {
         ItemsScreenControllerImpl.ItemTypes.PPTraining.id -> R.drawable.baseline_agility_24
@@ -12,11 +19,19 @@ fun getIconResource(index: Int): Int {
         6 -> R.drawable.baseline_timer_24
         7 -> R.drawable.baseline_rank_24
         8 -> R.drawable.baseline_vitals_24
+        9, 10 -> R.drawable.baseline_compass_24
+        11, 12 -> R.drawable.baseline_vitals_24
+        13, 14 -> R.drawable.baseline_swords_24
+        15, 16 -> R.drawable.baseline_trophy_24
         else -> R.drawable.baseline_question_mark_24
     }
 }
 
-fun getLengthResource(index: Int): Int {
+/**
+ * The length/effect glyph for an authored `itemLength` value, or null when the value has no authored
+ * glyph (mission durations such as 3 hours carry their goal in the name instead of a made-up icon).
+ */
+fun getLengthIcon(index: Int): Int? {
     return when (index) {
         15 -> R.drawable.baseline_15_min_timer
         30 -> R.drawable.baseline_30_min_timer
@@ -35,6 +50,9 @@ fun getLengthResource(index: Int): Int {
         -1000 -> R.drawable.baseline_double_arrow_down
         -2500 -> R.drawable.baseline_triple_arrow_down
         -9999 -> R.drawable.baseline_reset_24
-        else -> R.drawable.baseline_question_mark_24
+        else -> null
     }
 }
+
+/** Backwards-compatible glyph lookup for callers that always need an image. */
+fun getLengthResource(index: Int): Int = getLengthIcon(index) ?: R.drawable.baseline_question_mark_24

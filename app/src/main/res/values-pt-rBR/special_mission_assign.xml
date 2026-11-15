@@ -1,0 +1,12 @@
+<resources>
+    <string name="home_special_mission_assign_title">Atribuir missão especial</string>
+    <string name="home_special_mission_assign_slot">Slot de %1$s · escolha um item da sua mochila.</string>
+    <string name="home_special_mission_assign_empty">Nenhum item de missão especial para este slot. Missões especiais vêm da loja de itens ou de missões concluídas.</string>
+    <string name="home_special_mission_slot_empty">Toque para atribuir</string>
+    <string name="home_special_mission_assigned">Missão especial atribuída</string>
+    <string name="home_special_mission_equip">Equipar</string>
+    <string name="special_mission_slot_steps">Passos</string>
+    <string name="special_mission_slot_vitals">Vitais</string>
+    <string name="special_mission_slot_battles">Batalhas</string>
+    <string name="special_mission_slot_wins">Vitórias</string>
+</resources>

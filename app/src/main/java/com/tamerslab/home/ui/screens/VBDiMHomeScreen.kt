@@ -37,6 +37,7 @@ import com.tamerslab.home.ui.PartnerIdentityBlock
 import com.tamerslab.home.ui.PartnerTrainingGainsRow
 import com.tamerslab.home.ui.PartnerVitalsHeader
 import com.tamerslab.home.ui.PartnerWinRateRow
+import com.tamerslab.home.ui.dialogs.AssignSpecialMissionDialog
 import com.tamerslab.home.ui.dialogs.DeleteSpecialMissionDialog
 import com.tamerslab.ui.theme.TextPrimaryOnDark
 import com.tamerslab.utils.BitmapData
@@ -73,6 +74,7 @@ fun VBDiMHomeScreen(
     appData: com.tamerslab.storage.data.AppHomeStats? = null,
 ) {
     var selectedSpecialMissionId by remember { mutableStateOf<Long>(-1) }
+    var assignSpecialMissionSlot by remember { mutableStateOf<Int?>(null) }
 
     Column(
         modifier = Modifier
@@ -181,10 +183,21 @@ fun VBDiMHomeScreen(
                     onClickCollect = { missionId ->
                         homeScreenController.clearSpecialMission(missionId, onClickCollect)
                     },
+                    onClickAssign = { slot -> assignSpecialMissionSlot = slot },
+                    canAssign = true,
                 )
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
+    }
+
+    assignSpecialMissionSlot?.let { slot ->
+        AssignSpecialMissionDialog(
+            characterId = activeMon.id,
+            slotWatchId = slot,
+            homeScreenController = homeScreenController,
+            onDismiss = { assignSpecialMissionSlot = null },
+        )
     }
 
     if (selectedSpecialMissionId.toInt() != -1) {

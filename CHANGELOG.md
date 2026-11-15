@@ -423,6 +423,33 @@ tree; it is not a release announcement and does not claim a verified green build
   grazing angles are weighted more common than the steep one, and the lens is floor-limited so no cut,
   drift or manual drag can put it at or below the island surface.
 
+### Changed
+
+- **The Items tab is a grouped catalogue.** Two tabs instead of three: My items and Items store. My
+  items is sectioned by function - Training, Evolution, Vitals, Special missions - with the quest
+  battle stock folded in as its last section (the separate Battle items tab is gone). Entries are
+  compact instrument rows: a 44dp framed glyph well, a two-line name that reserves both lines, the
+  effect glyph and only the number that list needs (owned count, stock or store price; an unaffordable
+  price turns to the error colour). The old wide cards left a large empty artwork well, locked names
+  to three lines and produced ragged heights; the new rows are uniform and roughly half the height,
+  and special-mission rows take the full width because their names carry a goal and a window. The
+  store opens with one wallet strip (balance plus how many entries are affordable) above the same
+  sections. Special-mission items no longer fall through to a question-mark glyph: steps, vitals,
+  battle and win missions have their own glyphs. The item dialog repeats the row grammar and puts the
+  price and affordability next to the action, so Purchase is disabled with a reason instead of failing
+  after the tap. Strings are in the three supported locales and `items_kind_count` is a plural.
+
+### Added
+
+- **Special missions can be assigned straight from the partner overview.** Each of the four mission
+  slots on an eligible partner's overview is now actionable: an empty slot reads "Tap to assign" and
+  opens a chooser listing the owned special-mission items that fit that slot only (steps, vitals,
+  battles, wins), with quantity and an Equip action. Equipping consumes one item through the same
+  gameplay path as the Items tab and the slot/progress flow refreshes live, so adding a mission from
+  Home no longer requires going through Items -> Use item -> partner picker. Running missions keep
+  their removal action and completed ones keep their collect action. Slot/item mapping lives in
+  `SpecialMissionSlots` with unit coverage.
+
 ### Fixed
 
 - **The Transfer tab reads as one destination again.** The Home transfer action (header key and

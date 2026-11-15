@@ -1,4 +1,4 @@
-﻿package com.tamerslab.navigation
+package com.tamerslab.navigation
 
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavController
@@ -39,7 +39,7 @@ object ItemsDestination {
 
     fun tabIndex(tab: String?): Int = when (tab) {
         TAB_STORE -> 1
-        TAB_QUEST -> 2
+        // Battle stock moved into the owned catalogue; old quest links land on it.
         else -> 0
     }
 }

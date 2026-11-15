@@ -40,6 +40,15 @@ class HomeScreenControllerImpl(
         }
     }
 
+    override fun assignSpecialMission(itemId: Long, characterId: Long, onResult: (Boolean) -> Unit) {
+        componentActivity.lifecycleScope.launch {
+            val result = runCatching {
+                kotlinx.coroutines.withContext(Dispatchers.IO) { gameplay.applyItem(itemId, characterId) }
+            }
+            componentActivity.runOnUiThread { onResult(result.isSuccess) }
+        }
+    }
+
     override fun checkDailyDiary(characterId: Long) {
         componentActivity.lifecycleScope.launch(Dispatchers.IO) {
             com.tamerslab.di.AppServices.diaryService.checkAndGenerateEntry(characterId)
