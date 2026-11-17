@@ -1,0 +1,106 @@
+{
+    "engine":  {
+                   "name":  "jadx-headless-mcp",
+                   "version":  "0.7.1",
+                   "artifact_sha256":  "6e5eacf500b64292bfb73c49797c1958f6ee44646e43e868039ae7feb573ff75",
+                   "source_revision":  "5844800a486d2248fa949b74c9896285f5b54de2",
+                   "worker_count":  1,
+                   "heap_limit_mib":  4096
+               },
+    "class_name":  "online.battleterminal.vital.VpetActivity.Disp",
+    "methods":  [
+                    {
+                        "name":  "\u003cinit\u003e",
+                        "reported_signature":  "\u003cinit\u003e(android.bluetooth.BluetoothDevice, java.lang.String, boolean, boolean, boolean): void",
+                        "overload_index":  0,
+                        "is_constructor":  true,
+                        "dex_descriptor":  "(Landroid/bluetooth/BluetoothDevice;Ljava/lang/String;ZZZ)V"
+                    },
+                    {
+                        "name":  "getBle",
+                        "reported_signature":  "getBle(): boolean",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "()Z"
+                    },
+                    {
+                        "name":  "getD",
+                        "reported_signature":  "getD(): android.bluetooth.BluetoothDevice",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "()Landroid/bluetooth/BluetoothDevice;"
+                    },
+                    {
+                        "name":  "getNombre",
+                        "reported_signature":  "getNombre(): java.lang.String",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "()Ljava/lang/String;"
+                    },
+                    {
+                        "name":  "getUart",
+                        "reported_signature":  "getUart(): boolean",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "()Z"
+                    },
+                    {
+                        "name":  "getVinculado",
+                        "reported_signature":  "getVinculado(): boolean",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "()Z"
+                    },
+                    {
+                        "name":  "setBle",
+                        "reported_signature":  "setBle(boolean): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Z)V"
+                    },
+                    {
+                        "name":  "setNombre",
+                        "reported_signature":  "setNombre(java.lang.String): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Ljava/lang/String;)V"
+                    },
+                    {
+                        "name":  "setUart",
+                        "reported_signature":  "setUart(boolean): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Z)V"
+                    }
+                ],
+    "fields":  [
+                   {
+                       "name":  "ble",
+                       "reported_type":  "boolean",
+                       "dex_static_value":  null
+                   },
+                   {
+                       "name":  "d",
+                       "reported_type":  "android.bluetooth.BluetoothDevice",
+                       "dex_static_value":  null
+                   },
+                   {
+                       "name":  "nombre",
+                       "reported_type":  "java.lang.String",
+                       "dex_static_value":  null
+                   },
+                   {
+                       "name":  "uart",
+                       "reported_type":  "boolean",
+                       "dex_static_value":  null
+                   },
+                   {
+                       "name":  "vinculado",
+                       "reported_type":  "boolean",
+                       "dex_static_value":  null
+                   }
+               ],
+    "inner_classes":  [
+
+                      ]
+}

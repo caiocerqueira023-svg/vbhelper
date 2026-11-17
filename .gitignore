@@ -34,3 +34,7 @@ __pycache__/
 # Local verification build logs and performance artifacts (evidence is recorded by
 # provenance in docs/performance/BASELINE.md, not by committing the raw files).
 build-logs/
+
+# Local Gradle user-home copies and temporary analysis scratch dumps.
+.gradle-home/
+analysis/**/patcher/

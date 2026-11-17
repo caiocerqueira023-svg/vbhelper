@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Backup
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Image
@@ -36,6 +37,7 @@ import com.tamerslab.navigation.TransferSection
 import com.tamerslab.navigation.TransferGame
 import com.tamerslab.transfer.ui.scan.ScanScreen
 import com.tamerslab.transfer.ui.scan.ScanScreenController
+import com.tamerslab.transfer.ui.vpet.VpetSectionScreen
 import com.tamerslab.storage.ui.BraceletConversionDialog
 import com.tamerslab.storage.ui.NativeGameArchivePanel
 import com.tamerslab.storage.data.StorageRepository
@@ -53,6 +55,7 @@ fun TransferHubScreen(navController: NavController, scanController: ScanScreenCo
         mutableStateOf(when (initialSection) {
             TransferSection.DEVICES -> "devices"
             TransferSection.STORAGE -> "storage"
+            TransferSection.VPET -> "vpet"
             TransferSection.SEND -> "send"
             else -> "library"
         })
@@ -86,6 +89,7 @@ fun TransferHubScreen(navController: NavController, scanController: ScanScreenCo
             "manage" -> R.string.transfer_workspace_manage
             "archives" -> R.string.transfer_workspace_vault_tools
             "devices" -> R.string.transfer_watch_section
+            "vpet" -> R.string.vpet_title
             "storage" -> R.string.transfer_workspace_vault
             "game" -> gameTitle(game ?: TransferGame.WORLD_DS)
             "icons" -> R.string.transfer_launcher_icons
@@ -101,6 +105,7 @@ fun TransferHubScreen(navController: NavController, scanController: ScanScreenCo
                     listOf(
                         Triple("library", R.string.transfer_origins_title, Icons.AutoMirrored.Filled.List),
                         Triple("devices", R.string.transfer_watch_section, Icons.Default.Nfc),
+                        Triple("vpet", R.string.vpet_title, Icons.Default.Build),
                         Triple("manage", R.string.transfer_workspace_manage, Icons.Default.Edit),
                         Triple("archives", R.string.transfer_workspace_vault_tools, Icons.Default.Inventory2),
                         Triple("backups", R.string.transfer_move_backups, Icons.Default.Backup),
@@ -146,6 +151,7 @@ fun TransferHubScreen(navController: NavController, scanController: ScanScreenCo
                     }
                 }
                 "devices" -> TransferDevicesPane(navController, scanController, initialCharacterId) { operationBusy = it }
+                "vpet" -> VpetSectionScreen(initialCharacterId = initialCharacterId)
                 "send" -> TransferSendScreen(initialCharacterId, sendIndividualId) { openPage("devices") }
                 "icons" -> TransferLauncherIconsScreen()
                 "backups" -> GameMoveBackupsScreen()

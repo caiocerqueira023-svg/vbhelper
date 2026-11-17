@@ -217,6 +217,7 @@ val jacocoUnitTestReport = tasks.register<JacocoReport>("jacocoTestReport") {
 dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(project(":hardware"))
+    implementation(project(":hardware-vpet"))
     implementation(project(":game-save-core"))
     implementation(project(":companion-protocol"))
     implementation(libs.androidx.profileinstaller)

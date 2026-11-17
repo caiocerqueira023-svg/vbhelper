@@ -28,6 +28,7 @@ rootProject.name = "TamersLab"
 include(":app")
 include(":hardware")
 include(":hardware-dim")
+include(":hardware-vpet")
 include(":game-save-core")
 include(":companion-protocol")
 include(":pc-save-companion")

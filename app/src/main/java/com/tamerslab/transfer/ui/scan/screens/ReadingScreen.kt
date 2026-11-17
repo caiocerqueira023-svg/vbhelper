@@ -13,6 +13,7 @@ import com.tamerslab.domain.card.Card
 import com.tamerslab.species.ui.card.ChooseCard
 import com.tamerslab.transfer.ui.scan.SCAN_SCREEN_ACTIVITY_LIFECYCLE_LISTENER
 import com.tamerslab.transfer.ui.scan.ScanScreenController
+import com.tamerslab.transfer.ui.scan.components.NfcTransferDirection
 import com.tamerslab.R
 
 
@@ -104,6 +105,7 @@ fun ReadingScreen(
                 scanScreenController.cancelRead()
                 onCancel()
             },
+            direction = NfcTransferDirection.WATCH_TO_APP,
             showHeader = showHeader,
         )
     } else if (cardSelectScreen) {

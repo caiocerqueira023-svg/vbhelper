@@ -1,4 +1,4 @@
-﻿package com.tamerslab.di
+package com.tamerslab.di
 
 import com.tamerslab.battle.online.RetrofitHelper
 import com.tamerslab.di.repository.ArenaBattleRepository
@@ -8,6 +8,7 @@ import com.tamerslab.di.repository.ContainerFarmGateway
 import com.tamerslab.di.repository.ContainerSaveImportRepository
 import com.tamerslab.di.repository.ContainerStorageGateway
 import com.tamerslab.di.repository.ContainerTransferRepository
+import com.tamerslab.di.repository.ContainerVpetRepository
 import com.tamerslab.domain.repository.ArenaRosterGateway
 import com.tamerslab.domain.repository.BattleRepository
 import com.tamerslab.domain.repository.ChatGateway
@@ -15,6 +16,7 @@ import com.tamerslab.domain.repository.FarmGateway
 import com.tamerslab.domain.repository.SaveImportRepository
 import com.tamerslab.domain.repository.StorageGateway
 import com.tamerslab.domain.repository.TransferRepository
+import com.tamerslab.domain.vpet.VpetRepository
 import com.tamerslab.domain.usecase.BattleUseCase
 import com.tamerslab.domain.usecase.ChatUseCase
 import com.tamerslab.domain.usecase.FarmUseCase
@@ -48,6 +50,7 @@ val repositoryModule = koinModule {
     single<FarmGateway> { ContainerFarmGateway(get()) }
     single<StorageGateway> { ContainerStorageGateway(get()) }
     single<ArenaRosterGateway> { RoomArenaRosterGateway(get<AppContainer>().db, androidContext()) }
+    single<VpetRepository> { ContainerVpetRepository(get()) }
 }
 
 val useCaseModule = koinModule {

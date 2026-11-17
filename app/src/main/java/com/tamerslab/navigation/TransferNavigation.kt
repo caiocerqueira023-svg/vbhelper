@@ -1,6 +1,12 @@
-﻿package com.tamerslab.navigation
+package com.tamerslab.navigation
 
-enum class TransferSection(val key: String) { SAVES("saves"), STORAGE("storage"), DEVICES("devices"), SEND("send") }
+enum class TransferSection(val key: String) {
+    SAVES("saves"),
+    STORAGE("storage"),
+    DEVICES("devices"),
+    VPET("vpet"),
+    SEND("send"),
+}
 
 /** All external transfer setup is reached through the same destination, with optional partner context. */
 object TransferNavigation {

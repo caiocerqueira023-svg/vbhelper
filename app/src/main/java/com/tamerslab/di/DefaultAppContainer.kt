@@ -8,6 +8,8 @@ import androidx.datastore.preferences.preferencesDataStore
 import androidx.room.Room
 import com.tamerslab.data.database.AppDatabase
 import com.tamerslab.di.AppContainer
+import com.tamerslab.di.repository.ContainerVpetRepository
+import com.tamerslab.domain.vpet.VpetRepository
 import com.tamerslab.items.data.CurrencyRepository
 import com.tamerslab.security.DataStoreSecretsRepository
 import com.tamerslab.settings.data.LlmSettingsRepository
@@ -21,6 +23,9 @@ import com.tamerslab.chat.DigimonDiaryService
 import com.tamerslab.chat.ReactionRepository
 import com.tamerslab.chat.lorebook.LorebookRepository
 import com.tamerslab.species.SpeciesRepository
+import com.tamerslab.transfer.vpet.VpetImportService
+import com.tamerslab.transfer.vpet.VpetPendingReadStore
+import com.tamerslab.transfer.vpet.vpetPendingReadsDataStore
 import com.tamerslab.world.WorldRepository
 import com.tamerslab.farm.DigifarmRepository
 import com.tamerslab.farm.FarmSessionCoordinator
@@ -181,6 +186,23 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
     val spriteRepository by lazy { com.tamerslab.species.data.SpriteRepository(db) }
     val storageRepository by lazy { com.tamerslab.storage.data.StorageRepository(db) }
     val gameplayRepository by lazy { com.tamerslab.items.data.GameplayRepository(db, currencyRepository) }
+
+    /** Pending V-Pet reads that still need a canonical species or a participation retry (D7). */
+    val vpetPendingReadStore by lazy {
+        VpetPendingReadStore(context.vpetPendingReadsDataStore)
+    }
+
+    val vpetImportService by lazy {
+        VpetImportService(
+            db = db,
+            catalogLoader = { speciesRepository.getCanonicalCatalog() },
+            pendingStore = vpetPendingReadStore,
+            clock = System::currentTimeMillis,
+        )
+    }
+
+    /** Repository the V-Pet transfer section uses to import reads and manage pending entries. */
+    val vpetRepository: VpetRepository by lazy { ContainerVpetRepository(this) }
 
     override val questRepository by lazy { com.tamerslab.quests.QuestRepository(db, currencyRepository,
         allowAnyDistance = { debugSettingsRepository.allowAnyDistance }) }

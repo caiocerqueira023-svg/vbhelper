@@ -22,6 +22,11 @@ import com.tamerslab.domain.repository.FarmGateway
 import com.tamerslab.domain.repository.SaveImportRepository
 import com.tamerslab.domain.repository.StorageGateway
 import com.tamerslab.domain.repository.TransferRepository
+import com.tamerslab.domain.vpet.VpetImportOutcome
+import com.tamerslab.domain.vpet.VpetPendingRead
+import com.tamerslab.domain.vpet.VpetReadSnapshot
+import com.tamerslab.domain.vpet.VpetRepository
+import com.tamerslab.domain.vpet.VpetSpeciesChoice
 import com.tamerslab.dtos.CharacterDtos
 import com.tamerslab.items.data.CurrencyRepository
 import com.tamerslab.storage.data.StorageRepository
@@ -103,4 +108,22 @@ class RoomArenaRosterGateway(
 
     override suspend fun speciesIndex(): List<com.tamerslab.battle.offline.tamers.ArenaSpecies> =
         com.tamerslab.battle.offline.tamers.ArenaSpeciesIndex.load(context, db)
+}
+
+/** V-Pet read ingestion: delegates species resolution, partner creation and pending reads. */
+class ContainerVpetRepository(private val container: DefaultAppContainer) : VpetRepository {
+    override val pendingReads: Flow<List<VpetPendingRead>>
+        get() = container.vpetImportService.pendingReads
+
+    override suspend fun import(snapshot: VpetReadSnapshot): VpetImportOutcome =
+        container.vpetImportService.import(snapshot)
+
+    override suspend fun mapPending(id: String, canonicalId: String): VpetImportOutcome =
+        container.vpetImportService.mapPending(id, canonicalId)
+
+    override suspend fun discardPending(id: String) =
+        container.vpetImportService.discardPending(id)
+
+    override suspend fun searchSpecies(query: String, limit: Int): List<VpetSpeciesChoice> =
+        container.vpetImportService.searchSpecies(query, limit)
 }

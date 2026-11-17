@@ -22,6 +22,7 @@ kotlinxCoroutinesPlayServices = "1.11.0"
 workManager = "2.10.0"
 playServicesLocation = "21.3.0"
 timber = "5.0.1"
+usbSerial = "3.8.1"
 tinylog = "2.7.0"
 retrofit = "3.0.0"
 gson = "2.14.0"
@@ -94,6 +95,7 @@ kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "ko
 androidx-work-runtime-ktx = { module = "androidx.work:work-runtime-ktx", version.ref = "workManager" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 timber = { module = "com.jakewharton.timber:timber", version.ref = "timber" }
+usb-serial = { module = "com.github.mik3y:usb-serial-for-android", version.ref = "usbSerial" }
 tinylog-api = { module = "org.tinylog:tinylog-api", version.ref = "tinylog" }
 tinylog-impl = { module = "org.tinylog:tinylog-impl", version.ref = "tinylog" }
 retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }

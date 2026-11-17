@@ -16,6 +16,11 @@ interface WatchTransferDao {
     @Query("SELECT * FROM WatchRepresentationSnapshot WHERE transferToken=:token")
     fun snapshot(token: String): WatchRepresentationSnapshot?
 
+    /** Most recent device observation for an individual; baselines outlive their transfer tokens. */
+    @Query("""SELECT * FROM WatchRepresentationSnapshot WHERE individualId = :individualId
+        ORDER BY capturedAt DESC LIMIT 1""")
+    fun latestSnapshot(individualId: String): WatchRepresentationSnapshot?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun record(transfer: WatchTransfer)
 

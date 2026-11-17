@@ -11,6 +11,18 @@ tree; it is not a release announcement and does not claim a verified green build
 
 ### Added
 
+- **NFC transfer guide and Digimon hand-off animation.** The watch-transfer waiting steps now
+  render the original VB Lab scan artwork extracted from the discontinued 1.4.6 APK (the
+  `scan_images` instruction infographic and the `scan_images1` connecting illustration, with its
+  separate `SUCCESSFUL!` sprite reproduced as in the shipped `scan_F_success`/`scan_R_success`
+  pages), and animate the Digimon hand-off with the original `loadchara` two-frame sprites or the
+  character's card artwork under a mask wipe. The transfer direction (watch-to-app /
+  app-to-watch) is labelled in en/pt-BR/ja, the flow respects the system reduce-motion setting,
+  and the extracted artwork is used for personal preservation only — it is not redistributed.
+  The recovery notes for the discontinued APK (asset names, `scan_F_success`/`scan_R_success` UI
+  objects and the `loadchara` frames) live with the local reverse-engineering material, outside
+  the repository.
+
 - **Connection secrets now ship with the app.** The AES key, the two 4-bit substitution ciphers and
   the VBDM/VBC/BE HMAC key pairs used to authenticate with the watch are baked into the build
   (extracted from the official VB Arena 2.1.0 base APK), so a fresh install can scan a watch without
@@ -451,6 +463,18 @@ tree; it is not a release announcement and does not claim a verified green build
   `SpecialMissionSlots` with unit coverage.
 
 ### Fixed
+
+- **A form gained on the watch now survives the next app start.** Reported flow: a Digimon imported
+  from World DS went to the watch, evolved there, and came back to the app on its evolved form — and
+  was then rewritten to the form it had when it last left the app, while the evolved form stayed in the
+  Dex. The import itself was right (the app stores the watch's current slot); the World DS archive
+  keeps the record it imported, and its species repair/reconcile runs on every startup and save refresh,
+  so the stale archived record kept overriding the newer device state. Native records are now
+  authoritative only while the game produced something newer: `NativeReconcilePolicy` makes a retained
+  watch baseline captured after the archived record supersede it, and makes a re-read of an unchanged
+  record a no-op instead of a revert (`reconcileReturnedSpecies`, `applyWorldDsReturn`). A game record
+  that really changed — the Digimon was played in the game again — is still adopted. Covered by
+  `NativeReconcilePolicyTest` (5 cases).
 
 - **The Transfer tab reads as one destination again.** The Home transfer action (header key and
   menu entry) opened the Vital Bracelet pane directly; it now opens the overall Transfer tab with the

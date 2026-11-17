@@ -1,0 +1,205 @@
+{
+    "engine":  {
+                   "name":  "jadx-headless-mcp",
+                   "version":  "0.7.1",
+                   "artifact_sha256":  "6e5eacf500b64292bfb73c49797c1958f6ee44646e43e868039ae7feb573ff75",
+                   "source_revision":  "5844800a486d2248fa949b74c9896285f5b54de2",
+                   "worker_count":  1,
+                   "heap_limit_mib":  4096
+               },
+    "class_name":  "online.battleterminal.vital.VpetActivity.Puente",
+    "methods":  [
+                    {
+                        "name":  "$r8$lambda$ZlgNrOGoXVohnAMf0wMObPBTLl4",
+                        "reported_signature":  "$r8$lambda$ZlgNrOGoXVohnAMf0wMObPBTLl4(online.battleterminal.vital.VpetActivity, java.lang.String): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Lonline/battleterminal/vital/VpetActivity;Ljava/lang/String;)V"
+                    },
+                    {
+                        "name":  "$r8$lambda$g2JvKWSAfjOAjFf2izUnMthILiM",
+                        "reported_signature":  "$r8$lambda$g2JvKWSAfjOAjFf2izUnMthILiM(online.battleterminal.vital.VpetActivity): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Lonline/battleterminal/vital/VpetActivity;)V"
+                    },
+                    {
+                        "name":  "$r8$lambda$gdSJziYGy2rl9WDZzWAI6z0YXnY",
+                        "reported_signature":  "$r8$lambda$gdSJziYGy2rl9WDZzWAI6z0YXnY(android.appwidget.AppWidgetManager, online.battleterminal.vital.VpetActivity): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Landroid/appwidget/AppWidgetManager;Lonline/battleterminal/vital/VpetActivity;)V"
+                    },
+                    {
+                        "name":  "$r8$lambda$mJNt87SRYUX1AY2YpNsuX9mOVJA",
+                        "reported_signature":  "$r8$lambda$mJNt87SRYUX1AY2YpNsuX9mOVJA(online.battleterminal.vital.VpetActivity): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Lonline/battleterminal/vital/VpetActivity;)V"
+                    },
+                    {
+                        "name":  "\u003cinit\u003e",
+                        "reported_signature":  "\u003cinit\u003e(online.battleterminal.vital.VpetActivity): void",
+                        "overload_index":  0,
+                        "is_constructor":  true,
+                        "dex_descriptor":  "(Lonline/battleterminal/vital/VpetActivity;)V"
+                    },
+                    {
+                        "name":  "cerrar",
+                        "reported_signature":  "cerrar(): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "()V"
+                    },
+                    {
+                        "name":  "cerrar$lambda$5",
+                        "reported_signature":  "cerrar$lambda$5(online.battleterminal.vital.VpetActivity): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Lonline/battleterminal/vital/VpetActivity;)V"
+                    },
+                    {
+                        "name":  "compa",
+                        "reported_signature":  "compa(java.lang.String): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Ljava/lang/String;)V"
+                    },
+                    {
+                        "name":  "conectar",
+                        "reported_signature":  "conectar(java.lang.String): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Ljava/lang/String;)V"
+                    },
+                    {
+                        "name":  "conectar$lambda$6",
+                        "reported_signature":  "conectar$lambda$6(online.battleterminal.vital.VpetActivity, java.lang.String): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Lonline/battleterminal/vital/VpetActivity;Ljava/lang/String;)V"
+                    },
+                    {
+                        "name":  "desconectar",
+                        "reported_signature":  "desconectar(): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "()V"
+                    },
+                    {
+                        "name":  "desconectar$lambda$7",
+                        "reported_signature":  "desconectar$lambda$7(online.battleterminal.vital.VpetActivity): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Lonline/battleterminal/vital/VpetActivity;)V"
+                    },
+                    {
+                        "name":  "enviar",
+                        "reported_signature":  "enviar(java.lang.String): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Ljava/lang/String;)V"
+                    },
+                    {
+                        "name":  "espacios",
+                        "reported_signature":  "espacios(): java.lang.String",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "()Ljava/lang/String;"
+                    },
+                    {
+                        "name":  "fijarWidget",
+                        "reported_signature":  "fijarWidget(): boolean",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "()Z"
+                    },
+                    {
+                        "name":  "fijarWidget$lambda$0",
+                        "reported_signature":  "fijarWidget$lambda$0(android.appwidget.AppWidgetManager, online.battleterminal.vital.VpetActivity): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Landroid/appwidget/AppWidgetManager;Lonline/battleterminal/vital/VpetActivity;)V"
+                    },
+                    {
+                        "name":  "guardar",
+                        "reported_signature":  "guardar(java.lang.String, java.lang.String): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Ljava/lang/String;Ljava/lang/String;)V"
+                    },
+                    {
+                        "name":  "idioma",
+                        "reported_signature":  "idioma(): java.lang.String",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "()Ljava/lang/String;"
+                    },
+                    {
+                        "name":  "leer",
+                        "reported_signature":  "leer(java.lang.String): java.lang.String",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Ljava/lang/String;)Ljava/lang/String;"
+                    },
+                    {
+                        "name":  "m1974$r8$lambda$rXzFlfsoKdMlnnQw_I9MwFd6ZU",
+                        "reported_signature":  "m1974$r8$lambda$rXzFlfsoKdMlnnQw_I9MwFd6ZU(online.battleterminal.vital.VpetActivity, java.lang.String): kotlin.Unit",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Lonline/battleterminal/vital/VpetActivity;Ljava/lang/String;)Lkotlin/Unit;"
+                    },
+                    {
+                        "name":  "nidoCuidar",
+                        "reported_signature":  "nidoCuidar(java.lang.String, java.lang.String, java.lang.String): java.lang.String",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"
+                    },
+                    {
+                        "name":  "nidoEstado",
+                        "reported_signature":  "nidoEstado(java.lang.String, boolean): java.lang.String",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Ljava/lang/String;Z)Ljava/lang/String;"
+                    },
+                    {
+                        "name":  "poder",
+                        "reported_signature":  "poder(java.lang.String): java.lang.String",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Ljava/lang/String;)Ljava/lang/String;"
+                    },
+                    {
+                        "name":  "questPremio",
+                        "reported_signature":  "questPremio(java.lang.String, int, int): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Ljava/lang/String;II)V"
+                    },
+                    {
+                        "name":  "questPremio$lambda$4",
+                        "reported_signature":  "questPremio$lambda$4(online.battleterminal.vital.VpetActivity, java.lang.String): kotlin.Unit",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Lonline/battleterminal/vital/VpetActivity;Ljava/lang/String;)Lkotlin/Unit;"
+                    },
+                    {
+                        "name":  "vibrar",
+                        "reported_signature":  "vibrar(int): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(I)V"
+                    }
+                ],
+    "fields":  [
+                   {
+                       "name":  "this$0",
+                       "reported_type":  "online.battleterminal.vital.VpetActivity",
+                       "dex_static_value":  null
+                   }
+               ],
+    "inner_classes":  [
+
+                      ]
+}

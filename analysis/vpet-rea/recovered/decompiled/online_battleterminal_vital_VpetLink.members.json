@@ -1,0 +1,33 @@
+{
+    "engine":  {
+                   "name":  "jadx-headless-mcp",
+                   "version":  "0.7.1",
+                   "artifact_sha256":  "6e5eacf500b64292bfb73c49797c1958f6ee44646e43e868039ae7feb573ff75",
+                   "source_revision":  "5844800a486d2248fa949b74c9896285f5b54de2",
+                   "worker_count":  1,
+                   "heap_limit_mib":  4096
+               },
+    "class_name":  "online.battleterminal.vital.VpetLink",
+    "methods":  [
+                    {
+                        "name":  "cerrar",
+                        "reported_signature":  "cerrar(): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "()V"
+                    },
+                    {
+                        "name":  "enviar",
+                        "reported_signature":  "enviar(java.lang.String): void",
+                        "overload_index":  0,
+                        "is_constructor":  false,
+                        "dex_descriptor":  "(Ljava/lang/String;)V"
+                    }
+                ],
+    "fields":  [
+
+               ],
+    "inner_classes":  [
+
+                      ]
+}

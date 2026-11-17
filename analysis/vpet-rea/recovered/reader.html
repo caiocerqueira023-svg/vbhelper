@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>
+  html,body{margin:0;height:100%;background:transparent;color:#dff}
+  #log{font:12px/1.4 monospace;white-space:pre-wrap;padding:8px;opacity:.8;max-height:100%;overflow:auto}
+</style>
+</head>
+<body>
+<!-- protocolo recuperado do DBT-Link v18.9 (assets/vpet/lector.js, verbatim) -->
+<script src="lector.js"></script>
+<script>
+  // A ponte Kotlin expõe window.Android com: enviar, progreso, falla, listo.
+  const A = window.Android || null;
+  const logEl = document.getElementById('log');
+  const log = t => { if (logEl) logEl.textContent += t + "\n"; };
+
+  // Kotlin → JS: linhas recebidas do adaptador (A-Com/BTCom).
+  window.vpetLinea = function (line) { log(line); };
+  // Kotlin → JS: status da conexão {ok, msg}.
+  window.vpetEstado = function (e) { log("[" + e.msg + "]"); };
+
+  // Chamado pelo Kotlin para iniciar a leitura de um tipo de VPet.
+  window.vpetComecar = function (tipo) {
+    try {
+      window.LECTOR.empezar(tipo, {
+        monitor: function (t) { log(t); },
+        progreso: function (p) { if (A && A.progreso) A.progreso(p); },
+        falla: function (m) { if (A && A.falla) A.falla(m); },
+        listo: function (d) { if (A && A.listo) A.listo(JSON.stringify(d)); }
+      });
+    } catch (e) {
+      if (A && A.falla) A.falla("No pude leer este vpet: " + e.message);
+    }
+  };
+
+  window.vpetParar = function () { try { window.LECTOR.parar(); } catch (e) {} };
+</script>
+</body>
+</html>

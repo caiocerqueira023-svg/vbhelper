@@ -1,4 +1,4 @@
-﻿package com.tamerslab.transfer.data.gameSave
+package com.tamerslab.transfer.data.gameSave
 
 import androidx.room.withTransaction
 import com.tamerslab.data.database.AppDatabase
@@ -258,9 +258,19 @@ class NativeMaterializationRepository(
         val current = WorldDsReceiveConversion.nativeStats(record) ?: return@withContext false
         val reading = WorldDsAppStatsReader.read(db, snapshot.individualId)
         val projection = db.transferContinuityDao().projection(snapshot.individualId)
-        val previous = projection?.takeIf { it.nativeSnapshotId != snapshot.id }?.let { saved ->
-            dao.snapshot(saved.nativeSnapshotId)?.let { gson.fromJson(it.recordJson, ObservedDigimon::class.java) }
-        }
+        val previousSnapshot = projection?.takeIf { it.nativeSnapshotId != snapshot.id }
+            ?.let { saved -> dao.snapshot(saved.nativeSnapshotId) }
+        // The game is the form authority only while it produced something newer. A device
+        // observation captured after the archived record means the individual was used elsewhere
+        // (a watch evolution, for example), so re-reading an unchanged record must not revert it.
+        if (NativeReconcilePolicy.unchangedNativeRecordRevertsAppForm(
+                previousSnapshotImportedAt = previousSnapshot?.importedAt,
+                previousRecordJson = previousSnapshot?.recordJson,
+                currentRecordJson = snapshot.recordJson,
+                latestWatchCapturedAt = db.watchTransferDao().latestSnapshot(snapshot.individualId)?.capturedAt,
+            )
+        ) return@withContext false
+        val previous = previousSnapshot?.let { gson.fromJson(it.recordJson, ObservedDigimon::class.java) }
         val previousStats = previous?.let(WorldDsReceiveConversion::nativeStats)
         val existingMapping = dao.mapping(snapshot.id)?.takeIf { it.nativeSpeciesId == record.nativeSpeciesId }
         val tableCanonical = NativeSpeciesResolution.tableIdentity(binding.gameId, binding.formatProfile,
@@ -435,6 +445,11 @@ class NativeMaterializationRepository(
             val characters = db.userCharacterDao().getByIndividualIdSync(snapshot.individualId)
             val character = IndividualCharacters.representative(characters)
                 ?: continue
+            // A watch baseline captured after this archived record means the current representation
+            // came from a device round trip. The archived native form is historical then: repairing
+            // it here would revert a watch evolution (while the evolved form stays in the Dex).
+            if (NativeReconcilePolicy.watchObservationSupersedesSnapshot(snapshot.importedAt,
+                    db.watchTransferDao().latestSnapshot(snapshot.individualId)?.capturedAt)) continue
             val individual = db.digimonIndividualDao().getIndividual(snapshot.individualId) ?: continue
             val record = runCatching { gson.fromJson(snapshot.recordJson, ObservedDigimon::class.java) }.getOrNull()
                 ?: continue

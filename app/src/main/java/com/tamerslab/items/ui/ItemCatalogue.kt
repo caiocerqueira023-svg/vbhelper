@@ -1,5 +1,6 @@
 package com.tamerslab.items.ui
 
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -60,7 +61,7 @@ internal fun itemFamily(itemIcon: Int): ItemFamily = when (itemIcon) {
 internal data class CatalogueTile(
     val key: String,
     val title: String,
-    @StringRes val iconRes: Int,
+    @DrawableRes val iconRes: Int,
     @StringRes val lengthRes: Int? = null,
     val trailing: String? = null,
     val trailingIsWarning: Boolean = false,
