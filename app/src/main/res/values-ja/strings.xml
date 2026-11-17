@@ -1181,17 +1181,27 @@
     <string name="vpet_debug_hint">Debug builds only. Simulates a complete read without hardware.</string>
     <string name="vpet_simulate_read">Simulate read</string>
 
-    <!-- NFC transfer guide (VB Lab-style explainer + Digimon hand-off animation). -->
-    <string name="scan_guide_waiting">WAITING…</string>
-    <string name="scan_guide_touch">TOUCH!</string>
-    <string name="scan_guide_transferring">TRANSFERRING…</string>
-    <string name="scan_guide_success">COMPLETE</string>
-    <string name="scan_guide_error">TRANSFER FAILED</string>
-    <string name="scan_guide_send_direction">PHONE → WATCH</string>
-    <string name="scan_guide_receive_direction">WATCH → PHONE</string>
     <string name="scan_guide_digimon_arriving">Digimon arriving from the watch</string>
     <string name="scan_guide_digimon_departing">Digimon leaving for the watch</string>
-    <string name="scan_guide_content_description">NFC transfer guide: %1$s. %2$s</string>
 <string name="settings_debug_legacy_llm_title">Legacy LLM chat</string>
 <string name="settings_debug_legacy_llm_description">Debug only. Restores free-text chat through an external AI service. Sandboxed: it never changes mood, personality, quests or save data.</string>
+<!-- Adventure: VB Arena-derived composition rendered with the Tamers Lab instrument language. -->
+<string name="adventure_character_list">キャラクターリスト</string>
+<string name="adventure_selected_count">%1$d 体選択中</string>
+<string name="adventure_selected_order">出発順 %1$d 番目</string>
+<string name="adventure_depart">出発</string>
+<string name="adventure_withdraw">撤退</string>
+<string name="adventure_collect">受け取る</string>
+<string name="adventure_depart_title">冒険に出発しますか？</string>
+<string name="adventure_depart_body">選択したパートナーは指定した時間冒険に出て、報酬を持ち帰ります。</string>
+<string name="adventure_withdraw_title">パートナーを撤退させますか？</string>
+<string name="adventure_withdraw_body">%1$d 体が今すぐ戻ります。現在の冒険の進行と報酬は失われます。</string>
+<string name="adventure_withdrawn_toast">冒険を撤退しました</string>
+<string name="adventure_team_full">同時に出発できるのは%1$d体までです。</string>
+<string name="adventure_select_hint">最大%1$d体を選択して出発してください。</string>
+<string name="adventure_empty_action">ストレージを開く</string>
+<string name="adventure_scene_ready_count">%1$d 体が帰還</string>
+<string name="adventure_scene_ready">準備完了!</string>
+<string name="adventure_scene_slot_description">%1$s。%2$s。%3$s</string>
 </resources>
+

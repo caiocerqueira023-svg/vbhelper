@@ -74,4 +74,22 @@ class AdventureScreenControllerImpl(
             }
         }
     }
+
+    override fun withdrawAdventures(characterIds: List<Long>, onResult: () -> Unit) {
+        if (characterIds.isEmpty()) {
+            onResult()
+            return
+        }
+        componentActivity.lifecycleScope.launch(Dispatchers.IO) {
+            characterIds.forEach { characterId -> gameplay.cancelAdventure(characterId) }
+            componentActivity.runOnUiThread {
+                Toast.makeText(
+                    componentActivity,
+                    componentActivity.getString(R.string.adventure_withdrawn_toast),
+                    Toast.LENGTH_SHORT,
+                ).show()
+                onResult()
+            }
+        }
+    }
 }

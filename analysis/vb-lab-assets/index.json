@@ -1,0 +1,446 @@
+[
+ {
+  "file": "icons/ui/UICheckMark.png",
+  "width": 11,
+  "height": 11,
+  "source_asset": "UICheckMark.png"
+ },
+ {
+  "file": "icons/ui/UIFoldoutClosed.png",
+  "width": 11,
+  "height": 11,
+  "source_asset": "UIFoldoutClosed.png"
+ },
+ {
+  "file": "icons/ui/UIFoldoutOpened.png",
+  "width": 11,
+  "height": 11,
+  "source_asset": "UIFoldoutOpened.png"
+ },
+ {
+  "file": "icons/ui/UIElement8px.png",
+  "width": 8,
+  "height": 8,
+  "source_asset": "UIElement8px.png"
+ },
+ {
+  "file": "icons/ui/UIMask.png",
+  "width": 28,
+  "height": 28,
+  "source_asset": "UIMask.png"
+ },
+ {
+  "file": "icons/ui/white.png",
+  "width": 32,
+  "height": 32,
+  "source_asset": "white.png"
+ },
+ {
+  "file": "icons/ui/White1px.png",
+  "width": 1,
+  "height": 1,
+  "source_asset": "White1px.png"
+ },
+ {
+  "file": "icons/buttons/button_b_atlas.png",
+  "width": 512,
+  "height": 256,
+  "source_asset": "button_b.png"
+ },
+ {
+  "file": "icons/buttons/button_st_atlas.png",
+  "width": 512,
+  "height": 512,
+  "source_asset": "button_st.png"
+ },
+ {
+  "file": "icons/buttons/button_b_g.png",
+  "width": 147,
+  "height": 91,
+  "source_asset": "button_b_g.png"
+ },
+ {
+  "file": "icons/buttons/button_b_r.png",
+  "width": 159,
+  "height": 100,
+  "source_asset": "button_b_r.png"
+ },
+ {
+  "file": "icons/buttons/button_b_r_on.png",
+  "width": 159,
+  "height": 100,
+  "source_asset": "button_b_r_on.png"
+ },
+ {
+  "file": "icons/buttons/button_st.png",
+  "width": 445,
+  "height": 140,
+  "source_asset": "button_st.png"
+ },
+ {
+  "file": "icons/buttons/button_st_on.png",
+  "width": 445,
+  "height": 140,
+  "source_asset": "button_st_on.png"
+ },
+ {
+  "file": "icons/popups/popup_text_atlas.png",
+  "width": 2048,
+  "height": 1024,
+  "source_asset": "popup.png"
+ },
+ {
+  "file": "icons/popups/popup_bg.png",
+  "width": 271,
+  "height": 266,
+  "source_asset": "popup_bg.png"
+ },
+ {
+  "file": "icons/popups/popup_error.png",
+  "width": 458,
+  "height": 104,
+  "source_asset": "popup_error.png"
+ },
+ {
+  "file": "icons/popups/popup_line.png",
+  "width": 983,
+  "height": 22,
+  "source_asset": "popup_line.png"
+ },
+ {
+  "file": "icons/popups/popup_moyou.png",
+  "width": 1080,
+  "height": 360,
+  "source_asset": "popup_moyou.png"
+ },
+ {
+  "file": "backgrounds/title/title_bg.png",
+  "width": 1024,
+  "height": 512,
+  "source_asset": "title_bg.png"
+ },
+ {
+  "file": "backgrounds/title/title_img.png",
+  "width": 1024,
+  "height": 1024,
+  "source_asset": "title_img.png"
+ },
+ {
+  "file": "backgrounds/title/title_img_ef.png",
+  "width": 1018,
+  "height": 391,
+  "source_asset": "title_img_ef.png"
+ },
+ {
+  "file": "backgrounds/title/title_moyou.png",
+  "width": 1024,
+  "height": 410,
+  "source_asset": "title_moyou.png"
+ },
+ {
+  "file": "backgrounds/title/title_caution_bg.png",
+  "width": 512,
+  "height": 512,
+  "source_asset": "title_caution_bg.png"
+ },
+ {
+  "file": "backgrounds/title/title_circle1.png",
+  "width": 404,
+  "height": 405,
+  "source_asset": "title_circle1.png"
+ },
+ {
+  "file": "backgrounds/title/title_circle2.png",
+  "width": 167,
+  "height": 159,
+  "source_asset": "title_circle2.png"
+ },
+ {
+  "file": "backgrounds/title/title_circle3.png",
+  "width": 210,
+  "height": 203,
+  "source_asset": "title_circle3.png"
+ },
+ {
+  "file": "backgrounds/title/title_cricle2.png",
+  "width": 512,
+  "height": 512,
+  "source_asset": "title_cricle2.png"
+ },
+ {
+  "file": "backgrounds/title/title_cricle3.png",
+  "width": 512,
+  "height": 512,
+  "source_asset": "title_cricle3.png"
+ },
+ {
+  "file": "backgrounds/title/title_electro.png",
+  "width": 1019,
+  "height": 387,
+  "source_asset": "title__electro.png"
+ },
+ {
+  "file": "backgrounds/effects/Ef_gr_radial.png",
+  "width": 1024,
+  "height": 1024,
+  "source_asset": "Ef_gr.png"
+ },
+ {
+  "file": "logos/logo_vital_bracelet_lab.png",
+  "width": 1024,
+  "height": 1024,
+  "source_asset": "logo.png"
+ },
+ {
+  "file": "logos/logo_bandai.png",
+  "width": 512,
+  "height": 512,
+  "source_asset": "logo_bandai.png"
+ },
+ {
+  "file": "logos/logo_chariot.png",
+  "width": 512,
+  "height": 512,
+  "source_asset": "logo_chariot.png"
+ },
+ {
+  "file": "illustrations/chara_iC0002.png",
+  "width": 1024,
+  "height": 1024,
+  "source_asset": "iC0002.png"
+ },
+ {
+  "file": "illustrations/chara_iC0003.png",
+  "width": 1024,
+  "height": 1024,
+  "source_asset": "iC0003.png"
+ },
+ {
+  "file": "illustrations/chara_iC0004.png",
+  "width": 1024,
+  "height": 1024,
+  "source_asset": "iC0004.png"
+ },
+ {
+  "file": "illustrations/chara_iC0011.png",
+  "width": 1024,
+  "height": 1024,
+  "source_asset": "iC0011.png"
+ },
+ {
+  "file": "illustrations/chara_iC9000.png",
+  "width": 1024,
+  "height": 1024,
+  "source_asset": "iC9000.png"
+ },
+ {
+  "file": "effects/handoff/loadchara_0.png",
+  "width": 49,
+  "height": 39,
+  "source_asset": "loadchara_0.png"
+ },
+ {
+  "file": "effects/handoff/loadchara_1.png",
+  "width": 47,
+  "height": 41,
+  "source_asset": "loadchara_1.png"
+ },
+ {
+  "file": "effects/handoff/scan_images_atlas.png",
+  "width": 1024,
+  "height": 1024,
+  "source_asset": "scan_images.png"
+ },
+ {
+  "file": "effects/handoff/scan_images1_atlas.png",
+  "width": 1024,
+  "height": 1024,
+  "source_asset": "scan_images1.png"
+ },
+ {
+  "file": "effects/attacks/atk_s_00.png",
+  "width": 20,
+  "height": 20,
+  "source_asset": "atk_s_00.png"
+ },
+ {
+  "file": "effects/attacks/atk_s_09.png",
+  "width": 20,
+  "height": 20,
+  "source_asset": "atk_s_09.png"
+ },
+ {
+  "file": "effects/attacks/atk_s_11.png",
+  "width": 20,
+  "height": 20,
+  "source_asset": "atk_s_11.png"
+ },
+ {
+  "file": "effects/attacks/atk_l_00.png",
+  "width": 34,
+  "height": 44,
+  "source_asset": "atk_l_00.png"
+ },
+ {
+  "file": "effects/attacks/atk_l_03.png",
+  "width": 34,
+  "height": 42,
+  "source_asset": "atk_l_03.png"
+ },
+ {
+  "file": "effects/attacks/atk_l_14.png",
+  "width": 34,
+  "height": 44,
+  "source_asset": "atk_l_14.png"
+ },
+ {
+  "file": "launcher/app_icon_ldpi.png",
+  "width": 36,
+  "height": 36,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-ldpi-v4\\app_icon.png"
+ },
+ {
+  "file": "launcher/app_icon_round_ldpi.png",
+  "width": 36,
+  "height": 36,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-ldpi-v4\\app_icon_round.png"
+ },
+ {
+  "file": "launcher/ic_launcher_foreground_ldpi.png",
+  "width": 81,
+  "height": 81,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-ldpi-v4\\ic_launcher_foreground.png"
+ },
+ {
+  "file": "launcher/ic_launcher_background_ldpi.png",
+  "width": 81,
+  "height": 81,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-ldpi-v4\\ic_launcher_background.png"
+ },
+ {
+  "file": "launcher/app_icon_mdpi.png",
+  "width": 48,
+  "height": 48,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-mdpi-v4\\app_icon.png"
+ },
+ {
+  "file": "launcher/app_icon_round_mdpi.png",
+  "width": 48,
+  "height": 48,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-mdpi-v4\\app_icon_round.png"
+ },
+ {
+  "file": "launcher/ic_launcher_foreground_mdpi.png",
+  "width": 108,
+  "height": 108,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-mdpi-v4\\ic_launcher_foreground.png"
+ },
+ {
+  "file": "launcher/ic_launcher_background_mdpi.png",
+  "width": 108,
+  "height": 108,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-mdpi-v4\\ic_launcher_background.png"
+ },
+ {
+  "file": "launcher/app_icon_hdpi.png",
+  "width": 72,
+  "height": 72,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-hdpi-v4\\app_icon.png"
+ },
+ {
+  "file": "launcher/app_icon_round_hdpi.png",
+  "width": 72,
+  "height": 72,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-hdpi-v4\\app_icon_round.png"
+ },
+ {
+  "file": "launcher/ic_launcher_foreground_hdpi.png",
+  "width": 162,
+  "height": 162,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-hdpi-v4\\ic_launcher_foreground.png"
+ },
+ {
+  "file": "launcher/ic_launcher_background_hdpi.png",
+  "width": 162,
+  "height": 162,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-hdpi-v4\\ic_launcher_background.png"
+ },
+ {
+  "file": "launcher/app_icon_xhdpi.png",
+  "width": 96,
+  "height": 96,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-xhdpi-v4\\app_icon.png"
+ },
+ {
+  "file": "launcher/app_icon_round_xhdpi.png",
+  "width": 96,
+  "height": 96,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-xhdpi-v4\\app_icon_round.png"
+ },
+ {
+  "file": "launcher/ic_launcher_foreground_xhdpi.png",
+  "width": 216,
+  "height": 216,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-xhdpi-v4\\ic_launcher_foreground.png"
+ },
+ {
+  "file": "launcher/ic_launcher_background_xhdpi.png",
+  "width": 216,
+  "height": 216,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-xhdpi-v4\\ic_launcher_background.png"
+ },
+ {
+  "file": "launcher/app_icon_xxhdpi.png",
+  "width": 144,
+  "height": 144,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-xxhdpi-v4\\app_icon.png"
+ },
+ {
+  "file": "launcher/app_icon_round_xxhdpi.png",
+  "width": 144,
+  "height": 144,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-xxhdpi-v4\\app_icon_round.png"
+ },
+ {
+  "file": "launcher/ic_launcher_foreground_xxhdpi.png",
+  "width": 324,
+  "height": 324,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-xxhdpi-v4\\ic_launcher_foreground.png"
+ },
+ {
+  "file": "launcher/ic_launcher_background_xxhdpi.png",
+  "width": 324,
+  "height": 324,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-xxhdpi-v4\\ic_launcher_background.png"
+ },
+ {
+  "file": "launcher/app_icon_xxxhdpi.png",
+  "width": 192,
+  "height": 192,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-xxxhdpi-v4\\app_icon.png"
+ },
+ {
+  "file": "launcher/app_icon_round_xxxhdpi.png",
+  "width": 192,
+  "height": 192,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-xxxhdpi-v4\\app_icon_round.png"
+ },
+ {
+  "file": "launcher/ic_launcher_foreground_xxxhdpi.png",
+  "width": 432,
+  "height": 432,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-xxxhdpi-v4\\ic_launcher_foreground.png"
+ },
+ {
+  "file": "launcher/ic_launcher_background_xxxhdpi.png",
+  "width": 432,
+  "height": 432,
+  "source_asset": "C:\\Users\\julye\\Downloads\\vbhelper-analysis\\digibb-1.4.6\\assets_out\\res_icons\\res\\mipmap-xxxhdpi-v4\\ic_launcher_background.png"
+ },
+ {
+  "file": "launcher/xapk_icon.png",
+  "width": 512,
+  "height": 512,
+  "source_asset": "XAPK icon.png"
+ }
+]

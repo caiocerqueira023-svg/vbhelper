@@ -28,21 +28,21 @@ enum class PlaceDestination(
     ),
     Arena(
         AppRoute.Battles,
-        R.drawable.baseline_swords_24,
+        R.drawable.vb_icon_battle,
         R.string.place_arena,
         R.string.place_arena_subtitle,
     ),
     Dex(
         AppRoute.Dex,
-        R.drawable.baseline_menu_book_24,
+        R.drawable.vb_icon_digidex,
         R.string.place_dex,
         R.string.place_dex_subtitle,
     ),
-    Shop(
+    Items(
         AppRoute.Items(ItemsDestination.TAB_STORE),
-        R.drawable.baseline_data_24,
-        R.string.place_shop,
-        R.string.place_shop_subtitle,
+        R.drawable.vb_icon_items,
+        R.string.place_items,
+        R.string.place_items_subtitle,
     ),
     Partners(
         AppRoute.Storage,

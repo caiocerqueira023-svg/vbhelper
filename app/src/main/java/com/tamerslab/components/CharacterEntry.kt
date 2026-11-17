@@ -450,7 +450,7 @@ fun SpecialMissionsEntry(
     val icon = when (specialMission.missionType) {
         SpecialMission.Type.NONE -> R.drawable.baseline_free_24
         SpecialMission.Type.STEPS -> R.drawable.baseline_agility_24
-        SpecialMission.Type.BATTLES -> R.drawable.baseline_swords_24
+        SpecialMission.Type.BATTLES -> R.drawable.vb_icon_battle
         SpecialMission.Type.WINS -> R.drawable.baseline_trophy_24
         SpecialMission.Type.VITALS -> R.drawable.baseline_vitals_24
     }

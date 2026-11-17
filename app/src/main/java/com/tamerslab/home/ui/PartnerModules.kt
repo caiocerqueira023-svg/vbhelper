@@ -139,13 +139,13 @@ fun PartnerWinRateRow(
             .heightIn(min = 104.dp)
             .padding(8.dp)
         ItemDisplay(
-            icon = R.drawable.baseline_swords_24,
+            icon = R.drawable.vb_icon_battle,
             textValue = battleWinPercent(totalWon, totalLost),
             definition = stringResource(R.string.home_vbdim_total_battle_win),
             modifier = tile,
         )
         ItemDisplay(
-            icon = R.drawable.baseline_swords_24,
+            icon = R.drawable.vb_icon_battle,
             textValue = battleWinPercent(phaseWon, phaseLost),
             definition = stringResource(R.string.home_vbdim_current_phase_win),
             modifier = tile,

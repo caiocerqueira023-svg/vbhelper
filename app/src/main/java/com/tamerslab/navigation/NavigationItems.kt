@@ -17,7 +17,7 @@ sealed class NavigationItems(
 
     object Battles : NavigationItems(
         AppRoute.Battles,
-        R.drawable.baseline_swords_24,
+        R.drawable.vb_icon_battle,
         R.string.nav_battle
     )
 
@@ -37,7 +37,7 @@ sealed class NavigationItems(
 
     object Dex : NavigationItems(
         AppRoute.Dex,
-        R.drawable.baseline_menu_book_24,
+        R.drawable.vb_icon_digidex,
         R.string.nav_dex
     )
 
@@ -79,25 +79,25 @@ sealed class NavigationItems(
 
     object Items : NavigationItems(
         AppRoute.Items(),
-        R.drawable.baseline_data_24,
+        R.drawable.vb_icon_items,
         R.string.nav_items
     )
 
     object MyItems : NavigationItems(
         AppRoute.Items("mine"),
-        R.drawable.baseline_data_24,
+        R.drawable.vb_icon_items,
         R.string.nav_my_items
     )
 
     object ItemsStore : NavigationItems(
         AppRoute.Items("store"),
-        R.drawable.baseline_data_24,
+        R.drawable.vb_icon_items,
         R.string.nav_items_store
     )
 
     object ApplyItem : NavigationItems(
         AppRoute.ApplyItem(0),
-        R.drawable.baseline_data_24,
+        R.drawable.vb_icon_items,
         R.string.nav_apply_item
     )
 
@@ -121,7 +121,7 @@ sealed class NavigationItems(
 
     object TechniqueLoadout : NavigationItems(
         AppRoute.TechniqueLoadout(0),
-        R.drawable.baseline_swords_24,
+        R.drawable.vb_icon_battle,
         R.string.nav_battle
     )
 

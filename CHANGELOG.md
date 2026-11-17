@@ -11,17 +11,36 @@ tree; it is not a release announcement and does not claim a verified green build
 
 ### Added
 
-- **NFC transfer guide and Digimon hand-off animation.** The watch-transfer waiting steps now
-  render the original VB Lab scan artwork extracted from the discontinued 1.4.6 APK (the
-  `scan_images` instruction infographic and the `scan_images1` connecting illustration, with its
-  separate `SUCCESSFUL!` sprite reproduced as in the shipped `scan_F_success`/`scan_R_success`
-  pages), and animate the Digimon hand-off with the original `loadchara` two-frame sprites or the
-  character's card artwork under a mask wipe. The transfer direction (watch-to-app /
-  app-to-watch) is labelled in en/pt-BR/ja, the flow respects the system reduce-motion setting,
-  and the extracted artwork is used for personal preservation only — it is not redistributed.
-  The recovery notes for the discontinued APK (asset names, `scan_F_success`/`scan_R_success` UI
-  objects and the `loadchara` frames) live with the local reverse-engineering material, outside
-  the repository.
+- **VB Arena adventure stage ported into the Adventure screen.** The Adventure route now mirrors the
+  composition of the discontinued `com.bandai.vitalbraceletarena` 2.1.0 XAPK: a city viewport with the
+  walking team and the return countdown, the "Character list" grid that selects the departing team (up
+  to four), the source CHECK dialog (team preview on the extracted ground plates plus the duration
+  choice) and one primary action (Depart / Collect / Withdraw). The parallax is the original
+  `BattleBg_0013`/`BattleBg_0012` artwork behind `ScrollBackground_Adv`/`ScrollMiddle_Adv`: it is
+  recoloured off the main thread with a luminance -> palette gradient map built from the active saved
+  palette, so the city keeps many distinct colours, all of them drawn from the theme (Tamers Lab
+  violet/cyan, VB Lab charcoal/cyan, VB Arena green/mint, Digimon.net blue/gold) and keeps its
+  dark-city-on-light-page polarity instead of inverting in the light palettes. Geometry and timing come
+  from the shipped data read from the AssetBundle type trees: the running view uses the exact source
+  `CharacterView` rects (224x196 at panel fractions 0.4265/0.7416/0.5168/0.8319 by 0.3936/0.6976 — two
+  partners on top, two below, all on the right), the adventure walk is `m_CharaMoveAnimId = 12`
+  ("Walk": 20 draw frames per pose at 60 fps = 0.333 s), and the background shader speeds are
+  0.12/0.13 UV/second; the source Front layer is inactive and is not drawn, and the walk/parallax
+  clocks live in the viewport so a departure starts moving immediately. The partner grid reuses the
+  Storage character card (idle two-frame breathing), the departure-order badge sits on the card's right
+  edge while the countdown/Ready caption moved to the card bottom so the two no longer collide, the
+  header carries no exploring count, and the whole screen keeps the selected palette's surfaces,
+  signals, typography and reduce-motion behaviour. The
+  extracted artwork is used for personal preservation only — it is not redistributed — and the
+  recovery map (scene rect table, animation master data, sprite borders) stays with the local
+  reverse-engineering material, outside the repository.
+
+- **Digimon hand-off animation for watch transfers.** The NFC waiting steps now animate the
+  character leaving for or arriving from the watch: the original VB Lab loading sprites
+  (`loadchara` two-frame pixel art extracted from the discontinued 1.4.6 APK) or the character's
+  card artwork are revealed/hidden with a mask wipe over the original polling ring, respecting
+  the system reduce-motion setting. The earlier illustrated guide was removed. The extracted
+  artwork is used for personal preservation only and is not redistributed.
 
 - **Connection secrets now ship with the app.** The AES key, the two 4-bit substitution ciphers and
   the VBDM/VBC/BE HMAC key pairs used to authenticate with the watch are baked into the build
@@ -621,3 +640,4 @@ gap-closing work — an earlier pass in the same session with 1,155 tests and a
 Useful references: [documentation index](docs/INDEX.md),
 [performance baseline and budgets](docs/performance/BASELINE.md),
 [Alpha 0.7.0 release checklist](docs/release/RELEASE_CHECKLIST_0.7.0.md).
+

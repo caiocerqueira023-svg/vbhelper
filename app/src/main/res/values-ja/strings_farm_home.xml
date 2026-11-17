@@ -7,8 +7,8 @@
     <string name="place_arena_subtitle">コロシアム</string>
     <string name="place_digiline">デジライン</string>
     <string name="place_digiline_subtitle">メッセージ</string>
-    <string name="place_shop">ショップ</string>
-    <string name="place_shop_subtitle">交換</string>
+    <string name="place_items">アイテム</string>
+    <string name="place_items_subtitle">インベントリ</string>
     <string name="place_partners">パートナー</string>
     <string name="place_partners_subtitle">保管庫</string>
 

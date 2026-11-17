@@ -32,10 +32,15 @@ class CurrencyRepository (
     }
 
     /** INSERT IGNORE makes the legacy preference import safe under concurrent first use. */
-    suspend fun initializeWallet() = withContext(Dispatchers.IO) {
-        val db = database ?: return@withContext
-        if (db.questDao().wallet() == null) {
-            val legacy = dataStore.data.first()[CURRENCY_VALUE] ?: 10000
+    suspend fun initializeWallet() {
+        val db = database ?: return
+        // The wallet lookups are blocking DAO calls, so they run inside Room's own transaction
+        // context; wrapping them in withContext(Dispatchers.IO) could inherit a different context
+        // from a suspended transaction and throw Room's "different coroutine context" guard.
+        val existing = db.withTransaction { db.questDao().wallet() }
+        if (existing != null) return
+        val legacy = dataStore.data.first()[CURRENCY_VALUE] ?: 10000
+        db.withTransaction {
             db.questDao().initializeWallet(QuestWallet(balance = legacy.coerceAtLeast(0)))
         }
     }

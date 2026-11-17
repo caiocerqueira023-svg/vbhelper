@@ -1252,15 +1252,25 @@
     <string name="settings_debug_legacy_llm_title">Chat LLM legado</string>
     <string name="settings_debug_legacy_llm_description">Somente em builds de depuração. Restaura o chat de texto livre por um serviço de IA externo. Isolado: nunca altera humor, personalidade, missões ou dados de save.</string>
 
-    <!-- NFC transfer guide (VB Lab-style explainer + Digimon hand-off animation). -->
-    <string name="scan_guide_waiting">AGUARDANDO…</string>
-    <string name="scan_guide_touch">ENCOSTE!</string>
-    <string name="scan_guide_transferring">TRANSFERINDO…</string>
-    <string name="scan_guide_success">CONCLUÍDO</string>
-    <string name="scan_guide_error">FALHA NA TRANSFERÊNCIA</string>
-    <string name="scan_guide_send_direction">CELULAR → RELÓGIO</string>
-    <string name="scan_guide_receive_direction">RELÓGIO → CELULAR</string>
     <string name="scan_guide_digimon_arriving">Digimon chegando do relógio</string>
     <string name="scan_guide_digimon_departing">Digimon partindo para o relógio</string>
-    <string name="scan_guide_content_description">Guia de transferência NFC: %1$s. %2$s</string>
+    <!-- Adventure: VB Arena-derived composition rendered with the Tamers Lab instrument language. -->
+    <string name="adventure_character_list">Lista de parceiros</string>
+    <string name="adventure_selected_count">%1$d selecionados</string>
+    <string name="adventure_selected_order">Posição %1$d na equipe</string>
+    <string name="adventure_depart">Partir</string>
+    <string name="adventure_withdraw">Retirar</string>
+    <string name="adventure_collect">Coletar</string>
+    <string name="adventure_depart_title">Partir em uma aventura?</string>
+    <string name="adventure_depart_body">Os parceiros selecionados partem pelo tempo escolhido e voltam com uma recompensa.</string>
+    <string name="adventure_withdraw_title">Retirar parceiros?</string>
+    <string name="adventure_withdraw_body">%1$d parceiro(s) voltam agora. O progresso e as recompensas desta aventura são perdidos.</string>
+    <string name="adventure_withdrawn_toast">Aventuras retiradas</string>
+    <string name="adventure_team_full">Até %1$d parceiros podem partir juntos.</string>
+    <string name="adventure_select_hint">Selecione até %1$d parceiros e parta.</string>
+    <string name="adventure_empty_action">Abrir Storage</string>
+    <string name="adventure_scene_ready_count">%1$d prontos</string>
+    <string name="adventure_scene_ready">Pronto!</string>
+    <string name="adventure_scene_slot_description">%1$s. %2$s. %3$s</string>
 </resources>
+

@@ -21,7 +21,7 @@ fun getIconResource(index: Int): Int {
         8 -> R.drawable.baseline_vitals_24
         9, 10 -> R.drawable.baseline_compass_24
         11, 12 -> R.drawable.baseline_vitals_24
-        13, 14 -> R.drawable.baseline_swords_24
+        13, 14 -> R.drawable.vb_icon_battle
         15, 16 -> R.drawable.baseline_trophy_24
         else -> R.drawable.baseline_question_mark_24
     }

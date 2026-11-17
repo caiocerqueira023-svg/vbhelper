@@ -1262,15 +1262,25 @@
     <string name="vpet_debug_hint">Debug builds only. Simulates a complete read without hardware.</string>
     <string name="vpet_simulate_read">Simulate read</string>
 
-    <!-- NFC transfer guide (VB Lab-style explainer + Digimon hand-off animation). -->
-    <string name="scan_guide_waiting">WAITING…</string>
-    <string name="scan_guide_touch">TOUCH!</string>
-    <string name="scan_guide_transferring">TRANSFERRING…</string>
-    <string name="scan_guide_success">COMPLETE</string>
-    <string name="scan_guide_error">TRANSFER FAILED</string>
-    <string name="scan_guide_send_direction">PHONE → WATCH</string>
-    <string name="scan_guide_receive_direction">WATCH → PHONE</string>
     <string name="scan_guide_digimon_arriving">Digimon arriving from the watch</string>
     <string name="scan_guide_digimon_departing">Digimon leaving for the watch</string>
-    <string name="scan_guide_content_description">NFC transfer guide: %1$s. %2$s</string>
+    <!-- Adventure: VB Arena-derived composition rendered with the Tamers Lab instrument language. -->
+    <string name="adventure_character_list">Character list</string>
+    <string name="adventure_selected_count">%1$d selected</string>
+    <string name="adventure_selected_order">Departing position %1$d</string>
+    <string name="adventure_depart">Depart</string>
+    <string name="adventure_withdraw">Withdraw</string>
+    <string name="adventure_collect">Collect</string>
+    <string name="adventure_depart_title">Set off on an adventure?</string>
+    <string name="adventure_depart_body">The selected partners leave for the chosen time and return with a reward.</string>
+    <string name="adventure_withdraw_title">Withdraw partners?</string>
+    <string name="adventure_withdraw_body">%1$d partner(s) return now. The current adventure progress and rewards are lost.</string>
+    <string name="adventure_withdrawn_toast">Adventures withdrawn</string>
+    <string name="adventure_team_full">Up to %1$d partners can depart together.</string>
+    <string name="adventure_select_hint">Select up to %1$d partners, then depart.</string>
+    <string name="adventure_empty_action">Open Storage</string>
+    <string name="adventure_scene_ready_count">%1$d ready</string>
+    <string name="adventure_scene_ready">Ready!</string>
+    <string name="adventure_scene_slot_description">%1$s. %2$s. %3$s</string>
 </resources>
+

@@ -7,8 +7,8 @@
     <string name="place_arena_subtitle">Coliseu</string>
     <string name="place_digiline">DigiLine</string>
     <string name="place_digiline_subtitle">Mensagens</string>
-    <string name="place_shop">Loja</string>
-    <string name="place_shop_subtitle">Troca</string>
+    <string name="place_items">Itens</string>
+    <string name="place_items_subtitle">Inventário</string>
     <string name="place_partners">Parceiros</string>
     <string name="place_partners_subtitle">Cofre</string>
 

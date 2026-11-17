@@ -146,13 +146,13 @@ fun UnifiedHomeScreen(
             
             // Battle stats (Common)
             ItemDisplay(
-                icon = R.drawable.baseline_swords_24,
+                icon = R.drawable.vb_icon_battle,
                 textValue = calculateWinPercent(activeMon.totalBattlesWon, activeMon.totalBattlesLost),
                 definition = "Total battle win %",
                 modifier = Modifier.weight(1f).aspectRatio(1f).padding(8.dp)
             )
             ItemDisplay(
-                icon = R.drawable.baseline_swords_24,
+                icon = R.drawable.vb_icon_battle,
                 textValue = calculateWinPercent(activeMon.currentPhaseBattlesWon, activeMon.currentPhaseBattlesLost),
                 definition = "Current phase win %",
                 modifier = Modifier.weight(1f).aspectRatio(1f).padding(8.dp)
