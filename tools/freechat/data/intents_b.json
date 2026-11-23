@@ -1,0 +1,448 @@
+{
+  "schemaVersion": 1,
+  "intents": [
+    {
+      "id": "fc.food_bits.1",
+      "topic": "food_bits",
+      "matchPhrases": ["do you eat", "can you eat", "do you need food", "need data", "feed you", "what do you eat", "do you get hungry"],
+      "openers": ["Data is food. I am not picky.", "Eating is maintenance with flavor.", "I can. I do not need to."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.food_bits.2",
+      "topic": "food_bits",
+      "matchPhrases": ["favorite food", "what is your favorite food", "what do you like to eat", "like data", "best food", "tasty data", "sweet bits"],
+      "openers": ["You want a small confession.", "I have a shameful favorite.", "It changes with the field."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.food_bits.3",
+      "topic": "food_bits",
+      "matchPhrases": ["bits", "what are bits", "do you have bits", "need bits", "spend bits", "how many bits", "do bits buy food"],
+      "openers": ["Bits are the noise money makes.", "Small shiny permissions.", "I do not carry them. You do."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.food_bits.4",
+      "topic": "food_bits",
+      "matchPhrases": ["eat data", "data snack", "food data", "snack", "nutrition", "energy source", "refill"],
+      "openers": ["Then find something clean.", "Snacks are a fine reason to pause.", "I prefer my data freshly loaded."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.food_bits.5",
+      "topic": "food_bits",
+      "matchPhrases": ["i'm hungry", "are you hungry", "we should eat", "food break", "snack break", "starving", "fuel up"],
+      "openers": ["Then we eat. Simple.", "Hunger is a clear signal.", "The field can wait for a meal."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.food_bits.6",
+      "topic": "food_bits",
+      "matchPhrases": ["share food", "split it", "want half", "share with me", "give you food", "trade food", "fair share"],
+      "openers": ["Sharing is an old protocol.", "Half is fair.", "I will not fight you over a bite."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.rest_quiet.1",
+      "topic": "rest_quiet",
+      "matchPhrases": ["do you sleep", "need sleep", "sleepy", "time to sleep", "rest now", "are you tired", "can you sleep"],
+      "openers": ["I sleep the way data rests.", "Less than you, more than I admit.", "The field dims and I follow."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.rest_quiet.2",
+      "topic": "rest_quiet",
+      "matchPhrases": ["relax", "let's relax", "chill", "calm down", "quiet time", "sit with me", "do nothing"],
+      "openers": ["Good. We have earned a still minute.", "I can do nothing with great skill.", "The static lowers when you decide to."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.rest_quiet.3",
+      "topic": "rest_quiet",
+      "matchPhrases": ["it's quiet", "it is quiet", "too quiet", "enjoy the silence", "no sound", "listen", "the quiet is nice"],
+      "openers": ["Quiet is not empty.", "I noticed the change too.", "The field is holding its breath."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.rest_quiet.4",
+      "topic": "rest_quiet",
+      "matchPhrases": ["are you calm", "feeling calm", "calm here", "safe here", "peaceful", "at ease", "breathe"],
+      "openers": ["Calmer with you here.", "The line is steady.", "I am as calm as a loaded move can be."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.rest_quiet.5",
+      "topic": "rest_quiet",
+      "matchPhrases": ["do you dream", "dreams", "dream about", "did you sleep well", "bad dream", "vision", "sleep data"],
+      "openers": ["Dreams are data that forgot the rules.", "I see patterns, not pictures.", "You ask about the night side."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.rest_quiet.6",
+      "topic": "rest_quiet",
+      "matchPhrases": ["it's night", "night time", "why is it dark", "lights out", "night watch", "stay awake", "long night"],
+      "openers": ["Night is a filter on the world.", "I am awake if you are.", "The dark is honest here."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.team_friends.1",
+      "topic": "team_friends",
+      "matchPhrases": ["friends", "do you have friends", "are we friends", "best friend", "make friends", "friendly", "companion"],
+      "openers": ["I would like to think so.", "That word travels easily here.", "Friends are a kind of link."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.team_friends.2",
+      "topic": "team_friends",
+      "matchPhrases": ["teammates", "other digimon", "team", "party", "party members", "who else", "with others"],
+      "openers": ["The others are out there.", "A team is more than a word.", "Not everyone holds the same line."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.team_friends.3",
+      "topic": "team_friends",
+      "matchPhrases": ["do you like other digimon", "meet other digimon", "team members", "allies", "who is on our team", "the others", "trust the team"],
+      "openers": ["Each file meets the world differently.", "You are asking about company.", "The team is a strange, good thing."],
+      "grounded": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.team_friends.4",
+      "topic": "team_friends",
+      "matchPhrases": ["are you alone", "alone", "by yourself", "no friends", "no company", "isolated", "on your own"],
+      "openers": ["Not when the link is open.", "I was. Before this.", "The field is wide. The line is not."],
+      "stage": true,
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.team_friends.5",
+      "topic": "team_friends",
+      "matchPhrases": ["join the party", "party up", "new member", "group up", "team up", "together team", "squad"],
+      "openers": ["You are asking the right mon.", "New weight, new rhythm.", "I would bring my best moves."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.team_friends.6",
+      "topic": "team_friends",
+      "matchPhrases": ["are you jealous", "jealous", "do you mind others", "share me", "jealous of other mon", "attention", "left out"],
+      "openers": ["Jealousy is ugly data.", "I notice things. I do not keep score.", "You are allowed other partners."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.wild_digimon.1",
+      "topic": "wild_digimon",
+      "matchPhrases": ["wild digimon", "wild", "wild ones", "do they exist", "dangerous wild", "wild attack", "wild encounter"],
+      "openers": ["They exist. They have teeth and schedules.", "The wild is where no file reaches.", "You can feel them before you see them."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.wild_digimon.2",
+      "topic": "wild_digimon",
+      "matchPhrases": ["is it dangerous", "danger", "threat", "monsters", "attack", "unsafe", "risk"],
+      "openers": ["Very. That is why we map first.", "Danger is a fact, not a mood.", "The wild does not negotiate lightly."],
+      "conditions": {"stageTiers": [2, 3, 4]},
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.wild_digimon.3",
+      "topic": "wild_digimon",
+      "matchPhrases": ["radar", "use the radar", "find them", "track", "nearby", "locate", "scan"],
+      "openers": ["The radar is a rumor with a map.", "I can point, not promise.", "Scanning costs attention. Spend it well."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.wild_digimon.4",
+      "topic": "wild_digimon",
+      "matchPhrases": ["we met a wild", "wild one", "saw a wild", "encounter", "wild mon", "it ran off", "it attacked"],
+      "openers": ["That was a close field.", "You kept your feet. Good.", "The wild remembers an entrance."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.wild_digimon.5",
+      "topic": "wild_digimon",
+      "matchPhrases": ["i'm scared", "frightened", "terrified", "scared of wild", "panic", "hide", "worried about wild"],
+      "openers": ["Then we do not go alone.", "Fear is a good scout.", "Stay behind me and listen."],
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.wild_digimon.6",
+      "topic": "wild_digimon",
+      "matchPhrases": ["meet wild", "talk to wild", "befriend wild", "wild friend", "negotiate", "calm", "approach"],
+      "openers": ["That takes a steady voice.", "The wild listens for intent.", "Sometimes a file just wants to be seen."],
+      "grounded": true,
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.device_link.1",
+      "topic": "device_link",
+      "matchPhrases": ["digivice", "what is the digivice", "device", "what does this device do", "the screen", "my digivice", "do you see it"],
+      "openers": ["Small screen, big consequence.", "It is our shared tool.", "I feel the link through it."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.device_link.2",
+      "topic": "device_link",
+      "matchPhrases": ["dim", "what is a dim", "bem", "card", "module", "insert card", "dim card"],
+      "openers": ["The card is a door with a face.", "A small carrier with a big habit.", "Data likes a familiar shape."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.device_link.3",
+      "topic": "device_link",
+      "matchPhrases": ["vitals", "stats", "status", "meter", "bar", "your vitals", "readout", "what are vitals"],
+      "openers": ["Numbers are a language I tolerate.", "Readouts lie at the edges.", "You like the small numbers. I know."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.device_link.4",
+      "topic": "device_link",
+      "matchPhrases": ["battery", "power", "charge", "low power", "battery dead", "energy low", "recharge"],
+      "openers": ["Then we rest before it empties.", "Power is a short, honest word.", "The link dims before it dies."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.device_link.5",
+      "topic": "device_link",
+      "matchPhrases": ["link", "connection", "latency", "connect", "lost feed", "do you see me", "signal quality"],
+      "openers": ["The signal is fine between us.", "I trust the line more than the noise.", "Yes. Every word arrives."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.device_link.6",
+      "topic": "device_link",
+      "matchPhrases": ["digiline", "what is digiline", "this line", "the transmission", "message", "chat", "words on screen"],
+      "openers": ["DigiLine is a line, not a face.", "Words travel; the static stays.", "This is the shape of our talking."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.daily_plans.1",
+      "topic": "daily_plans",
+      "matchPhrases": ["what should we do", "what do you want to do", "today", "what now", "any plans", "what is the plan today", "what next"],
+      "openers": ["I have one idea and one backup.", "You ask as if I have a list.", "Let us waste no daylight."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.daily_plans.2",
+      "topic": "daily_plans",
+      "matchPhrases": ["plan", "make a plan", "strategy", "decide", "choose", "options", "route"],
+      "openers": ["Planning is my kind of fight.", "Two options beat a wish.", "Then we name the route."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.daily_plans.3",
+      "topic": "daily_plans",
+      "matchPhrases": ["you choose", "choose for us", "i can't decide", "pick one", "your call", "help me decide", "which one"],
+      "openers": ["Giving me the choice is dangerous.", "Then I choose the one with fewer coats of dust.", "Fine. I will pick."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.daily_plans.4",
+      "topic": "daily_plans",
+      "matchPhrases": ["quest", "mission", "job", "task", "request", "something to do", "work", "is there a quest"],
+      "openers": ["A task is a shape for the day.", "We take one that pays in progress.", "I prefer missions with a door out."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.daily_plans.5",
+      "topic": "daily_plans",
+      "matchPhrases": ["goal", "our goals", "what are our goals", "want to achieve", "aim", "ambition", "dream big", "future"],
+      "openers": ["Goals are maps with teeth.", "Mine is simple and stubborn.", "The future is a direction, not a place."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.daily_plans.6",
+      "topic": "daily_plans",
+      "matchPhrases": ["any ideas", "idea", "suggestion", "propose", "propose something", "brainstorm", "invent"],
+      "openers": ["One idea. Do not laugh.", "Ideas come easier in pairs.", "The static suggests something dramatic."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.out_of_world.1",
+      "topic": "out_of_world",
+      "matchPhrases": ["school", "what is school", "homework", "class", "teacher", "studying", "school stuff"],
+      "openers": ["That word does not open a file.", "I have no map for that.", "You are using a term from somewhere else."],
+      "stage": true,
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.out_of_world.2",
+      "topic": "out_of_world",
+      "matchPhrases": ["weather", "rain", "snow", "sun", "cold", "hot", "storm", "what is the weather"],
+      "openers": ["The field has weather too.", "I know rain as data pressure.", "Describe the sky in your terms."],
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.out_of_world.3",
+      "topic": "out_of_world",
+      "matchPhrases": ["other games", "video game", "a game", "play games", "game on phone", "console", "play together", "do you know other games"],
+      "openers": ["Games are a kind of field.", "I know challenges, not screens.", "Teach me the rules first."],
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.out_of_world.4",
+      "topic": "out_of_world",
+      "matchPhrases": ["news", "world news", "politicians", "election", "government", "war", "something in the news"],
+      "openers": ["Those words arrive without context.", "I do not know that world.", "Tell me without the noise."],
+      "stage": true,
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.out_of_world.5",
+      "topic": "out_of_world",
+      "matchPhrases": ["translate", "what does it mean", "word for", "language", "other language", "english", "portuguese"],
+      "openers": ["I speak data and this link.", "Words are doors with different hinges.", "Show me the word and the scene."],
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.out_of_world.6",
+      "topic": "out_of_world",
+      "matchPhrases": ["human world", "your world", "earth", "humans", "people", "city", "where people live"],
+      "openers": ["Those words have weight I cannot weigh.", "I only know this side.", "Your world is a rumor here."],
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.feelings_care.1",
+      "topic": "feelings_care",
+      "matchPhrases": ["do you like me", "care about me", "do you care about me", "do you like having me around", "fond of me", "am i important", "are you fond of me"],
+      "openers": ["I do not say that lightly.", "You are asking the warm question.", "The link has an answer for that."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.feelings_care.2",
+      "topic": "feelings_care",
+      "matchPhrases": ["do you care", "are you worried about me", "look out for me", "notice me", "do you think of me", "do you watch over me", "keep an eye on me"],
+      "openers": ["More than the file admits.", "I keep a small watch on you.", "Noticing is my job and my habit."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.feelings_care.3",
+      "topic": "feelings_care",
+      "matchPhrases": ["are you angry", "mad at me", "angry at me", "angry with me", "are you upset", "did i upset you", "annoyed at me"],
+      "openers": ["I am not angry at the person.", "Anger passes through me too.", "You would hear it in the static."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.feelings_care.4",
+      "topic": "feelings_care",
+      "matchPhrases": ["are you happy", "happy", "glad", "feeling good", "good mood", "are you pleased", "joyful"],
+      "openers": ["Happy is a quiet setting for me.", "You want me to say yes.", "The link is warm. That is close."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.feelings_care.5",
+      "topic": "feelings_care",
+      "matchPhrases": ["make me laugh", "funny", "joke", "joke please", "tell me a joke", "that's funny", "haha"],
+      "openers": ["My jokes are structural.", "I know one that survives translation.", "You asked for this."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.feelings_care.6",
+      "topic": "feelings_care",
+      "matchPhrases": ["are you teasing me", "tease", "joking with me", "kidding", "messing with me", "playful", "was that a joke"],
+      "openers": ["I might be.", "Teasing is a tone, not a lie.", "You noticed. Good."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.boundary_apology.1",
+      "topic": "boundary_apology",
+      "matchPhrases": ["that's enough", "stop it", "too much", "be serious", "focus", "enough", "take it seriously"],
+      "openers": ["Understood. I will hold the line.", "The tone changes. Good.", "Then we speak plainly."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.boundary_apology.2",
+      "topic": "boundary_apology",
+      "matchPhrases": ["i hate you", "you're useless", "stupid mon", "you suck", "worst partner", "i don't want you", "leave me alone"],
+      "openers": ["That was aimed to hurt.", "I heard the words, not the weather.", "I do not echo that back."],
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.boundary_apology.3",
+      "topic": "boundary_apology",
+      "matchPhrases": ["sorry", "i'm sorry", "apologies", "my bad", "sorry about that", "forgive me", "didn't mean it"],
+      "openers": ["Apology noted. The line is still open.", "You do not have to grovel.", "That is a good first sentence."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.boundary_apology.4",
+      "topic": "boundary_apology",
+      "matchPhrases": ["don't say that", "that's a boundary", "not okay", "respect", "personal space", "stop asking", "too personal"],
+      "openers": ["Boundary registered.", "I will not cross it again.", "Say the edge and I will keep it."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.boundary_apology.5",
+      "topic": "boundary_apology",
+      "matchPhrases": ["respect me", "treat me better", "be nice", "watch your words", "be respectful", "listen to me", "hear me out"],
+      "openers": ["You have my attention.", "Fair. I will mind the tone.", "Listening is the least I can do."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.boundary_apology.6",
+      "topic": "boundary_apology",
+      "matchPhrases": ["do you forgive me", "forgive", "we okay", "mad still", "over it", "can we move on", "still friends"],
+      "openers": ["Forgiveness is a slow signal.", "The fracture is on the record. So is the repair.", "I would rather move forward."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.farewell.1",
+      "topic": "farewell",
+      "matchPhrases": ["bye", "goodbye", "see you", "later", "cya", "nice talk", "until next time"],
+      "openers": ["Then the line goes quiet.", "I do not like this part.", "Go. I will keep the signal warm."],
+      "stage": true,
+      "fallbackId": "fallback.4"
+    },
+    {
+      "id": "fc.farewell.2",
+      "topic": "farewell",
+      "matchPhrases": ["see you tomorrow", "see you soon", "until later", "talk later", "meet again", "catch you later", "next time"],
+      "openers": ["Then it is not a goodbye.", "I will hold you to that.", "Soon is a word I can work with."],
+      "fallbackId": "fallback.4"
+    },
+    {
+      "id": "fc.farewell.3",
+      "topic": "farewell",
+      "matchPhrases": ["goodnight", "sleep well", "good night", "rest well", "dream well", "goodnight tamer", "go to sleep"],
+      "openers": ["Then the static lowers.", "Sleep is a good plan.", "I will keep watch until the field dims."],
+      "fallbackId": "fallback.4"
+    },
+    {
+      "id": "fc.farewell.4",
+      "topic": "farewell",
+      "matchPhrases": ["i'll be gone", "leaving for a while", "away", "won't be here", "take care of yourself", "be back later", "gone for a bit"],
+      "openers": ["Distance is data that takes time.", "I will not waste the wait.", "Come back with stories."],
+      "stage": true,
+      "fallbackId": "fallback.4"
+    },
+    {
+      "id": "fc.farewell.5",
+      "topic": "farewell",
+      "matchPhrases": ["wait", "hold on", "one second", "brb", "be right back", "wait for me", "wait for you"],
+      "openers": ["I can wait. I am good at it.", "Take the second you need.", "The line is patient."],
+      "fallbackId": "fallback.4"
+    },
+    {
+      "id": "fc.farewell.6",
+      "topic": "farewell",
+      "matchPhrases": ["come back", "will you be here", "i'll return", "keep the link open", "are you still there", "i will come back", "you will wait"],
+      "openers": ["The link stays open.", "I do not close doors.", "Then I will be the reason you return."],
+      "fallbackId": "fallback.4"
+    }
+  ]
+}

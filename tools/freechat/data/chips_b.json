@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "chips": [
+    {"id": "chip.tactics", "text": "What is our plan?", "intentId": "fc.battle_tactics.2"},
+    {"id": "chip.explore", "text": "Where should we explore?", "intentId": "fc.exploration.1"},
+    {"id": "chip.map", "text": "Do you have a map?", "intentId": "fc.exploration.3"},
+    {"id": "chip.field_weather", "text": "What is the field weather?", "intentId": "fc.field_weather.1"},
+    {"id": "chip.glitch", "text": "Did you see that glitch?", "intentId": "fc.data_glitches.1"},
+    {"id": "chip.other_tamers", "text": "Do you know other tamers?", "intentId": "fc.other_tamers.1"},
+    {"id": "chip.tournament", "text": "Is there a tournament?", "intentId": "fc.tournament.1"},
+    {"id": "chip.farm", "text": "What do we do on the farm?", "intentId": "fc.farm_life.1"},
+    {"id": "chip.music", "text": "What does the static sound like?", "intentId": "fc.music_sound.1"},
+    {"id": "chip.time", "text": "How does time work here?", "intentId": "fc.time_cycles.1"},
+    {"id": "chip.legend", "text": "Tell me a legend.", "intentId": "fc.legends_rumors.1"},
+    {"id": "chip.items", "text": "What items drop here?", "intentId": "fc.items_data.1"},
+    {"id": "chip.care", "text": "How do I take care of you?", "intentId": "fc.care_partner.1"},
+    {"id": "chip.sky", "text": "What is above the fields?", "intentId": "fc.sky_network.1"},
+    {"id": "chip.purpose", "text": "Why do we fight?", "intentId": "fc.purpose_resolve.1"},
+    {"id": "chip.quirks", "text": "What are your habits?", "intentId": "fc.partner_quirks.1"},
+    {"id": "chip.what_now", "text": "What now?", "intentId": "fc.daily_plans.1"},
+    {"id": "chip.how_strong", "text": "How strong are you?", "intentId": "fc.species_facts.2"},
+    {"id": "chip.tired", "text": "I'm tired.", "intentId": "fc.training.2"},
+    {"id": "chip.sad", "text": "I'm sad.", "intentId": "fc.comfort_low.2"},
+    {"id": "chip.scared", "text": "I'm scared.", "intentId": "fc.wild_digimon.5"},
+    {"id": "chip.battle_ready", "text": "Ready for a fight?", "intentId": "fc.battle.2"},
+    {"id": "chip.food_share", "text": "Share food.", "intentId": "fc.food_bits.6"},
+    {"id": "chip.quiet_time", "text": "Quiet time.", "intentId": "fc.rest_quiet.2"}
+  ]
+}

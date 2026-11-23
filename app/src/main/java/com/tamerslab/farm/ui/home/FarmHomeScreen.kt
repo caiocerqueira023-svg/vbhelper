@@ -1,4 +1,4 @@
-﻿package com.tamerslab.farm.ui.home
+package com.tamerslab.farm.ui.home
 
 import androidx.activity.compose.BackHandler
 import com.tamerslab.navigation.AppRoute
@@ -9,9 +9,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -45,6 +43,7 @@ import com.tamerslab.farm.ui.digifarm.FarmWorldSummary
 import com.tamerslab.home.ui.HomeScreenControllerImpl
 import com.tamerslab.home.ui.PartnerDeck
 import com.tamerslab.home.ui.PartnerDetent
+import com.tamerslab.home.ui.farmChromeScale
 import com.tamerslab.storage.ui.FarmSwapRequest
 import com.tamerslab.storage.ui.FarmSwapTarget
 import com.tamerslab.storage.ui.StorageScreenControllerImpl
@@ -70,9 +69,10 @@ fun FarmHomeScreen(
     val application = context.applicationContext as TamersLabApplication
     val controller = shell.controller
     val summary by controller.summary
-    val bits by remember(application) {
-        application.container.currencyRepository.currencyValue
-    }.collectAsStateWithLifecycle(initialValue = 0)
+    val rankProfile by application.container.rankRepository.profile
+        .collectAsStateWithLifecycle(initialValue = null)
+    val rankHomeCardEnabled by application.container.rankSettings.homeCardEnabled
+        .collectAsStateWithLifecycle(initialValue = true)
 
     var showRoster by rememberSaveable { mutableStateOf(false) }
     var showMenu by rememberSaveable { mutableStateOf(false) }
@@ -102,34 +102,44 @@ fun FarmHomeScreen(
         // The partner overview owns the screen when it is fully open: the status zone fades out and
         // lifts away instead of sitting on top of the sheet.
         val overviewOpen = shell.detent == PartnerDetent.Expanded
-        val topHudAlpha by animateFloatAsState(
+        // The fade is read only in the draw phase below; composition flips once when the HUD becomes
+        // fully transparent instead of recomposing the home shell for every animation frame (H18).
+        val topHudAlpha = animateFloatAsState(
             targetValue = if (overviewOpen) 0f else 1f,
             animationSpec = tween(if (motionEnabled()) 220 else 0),
             label = "homeTopHudVisibility",
         )
+        val hudHidden by remember {
+            derivedStateOf { topHudAlpha.value < 0.01f }
+        }
+
         HomeTopHud(
             residentCount = summary.residentCount,
             capacity = FarmWorldSummary.CAPACITY,
-            bits = bits,
             onFarmClick = { showRoster = true },
-            onTransferClick = {
-                // The overall Transfer tab: origins list first, the Vital Bracelet is one row there.
-                navController.navigate(TransferNavigation.route())
-            },
+            onDexClick = { navController.navigatePrimary(NavigationItems.Dex) },
 
             onSettingsClick = { navController.navigatePrimary(NavigationItems.Settings) },
             onMenuClick = { showMenu = true },
+            rankLevel = rankProfile?.level.takeIf { rankHomeCardEnabled },
+            rankEmblemRes = rankProfile?.emblemRes.takeIf { rankHomeCardEnabled },
+            onRankClick = if (rankHomeCardEnabled) {
+                { navController.navigatePrimary(NavigationItems.Rank) }
+            } else {
+                null
+            },
             modifier = Modifier
                 .align(Alignment.TopCenter)
                 // Above the deck in z-order so the half-sheet's tap-on-the-farm catcher can never
                 // swallow a tap meant for the status zone.
                 .zIndex(1f)
                 .graphicsLayer {
-                    alpha = topHudAlpha
-                    translationY = (1f - topHudAlpha) * -14.dp.toPx()
+                    val fade = topHudAlpha.value
+                    alpha = fade
+                    translationY = (1f - fade) * -14.dp.toPx()
                 }
                 .then(
-                    if (topHudAlpha < 0.01f) Modifier.semantics { invisibleToUser() } else Modifier
+                    if (hudHidden) Modifier.semantics { invisibleToUser() } else Modifier
                 ),
         )
 
@@ -138,7 +148,11 @@ fun FarmHomeScreen(
         // progress, so the handoff is continuous - no detent-edge pop, no gap, no clipping. The
         // progress is read inside the graphics layer so a drag invalidates the draw phase only.
         val density = LocalDensity.current
-        val bandPx = with(density) { PlaceRowBandHeight.toPx() }
+        // The dock band and the slab grow with the system font (capped); the row translation and the
+        // sheet's band yield both use the same scaled value so they never disagree.
+        val chromeScale = farmChromeScale()
+        val placeBand = PlaceRowBandHeight * chromeScale
+        val bandPx = with(density) { placeBand.toPx() }
         val rowHidden by remember(shell) {
             derivedStateOf { shell.sheetProgress > 0.5f }
         }
@@ -169,15 +183,11 @@ fun FarmHomeScreen(
             onImportConnection = onImportConnection,
             detent = shell.detent,
             onDetentChange = { shell.detent = it },
-            placeRowBand = PlaceRowBandHeight,
+            placeRowBand = placeBand,
             onSheetProgress = onSheetProgress,
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .navigationBarsPadding()
-                // Claim the slab's drag area above the navigation-bar strip: without this, pulling
-                // the partner sheet up from the bottom of the screen is stolen by the system Home
-                // gesture and the app disappears to the launcher.
-                .systemGestureExclusion(),
+            // The deck now fills the window to the bottom edge so the expanded sheet and its scrim
+            // continue under the transparent navigation bar; the deck pads its own content above it.
+            modifier = Modifier.align(Alignment.BottomCenter),
         )
 
         // Boot cover: the farm streams residents one asset per frame and the active partner loads after

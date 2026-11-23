@@ -33,7 +33,7 @@ import com.tamerslab.ui.theme.SurfaceStroke
 
 internal val primaryDestinations = listOf(NavigationItems.Home, NavigationItems.Storage, NavigationItems.Dex, NavigationItems.World)
 private val overflowDestinations = listOf(NavigationItems.Digiline, NavigationItems.Quests, NavigationItems.Items,
-    NavigationItems.Battles, NavigationItems.Settings)
+    NavigationItems.Battles, NavigationItems.Rank, NavigationItems.Settings)
 
 private fun topLevelRoute(destination: NavDestination?, previous: NavDestination? = null): AppRoute? = when {
     destination == null -> null
@@ -49,6 +49,7 @@ private fun topLevelRoute(destination: NavDestination?, previous: NavDestination
     destination.hasRoute<AppRoute.Credits>() || destination.hasRoute<AppRoute.Lorebook>() ||
         destination.hasRoute<AppRoute.Viewer>() -> AppRoute.Settings
     destination.hasRoute<AppRoute.Battles>() -> AppRoute.Battles
+    destination.hasRoute<AppRoute.Rank>() -> AppRoute.Rank
     destination.hasRoute<AppRoute.Home>() -> AppRoute.Home
     destination.hasRoute<AppRoute.Storage>() -> AppRoute.Storage
     destination.hasRoute<AppRoute.Dex>() -> AppRoute.Dex

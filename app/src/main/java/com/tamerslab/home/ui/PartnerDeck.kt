@@ -10,6 +10,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.systemGestureExclusion
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.pointer.PointerEventPass
@@ -29,10 +30,12 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -83,6 +86,7 @@ import androidx.navigation.NavController
 import com.tamerslab.R
 import com.tamerslab.components.VitalButton
 import com.tamerslab.components.VitalButtonStyle
+import com.tamerslab.components.moodSummary
 import com.tamerslab.components.motionEnabled
 import com.tamerslab.dtos.CharacterDtos
 import com.tamerslab.farm.ui.digiline.DigilinePin
@@ -145,6 +149,8 @@ fun PartnerDeck(
     val state = rememberPartnerOverviewState(homeScreenController, storageScreenController)
     val allowMotion = motionEnabled()
     val density = LocalDensity.current
+    // Fixed-dp bottom chrome grows with the system font (capped) so the slab readings still fit.
+    val chromeScale = farmChromeScale()
 
     var detailsCharacterId by rememberSaveable { mutableStateOf<Long?>(null) }
     var selectedTransformationId by rememberSaveable { mutableStateOf<Long?>(null) }
@@ -189,9 +195,16 @@ fun PartnerDeck(
         contentAlignment = Alignment.BottomCenter,
     ) {
         val maxHeightPx = with(density) { maxHeight.toPx() }
-        val peekPx = with(density) { PartnerPeekHeight.toPx() }
-        val halfPx = maxHeightPx * HALF_FRACTION
-        val expandedPx = maxHeightPx * EXPANDED_FRACTION
+        val peekPx = with(density) { (PartnerPeekHeight * chromeScale).toPx() }
+        // The deck fills the window to the bottom edge so the expanded sheet (and its scrim) continue
+        // under the transparent navigation bar. Detents are measured from the usable height above the
+        // bar and add it back, so 44%/96% still describe the visible page while the peek slab still
+        // lands exactly on the place row.
+        val navBarBottomPx = WindowInsets.navigationBars.getBottom(density).toFloat()
+        val navBarBottomDp = with(density) { navBarBottomPx.toDp() }
+        val usableHeightPx = (maxHeightPx - navBarBottomPx).coerceAtLeast(0f)
+        val halfPx = usableHeightPx * HALF_FRACTION + navBarBottomPx
+        val expandedPx = usableHeightPx * EXPANDED_FRACTION + navBarBottomPx
 
         fun heightOf(target: PartnerDetent): Float = when (target) {
             PartnerDetent.Peek -> peekPx
@@ -280,18 +293,28 @@ fun PartnerDeck(
                 onHorizontalSwipe = { direction -> state.cycleFavorite(direction) },
             )
         }
+            // The exclusion belongs to the drag handle, not the route: these modifiers sit on the
+            // 96dp slab or the state card, so the OS only yields gestures over the strip the visitor
+            // actually drags. A fillMaxSize node would claim the whole screen (see audit H06).
+            .systemGestureExclusion()
 
-        // Scrim exists only at Expanded: at Peek/Half the farm must stay interactive.
-        val scrimAlpha by animateFloatAsState(
+        // Scrim exists only at Expanded: at Peek/Half the farm must stay interactive. The alpha is
+        // read in the draw phase only - composition flips once when it becomes visible - so the
+        // 200ms fade cannot recompose the deck's state for every frame (audit H18).
+        val scrimAlpha = animateFloatAsState(
             targetValue = if (detent == PartnerDetent.Expanded) 1f else 0f,
             animationSpec = tween(if (allowMotion) 200 else 0),
             label = "partnerDeckScrim",
         )
-        if (scrimAlpha > 0.01f) {
+        val scrimVisible by remember {
+            derivedStateOf { scrimAlpha.value > 0.01f }
+        }
+        if (scrimVisible) {
             Box(
                 Modifier
                     .fillMaxSize()
-                    .background(SpaceBlack.copy(alpha = 0.28f * scrimAlpha))
+                    .graphicsLayer { alpha = scrimAlpha.value * 0.28f }
+                    .background(SpaceBlack)
                     .clickable { onDetentChange(PartnerDetent.Half) },
             )
         }
@@ -371,16 +394,18 @@ fun PartnerDeck(
             modifier = Modifier
                 .fillMaxWidth()
                 // Drop into the place row's band as the sheet opens: at Peek the slab sits above the
-                // row, at Half and beyond it owns the bottom of the screen.
+                // row, at Half and beyond it owns the bottom of the screen - down to the window edge,
+                // under the transparent navigation bar.
                 .graphicsLayer {
-                    translationY = -(bandPx * (1f - progressOf(sheetHeightState.floatValue)))
+                    translationY = -((bandPx + navBarBottomPx) *
+                        (1f - progressOf(sheetHeightState.floatValue)))
                 }
                 .then(
                     if (stateCard) {
-                        Modifier.heightIn(min = PartnerPeekHeight)
+                        Modifier.heightIn(min = PartnerPeekHeight * chromeScale)
                     } else {
                         Modifier
-                            .heightIn(min = PartnerPeekHeight)
+                            .heightIn(min = PartnerPeekHeight * chromeScale)
                             .layout { measurable, constraints ->
                                 val heightPx = sheetHeightState.floatValue.roundToInt()
                                     .coerceIn(peekPx.roundToInt(), expandedPx.roundToInt())
@@ -433,6 +458,7 @@ fun PartnerDeck(
                 onDetentChange = onDetentChange,
                 deckGesture = deckGesture,
                 allowMotion = allowMotion,
+                navBarBottomInset = navBarBottomDp,
             )
         }
     }
@@ -479,6 +505,8 @@ private fun ColumnScope.PartnerDeckBody(
     onDetentChange: (PartnerDetent) -> Unit,
     deckGesture: Modifier,
     allowMotion: Boolean,
+    /** Height of the system navigation bar the sheet now continues under at Half/Expanded. */
+    navBarBottomInset: Dp = 0.dp,
 ) {
     val activeMon = state.activeMon
     val cardIcon = state.cardIcon
@@ -541,6 +569,9 @@ private fun ColumnScope.PartnerDeckBody(
                         Modifier
                             .fillMaxWidth()
                             .weight(1f)
+                            // Body content stops above the system navigation bar; the sheet ground
+                            // continues underneath it, so the bar reads as part of the sheet.
+                            .padding(bottom = navBarBottomInset)
                             .verticalScroll(rememberScrollState()),
                     ) {
                         PartnerHalfBody(
@@ -557,7 +588,12 @@ private fun ColumnScope.PartnerDeckBody(
                     }
                 } else {
                     // Expanded body owns its own scrolling inside the device renderers.
-                    Box(Modifier.fillMaxWidth().weight(1f)) {
+                    Box(
+                        Modifier
+                            .fillMaxWidth()
+                            .weight(1f)
+                            .padding(bottom = navBarBottomInset)
+                    ) {
                         PartnerOverviewContent(
                             state = state,
                             homeScreenController = homeScreenController,
@@ -593,19 +629,33 @@ private fun PartnerSlab(
     onOpenDetails: () -> Unit,
     gesture: Modifier,
 ) {
-    val paneTitle = stringResource(R.string.home_title)
+    val partnerName = activeMon.nickname?.takeIf { it.isNotBlank() }
+        ?: activeMon.speciesName?.takeIf { it.isNotBlank() }
+        ?: stringResource(R.string.widget_digimon_label)
+    // One utterance for the card that answers "who is with me and how are they". The merged text
+    // children would otherwise be read as bare fragments (stage, numbers) with no editable name;
+    // the mood reading is colour-only on screen, so it is spoken from the existing summary.
+    val slabDescription = stringResource(
+        R.string.home_partner_slab_a11y,
+        partnerName,
+        stageLabel,
+        activeMon.attribute.name,
+        activeMon.vitalPoints,
+        MAX_VITAL_POINTS,
+        moodSummary(mood),
+    )
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = PartnerPeekHeight)
+            .heightIn(min = PartnerPeekHeight * farmChromeScale())
             .then(gesture)
             .combinedClickable(
-                onClickLabel = paneTitle,
+                onClickLabel = stringResource(R.string.home_partner_expand),
                 onLongClickLabel = stringResource(R.string.home_open_dex_details),
                 onLongClick = onOpenDetails,
                 onClick = onExpand,
             )
-            .semantics { contentDescription = paneTitle }
+            .semantics { contentDescription = slabDescription }
             .padding(horizontal = 12.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -617,9 +667,7 @@ private fun PartnerSlab(
         )
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                text = activeMon.nickname?.takeIf { it.isNotBlank() }
-                    ?: activeMon.speciesName?.takeIf { it.isNotBlank() }
-                    ?: stringResource(R.string.widget_digimon_label),
+                text = partnerName,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimaryOnDark,

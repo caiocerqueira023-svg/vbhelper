@@ -1,4 +1,4 @@
-﻿package com.tamerslab.home.ui
+package com.tamerslab.home.ui
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -89,7 +89,7 @@ fun rememberPartnerOverviewState(
 
     // Cached values live on the implementation; the deck only needs them as a warm start.
     val impl = homeScreenController as? HomeScreenControllerImpl
-    val storageRepository = remember { StorageRepository(application.container.db) }
+    val storageRepository = remember { application.container.storageRepository }
     val cardRepository = remember { CardRepository(application.container.db) }
     val dexRepository = remember { DexRepository(application.container.db) }
 

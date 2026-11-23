@@ -28,7 +28,9 @@ OUTPUT = ASSETS / "environment_themes"
 PALETTES = json.loads((Path(__file__).with_name("environment_theme_palettes.json")).read_text(encoding="utf-8"))
 SCENES = {
     "farm": ("digifarm/3d/digi_farm_3d.glb", {
-        "island_top_baked": "grass_patches", "island_side_baked": "cliff",
+        "island_top_baked": "grass_patches",
+        "island_glow_overlay_baked": "glow_overlay",
+        "island_side_baked": "cliff",
         "island_side_rim_baked": "cliff",
         "voxel_block_dark_baked": "panel", "voxel_block_lit_baked": "panel",
     }),
@@ -170,6 +172,22 @@ def recolor(source, role, palette, emission=False):
     return image
 
 
+def overlay_variant(overlay_payload, themed_island_rgb):
+    """Themed glow-overlay texture: themed island colour through the authored alpha mask.
+
+    The overlay carries no colour of its own to re-derive: every glowing pixel keeps the
+    island colour it composites over (themed per palette), and the alpha mask is preserved
+    exactly so the same pixels pulse in every theme.
+    """
+    with Image.open(io.BytesIO(overlay_payload)) as source_image:
+        overlay = source_image.convert("RGBA")
+    alpha = overlay.getchannel("A")
+    themed = Image.new("RGBA", overlay.size)
+    themed.paste(themed_island_rgb, (0, 0), alpha)
+    themed.putalpha(alpha)
+    return themed
+
+
 def encoded(image):
     buffer = io.BytesIO()
     image.save(buffer, "PNG", optimize=True)
@@ -196,6 +214,7 @@ def generate(output=OUTPUT):
         if missing:
             raise ValueError(f"{scene}: source material contract changed: {sorted(missing)}")
         scene_doc = {"asset": asset_path, "sourceSha256": source_hash, "materials": []}
+        themed_island = {}
         for name, role in roles.items():
             material = materials[name]
             pbr = material.get("pbrMetallicRoughness", {})
@@ -224,9 +243,18 @@ def generate(output=OUTPUT):
                         emit = [gain] * 3
                 variant = {"baseColorFactor": factors, "emissiveFactor": emit, "textures": {}}
                 for parameter, (original, sampler) in channels.items():
-                    with Image.open(io.BytesIO(original)) as image:
-                        payload = original if theme == "vb_helper" else encoded(recolor(
-                            image, role, palette, emission=parameter == "emissiveMap"))
+                    if name == "island_glow_overlay_baked":
+                        # The overlay only pulses the lightest tiles + wire lines: its
+                        # colours follow the themed island and its alpha mask is authored.
+                        payload = original if theme == "vb_helper" else encoded(
+                            overlay_variant(original, themed_island[theme]))
+                    else:
+                        with Image.open(io.BytesIO(original)) as image:
+                            payload = original if theme == "vb_helper" else encoded(recolor(
+                                image, role, palette, emission=parameter == "emissiveMap"))
+                    if name == "island_top_baked" and theme != "vb_helper":
+                        with Image.open(io.BytesIO(payload)) as themed_base:
+                            themed_island[theme] = themed_base.convert("RGB")
                     digest = hashlib.sha256(payload).hexdigest()
                     path = textures / f"{digest}.png"
                     if not path.exists():
@@ -280,13 +308,27 @@ def validate(output=OUTPUT):
                             # palette's grass stop, so a natural pixel has to differ from the source.
                             outside = [(x, y) for x, y in ((256, 256), (300, 300), (220, 240)) if (x // TOP_PITCH, y // TOP_PITCH) not in wireframe_tiles()]
                             assert outside and all(a.convert("RGBA").getpixel(p) != b.convert("RGBA").getpixel(p) for p in outside), "Themed grass did not change"
+                        if material["role"] == "glow_overlay":
+                            # The pulsing overlay must keep the authored alpha mask exactly and
+                            # take the themed island colour where it glows.
+                            source_pixels = a.convert("RGBA")
+                            themed_pixels = b.convert("RGBA")
+                            alpha = source_pixels.getchannel("A")
+                            assert alpha.getextrema() == (0, 255), "Overlay mask must be binary"
+                            glowing = next((x, y) for y in range(TOP_SIZE) for x in range(TOP_SIZE)
+                                           if alpha.getpixel((x, y)) == 255)
+                            assert (source_pixels.getpixel(glowing)
+                                    != themed_pixels.getpixel(glowing)) or theme == "vb_helper", \
+                                "Themed overlay did not change"
                         if material["role"] == "grass_patches":
                             # Digital cells keep the authored grid geometry: the mask must still
                             # hold bright wire pixels that the recolor sends to the patch grid color.
                             exposed = next(iter(wireframe_tiles()))
                             corner = (exposed[0] * TOP_PITCH, exposed[1] * TOP_PITCH)
                             assert a.convert("RGBA").getpixel(corner) == b.convert("RGBA").getpixel(corner) or theme != "vb_helper"
-    print("Environment themes valid: original geometry/sources, default pixels, themed grass, patch grid, alpha, samplers and four-theme bindings preserved")
+    print("Environment themes valid: original geometry/sources, default pixels, themed grass, "
+          "static glow overlay (themed colours + authored mask), patch grid, alpha, samplers "
+          "and four-theme bindings preserved")
 
 
 if __name__ == "__main__":

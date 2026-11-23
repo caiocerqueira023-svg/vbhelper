@@ -9,6 +9,9 @@ interface NdsStoryPendingEdit {
     val candidateRevision: String
     val recordKey: String
     val candidateBytes: ByteArray
+
+    /** Native identity the edit wrote or kept, when the edit defines one. */
+    val nativeIdentity: String? get() = null
 }
 
 /**
@@ -21,8 +24,11 @@ interface NdsStorySaveEditor {
 
     fun read(bytes: ByteArray): SaveObservation
     fun removeRecord(source: ByteArray, observedRevision: String, recordKey: String): NdsStoryPendingEdit
-    fun insertRetained(destination: ByteArray, observedRevision: String, recordBase64: String): NdsStoryPendingEdit
-    fun insertGenerated(destination: ByteArray, observedRevision: String, recordBase64: String): NdsStoryPendingEdit
+    /** [container] selects the native destination (party/bank/farm); null keeps the layout default. */
+    fun insertRetained(destination: ByteArray, observedRevision: String, recordBase64: String,
+        container: SaveContainer? = null): NdsStoryPendingEdit
+    fun insertGenerated(destination: ByteArray, observedRevision: String, recordBase64: String,
+        container: SaveContainer? = null): NdsStoryPendingEdit
     fun replaceRetained(destination: ByteArray, observedRevision: String, recordBase64: String): NdsStoryPendingEdit
     fun admitToParty(source: ByteArray, observedRevision: String, recordKey: String): NdsStoryPendingEdit
     fun restore(candidate: ByteArray, edit: NdsStoryPendingEdit): ByteArray
@@ -30,7 +36,7 @@ interface NdsStorySaveEditor {
 
 /** Resolves the audited editor for one layout. A layout without a verified editor returns null. */
 object NdsStorySaveEditors {
-    val all: List<NdsStorySaveEditor> = listOf(Ds1SaveEditor)
+    val all: List<NdsStorySaveEditor> = listOf(Ds1SaveEditor, Ds2SaveEditor, LostEvolutionSaveEditor)
 
     fun forProfile(profile: NdsStoryProfile): NdsStorySaveEditor? =
         all.firstOrNull { it.profile.gameId == profile.gameId && it.profile.formatProfile == profile.formatProfile &&
@@ -49,11 +55,13 @@ object Ds1SaveEditor : NdsStorySaveEditor {
     override fun removeRecord(source: ByteArray, observedRevision: String, recordKey: String): NdsStoryPendingEdit =
         WorldDsPartyEdits.removeForResearch(source, observedRevision, recordKey)
 
-    override fun insertRetained(destination: ByteArray, observedRevision: String, recordBase64: String): NdsStoryPendingEdit =
-        WorldDsPartyEdits.insertRetainedRecord(destination, observedRevision, recordBase64)
+    override fun insertRetained(destination: ByteArray, observedRevision: String, recordBase64: String,
+        container: SaveContainer?): NdsStoryPendingEdit =
+        WorldDsPartyEdits.insertRetainedRecord(destination, observedRevision, recordBase64, container)
 
-    override fun insertGenerated(destination: ByteArray, observedRevision: String, recordBase64: String): NdsStoryPendingEdit =
-        WorldDsPartyEdits.insertGeneratedRecord(destination, observedRevision, recordBase64)
+    override fun insertGenerated(destination: ByteArray, observedRevision: String, recordBase64: String,
+        container: SaveContainer?): NdsStoryPendingEdit =
+        WorldDsPartyEdits.insertGeneratedRecord(destination, observedRevision, recordBase64, container)
 
     override fun replaceRetained(destination: ByteArray, observedRevision: String, recordBase64: String): NdsStoryPendingEdit =
         WorldDsPartyEdits.replaceRetainedRecord(destination, observedRevision, recordBase64)

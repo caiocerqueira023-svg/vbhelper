@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "intents": [
+    {
+      "id": "fc.thanks.1",
+      "topic": "tamer_bond",
+      "matchPhrases": [
+        "thanks",
+        "thank you",
+        "thanks a lot",
+        "thank you so much",
+        "appreciate it",
+        "i appreciate you",
+        "much appreciated"
+      ],
+      "openers": [
+        "You are welcome.",
+        "Noted, and kept.",
+        "That lands better than static."
+      ],
+      "fallbackId": "fallback.4"
+    },
+    {
+      "id": "fc.compliment.1",
+      "topic": "encouragement",
+      "matchPhrases": [
+        "you are the best",
+        "good job",
+        "well done",
+        "proud of you",
+        "you did great",
+        "nice work",
+        "you rock"
+      ],
+      "openers": [
+        "Say that again on a hard day.",
+        "I will keep that one.",
+        "Credit noted."
+      ],
+      "fallbackId": "fallback.4"
+    },
+    {
+      "id": "fc.yes.1",
+      "topic": "daily_plans",
+      "matchPhrases": [
+        "yes",
+        "yeah",
+        "sure",
+        "okay",
+        "ok",
+        "alright",
+        "sounds good",
+        "lets do it"
+      ],
+      "openers": [
+        "Then we move.",
+        "Good. I like a decided tamer.",
+        "Then it is settled."
+      ],
+      "fallbackId": "fallback.4"
+    },
+    {
+      "id": "fc.no.1",
+      "topic": "daily_plans",
+      "matchPhrases": [
+        "no",
+        "nope",
+        "not now",
+        "no thanks",
+        "not today",
+        "maybe later"
+      ],
+      "openers": [
+        "Understood. The link stays open.",
+        "No is a full sentence.",
+        "Later, then."
+      ],
+      "fallbackId": "fallback.4"
+    },
+    {
+      "id": "fc.how_about_you.1",
+      "topic": "tamer_bond",
+      "matchPhrases": [
+        "what about you",
+        "how about you",
+        "and you",
+        "what do you think",
+        "your turn",
+        "what is your side"
+      ],
+      "openers": [
+        "You turned it around.",
+        "Now we are both in the conversation.",
+        "Fair question."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.comfort_tired.1",
+      "topic": "feelings_care",
+      "matchPhrases": [
+        "i am tired",
+        "i am exhausted",
+        "i am stressed",
+        "i am worried",
+        "i am scared",
+        "i am angry",
+        "i am anxious"
+      ],
+      "openers": [
+        "Then we go slower.",
+        "You are not carrying it alone.",
+        "Stay a moment."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.smalltalk_day.1",
+      "topic": "daily_plans",
+      "matchPhrases": [
+        "what are you doing",
+        "what are you up to",
+        "what is new",
+        "anything new",
+        "how is your day",
+        "what happened today",
+        "what have you been doing",
+        "how was your day",
+        "how has your day been",
+        "how did your day go"
+      ],
+      "openers": [
+        "The link, mostly.",
+        "Small things. The field is loud.",
+        "Tell me yours first."
+      ],
+      "fallbackId": "fallback.2"
+    }
+  ]
+}

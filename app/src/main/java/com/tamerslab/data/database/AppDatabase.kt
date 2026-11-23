@@ -93,7 +93,7 @@ import com.tamerslab.domain.digifarm.FarmResident
 import com.tamerslab.domain.digifarm.WildRelationship
 
 @Database(
-    version = 56,
+    version = 60,
     exportSchema = true,
     views = [com.tamerslab.domain.species.DisplaySprite::class],
     entities = [
@@ -194,6 +194,7 @@ import com.tamerslab.domain.digifarm.WildRelationship
         com.tamerslab.domain.transfer.IndividualLifeEvent::class,
         com.tamerslab.domain.transfer.AppProgressDelta::class,
         com.tamerslab.domain.transfer.NativeAppProjection::class,
+        com.tamerslab.domain.transfer.StoryProgressDomain::class,
         com.tamerslab.domain.transfer.NativeSaveContainer::class,
         com.tamerslab.domain.transfer.NativeSaveContainerChunk::class,
         com.tamerslab.domain.transfer.NativeSnapshotContainer::class,
@@ -211,7 +212,16 @@ import com.tamerslab.domain.digifarm.WildRelationship
         com.tamerslab.digiline.data.DigilineNegotiationEntity::class,
         com.tamerslab.digiline.data.DigilineNegotiationLogEntity::class,
         com.tamerslab.digiline.data.WildPersuasionEntity::class,
-        com.tamerslab.digiline.data.DigilineEventRecordEntity::class
+        com.tamerslab.digiline.data.DigilineEventRecordEntity::class,
+        // Free Talk (schema 57): owned-partner free-chat cadence/credit + turn audit.
+        com.tamerslab.digiline.freechat.data.FreeChatProfileEntity::class,
+        com.tamerslab.digiline.freechat.data.FreeChatTurnEntity::class,
+        // Tamer Rank (schema 58): offline Tamer profile, XP ledger, caps, rewards and activity.
+        com.tamerslab.rank.data.TamerProfileEntity::class,
+        com.tamerslab.rank.data.TamerTxpEventEntity::class,
+        com.tamerslab.rank.data.TamerDailyCapEntity::class,
+        com.tamerslab.rank.data.TamerRankRewardEntity::class,
+        com.tamerslab.rank.data.TamerActivityEntity::class
     ]
 )
 @TypeConverters(SpeciesProfileConverters::class, PersonalityConverters::class)
@@ -261,8 +271,31 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun transferContinuityDao(): com.tamerslab.transfer.data.TransferContinuityDao
     abstract fun appPartnerStateDao(): com.tamerslab.storage.data.AppPartnerStateDao
     abstract fun digilineDao(): com.tamerslab.digiline.data.DigilineDao
+    abstract fun freeChatDao(): com.tamerslab.digiline.freechat.data.FreeChatDao
+    abstract fun rankDao(): com.tamerslab.rank.data.RankDao
+    abstract fun progressDomainDao(): com.tamerslab.transfer.data.ProgressDomainDao
 
     companion object {
+        val MIGRATION_59_60 = object : Migration(59, 60) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                ProgressDomainSchema.dropVb(db)
+            }
+        }
+        val MIGRATION_58_59 = object : Migration(58, 59) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                ProgressDomainSchema.create(db)
+            }
+        }
+        val MIGRATION_57_58 = object : Migration(57, 58) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                com.tamerslab.rank.data.RankSchema.migrate(db)
+            }
+        }
+        val MIGRATION_56_57 = object : Migration(56, 57) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                com.tamerslab.digiline.freechat.data.FreeChatSchema.migrate(db)
+            }
+        }
         val MIGRATION_55_56 = object : Migration(55, 56) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 DigilineSchema.migrate(db)

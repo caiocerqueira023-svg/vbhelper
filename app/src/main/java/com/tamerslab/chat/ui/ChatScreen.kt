@@ -27,6 +27,8 @@ import com.tamerslab.components.ChatStatusPanel
 import com.tamerslab.components.TopBanner
 import com.tamerslab.components.VitalButton
 import com.tamerslab.chat.ui.dialogs.SpeciesManualEditDialog
+import com.tamerslab.components.showAppFeedback
+import com.tamerslab.digiline.freechat.model.FreeChatChip
 import kotlinx.coroutines.launch
 
 @Composable
@@ -101,6 +103,7 @@ fun ChatScreen(
     val syncState by chatScreenController.getPersonalitySyncState(characterId)
         .collectAsStateWithLifecycle(PersonalitySyncUiState.NONE)
     val legacyLlmEnabled = chatScreenController.isLegacyLlmEnabled()
+    val freeChatEnabled = !legacyLlmEnabled && chatScreenController.isFreeChatEnabled()
     var showShiftNotice by rememberSaveable(characterId) { mutableStateOf(false) }
     LaunchedEffect(characterId) { chatScreenController.ensureScene(characterId) { } }
     LaunchedEffect(characterId) {
@@ -114,6 +117,64 @@ fun ChatScreen(
     val context = LocalContext.current
     val resources = LocalResources.current
     val listState = rememberLazyListState()
+
+    // Authored Free Talk state stays separate from the legacy request state so the Debug LLM path is unchanged.
+    var freeChatInput by rememberSaveable(characterId) { mutableStateOf("") }
+    var freeChatChips by remember { mutableStateOf<List<FreeChatChip>>(emptyList()) }
+    var freeChatSending by remember { mutableStateOf(false) }
+    var freeChatError by remember { mutableStateOf<String?>(null) }
+    var freeChatNotice by remember { mutableStateOf<FreeChatNotice?>(null) }
+    var showFreeChatClearDialog by remember { mutableStateOf(false) }
+
+    val reportFreeChatFailure: (Throwable) -> Unit = { failure ->
+        freeChatError = failure.message?.takeIf { it.isNotBlank() }
+            ?: resources.getString(R.string.freechat_unavailable)
+    }
+    // Exactly one open per screen entry: the repository persists the greeting once per cadence window.
+    LaunchedEffect(characterId, freeChatEnabled) {
+        if (!freeChatEnabled) return@LaunchedEffect
+        chatScreenController.openFreeChat(characterId) { result ->
+            result.fold(
+                onSuccess = { view ->
+                    freeChatChips = view?.chips.orEmpty().take(FREE_CHAT_MAX_CHIPS)
+                    freeChatError = null
+                },
+                onFailure = reportFreeChatFailure
+            )
+        }
+    }
+    val submitFreeChat: (String) -> Unit = submit@{ raw ->
+        val text = raw.trim()
+        if (!freeChatEnabled || !usable || freeChatSending || text.isEmpty()) return@submit
+        freeChatSending = true
+        freeChatError = null
+        chatScreenController.sendFreeText(characterId, text) { result ->
+            freeChatSending = false
+            result.fold(
+                onSuccess = { view ->
+                    freeChatChips = view?.chips.orEmpty().take(FREE_CHAT_MAX_CHIPS)
+                    freeChatNotice = when (view?.closeReason) {
+                        null -> null
+                        "SAFETY" -> FreeChatNotice(resources.getString(R.string.freechat_closed_safety), isSafety = true)
+                        else -> FreeChatNotice(resources.getString(R.string.freechat_boundary))
+                    }
+                    if (freeChatInput == raw) freeChatInput = ""
+                },
+                onFailure = reportFreeChatFailure
+            )
+        }
+    }
+    val clearFreeChatThread: () -> Unit = clear@{
+        if (!freeChatEnabled || !usable || freeChatSending) return@clear
+        freeChatSending = true
+        chatScreenController.clearFreeChat(characterId) {
+            freeChatSending = false
+            freeChatChips = emptyList()
+            freeChatNotice = null
+            freeChatError = null
+            context.showAppFeedback(R.string.freechat_clear_done)
+        }
+    }
 
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) listState.animateScrollToItem(messages.size - 1)
@@ -163,7 +224,11 @@ fun ChatScreen(
             ChatHistoryPanel(
                 isEmpty = messages.isEmpty(),
                 emptyMessage = stringResource(
-                    if (legacyLlmEnabled) R.string.ui_chat_empty else R.string.digiline_chat_empty
+                    when {
+                        legacyLlmEnabled -> R.string.ui_chat_empty
+                        freeChatEnabled -> R.string.freechat_empty
+                        else -> R.string.digiline_chat_empty
+                    }
                 ),
                 modifier = Modifier
                     .weight(1f)
@@ -279,6 +344,26 @@ fun ChatScreen(
                         }
                     }
                 )
+            } else if (freeChatEnabled) {
+                // A pending authored card owns the interaction slot; the composer returns when it closes.
+                if (scene == null) {
+                    FreeChatComposer(
+                        chips = freeChatChips,
+                        value = freeChatInput,
+                        onValueChange = { freeChatInput = it },
+                        placeholder = stringResource(R.string.freechat_placeholder),
+                        sendLabel = stringResource(R.string.freechat_send),
+                        chipsLabel = stringResource(R.string.freechat_chips_label),
+                        clearLabel = stringResource(R.string.freechat_clear),
+                        sending = freeChatSending,
+                        enabled = usable,
+                        errorMessage = freeChatError ?: error,
+                        notice = freeChatNotice,
+                        onChipClick = { chip -> submitFreeChat(chip.text) },
+                        onSend = { submitFreeChat(freeChatInput) },
+                        onClear = { showFreeChatClearDialog = true }
+                    )
+                }
             } else if (scene == null && error == null) {
                 Text(
                     text = stringResource(R.string.digiline_idle_hint),
@@ -293,6 +378,25 @@ fun ChatScreen(
                 )
             }
         }
+    }
+
+    if (showFreeChatClearDialog) {
+        AlertDialog(
+            onDismissRequest = { showFreeChatClearDialog = false },
+            title = { Text(stringResource(R.string.freechat_clear_title)) },
+            text = { Text(stringResource(R.string.freechat_clear_body)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showFreeChatClearDialog = false
+                    clearFreeChatThread()
+                }) { Text(stringResource(R.string.freechat_clear)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showFreeChatClearDialog = false }) {
+                    Text(stringResource(R.string.ui_cancel))
+                }
+            }
+        )
     }
 
     if (showShiftNotice) {

@@ -10,16 +10,21 @@ import com.tamerslab.domain.personality.DigimonPersonalityTraits
 import com.tamerslab.dtos.CharacterDtos
 import com.tamerslab.dtos.ItemDtos
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class StorageRepository (
-    private val db: AppDatabase
+    private val db: AppDatabase,
+    /** Applies the VB-first shipped-art priority to the sprite bytes the database view resolved as Dot. */
+    private val appearances: com.tamerslab.species.SpeciesAppearanceRepository? = null,
 ) {
     fun getAllCharacters(): Flow<List<CharacterDtos.CharacterWithSprites>> {
         return db.userCharacterDao().getAllCharacters()
+            .map { com.tamerslab.species.BundledVbArtwork.characters(it, appearances) }
     }
 
     suspend fun getSingleCharacter(id: Long): CharacterDtos.CharacterWithSprites {
-        return db.userCharacterDao().getCharacterWithSprites(id)
+        return com.tamerslab.species.BundledVbArtwork.character(
+            db.userCharacterDao().getCharacterWithSprites(id), appearances)
     }
 
     fun getCharacterBeData(id: Long): Flow<BECharacterData> {
@@ -104,6 +109,7 @@ class StorageRepository (
 
     fun getActiveCharacter(): Flow<CharacterDtos.CharacterWithSprites?> {
         return db.userCharacterDao().getActiveCharacter()
+            .map { character -> character?.let { com.tamerslab.species.BundledVbArtwork.character(it, appearances) } }
     }
 
     suspend fun updateNickname(characterId: Long, nickname: String?) {
@@ -115,11 +121,11 @@ class StorageRepository (
     }
 
     suspend fun getBECharacters(): List<CharacterDtos.CharacterWithSprites> {
-        return db.userCharacterDao().getBECharacters()
+        return com.tamerslab.species.BundledVbArtwork.characters(db.userCharacterDao().getBECharacters(), appearances)
     }
 
     suspend fun getVBCharacters(): List<CharacterDtos.CharacterWithSprites> {
-        return db.userCharacterDao().getVBDimCharacters()
+        return com.tamerslab.species.BundledVbArtwork.characters(db.userCharacterDao().getVBDimCharacters(), appearances)
     }
 
     suspend fun setOnlyActive(characterId: Long) = db.withTransaction {

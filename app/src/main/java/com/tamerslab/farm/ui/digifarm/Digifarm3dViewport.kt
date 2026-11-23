@@ -36,7 +36,7 @@ import com.tamerslab.farm.FarmCameraState
 import com.tamerslab.farm.map.Digifarm3dAssetCatalog
 import com.tamerslab.rendering.CubeVolume
 import com.tamerslab.rendering.HybridSceneKind
-import com.tamerslab.rendering.separateCubeVolumes
+import com.tamerslab.rendering.separateCubeVolumesInto
 import com.tamerslab.rendering.SceneFrameBudget
 import com.tamerslab.rendering.SceneFrameInputs
 import com.tamerslab.rendering.SceneFramePacer
@@ -327,6 +327,17 @@ class Digifarm3dSceneView(
     private var windowVisible = true
     private val pacer = SceneFramePacer()
     private val powerManager = context.getSystemService(PowerManager::class.java)
+    /**
+     * Thermal status cached from [powerManager] and refreshed by [registerThermalStatusListener].
+     *
+     * `currentThermalStatus` is a synchronous binder call while thermal status changes on
+     * multi-second scales, so the frame callback and touch events only read this field (H17).
+     * Volatile because the listener callback may be dispatched on a binder thread.
+     */
+    @Volatile
+    private var thermalStatus = PowerManager.THERMAL_STATUS_NONE
+    /** Opaque API 29+ listener handle; typed as [Any] so this class still loads on API < 29. */
+    private var thermalListener: Any? = null
     private var framePosted = false
     private var startRetryPosted = false
 
@@ -427,12 +438,38 @@ class Digifarm3dSceneView(
         val material: MaterialInstance,
         val phase: Double,
         val amplitude: Float,
+        /** Emissive factor the pulse oscillates around; the island floor holds it steady. */
+        val baseIntensity: Float = GLOW_BASE_INTENSITY,
     )
+
+    /**
+     * Preallocated collision state for one floating-cube set (H17).
+     *
+     * The solver runs on every rendered frame, so its volumes, displacement slots and pair scratch
+     * are allocated once here and reused; the volumes' centres are rewritten in place each frame.
+     * [cubes] identifies the set this state was built for, so a scene swap rebuilds it.
+     */
+    private class CubeCollisionScratch(val cubes: List<FloatingCube>) {
+        val volumes: ArrayList<CubeVolume> = ArrayList(cubes.size)
+        val displacements: ArrayList<FloatArray> = ArrayList(cubes.size)
+        val scratchA = FloatArray(3)
+        val scratchB = FloatArray(3)
+        val scratchOverlap = FloatArray(3)
+
+        init {
+            for (cube in cubes) {
+                volumes += CubeVolume(FloatArray(3), cube.halfExtents)
+                displacements += FloatArray(3)
+            }
+        }
+    }
 
     private var floatingBlocks: List<FloatingBlocks> = emptyList()
     private var floatingCubes: List<FloatingCube> = emptyList()
     private var floatingIsland: FloatingIsland? = null
     private var pulsingGlows: List<PulsingGlow> = emptyList()
+    /** Rebuilt only when [floatingCubes] changes; see [CubeCollisionScratch]. */
+    private var cubeCollisionScratch: CubeCollisionScratch? = null
     private var islandFloatOffsetY = 0f
     private var floatingStartNanos = 0L
     private val tmpCubeBox = com.google.android.filament.Box()
@@ -521,11 +558,28 @@ class Digifarm3dSceneView(
                 SceneFrameBudget.INTERACTION_GRACE_NANOS,
             animating = isAnimating(),
         ),
-        quality = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-            SceneFrameBudget.qualityForThermalStatus(powerManager?.currentThermalStatus
-                ?: PowerManager.THERMAL_STATUS_NONE)
-        else SceneQuality.HIGH,
+        quality = thermalQuality(),
     )
+
+    /**
+     * Quality from the listener-maintained [thermalStatus] field: a plain field read, so this can
+     * run inside the frame callback without a binder round-trip (H17).
+     */
+    private fun thermalQuality(): SceneQuality =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+            SceneFrameBudget.qualityForThermalStatus(thermalStatus)
+        else SceneQuality.HIGH
+
+    /**
+     * Cheap "is the gate paused" answer for the touch path (H17).
+     *
+     * [currentFrameTier] also walks every resident to decide [isAnimating], which a touch does not
+     * need: it only needs to know whether the loop may run at all. Paused is exactly these four
+     * gate inputs, mirroring the first branch of [SceneFrameBudget.tier].
+     */
+    private fun isFrameLoopPaused(): Boolean =
+        !worldActive || !lifecycleResumed || !windowVisible ||
+            !(isAvailable && viewW > 0 && viewH > 0)
 
     /** Anything that visibly changes this frame: streaming, walking, a gesture, or the camera catching up. */
     private fun isAnimating(): Boolean {
@@ -572,6 +626,35 @@ class Digifarm3dSceneView(
             startRetryPosted = false
             refreshFrameLoop()
         }, FRAME_START_RETRY_MILLIS)
+    }
+
+    /**
+     * Registers the API 29+ thermal listener behind [thermalStatus]; called once from [init] and
+     * released by [unregisterThermalStatusListener] in the teardown paths.
+     *
+     * The one synchronous read below seeds the cache, so the first [currentFrameTier] already sees
+     * the device's current state; afterwards only thermal *changes* cost a callback (H17).
+     */
+    private fun registerThermalStatusListener() {
+        if (thermalListener != null || released) return
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+        val manager = powerManager ?: return
+        thermalStatus = manager.currentThermalStatus
+        val listener = PowerManager.OnThermalStatusChangedListener { status ->
+            thermalStatus = status
+        }
+        thermalListener = listener
+        manager.addThermalStatusListener(listener)
+    }
+
+    /** The symmetric half of [registerThermalStatusListener]; safe to call more than once. */
+    private fun unregisterThermalStatusListener() {
+        val listener = thermalListener ?: return
+        thermalListener = null
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return
+        powerManager?.removeThermalStatusListener(
+            listener as PowerManager.OnThermalStatusChangedListener
+        )
     }
 
     fun setLifecycleResumed(resumed: Boolean) {
@@ -652,13 +735,15 @@ class Digifarm3dSceneView(
             }
             if (!released) onTouchImpl(event) else false
         }
+        registerThermalStatusListener()
         refreshFrameLoop()
     }
 
     /** Keeps the frame gate at full rate around a gesture, and restarts a paused loop. */
     private fun markInteraction() {
         lastTouchNanos = System.nanoTime()
-        if (currentFrameTier(lastTouchNanos) != SceneFrameTier.Paused) scheduleFrame(0L)
+        // Touch is a hot path: the cheap gate check replaces a full tier computation (H17).
+        if (!isFrameLoopPaused()) scheduleFrame(0L)
     }
 
     fun loadAsset(assetName: String, onAssetError: ((String) -> Unit)? = null) {
@@ -687,6 +772,7 @@ class Digifarm3dSceneView(
         if (assetName == requestedAssetName) return
         floatingBlocks = emptyList()
         floatingCubes = emptyList()
+        cubeCollisionScratch = null
         floatingIsland = null
         pulsingGlows = emptyList()
         islandFloatOffsetY = 0f
@@ -847,6 +933,7 @@ class Digifarm3dSceneView(
         }
         floatingBlocks = groups
         floatingCubes = cubes
+        cubeCollisionScratch = null
         islandFloatOffsetY = 0f
         floatingStartNanos = 0L
         Log.i(logTag, "Loaded ${groups.size}/6 floating voxel groups")
@@ -888,7 +975,7 @@ class Digifarm3dSceneView(
         resolveFloatingCubeCollisions()
         pulsingGlows.forEach { glow ->
             val pulse = (0.5 + 0.5 * sin(elapsed * GLOW_PULSE_SPEED + glow.phase)).toFloat()
-            val strength = GLOW_BASE_INTENSITY + glow.amplitude * pulse
+            val strength = glow.baseIntensity + glow.amplitude * pulse
             if (!environmentThemes.updateEmission(glow.material, strength)) {
                 glow.material.setParameter("emissiveFactor", strength, strength, strength)
             }
@@ -906,33 +993,50 @@ class Digifarm3dSceneView(
      * drift.
      */
     private fun resolveFloatingCubeCollisions() {
-        if (floatingCubes.size < 2) return
+        val cubes = floatingCubes
+        if (cubes.size < 2) return
         val manager = engine.transformManager
-        val volumes = ArrayList<CubeVolume>(floatingCubes.size)
-        for (cube in floatingCubes) {
+        // The solver state is allocated once per cube set and reused every frame (H17): no
+        // volumes, centres, displacement lists or pair vectors are created inside the frame path.
+        val cachedScratch = cubeCollisionScratch
+        val scratch = if (cachedScratch != null && cachedScratch.cubes === cubes) {
+            cachedScratch
+        } else {
+            CubeCollisionScratch(cubes).also { cubeCollisionScratch = it }
+        }
+        var index = 0
+        while (index < cubes.size) {
+            val cube = cubes[index]
             val group = floatingBlocks.getOrNull(cube.groupId)
             val groupX = if (group != null) group.animated[12] - group.base[12] else 0f
             val groupY = if (group != null) group.animated[13] - group.base[13] else 0f
             val groupZ = if (group != null) group.animated[14] - group.base[14] else 0f
-            volumes += CubeVolume(
-                floatArrayOf(
-                    cube.baseCentre[0] + groupX + (cube.animated[12] - cube.base[12]),
-                    cube.baseCentre[1] + groupY + (cube.animated[13] - cube.base[13]),
-                    cube.baseCentre[2] + groupZ + (cube.animated[14] - cube.base[14]),
-                ),
-                cube.halfExtents,
-            )
+            val centre = scratch.volumes[index].centre
+            centre[0] = cube.baseCentre[0] + groupX + (cube.animated[12] - cube.base[12])
+            centre[1] = cube.baseCentre[1] + groupY + (cube.animated[13] - cube.base[13])
+            centre[2] = cube.baseCentre[2] + groupZ + (cube.animated[14] - cube.base[14])
+            index++
         }
-        if (volumes.size < 2) return
-        val displacements = separateCubeVolumes(volumes)
-        for (index in floatingCubes.indices) {
-            val displacement = displacements[index]
-            if (displacement[0] == 0f && displacement[1] == 0f && displacement[2] == 0f) continue
-            val cube = floatingCubes[index]
+        separateCubeVolumesInto(
+            volumes = scratch.volumes,
+            displacements = scratch.displacements,
+            scratchA = scratch.scratchA,
+            scratchB = scratch.scratchB,
+            scratchOverlap = scratch.scratchOverlap,
+        )
+        index = 0
+        while (index < cubes.size) {
+            val displacement = scratch.displacements[index]
+            if (displacement[0] == 0f && displacement[1] == 0f && displacement[2] == 0f) {
+                index++
+                continue
+            }
+            val cube = cubes[index]
             cube.animated[12] += displacement[0]
             cube.animated[13] += displacement[1]
             cube.animated[14] += displacement[2]
             manager.setTransform(cube.transformInstance, cube.animated)
+            index++
         }
     }
 
@@ -960,12 +1064,12 @@ class Digifarm3dSceneView(
             manager.setTransform(island.transformInstance, island.animated)
         }
         pulsingGlows.forEach { glow ->
-            if (!environmentThemes.updateEmission(glow.material, GLOW_BASE_INTENSITY)) {
+            if (!environmentThemes.updateEmission(glow.material, glow.baseIntensity)) {
                 glow.material.setParameter(
                     "emissiveFactor",
-                    GLOW_BASE_INTENSITY,
-                    GLOW_BASE_INTENSITY,
-                    GLOW_BASE_INTENSITY,
+                    glow.baseIntensity,
+                    glow.baseIntensity,
+                    glow.baseIntensity,
                 )
             }
         }
@@ -975,7 +1079,13 @@ class Digifarm3dSceneView(
         val renderables = engine.renderableManager
         val materials = LinkedHashMap<Long, PulsingGlow>()
 
-        fun add(entityName: String, primitiveIndex: Int, phase: Double, amplitude: Float) {
+        fun add(
+            entityName: String,
+            primitiveIndex: Int,
+            phase: Double,
+            amplitude: Float,
+            baseIntensity: Float = GLOW_BASE_INTENSITY,
+        ) {
             val entity = asset.getFirstEntityByName(entityName)
             if (entity == 0 || !renderables.hasComponent(entity)) return
             val instance = renderables.getInstance(entity)
@@ -983,13 +1093,48 @@ class Digifarm3dSceneView(
             val material = renderables.getMaterialInstanceAt(instance, primitiveIndex)
             val nativeMaterial = material.getNativeObject()
             if (!materials.containsKey(nativeMaterial)) {
-                materials[nativeMaterial] = PulsingGlow(material, phase, amplitude)
+                materials[nativeMaterial] = PulsingGlow(material, phase, amplitude, baseIntensity)
             }
         }
 
-        // The island top contains the violet wireframe texture; the grass shares
-        // this baked material, so boost it visibly without adding another pass.
-        add("Island", primitiveIndex = 0, phase = 0.0, amplitude = 0.78f)
+        /** Finds a primitive by its material name, so the pulse never depends on export order. */
+        fun addByMaterial(
+            entityName: String,
+            materialName: String,
+            phase: Double,
+            amplitude: Float,
+            baseIntensity: Float = GLOW_BASE_INTENSITY,
+        ) {
+            val entity = asset.getFirstEntityByName(entityName)
+            if (entity == 0 || !renderables.hasComponent(entity)) return
+            val instance = renderables.getInstance(entity)
+            if (instance == 0) return
+            for (primitiveIndex in 0 until renderables.getPrimitiveCount(instance)) {
+                val material = renderables.getMaterialInstanceAt(instance, primitiveIndex)
+                if (material.name == materialName) {
+                    add(entityName, primitiveIndex, phase, amplitude, baseIntensity)
+                    return
+                }
+            }
+        }
+
+        // The island floor holds a steady emissive factor: the darker grass therefore keeps a constant
+        // luminance. Only the baked glow overlay - the lightest grass tiles and the bright wireframe
+        // lines - pulses, carrying the old island breathing on top of the static base.
+        add(
+            "Island",
+            primitiveIndex = 0,
+            phase = 0.0,
+            amplitude = 0f,
+            baseIntensity = ISLAND_STATIC_GLOW,
+        )
+        addByMaterial(
+            "Island",
+            ISLAND_GLOW_OVERLAY_MATERIAL,
+            phase = 0.0,
+            amplitude = ISLAND_GLOW_PULSE_AMPLITUDE,
+            baseIntensity = ISLAND_STATIC_GLOW,
+        )
 
         var blockOrdinal = 0
         for (groupIndex in BLOCKS_PER_GROUP.indices) {
@@ -1238,6 +1383,7 @@ class Digifarm3dSceneView(
         released = true
         Choreographer.getInstance().removeFrameCallback(frameCallback)
         framePosted = false
+        unregisterThermalStatusListener()
         destroyResidents()
         environmentThemes.release()
         releaseBackgroundSkybox()
@@ -1252,6 +1398,7 @@ class Digifarm3dSceneView(
             Choreographer.getInstance().removeFrameCallback(frameCallback)
             framePosted = false
         }
+        unregisterThermalStatusListener()
         // Resident textures, assets and loaders must be freed BEFORE
         // ModelViewer's detach listener destroys the Engine.
         destroyResidents()
@@ -2065,6 +2212,15 @@ class Digifarm3dSceneView(
         private const val ISLAND_FLOAT_SPEED = 0.52
         private const val GLOW_PULSE_SPEED = 1.15
         private const val GLOW_BASE_INTENSITY = 1.08f
+
+        /**
+         * The island floor holds this steady emissive factor (near the old pulse's average, so the farm
+         * keeps its overall brightness); the darker grass never changes. The glow overlay pulses around
+         * the same value, so the lightest grass tiles and the wireframe breathe in their own colour.
+         */
+        private const val ISLAND_STATIC_GLOW = 1.45f
+        private const val ISLAND_GLOW_PULSE_AMPLITUDE = 0.78f
+        private const val ISLAND_GLOW_OVERLAY_MATERIAL = "island_glow_overlay_baked"
 
         /**
          * The farm's floor and cube accents are theme-tinted emissive surfaces, so their pulse may

@@ -54,6 +54,10 @@ val Context.speciesSettingsStore: DataStore<Preferences> by preferencesDataStore
     name = SPECIES_SETTINGS_STORE_NAME
 )
 
+val Context.rankSettingsStore: DataStore<Preferences> by preferencesDataStore(
+    name = "rank_settings"
+)
+
 class DefaultAppContainer(private val context: Context) : AppContainer {
 
     override val db: AppDatabase by lazy {
@@ -117,6 +121,10 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
                 AppDatabase.MIGRATION_53_54,
                 AppDatabase.MIGRATION_54_55,
                 AppDatabase.MIGRATION_55_56,
+                AppDatabase.MIGRATION_59_60,
+                AppDatabase.MIGRATION_58_59,
+                AppDatabase.MIGRATION_57_58,
+                AppDatabase.MIGRATION_56_57,
             )
             // Missing migrations must preserve the database, never erase individuals/chats.
             .openHelperFactory(com.tamerslab.data.database.PreservingMigrationFactory())
@@ -138,6 +146,9 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
     val localSaveDocuments by lazy { com.tamerslab.transfer.data.gameSave.AndroidSaveDocuments(context) }
     val localCompanion by lazy { com.tamerslab.transfer.data.gameSave.LocalCompanionClient(db) }
     val saveLocations by lazy { com.tamerslab.transfer.data.gameSave.SaveLocationRepository(db, localSaveDocuments, localCompanion) }
+    val progressDomains by lazy {
+        com.tamerslab.transfer.data.ProgressDomainRepository(db.progressDomainDao())
+    }
     val linkedGameSaves: com.tamerslab.transfer.data.gameSave.LinkedGameSaveRepository by lazy {
         com.tamerslab.transfer.data.gameSave.LinkedGameSaveRepository(db,
             com.tamerslab.transfer.data.gameSave.LinkedSaveDocuments(localSaveDocuments, localCompanion),
@@ -155,7 +166,7 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
     val nativeMaterialization by lazy {
         com.tamerslab.transfer.data.gameSave.NativeMaterializationRepository(db, gameImportAcquisition,
             { dotSpriteLibrary.catalog() }, { requireNotNull(db.expandedCatalog).definitionFor(it) },
-            com.tamerslab.transfer.data.gameSave.WorldDsSpeciesTable.load(context))
+            com.tamerslab.transfer.data.gameSave.NdsStorySpeciesTables.load(context))
     }
     val latestSaveReconciler by lazy {
         com.tamerslab.transfer.data.gameSave.AutomaticSaveReconciler(db, nativeMaterialization)
@@ -164,7 +175,7 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
     val destinationPreviews by lazy { com.tamerslab.transfer.data.gameSave.DestinationPreviewRepository(db, linkedGameSaves) }
     val nativeSpeciesPresentation by lazy {
         com.tamerslab.transfer.data.gameSave.NativeSpeciesPresentationRepository(db, dotSpriteLibrary,
-            com.tamerslab.transfer.data.gameSave.WorldDsSpeciesTable.load(context))
+            com.tamerslab.transfer.data.gameSave.NdsStorySpeciesTables.load(context))
     }
     val storageAway by lazy {
         com.tamerslab.transfer.data.gameSave.StorageAwayRepository(db, linkedGameSaves, nativeSpeciesPresentation)
@@ -179,12 +190,16 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
         com.tamerslab.transfer.data.gameSave.ExperimentalWorldDsSendRepository(db, linkedGameSaves,
             com.tamerslab.transfer.data.gameSave.AndroidSaveDocumentWrite(context),
             java.io.File(context.filesDir, "experimental-game-sends"),
-            com.tamerslab.transfer.data.gameSave.WorldDsSpeciesTable.load(context),
+            com.tamerslab.transfer.data.gameSave.NdsStorySpeciesTables.load(context),
             { dotSpriteLibrary.catalog() })
     }
     val cardRepository by lazy { com.tamerslab.species.data.CardRepository(db) }
     val spriteRepository by lazy { com.tamerslab.species.data.SpriteRepository(db) }
-    val storageRepository by lazy { com.tamerslab.storage.data.StorageRepository(db) }
+    /** Shared artwork priority resolver: loaded VB art, then shipped VB frames, then Dot. */
+    val speciesAppearance by lazy {
+        com.tamerslab.species.SpeciesAppearanceRepository(db, dotSpriteLibrary) { spritePreferenceRepository.current }
+    }
+    val storageRepository by lazy { com.tamerslab.storage.data.StorageRepository(db, speciesAppearance) }
     val gameplayRepository by lazy { com.tamerslab.items.data.GameplayRepository(db, currencyRepository) }
 
     /** Pending V-Pet reads that still need a canonical species or a participation retry (D7). */
@@ -217,6 +232,15 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
         debugEnabled = { debugSettingsRepository.enabled })
 
     override val speciesSettingsRepository = SpeciesSettingsRepository(context.speciesSettingsStore)
+
+    override val rankRepository: com.tamerslab.rank.domain.RankRepository by lazy {
+        com.tamerslab.rank.data.RankRepositoryImpl(
+            db = db,
+            currencyRepository = currencyRepository,
+        ).also { repository -> com.tamerslab.rank.data.RankEvents.install(repository) }
+    }
+
+    override val rankSettings = com.tamerslab.rank.data.RankSettingsStore(context.rankSettingsStore)
 
     override val dotSpriteLibrary by lazy {
         com.tamerslab.species.BundledDotSpriteLibrary(context, db)
@@ -257,8 +281,9 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
     override val worldRepository by lazy { WorldRepository(db,
         scanPercentagePerDefeat = { debugSettingsRepository.state.value.percentagePerDefeat },
         debugEnabled = { debugSettingsRepository.enabled },
-        allowAnyDistance = { debugSettingsRepository.allowAnyDistance }) }
-    override val digifarmRepository by lazy { DigifarmRepository(db) }
+        allowAnyDistance = { debugSettingsRepository.allowAnyDistance },
+        appearances = speciesAppearance) }
+    override val digifarmRepository by lazy { DigifarmRepository(db, speciesAppearance) }
     override val farmConversationOrchestrator by lazy { digifarmRepository.conversationOwner(chatRepository) }
     override val farmSessionCoordinator by lazy { FarmSessionCoordinator(digifarmRepository).also {
         it.onSuspend = { farmId -> farmConversationOrchestrator.suspendFarm(farmId) }
@@ -288,6 +313,20 @@ class DefaultAppContainer(private val context: Context) : AppContainer {
     override val digilineGateway by lazy {
         com.tamerslab.digiline.gateway.ScriptedDigilineGateway(
             db, ownedDigilineRepository, wildDigilineRepository
+        )
+    }
+    override val freeChatGateway by lazy {
+        com.tamerslab.digiline.freechat.gateway.ScriptedFreeChatGateway(
+            com.tamerslab.digiline.freechat.data.FreeChatRepository(
+                database = db,
+                content = com.tamerslab.digiline.freechat.content.FreeChatContentProvider(
+                    com.tamerslab.digiline.freechat.content.FreeChatContentLoader.fromAssets(context.assets)
+                ),
+                assembler = com.tamerslab.digiline.freechat.data.FreeChatContextAssembler(db, speciesRepository),
+                contentEnabled = {
+                    com.tamerslab.BuildConfig.FREE_CHAT_ENABLED && debugSettingsRepository.freeChatAvailable
+                },
+            )
         )
     }
     override val diaryService by lazy { DigimonDiaryService(db, chatRepository, digilineContentProvider) }

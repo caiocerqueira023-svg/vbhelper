@@ -1,5 +1,6 @@
 package com.tamerslab.home.ui.dialogs
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,9 +42,9 @@ import com.tamerslab.components.cyberFrame
 import com.tamerslab.components.editorDialogBounds
 import com.tamerslab.components.showAppFeedback
 import com.tamerslab.di.TamersLabApplication
-import com.tamerslab.domain.items.ItemType
 import com.tamerslab.home.ui.HomeScreenController
 import com.tamerslab.items.data.ItemsRepository
+import com.tamerslab.items.data.SpecialMissionAssignment
 import com.tamerslab.items.data.SpecialMissionSlots
 import com.tamerslab.items.ui.getIconResource
 import com.tamerslab.ui.theme.TextPrimaryOnDark
@@ -51,16 +52,21 @@ import com.tamerslab.ui.theme.TextSecondaryOnDark
 import com.tamerslab.ui.theme.VitalCyan
 
 /**
- * Equip one owned special-mission item into the partner overview's matching slot.
+ * Equip one owned special-mission item into a partner's mission row.
  *
- * The list only offers the missions that belong to the tapped slot (steps, vitals, battles, wins), so
- * choosing one cannot silently fill a different slot. Equipping consumes the item through the same
- * gameplay path as the item flow, so both entry points stay equivalent.
+ * [slot] is the tapped card's position among the partner's mission rows (0..3, never the
+ * device-side watchId). It picks the slot label and the eligible item kinds, so the list cannot
+ * offer a mission of the wrong kind. [missionId] is the exact row to equip, so the update can
+ * never land on a different mission.
+ *
+ * A failed equip stays inside the dialog: a snackbar is posted in the activity window, which sits
+ * behind the dialog, so it would be unreadable while the dialog is open.
  */
 @Composable
 fun AssignSpecialMissionDialog(
     characterId: Long,
-    slotWatchId: Int,
+    slot: Int,
+    missionId: Long,
     homeScreenController: HomeScreenController,
     onDismiss: () -> Unit,
 ) {
@@ -69,13 +75,11 @@ fun AssignSpecialMissionDialog(
     val repository = remember(application) { ItemsRepository(application.container.db) }
     val owned by remember(repository) { repository.getUserItems() }
         .collectAsStateWithLifecycle(initialValue = emptyList())
-    val candidates = remember(owned, slotWatchId) {
-        owned.filter { item ->
-            item.itemType == ItemType.SPECIALMISSION &&
-                SpecialMissionSlots.slotForItemIcon(item.itemIcon) == slotWatchId
-        }
+    val candidates = remember(owned, slot) {
+        SpecialMissionAssignment.candidatesForSlot(owned, slot)
     }
     var assigning by remember { mutableStateOf(false) }
+    var assignFailed by remember { mutableStateOf(false) }
 
     Dialog(
         onDismissRequest = { if (!assigning) onDismiss() },
@@ -96,7 +100,7 @@ fun AssignSpecialMissionDialog(
             Text(
                 text = stringResource(
                     R.string.home_special_mission_assign_slot,
-                    stringResource(slotLabel(slotWatchId)),
+                    stringResource(specialMissionSlotLabelRes(slot)),
                 ),
                 style = MaterialTheme.typography.bodySmall,
                 color = TextSecondaryOnDark,
@@ -119,13 +123,18 @@ fun AssignSpecialMissionDialog(
                             onClick = {
                                 if (assigning) return@CyberPanel
                                 assigning = true
-                                homeScreenController.assignSpecialMission(item.id, characterId) { applied ->
+                                assignFailed = false
+                                homeScreenController.assignSpecialMission(
+                                    item.id,
+                                    characterId,
+                                    missionId,
+                                ) { applied ->
                                     assigning = false
                                     if (applied) {
-                                        context.showAppFeedback(R.string.home_special_mission_assigned)
                                         onDismiss()
+                                        context.showAppFeedback(R.string.home_special_mission_assigned)
                                     } else {
-                                        context.showAppFeedback(R.string.app_item_not_applied)
+                                        assignFailed = true
                                     }
                                 }
                             },
@@ -181,6 +190,15 @@ fun AssignSpecialMissionDialog(
                     }
                 }
             }
+            if (assignFailed) {
+                Text(
+                    text = stringResource(R.string.home_special_mission_assign_failed),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
+                )
+            }
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
                 horizontalArrangement = Arrangement.End,
@@ -200,7 +218,9 @@ fun AssignSpecialMissionDialog(
     }
 }
 
-private fun slotLabel(slot: Int): Int = when (slot) {
+/** The slot label shown in the dialog and on the partner overview cards. */
+@StringRes
+internal fun specialMissionSlotLabelRes(slot: Int): Int = when (slot) {
     SpecialMissionSlots.STEPS -> R.string.special_mission_slot_steps
     SpecialMissionSlots.VITALS -> R.string.special_mission_slot_vitals
     SpecialMissionSlots.BATTLES -> R.string.special_mission_slot_battles

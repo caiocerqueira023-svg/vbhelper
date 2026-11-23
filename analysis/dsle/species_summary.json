@@ -1,0 +1,16 @@
+{
+ "firstSpecies": 54,
+ "eggCount": 54,
+ "speciesEnd": 446,
+ "count": 641,
+ "samples": {
+  "54": "Chicchimon",
+  "77": "Agumon",
+  "80": "Dorumon",
+  "82": "Gabumon",
+  "90": "ToyAgumon",
+  "101": "Falcomon",
+  "307": "Megidramon",
+  "341": "Dynasmon"
+ }
+}

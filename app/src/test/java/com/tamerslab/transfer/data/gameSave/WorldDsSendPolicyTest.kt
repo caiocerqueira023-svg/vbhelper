@@ -49,4 +49,12 @@ class WorldDsSendPolicyTest {
         assertFalse(WorldDsSendPolicy.nativeReturnable(record(SaveContainer.FARM, emptyList())))
         assertFalse(WorldDsSendPolicy.nativeReturnable(record(SaveContainer.BANK, emptyList())))
     }
+
+    @Test fun farmAssignedRecordOnlyReturnsWhereTheLayoutAllowsFarmTransfer() {
+        val farm = com.tamerslab.gamesave.ObservedDigimon("copy:2:record:5", SaveContainer.FARM, 1, 101,
+            "Falcomon", 1, null, 0, com.tamerslab.gamesave.RecordMembership.ACTIVE_RECORD,
+            nativeRecordBase64 = "AAAA", nativeIdentity = "save-local:30405f000000002")
+        assertTrue(!WorldDsSendPolicy.nativeReturnable(farm))
+        assertTrue(WorldDsSendPolicy.nativeReturnable(farm, allowFarm = true))
+    }
 }

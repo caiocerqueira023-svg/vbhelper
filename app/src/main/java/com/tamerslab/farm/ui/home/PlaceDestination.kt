@@ -1,4 +1,4 @@
-﻿package com.tamerslab.farm.ui.home
+package com.tamerslab.farm.ui.home
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
@@ -7,6 +7,7 @@ import com.tamerslab.R
 import com.tamerslab.navigation.AppRoute
 import com.tamerslab.navigation.ItemsDestination
 import com.tamerslab.navigation.NavigationItems
+import com.tamerslab.navigation.TransferNavigation
 
 /**
  * The five places the farm's command deck exposes (owner decision Q1).
@@ -32,11 +33,12 @@ enum class PlaceDestination(
         R.string.place_arena,
         R.string.place_arena_subtitle,
     ),
-    Dex(
-        AppRoute.Dex,
-        R.drawable.vb_icon_digidex,
-        R.string.place_dex,
-        R.string.place_dex_subtitle,
+    Transfer(
+        // Transfer and Dex traded places: Dex is the top-zone key, Transfer is the third place.
+        TransferNavigation.route(),
+        R.drawable.baseline_nfc_24,
+        R.string.place_transfer,
+        R.string.place_transfer_subtitle,
     ),
     Items(
         AppRoute.Items(ItemsDestination.TAB_STORE),
@@ -46,7 +48,8 @@ enum class PlaceDestination(
     ),
     Partners(
         AppRoute.Storage,
-        R.drawable.baseline_chest_24,
+        // White Dot-sprite companion icon, matching the Dex key's white pixel artwork.
+        R.drawable.vb_icon_partners,
         R.string.place_partners,
         R.string.place_partners_subtitle,
     ),

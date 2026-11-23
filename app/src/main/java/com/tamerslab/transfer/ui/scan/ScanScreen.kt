@@ -58,7 +58,7 @@ fun ScanScreen(
     val secrets by scanScreenController.secretsFlow.collectAsStateWithLifecycle(null)
 
     val application = LocalContext.current.applicationContext as TamersLabApplication
-    val storageRepository = remember { StorageRepository(application.container.db) }
+    val storageRepository = remember { application.container.storageRepository }
     var nfcCharacter by remember(characterId) { mutableStateOf<NfcCharacter?>(null) }
     var feedbackMessage by rememberSaveable(characterId) { mutableStateOf<String?>(null) }
     var feedbackRequiresSettings by rememberSaveable(characterId) { mutableStateOf(false) }

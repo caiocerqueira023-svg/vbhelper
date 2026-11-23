@@ -1,4 +1,4 @@
-package com.tamerslab.storage.data
+﻿package com.tamerslab.storage.data
 
 import androidx.room.Dao
 import androidx.room.Insert
@@ -23,6 +23,18 @@ import kotlinx.coroutines.flow.Flow
 interface UserCharacterDao {
     @Query("SELECT vitalPoints FROM UserCharacter WHERE isActive = 1 LIMIT 1")
     suspend fun getActiveVitalPoints(): Int?
+
+    @Query("SELECT COUNT(*) FROM UserCharacter")
+    fun observeCharacterCount(): Flow<Int>
+
+    @Query("SELECT COALESCE(SUM(totalBattlesWon), 0) FROM UserCharacter")
+    fun observeTotalWins(): Flow<Int>
+
+    @Query("SELECT COALESCE(SUM(totalBattlesLost), 0) FROM UserCharacter")
+    fun observeTotalLosses(): Flow<Int>
+
+    @Query("SELECT COALESCE(SUM(trophies), 0) FROM UserCharacter")
+    fun observeTotalTrophies(): Flow<Int>
 
     @Query("SELECT * FROM UserCharacter WHERE id = :id")
     fun getCharacterSync(id: Long): UserCharacter?
@@ -94,6 +106,7 @@ interface UserCharacterDao {
         """
         SELECT
             uc.*,
+            c.cardId AS cardId,
             c.stage,
             c.attribute,
             s.spriteIdle1 AS spriteIdle,
@@ -179,6 +192,7 @@ interface UserCharacterDao {
         """
         SELECT
             uc.*,
+            c.cardId AS cardId,
             c.stage,
             c.attribute,
             s.spriteIdle1 AS spriteIdle,
@@ -231,13 +245,16 @@ interface UserCharacterDao {
     @Query("SELECT * FROM VBCharacterData WHERE id = :id")
     suspend fun getVbDataOrNull(id: Long): VBCharacterData?
 
-    @Query("SELECT * FROM SpecialMissions WHERE characterId = :id")
+    // Rows are always created in slot order 0..3, so ascending ids are slot order. Callers that
+    // need slot identity (instead of the device-side watchId) rely on this ordering.
+    @Query("SELECT * FROM SpecialMissions WHERE characterId = :id ORDER BY id")
     fun getSpecialMissions(id: Long): Flow<List<SpecialMissions>>
 
     @Query(
         """
         SELECT
             uc.*,
+            c.cardId AS cardId,
             c.stage,
             c.attribute,
             s.spriteIdle1 AS spriteIdle,
@@ -351,6 +368,7 @@ interface UserCharacterDao {
         """
         SELECT
             uc.*,
+            c.cardId AS cardId,
             c.stage,
             c.attribute,
             s.spriteIdle1 AS spriteIdle,
@@ -383,6 +401,7 @@ interface UserCharacterDao {
         """
         SELECT
             uc.*,
+            c.cardId AS cardId,
             c.stage,
             c.attribute,
             s.spriteIdle1 AS spriteIdle,

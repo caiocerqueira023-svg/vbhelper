@@ -100,6 +100,8 @@ fun SettingsScreen(
     val cardImports by settingsScreenController.cardImportState.collectAsStateWithLifecycle()
     val debugSettings by settingsScreenController.debugSettings.collectAsStateWithLifecycle()
     val spritePreference by settingsScreenController.spritePreference.collectAsStateWithLifecycle()
+    val rankHomeCardEnabled by settingsScreenController.rankHomeCardEnabled.collectAsStateWithLifecycle(initialValue = true)
+    val rankNotificationsEnabled by settingsScreenController.rankNotificationsEnabled.collectAsStateWithLifecycle(initialValue = true)
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showFontDialog by remember { mutableStateOf(false) }
     var showTamerNameDialog by remember { mutableStateOf(false) }
@@ -161,6 +163,18 @@ fun SettingsScreen(
             ) {
                 showFontDialog = true
             }
+
+            SettingsSection(title = stringResource(R.string.settings_rank_section))
+            LabeledSwitchRow(
+                stringResource(R.string.settings_rank_home_card), rankHomeCardEnabled,
+                settingsScreenController::setRankHomeCardEnabled, Modifier.padding(horizontal = 16.dp),
+                description = stringResource(R.string.settings_rank_home_card_desc)
+            )
+            LabeledSwitchRow(
+                stringResource(R.string.settings_rank_notifications), rankNotificationsEnabled,
+                settingsScreenController::setRankNotificationsEnabled, Modifier.padding(horizontal = 16.dp),
+                description = stringResource(R.string.settings_rank_notifications_desc)
+            )
 
             SettingsSection(title = stringResource(R.string.immersion_audio))
             BackgroundMusicControlPanel(
@@ -258,6 +272,13 @@ fun SettingsScreen(
                     settingsScreenController::setDebugLegacyLlm,
                     Modifier.padding(horizontal = 16.dp),
                     description = stringResource(R.string.settings_debug_legacy_llm_description)
+                )
+                LabeledSwitchRow(
+                    stringResource(R.string.settings_debug_free_chat_title),
+                    debugSettings.freeChatAvailable,
+                    settingsScreenController::setDebugFreeChatEnabled,
+                    Modifier.padding(horizontal = 16.dp),
+                    description = stringResource(R.string.settings_debug_free_chat_description)
                 )
                 DebugSwitchRow(
                     title = stringResource(R.string.settings_debug_instant_scan_title),

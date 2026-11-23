@@ -117,7 +117,11 @@ class GameplayRepository(
         EvolutionHistoryRepository(db).repairCharacter(characterId)
     }
 
-    suspend fun applyItem(itemId: Long, characterId: Long): String = db.withTransaction {
+    /**
+     * Applies one owned item. [missionId] names the tapped special-mission row for the assignment
+     * flow; the item flow leaves it null and lets the item's kind pick its positional slot.
+     */
+    suspend fun applyItem(itemId: Long, characterId: Long, missionId: Long? = null): String = db.withTransaction {
         db.participation?.snapshot()?.requireOwned(characterId)
         val item = db.itemDao().getItem(itemId)
         check(item.quantity > 0) { "This item is no longer available." }
@@ -165,15 +169,25 @@ class GameplayRepository(
             }
             item.itemIcon in ItemUse.Step8k.id..ItemUse.Win4.id &&
                 (character.characterType == DeviceType.APP || character.characterType == DeviceType.VBDevice && vbData != null) -> {
-                applySpecialMission(item.itemIcon, item.itemLength, characterId)
+                applySpecialMission(item.itemIcon, item.itemLength, characterId, missionId)
             }
             else -> error("This item is not applicable to this partner")
         }
         check(db.itemDao().useItem(item.id) == 1) { "This item is no longer available." }
+        com.tamerslab.rank.data.RankEvents.award(
+            com.tamerslab.rank.domain.TxpSource.ITEM_USE,
+            "item:${item.id}:${System.currentTimeMillis()}",
+            origin = "ITEMS",
+        )
         item.name
     }
 
-    private suspend fun applySpecialMission(itemIcon: Int, itemLength: Int, characterId: Long) {
+    private suspend fun applySpecialMission(
+        itemIcon: Int,
+        itemLength: Int,
+        characterId: Long,
+        missionId: Long?,
+    ) {
         val type = when (itemIcon) {
             ItemUse.Step8k.id, ItemUse.Step4k.id -> SpecialMission.Type.STEPS
             ItemUse.Vitals1000.id, ItemUse.Vitals250.id -> SpecialMission.Type.VITALS
@@ -192,15 +206,10 @@ class GameplayRepository(
             ItemUse.Win4.id -> 4
             else -> 0
         }
-        val slot = when (itemIcon) {
-            ItemUse.Step8k.id, ItemUse.Step4k.id -> 0
-            ItemUse.Vitals1000.id, ItemUse.Vitals250.id -> 1
-            ItemUse.Battle20.id, ItemUse.Battle5.id -> 2
-            ItemUse.Win10.id, ItemUse.Win4.id -> 3
-            else -> 0
-        }
         val current = db.userCharacterDao().getSpecialMissions(characterId).first()
-        val mission = requireNotNull(current.firstOrNull { it.watchId == slot })
+        // Slot identity is the row position, never watchId: see SpecialMissionAssignment.
+        val mission = SpecialMissionAssignment.resolveTarget(current, itemIcon, missionId)
+            ?: error("This mission item does not match this mission slot.")
         db.userCharacterDao().insertSpecialMissions(SpecialMissions(
             id = mission.id,
             characterId = mission.characterId,

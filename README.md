@@ -76,7 +76,9 @@ and is history, not the current result.
 ### Multi-game Transfer and local PC companion
 
 **Current development focus:** actual World DS / first Story moves between a save and
-the vault, followed by the other DS games. Time Stranger transfer development is paused.
+the vault. World DS, Dawn/Dusk and Lost Evolution now read, import, move out and send back;
+Lost Evolution is the newest adapter (see [LOST_EVOLUTION_TRANSFER_PLAN.md](LOST_EVOLUTION_TRANSFER_PLAN.md)).
+Time Stranger transfer development is paused.
 The target Transfer flow uses PKForge's game-first organization, adapted into one
 origin list with DS launcher icons, Vital Bracelet and other origins together.
 Open a game, tap a sprite-matched individual, then use Move to Storage in its information
@@ -211,9 +213,9 @@ and result forms.
 
 ### Digimon graphics and universal participation
 
-**Settings → Digimon graphics** offers **VB first** (loaded VB sprites, then Dot
-fallback) and **Dot first** (Dot sprites, then loaded VB fallback). This choice is
-cosmetic. There are no VB/Expanded gameplay modes, source restrictions or artwork
+**Settings → Digimon graphics** offers **VB first** (loaded VB sprites, then the VB
+frames bundled with the app, then Dot fallback) and **Dot first** (Dot sprites, then
+loaded VB fallback). This choice is cosmetic. There are no VB/Expanded gameplay modes, source restrictions or artwork
 participation requirements. Missing art uses a neutral placeholder. Artwork changes do
 not clear the active partner, pause activities, change stats or interrupt play.
 Existing source-mode preferences migrate to the corresponding artwork priority;

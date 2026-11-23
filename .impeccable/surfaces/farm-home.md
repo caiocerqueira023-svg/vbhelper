@@ -1,8 +1,8 @@
 ---
 version: 1
 slug: farm-home
-primary_target: app/src/main/java/com/github/nacabaro/vbhelper/screens/homeScreens/HomeScreen.kt
-related_targets: ["app/src/main/java/com/github/nacabaro/vbhelper/screens/digifarmScreen/DigifarmScreen.kt","app/src/main/java/com/github/nacabaro/vbhelper/screens/digifarmScreen/Digifarm3dViewport.kt","app/src/main/java/com/github/nacabaro/vbhelper/navigation/AppNavigation.kt","app/src/main/java/com/github/nacabaro/vbhelper/navigation/BottomNavigationBar.kt","app/src/main/java/com/github/nacabaro/vbhelper/screens/worldScreen/WorldHubScreen.kt","app/src/main/java/com/github/nacabaro/vbhelper/components/CyberUi.kt","app/src/main/java/com/github/nacabaro/vbhelper/ui/theme/AppTheme.kt"]
+primary_target: app/src/main/java/com/tamerslab/farm/ui/home/FarmHomeScreen.kt
+related_targets: ["app/src/main/java/com/tamerslab/farm/ui/home/FarmHomeHud.kt","app/src/main/java/com/tamerslab/farm/ui/home/PlaceDock.kt","app/src/main/java/com/tamerslab/home/ui/PartnerDeck.kt","app/src/main/java/com/tamerslab/home/ui/PartnerDeckContract.kt","app/src/main/java/com/tamerslab/farm/ui/digifarm/FarmHomeWorld.kt","app/src/main/java/com/tamerslab/navigation/AppNavigation.kt","app/src/main/java/com/tamerslab/components/HudChrome.kt","app/src/main/java/com/tamerslab/ui/theme/AppTheme.kt"]
 ---
 
 # Farm home surface brief
@@ -21,12 +21,15 @@ language; the game layer is a composition and motion change, expressed with exis
 gradient scrims.
 
 STORY: Open the app and see who is with you and how they are — vitals, mood, the next evolution,
-what they are doing — then go somewhere: Radar for the world outside, Arena to fight, DigiLine to
-talk, Shop to spend bits, Partners to manage the collection. Pull the slab for the full record.
+what they are doing — then go somewhere: Radar for the world outside, Arena to fight, Transfer to
+move individuals between games and devices, Items to spend bits and manage stock, Partners to manage
+the collection. Pull the slab for the full record; Dex, Quests, the Tamer profile and the remaining
+destinations live in the header or the menu.
 
 FIRST VIEWPORT: The island fills the screen and the active Digimon is framed between 30% and 52% of
-the viewport height. Top: farm chip, bits, quests, menu. Bottom: five place tiles above a partner
-slab that carries portrait, name, level, vitals and mood. Nothing else on the first screen.
+the viewport height. Top: the farm chip (resident count with its place gauge, rank), then Dex,
+Settings and menu keys. Bottom: five place overlays (Radar, Arena, Transfer, Items, Partners) above a
+partner slab that carries portrait, name, level, vitals and mood. Nothing else on the first screen.
 
 FORM: Android/Compose, edge-to-edge for this route only, Material 3 semantics and back behaviour,
 48dp targets, three-detent non-modal sheet with an explicit back ladder, one paused render loop and

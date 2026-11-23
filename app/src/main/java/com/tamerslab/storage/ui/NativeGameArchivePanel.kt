@@ -19,7 +19,7 @@ import com.tamerslab.components.VitalButton
 import com.tamerslab.transfer.data.gameSave.NativeArchiveView
 import com.tamerslab.transfer.data.gameSave.NativeMaterializationRepository
 import com.tamerslab.transfer.data.gameSave.NativeSpeciesPresentationRepository
-import com.tamerslab.transfer.data.gameSave.WorldDsSpeciesTable
+import com.tamerslab.transfer.data.gameSave.NdsStorySpeciesTables
 import com.tamerslab.species.CanonicalSpeciesDto
 import androidx.compose.ui.platform.LocalContext
 import com.tamerslab.di.TamersLabApplication
@@ -35,7 +35,7 @@ internal fun NativeGameArchivePanel(archives: List<NativeArchiveView>, materiali
     var progressTarget by remember { mutableStateOf<String?>(null) }
     val application = LocalContext.current.applicationContext as TamersLabApplication
     val presentations = remember(application) { NativeSpeciesPresentationRepository(application.container.db,
-        application.container.dotSpriteLibrary, WorldDsSpeciesTable.load(application)) }
+        application.container.dotSpriteLibrary, NdsStorySpeciesTables.load(application)) }
     val language = LocalConfiguration.current.locales[0].toLanguageTag()
     if (archives.isEmpty()) return
     VitalButton(onClick = { open = true }, modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp)) {

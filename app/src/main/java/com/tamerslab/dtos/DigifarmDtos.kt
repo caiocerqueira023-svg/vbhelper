@@ -50,6 +50,8 @@ data class DigilineStorageThread(
     val individualId: String,
     val nickname: String?,
     val speciesName: String?,
+    /** Imported-card source, or null for app catalog definitions. */
+    val cardId: Long? = null,
     val spriteIdle: ByteArray,
     val spriteWidth: Int,
     val spriteHeight: Int,

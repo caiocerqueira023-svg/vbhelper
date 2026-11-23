@@ -46,4 +46,7 @@ interface AppContainer {
     val digilineContentProvider: com.tamerslab.digiline.content.DigilineContentProvider
     val ownedDigilineRepository: com.tamerslab.digiline.data.OwnedDigilineRepository
     val digilineGateway: com.tamerslab.digiline.gateway.DigilineGateway
+    val freeChatGateway: com.tamerslab.digiline.freechat.gateway.FreeChatGateway
+    val rankRepository: com.tamerslab.rank.domain.RankRepository
+    val rankSettings: com.tamerslab.rank.data.RankSettingsStore
 }

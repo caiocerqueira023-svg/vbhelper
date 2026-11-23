@@ -51,7 +51,7 @@ fun AdventureScreen(
     val application = LocalContext.current.applicationContext as TamersLabApplication
     val context = LocalContext.current
     val database = application.container.db
-    val storageRepository = remember { StorageRepository(database) }
+    val storageRepository = remember { application.container.storageRepository }
     val partnersLoad = rememberCollectionLoad("adventure-partners", storageRepository::getAllCharacters)
     val activeLoad = rememberCollectionLoad("adventure-active", storageRepository::getAdventureCharacters)
     val partners = partnersLoad.data.orEmpty()
@@ -135,6 +135,9 @@ fun AdventureScreen(
         selectedIds.isNotEmpty() -> stringResource(R.string.adventure_selected_count, selectedIds.size)
         else -> null
     }
+    // Resolved during composition: the click handler below may run after the composition is gone,
+    // and lint rejects querying resources from LocalContext inside it.
+    val teamFullMessage = stringResource(R.string.adventure_team_full, AdventureMaxTeamSize)
 
     Scaffold(
         topBar = {
@@ -210,7 +213,7 @@ fun AdventureScreen(
                                 } else {
                                     Toast.makeText(
                                         context,
-                                        context.getString(R.string.adventure_team_full, AdventureMaxTeamSize),
+                                        teamFullMessage,
                                         Toast.LENGTH_SHORT,
                                     ).show()
                                 }

@@ -89,7 +89,8 @@ class ArenaRepository(private val db: AppDatabase, private val currency: Currenc
     suspend fun recordTerminal(matchId: String, snapshot: BattleSnapshot): ArenaSettlement = withContext(Dispatchers.IO) {
         val result = requireNotNull(snapshot.result)
         currency.initializeWallet()
-        db.withTransaction {
+        var newlySettled = false
+        val settlement = db.withTransaction {
             val dao = db.arenaDao()
             val row = requireNotNull(dao.match(matchId)) { "Arena match not found" }
             val spec = decodeMatch(row)
@@ -118,6 +119,7 @@ class ArenaRepository(private val db: AppDatabase, private val currency: Currenc
             val now = System.currentTimeMillis()
             check(dao.completeMatch(matchId, outcome.name, reward, snapshot.statistics.itemsUsed,
                 if (spec.tiebreakRound == 0) 5 - snapshot.opposingItems.sumOf { it.remaining } else 0, now) == 1)
+            newlySettled = true
             grantLocked(matchId, reward, now)
             if (spec.tournamentId != null) {
                 val tournament = mutateRun(spec.tournamentId) { run ->
@@ -133,6 +135,22 @@ class ArenaRepository(private val db: AppDatabase, private val currency: Currenc
             }
             ArenaSettlement(outcome, reward, outcome != result.outcome)
         }
+        if (newlySettled) {
+            when (settlement.outcome) {
+                BattleOutcome.ALLIED_VICTORY -> com.tamerslab.rank.data.RankEvents.award(
+                    com.tamerslab.rank.domain.TxpSource.BATTLE_WIN,
+                    "arena:$matchId",
+                    origin = "ARENA",
+                )
+                BattleOutcome.ABANDONED -> Unit
+                else -> com.tamerslab.rank.data.RankEvents.award(
+                    com.tamerslab.rank.domain.TxpSource.BATTLE_LOSS,
+                    "arena:$matchId",
+                    origin = "ARENA",
+                )
+            }
+        }
+        settlement
     }
 
     private suspend fun grantLocked(id: String, bits: Int, now: Long) {

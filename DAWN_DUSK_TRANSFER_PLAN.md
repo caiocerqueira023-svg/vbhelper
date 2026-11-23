@@ -1,9 +1,12 @@
 # Digimon World Dawn/Dusk transfer plan — the second NDS Story adapter
 
-**Status:** planning step opened 2026-10-24. No production capability is added by this
-document; it defines the evidence gates and the implementation sequence for extending the
-current World DS transfer feature to Digimon World Dawn (USA `A3VE`) and Digimon World Dusk
-(USA `A6RE`).
+**Status:** planning step opened 2026-10-24; **read, acquisition and the native editor are
+implemented 2026-11-19** from the user-supplied USA ROMs and retail saves (see
+`game-save-core/DS2_RESEARCH.md`). Dawn/Dusk saves now decode on the shared reader, party
+records are imported into Storage through the normal reviewed flow, and the core party-record
+editor is verified on the real saves. The app-level move/send repository wiring is the remaining
+writer step (W6/W7). This document keeps the evidence gates and implementation sequence that
+produced the adapter.
 
 **Parent plan:** [MULTI_GAME_TRANSFER_PLAN.md](MULTI_GAME_TRANSFER_PLAN.md), section 20
 item 5 ("Extend to Dawn/Dusk…") and section 21 checkpoint added with this plan.
@@ -480,7 +483,22 @@ geometry, discovery ranges, byte-identical facade equivalence) and `TransferGame
 **Acceptance:** no behavior change for World DS; debug assembly; no schema change; plan
 checkpoint recorded. **Met** (see delivery note; recorded in `TESTING.md`).
 
-### W2 — Dawn/Dusk evidence pack (M) — needs G1–G4
+### W2 — Dawn/Dusk evidence pack (M) — **delivered 2026-11-19 (ROM-first)**
+
+Delivery: the layout was recovered by static analysis of the user's USA ROMs (ARM9 + overlays,
+Ghidra headless) and verified on two retail saves. Container `0x10000` with `0x7B2C` copies at
+`0x0`/`0x7B80`; MD5 header over the copy with the header zeroed; u32 sequence at `+0x18`;
+`DSDIG2` magic at `+0x10`; 40 records of `0x164` at `0x288`; party array of ten ids at `0x260`;
+last id at `0x25C`; record fields through `0x124` mapped, remainder preserved verbatim. Species
+names, base data, lineage and the three 99-level EXP curves were extracted from both ROMs and are
+identical between the titles; the extracted Coronamon record reproduces a real save's record
+windows exactly. Full offsets, evidence and reproduction commands: `game-save-core/DS2_RESEARCH.md`
+(tooling under `analysis/ds2/`). Controlled before/after sample pairs were **not needed** — the
+engine code plus two real saves settled every field the adapter interprets. Remaining unknowns:
+the meaning of record `0x120` state bits and of `0x128..0x164` (preserved, never interpreted), and
+the DigiFarm table (farm transfer stays out of scope).
+
+Original task list (kept for traceability):
 
 - `--inspect-nds-story` on the user's Dawn/Dusk files; `game-save-core/DS2_RESEARCH.md`
   documenting every verified offset/width with method and confidence, and the still-unknown
@@ -495,7 +513,21 @@ checkpoint recorded. **Met** (see delivery note; recorded in `TESTING.md`).
   the in-game party; MD5 headers re-derived byte-exactly; evidence doc reviewed; no reader
   registered in production yet.
 
-### W3 — DS2 read-only phone parity (M) — depends W1, W2
+### W3 — DS2 read-only phone parity (M) — **delivered 2026-11-19**
+
+Delivered: `NdsStoryProfiles.DAWN_DUSK` (game id `digimon_world_ds2_nds`, profile
+`ds2-usa-raw-v1`, codec 1) is registered, so the shared reader, discovery, copy review and the
+error granularity apply unchanged; the reader requires the `DSDIG2` signature so the families
+cannot decode each other's bytes. The app resolves the retail title from the file name
+(`TransferGameCatalog.titleHint`; Dawn/Dusk both name the same family, a generic name falls back
+to Dawn) and the library shows the two entries. DS2 rows use the existing `WorldDsCopyDialog`
+(profile-based copy authority) and the native stat rows. JA `transfer_game_dawn` mojibake fixed
+(`デジモンストーリー サンバースト`). Not implemented from the original list: a reviewed,
+revision-bound title binding (schema 56) and a first-link title prompt — the file name covers the
+supported titles for now and the binding remains the documented follow-up. Physical-phone
+acceptance was not run.
+
+Original task list (kept for traceability):
 
 - `Ds2Layout` constants and `NdsStoryTitle` entries for Dawn/Dusk; `codecVersion = 1` for the
   DS2 layout; identity scheme `ds2-source-local-v1`.
@@ -512,7 +544,20 @@ checkpoint recorded. **Met** (see delivery note; recorded in `TESTING.md`).
   Physical-phone acceptance may be deferred by user request, but desktop/JVM evidence is not
   a substitute.
 
-### W4 — Acquisition, Storage and Home parity (M) — depends W3
+### W4 — Acquisition, Storage and Home parity (M) — **delivered 2026-11-19**
+
+Delivered: `productionProfiles` gains the Dawn/Dusk entry (party-only, `appPersonalityOnly`,
+provisional identity, level range 1..99, identity scheme `ds2-source-local-v1`).
+`NdsStorySpeciesTables` resolves each game's own table by (gameId, profile, codec); the DS2
+asset (`app/src/main/assets/ds2_species.json`, 436 species with names, base data, lineage and
+EXP curves, extracted from the user's ROMs) serves Dawn and Dusk identically, and auto-identity
+runs before any review through the normal path. `NativeMaterializationRepository` seeds the first
+materialization and applies returns through `Ds2StatConversion` (authored `ds2-stat-v1`: level,
+HP, ATK, DEF and max-level/aptitude project; the nine native EXP channels are retained and only
+the three training counters are interpreted). Pending: the destination preview title wording for
+DS2 (`W5`) and phone acceptance.
+
+Original task list (kept for traceability):
 
 - `GameImportAcquisitionRepository.productionProfiles` gains Dawn and Dusk entries
   (`appPersonalityOnly`, party-only, provisional identity, level range verified).
@@ -534,7 +579,34 @@ checkpoint recorded. **Met** (see delivery note; recorded in `TESTING.md`).
 - **Acceptance:** previews for Dawn/Dusk are honest (copy vs conversion, blockers, progress)
   and flag every unvalidated field.
 
-### W6 — Writer parity A: exact retained round trip (L) — depends W2 + G5
+### W6 — Writer parity A: exact retained round trip (L) — **core editor delivered 2026-11-19**
+**App repository wiring still pending.**
+
+Delivered in core: `Ds2SaveEdits` / `Ds2SaveEditor` (registered in `NdsStorySaveEditors`) with
+revision-bound removal (party reference + record slot cleared to the game's own empty shape,
+last-party-member refusal), exact retained insertion (first free record slot, first free party
+slot by the game's own rule, last-id high-water raise only when needed), replacement, party
+admission and byte-exact restore. Every edit edits only the authoritative copy, refuses a copy
+whose MD5 header does not match, bumps the copy sequence by one, reseals the header, and re-reads
+the candidate requiring every unrelated record unchanged. Verified on the two retail saves
+(`Ds2RealSaveValidationTest`: removal + restore rebuilds the exact real bytes; the candidate
+header validates). Also verified by synthetic unit tests (`Ds2SaveEditsTest`).
+
+App wiring delivered too: `ExperimentalWorldDsMoveRepository` and
+`ExperimentalWorldDsSendRepository` now resolve the import profile and the native editor per
+observation instead of a single World DS profile, so Move to Storage / Move to game work for
+Dawn/Dusk party records through the same journal, durable backup, fresh-read preflight, readback
+verification and presence machinery. Record synthesis is implemented for these titles too: app-only partners (and stored partners
+whose app growth exceeded the archived record) are projected into a `0x164` record from the game's
+own species defaults plus the app stats, with the level capped by the species max level, the
+history block rebuilt exactly like the engine's creation path, and the nine native EXP counters
+left zero because their semantics are not established. A retained record is used as the seed, so
+its identity and unknown bytes survive. A cross-layout send is supported the simple way: the individual is already in Storage, so a
+destination title that differs from its last native layout receives a freshly synthesized record
+for its own layout (the retained bytes are only reused inside their own layout). In-game boot
+acceptance of a written Dawn/Dusk save is still unperformed.
+
+Original task list (kept for traceability):
 
 - `Ds2SaveEditor`: remove a party record (clear slot, adjust roster/reference data), reseal
   both copies, insert the exact retained `0x164` record into an evidenced empty slot, admit
@@ -547,7 +619,20 @@ checkpoint recorded. **Met** (see delivery note; recorded in `TESTING.md`).
   flags move from experimental to supported-for-that-rung; source removal only after
   readback+acknowledgement exactly as DS1.
 
-### W7 — Writer parity B: generated records and cross-title sends (L) — depends W6
+### W7 — Writer parity B: generated records and cross-title sends (L) — **DS2 record synthesis delivered 2026-11-19**
+
+Delivered: `Ds2RecordCodec` (core) builds a `0x164` record exactly like the engine's creation path
+(species fields, abilities/skills/resistances, stage flags, five stage-indexed forms, the species
+history bitmap, stage byte, EXP-to-next from the ARM9 curves); `Ds2SaveEdits.insertGeneratedRecord`
+assigns the next identity from the destination high-water mark and inserts it; the app's
+`Ds2OutboundConversion` projects app stats through `Ds2StatConversion.toNative` (level capped by
+the species max level) and feeds it from `Ds2SpeciesCrosswalk.ds2IdsByCanonical`; the send
+repository chooses retained vs generated per destination and seeds generation with the retained
+record so identity and unknown windows survive. Remaining from this work item: direct
+cross-title conversion (a World DS record into Dawn or the reverse) — it stays refused and belongs
+to the Storage-conversion path; and in-game acceptance of a synthesized record.
+
+Original task list (kept for traceability):
 
 - DS2 record generator from app state: species defaults, moves/traits/equipment mapping,
   EXP/level windows, stage/history; every unmapped field blocks rather than guesses.

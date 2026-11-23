@@ -40,10 +40,17 @@ class HomeScreenControllerImpl(
         }
     }
 
-    override fun assignSpecialMission(itemId: Long, characterId: Long, onResult: (Boolean) -> Unit) {
+    override fun assignSpecialMission(
+        itemId: Long,
+        characterId: Long,
+        missionId: Long,
+        onResult: (Boolean) -> Unit
+    ) {
         componentActivity.lifecycleScope.launch {
             val result = runCatching {
-                kotlinx.coroutines.withContext(Dispatchers.IO) { gameplay.applyItem(itemId, characterId) }
+                kotlinx.coroutines.withContext(Dispatchers.IO) {
+                    gameplay.applyItem(itemId, characterId, missionId)
+                }
             }
             componentActivity.runOnUiThread { onResult(result.isSuccess) }
         }

@@ -18,6 +18,7 @@ import com.tamerslab.domain.digifarm.WildRelationship
 import com.tamerslab.dtos.WorldDtos
 import com.tamerslab.dtos.DebugSpawnCharacter
 import com.tamerslab.domain.identity.IndividualIdentity
+import com.tamerslab.species.BundledVbArtwork
 import com.tamerslab.utils.DeviceType
 import com.tamerslab.world.ecosystem.WorldInteractionRepository
 import com.tamerslab.world.ecosystem.WorldDen
@@ -27,6 +28,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.math.sqrt
@@ -36,7 +38,9 @@ class WorldRepository(private val db: AppDatabase,
                       private val scanPercentagePerDefeat: () -> Int = { com.tamerslab.species.data.DigimonScanPolicy.NORMAL_GAIN },
                        private val clock: () -> Long = System::currentTimeMillis,
                        private val debugEnabled: () -> Boolean = { false },
-                       private val allowAnyDistance: () -> Boolean = { false }) {
+                       private val allowAnyDistance: () -> Boolean = { false },
+                       /** Applies the VB-first shipped-art priority to the spawn sprite bytes. */
+                       private val appearances: com.tamerslab.species.SpeciesAppearanceRepository? = null) {
     private val spawnDao: WorldSpawnDao = db.worldSpawnDao()
     private val biomeDetector = OpenStreetMapBiomeDetector()
     val interactions = WorldInteractionRepository(db, scanPercentagePerDefeat, allowAnyDistance, clock)
@@ -59,14 +63,17 @@ class WorldRepository(private val db: AppDatabase,
     }
 
     fun observeSpawns(): Flow<List<WorldDtos.SpawnWithDetails>> {
+        // The database view resolves Dot artwork for un-owned species; the VB-first shipped frames
+        // replace it here so the radar/world renderers and battle entries stay in VB mode.
         val source = spawnDao.getActiveSpawnsWithDetails(clock())
+            .map { BundledVbArtwork.spawns(it, appearances) }
         return db.participation?.let { gate -> source.combine(gate.observe()) { rows, eligibility ->
             rows.filter { eligibility.card(it.cardCharacterId).usable }
         } } ?: source
     }
 
     fun observePendingRecruits(): Flow<List<WorldDtos.SpawnWithDetails>> =
-        spawnDao.getPendingRecruitsWithDetails()
+        spawnDao.getPendingRecruitsWithDetails().map { BundledVbArtwork.spawns(it, appearances) }
 
     fun observeMood(individualId: String): Flow<Int?> =
         db.wildRelationshipDao().observeTrust(individualId)
@@ -578,5 +585,6 @@ class WorldRepository(private val db: AppDatabase,
     suspend fun markInteractedByIndividual(individualId: String) =
         spawnDao.markInteractedByIndividual(individualId)
 
-    suspend fun getSpawn(spawnId: Long): WorldDtos.SpawnWithDetails? = spawnDao.getSpawnById(spawnId)
+    suspend fun getSpawn(spawnId: Long): WorldDtos.SpawnWithDetails? =
+        spawnDao.getSpawnById(spawnId)?.let { BundledVbArtwork.spawn(it, appearances) }
 }

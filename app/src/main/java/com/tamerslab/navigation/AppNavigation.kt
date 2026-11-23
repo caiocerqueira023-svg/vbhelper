@@ -1,4 +1,4 @@
-﻿package com.tamerslab.navigation
+package com.tamerslab.navigation
 
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -15,12 +15,19 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -50,6 +57,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavDestination
@@ -100,8 +108,13 @@ import com.tamerslab.chat.ui.lorebook.LorebookScreen
 import com.tamerslab.chat.ui.lorebook.LorebookScreenControllerImpl
 import com.tamerslab.farm.ui.home.FarmHomeScreen
 import com.tamerslab.farm.ui.digifarm.FarmHomeWorld
+import com.tamerslab.farm.ui.home.PlaceRowBandHeight
 import com.tamerslab.farm.ui.home.rememberFarmHomeShellState
 import com.tamerslab.home.ui.PartnerDetent
+import com.tamerslab.home.ui.PartnerPeekHeight
+import com.tamerslab.home.ui.farmChromeScale
+import com.tamerslab.home.ui.PartnerSlabAlpha
+import com.tamerslab.ui.theme.SurfaceElevatedPurple
 import com.tamerslab.world.ui.WorldScreen
 import com.tamerslab.world.ui.RadarPlaceScreen
 import com.tamerslab.world.ui.WorldChatScreen
@@ -181,6 +194,9 @@ fun AppNavigation(
     val feedback = (context.applicationContext as TamersLabApplication).feedback
     val snackbar = remember { SnackbarHostState() }
     val keyboardVisible = WindowInsets.isImeVisible
+    // The fixed bottom chrome (peek slab + place band) grows with the system font (capped at 1.5x),
+    // so the snackbar lift and the sheet's band yield must use the same scaled values.
+    val chromeScale = farmChromeScale()
     LaunchedEffect(feedback, lifecycleOwner, resources) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             feedback.messages.collect { message ->
@@ -250,7 +266,33 @@ fun AppNavigation(
             // bleed behind the system bars.
             contentWindowInsets = if (isFarmHome) WindowInsets(0) else
                 WindowInsets.safeDrawing.exclude(WindowInsets.ime),
-            snackbarHost = { SnackbarHost(snackbar, Modifier.imePadding()) },
+            // Material3 offsets the snackbar by its own height plus contentWindowInsets' bottom (no
+            // bottomBar/FAB here). Home's insets are zero, so the host must take the navigation-bar
+            // inset itself, and then clear the farm's own bottom chrome: the place dock, plus the
+            // partner peek slab while the deck sits at Peek. The lift only reads the settled detent -
+            // never the sheet's per-frame drag progress - so dragging the deck cannot relayout the
+            // snackbar every frame. Every other destination keeps the plain IME host: its
+            // contentWindowInsets already reserves safeDrawing's bottom, so adding the nav inset
+            // again would double-lift it.
+            snackbarHost = {
+                SnackbarHost(
+                    snackbar,
+                    if (isFarmHome) {
+                        Modifier
+                            .imePadding()
+                            .navigationBarsPadding()
+                            .padding(
+                                bottom = homeSnackbarLift(
+                                    farmShell.detent,
+                                    peekHeight = PartnerPeekHeight * chromeScale,
+                                    bandHeight = PlaceRowBandHeight * chromeScale,
+                                )
+                            )
+                    } else {
+                        Modifier.imePadding()
+                    },
+                )
+            },
         ) { contentPadding ->
             // Two independent layers. The world keeps the shell's whole window for the shell's whole
             // life: it is deliberately not padded with the system-bar insets, so entering or leaving
@@ -258,6 +300,9 @@ fun AppNavigation(
             // resize used to land in the same frames as the route transition. Only the NavHost takes
             // the insets and the IME.
             Box(modifier = Modifier.fillMaxSize()) {
+                // Transparent system bars expose the edge where inset pages stop drawing content.
+                // The content itself is alpha-faded above the action bar; immersive routes own their
+                // world scrims and are skipped.
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -276,6 +321,21 @@ fun AppNavigation(
                         modifier = Modifier.fillMaxSize(),
                         isActive = isFarmHome && farmShell.detent != PartnerDetent.Expanded,
                         onResidentTap = onFarmResidentTap,
+                    )
+                }
+                // The boxed pages keep their header material flowing behind the transparent status
+                // bar. Without this the bar showed the raw window background and a hard step where
+                // the banner scrim began; the strip uses the same top tone as hudTopScrim(), so the
+                // banner continues seamlessly under the bar. Immersive routes paint their own scrims
+                // above it, and Home has its own HUD ground.
+                val statusBarTop = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
+                if (!isFarmHome && statusBarTop > 0.dp) {
+                    Box(
+                        Modifier
+                            .align(Alignment.TopCenter)
+                            .fillMaxWidth()
+                            .height(statusBarTop)
+                            .background(SurfaceElevatedPurple.copy(alpha = PartnerSlabAlpha))
                     )
                 }
                 NavHost(
@@ -443,7 +503,7 @@ fun AppNavigation(
 
                 if (characterId == null) {
                     val context = LocalContext.current.applicationContext as TamersLabApplication
-                    val storageRepository = remember { StorageRepository(context.container.db) }
+                    val storageRepository = remember { context.container.storageRepository }
                     val characterData by storageRepository.getActiveCharacter().collectAsStateWithLifecycle(null)
                     if (characterData != null) {
                         characterId = characterData!!.id
@@ -467,6 +527,9 @@ fun AppNavigation(
                     onStopImport = settingsScreenController::stopCardImport,
                     onDismissImportResult = settingsScreenController::dismissCardImportResult,
                 )
+            }
+            composable<AppRoute.Rank> {
+                com.tamerslab.rank.ui.RankScreen(navController = navController)
             }
             composable<AppRoute.Settings> {
                 SettingsScreen(
@@ -619,6 +682,43 @@ internal fun routeExitMotion(
     targetIsHome -> RouteExitMotion.PlaceSink
     direction != 0 -> RouteExitMotion.TabSlide
     else -> RouteExitMotion.Fade
+}
+
+/**
+ * How far above the system navigation-bar inset Home's snackbar host must sit so feedback is never
+ * hidden behind the farm's own bottom chrome.
+ *
+ * The farm Home is edge-to-edge, so its Scaffold reserves no contentWindowInsets bottom and Material3
+ * places the snackbar flush with the window bottom (behind the navigation bar). The host applies the
+ * navigation-bar inset itself; this lift adds only the bottom chrome that is drawn over the content:
+ *
+ * - [PartnerDetent.Peek]: the always-visible partner slab ([PartnerPeekHeight]) sits above the place
+ *   dock band ([PlaceRowBandHeight]), which is exactly where the deck's own lift leaves it, so the
+ *   snackbar clears the sum of both.
+ * - [PartnerDetent.Half] and [PartnerDetent.Expanded]: the sheet owns the bottom of the screen and the
+ *   dock has already yielded its band, so the snackbar may float over the sheet with only the
+ *   navigation-bar inset.
+ *
+ * Only the settled detent is consulted. The sheet's continuous drag progress is intentionally not an
+ * input: it changes every pointer frame, and the host's padding would then relayout (and may
+ * recompose) the snackbar during the gesture.
+ *
+ * [isFarmHome] is modelled so the placement contract is a pure, unit-testable function. Every other
+ * destination keeps its previous snackbar behaviour - its Scaffold already reserves safeDrawing's
+ * bottom - and therefore must lift by 0 here.
+ */
+internal fun homeSnackbarLift(
+    detent: PartnerDetent,
+    isFarmHome: Boolean = true,
+    peekHeight: Dp = PartnerPeekHeight,
+    bandHeight: Dp = PlaceRowBandHeight,
+): Dp {
+    if (!isFarmHome) return 0.dp
+    return when (detent) {
+        PartnerDetent.Peek -> bandHeight + peekHeight
+        // The dock has faded and the sheet starts at Half; only the navigation-bar inset applies.
+        PartnerDetent.Half, PartnerDetent.Expanded -> 0.dp
+    }
 }
 
 /**

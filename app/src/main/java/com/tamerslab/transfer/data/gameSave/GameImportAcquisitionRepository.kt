@@ -301,6 +301,18 @@ class GameImportAcquisitionRepository(
             provisionalIdentity = true, allowedSnapshotContainers = setOf(SaveContainer.PARTY, SaveContainer.BANK)),
             VerifiedSnapshotImportProfile(WorldDsSaveReader.GAME_ID, WorldDsSaveReader.PROFILE, 1, "world-ds-source-local-v1",
                 emptyMap(), nativeLevelRange = 1..99, provisionalIdentity = true, allowedSnapshotContainers = setOf(SaveContainer.PARTY),
-                appPersonalityOnly = true, crossSourceIdentityReview = false))
+                appPersonalityOnly = true, crossSourceIdentityReview = false),
+            // Dawn/Dusk: party references only. The record carries no native personality field, so
+            // the app initializes one from the permanent UUID exactly as it does for World DS.
+            VerifiedSnapshotImportProfile(NdsStoryProfiles.DAWN_DUSK.gameId, NdsStoryProfiles.DAWN_DUSK.formatProfile, 1,
+                "ds2-source-local-v1", emptyMap(), nativeLevelRange = 1..99, provisionalIdentity = true,
+                allowedSnapshotContainers = setOf(SaveContainer.PARTY), appPersonalityOnly = true,
+                crossSourceIdentityReview = false),
+            // Lost Evolution: party and farm residents are both player-owned; the record carries no
+            // native personality field, so the app initializes one from the permanent UUID.
+            VerifiedSnapshotImportProfile(NdsStoryProfiles.LOST_EVOLUTION.gameId, NdsStoryProfiles.LOST_EVOLUTION.formatProfile,
+                1, "le-source-local-v1", emptyMap(), nativeLevelRange = 1..99, provisionalIdentity = true,
+                allowedSnapshotContainers = setOf(SaveContainer.PARTY, SaveContainer.FARM), appPersonalityOnly = true,
+                crossSourceIdentityReview = false))
     }
 }

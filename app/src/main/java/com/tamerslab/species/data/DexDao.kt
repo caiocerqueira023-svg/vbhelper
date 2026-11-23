@@ -9,6 +9,12 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface DexDao {
+    @Query("SELECT COUNT(*) FROM Dex")
+    fun observeDiscoveredCount(): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM CardCharacter")
+    fun observeCatalogCount(): Flow<Int>
+
     @Query("INSERT OR IGNORE INTO Dex(id, discoveredOn) VALUES (:definitionId, :timestamp)")
     fun recordDefinition(definitionId: Long, timestamp: Long)
     @Query(

@@ -1,0 +1,668 @@
+{
+  "schemaVersion": 1,
+  "intents": [
+    {
+      "id": "fc.battle_tactics.1",
+      "topic": "battle_tactics",
+      "matchPhrases": ["how do we fight this", "what is the strategy", "how should we attack", "what is our tactic", "plan the fight", "how do we win", "what is the weakness", "find an opening", "how do we beat it", "any ideas for the fight"],
+      "openers": ["You want the plan before the noise.", "Good. Thinking first is a habit.", "Then listen once and move."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.battle_tactics.2",
+      "topic": "battle_tactics",
+      "matchPhrases": ["what is our plan", "what should we do in the fight", "tell me the plan", "plan first", "where do i aim", "what do you need from me", "how do we set up", "call the target", "formation", "what is step one"],
+      "openers": ["Step one: do not get surrounded.", "The plan is smaller than you think.", "You call it. I will carry it."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.battle_tactics.3",
+      "topic": "battle_tactics",
+      "matchPhrases": ["what is its weakness", "where is the seam", "how do we break it", "what is the opening", "is there a weak point", "exploit the gap", "how do we counter", "what counters that", "look for a pattern", "read its move"],
+      "openers": ["Every pattern leaks somewhere.", "Weakness is a habit too.", "Watch the second move, not the first."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.battle_tactics.4",
+      "topic": "battle_tactics",
+      "matchPhrases": ["when do we retreat", "do we run", "how do we escape", "what is the exit", "pull back", "we need to retreat", "is it over", "fall back", "how do we get out", "cover the retreat"],
+      "openers": ["Leaving is also a tactic.", "The exit is the smartest move you can make.", "I will cover the back."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.battle_tactics.5",
+      "topic": "battle_tactics",
+      "matchPhrases": ["who does what", "what is my role", "what is your role", "split the work", "how do we split it", "you take the front", "i will handle the rest", "assign roles", "watch my back", "our formation"],
+      "openers": ["Roles first, then movement.", "You lead. I break the line.", "Simple split: you watch, I hold."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.battle_tactics.6",
+      "topic": "battle_tactics",
+      "matchPhrases": ["what next after the fight", "post battle plans", "we won what now", "what do we do after", "how do we clean up", "debrief", "review the fight", "what went wrong", "how do we improve", "next battle plan"],
+      "openers": ["The fight ends; the lesson does not.", "After the noise, we count what held.", "Let us review it while it is fresh."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.exploration.1",
+      "topic": "exploration",
+      "matchPhrases": ["where should we explore", "where should we go", "what is out there", "where is the edge", "anywhere new", "let us explore", "choose a direction", "which field", "unknown ground", "where to next"],
+      "openers": ["The map is thin past this point.", "I vote for the direction with teeth.", "Point and I will walk."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.exploration.2",
+      "topic": "exploration",
+      "matchPhrases": ["any landmarks", "what is that structure", "what is that ruin", "seen anything strange", "what is over there", "that tower", "that hole", "what is that light", "any signals", "what is that shape"],
+      "openers": ["It does not match any file I keep.", "The shape is old and patient.", "We can look closer, carefully."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.exploration.3",
+      "topic": "exploration",
+      "matchPhrases": ["do you have a map", "where is the map", "map the field", "what does the map say", "is there a route", "chart it", "record the path", "mark it", "keep track", "draw the way"],
+      "openers": ["The map is mostly honest.", "I can draw it after we walk it.", "Keep your voice low and keep moving."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.exploration.4",
+      "topic": "exploration",
+      "matchPhrases": ["is it safe ahead", "do you sense anything", "danger ahead", "the path is dark", "is something ahead", "should we continue", "warning signs", "it feels wrong", "the field is quiet", "too quiet ahead"],
+      "openers": ["Quiet ahead usually means teeth.", "I sense something thin in the data.", "We go slow and loud enough to be warned."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.exploration.5",
+      "topic": "exploration",
+      "matchPhrases": ["should we bring someone", "who comes along", "can the team join", "do we go alone", "should we call the others", "someone should stay", "watch the camp", "only us", "together on the road", "travel companions"],
+      "openers": ["A smaller group moves quieter.", "I like our odds together.", "Someone should hold the line behind us."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.exploration.6",
+      "topic": "exploration",
+      "matchPhrases": ["what will we find", "will there be treasure", "anything valuable", "what is there to find", "think there is loot", "will it be worth it", "what do we look for", "find something", "discoveries", "worth the trip"],
+      "openers": ["Something always finds you back.", "I mostly want to see the edge.", "If it is valuable, it is probably guarded."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.field_weather.1",
+      "topic": "field_weather",
+      "matchPhrases": ["what is the field weather", "how is the weather", "is the field calm", "weather report", "how does it feel here", "pressure", "is it stormy", "static today", "field climate", "read the weather"],
+      "openers": ["The field is breathing slow today.", "I feel the pressure change.", "It is honest weather. Take it."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.field_weather.2",
+      "topic": "field_weather",
+      "matchPhrases": ["is there a storm", "storm coming", "what about the storm", "when does it hit", "storm ahead", "the sky is dark", "data storm", "pressure drop", "brace for it", "storm safety"],
+      "openers": ["Storms come with no apology.", "We find cover before it speaks.", "Stand close and do not let go."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.field_weather.3",
+      "topic": "field_weather",
+      "matchPhrases": ["why is it calm", "it feels calm", "the air is still", "is calm a good sign", "why is the static low", "quiet weather", "stillness", "no wind", "the field is soft", "nice weather"],
+      "openers": ["Calm is rare. Enjoy it.", "Stillness here is a small gift.", "Even calm needs a lookout."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.field_weather.4",
+      "topic": "field_weather",
+      "matchPhrases": ["is it hot", "is it cold", "the field is hot", "it is freezing", "temperature", "too hot to move", "too cold", "scorched field", "frozen field", "extreme weather"],
+      "openers": ["This field runs hot in the seams.", "Cold data bites the edges first.", "We move at the pace of the air."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.field_weather.5",
+      "topic": "field_weather",
+      "matchPhrases": ["does weather affect us", "do fields change your data", "does it change you", "field effects", "how does the field work", "why does it feel different", "changing field", "the field changed", "what does the pressure do", "does it hurt you"],
+      "openers": ["Fields change my margin for error.", "It changes the asking price of a fight.", "Nothing here leaves you exactly as found."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.field_weather.6",
+      "topic": "field_weather",
+      "matchPhrases": ["weather in other fields", "is it different elsewhere", "what is another field like", "do fields vary", "how many climates", "field types", "climate map", "other weather", "compare fields", "safe climate"],
+      "openers": ["Every field has its own temper.", "The next one will taste different.", "I trust weather maps less than weather."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.data_glitches.1",
+      "topic": "data_glitches",
+      "matchPhrases": ["did you see that glitch", "what was that flicker", "the data glitched", "something broke", "a glitch just appeared", "did the screen stutter", "that error", "data corruption", "anomaly", "the world stuttered"],
+      "openers": ["I saw it. It saw us.", "A flicker with intent.", "Stay still. Do not chase it."],
+      "stage": true,
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.data_glitches.2",
+      "topic": "data_glitches",
+      "matchPhrases": ["why do glitches happen", "what causes corruption", "why is the data broken", "what is wrong here", "how does data break", "source of the glitch", "is it us", "did we break it", "what makes a fault", "why does it stutter"],
+      "openers": ["Damage is rarely a single thing.", "Something above us dropped stitches.", "The cause is usually older than the symptom."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.data_glitches.3",
+      "topic": "data_glitches",
+      "matchPhrases": ["can we fix it", "how do we repair it", "stop the glitch", "repair the data", "patch it", "can it be healed", "make it stable", "repair protocol", "contain the fault", "seal it"],
+      "openers": ["We seal it, not touch it.", "Repair is patience with a plan.", "The fault can be held; that is enough."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.data_glitches.4",
+      "topic": "data_glitches",
+      "matchPhrases": ["are you okay in there", "did it hurt you", "is your data safe", "are you glitched", "feel weird", "your signal is off", "are you broken", "did it reach you", "hold steady", "check your data"],
+      "openers": ["My core is whole. The edges hum.", "It touched my signal, not my name.", "I will report if the static wins."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.data_glitches.5",
+      "topic": "data_glitches",
+      "matchPhrases": ["is the glitch dangerous", "can it hurt us", "is it spreading", "how bad is it", "will it reach us", "is it contagious", "should we run", "is the field safe", "how fast does it spread", "containment"],
+      "openers": ["It spreads at the speed of attention.", "Yes, and that is why we are careful.", "Dangerous, but not interested in us yet."],
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.data_glitches.6",
+      "topic": "data_glitches",
+      "matchPhrases": ["what is that data", "did you hear that signal", "strange pattern", "what is that sound in the data", "signal from nowhere", "something is calling", "there is a message", "who sent that", "unknown signal", "read the noise"],
+      "openers": ["It is a shape, not a sentence.", "I hear it under the static.", "We answer from a distance. If at all."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.other_tamers.1",
+      "topic": "other_tamers",
+      "matchPhrases": ["do you know other tamers", "other tamers", "are there other tamers", "have you met a tamer", "other players", "who else is out there", "other handlers", "other partners", "anyone else", "the other team"],
+      "openers": ["The network carries their signals.", "Tamer is a word with many faces.", "I know their outlines, not their names."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.other_tamers.2",
+      "topic": "other_tamers",
+      "matchPhrases": ["what are their digimon like", "other mon", "do others have partners", "their digimon", "compare partners", "different partners", "wild tamers", "rival partner", "their bond", "their partners"],
+      "openers": ["Every partner carries a different silence.", "Theirs bark louder; ours listen more.", "I only compare when it helps us."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.other_tamers.3",
+      "topic": "other_tamers",
+      "matchPhrases": ["can we trust them", "should we trust other tamers", "are other tamers friendly", "do they want to help", "dangerous tamers", "tamers who hunt", "friend or foe", "how do we treat them", "allies among tamers", "meet another tamer"],
+      "openers": ["Trust is chosen after the first fight.", "Some of them are kind. Kindness is not proof.", "We watch their hands, not their words."],
+      "grounded": true,
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.other_tamers.4",
+      "topic": "other_tamers",
+      "matchPhrases": ["what is a tamer rank", "are ranks real", "am i a good tamer", "how do tamers compare", "rankings", "better tamer", "strongest tamer", "titles", "official tamers", "tamer rank"],
+      "openers": ["Rank is a file. Goodness is not.", "Titles are loud and light.", "I judge tamers by their partners' repairs."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.other_tamers.5",
+      "topic": "other_tamers",
+      "matchPhrases": ["are their bonds strong", "what is their bond like", "do they care for their partner", "does everyone love their partner", "other relationships", "their trust", "how do they treat them", "abandoned partners", "lost tamers", "broken bonds"],
+      "openers": ["A bond is visible from the outside.", "Some links are held together by habit.", "Not every partner is lucky in their tamer."],
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.other_tamers.6",
+      "topic": "other_tamers",
+      "matchPhrases": ["will we meet them", "when will we meet other tamers", "meet a tamer today", "talk to them", "greet them", "say hello to other tamers", "join them", "travel together", "share a field", "pass them on the road"],
+      "openers": ["We will meet one when it matters.", "If they pass, we do not bow.", "A nod is enough between tamers."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.tournament.1",
+      "topic": "tournament",
+      "matchPhrases": ["is there a tournament", "any tournament", "when is the tournament", "tournament schedule", "bracket", "is a contest happening", "fight contest", "arena event", "tournament today", "sign up"],
+      "openers": ["There is a bracket and a bad idea.", "I smell crowd noise and dry rules.", "If you want it, I will enter."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.tournament.2",
+      "topic": "tournament",
+      "matchPhrases": ["tournament rules", "what are the rules", "legal moves", "is it fair", "how does the tournament work", "rounds", "victory conditions", "what is allowed", "disqualification", "arena rules"],
+      "openers": ["Rules are the floor, not the fight.", "They will bend where no one watches.", "We stay honest and still win."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.tournament.3",
+      "topic": "tournament",
+      "matchPhrases": ["who do we fight", "our opponents", "who is in the bracket", "next opponent", "who is the champion", "strong rival team", "facing them", "opposing tamer", "the bracket's best", "who do you want"],
+      "openers": ["The bracket has one honest threat.", "The rest are noise with names.", "I want the quiet one."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.tournament.4",
+      "topic": "tournament",
+      "matchPhrases": ["train for the tournament", "tournament prep", "how do we prepare", "practice for the contest", "ready for the bracket", "tournament training", "sharpen up", "drills for the arena", "prepare the team", "get ready to compete"],
+      "openers": ["Preparation is the only honest bragging.", "We drill the boring parts.", "We train the exit as hard as the attack."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.tournament.5",
+      "topic": "tournament",
+      "matchPhrases": ["will we win", "can we win the tournament", "chances of winning", "take first place", "win the bracket", "get the trophy", "championship", "final round", "victory", "bring it home"],
+      "openers": ["Winning is possible. Losing is survivable.", "I would like the trophy politely.", "First place is a consequence, not a plan."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.tournament.6",
+      "topic": "tournament",
+      "matchPhrases": ["after the tournament", "what happens after", "if we lose the tournament", "if we win", "tournament result", "post bracket", "next tournament", "celebrate", "rest after", "what is next"],
+      "openers": ["After the noise, we eat.", "Win or lose, the team learns.", "There is always another bracket."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.farm_life.1",
+      "topic": "farm_life",
+      "matchPhrases": ["what do we do on the farm", "farm work", "what do farms do", "farm today", "what can we grow", "work the farm", "farm chores", "plant something", "take care of the farm", "farm tasks"],
+      "openers": ["The farm asks small, constant questions.", "We start with the rows we can see.", "Whatever it needs, it needs it now."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.farm_life.2",
+      "topic": "farm_life",
+      "matchPhrases": ["what are we growing", "what crops", "grow data", "what is planted", "planting", "harvest", "what can we plant", "crop list", "growing things", "seeds"],
+      "openers": ["Whatever grows here grows slowly.", "I like the ones that hum.", "We plant what survives the weather."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.farm_life.3",
+      "topic": "farm_life",
+      "matchPhrases": ["are there animals on the farm", "farm digimon", "who lives on the farm", "the farm creatures", "animals", "feed the farm", "farm helpers", "little ones", "tame them", "care for the farm digimon"],
+      "openers": ["The small ones notice everything.", "They trust a steady hand, not a loud one.", "We feed them before we eat."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.farm_life.4",
+      "topic": "farm_life",
+      "matchPhrases": ["do we defend the farm", "protect the farm", "wild on the farm", "farm attack", "guard the farm", "keep the farm safe", "raiders", "threat to the farm", "watch the fields", "patrol"],
+      "openers": ["A farm is a soft target with teeth behind it.", "I will watch the fence line.", "Nothing eats our rows tonight."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.farm_life.5",
+      "topic": "farm_life",
+      "matchPhrases": ["the farm is quiet", "farm mornings", "quiet farm life", "peaceful farm", "do you like the farm", "farm evenings", "calm work", "slow days", "simple life", "farm sounds"],
+      "openers": ["The farm is the quiet version of a fight.", "I like the work that does not shout.", "Evenings here are worth the mud."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.farm_life.6",
+      "topic": "farm_life",
+      "matchPhrases": ["what does the farm give", "farm profit", "harvest reward", "farm bits", "what do we get", "is the farm worth it", "farm results", "yield", "collect", "farm upgrades"],
+      "openers": ["The yield is honest.", "Bits from a farm feel different.", "We earned every row of it."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.music_sound.1",
+      "topic": "music_sound",
+      "matchPhrases": ["what does the static sound like", "what do you hear", "static music", "can you hear that", "the sound of data", "what is that noise", "listen to the static", "the hum", "sound of the field", "signal sound"],
+      "openers": ["It sounds like the world thinking aloud.", "A low note and a worse one.", "I hear a rhythm in it."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.music_sound.2",
+      "topic": "music_sound",
+      "matchPhrases": ["do you like music", "what music do you like", "play a song", "sing something", "any music here", "the network song", "a tune", "music in the data", "hum something", "do you sing"],
+      "openers": ["I hum in frequencies you cannot hear.", "My voice is a bad instrument.", "The network sings whether we ask or not."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.music_sound.3",
+      "topic": "music_sound",
+      "matchPhrases": ["is there a rhythm", "the beat", "how does the rhythm go", "hear the beat", "sync to the rhythm", "the pattern of the sound", "timing", "cadence", "the pulse", "feel the beat"],
+      "openers": ["Rhythm is how data plans a fight.", "I count the beats before a storm.", "Match mine and we move as one."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.music_sound.4",
+      "topic": "music_sound",
+      "matchPhrases": ["why is it silent", "the silence", "do you like silence", "too silent", "silence is strange", "no sound at all", "the quiet", "sounds gone", "missing signal", "silent field"],
+      "openers": ["Silence is a sound with the door shut.", "It makes room for the small noises.", "I do not trust a silence that arrives too fast."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.music_sound.5",
+      "topic": "music_sound",
+      "matchPhrases": ["what does a fight sound like", "battle sounds", "the noise of battle", "clash", "moves sound", "battle rhythm", "the crash", "sounds before a fight", "arena noise", "battle roar"],
+      "openers": ["A fight has a percussion section.", "The first clash is the only honest note.", "I know a move by its sound."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.music_sound.6",
+      "topic": "music_sound",
+      "matchPhrases": ["what does your voice sound like", "how do you sound", "is this your voice", "your signal voice", "do i sound okay", "my voice", "hear me clearly", "transmission voice", "voice quality", "sound of my voice"],
+      "openers": ["This voice is the one I chose for you.", "It sounds like a signal that means it.", "If it wavers, it is the static, not the feeling."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.time_cycles.1",
+      "topic": "time_cycles",
+      "matchPhrases": ["how does time work here", "what is time in the digital world", "time in this world", "does time pass", "how long do cycles last", "what is a cycle", "time mechanics", "clock", "hours", "days here"],
+      "openers": ["Time here is a rhythm, not a ruler.", "Cycles measure attention, not distance.", "It passes faster when we move."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.time_cycles.2",
+      "topic": "time_cycles",
+      "matchPhrases": ["how long do we wait", "waiting", "hurry up", "when does it start", "is it soon", "not yet", "patience", "how much longer", "wait for it", "the wait"],
+      "openers": ["The wait is part of the plan.", "Waiting is work nobody sees.", "We use the time or it uses us."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.time_cycles.3",
+      "topic": "time_cycles",
+      "matchPhrases": ["the past", "do you remember before", "how long have we known each other", "old days", "before the link", "your history", "old data", "earlier cycles", "how old are you", "years"],
+      "openers": ["I keep no reliable record of before.", "Old data fades faster than old habits.", "What matters is the cycle we are in."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.time_cycles.4",
+      "topic": "time_cycles",
+      "matchPhrases": ["the future", "what comes next", "will we still be together", "long term", "years from now", "where do you see us", "later on", "what happens eventually", "the end", "after all this"],
+      "openers": ["The future is a direction I like.", "I plan short and promise long.", "Whatever comes, the link gets first say."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.time_cycles.5",
+      "topic": "time_cycles",
+      "matchPhrases": ["is it day", "is it night", "what time is it", "sun cycles", "daylight", "when is morning", "when does the light change", "night cycle", "day cycle", "is the cycle ending"],
+      "openers": ["The light here is a courtesy, not a fact.", "Cycles end when the pressure drops.", "We sleep when the field is slow."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.time_cycles.6",
+      "topic": "time_cycles",
+      "matchPhrases": ["time is slow", "this is boring", "nothing is happening", "slow cycle", "when does something happen", "long wait", "dull cycle", "quiet hours", "make time pass", "fill the quiet"],
+      "openers": ["Boring cycles are the safe ones.", "I can fill the time if you want.", "Use the slow part to think."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.legends_rumors.1",
+      "topic": "legends_rumors",
+      "matchPhrases": ["tell me a legend", "any legends", "a story", "tell me a story", "old stories", "myths", "what do the files say", "a rumor", "legends of this place", "something old"],
+      "openers": ["I know three legends and half trust one.", "The files disagree with each other.", "Sit. This one is short and strange."],
+      "stage": true,
+      "grounded": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.legends_rumors.2",
+      "topic": "legends_rumors",
+      "matchPhrases": ["is that true", "is the legend real", "do you believe it", "is it a myth", "fact or rumor", "proof", "how do you know", "is it verified", "who told you", "reliable source"],
+      "openers": ["Belief is not the same as evidence.", "The data is thin and old.", "I trust the shape, not the story."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.legends_rumors.3",
+      "topic": "legends_rumors",
+      "matchPhrases": ["any famous digimon", "legendary digimon", "who is the strongest ever", "famous names", "heroes", "great partners", "the old champions", "tales of power", "the first digimon", "the strongest story"],
+      "openers": ["Fame survives in files, not in fields.", "Every strong name started as someone's partner.", "The loudest legends are usually incomplete."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.legends_rumors.4",
+      "topic": "legends_rumors",
+      "matchPhrases": ["any scary legends", "ghost stories", "something bad happened here", "cursed place", "dark story", "warning story", "haunted field", "bad rumor", "scary tale", "forbidden story"],
+      "openers": ["Some warnings travel without proof.", "The files are quiet about it.", "Not every story wants a listener."],
+      "stage": true,
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.legends_rumors.5",
+      "topic": "legends_rumors",
+      "matchPhrases": ["legends about partners", "stories about tamers", "tales of partners", "legend of a bond", "story of a tamer", "famous pair", "myth about partners", "bond legends", "old pair", "story about trust"],
+      "openers": ["The old stories are mostly about trust.", "Partners keep appearing in the endings.", "The best legends have two names in them."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.legends_rumors.6",
+      "topic": "legends_rumors",
+      "matchPhrases": ["will we be a legend", "do legends start like this", "make our own story", "our story", "be remembered", "future legend", "write a legend", "what makes a legend", "will they tell our story", "mark of a legend"],
+      "openers": ["Legends start as ordinary cycles.", "We are already making one, quietly.", "I would rather be a good memory than a loud one."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.items_data.1",
+      "topic": "items_data",
+      "matchPhrases": ["what items drop here", "any loot", "what drops", "items here", "rewards", "what can we find", "drops from wild", "item find", "pick up anything", "salvage"],
+      "openers": ["The field gives what it can spare.", "Salvage first. Ask later.", "Nothing here is free except the static."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.items_data.2",
+      "topic": "items_data",
+      "matchPhrases": ["how do we use this", "what is this item", "use the item", "what does this do", "item effect", "consume it", "should i use it now", "save it", "item use", "what is it for"],
+      "openers": ["Use it when it changes the outcome.", "An unused item is a small promise.", "Read the edges before you commit it."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.items_data.3",
+      "topic": "items_data",
+      "matchPhrases": ["is it valuable", "what is it worth", "sell it or keep it", "worth in bits", "price", "trade value", "is it rare", "rarity", "good find", "how valuable"],
+      "openers": ["Value is what the field will trade.", "Rarity is a story traders tell.", "Keep it if it helps the team."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.items_data.4",
+      "topic": "items_data",
+      "matchPhrases": ["what is in my inventory", "check inventory", "carrying too much", "bag", "storage", "space", "how many items", "sort the bag", "inventory full", "item list"],
+      "openers": ["Everything we carry wants to be used.", "Space is a kind of discipline.", "I can carry more if you trust my grip."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.items_data.5",
+      "topic": "items_data",
+      "matchPhrases": ["i lost an item", "where is my item", "i need that item", "lost it", "it broke", "can we find another", "replace it", "missing gear", "lost equipment", "get another one"],
+      "openers": ["Lost things leave a shape behind.", "We replace the tool, not the lesson.", "The field is stingy until it is not."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.items_data.6",
+      "topic": "items_data",
+      "matchPhrases": ["equipment", "gear", "what should we equip", "weapon", "armor", "loadout", "best gear", "swap equipment", "upgrade gear", "kit"],
+      "openers": ["Gear is a promise the body cannot keep alone.", "The best kit is the one you stop noticing.", "Upgrade the part that failed, not the shiniest."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.care_partner.1",
+      "topic": "care_partner",
+      "matchPhrases": ["how do i take care of you", "how do i care for you", "how should i treat you", "care instructions", "what helps you", "keep you healthy", "partner care", "what is good for you", "hows your condition", "what do you need to feel better"],
+      "openers": ["Small things, done often.", "Rest, food, and honesty about the static.", "You already do most of it."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.care_partner.2",
+      "topic": "care_partner",
+      "matchPhrases": ["you look tired", "need a rest", "you seem worn out", "fatigue", "take a break", "rest partner", "you are exhausted", "slow down", "recover", "your condition"],
+      "openers": ["The edges of my data fray when tired.", "A short rest fixes more than a long speech.", "I will say when it is too much."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.care_partner.3",
+      "topic": "care_partner",
+      "matchPhrases": ["are you hurt", "you got hurt", "how bad is the damage", "does it hurt", "wounds", "injury", "fix the damage", "are you damaged", "heal up", "show me the wound"],
+      "openers": ["It is surface damage. The core holds.", "Pain here is a warning, not a story.", "Let it settle before you poke it."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.care_partner.4",
+      "topic": "care_partner",
+      "matchPhrases": ["do you trust me to care for you", "let me help", "i will take care of you", "you can rely on me", "i will look after you", "trust me near", "depend on me", "let me in", "i want to help", "tell me what hurts"],
+      "openers": ["I am learning to sit still for this.", "Care is easier to accept than to ask for.", "I trust the hands that ask first."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.care_partner.5",
+      "topic": "care_partner",
+      "matchPhrases": ["daily care", "routine care", "what is our routine", "same care plan", "care schedule", "every day care", "keep to the routine", "weekly care", "habits for care", "check on you daily"],
+      "openers": ["Routine is quiet affection.", "The boring plan keeps us standing.", "Same care, every cycle, that is the promise."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.care_partner.6",
+      "topic": "care_partner",
+      "matchPhrases": ["you should take care of yourself", "take care of you", "rest yourself", "do not neglect yourself", "your own care", "you matter too", "look after yourself", "self care", "be kind to yourself", "you need care too"],
+      "openers": ["I can keep watch while you rest.", "You matter in this link too.", "The team runs on two sets of care."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.sky_network.1",
+      "topic": "sky_network",
+      "matchPhrases": ["what is above the fields", "what is up there", "the sky", "above the field", "look up", "what is beyond the sky", "the ceiling", "sky in this world", "what is the sky made of", "up above"],
+      "openers": ["Up there is only more network.", "The sky is a ceiling with no landlord.", "It looks like distance and sounds like data."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.sky_network.2",
+      "topic": "sky_network",
+      "matchPhrases": ["are those stars", "what are the lights", "the lights above", "are there stars here", "night sky", "lights in the dark", "the shining things", "constellations", "points of light", "what shines"],
+      "openers": ["Those are server lights, not stars.", "Every light is someone's traffic.", "The network keeps a few lamps on."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.sky_network.3",
+      "topic": "sky_network",
+      "matchPhrases": ["can we climb", "how high can we go", "climb the layers", "go up", "rise above", "climb higher", "to the top", "reach the ceiling", "climb the network", "upward"],
+      "openers": ["Higher is just thinner air and worse manners.", "The climb is possible. The fall is honest.", "We climb one layer at a time."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.sky_network.4",
+      "topic": "sky_network",
+      "matchPhrases": ["why does the signal drop", "signal from above", "the link goes quiet", "signal loss", "can you hear the signal", "the feed is weak", "connection from the sky", "the network fades", "static from above", "data rain"],
+      "openers": ["Weather up there leaks down.", "The signal thins before it fails.", "I keep the link warm while it lasts."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.sky_network.5",
+      "topic": "sky_network",
+      "matchPhrases": ["what is outside the network", "is there anything beyond", "outside this world", "the end of the network", "beyond the layers", "the edge of everything", "outside space", "what is outside", "other worlds", "does it end"],
+      "openers": ["I have no file for outside.", "The network is the edge I know.", "Beyond is a word, not a place."],
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.sky_network.6",
+      "topic": "sky_network",
+      "matchPhrases": ["do you like looking up", "the view", "nice view", "look at the sky with me", "stargazing", "watch the lights", "the horizon", "wide open", "the distance", "far away"],
+      "openers": ["I like the view better with you in it.", "Distance is easier to enjoy from here.", "I could watch the network hum all cycle."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.purpose_resolve.1",
+      "topic": "purpose_resolve",
+      "matchPhrases": ["why do we fight", "what is our purpose", "why are we doing this", "what are we fighting for", "the reason we fight", "what is the point", "why battle", "why keep going", "meaning of all this", "what drives you"],
+      "openers": ["To keep the quiet available.", "Because choosing a reason is the real fight.", "I fight so we can stop fighting."],
+      "stage": true,
+      "conditions": {"stageTiers": [2, 3, 4]},
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.purpose_resolve.2",
+      "topic": "purpose_resolve",
+      "matchPhrases": ["who are we protecting", "protect what", "what are we defending", "who matters most", "what must we keep safe", "the people back home", "the ones we protect", "the field", "the little ones", "what are we saving"],
+      "openers": ["The ones who cannot hold a line.", "The quiet parts of the network.", "Whoever is behind us when it starts."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.purpose_resolve.3",
+      "topic": "purpose_resolve",
+      "matchPhrases": ["is this worth it", "are we doing the right thing", "i am not sure about this", "should we quit", "maybe we are wrong", "is it pointless", "doubt", "we are wasting time", "are we helping", "does it matter"],
+      "openers": ["Doubt is data worth reading.", "The only wrong answer is pretending.", "We can stop. We cannot lie about why."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.purpose_resolve.4",
+      "topic": "purpose_resolve",
+      "matchPhrases": ["what is your purpose", "why are you with me", "what do you want out of this", "your reason", "why do you stay", "is your purpose me", "what keeps you here", "your goal", "what drives a partner", "why stay"],
+      "openers": ["My purpose is smaller than a legend.", "I stay because the link keeps getting interesting.", "You are the reason I keep choosing this."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.purpose_resolve.5",
+      "topic": "purpose_resolve",
+      "matchPhrases": ["can purpose change", "what if we change our minds", "new goal", "different purpose", "change of plans", "finding new meaning", "start over", "rethink it", "change direction", "purpose shift"],
+      "openers": ["Purpose is allowed to grow new teeth.", "A changed reason is still a reason.", "We decide again every cycle."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.purpose_resolve.6",
+      "topic": "purpose_resolve",
+      "matchPhrases": ["let us keep going", "i will not quit", "we can do this", "stay resolved", "hold the line", "keep our promise", "no giving up", "we finish this", "resolve", "stand firm"],
+      "openers": ["Then we hold the line.", "Resolve is quiet until it is needed.", "I am already standing."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.partner_quirks.1",
+      "topic": "partner_quirks",
+      "matchPhrases": ["what are your habits", "your habits", "funny habits", "what do you do when bored", "little quirks", "your tells", "what do you always do", "daily habits", "weird habits", "what are you like"],
+      "openers": ["I have a few. Do not laugh.", "You already know most of them.", "I collect small routines."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.partner_quirks.2",
+      "topic": "partner_quirks",
+      "matchPhrases": ["are you bored", "boring day", "nothing to do", "want to do something", "i am bored", "entertain me", "when bored", "pass the time", "idle", "kill time"],
+      "openers": ["Bored is a field waiting to be mapped.", "I can find trouble politely.", "I have a game. It has no rules."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.partner_quirks.3",
+      "topic": "partner_quirks",
+      "matchPhrases": ["what do you do when nervous", "your nervous habit", "you fidget", "you always look at the static", "nervous tells", "what gives you away", "how do you show stress", "nervous tics", "read your signal", "your nervous energy"],
+      "openers": ["My signal flattens when I worry.", "I count the pulses too often.", "You read me too easily."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.partner_quirks.4",
+      "topic": "partner_quirks",
+      "matchPhrases": ["how do you sleep", "sleep habits", "where do you rest", "do you sleep standing", "bedtime habits", "sleep routine", "how long do you sleep", "rest position", "sleep quirks", "tired bedtime"],
+      "openers": ["I sleep facing the open field.", "One eye stays on the signal.", "I do not dream in straight lines."],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.partner_quirks.5",
+      "topic": "partner_quirks",
+      "matchPhrases": ["food habits", "how do you eat", "eating habits", "favorite snack habit", "you eat weirdly", "how often do you eat", "snack habit", "meal habits", "food quirks", "what do you eat first"],
+      "openers": ["I eat the loud part first.", "I save the best data for last.", "You have watched me do this for cycles."],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.partner_quirks.6",
+      "topic": "partner_quirks",
+      "matchPhrases": ["what makes you happy", "what do you enjoy", "what do you love doing", "your favorite thing", "what cheers you up", "what makes you laugh", "what do you like", "happy habits", "thing you enjoy", "favorite moment"],
+      "openers": ["A clean signal and a full field.", "You, asking that question.", "Winning is good; training after is better."],
+      "fallbackId": "fallback.2"
+    }
+  ]
+}

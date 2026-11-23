@@ -472,6 +472,18 @@ class WorldDsPartyEditsTest {
         }
     }
 
+    @Test fun chosenDestinationsPlaceTheRecordInTheFarmOrTheStorageBank() {
+        val destination = fixture()
+        assertThrows(IllegalArgumentException::class.java) {
+            WorldDsPartyEdits.insertRetainedRecord(destination,
+                revision(destination), retained(40), SaveContainer.FARM)
+        }
+        val bankInsertion = WorldDsPartyEdits.insertRetainedRecord(destination,
+            revision(destination), retained(41), SaveContainer.BANK)
+        val bankRecord = WorldDsSaveReader().read(bankInsertion.candidateBytes)
+            .records.single { it.nativeIdentity == "save-local:41" }
+        assertEquals(SaveContainer.UNASSIGNED, bankRecord.container)
+    }
     @Test fun insertionWritesEveryPopulatedCopyAndOnlyRaisesTheirOwnHighWaterMarks() {
         val destination = fixture().also { it.copyOfRange(0, WorldDsSaveReader.COPY_STRIDE).copyInto(it, WorldDsSaveReader.COPY_STRIDE) }
         val insertion = WorldDsPartyEdits.insertRetainedRecord(destination, revision(destination), retained(40))

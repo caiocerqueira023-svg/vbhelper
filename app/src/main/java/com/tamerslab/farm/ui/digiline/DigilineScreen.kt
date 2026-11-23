@@ -86,7 +86,7 @@ fun DigilineScreen(navController: NavController) {
     // One-shot pin from Home: the conversation of the partner the visitor was just looking at.
     var pinnedId by remember { mutableStateOf<Long?>(null) }
     var pinnedCharacter by remember { mutableStateOf<CharacterDtos.CharacterWithSprites?>(null) }
-    val storageRepository = remember(app) { com.tamerslab.storage.data.StorageRepository(app.container.db) }
+    val storageRepository = remember(app) { app.container.storageRepository }
     LaunchedEffect(Unit) { pinnedId = DigilinePin.consume() }
     LaunchedEffect(pinnedId) {
         val id = pinnedId ?: return@LaunchedEffect

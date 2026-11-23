@@ -1,4 +1,4 @@
-﻿package com.tamerslab.transfer.ui
+package com.tamerslab.transfer.ui
 
 import android.net.Uri
 import android.util.Log
@@ -49,7 +49,7 @@ internal fun TransferWorkspaceScreen(game: TransferGame?, startInStorage: Boolea
     val documents = remember(app) { AndroidSaveDocuments(app) }
     val launcherIcons = remember(app) { NdsLauncherIconRepository(app) }
     val presentations = remember(app) { NativeSpeciesPresentationRepository(app.container.db, app.container.dotSpriteLibrary,
-        WorldDsSpeciesTable.load(context)) }
+        NdsStorySpeciesTables.load(context)) }
     val scope = rememberCoroutineScope()
     var sources by remember { mutableStateOf<List<LinkedSaveView>?>(null) }
     var archives by remember { mutableStateOf<List<NativeArchiveView>?>(null) }
@@ -97,13 +97,15 @@ internal fun TransferWorkspaceScreen(game: TransferGame?, startInStorage: Boolea
         ?: gameSources.firstOrNull()
     val observation = source?.observation
     val sourceId = source?.source?.sourceId
-    var containerKey by rememberSaveable(sourceId) { mutableStateOf(SaveContainer.PARTY.name) }
+    var containerKey by rememberSaveable(sourceId) { mutableStateOf("ALL") }
     var detailKey by remember(sourceId, observation?.contentRevision) { mutableStateOf<String?>(null) }
     var resolved by remember(sourceId, observation?.contentRevision) { mutableStateOf(emptyMap<String, CanonicalSpeciesDto>()) }
     var movingRecord by remember { mutableStateOf<ObservedDigimon?>(null) }
     var movingSpecies by remember { mutableStateOf<CanonicalSpeciesDto?>(null) }
-    val container = SaveContainer.valueOf(containerKey)
-    val records = observation?.let { shownRecords(it, container) }.orEmpty()
+    val container = containerKey.takeIf { it != "ALL" }?.let(SaveContainer::valueOf)
+    val allRecords = observation?.let { shownRecords(it) }.orEmpty()
+    val containerCounts = allRecords.groupingBy { it.container }.eachCount()
+    val records = allRecords.filter { container == null || it.container == container }
     val picker = rememberLauncherForActivityResult(OpenGameSaveDocument()) { uri: Uri? ->
         if (uri != null) scope.launch {
             opening = true
@@ -142,27 +144,35 @@ internal fun TransferWorkspaceScreen(game: TransferGame?, startInStorage: Boolea
 
     Column(Modifier.fillMaxSize()) {
         if (!startInStorage) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                // A single save opens directly. Only multiple saves need a chooser.
-                if (gameSources.size > 1) OutlinedButton(onClick = { choosingSave = true }, modifier = Modifier.weight(1f)) {
-                    Text(source?.source?.label.orEmpty(), Modifier.weight(1f), maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    Icon(Icons.Default.ArrowDropDown, null)
-                } else Text(source?.source?.label ?: stringResource(R.string.transfer_workspace_open),
-                    Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                IconButton(onClick = { sourceId?.let { scope.launch { repository.refresh(it) } } },
-                    enabled = sourceId != null && sourceId !in refreshing && !opening) {
-                    Icon(Icons.Default.Refresh, stringResource(R.string.transfer_refresh))
-                }
-            }
-            if (opening || sourceId in refreshing) LinearProgressIndicator(Modifier.fillMaxWidth())
+            val multipleCopies = observation?.records?.mapNotNull { it.nativeParameters?.saveBlock }
+                ?.distinct()?.size ?: 0 > 1
+            TransferSaveIdentityBar(
+                saveLabel = (source?.source?.label ?: stringResource(R.string.transfer_workspace_open))
+                    .removeSuffix(".sav"),
+                statusLine = source?.let { view ->
+                    when {
+                        view.source.lastError != null -> stringResource(R.string.transfer_cached)
+                        view.observation == null -> stringResource(R.string.transfer_never_read)
+                        else -> stringResource(R.string.transfer_save_box_summary,
+                            containerCounts[SaveContainer.PARTY] ?: 0,
+                            containerCounts[SaveContainer.FARM] ?: 0,
+                            containerCounts[SaveContainer.BANK] ?: 0)
+                    }
+                } ?: stringResource(R.string.transfer_workspace_open_hint),
+                leading = { game?.let { TransferOriginIcon(it, Modifier.size(40.dp)) } },
+                refreshing = opening || sourceId in refreshing,
+                onRefresh = { sourceId?.let { scope.launch { repository.refresh(it) } } },
+                onSwitchSaves = if (gameSources.size > 1) ({ choosingSave = true }) else null,
+                onSaveCopy = if (multipleCopies) ({ reviewingCopy = true }) else null,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+            )
         }
         when {
             startInStorage -> when {
                 vaultFailed -> OriginMessage(R.string.transfer_list_failed, R.string.transfer_refresh) { attempt++ }
                 archives == null -> OriginLoading()
                 archives.orEmpty().isEmpty() -> OriginMessage(R.string.transfer_workspace_vault_empty)
-                else -> LazyVerticalGrid(GridCells.Adaptive(104.dp), Modifier.weight(1f),
+                else -> LazyVerticalGrid(GridCells.Fixed(3), Modifier.weight(1f),
                     contentPadding = PaddingValues(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(archives.orEmpty(), key = { it.snapshot.individualId }) { archive ->
@@ -171,9 +181,17 @@ internal fun TransferWorkspaceScreen(game: TransferGame?, startInStorage: Boolea
                             catch (cancelled: CancellationException) { throw cancelled }
                             catch (_: Exception) { value = null }
                         }
-                        TransferIndividualTile(archive.nickname?.takeIf(String::isNotBlank) ?: archive.record?.storedName.orEmpty(),
-                            archive.record?.level, species, artworkVersion, onClick = { archiveId = archive.snapshot.id })
+                        TransferDigimonCard(
+                            archive.nickname?.takeIf(String::isNotBlank) ?: archive.record?.storedName.orEmpty(),
+                            archive.record?.level, species,
+                            archive.record?.container ?: SaveContainer.UNASSIGNED,
+                            archive.record?.position ?: 0, artworkVersion,
+                            onClick = { archiveId = archive.snapshot.id })
                     }
+                    val archiveRecords = archives.orEmpty().size
+                    val placeholders = if (archiveRecords < 12) 12 - archiveRecords
+                    else (3 - archiveRecords % 3) % 3
+                    items(placeholders, key = { "empty-$it" }) { TransferEmptySlot() }
                 }
             }
             failed -> OriginMessage(R.string.transfer_list_failed, R.string.transfer_refresh) { attempt++ }
@@ -182,26 +200,21 @@ internal fun TransferWorkspaceScreen(game: TransferGame?, startInStorage: Boolea
             observation == null -> OriginMessage(source.source.lastError?.let(::saveErrorResource) ?: R.string.transfer_never_read,
                 R.string.transfer_workspace_manage, onManageSaves)
             else -> {
-                if (source.source.lastError != null) Text(stringResource(R.string.transfer_cached), Modifier.padding(horizontal = 16.dp),
-                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-                if (observation.records.mapNotNull { it.nativeParameters?.saveBlock }.distinct().size > 1) TextButton(onClick = { reviewingCopy = true }) {
-                    Text(stringResource(R.string.world_ds_choose_copy))
-                }
-                FlowRow(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    SaveContainer.entries.filter { candidate -> candidate == SaveContainer.PARTY ||
-                        observation.records.any { it.container == candidate } }.forEach { candidate ->
-                        FilterChip(selected = container == candidate, onClick = { containerKey = candidate.name },
-                            label = { Text(stringResource(containerLabel(candidate))) })
-                    }
-                }
-                if (records.isEmpty()) OriginMessage(R.string.transfer_workspace_no_records)
-                else LazyVerticalGrid(GridCells.Adaptive(104.dp), Modifier.weight(1f),
+                TransferScopeTabs(containerCounts, allRecords.size, container,
+                    onSelect = { containerKey = it?.name ?: "ALL" },
+                    modifier = Modifier.padding(horizontal = 16.dp))
+                if (records.isEmpty()) OriginMessage(R.string.transfer_box_empty)
+                else LazyVerticalGrid(GridCells.Fixed(3), Modifier.weight(1f),
                     contentPadding = PaddingValues(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     items(records, key = { it.recordKey }) { record ->
-                        TransferIndividualTile(record.storedName, record.level, resolved[record.recordKey], artworkVersion,
+                        TransferDigimonCard(record.storedName, record.level, resolved[record.recordKey],
+                            record.container, record.position, artworkVersion,
                             onClick = { detailKey = record.recordKey })
                     }
+                    val placeholders = if (records.size < 12) 12 - records.size
+                    else (3 - records.size % 3) % 3
+                    items(placeholders, key = { "empty-$it" }) { TransferEmptySlot() }
                 }
             }
         }
@@ -221,7 +234,7 @@ internal fun TransferWorkspaceScreen(game: TransferGame?, startInStorage: Boolea
         val blocker = source?.let { app.container.experimentalGameMoves.blocker(it, record) }
         val admissionBlocker = if (record.container == SaveContainer.UNASSIGNED && movingRecord == null)
             source?.let { app.container.experimentalGameMoves.admissionBlocker(it, record) } else null
-        TransferIndividualInformation(record, record.storedName, movingSpecies ?: resolved[record.recordKey], artworkVersion,
+        TransferInspectorSheet(record, record.storedName, movingSpecies ?: resolved[record.recordKey], artworkVersion,
             moveIntoStorage = true, moving = movingRecord != null,
             moveBlocker = if (movingRecord != null) null else blocker?.let(::moveBlockerText),
             onMove = if (source == null || observation == null || blocker != null) null else ({
@@ -272,8 +285,9 @@ internal fun TransferWorkspaceScreen(game: TransferGame?, startInStorage: Boolea
             catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) { value = null }
         }
-        archive.record?.let { record -> TransferIndividualInformation(record,
+        archive.record?.let { record -> TransferInspectorSheet(record,
             archive.nickname?.takeIf(String::isNotBlank) ?: record.storedName, species, artworkVersion,
+            individualId = archive.snapshot.individualId,
             moveIntoStorage = false, moveBlocker = null,
             onMove = if (WorldDsSendPolicy.nativeReturnable(record)) ({ onSendToGame(archive.snapshot.individualId) }) else null,
             onDismiss = { archiveId = null }) }

@@ -4,12 +4,376 @@ All notable changes to Tamers Lab are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions are project
 milestones rather than strict SemVer.
 
-## [Unreleased] — Alpha 0.7.0
+## [Unreleased] â€” Alpha 0.7.0
+
+### Added
+
+- **EXP counters now written by Dawn/Dusk and Lost Evolution stories.** Dawn/Dusk record generation
+  accepts the normalized EXP channels and writes all nine counters; Lost Evolution writes its single
+  EXP word from the tracked story total. Round-trip tests now assert the EXP total survives all three
+  story layouts.
+
+
+- **World DS created-at-level bootstrap, completing the one-time story seed for all three titles.**
+  Recovered the DS1 stat-scaling routine from the retail ARM9 (`FUN_020a1c70`: base species block ×
+  `(level * growth + 100000) / 100000`, dumped growth rows, 999/9999 clamps), extended the species
+  extractor with the creation block (base stats, base level, growth index), added
+  `WorldDsCreationStats`, and wired the one-time World DS story seed into the send projection. Provider
+  tests cover base-level start, growth and caps; transfer package 165/0.
+
+
+- **Lost Evolution created-at-level bootstrap.** Recovered the LE level-up data from the retail ARM9:
+  growth pairs at `DAT_020cf870 = 0x02142258` (base + random-range per stat), the `0x66666667` 1/10
+  fixed-point scale, clamps 9999 (HP/MP) and 999 (combat), and speed copied from the species (cap 99).
+  `LeCreationStats` implements the provider with the deterministic expectation of the game formula, and
+  the send projection now performs the one-time Lost Evolution story seed for partners that only have
+  app/VB progress. Provider tests cover level-1 equality and cap bands.
+
+
+- **One-time Dawn/Dusk story bootstrap.** The game's own created-at-level data was extracted from the
+  retail ROM (growth rows at ARM9 0x0211E298, 1/10 fixed-point scale, 9999/999 caps), implemented as
+  `Ds2CreationStats`, and wired into the send projection: a Digimon with app/VB progress but no story
+  block yet is seeded exactly once (level from the VP curve, stats from the game formula) before its
+  first Dawn/Dusk write. Tests cover base-level equality, growth and the species level cap.
+
+
+- **Dawn/Dusk round-trip coverage for the story block.** `StoryRoundTripTest` now also writes the tracked
+  story stats into a Dawn/Dusk record and reads them back (level, HP/MP/ATK/DEF/SPI/SPD, nickname), so
+  all three story layouts have write/read verification for the shared story progression.
+
+
+- **Story round-trip tests.** New `StoryRoundTripTest` writes a tracked story block into a World DS
+  record and into a Lost Evolution record and reads them back: level, HP/MP/ATK/DEF/SPI/SPD, EXP total
+  (World DS), Lost Evolution aptitude and the stored nickname all survive the round trip, and a retained
+  seed keeps its record identity while the story stats are written.
+
+
+- **Bootstrap policy seam and engine-formula research for first-time story entry.** `StoryBootstrapPolicy`
+  now defines the one-time story seed (level from the VP curve; stats supplied per title by a
+  `NativeCreationStats` provider, refusing to invent stats without one), and the Dawn/Dusk per-level
+  stat-growth formula was recovered from the decompiled ARM9 (growth rows + RNG + fixed-point scaling +
+  clamps) and documented for the provider implementation.
+
+
+- **Progress-domain foundation for how transfers will track progression.** Database v59 adds
+  `story_progress` (one block shared by World DS / Dawn / Dusk / Lost Evolution: level, total EXP,
+  HP/MP/ATK/DEF/SPI/SPD, optional aptitude) and `vb_progress` (stage, vital points, training, mood,
+  battles, activity, generation/rank), plus the seed-provenance fields that make the first-time
+  conversion happen at most once. `ProgressDomainRules` owns the VP→level curve (7500 → level 75),
+  clamping, and the seed-once rule; no transfer behaviour changes yet.
+
+
+- **Digimon Story: Lost Evolution is a supported transfer title.** The third NDS Story adapter
+  (Japanese `BLEJ` ROM with the Operation Decoded English v1.1 translation) is recovered entirely
+  from the ROM's own save/creator code and validated against the user's retail save: two
+  `0x8000`-byte MD5 slots with the `DM3_000` signature, the serialized player state at `+0x20`,
+  40 x `0x78` records at `0x1850`, the 8-slot u64 party array, four farm groups, the team
+  container, and the game's own next-identity allocator. Saves now decode on the shared reader
+  (party and farm residents are imported through the reviewed flow), species identity resolves
+  from a ROM-generated 314-species asset with 51 documented localization aliases, native moves
+  remove the exact record and every party/farm/team/partner reference, and sends write retained
+  records or synthesize new ones (sequence bump, MD5 reseal, readback, byte-exact restore);
+  farm residents are part of the transfer scope for this layout (the editor clears the farm
+  reference), unlike the party-scope World DS/Dawn-Dusk adapters.
+  App-side wiring covers the origin list, capabilities, import profile, stat policy
+  (`le-stat-v1`), materialization and move/send branches. Full evidence and the honest
+  verification boundary (in-game boot acceptance still pending) are in
+  [LOST_EVOLUTION_TRANSFER_PLAN.md](LOST_EVOLUTION_TRANSFER_PLAN.md) and
+  [game-save-core/LOST_EVOLUTION_RESEARCH.md](game-save-core/LOST_EVOLUTION_RESEARCH.md).
+
+### Added
+
+- **Choose where a sent Digimon lands (party, bank or farm), per DS title.** The send screen now
+  shows destination chips for the selected game: Lost Evolution offers farm (default), party and
+  bank using the engine's own add rules; World DS offers party and bank (bank = record stored
+  without a party reference); Dawn/Dusk offers party and bank because its save layout does not
+  serialize farms. The native editors accept the destination, keep the two-copy mirror, identity
+  windows, player-state XOR checksum and byte-exact undo (World DS undo now also restores the farm
+  table), the send journal records the destination so recovery rebuilds the same placement, and the
+  commit check verifies the record landed in the container the player chose.
+
+### Fixed
+
+- **Partners that exist only in Dawn/Dusk/Lost Evolution still showed as blocked everywhere.** The
+  landing projection (`outbound()` with no target) assumed World DS whenever the partner had no source
+  game. For a species absent from World DS this returned null, so the send screen treated the partner
+  as unprojectable and disabled every destination before the per-game blockers were consulted. When no
+  source game exists, the projection now tries World DS, Dawn/Dusk and Lost Evolution in order and
+  returns the first title that can actually represent the species — so e.g. Devidramon correctly
+  exposes Dawn/Dusk/Lost Evolution and only shows the World DS species blocker.
+
+### Fixed
+
+- **Partners blocked from every story game even though their species exists.** Two causes were fixed:
+  (1) the shared story block is backfilled from a partner's retained native snapshot before any
+  bootstrap, so pre-tracking imports carry their real progress; (2) story stats are clamped into each
+  title's record bands when written, fixing a Lost Evolution crash ("speed outside the record range")
+  for story blocks seeded from Dawn/Dusk records whose speed word is 0. Verified against the owner's
+  database: every previously blocked partner with a supported species now projects a record for at
+  least one title; only species that no supported title contains remain blocked, with the explicit
+  species reason.
+
+### Fixed
+
+- **Partners imported before story tracking existed can now be sent.** The send projection backfills
+  the shared story block from the individual's own retained native snapshot (World DS, Dawn/Dusk or
+  Lost Evolution layout) before attempting a bootstrap. Previously such partners had no story block
+  and no app-character-derived seed, so every destination reported "no saved game record". A retained
+  record is authoritative story progress, so the send now carries its real level/stats instead of
+  being blocked.
+
+### Fixed
+
+- **Corrected the progress model: VB progress is the app's existing progression, not a second table.**
+  `story_progress` remains the only new block. The experimental `vb_progress` table and its
+  export/import wiring were removed (DB v60 drops it): bracelet transfers again read/write the existing
+  app columns exactly as VBHelper always has, story imports only update the tracked story block, and
+  the transfer inspector shows the Story-progress group beside the native facts. First-send bootstrap
+  (VB/app progression → story) is still the pending piece.
+
+### Fixed
+
+- **Every stored Digimon is now projectable into every wired title unless its species is the reason.**
+  The send projection no longer requires an app character representation: stats fall back to a minimal
+  valid reading, and the species falls back from the individual field to the retained record's own
+  native species name. There is **no species substitution**: a species the target title does not contain
+  blocks that destination with an explicit reason, and a Digimon with no species assigned is blocked
+  with its own reason. Both reasons are shown in the destination chooser and on the send screen header,
+  replacing the old "No retained ... record" message.
+
+### Fixed
+
+- **Dawn/Dusk move-out duplication (record stayed in the game while the app imported it).** The
+  Dawn/Dusk editor edited only the newest card copy, but the retail loader can load the other copy -
+  so a moved-out Digimon stayed in the game while the app already had it in Storage. The layout now
+  applies every logical edit to **all populated copies** (removal clears the party reference and the
+  record in each copy, insertion places the record/party reference in each copy, replacement and
+  admission touch every copy that holds the identity) and bumps/seals each copy's sequence and MD5,
+  like the game's own slot writes. The user's divergent Dawn save was repaired directly (both copies
+  now omit the moved Digimon, MD5s valid, sequences 13/15).
+
+- **Lost Evolution encyclopedia registration.** The engine registers each created species in the
+  player-state book at `+0x460` (one u64 per species, owned pattern `0x4000000100000000`, set by
+  `FUN_020ae72c`/`FUN_020ae7ac` during creation). App-inserted records skipped that step, so sent
+  Digimon did not appear in the game's species encyclopedia. The editor now registers the species in
+  both card copies before mirroring, preserving any bits the game already set, with a regression
+  test (World DS and Dawn/Dusk have no equivalent serialized species book in their layouts).
+
+
+- **Lost Evolution save writes now load in the game (verified on-device).** After the player-state
+  XOR checksum fix, an in-game send of a Digimon was accepted by the retail game - the first
+  app-written save the game has loaded. Move-to-Storage (native removal/admission) is enabled for
+  Lost Evolution again, since every edit path now recomputes the checksum, mirrors both card copies,
+  mirrors the engine's delete routine and protects the current partner.
+
+- **Lost Evolution saves carried a stale player-state checksum - the actual reason the game
+  rejected modified saves.** The engine stores an XOR checksum at player-state `+0x4078` (save
+  `+0x4098`): it sets the word to `0xFFFFFFFF`, XORs every u32 of the serialized player state
+  (`0x7FE0` bytes, save `+0x20..+0x8000`) and stores the result, so a valid state always XORs to
+  `0xFFFFFFFF`. Both game-written saves on disk satisfy this in both card copies; every app-written
+  save (sends and moves) kept the old checksum word and therefore failed the game's post-load
+  validation even though the header tag/MD5 were correct. The editor now recomputes the checksum on
+  every edit before mirroring the body to both card copies, with a regression test asserting the
+  invariant for removals and both insert kinds.
+
+- **Lost Evolution synthesized records missed a mandatory identity window.** Every game-written
+  record repeats the identity's high word at record `+0x08` and initializes the six tail slots at
+  `+0x5C` to `0xFFFF` (the engine's `FUN_020b0100`/`FUN_020b15e8`). Records produced by the app kept
+  `+0x08 = 0` and an all-zero tail, so written saves carried a record no game-written save ever has -
+  the most likely reason the game rejected/ignored them. `buildRecord` now writes the marker window,
+  and every insert stamps all identity windows plus the tail exactly like game-created records (this
+  also repairs records already stored by older app builds). Regression tests cover both the fresh and
+  the legacy-record paths.
+
+### Changed
+
+- **The one-time story conversion is only spent by a successful transfer.** Previews, destination
+  blockers and the send screen's landing projection now compute the would-be story block without
+  saving it; the seed (VB→story or retained-snapshot backfill) is persisted only after the write is
+  verified and the operation is committed. Opening a partner or backing out of the confirmation no
+  longer consumes the one-time conversion.
+
+
+- **Bracelet transfers now use the canonical VB progress block.** Exporting to a VB watch takes stage,
+  vital points, mood, age, trophies, wins/losses and activity from `vb_progress` when it exists (the
+  legacy app columns remain the fallback), and a watch import records the observed values back into
+  that block with the original seed provenance preserved. Story progress is never read or written by
+  the bracelet path.
+
+
+- **Story gains no longer leak into VB progress after the first seed.** Materializing a story-game
+  record for the first time now seeds the canonical VB block once (tagged as a story-origin seed);
+  later returns update the tracked story block only, so in-game level/stat gains cannot overwrite the
+  bracelet-side progression. Seed provenance is preserved across later observations by both domains.
+
+
+- **Story progress is now the authority for story-game sends.** When a Digimon has a tracked story
+  block, World DS, Dawn, Dusk and Lost Evolution writes use its level/stats/aptitude exactly instead of
+  re-deriving them from the app/VB block; the old conversion is only used when no story block exists
+  yet. World DS also writes the normalized EXP total across its channels. The VB block remains
+  untouched by every story send. Known limit: Dawn/Dusk and Lost Evolution record generation still
+  zeroes their EXP counters, so EXP is tracked but not yet written there.
+
+
+- **Story progress is now tracked across all story titles.** Every World DS, Dawn, Dusk and Lost
+  Evolution snapshot records one shared story block on first materialization and again whenever the
+  game returns: level, normalized total EXP, HP/MP/ATK/DEF/SPI/SPD, and Lost Evolution aptitude. The
+  VB block is never read or written by this tracking, so story gains no longer have a path to change
+  bracelet progress. Sending still uses the old conversion until the story-authoritative write path
+  lands; this pass is observation only.
+
+
+- **Transfer navigation rethought around one library and one Tools page.** The persistent
+  Library/Storage/Tools tab row was removed: the library is the home, non-game origins (Storage,
+  Vital Bracelet, V-Pet) continue the same shelf as full-width rows under the game plates, and the header's wrench key opens a dedicated **Tools** page instead of a flat overflow
+  menu. Tools groups its rows by what they protect (Saves, Protection, Appearance), each row states
+  what it does and shows a live count (linked saves, backups, native records), and the old dropdown
+  menu, launcher-icon list and backups list were rebuilt with the same long-row grammar.
+
+
+- **Transfer screens redesigned as a Digimon library.** The hub is a two-column shelf of game
+  plates with launcher art and a party/farm/bank census; Storage and the bracelet are wide plates.
+  An opened game is a box: save identity bar, All/Party/Farm/Bank scope tabs with counts, and a
+  three-column grid of flat sprite cells with level badges and quiet empty slots. Tapping a Digimon
+  opens a full inspector sheet with native stats, a collapsed native-details block and one primary
+  Move action. Sends reuse the plates for destination games and the scope chips for Party/Bank/Farm
+  placement. Technical copy review moved out of the main path into a quiet save-bar action.
+
+
+- **Lost Evolution placement and record synthesis now follow the engine's own add paths.**
+  Recovered with the ROM analysis: party insert `FUN_020afce8` (six members maximum, three active
+  slots searched first, then three reserve slots), farm-group insert `FUN_020ea928` (first empty of
+  the group's eight residents), a third eight-slot assignment container at player +0x157C
+  (`FUN_020eb3e0` add / `FUN_020eb41c` remove) and the full delete pipeline `FUN_020ae0ac`. The
+  editor now applies those exact placement rules, and freshly synthesized records initialize the
+  six tail slots at +0x5C to `0xFFFF` exactly like the engine initializer `FUN_020b0100`
+  (`FUN_020b15e8`). Sends use farm placement; move-to-Storage stays disabled until an in-game send
+  is confirmed.
+
+- **Lost Evolution sends re-enabled with the game's own two-copy write model; moves stay off.**
+  Inspection of genuine saves showed the engine writes the *same edited body into both card slots*
+  with consecutive sequences (e.g. 14/15) and fresh MD5s; writing only the newest copy left the
+  slots divergent, which is what made the game reject/ignore app-written saves. The editor now
+  mirrors every edit to both slots exactly like the game writer, and Lost Evolution removal was
+  aligned with the game's delete routine (`FUN_020ae0ac`: party zero, farm-resident compaction,
+  second farm list compaction, team zero) with the current partner protected. Sends (insert-only,
+  farm placement) are enabled again; move-to-Storage for Lost Evolution stays disabled until an
+  in-game send is confirmed.
+
+- **Lost Evolution native writes are temporarily disabled (read/import stays available).** Device
+  evidence showed the app-written slots were never loaded by the game (the emulator kept its old
+  in-memory session), and repeated edits left the roster with holes in front of an untouched older
+  copy. A user save that the game then refused to recognize was restored from the genuine
+  pre-test backup (`NDS-wrapper-backups/vbhelper-pretest-20261120-1010/le.sav`, the save the game
+  itself wrote). The writer is hidden from move/send until the roster-packing and header bookkeeping
+  invariants are fully recovered and verified in-game; reads, roster browsing and imports are
+  unaffected. The damaged file is preserved for analysis at
+  `NDS-wrapper-backups/vbhelper-bad-save-analysis/le-bad.sav`.
+
+### Fixed
+
+- **Lost Evolution "Move to Storage" got stuck in recovery.** The first move actually wrote the
+  save, but the post-write check looked at every view of every card copy; the untouched older copy
+  legitimately still holds the pre-move roster, so the check failed and the operation was marked
+  recovery-required - which then blocked every later action on that save. The check now only looks
+  at the copy that was edited, acquisition/materialization failures can no longer turn a completed
+  move into recovery, and recovery logs the exact cause. The pending Dorumon move completes
+  automatically on the next action.
+- **Lost Evolution sends now place the Digimon in the farm, not the battle party.** The party is
+  story-gated (the user's save is capped at three members), so a fourth party slot would not be
+  shown in-game. Farm/Digimon-list placement is always visible and the player can move the Digimon
+  into the party when the story allows it.
+
+- **A send could be silently overwritten by a game session that was already open.** If the
+  emulator/game was running with the pre-write save in memory, it never loaded VBHelper's write and
+  its next in-game save replaced it; the app then kept treating the individual as away. The
+  send-complete message now tells the player to close the game completely before reopening it, and
+  every linked-save refresh releases individuals whose native identity no longer exists in that
+  save (the retained archive is untouched), so they return to Storage and can be sent again.
+
+- **Lost Evolution send aborted with "Could not update this source".** The Lost Evolution
+  identity allocator advanced the game's next-id counter on the *caller's* save bytes instead of
+  the planned candidate, so the send journal's backup no longer hashed to the revision it was
+  recorded against and the write was refused before touching the file (the source was left
+  unchanged). The allocator now works on the candidate only, every planned edit asserts its
+  source bytes still hash to the recorded revision, and a regression test covers all planning
+  operations. Cause confirmed from the device journal (`files/experimental-game-sends`) and
+  logcat (`IllegalStateException: Check failed` in the send journal check).
+- **Lost Evolution had no DS launcher icon option.** The title is now one of the verified
+  launcher-banner titles (`BLEJ`/`BLE` prefix) and appears in Transfer → Launcher icons, so its
+  32x32 DS launcher icon can be imported like World DS/Dawn/Dusk.
+
+- **Dawn/Dusk species showing as absent (Metal Mamemon, Black WereGarurumon, Prince Mamemon...).**
+  The game's record/status name table is truncated to ~12 glyphs (`MtlMamemon`, `WGarurumonB`), so
+  name-based identity failed and the UI reported those species as not in Dawn/Dusk. The packed
+  full-name table in ARM9 is now extracted into the species asset, with 11 documented localization
+  aliases (War=Were, Volcanomon=Volcamon, Rapidmon Perfect, Dot Falcomon, DK=Dark, chessmon
+  colours, SL=Slash, Tsuchidarumon). Species identification, availability and send target selection
+  all use it, so a species the game owns is no longer listed as missing.
+- **Agumon (Black) transferring as Agumon.** When an individual's species is a base form but its
+  assigned/exported card character is a variant of the same Digimon, the transfer now uses the
+  variant; a different Digimon still never overrides the individual's own species.
+
+- **A save whose two card slots are tied at the same counter is now editable.** The Dawn/Dusk
+  engine stores counter 1 when it saves into an erased slot, so a save VBHelper wrote (counter 1)
+  and the game then re-saved ends with **both** slots at 1 - a normal outcome, not corruption.
+  The app previously refused with "The save has no defensible authoritative copy". It now resolves
+  a tie automatically when the tied copies hold the same individuals (the World DS profile keeps
+  its previous no-auto-choice rule), and an edit bumps the chosen copy into a unique newest slot
+  again. Verified against the user's actual current Dawn and Dusk saves, including inserting a
+  synthesized record into them.
+- **Synthesized sends were routed to the retained inserter.** `Ds2SaveEditor.insertGenerated` delegated to `insertRetainedRecord`, so any
+  generated record (identity 0 until the destination assigns one) failed with "A retained record
+  must carry a nonzero local identity"; exact retained sends were unaffected. The facade now
+  calls `insertGeneratedRecord`, covered by a regression test through the editor registry.
+- **Sending to a played Dawn/Dusk save failed with "Could not update this source".** The
+  Dawn/Dusk editor assumed a save with exactly one populated card copy; any save the game had
+  written twice (both slots valid) was refused. Moves, sends and in-place repairs now edit only
+  the authoritative (newest valid) copy and leave the older slot byte-identical, matching the
+  game's own alternating slot writes. The send path also decides "replace in place" from the
+  authoritative copy instead of both slots.
+- **Cross-game sends from Storage are now simple.** A partner in Storage can be sent to any
+  linked supported game that owns its species: the same title reuses the exact retained record,
+  while a different title synthesizes a fresh record for its own layout. Previously a
+  cross-layout send was refused.
 
 Target: Alpha 0.7.0. This entry summarizes the refactor work that is implemented in the
 tree; it is not a release announcement and does not claim a verified green build.
 
+- **Digimon World Dawn/Dusk transfer support (read, acquire, native editor).** The NDS Story
+  family gained a second verified profile recovered from the user's own USA ROMs by static
+  analysis and checked against two retail saves: 64 KiB image, `0x7B2C` copies at `0x0`/`0x7B80`,
+  MD5 header over the copy with the header zeroed, u32 sequence at `+0x18`, `DSDIG2` magic, 40
+  records of `0x164` at `0x288`, party ids at `0x260`, last id at `0x25C`. Core adds
+  `NdsStoryProfiles.DAWN_DUSK`, `WorldDs2SaveReader` and `Ds2SaveEdits`/`Ds2SaveEditor`
+  (revision-bound removal, exact retained insertion, replacement, party admission, byte-exact
+  restore, sequence bump and header reseal). The app ships the extracted `ds2_species.json`
+  (436 species with base data, lineage and EXP curves — identical for Dawn and Dusk),
+  `Ds2SpeciesTable`/`NdsStorySpeciesTables` resolution, `Ds2StatConversion` (`ds2-stat-v1`),
+  Dawn/Dusk snapshot-import profiles and materialization seeding, and lists Dawn and Dusk in the
+  origin list (title resolved from the file name; generic names fall back to Dawn). Full evidence
+  and reproduction: `game-save-core/DS2_RESEARCH.md`. The Move/Send repositories resolve the
+  profile and editor per observation, so Dawn/Dusk party records use the normal Move to Storage /
+  Move to game flow (journal, backup, readback, presence); sends prefer the exact retained
+  record and otherwise synthesize a Dawn/Dusk record from the game's species defaults plus the app
+  projection (level capped by species max level, native EXP counters zero), with the retained
+  record as seed so identity/unknown bytes survive; a cross-layout send is refused. Not included
+  yet: a reviewed title-binding prompt, direct cross-title conversion, DigiFarm transfer and
+  in-game acceptance of written saves.
 ### Added
+
+- **DigiLine Free Talk ("Papo") â€” offline, retrieval-based chat with owned partners.** New
+  `com.tamerslab.digiline.freechat` package: deterministic integer-Q16 intent retrieval over an authored
+  Digimon-contextualized corpus (217 intents / 5,196 replies / 1,797 match phrases / 1,662 generated species-voice
+  entries), an intent-fallback rung and a **licensed dataset fallback layer** (3,553 pairs from
+  Cornell/OASST1/SODA after safety/language/quality filtering) that answers only when generated content has no
+  answer â€” with a matched-only database gate plus an **authored in-world repair move** ("say it again")
+  for input that matches nothing (no random dataset quotes: a device playtest showed they read as nonsense).
+  Includes PT-BR input aliasing for matching, entity-aware normalization, safety classes with private redaction,
+  Room v57 (`FreeChatProfile`, `FreeChatTurn`, migration), inline composer + suggestion chips + clear action on the
+  DigiLine thread, persona-tone wiring, and a Debug kill-switch. Generated content always takes priority over the
+  database layer; `DISTRIBUTION_GATE.md` documents the mandatory removal of licensed dataset text before any
+  distribution. See `DIGILINE_FREE_TALK_PLAN.md` and `FREE_CHAT_IMPLEMENTATION_CONTRACT.md`.
 
 - **VB Arena adventure stage ported into the Adventure screen.** The Adventure route now mirrors the
   composition of the discontinued `com.bandai.vitalbraceletarena` 2.1.0 XAPK: a city viewport with the
@@ -22,7 +386,7 @@ tree; it is not a release announcement and does not claim a verified green build
   violet/cyan, VB Lab charcoal/cyan, VB Arena green/mint, Digimon.net blue/gold) and keeps its
   dark-city-on-light-page polarity instead of inverting in the light palettes. Geometry and timing come
   from the shipped data read from the AssetBundle type trees: the running view uses the exact source
-  `CharacterView` rects (224x196 at panel fractions 0.4265/0.7416/0.5168/0.8319 by 0.3936/0.6976 — two
+  `CharacterView` rects (224x196 at panel fractions 0.4265/0.7416/0.5168/0.8319 by 0.3936/0.6976 â€” two
   partners on top, two below, all on the right), the adventure walk is `m_CharaMoveAnimId = 12`
   ("Walk": 20 draw frames per pose at 60 fps = 0.333 s), and the background shader speeds are
   0.12/0.13 UV/second; the source Front layer is inactive and is not drawn, and the walk/parallax
@@ -31,7 +395,7 @@ tree; it is not a release announcement and does not claim a verified green build
   edge while the countdown/Ready caption moved to the card bottom so the two no longer collide, the
   header carries no exploring count, and the whole screen keeps the selected palette's surfaces,
   signals, typography and reduce-motion behaviour. The
-  extracted artwork is used for personal preservation only — it is not redistributed — and the
+  extracted artwork is used for personal preservation only â€” it is not redistributed â€” and the
   recovery map (scene rect table, animation master data, sprite borders) stays with the local
   reverse-engineering material, outside the repository.
 
@@ -61,7 +425,7 @@ tree; it is not a release announcement and does not claim a verified green build
   ms), and no step bob. Pacing is probabilistic rather than directed: every finished beat rolls once
   for the next behaviour,
   with standing (49%) and walking (42%) dominating and a rare jog, workout, happy beat, nap or greeting
-  making up the rest — no global cycle, schedule or cap on how many residents may do the same thing at
+  making up the rest â€” no global cycle, schedule or cap on how many residents may do the same thing at
   once, so most of the time the island simply stands and walks about. Workouts and naps are held longer
   than the other beats (10-20 s and 30-60 s), so when one happens it is a state you can actually see.
   Greetings are the rarest roll
@@ -76,7 +440,7 @@ tree; it is not a release announcement and does not claim a verified green build
   happy with four stored frames, keeps the legacy four-frame fallback for partial data, and freezes to
   a staged tableau under reduced motion. Implementation and unit-test evidence live in `TESTING.md`.
 
-- **Home ↔ place transitions are animated instead of cut.** Choosing a place from the farm now
+- **Home â†” place transitions are animated instead of cut.** Choosing a place from the farm now
   dissolves the outgoing chrome while the place lifts and fades over the world; the farm itself holds
   the screen as a depth layer, pushing in slightly and staying composited until the new screen is
   opaque, so the world is never cut out from under a half-transparent page. Returning reverses the
@@ -93,11 +457,11 @@ tree; it is not a release announcement and does not claim a verified green build
   HP/MP/ESP strip floats bottom-left above the band, and one bottom command band holds the CP
   instrument, the polite event line and the nine 48dp cut-corner keys grouped as menus / orders /
   movement (portrait 3 columns, landscape 5 columns in two rows). The Radar battle keeps the Radar
-  world full-bleed from the encounter through the fight — the square viewport special case is gone —
+  world full-bleed from the encounter through the fight â€” the square viewport special case is gone â€”
   and the AR stage deliberately keeps its established square layout. Countdown, loading/transforming,
   pause (with the tactical-pause switch moved into its panel), exit, Blast timing, finisher captions and
   result/rewards all float over the live arena; the duplicate deck/HUD copies are replaced by shared
-  chrome, the `"â†’"` mojibake in the Blast attacker line is fixed, and the retired split-layout helper
+  chrome, the `"Ã¢â€ â€™"` mojibake in the Blast attacker line is fixed, and the retired split-layout helper
   and its test are removed. Implementation and unit-test evidence live in `TESTING.md`; native
   captures, TalkBack and font-scale acceptance are recorded there after the final gate.
 
@@ -108,14 +472,14 @@ tree; it is not a release announcement and does not claim a verified green build
   travel is measured from real-world positions only (never from the rotating plate or the zoom), so
   the compass turn rotates the cardboard with the world instead of looking like a direction change;
   standing tokens face the camera like idle island residents and the mirror flag uses a latch. The
-  radar clamps the camera assist to ±15° so walking Digimon read front-facing, walk/idle poses use a
+  radar clamps the camera assist to Â±15Â° so walking Digimon read front-facing, walk/idle poses use a
   smoothed speed with start/stop hysteresis (the ecosystem's 1 s interpolation steps cannot flicker
   the animation), and visibility is decided by the projected billboard rect instead of the
   visible-radius value, so zooming never hides a Digimon that is still on screen. The
   Radar place draws no distance/range rings (owner decision 2026-11-04): its compass is a large
   minimal instrument ring (120 thin cyan ticks, longer/thicker ticks at the four cardinal directions
-  with the longest north, no inner circle or lettering, and a red two-triangle needle — the reference
-  digivice arrow shape, larger triangle outward over a small gap and a smaller inward triangle —
+  with the longest north, no inner circle or lettering, and a red two-triangle needle â€” the reference
+  digivice arrow shape, larger triangle outward over a small gap and a smaller inward triangle â€”
   riding the ring at the nearest wild Digimon's bearing; while the radar is live the needle performs
   an occasional idle search gesture and returns to the true bearing, and the tick nearest that bearing
   is always drawn slightly longer so the reading stays visible (no gesture under reduced motion), and
@@ -128,7 +492,7 @@ tree; it is not a release announcement and does not claim a verified green build
   as the ring radius changes so its thickness stays constant on screen and follows a pinch smoothly
   with no texture rebuild or settle delay and no glow; tapping a Digimon now uses its full projected
   sprite rect (min 48dp) as the hit target with no pressed ripple, like tapping a farm resident,
-  instead of a floating box above its head (fixed 34° camera; the vertical
+  instead of a floating box above its head (fixed 34Â° camera; the vertical
   tilt gesture was removed), and the interaction dot that used to appear over a Digimon's head is
   tilt gesture was removed), and the interaction dot that used to appear over a Digimon's head is
   gone. The zoom envelope is pulled in: the neutral view is 200 m visible, the widest zoom-out 400 m
@@ -173,7 +537,7 @@ tree; it is not a release announcement and does not claim a verified green build
   `SceneQuality` frame pacing, thermal downgrade via `PowerManager.currentThermalStatus`
   on API 29+, and the `BattleSceneChannel` scene/UI state split behind
   `BuildConfig.BATTLE_SCENE_CHANNEL_ENABLED` (default off).
-- **Documentation set.** Module READMEs, ADRs 0001–0005, a root documentation index,
+- **Documentation set.** Module READMEs, ADRs 0001â€“0005, a root documentation index,
   Phase 5/7 decision records, and the Alpha 0.7.0 release checklist.
 - **Translations.** Japanese and Brazilian Portuguese string resources for the previously
   missing keys (including a locale farm-home file), removing the 52 lint
@@ -186,11 +550,11 @@ tree; it is not a release announcement and does not claim a verified green build
   placement, derives the scale from the surface, and starts the battle once the pose is
   stable (quality gates prevent premature locks; depth/instant hits are gravity-aligned so
   the arena never appears tilted). The AR scene shows only the two Digimon and the
-  `battle_boundary` ring — the floor, grid, dome and debris are hidden so the camera feed is
+  `battle_boundary` ring â€” the floor, grid, dome and debris are hidden so the camera feed is
   the backdrop. The battle `TextureView` is hosted on a `CONFIG_TRANSPARENT` swap chain
   (Filament 1.76.1 `ModelViewer` is opaque by default) so the fight composites over the live
   camera. Scale plans (`Auto`/`Tabletop`/`Room`/`Open space`) map the 16-unit radar arena to
-  0.9–8 m, chosen automatically from the detected surface, and an "AR battles" radar
+  0.9â€“8 m, chosen automatically from the detected surface, and an "AR battles" radar
   preference enables the mode. **AR battles are a developer-only option**: the preference and
   every AR entry point are gated by the build-time `AR_BATTLES_ENABLED` flag (true for
   debug/integrityCheck builds, false for release, so production builds hide and disable the
@@ -257,10 +621,10 @@ tree; it is not a release announcement and does not claim a verified green build
   Card archive. The import itself is unchanged and still overrides the built-in values.
 
 - **Settings is ordered and grouped like a setup flow; every option is unchanged.** Sections now
-  run Watch connection → Card archive (import plus the card-origin prompt) → Appearance → Sound →
-  Tamer profile and preferences → Species (catalog plus the VB-first/Dot-first artwork priority) →
-  Communication (research notes, and DigiLine while Debug and legacy chat are on) → Backup and
-  restore → Debug mode → About and credits. The card-origin toggle moved next to card import,
+  run Watch connection â†’ Card archive (import plus the card-origin prompt) â†’ Appearance â†’ Sound â†’
+  Tamer profile and preferences â†’ Species (catalog plus the VB-first/Dot-first artwork priority) â†’
+  Communication (research notes, and DigiLine while Debug and legacy chat are on) â†’ Backup and
+  restore â†’ Debug mode â†’ About and credits. The card-origin toggle moved next to card import,
   research notes and the DigiLine connection left the Tamer section, backup/restore moved above
   Debug and About, the redundant "Digimon graphics" header folded into Species, and the Tamer name
   is edited from its row in a dialog like the font and language instead of an inline field plus a
@@ -295,15 +659,15 @@ tree; it is not a release announcement and does not claim a verified green build
   archive, needs, transfer) and the Radar|Digifarm tabs on the legacy `World` route were deleted. The
   `World` alias now opens the Radar world directly. Stored farm data and tables are untouched; only
   the exposed UI was retired.
-- **The battle command band is a fixed 3×3 instrument after Re:Digitize Decode.** The float
+- **The battle command band is a fixed 3Ã—3 instrument after Re:Digitize Decode.** The float
   disappears: row one is the partner's three equipped techniques (name plus EN cost and live
   availability), row two Items / Special / Strategy, row three Focus / Defend / Move. Move arms a
   one-tap arena destination (move-to-point via the scene's unpick) instead of opening a menu, and the
   selected partner's vitals were folded into the band header so nothing floats over the arena. The
   special/Blast timing is a Decode-style command dial with a dark technical ring, a yellow progress arc,
   a red target arc, ticks and a needle, the ordered move's name in the centre, and a full-screen tap as
-  the only input (no Stop button). The nine deck keys are bare HUD keys — no fill and no angular
-  frame, each settled by a 1dp hairline — matching the bare-key instrument vocabulary of the top
+  the only input (no Stop button). The nine deck keys are bare HUD keys â€” no fill and no angular
+  frame, each settled by a 1dp hairline â€” matching the bare-key instrument vocabulary of the top
   cluster. The same deck is shared by training/Arena, Radar and the AR stage.
 
 - **The Radar ground scrolls as you walk.** The active partner still stays planted at the plate centre,
@@ -317,9 +681,9 @@ tree; it is not a release announcement and does not claim a verified green build
   metre-ring decal and the interaction ring were given late Filament render priorities (5 and 6) so the
   ring stays above the grid instead of flipping under it as the plate moves. The mapping is covered by
   two `RadarIsometricGeometryTest` cases (direction/rate and the half-cell fold). Slide rate follows
-  real metres, so it is subtle at the widest zoom and strongest when zoomed in — same as the 2D radar.
+  real metres, so it is subtle at the widest zoom and strongest when zoomed in â€” same as the 2D radar.
 
-- **Home ↔ place background now crossfades instead of cutting.** The destination pages are transparent
+- **Home â†” place background now crossfades instead of cutting.** The destination pages are transparent
   over the global device pattern, so during a change the farm layer *is* the arriving page's
   background. It used to be held opaque and dropped at the end of the transition, which made the
   background swap abruptly; it now pushes in while dissolving into the device pattern over 240 ms on the
@@ -331,8 +695,8 @@ tree; it is not a release announcement and does not claim a verified green build
 
 - **Digifarm roster adds members through the shared partner picker.** The "In the Digifarm" sheet still
   lists current members beside the resident-limit and artwork controls, but "Add member" now opens the
-  same full-screen Storage partner picker the Arena uses for choosing a partner — search, filters, sort
-  and the sprite grid — instead of the sheet's bespoke candidate list. The picked partner lands on the
+  same full-screen Storage partner picker the Arena uses for choosing a partner â€” search, filters, sort
+  and the sprite grid â€” instead of the sheet's bespoke candidate list. The picked partner lands on the
   island immediately, the picker stays open while there is free capacity, and it closes on the last
   slot. `FarmMemberOption` now carries the stored character so the roster can hand the picker real
   sprite data. (Native capture pending a connected device.)
@@ -340,7 +704,7 @@ tree; it is not a release announcement and does not claim a verified green build
 - **One top-header type across the app.** Every boxed screen header now uses the same top-cluster
   material as Home, the Radar place and the battle surface instead of the old filled gradient banner:
   a palette-resolved scrim, a left-aligned title with a single quiet context line, one junction line,
-  and bare 48dp keys — icon and target only, no fill, no hairline stroke and no cut-corner frame, the
+  and bare 48dp keys â€” icon and target only, no fill, no hairline stroke and no cut-corner frame, the
   way Home's HUD keys already were. The back key always owns the left edge (the battle header's left
   key is its exit action); every other action the header was given now sits on the right instead of
   split across both sides, and when a screen passes no back callback the header uses the activity back
@@ -357,10 +721,10 @@ tree; it is not a release announcement and does not claim a verified green build
   entering Home no longer resizes and re-lays out the view that owns the Filament swapchain. Items
   that appear later (scrolling, later pages) still animate in. No visual design change; measurement
   is pending a connected device, see `TESTING.md` and `docs/performance/BASELINE.md`.
-- **Wild↔wild chat and battles are paused for current versions (owner decision 2026-11-04).**
+- **Wildâ†”wild chat and battles are paused for current versions (owner decision 2026-11-04).**
   `WildSocialInteractionGate` unwires the autonomous pair planner, the wild-pair battle
   transfers and their activation while the social planner, dialogue service, NPC battle
-  simulation, persistence, history and Radar rendering paths all stay in the codebase. Wild →
+  simulation, persistence, history and Radar rendering paths all stay in the codebase. Wild â†’
   player greetings/challenges and every player-directed or joined encounter are unaffected.
   Pairs left open by an earlier build are cancelled with `WILD_SOCIAL_PAUSED` (releasing their
   participation claims) and paused pairs are omitted from the public ecosystem snapshot, so the
@@ -372,7 +736,7 @@ tree; it is not a release announcement and does not claim a verified green build
   `applicationId` remained `com.github.nacabaro.vbhelper` for upgrade continuity during the
   refactor (see [ADR 0001](docs/adr/0001-keep-application-id.md)); that decision was later
   superseded by [ADR 0006](docs/adr/0006-own-application-id.md), which gives the app its own
-  `com.tamerslab.vbhelper` identity — see the "Changed" entry above.
+  `com.tamerslab.vbhelper` identity â€” see the "Changed" entry above.
 - **Feature-based package layout.** `battle`, `farm`, `transfer`, `chat`, `species`,
   `world`, `storage`, `home`, `items`, `settings`, `adventure`, and `quests`, plus shared
   `data`, `domain`, `ui`, `rendering`, `companion`, `di`, `navigation`, `security`,
@@ -420,7 +784,7 @@ tree; it is not a release announcement and does not claim a verified green build
   glass pass is applied to chrome: translucency stays a plain tint. The old top scrim was
   built from `colorScheme.background`, which is transparent in every palette, so it never painted;
   it now reads the palette background token. Every action keeps a 48dp target. The partner slab's
-  stage separator was also repaired from a double-encoded `Â·` to `·`. Compile-verified only; the
+  stage separator was also repaired from a double-encoded `Ã‚Â·` to `Â·`. Compile-verified only; the
   device capture pass is still pending a connected phone.
 
 - **Home entry points and boot.** The status zone now carries Transfer and Dex instead of Quests
@@ -456,6 +820,20 @@ tree; it is not a release announcement and does not claim a verified green build
 
 ### Changed
 
+- **The Digifarm floor now glows only where it should: the lightest grass tiles and the wireframe pulse,
+  the darker grass stays still.** The island floor used to pulse as one emissive surface (emissive factor
+  1.08-1.86), so every grass pixel brightened. The base floor now holds a steady emissive factor (1.45,
+  the old pulse's average), and a new glow-overlay layer pulses with the old envelope on top of it: the
+  overlay carries the authored colour of the lightest 8% of the 16px grass mosaic tiles plus the bright
+  wireframe grid lines (alpha mask, everything else transparent), so those elements breathe in their own
+  colour - not white - while the darker grass keeps a constant luminance. The overlay is a duplicated
+  island-top primitive (+0.0006 world units above the base, `island_glow_overlay_baked` material,
+  alpha-blended) and the base `island_top` texture is byte-identical to the previous art. The floating
+  voxel cubes keep their pulse. `tools/digifarm/build_reference_textures.py` generates the overlay,
+  `build_assets.py` adds the primitive/material, and `build_environment_themes.py` bakes the same mask in
+  each palette (default payload byte-identical to the GLB overlay); the island-side/voxel textures are
+  untouched and `validate_asset.py` pins the 6-material/4-primitive overlay contract. GLB
+  444,512 -> 592,876 bytes (overlay texture), GPU +1.33 MiB.
 - **The Items tab is a grouped catalogue.** Two tabs instead of three: My items and Items store. My
   items is sectioned by function - Training, Evolution, Vitals, Special missions - with the quest
   battle stock folded in as its last section (the separate Battle items tab is gone). Entries are
@@ -483,8 +861,30 @@ tree; it is not a release announcement and does not claim a verified green build
 
 ### Fixed
 
+- **The special-mission chooser now always offers the kind of mission of the slot that was tapped, and
+  equips the slot that was tapped.** The partner overview's four mission cards passed the device-side
+  `watchId` where the assign chooser expected a slot index 0..3. `watchId` is only 0..3 for app-created
+  partners; watch-imported partners carry the watch's mission id, and scan/world/migration-created
+  partners carry `(characterId*4+slot)%65535`. On those partners the chooser could list a different
+  mission kind (or nothing, labelled "Wins slot"), and equipping either overwrote another row or failed
+  with a `requireNotNull` crash. Slot identity is now the row position among the partner's four missions
+  (`UserCharacterDao.getSpecialMissions` orders by id; new pure `SpecialMissionAssignment` helpers), the
+  tapped card carries its row id, and `GameplayRepository.applySpecialMission` updates exactly that row
+  while preserving its `id`/`characterId`/`watchId` so watch export keeps working. App-created partners
+  with `watchId` 0..3 behave exactly as before. Covered by `SpecialMissionAssignmentTest` (10 cases).
+- **A failed mission equip now explains itself inside the chooser.** The failure snackbar was posted in
+  the activity window while the chooser dialog was still open, so it was dimmed behind the dialog and
+  could not be read. The chooser now shows a persistent inline error under the list, cleared on retry or
+  dismiss, with the string localized in the three supported locales.
+- **Home feedback messages are no longer hidden under the phone's navigation bar.** The farm Home draws
+  edge-to-edge and its Scaffold reserves no content insets, so the Material3 snackbar sat flush with the
+  window bottom where the 3-button navigation bar covered almost all of it (the reported "message appears
+  below the action bar"), with the place dock and partner slab over the rest. The Home snackbar host now
+  applies the navigation-bar inset itself and lifts above the place dock band plus the partner peek slab
+  while the deck is at Peek; other destinations keep their existing `safeDrawing` placement. Only the
+  settled detent is read, so dragging the deck never relayouts the snackbar per frame.
 - **A form gained on the watch now survives the next app start.** Reported flow: a Digimon imported
-  from World DS went to the watch, evolved there, and came back to the app on its evolved form — and
+  from World DS went to the watch, evolved there, and came back to the app on its evolved form â€” and
   was then rewritten to the form it had when it last left the app, while the evolved form stayed in the
   Dex. The import itself was right (the app stores the watch's current slot); the World DS archive
   keeps the record it imported, and its species repair/reconcile runs on every startup and save refresh,
@@ -492,7 +892,7 @@ tree; it is not a release announcement and does not claim a verified green build
   authoritative only while the game produced something newer: `NativeReconcilePolicy` makes a retained
   watch baseline captured after the archived record supersede it, and makes a re-read of an unchanged
   record a no-op instead of a revert (`reconcileReturnedSpecies`, `applyWorldDsReturn`). A game record
-  that really changed — the Digimon was played in the game again — is still adopted. Covered by
+  that really changed â€” the Digimon was played in the game again â€” is still adopted. Covered by
   `NativeReconcilePolicyTest` (5 cases).
 
 - **The Transfer tab reads as one destination again.** The Home transfer action (header key and
@@ -513,7 +913,7 @@ tree; it is not a release announcement and does not claim a verified green build
 
 - **The bracelet send screen no longer crashes for a partner with an assigned DIM/BEM.** Captured from
   the owner's SM-A346M: `java.lang.IllegalStateException: Cannot access database on the main thread` at
-  `CardDao_Impl.getCardById` ← `ScanRepository.getCardDetails`. The send-confirmation screens collect
+  `CardDao_Impl.getCardById` â† `ScanRepository.getCardDetails`. The send-confirmation screens collect
   that flow from Compose, so its builder ran on the main thread, and the blocking
   `CardDao.getCardById`/`getCardByCharacterIdSync` methods threw there. It only executed for a partner
   with an export target, i.e. a catalog/game-origin partner after a compatible-DiM conversion;
@@ -533,22 +933,22 @@ tree; it is not a release announcement and does not claim a verified green build
   catalog/game-origin partner has no card of its own, so the Storage detail line (and the Debug card
   field of its info editor) stayed blank even after a DIM/BEM was assigned. It now falls back to the
   exact slot recorded for bracelet export: on the owner's device the "Marcos" record now reads
-  `Metal Mamemon · 10 NuMetalEmpire`, and the same conversion renders the write-card screen
+  `Metal Mamemon Â· 10 NuMetalEmpire`, and the same conversion renders the write-card screen
   ("You will need 10 NuMetalEmpire card") instead of crashing.
 
 - **Farm walking restored to the diorama's pre-liveliness rhythm.** The resident-life pass had replaced
   the old stride rhythm with continuous movement at a fixed cadence; after device feedback the owner
   asked for the earlier feel back, with the correct frames (walk frames on the walk pose, run frames on
-  the jog). `FarmDioramaSimulation` now walks in the old strides again — 0.22 world units interpolated
+  the jog). `FarmDioramaSimulation` now walks in the old strides again â€” 0.22 world units interpolated
   over 1.1 s, then a 1.15-1.6 s beat before the next one, which leaves the short foot-plant pause the
-  old island had — and jogs in longer 0.32-unit strides over 0.8 s. The renderer cycles the walk pose at
+  old island had â€” and jogs in longer 0.32-unit strides over 0.8 s. The renderer cycles the walk pose at
   a fixed 250 ms and the jog at 220 ms; the speed-derived cadence, the beat latch and the step bob from
   the previous passes are gone. A jog can no longer strobe because one stride fills the whole
   interpolation window.
 - **The Radar's biome readout is visible again.** The OpenStreetMap biome system was still resolving and
   still biased spawn attributes, but its only UI was a 10sp label inside the legacy 2D radar, which is
-  reachable only while the master Debug switch is on — the isometric redesign dropped the display. The
-  floating top cluster now carries the same localized "Surroundings: …" line under "Radar · NW" (absent
+  reachable only while the master Debug switch is on â€” the isometric redesign dropped the display. The
+  floating top cluster now carries the same localized "Surroundings: â€¦" line under "Radar Â· NW" (absent
   while the lookup is Null, so unavailable map data never invents surroundings), and `WorldScreen`
   publishes the resolved biome as soon as the lookup returns instead of only after a successful region
   command, so a rejected/stale spawn refresh no longer leaves the readout empty.
@@ -610,7 +1010,7 @@ tree; it is not a release announcement and does not claim a verified green build
 
 Post-Phase-6 verification ran on the uncommitted working tree on 2026-10-31
 (all Gradle commands with `--no-daemon`; the final numbers include the Phase 1/5/7
-gap-closing work — an earlier pass in the same session with 1,155 tests and a
+gap-closing work â€” an earlier pass in the same session with 1,155 tests and a
 149,002,850-byte APK is superseded):
 
 - **Unit tests:** 1,157 tests, 0 failures, 0 errors, 7 skipped across
@@ -628,7 +1028,7 @@ gap-closing work — an earlier pass in the same session with 1,155 tests and a
 - **Baseline profiles:** regenerated on the device with startup + best-effort
   scan/battle/farm/transfer journeys (2,723,442 bytes each; 24,408 rules).
 - **Coverage:** JaCoCo reports for app and game-save-core; all six named classes are
-  above the 80% line target (81.0–95.8%). No threshold is enforced yet.
+  above the 80% line target (81.0â€“95.8%). No threshold is enforced yet.
 - **Benchmarks (device-gated):** cold-start TTID median 875.0 ms over 5 iterations;
   battle frame CPU duration P95 13.3 ms; the farm 3-second window recorded P95 29.8 ms
   and includes 3D asset loading (steady active/idle and thermal behavior unverified).

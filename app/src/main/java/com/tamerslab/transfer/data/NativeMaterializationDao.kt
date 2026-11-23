@@ -38,6 +38,8 @@ interface NativeMaterializationDao {
     suspend fun isAway(id: String): Boolean
     @Query("SELECT * FROM GameEndpointPresence WHERE individualId = :id")
     suspend fun presence(id: String): GameEndpointPresence?
+    @Query("SELECT * FROM GameEndpointPresence WHERE sourceId = :sourceId")
+    suspend fun presenceForSource(sourceId: String): List<GameEndpointPresence>
     @Query("SELECT u.id AS characterId, p.individualId AS individualId, p.sourceId AS sourceId FROM UserCharacter u JOIN GameEndpointPresence p ON p.individualId = u.individualId")
     fun observeAwayCharacters(): Flow<List<AwayCharacterRow>>
     @Upsert suspend fun savePresence(presence: GameEndpointPresence)

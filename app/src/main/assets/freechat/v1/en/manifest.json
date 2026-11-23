@@ -1,0 +1,10 @@
+{
+  "contentVersion": 1,
+  "files": {
+    "databaseFallback": "database_fallback.json",
+    "intents": "free_chat.json",
+    "speciesVoice": "species_voice.json"
+  },
+  "locale": "en",
+  "schemaVersion": 1
+}

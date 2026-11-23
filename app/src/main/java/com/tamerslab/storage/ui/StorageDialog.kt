@@ -88,7 +88,7 @@ fun StorageDialog(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val application = LocalContext.current.applicationContext as TamersLabApplication
-    val storageRepository = remember { StorageRepository(application.container.db) }
+    val storageRepository = remember { application.container.storageRepository }
     val character = remember { mutableStateOf<CharacterDtos.CharacterWithSprites?>(null) }
     val characterSprite = remember { mutableStateOf<BitmapData?>(null) }
     val characterName = remember { mutableStateOf<BitmapData?>(null) }

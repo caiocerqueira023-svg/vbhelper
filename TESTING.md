@@ -7,6 +7,495 @@ it is historical evidence, not the current result. Performance evidence lives in
 [docs/performance/BASELINE.md](docs/performance/BASELINE.md); quality-tooling decisions
 live in [docs/refactor/PHASE7_DECISIONS.md](docs/refactor/PHASE7_DECISIONS.md).
 
+## Verify v59: Lost Evolution adapter (2026-11-20, same tree)
+
+User request: extend the multi-game transfer system to Digimon Story: Lost Evolution using the
+same ROM-first REA/Ghidra process as Dawn/Dusk, to the same feature state (or better).
+
+Evidence and layout: [game-save-core/LOST_EVOLUTION_RESEARCH.md](game-save-core/LOST_EVOLUTION_RESEARCH.md)
+and [LOST_EVOLUTION_TRANSFER_PLAN.md](LOST_EVOLUTION_TRANSFER_PLAN.md). The Japanese `BLEJ` ROM
+(Operation Decoded T-En v1.1) was unpacked, its custom overlay compression was reversed and ported
+byte-exactly, and the save manager, record creator/merger, roster/party/farm/team containers,
+species id/parameter tables and message-pack name list were recovered from the ROM's own code:
+
+- container: two `0x8000` slots, MD5 over the slot with the 16 header bytes zeroed, `DM3_000`
+  signature at `+0x10`, u32 sequence at `+0x18`;
+- body: serialized player state at `+0x20` (`0x407C` bytes); 40 x `0x78` records at `0x1850`;
+- record: u64 identity at `+0x00` (low32 unique id, high32 marker `0x030405F0`), species `+0x0C`,
+  18-byte name `+0x0E`, level `+0x3C`, EXP `+0x40`, stat words `+0x28..+0x34`, speed `+0x3D`;
+- party: 8 x u64 identities at `0x3E8`; farm: up to four groups at `0x11F4` (stride `0xD0`,
+  8 residents at `+0x18`); team: 8 x u64 at `0x159C`; next identity: u64 at `0x4090`.
+
+Real-save validation (user's own `.sav`, newest copy):
+`77:Ａｎｄｒｅ:lv4:PARTY:168; 82:Gabumon:lv2:FARM:134; 90:ToyAgumon:lv1:FARM:144;
+80:Dorumon:lv2:PARTY:141; 101:Falcomon:lv2:PARTY:136` — party/farm membership matches the identity
+references found by byte search, and every level/stat matches the species parameter blocks scaled
+by the engine's growth code (independent cross-validation, not self-consistency).
+
+Farm residents are part of the transfer scope for this layout: the import profile accepts
+`SaveContainer.FARM`, and the native move policy admits farm records only where the registered
+profile sets `farmRecordsMovable` (Lost Evolution; the editor clears the farm reference).
+
+Implemented: core `LostEvolution.kt` (profile, name codec, stage bands, record builder) and
+`LostEvolutionSaveEdits.kt` (`LostEvolutionSaveReader` + remove / insert-retained / insert-generated
+/ replace / admit / byte-exact restore, authority-copy only, sequence bump, MD5 reseal, readback);
+app `LeSpeciesTable` (ROM-generated `le_species.json`: 314 real Digimon ids with base stats and
+skills, stage bands, 51 documented localization aliases), `LeStatConversion` (`le-stat-v1`),
+`LeOutboundConversion`, import profile (party + farm residents), materialization and move/send
+branches, catalog/capabilities wiring.
+
+Tests: `LostEvolutionSaveTest` (10 core cases, including the real save behind `LE_SAVE_DIR`),
+`LeTransferConversionTest` (7), updated catalog/capability/import-profile tests. Full suites on
+this tree: **core 232 tests / app 1333 tests, 0 failures** (env-gated real-save and device tests
+skipped when unset).
+
+Follow-up after the first device send attempt ("could not update this source"): logcat showed
+`IllegalStateException: Check failed.` at the send journal revision check, and the device journal
+showed `original.sav` differing from the revision recorded in `operation.json`. Cause: the Lost
+Evolution identity allocator advanced the next-id counter on the caller's source bytes instead of
+the candidate, so the journal backup hash never matched (no write happened, source unchanged). The
+allocator now runs on the candidate, `Edit` asserts an edit never mutates its source, and
+`LostEvolutionSaveTest.planningAnEditNeverMutatesTheSourceBytes` covers insert/remove/admit, and
+`realSaveReplaysTheFirstDeviceSendDeterministicallyWhenAvailable` replayed the exact failed send on
+the real save with the failed operation's own synthesized record, reproducing the device candidate
+byte for byte while leaving the source untouched (env-gated by `LE_SAVE_DIR`/`LE_REPLAY_*`). The DS
+launcher icon list now includes Lost Evolution (`BLEJ`/`BLE`).
+
+Second device report: after a send, the game did not show the Digimon and the app list lost it
+after the in-game save. Pulling the phone save proved the game session had never loaded the write:
+the inserted identity, its party slot and the advanced next-id counter were all absent, and the file
+held only the original five records with the old counter while the slot sequences advanced by normal
+in-game saves. The game was already running with the pre-write state (the user suspected exactly
+this), so saving overwrote the file. Follow-up hardening: the send confirmation now instructs the
+player to close the game completely before reopening it, and linked-save refresh releases ("returns
+to Storage") any individual whose identity is no longer present in the destination save, instead of
+leaving it stuck as away. Covered by `PresenceReconciliationTest`.
+
+Third device report: the game still did not show a send and the app released it after the in-game
+save. Decompressing DraStic's in-memory session state proved the game had never read the file: RAM
+held only the original roster and the pre-write next-id counter. This confirmed the requirement that
+the game must be closed when VBHelper writes and be (re)started afterwards to read the save. UX for
+that rule is now emulator-agnostic and two-step with no savestate/file instructions (close the game
+first, open it after sending). The send flow and the automatic return-to-Storage recovery are the
+product-level answers; no emulator internals are touched.
+
+Third round of device evidence (10:24): the Dorumon move had actually written its save (the file
+on the phone equals the recorded candidate), but the post-write verification compared the record
+against both card copies; the untouched older copy still contained it, so the move was flagged
+recovery-required. On top of that the stale "recovery required" state blocked later moves from the
+same save - the user's "can't bring Digimon to Storage". Fix: scope the removal check to the edited
+copy, log the exact recovery cause, and never let return materialization failures fail a completed
+move. Also, because Lost Evolution's party is story-gated (the real save is capped at three
+members), sends now place the individual in the farm/Digimon list rather than a fourth party slot.
+The user's emulator RAM dump (decompressed DraStic state) still showed the pre-write roster, so the
+game session had not loaded any write; the reload requirement remains the boundary.
+
+Fourth device report (10:51-10:55): a move to Storage appeared duplicated (game kept the Digimon
+because its paused session still held it, the app imported it), some moves were blocked by the
+earlier recovery state, and a later save was not recognized by the game. Inspection of the current
+file: the app-edited copy (seq 19) had records only in slots 1, 2 and 5 - a hole in front of the
+game-written backup copy (seq 14). The genuine game-written save from the pre-test backup was
+restored byte-for-byte (`le.sav`, sha256 ad22ef13...), and the damaged file was preserved. Lost
+Evolution native writes are now gated off in the app until the roster-packing rule and header
+bookkeeping fields are recovered and verified; reads/imports remain enabled. This is a deliberate
+safety stop, not a shipped transfer.
+
+Fifth iteration: genuine saves always carry identical bodies in both card slots (only the MD5
+header and the consecutive write sequences differ). The single-copy writer was therefore writing a
+file whose slots disagreed - the strongest remaining explanation for the game ignoring/rejecting
+app-written saves. The Lost Evolution editor now commits a complete body to both slots with
+consecutive sequences and fresh MD5 headers exactly like the game's own writer, mirrors the game's
+delete routine for removal (party zero, farm-resident compaction, second farm list compaction, team
+zero, partner protected), and keeps native move-to-Storage disabled while insert-only sends are
+enabled again. This build is the current in-game verification candidate.
+
+Sixth iteration: the engine's add/delete paths are now fully identified. Party insert
+`FUN_020afce8` allows six members (three active slots searched in 0..4, then three reserve slots in
+5..7); farm insert `FUN_020ea928` fills the first empty resident of one group; a third assignment
+container at player +0x157C has add `FUN_020eb3e0` and remove `FUN_020eb41c`; the delete pipeline is
+`FUN_020ae0ac`. The overlay creation caller `FUN_0223d3bc` (via `FUN_020adf08`) also shows the story
+partner record gets parent slots at +0x5C..+0x66 and flags bit 1. Editor now mirrors the party rule
+and the tail-slot initialization; sends remain insert-only for in-game verification.
+
+Seventh iteration: byte comparison of game-written vs app-written records found the concrete
+format violation. Every game-created record has `+0x08 == high32(identity)` (a marker copy) and six
+`0xFFFF` tail slots at `+0x5C`; the app's synthesized record had `+0x08 = 0` and an all-zero tail.
+The loader itself only checks header tag/MD5/sequence (verified from the state machine), which is why
+detection seemed fine, but the inserted record was unlike anything the engine produces. `buildRecord`
+and the editor now stamp the marker window and tail; inserting a record from an old app snapshot
+repairs both windows. The phone's original game-written save was restored and old recovery journals
+were pruned so the stale operations cannot block new sends. In-game acceptance of the corrected write
+is the next verification step.
+
+Eighth iteration - the actual save-integrity mechanism was found. The engine writers call
+`FUN_020ace5c`, which sets player-state `+0x4078` to `0xFFFFFFFF` and stores
+`FUN_020ad328(player, 0x7FE0)` - an XOR of every u32 in the serialized player state - so any valid
+save XORs to `0xFFFFFFFF` over the `0x7FE0`-byte body of each slot. Both genuine saves (PC file and
+the phone backup) satisfy this in both card copies; every save the app wrote did not, which explains
+why the game read/validated the file header and then refused the loaded state. The editor now
+recomputes the checksum for every edit and mirrors the corrected body to both copies. Next step is
+one direct-load test of a freshly written save.
+
+Ninth iteration - **in-game acceptance confirmed**. After recomputing the player-state XOR
+checksum (see the eighth iteration), the user sent a Digimon with the app and the game loaded the
+written save normally. That closes the main boundary: the writer now produces saves the retail game
+accepts. Move-to-Storage is re-enabled for Lost Evolution; remaining known gap is cosmetic - a new
+record does not add its species to the encyclopedia book container yet.
+
+Tenth iteration: per-send destination selection. Lost Evolution placement follows the engine add
+rules for party (FUN_020afce8), farm (FUN_020ea928) and bank (FUN_020eb3e0); World DS supports
+party and bank (bank = no party reference); Dawn/Dusk supports party and bank because the save
+layout has no serialized farm table. World DS farm placement is deliberately refused until the farm
+group header semantics are recovered. Destination is persisted in the send journal and replayed by
+recovery. Suites: 237 core / 1334 app green.
+
+Eleventh iteration: the Lost Evolution encyclopedia book was recovered (player-state +0x460, one u64
+per species, owned pattern 0x4000000100000000 written by the creation path). Sends now register the
+species in both card copies, preserving existing bits and the checksum. No equivalent per-species
+book exists in the World DS/Dawn-Dusk serialized layouts, so no change was needed there.
+
+Twelfth iteration: the Dawn/Dusk duplication was a copy-coverage bug - move-out only edited the newest
+card copy and the retail loader used the other one. DS2 edits (removal, insertion, replacement,
+admission) now apply to every populated copy with per-copy sequence/MD5 reseal; tests were updated to
+the new both-copies contract. The affected Dawn save was repaired in place. World DS already edited
+every populated copy and Lost Evolution mirrors both copies, so this class of bug is now closed for
+all three layouts.
+
+Thirteenth iteration: the Transfer screens were redesigned (library shelves -> opened box ->
+inspector sheet) against the owner's PKForge and PKVault references. A two-column game shelf shows
+launcher art and a party/farm/bank census; the opened game is a save identity bar, scope tabs with
+counts and a three-column sprite-first box with quiet empty slots; tapping a Digimon opens a full
+inspector sheet with native facts, a collapsed native-details block and one primary Move action;
+sends reuse the plates for destinations and Party/Bank/Farm scope chips. Evidence: device captures
+`analysis/dsle/device/final-library.png`, `final-box.png`, `final-sheet.png`; build and test suites
+green. Remaining boundary: the send screen and the per-save chooser were only smoke-checked through
+the same components, not captured in this pass; no formal finish-reviewer agent run was recorded.
+
+Fourteenth iteration: Transfer navigation was rethought after owner feedback. The tab row was
+removed; the library is the home with games as plates with Storage, bracelet and V-Pet continuing the same shelf as full-width rows
+(no sub-sections), and the header wrench key opens a dedicated Tools page (grouped
+Saves / Protection / Appearance, explicit descriptions, live counts) instead of the overflow menu.
+Backups and launcher icons pages use the long-row grammar too. Device and V-Pet pages share the save
+identity bar. Device captures: `analysis/dsle/device/v3-library.png`, `v3-tools.png`. Build green;
+app suite last run green before this navigation pass (UI-only change compiled afterwards).
+
+Fifteenth iteration: universal send projection with explicit species reasons. Stats fall back to a
+minimal valid reading when an individual has no app character representation, and the species falls
+back to the retained record's native species name. No species substitution is performed: a species the
+target title does not contain returns SPECIES_NOT_IN_GAME, an individual without a canonical species
+returns SPECIES_UNKNOWN, and both are surfaced as localized reasons in the destination chooser and the
+send header. Transfer tests: 1341 / 0 failures.
+
+Sixteenth iteration: progress-domain foundation. DB v59 adds the story and VB progress tables, the
+seed-provenance fields and `ProgressDomainRules`; nothing reads or writes them from transfers yet, so
+existing behaviour is unchanged. Evidence: app installed over the v58 database and launched into the
+home screen (screenshot `analysis/dsle/device/v12-progress-foundation.png`), `ProgressDomainRulesTest`
+6/6 green. Next: story-domain wiring (send/import read and write the shared story block; bootstrap only
+on first seed).
+
+Seventeenth iteration: story-domain tracking. Native materialization now records the shared story
+progress block from every World DS / Dawn / Dusk / Lost Evolution snapshot (first materialization and
+each return), in native units; the VB block is untouched. Unit tests: `StoryProgressTrackingTest` 4/4
+plus `ProgressDomainRulesTest` 6/6 green (10/10 total), build installed and the app smoke-launched.
+Send still uses the old conversion; story-authoritative outbound generation and the first-send
+bootstrap remain for the next pass.
+
+Eighteenth iteration: story-authoritative sends. The World DS / Dawn-Dusk / Lost Evolution outbound
+conversions accept explicit native stats, `StoryProgressTracking` maps the story block into each title,
+and the send projection prefers the tracked story block over retained/app conversion whenever one
+exists. New `StoryAuthoritativeSendTest` verifies DS1 and LE write the tracked level/stats/aptitude
+exactly. Transfer test package: 151/0 green; build installed and smoke-launched. Limits: DS2/LE EXP
+counters are still zeroed by their codecs, and the first-send bootstrap (no story block yet) remains.
+
+Nineteenth iteration: VB seed-once and story/VB separation. First story materialization seeds
+`VbProgressDomain` once (story-origin provenance); later story returns stop mirroring into the VB block
+and update only the tracked story block. New `ProgressDomainRepositoryTest` (3 tests) covers seed
+provenance preservation, clamping and domain independence. Transfer test package: 154/0 green; build
+installed and smoke-launched. Remaining: VB transfer read/write paths, the first-send bootstrap
+(native created-at-level stats research), DS2/LE EXP writing, and the two-domain UI.
+
+Twentieth iteration: VB domain on the bracelet path. `ToNfcConverter` reads the VB block for stage/
+vitals/mood/age/trophies/battles/activity on export; `FromNfcConverter` records watch imports into the
+VB block through the new pure `VbProgressTracking` mapper (clamping, provenance preservation, revision
+advance), covered by 3 unit tests. Transfer package: 157/0 green; build installed and smoke-launched.
+Still open: first-send VB→story bootstrap (native created-at-level stats research), DS2/LE EXP writing,
+BE export, and the two-domain UI.
+
+Twenty-first iteration: progress model corrected. VB progress stays as the app's existing progression;
+`story_progress` is the only new block. The experimental `vb_progress` table, its watch export/import
+wiring and its tests were removed; DB v60 drops the table, and the app was installed over v59 and
+launched cleanly. The transfer inspector now shows the tracked Story-progress group (level, stats, EXP,
+aptitude, provenance) for archives whose individual id is known. Transfer package: 151/0 green.
+Remaining: first-send VB/app→story bootstrap (game-native created-at-level stats), DS2/LE EXP writing,
+and in-game acceptance.
+
+Twenty-second iteration: bootstrap research. The Dawn/Dusk level-up/stat-growth formula was recovered
+from the decompiled ARM9 and documented, and `StoryBootstrapPolicy`/`NativeCreationStats` introduced the
+level seam + per-title stat provider (2 unit tests). Transfer package: 153/0 green; build assembles.
+Bootstrap is not yet wired to sends: the growth table/constants and per-species base records still need
+extraction, and LE/DS1 need their equivalent formula.
+
+Twenty-third iteration: story round-trip evidence. `StoryRoundTripTest` writes the tracked story block
+into World DS and Lost Evolution records and decodes it back, asserting level/stats/EXP/aptitude and
+nickname survive, plus retained-identity preservation when a seed is used. Transfer package: 156/0
+green. Still open: bootstrap providers (engine growth table/constants), DS2/LE EXP counters, BE path,
+and in-game acceptance.
+
+Twenty-fourth iteration: all three story layouts now have round-trip coverage. `StoryRoundTripTest`
+writes/reads the tracked story block through World DS, Dawn/Dusk and Lost Evolution records and checks
+level/stats/nickname (plus LE aptitude and retained identity). Transfer package: 157/0 green. Remaining
+for the objective: bootstrap providers from the recovered engine formula, DS2/LE EXP counters, and
+in-game acceptance on the owner's device.
+
+Twenty-fifth iteration: Dawn/Dusk bootstrap. Extracted the retail ARM9 growth table (0x0211E298), 1/10
+scale and clamps, implemented `Ds2CreationStats`, and wired the one-time Dawn/Dusk story seed into
+`outbound()`. New provider tests: base level equals the species record, growth stays inside engine caps,
+species level cap clamps. Transfer package: 160/0 green; APK installed. Remaining: LE/World DS providers,
+DS2/LE EXP counters, in-game acceptance.
+
+Twenty-sixth iteration: Lost Evolution bootstrap. Recovered LE growth pairs/clamps/scale from
+`analysis/dsle/decompressed/arm9.bin`, added `LeCreationStats` with 2 unit tests, and wired the one-time
+LE story seed into `outbound()`. Transfer package: 162/0 green; APK installed. Remaining: World DS
+created-at-level provider, DS2/LE EXP counters, and in-game acceptance.
+
+Twenty-seventh iteration: World DS bootstrap. Isolated `FUN_020a1c70` in the DS1 Ghidra export,
+extended the species extractor with the dm creation block and regenerated `world_ds_species.json`,
+added `WorldDsCreationStats` (dumped growth rows, 999/9999 clamps) with 3 unit tests, and wired the
+one-time World DS seed into `outbound()`. All three story titles now bootstrap. Transfer package:
+165/0 green; APK installed. Remaining: DS2/LE EXP counters and the owner's in-game acceptance.
+
+Twenty-eighth iteration: EXP writing for the remaining story titles. `Ds2RecordCodec.generate` accepts
+EXP channels and the Dawn/Dusk conversion/repository pass the tracked total's spread;
+`LostEvolution.buildRecord` accepts the single EXP word and the LE conversion/repository pass the story
+total. Round-trip tests assert EXP now survives World DS, Dawn/Dusk and Lost Evolution. Transfer
+package: 165/0 green; APK installed and launched. Remaining for the objective: owner in-game acceptance.
+
+Twenty-ninth iteration: retained-snapshot story backfill. `outbound()` now rebuilds `story_progress` from
+the individual's retained native record (any story layout) before the one-time bootstrap, so partners
+imported before tracking existed are sendable and carry their real level/stats. New `fromRecord`
+mapping test; transfer package: 169/0 green; APK installed and launched.
+
+Thirtieth iteration: sendability fix verified on the owner's database. A temporary debug probe ran the
+real `outbound()` projection for every missing-story partner on-device: after the retained-snapshot
+backfill and band clamping, Devidramon (Dawn/Dusk/LE), Were Garurumon (Black), Karatenmon, Machinedramon,
+Falcomon, SkullGreymon, Otamamon and Gottsumon all produce records for their supported titles; only
+Ryudamon, Sakumon, GulusGammamon and Sunarizamon remain blocked (absent from all three title tables).
+The probe was removed; transfer package 172/0 green; APK installed.
+
+Thirty-first iteration: default projection fix. On-device blocker probe showed Devidramon's per-game
+blockers were already null for Dawn/Dusk/Lost Evolution, but the untargeted `outbound()` assumed World
+DS and returned null, so the send screen disabled everything. The projection now picks the first story
+title that supports the species when there is no source game. Probe removed; transfer package 172/0
+green; clean APK installed.
+
+Thirty-second iteration: deferred story seeding. `outbound()`/blockers/previews now build the story
+block without persisting; `send()` calls `persistStorySeedIfMissing()` only after the journal reaches
+ACKNOWLEDGED, so an abandoned transfer leaves no conversion behind. Transfer package: 172/0 green;
+APK installed and launched.
+
+Honest boundary: in-game boot acceptance of a VBHelper-written Lost Evolution save has not been
+performed by the user yet; every candidate is verified byte-wise (sequence bump, MD5 reseal,
+readback, byte-exact restore) and mirrors the game's own creator/allocator code, but only the game
+can confirm the final load. The team container (`0x159C`) is inspection-only and EXP-to-next /
+`+0x3A` aptitude semantics are not needed by the current conversion.
+
+## Verify v58: authoritative Dawn/Dusk species identity (2026-11-19, same tree)
+
+Owner report: "why is metal mamemon listed as not being in dawn and dusk when they are?" and
+earlier "sent an Agumon Black and it became a regular Agumon; the app did not detect the black
+WereGarurumon".
+
+Root cause: the Dawn/Dusk record/status name table used for identity (ARM9 0x02112998) is
+**truncated to about 12 glyphs** - MetalMamemon is stored as `MtlMamemon`, WereGarurumon (Black) as
+`WGarurumonB`, PrinceMamemon as `PrMamemon` - so name lookup against the bundled catalog failed and
+the UI reported those species as absent. The game does contain them; the record only stores a
+species id.
+
+Fix: ARM9 also holds the **packed full-name table** (0xFFFF-terminated strings, id order, first
+entry `Chicchimon` = 0x41, offsets arm9+0x1075C6 Dawn / arm9+0x1076C2 Dusk, byte-identical across
+titles). It was extracted into the asset (`fullNames`, 398 entries; the remaining 38 are the game's
+empty "Undecided" slots) and each id is resolved to a bundled canonical species
+(`canonicalOverrides` documents the 11 localization aliases decided from the ROM evolution chains:
+War=Were, Volcanomon=Volcamon, Rapidmon Perfect, Dot Falcomon, DK=Dark, chessmon colours, SL=Slash,
+Tsuchidarumon/Tuchidarumon). `Ds2SpeciesTable.canonicalId`, `NdsStorySpeciesTables.canonicalId`,
+`NativeSpeciesResolution.tableIdentity` and `WorldDsSpeciesCrosswalk.ds2IdsByCanonical` now use it,
+so identification (read) and availability/selection (send) share one authority. Kokomon and
+Reptiledramon have no bundled counterpart and stay unidentified rather than being guessed.
+
+Also fixed: a partner whose individual species is a base form while its assigned/exported card
+character is a variant of that same Digimon ("Agumon" + "Agumon (Black)") now transfers as the
+variant; a different Digimon never overrides the individual's own species
+(`WorldDsSpeciesCrosswalk.preferRefined`).
+
+Evidence: `Ds2SpeciesTableTest` asserts MetalMamemon (0x124), Black WereGarurumon (0x133),
+PrinceMamemon (0x1B7), Volcamon, DarkTyranomon, Rapidmon Perfect, chessmon colours and the two
+unidentified slots; `Ds2OutboundConversionTest` asserts the canonical->game-id crosswalk for those
+species and the refinement rule; the real-save corpus from the phone still decodes.
+
+## Verify v58: engine sequence tie and synthesized sends (2026-11-19, same device)
+
+Two distinct defects were found by reading the phone's logcat and the app database instead of
+guessing:
+
+1. **Synthesized sends hit the retained inserter.** `Ds2SaveEditor.insertGenerated` delegated to
+   `insertRetainedRecord`, so a generated record (identity 0 until the destination assigns one)
+   failed with "A retained record must carry a nonzero local identity" and the UI showed the
+   generic "Could not update this source". Fixed to `insertGeneratedRecord`; regression test goes
+   through `NdsStorySaveEditors.forObservation(...)`.
+2. **The engine's own counter tie.** After VBHelper writes a Dawn/Dusk save (counter 0 -> 1) and the
+   game saves into the erased slot, the erased counter 0xFFFFFFFF wraps, so the game writes
+   **counter 1 too**: both slots legitimately end at 1 with the same roster. The app required a
+   unique newest copy and reported "The save has no defensible authoritative copy". A tie is now
+   resolved to the lowest copy when the tied copies hold the same individuals (party order,
+   positions and counters ignored), then the edit bumps that copy to a unique newest counter. The
+   World DS profile keeps its previous no-auto-choice rule.
+
+Evidence: the user's actual current saves were pulled from the phone (`analysis/ds2/device`,
+not committed) and used as the real-save validation corpus. `Ds2RealSaveValidationTest` now runs
+three cases against them: layout decode with automatic copy normalization, removal + byte-exact
+restore, and **inserting a synthesized record through the editor** - the exact operation that
+failed. All pass. Full `:game-save-core:test` and the app JVM suite pass; debug APK and the
+integrity Android-test compilation pass. Still unverified: in-game boot of a written save.
+
+## Verify v58: multi-copy saves and cross-game owned sends (2026-11-19, follow-up)
+
+Owner report: "I receive a 'could not update this source' when trying to send a mon... it should
+work in a really simple way: send any digimon from my storage to any game (where that digimon
+exists) like Pokemon HOME/PKForge."
+
+Root cause (read from the device logcat, not guessed): `Ds2SaveEditor.insertGenerated`
+delegated to `insertRetainedRecord`, so every *synthesized* record — identity 0 until the
+destination assigns one — was rejected with "A retained record must carry a nonzero local
+identity", and the UI showed the generic "Could not update this source". That is why only
+generated sends failed while exact retained sends worked. Fixed to call
+`Ds2SaveEdits.insertGeneratedRecord`, plus a regression test that goes through
+`NdsStorySaveEditors.forObservation(...)` instead of the internal function.
+
+Two further defects found while diagnosing: the Dawn/Dusk editor required a save with **exactly
+one populated card copy** (true for the two fresh fixture saves, false for any save the game has
+written twice), and the send path decided "replace in place" from **both** copies, so an identity
+that only the older slot still listed was treated as present and the replace could not find it in
+the authoritative copy.
+
+Fixes:
+- `Ds2SaveEdits` edits only the authoritative (newest valid) copy and no longer requires a
+  single-copy image; removal/insert/replace/admit verify against that copy's records, and the
+  stale slot is left byte-identical (exactly what the game's own alternating slot writes do).
+  New tests: dual-copy save removal leaves the older slot untouched, returning a record that only
+  the older slot still lists inserts into the authoritative slot, replace only touches the
+  authoritative slot, and all three restore byte-exactly.
+- The send path decides "replace in place" from the authoritative copy only.
+- Cross-game sends are now allowed the simple way: a partner in Storage can be sent to any linked
+  supported game that owns the species. Same-layout destinations prefer the exact retained
+  record; a different destination title synthesizes a fresh record for its own layout (native
+  bytes cannot cross layouts) from the app projection. This replaces the previous
+  "cross-layout send is refused" behavior.
+
+Evidence: `:game-save-core:test` (12 `Ds2SaveEditsTest` cases including the dual-copy ones, real
+saves still decode) and the full app JVM suite pass; debug assembly and integrity Android-test
+compilation pass. Still unverified: in-game acceptance of a written Dawn/Dusk save and physical
+phone runs.
+## Digimon World Dawn/Dusk adapter: read, acquire and native editor (2026-11-19, same tree)
+
+Owner request: "start planning transferring into Digimon World Dawn and Dusk... actually I need it
+to be better [than World DS]" followed by "everything you need is here" with the two USA ROMs and
+two retail `.sav` files, asking for the work to be finished from the ROMs with REA instead of a
+manual controlled-save matrix.
+
+What changed (source of truth: `CHANGELOG.md`, plan `DAWN_DUSK_TRANSFER_PLAN.md`, evidence
+`game-save-core/DS2_RESEARCH.md`):
+
+- The Dawn/Dusk layout was recovered from the user's own ROMs by static analysis (Ghidra headless:
+  ARM9 + overlays) and verified on the two supplied real saves: `0x10000` image, `0x7B2C` copies at
+  `0x0`/`0x7B80`, MD5 header over the copy with the header zeroed, u32 sequence at `+0x18`,
+  `DSDIG2` magic, 40 records of `0x164` at `0x288`, party ids at `0x260`, last id at `0x25C`.
+  Real-save decode: Dawn → Coronamon/Reppamon/Karatenmon (levels 20/35/35, party arrays,
+  history forms) and Dusk → Lunamon/SkullGreymon/WGarurumonB, all matching the extracted species
+  tables exactly.
+- Core: `NdsStoryProfiles.DAWN_DUSK` registers the layout on the shared reader (signature required,
+  so the families cannot decode each other); `Ds2SaveEdits`/`Ds2SaveEditor` implement
+  revision-bound removal, exact retained insertion, replacement, party admission and byte-exact
+  restore with sequence bump and header reseal.
+- App: DS2 species asset (`ds2_species.json`, 436 species with base data/lineage/EXP curves from
+  both ROMs), `Ds2SpeciesTable` + `NdsStorySpeciesTables` registry (per-triple resolution),
+  `Ds2StatConversion` (`ds2-stat-v1`), Dawn/Dusk import profile, materialization seeding/returns,
+  family+titles catalog resolution, and the JA Dawn title fix.
+- No controlled before/after save pairs were required; the engine code plus two real saves settled
+  every interpreted field. The Move/Send repositories now resolve profile + editor per observation,
+  so Dawn/Dusk party records use the normal Move to Storage / Move to game flow (journal, durable
+  backup, fresh-read preflight, readback verification, presence). App-only partners are synthesized
+  into a Dawn/Dusk record from the game's own species defaults plus the app projection (level
+  capped by the species max level, native EXP counters zero because their semantics are
+  unestablished); a stored record is used as the seed so identity and unknown bytes survive; a
+  cross-layout send (World DS record into Dawn or the reverse) is refused with FORMAT because that
+  journey is Storage conversion, not a direct move. Not implemented: a title-binding prompt (file
+  name resolves the title) and in-game acceptance of a written save.
+
+Evidence for this working tree only:
+
+| Check | Result |
+|---|---|
+| `:game-save-core:test` | 207+ JVM cases passed, including `Ds2SaveEditsTest` (6 cases: layout/party decode, cross-family rejection through the shared registry, removal + byte-exact restore + header/sequence checks, last-member/stale refusals, exact retained insertion, corrupt-header refusal) |
+| Real-save validation (`DS2_SAVE_DIR`, files not committed) | `Ds2RealSaveValidationTest` ran against both retail saves: every record decodes (species in `0x41..0x1F4`, level 1..99, decodable names, `0x164` retained bytes, party records review-free); removal builds a valid-header candidate and restore rebuilds the exact original bytes |
+| Species extraction cross-check | ExtractCoronamon base record equals the real save's windows: maxLevel 32, unk50 5, skills `[32,52,111,59]`, abilities `[1,36]`, resistances `[1000,200,900,700,700,500,400,500]`; EXP curve `[20] = 646` and `[35] = 2344` match the saves' `expToNext` values |
+| `:app:testIntegrityCheckUnitTest` (transfer/navigation packages) | 128+ cases passed, including `Ds2SpeciesTableTest` (5), `TransferGameCatalogTest` (family/title resolution), `TransferGameCapabilitiesTest` (DAWN/DUSK readable with a core editor, no wired writer yet), and the updated `NativeSpeciesResolutionTest` registry cases |
+| `:app:assembleDebug`, `:app:compileIntegrityCheckAndroidTestKotlin` | Passed in this pass |
+| Phone / in-game | **Not run.** Linking a Dawn/Dusk save, copy review and Storage import must be checked on a device; loading an edited Dawn/Dusk save in the retail game is untested |
+
+Deliberate boundaries: farm/DigiFarm transfer remains out of scope; record `0x120` state-bit
+semantics and `0x128..0x164` stay uninterpreted (bytes preserved); writer repository wiring and
+in-game acceptance are the next step.
+
+## Digifarm glow confined to the lightest grass tiles and wireframe (2026-11-18, same tree)
+
+Owner request: "make so only the lightest tiles of grass and the wireframe and cubes glow on the farm
+and not the darker parts of grass (the luminance of these would never change)." Follow-up after the
+first bake: "the lighter ones became completely white instead of being pulsating like before" — so the
+final implementation keeps the old pulse but confines it to a transparent overlay, in colour.
+
+What changed (source of truth: the CHANGELOG entry above): the base island floor holds a steady
+emissive factor (`ISLAND_STATIC_GLOW = 1.45`); a duplicated island-top primitive with the
+`island_glow_overlay_baked` material pulses with the old envelope (base 1.45 + amplitude 0.78). The
+overlay texture is the authored colour of the lightest 8% grass mosaic tiles and the bright wireframe
+lines with an alpha mask, so only those breathe (in colour, not white) while the darker grass and the
+wireframe void stay static. The cubes keep their pulse.
+
+Evidence for this working tree only:
+
+| Check | Result |
+|---|---|
+| Overlay bake (shipped GLB payload) | 48/604 fully-grass tiles (8.0%) + 21,585 bright wire pixels masked; overlay alpha 0..255; base `island_top` image byte-identical to the previously shipped 512 art; overlay vertices +0.0006 above the base |
+| GLB contract | `validate_asset.py` OK: 592,876 bytes, 22 nodes, 6 materials, 4 island primitives, overlay material `island_glow_overlay_baked` at primitive index 3 (BLEND, alpha 0..255), masked upper cliff, transparent cliff foot, V clamp |
+| `py -3 -B tools/build_environment_themes.py --check` | Valid: four themed overlay variants (authored mask, themed colours), default payload byte-identical to the GLB overlay, base theme grass variants restored byte-identical to the committed art, other 39 theme PNGs untouched |
+| Runtime | `Digifarm3dViewport` adds the base island as a static glow and the overlay primitive as the pulsing one (found by material name, so export order cannot break it); pre-existing AppCamera bloom preview `build/farm-glow-overlay/report/preview_trough_vs_peak.png` shows the coloured pulse over an unchanged static floor |
+| `:app:testIntegrityCheckUnitTest` / `:app:assembleDebug` | Relevant suites green in this pass (`items.data.*`, `navigation.*`, `rendering.*`); the full JVM suite currently reports 4 failures in the unrelated in-progress `digiline.freechat` feature (see the note below) |
+| Native capture | **Pending.** No ADB device/AVD in this environment; the pulse itself must be judged on hardware |
+
+## Special-mission slot fix and readable Home feedback (2026-11-17, same tree)
+
+Owner reports: on the partner overview, tapping a special-mission slot "may open the wrong kind of
+mission for selection", and the failure message "appears below the action bar" and cannot be read.
+
+What changed (source of truth: the CHANGELOG entries above):
+
+- Special missions: slot identity is now the row position among a partner's four mission rows
+  (`SpecialMissionAssignment`, `UserCharacterDao.getSpecialMissions` ordered by id), not the device-side
+  `watchId`. The tapped card carries its row id and `GameplayRepository.applySpecialMission` updates
+  exactly that row while preserving `id`/`characterId`/`watchId`. The assign chooser labels/filters by
+  slot and shows a persistent inline error instead of a snackbar behind the dialog.
+- Home feedback: the Home snackbar host applies the navigation-bar inset itself and lifts above the
+  place dock band plus the partner peek slab at Peek (`homeSnackbarLift`), so the message is fully
+  visible above the phone's navigation bar and the farm's bottom chrome; other routes are unchanged.
+
+Evidence for this working tree only:
+
+| Check | Result |
+|---|---|
+| `:app:testIntegrityCheckUnitTest` | 1198 tests, 0 failures, 0 errors, 3 skipped (incl. new `SpecialMissionAssignmentTest` 10 cases and `HomeFeedbackPlacementTest` 3 cases) |
+| `:app:assembleDebug` | Passed on the same source tree (debug APK ~235 MiB) |
+| `:app:lint` | Not re-run after the final fix in this pass. The run on this tree reported **1 error, 571 warnings, 40 hints**: a pre-existing `LocalContextGetResourceValueCall` in `AdventureScreen.kt` (the team-full toast resolved a string through `LocalContext` inside a click lambda). That line was changed to resolve the string during composition; the full lint pass needs re-running. Other changes added no Android API usage. |
+| Native capture | **Pending.** No ADB device and no AVD were available in this pass (`adb devices` empty), so the snackbar placement and the mission chooser flow are not captured on hardware yet. |
+
 ## Single-farm cleanup: no multi-farm UI leftovers (2026-11-07, same tree)
 
 Owner request: two places still behaved as if the app had multiple Digifarms — the DigiLine had a

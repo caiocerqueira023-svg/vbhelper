@@ -2,7 +2,13 @@
 
 Outputs (POT sizes for mipmaps):
 - island_top.png 512x512: the original farm atlas grass, tiled as authored, with the
-  exposed cells drawn as a dark void carrying one continuous bright square grid.
+  exposed cells drawn as a dark void carrying one continuous bright square grid. This is
+  the authored base art, byte-identical to the committed texture (the island floor holds a
+  static emissive factor at runtime and never pulses).
+- island_glow_overlay.png 512x512 RGBA: the animated-glow overlay mask. RGB keeps the
+  authored island colour (no whitening) and alpha is 255 only on the lightest grass mosaic
+  tiles plus the bright wireframe grid lines, so the overlay primitive can pulse those
+  pixels in their own colour while the base art stays untouched.
 - island_side.png 256x256: original side-atlas detail tinted by the existing
   mauve gradient, strata and transparent cliff-foot fade.
 - voxel_block_dark/lit.png 128x128: two dark violet grid panels for the
@@ -17,7 +23,7 @@ import random
 import statistics
 import zipfile
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageOps
+from PIL import Image, ImageChops, ImageDraw, ImageOps
 
 SEED = 7
 TOP_SIZE = 512
@@ -249,6 +255,115 @@ def voxel_block(lit: bool) -> Image.Image:
     return img
 
 
+# --- Animated glow overlay ---------------------------------------------------------
+# The Digifarm viewport holds the island floor at a static emissive factor and pulses a
+# separate overlay primitive (old envelope: base 1.45 + amplitude 0.78). The overlay only
+# marks the pixels that should pulse - the lightest grass mosaic tiles and the bright
+# wireframe grid lines - and keeps their authored colour, so they pulse in colour rather
+# than washing out to white. Every base-art pixel outside the mask is byte-identical to the
+# committed 512 texture.
+GLOW_TILE_FRACTION = 0.08
+GLOW_TILE_CANDIDATES = (0.08, 0.12, 0.16)
+GLOW_WIRE_BRIGHTNESS = 200
+
+_SRGB_TO_LINEAR = tuple(
+    value / 12.92 if value <= 0.04045 else ((value + 0.055) / 1.055) ** 2.4
+    for value in (index / 255 for index in range(256))
+)
+
+
+def srgb_luminance(color: tuple[int, int, int]) -> float:
+    """Relative (linear) luminance of an sRGB 8-bit color."""
+    return (0.2126 * _SRGB_TO_LINEAR[color[0]]
+            + 0.7152 * _SRGB_TO_LINEAR[color[1]]
+            + 0.0722 * _SRGB_TO_LINEAR[color[2]])
+
+
+def exposed_pixel_mask() -> Image.Image:
+    """255 inside the exposed digital cells, 0 on the turf."""
+    mask = Image.new("L", (TOP_SIZE, TOP_SIZE), 0)
+    draw = ImageDraw.Draw(mask)
+    pitch = TOP_PITCH
+    for tx, ty in wireframe_tiles():
+        draw.rectangle((tx * pitch, ty * pitch, (tx + 1) * pitch - 1, (ty + 1) * pitch - 1),
+                       fill=255)
+    return mask
+
+
+def glow_mask(image: Image.Image, tile_fraction: float = GLOW_TILE_FRACTION):
+    """The animated-glow mask over the authored 512 art.
+
+    Grass: fully-grass 16px mosaic tiles (no exposed pixel inside) ranked by mean linear
+    luminance; the lightest ``tile_fraction`` of them are marked as whole tiles. Wire: the
+    bright grid-line pixels inside exposed cells (the near-black void stays out). Returns
+    ``(mask, stats)`` with an L-mode mask.
+    """
+    rgb = image.convert("RGB")
+    pixels = rgb.load()
+    exposed = exposed_pixel_mask()
+    exposed_pixels = exposed.load()
+    cells = TOP_SIZE // GRASS_TILE
+    tile_has_exposed = [[False] * cells for _ in range(cells)]
+    for ty in range(TOP_SIZE):
+        for tx in range(TOP_SIZE):
+            if exposed_pixels[tx, ty]:
+                tile_has_exposed[ty // GRASS_TILE][tx // GRASS_TILE] = True
+    tile_scores = []
+    for ty in range(cells):
+        for tx in range(cells):
+            if tile_has_exposed[ty][tx]:
+                continue
+            total = 0.0
+            for y in range(ty * GRASS_TILE, (ty + 1) * GRASS_TILE):
+                for x in range(tx * GRASS_TILE, (tx + 1) * GRASS_TILE):
+                    total += srgb_luminance(pixels[x, y])
+            tile_scores.append((total / (GRASS_TILE * GRASS_TILE), tx, ty))
+    tile_scores.sort(key=lambda entry: (-entry[0], entry[1], entry[2]))
+    selected_count = max(1, round(tile_fraction * len(tile_scores)))
+    selected = tile_scores[:selected_count]
+    tile_mask = Image.new("L", (TOP_SIZE, TOP_SIZE), 0)
+    tile_draw = ImageDraw.Draw(tile_mask)
+    for _score, tx, ty in selected:
+        tile_draw.rectangle((tx * GRASS_TILE, ty * GRASS_TILE,
+                             (tx + 1) * GRASS_TILE - 1, (ty + 1) * GRASS_TILE - 1), fill=255)
+    wire_mask = Image.new("L", (TOP_SIZE, TOP_SIZE), 0)
+    wire_pixels = wire_mask.load()
+    wire_count = 0
+    for ty in range(TOP_SIZE):
+        for tx in range(TOP_SIZE):
+            if exposed_pixels[tx, ty] and max(pixels[tx, ty]) >= GLOW_WIRE_BRIGHTNESS:
+                wire_pixels[tx, ty] = 255
+                wire_count += 1
+    mask = ImageChops.lighter(tile_mask, wire_mask)
+    exposed_count = sum(1 for value in exposed.getdata() if value)
+    selected_pixels = selected_count * GRASS_TILE * GRASS_TILE
+    turf_pixels = TOP_SIZE * TOP_SIZE - exposed_count
+    stats = {
+        "tileFraction": tile_fraction,
+        "grassTiles": len(tile_scores),
+        "selectedTiles": selected_count,
+        "selectedTileAreaPixels": selected_pixels,
+        "selectedTileFractionOfTiles": round(selected_count / len(tile_scores), 4),
+        "selectedTileAreaFractionOfTurf": round(selected_pixels / turf_pixels, 4),
+        "wireGlowPixels": wire_count,
+        "exposedPixels": exposed_count,
+        "wireFractionOfExposed": round(wire_count / exposed_count, 4),
+        "maskPixels": selected_pixels + wire_count,
+        "maskFractionOfTexture": round((selected_pixels + wire_count) / (TOP_SIZE * TOP_SIZE), 4),
+        "tileMask": tile_mask,
+        "wireMask": wire_mask,
+    }
+    return mask, stats
+
+
+def glow_overlay(image: Image.Image, tile_fraction: float = GLOW_TILE_FRACTION):
+    """Build the RGBA pulse overlay: authored colour on the glow mask, alpha 0 elsewhere."""
+    mask, stats = glow_mask(image, tile_fraction)
+    overlay = image.convert("RGB").convert("RGBA")
+    overlay.putalpha(mask)
+    return overlay, stats, mask
+
+
 def island_side(atlas: Image.Image) -> Image.Image:
     # The geometry ends on a fully transparent band, including texture-filter
     # samples along its last row. This prevents a one-pixel foot outline.
@@ -305,15 +420,23 @@ def main():
     p = argparse.ArgumentParser()
     p.add_argument("--dst", required=True)
     p.add_argument("--source-archive", default=str(DEFAULT_SOURCE_ARCHIVE))
+    p.add_argument("--tile-fraction", type=float, default=GLOW_TILE_FRACTION,
+                   help="fraction of fully-grass 16px tiles marked for the glow overlay")
     a = p.parse_args()
     dst = Path(a.dst)
     dst.mkdir(parents=True, exist_ok=True)
     atlas = load_original_atlas(Path(a.source_archive))
-    island_top(atlas).save(dst / "island_top.png")
+    base = island_top(atlas)
+    base.save(dst / "island_top.png")
+    overlay, glow_stats, _mask = glow_overlay(base, a.tile_fraction)
+    overlay.save(dst / "island_glow_overlay.png")
     island_side(atlas).save(dst / "island_side.png")
     voxel_block(False).save(dst / "voxel_block_dark.png")
     voxel_block(True).save(dst / "voxel_block_lit.png")
-    print("wrote original-grass island top, mauve cliff and unchanged violet blocks")
+    print(f"wrote original-grass island top (unchanged), {TOP_SIZE}x{TOP_SIZE} RGBA glow "
+          f"overlay ({glow_stats['selectedTiles']} tiles / "
+          f"{glow_stats['maskFractionOfTexture'] * 100:.1f}% of texture masked, "
+          f"{glow_stats['wireGlowPixels']} wire pixels), mauve cliff and unchanged blocks")
 
 
 if __name__ == "__main__":

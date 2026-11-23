@@ -102,7 +102,7 @@ fun StorageScreen(
     adventureScreenController: AdventureScreenControllerImpl
 ) {
     val application = LocalContext.current.applicationContext as TamersLabApplication
-    val storageRepository = remember { StorageRepository(application.container.db) }
+    val storageRepository = remember { application.container.storageRepository }
     val collection = rememberCollectionLoad(storageRepository) { storageRepository.getAllCharacters() }
     val characterList = collection.data.orEmpty()
     val nativeArchives by application.container.gameImportAcquisition.archives.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -612,6 +612,7 @@ fun StorageScreen(
         }
 
         if (showScanCollection) StorageScanCollectionDialog(application.container.db,
+            appearances = application.container.speciesAppearance,
             onClose = { showScanCollection = false })
         nativeArchives.firstOrNull { it.snapshot.id == selectedNativeSnapshot }?.let { archive ->
             com.tamerslab.transfer.ui.NativeArchiveStorageInformation(archive, onMoveToGame = {

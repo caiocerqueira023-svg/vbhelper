@@ -79,6 +79,7 @@ class IndividualPersistenceTest {
             AppDatabase.MIGRATION_53_54,
             AppDatabase.MIGRATION_54_55,
             AppDatabase.MIGRATION_55_56,
+            AppDatabase.MIGRATION_56_57,
         )
         .openHelperFactory(PreservingMigrationFactory())
         .addCallback(IndividualIntegrity.callback).build()

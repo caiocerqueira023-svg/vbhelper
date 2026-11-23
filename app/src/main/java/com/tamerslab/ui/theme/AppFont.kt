@@ -10,7 +10,8 @@ enum class AppFont(val preferenceValue: String, val displayName: String) {
     MICHROMA("michroma", "Michroma"),
     OXANIUM("oxanium", "Oxanium"),
     EUROSTILE_EXTENDED("eurostile_extended", "Eurostile Extended"),
-    SQUARE_721_EXTENDED("square_721_extended", "Square 721 Extended");
+    SQUARE_721_EXTENDED("square_721_extended", "Square 721 Extended"),
+    VB_LAB("vb_lab", "VB Lab (Kafu Techno)");
 
     companion object {
         fun fromPreference(value: String?): AppFont =
@@ -28,4 +29,8 @@ fun appFontFamily(appFont: AppFont): FontFamily = when (appFont) {
     )
     AppFont.EUROSTILE_EXTENDED -> FontFamily(Font(R.font.eurostile_extended_black))
     AppFont.SQUARE_721_EXTENDED -> FontFamily(Font(R.font.square_721_extended))
+    // FOT-KafuTechnoStd-E, extracted from the shipped VB Lab 1.4.6 APK.
+    // Proprietary Fontworks face: personal use only; do not redistribute the APK publicly
+    // without checking the font licence.
+    AppFont.VB_LAB -> FontFamily(Font(R.font.vb_lab_kafu_techno))
 }

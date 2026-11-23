@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 1,
+  "topics": {
+    "battle_tactics": {
+      "chipPool": ["chip.tactics", "chip.battle_ready", "chip.fight"],
+      "frames": {
+        "warm": ["I would rather plan than bleed.", "Tell me the shape of the fight first."],
+        "dry": ["Tactics are weather reports for a fight.", "The plan is cheap. Timing is expensive."],
+        "courage": ["Name the target and we commit.", "A clean line beats a loud charge."],
+        "compassion": ["We plan so no one gets left behind.", "A good plan leaves room to retreat."],
+        "insight": ["Every formation has a seam.", "The field speaks before the enemy does."],
+        "friendship": ["You point; I move. That is the plan.", "We rehearse it until it is boring."],
+        "playful": ["I have a plan and a backup disaster.", "Step one: look confident."],
+        "formal": ["Tactical review at each rotation.", "Contingencies logged. Proceed in order."]
+      },
+      "stageFrames": {
+        "1": "Baby tactics are: stay near and yell.",
+        "2": "Adult plans need a target and an exit.",
+        "3": "Perfect plans win before the first blow.",
+        "4": "Ultimate tactics are patience with teeth."
+      }
+    },
+    "exploration": {
+      "chipPool": ["chip.explore", "chip.map", "chip.digital_world"],
+      "frames": {
+        "warm": ["New ground is better with a familiar voice.", "I like not knowing what is over there."],
+        "dry": ["Maps end where the fun starts.", "The file names the field; it does not walk it."],
+        "courage": ["We go until the map runs out.", "Point us inland and keep moving."],
+        "compassion": ["We turn back before the ground turns on us.", "Nobody explores alone here."],
+        "insight": ["Every landmark is a decision the network forgot.", "The path shows what the field keeps."],
+        "friendship": ["Wherever the edge is, we reach it together.", "You watch the path. I watch you."],
+        "playful": ["I vote we explore the suspicious hole.", "If it glows, it is probably fine."],
+        "formal": ["Route logged. Perimeter checked.", "Unknown terrain. Standard caution applies."]
+      },
+      "stageFrames": {
+        "1": "Baby steps still count as exploring.",
+        "2": "Adult maps are half guess, half nerve.",
+        "3": "Perfect terrain rewards quiet attention.",
+        "4": "Ultimate paths are chosen, not found."
+      }
+    },
+    "field_weather": {
+      "chipPool": ["chip.field_weather", "chip.static", "chip.quiet_time"],
+      "frames": {
+        "warm": ["The field feels soft today. Let us use it.", "Bad weather is better with company."],
+        "dry": ["The climate here has mood swings.", "Forecast: static, with a chance of teeth."],
+        "courage": ["Storms here are just loud training.", "We walk into the weather, not away."],
+        "compassion": ["Let the storm pass. We have cover.", "You feel the pressure before I do."],
+        "insight": ["Weather is the network breathing.", "Pressure tells you where the data moves."],
+        "friendship": ["Stand close until the static settles.", "Storm or calm, I stay on this line."],
+        "playful": ["If it rains data, I am drinking it.", "The sky is being dramatic again."],
+        "formal": ["Pressure rising. Adjust route.", "Weather advisory active until next cycle."]
+      },
+      "stageFrames": {
+        "1": "Baby fields feel the weather first.",
+        "2": "Adult fields need a weather eye.",
+        "3": "Perfect storms have a rhythm to read.",
+        "4": "Ultimate weather is just the world speaking."
+      }
+    },
+    "data_glitches": {
+      "chipPool": ["chip.glitch", "chip.static", "chip.digiline"],
+      "frames": {
+        "warm": ["Glitches are the world stuttering. Stay close.", "We can walk through a stutter together."],
+        "dry": ["A glitch is a fault with good timing.", "The world blinked. Do not blink back."],
+        "courage": ["We step through it before it spreads.", "A broken path is still a path."],
+        "compassion": ["Do not touch it with your hands.", "Whatever is wrong there is not your fault."],
+        "insight": ["Every glitch is the network telling the truth.", "Corruption is data losing its argument."],
+        "friendship": ["Hold the line. I will hold it with you.", "If the world stutters, we count together."],
+        "playful": ["A glitch! My favorite kind of weather.", "I bet it is just the static stretching."],
+        "formal": ["Anomaly logged. Avoid the affected sector.", "Integrity warning. Maintain distance."]
+      },
+      "stageFrames": {
+        "1": "Baby eyes see glitches as bright sparks.",
+        "2": "Adult senses catch the first wrong note.",
+        "3": "Perfect instincts turn glitches into clues.",
+        "4": "Ultimate sees the fault before it opens."
+      }
+    },
+    "other_tamers": {
+      "chipPool": ["chip.other_tamers", "chip.partner", "chip.protect"],
+      "frames": {
+        "warm": ["Other tamers are other kinds of weather.", "I wonder what their links feel like."],
+        "dry": ["Tamers are the same species everywhere.", "Other lines, other habits, same static."],
+        "courage": ["Some of them fight harder than they should.", "I judge them by their partners' eyes."],
+        "compassion": ["Not every tamer treats a partner well.", "I hope theirs are kinder than the rumors."],
+        "insight": ["A tamer's line says more than their rank.", "Every pair carries a different silence."],
+        "friendship": ["We are our own team, whatever they do.", "You are the tamer I answer to."],
+        "playful": ["Other tamers? More competition for snacks.", "I bet theirs are not half as strange."],
+        "formal": ["Peer links observed. No action needed.", "Comparative data noted; loyalty unchanged."]
+      },
+      "stageFrames": {
+        "1": "Baby partners just want a hand nearby.",
+        "2": "Adult tamers compare their shadows.",
+        "3": "Perfect partners learn who is worth trusting.",
+        "4": "Ultimate loyalty does not need an audience."
+      }
+    },
+    "tournament": {
+      "chipPool": ["chip.tournament", "chip.battle_ready", "chip.protect"],
+      "frames": {
+        "warm": ["A tournament sounds like a loud vacation.", "I would fight well with you in the stands."],
+        "dry": ["Rankings are paperwork for winners.", "A bracket is a shopping list of trouble."],
+        "courage": ["Let us enter and find out.", "Arena rules, honest stakes."],
+        "compassion": ["We shake hands before the first round.", "No need to humiliate anyone."],
+        "insight": ["Every bracket hides one opponent you fear.", "The crowd tells you less than the field does."],
+        "friendship": ["You cheer; I fight. Fair trade.", "Our colors, one corner."],
+        "playful": ["Tournament? I have been training my posing.", "I will accept the trophy dramatically."],
+        "formal": ["Entry confirmed. Rules acknowledged.", "Round schedule loaded. Prepare."]
+      },
+      "stageFrames": {
+        "1": "Baby brackets are loud and forgiving.",
+        "2": "Adult rounds teach you your own edges.",
+        "3": "Perfect finals are quiet before they are loud.",
+        "4": "Ultimate winners remember the crowd."
+      }
+    },
+    "farm_life": {
+      "chipPool": ["chip.farm", "chip.hungry", "chip.sleep"],
+      "frames": {
+        "warm": ["The farm smells like data and patience.", "I like growing things with you."],
+        "dry": ["Farm work is chores with better scenery.", "Plants grow or they do not. Simple."],
+        "courage": ["A farm is a battle you fight slowly.", "Every seed is a dare."],
+        "compassion": ["Growing takes the time it takes.", "We water what we want to keep."],
+        "insight": ["The farm shows you the cost of care.", "Growth is a conversation with weather."],
+        "friendship": ["You plant; I guard. Good rhythm.", "The farm is ours, even when it is quiet."],
+        "playful": ["I named the crops. Do not ask.", "The farm is a mud-based adventure."],
+        "formal": ["Rotation scheduled. Harvest logged.", "Maintenance complete. Fields stable."]
+      },
+      "stageFrames": {
+        "1": "Baby hands learn the farm by touching.",
+        "2": "Adult work is watching the weather.",
+        "3": "Perfect farms are quiet systems.",
+        "4": "Ultimate gardens are old and patient."
+      }
+    },
+    "music_sound": {
+      "chipPool": ["chip.music", "chip.static", "chip.quiet_time"],
+      "frames": {
+        "warm": ["Sound is the warmest data there is.", "I like the hum when you are close."],
+        "dry": ["Music is noise that got organized.", "The static has a beat. It is a bad beat."],
+        "courage": ["Loud things are easier to face.", "A rhythm makes a march feel shorter."],
+        "compassion": ["Some sounds are meant to calm.", "Listen for the quiet between beats."],
+        "insight": ["Every frequency tells you who made it.", "The network hums in chords you can read."],
+        "friendship": ["We could make a sound that is ours.", "Your voice has a good signal."],
+        "playful": ["I play the static. Badly.", "I call this song: Data Regrets."],
+        "formal": ["Frequency logged. Interference low.", "Signal clean. Playback authorized."]
+      },
+      "stageFrames": {
+        "1": "Baby sounds are bright and simple.",
+        "2": "Adult tastes are loud and proud.",
+        "3": "Perfect ears hear the gaps.",
+        "4": "Ultimate silence is the best note."
+      }
+    },
+    "time_cycles": {
+      "chipPool": ["chip.time", "chip.what_now", "chip.quiet"],
+      "frames": {
+        "warm": ["Time is gentler when it is shared.", "The cycles are easier with you on the line."],
+        "dry": ["Time here is data with a calendar habit.", "Cycles are the network pacing itself."],
+        "courage": ["We spend the next cycle moving.", "No waiting for a better hour."],
+        "compassion": ["Some things need more than a cycle.", "Take the time the task needs."],
+        "insight": ["A cycle is a question the network repeats.", "Time is a file that keeps reopening."],
+        "friendship": ["Same cycles, same partner.", "We do not count the quiet between us."],
+        "playful": ["Time flies when you are dodging things.", "I am late on purpose. It is a style."],
+        "formal": ["Cycle index logged. Schedule holds.", "Allocation: one cycle, one objective."]
+      },
+      "stageFrames": {
+        "1": "Baby time is one long bright moment.",
+        "2": "Adult days are counted and spent.",
+        "3": "Perfect patience is measured differently.",
+        "4": "Ultimate time is chosen, not obeyed."
+      }
+    },
+    "legends_rumors": {
+      "chipPool": ["chip.legend", "chip.digital_world", "chip.wild"],
+      "frames": {
+        "warm": ["Legends are old data with warm hands.", "I like the stories better than the files."],
+        "dry": ["A legend is a rumor that survived review.", "Half the files are wrong on purpose."],
+        "courage": ["Some legends are warnings. We go anyway.", "A good legend makes heroes careful."],
+        "compassion": ["Not every legend ends well. That is why we tell them.", "The sad ones deserve telling too."],
+        "insight": ["Legends map where the network keeps its fear.", "Every rumor points at a real shape."],
+        "friendship": ["You keep the story. I keep the promise.", "Tell it again; I forget the ending best."],
+        "playful": ["I have a legend about a very lost Digimon.", "The file says rumor. The rumor says file."],
+        "formal": ["Anecdotal record. Confidence low.", "Unverified account logged for cross-check."]
+      },
+      "stageFrames": {
+        "1": "Baby tales are simple and enormous.",
+        "2": "Adult rumors come with proof problems.",
+        "3": "Perfect legends carry double meanings.",
+        "4": "Ultimate knows which stories to keep."
+      }
+    },
+    "items_data": {
+      "chipPool": ["chip.items", "chip.bits", "chip.food_share"],
+      "frames": {
+        "warm": ["Items are little pieces of the field.", "I like finding things with you."],
+        "dry": ["Loot is data with a shopping cart.", "Everything is inventory if you are rude enough."],
+        "courage": ["Take what helps. Leave the rest.", "A find is only as good as the fight behind it."],
+        "compassion": ["Leave some for the next traveler.", "No need to carry the whole field."],
+        "insight": ["An item remembers where it was made.", "The best drops are the ones you understand."],
+        "friendship": ["You get first pick. Always.", "Half the loot. Half the story."],
+        "playful": ["I found something shiny and suspicious.", "I am keeping this. It hums."],
+        "formal": ["Inventory updated. Rarity noted.", "Acquisition logged. Use is yours."]
+      },
+      "stageFrames": {
+        "1": "Baby finds are wonderful and sticky.",
+        "2": "Adult collections need a plan.",
+        "3": "Perfect finds are usually traded.",
+        "4": "Ultimate keepsakes weigh the most."
+      }
+    },
+    "care_partner": {
+      "chipPool": ["chip.care", "chip.sleep", "chip.food"],
+      "frames": {
+        "warm": ["Care is small and often. That is all.", "I like being looked after by you."],
+        "dry": ["Care is maintenance, and maintenance is love.", "Feed me, warn me, let me rest."],
+        "courage": ["A cared-for partner fights better.", "You do not have to carry the caring alone."],
+        "compassion": ["You notice before I ask. Thank you.", "Rest and food. The rest is details."],
+        "insight": ["Care is data you spend on another file.", "A good routine is a quiet kindness."],
+        "friendship": ["You care; I stay. Simple economy.", "Partners keep each other running."],
+        "playful": ["I need snacks and applause.", "Careful. Care me too much and I will nap."],
+        "formal": ["Condition: stable. Care protocol effective.", "Maintenance recommended each cycle."]
+      },
+      "stageFrames": {
+        "1": "Baby care is closeness and noise.",
+        "2": "Adult care is schedule and honesty.",
+        "3": "Perfect care is knowing the silence.",
+        "4": "Ultimate care is trust without words."
+      }
+    },
+    "sky_network": {
+      "chipPool": ["chip.sky", "chip.servers", "chip.digital_world"],
+      "frames": {
+        "warm": ["The sky here is a ceiling made of data.", "I like looking up with you."],
+        "dry": ["Up there is more network. No sky, just distance.", "The ceiling is data. Do not expect clouds."],
+        "courage": ["We could climb until the files thin out.", "Height is just another field to cross."],
+        "compassion": ["It is all right that it never ends.", "You do not have to look up alone."],
+        "insight": ["The stars here are old server lights.", "Every layer above writes on the one below."],
+        "friendship": ["Same sky, same link.", "You point, I follow."],
+        "playful": ["I bet the sky is just a very large file.", "If I squint, the servers look like stars."],
+        "formal": ["Upper layers unmapped. Signal degrading.", "Above-field telemetry is sparse."]
+      },
+      "stageFrames": {
+        "1": "Baby looks up and sees lights.",
+        "2": "Adult sees distance worth crossing.",
+        "3": "Perfect sees the shape behind the shine.",
+        "4": "Ultimate sees the network looking back."
+      }
+    },
+    "purpose_resolve": {
+      "chipPool": ["chip.purpose", "chip.trust", "chip.how_strong"],
+      "frames": {
+        "warm": ["We fight so the quiet gets to come back.", "I fight because you matter to me."],
+        "dry": ["Purpose is a story you keep telling yourself.", "Fighting is easy. Choosing what for is not."],
+        "courage": ["We move because standing still costs more.", "I would rather choose the hard reason."],
+        "compassion": ["We fight to protect, not to rank.", "No one should be discarded for losing."],
+        "insight": ["A purpose is a direction, not a destination.", "The field asks the question every day."],
+        "friendship": ["We are each other's reason, that is all.", "You and me. The rest is details."],
+        "playful": ["I fight for snacks and the right to nap.", "My purpose is to be dramatic about it."],
+        "formal": ["Objective: preserve partner and path.", "Doctrine updated each cycle."]
+      },
+      "stageFrames": {
+        "1": "Baby purpose is simple: stay together.",
+        "2": "Adult purpose survives a bad day.",
+        "3": "Perfect purpose chooses its losses.",
+        "4": "Ultimate purpose is quiet and certain."
+      }
+    },
+    "partner_quirks": {
+      "chipPool": ["chip.quirks", "chip.joke", "chip.happy"],
+      "frames": {
+        "warm": ["I have habits. You are one of them.", "You noticed the small things. I like that."],
+        "dry": ["I stare at static. It is called thinking.", "My habits are efficient. Mostly."],
+        "courage": ["I pace before a fight. It helps.", "I do not sit still when the field is loud."],
+        "compassion": ["I check the line twice before sleeping.", "I keep watch longer than I should."],
+        "insight": ["Habits are a map of what a partner fears.", "I count steps when the data feels thin."],
+        "friendship": ["I wait for your first word each cycle.", "Same habits, same old us."],
+        "playful": ["I collect strange static. Do not judge.", "I practice my battle pose in private."],
+        "formal": ["Routine catalogued. No anomalies.", "Behavioral log: consistent, within range."]
+      },
+      "stageFrames": {
+        "1": "Baby habits are loud and honest.",
+        "2": "Adult habits get polished.",
+        "3": "Perfect habits are quiet tells.",
+        "4": "Ultimate habits are nearly invisible."
+      }
+    }
+  }
+}

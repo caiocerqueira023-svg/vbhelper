@@ -17,7 +17,8 @@ class IndividualSpriteManager(private val context: Context) {
     private val appearances by lazy { app?.container?.let { container ->
         SpeciesAppearanceRepository(container.db, container.dotSpriteLibrary) { container.spritePreferenceRepository.current }
     } }
-    
+    private val vbSprites get() = app?.container?.dotSpriteLibrary?.bundledVbSprites
+
     /**
      * Load a specific sprite frame for a character
      * @param characterId The character ID (e.g., "dim012_mon03")
@@ -27,15 +28,23 @@ class IndividualSpriteManager(private val context: Context) {
     suspend fun loadSpriteFrame(characterId: String, frameNumber: Int): Bitmap? = withContext(Dispatchers.IO) {
         try {
             val name = AssetSpeciesNames.nameFor(context, characterId)
-            val preferred = name?.let { appearances?.resolve(it, characterId)?.sprite }
-            val cacheKey = "${characterId}_${app?.container?.spritePreferenceRepository?.current}_sprite_${preferred?.id}_frame_${frameNumber}"
+            // The owner's preference resolves first; VB_ASSET hands back the shipped character id,
+            // which may differ from [characterId] for app-defined individuals.
+            val artwork = name?.let { appearances?.resolve(it, characterId) }
+            val preferred = artwork?.sprite
+            val bundledAsset = artwork?.assetId
+            val cacheKey = "${characterId}_${app?.container?.spritePreferenceRepository?.current}_sprite_${preferred?.id ?: bundledAsset}_frame_${frameNumber}"
             spriteCache[cacheKey]?.let { return@withContext it }
             if (preferred != null) {
                 val bitmap = preferred.displayBitmap(frameNumber) ?: return@withContext null
                 spriteCache[cacheKey] = bitmap
                 return@withContext bitmap
             }
-            val assetPath = BattleAssetPaths.characterFrame(characterId, frameNumber)
+            val assetId = bundledAsset ?: characterId
+            // Cropped VB frames may lack the requested pose; the shipped idle is the safe fallback.
+            val shipped = vbSprites?.frames(assetId).orEmpty()
+            val frame = frameNumber.takeIf { shipped.isEmpty() || it in shipped } ?: shipped.first()
+            val assetPath = BattleAssetPaths.characterFrame(assetId, frame)
             val bitmap = context.assets.open(assetPath).use { input ->
                 BitmapFactory.decodeStream(input)
             }
@@ -76,8 +85,12 @@ class IndividualSpriteManager(private val context: Context) {
 
     suspend fun getAvailableDisplayFrames(characterId: String): List<Int> = withContext(Dispatchers.IO) {
         val name = AssetSpeciesNames.nameFor(context, characterId)
-        val preferred = name?.let { appearances?.resolve(it, characterId)?.sprite }
-        if (preferred != null) (1..12).toList() else getAvailableFrames(characterId)
+        val artwork = name?.let { appearances?.resolve(it, characterId) }
+        when {
+            artwork?.sprite != null -> (1..12).toList()
+            artwork?.assetId != null -> vbSprites?.frames(artwork.assetId).orEmpty()
+            else -> getAvailableFrames(characterId)
+        }
     }
     
     /**

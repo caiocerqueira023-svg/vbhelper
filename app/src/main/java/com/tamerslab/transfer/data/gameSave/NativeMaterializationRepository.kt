@@ -37,7 +37,7 @@ class NativeMaterializationRepository(
     private val acquisition: GameImportAcquisitionRepository,
     private val catalog: suspend () -> CanonicalSpeciesCatalog,
     private val prepareDefinition: suspend (String) -> CardCharacter,
-    private val worldDsSpecies: WorldDsSpeciesTable? = null,
+    private val speciesTables: NdsStorySpeciesTables? = null,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
     private val dao get() = db.nativeMaterializationDao()
@@ -214,34 +214,86 @@ class NativeMaterializationRepository(
         }
     }
 
-    /** World DS layout gate; the conversion below is DS1-policy-specific until its own adapter lands. */
+    /** World DS layout gate; the DS1 conversion below is World-DS-policy specific. */
     private fun isWorldDsBinding(binding: ExternalIndividualBinding): Boolean =
         binding.gameId == NdsStoryProfiles.WORLD_DS.gameId &&
             binding.formatProfile == NdsStoryProfiles.WORLD_DS.formatProfile
 
+    /** Dawn/Dusk layout gate; its own authored policy keeps native values exact. */
+    private fun isDs2Binding(binding: ExternalIndividualBinding): Boolean =
+        binding.gameId == NdsStoryProfiles.DAWN_DUSK.gameId &&
+            binding.formatProfile == NdsStoryProfiles.DAWN_DUSK.formatProfile
+
     /**
-     * First materialization of a World DS record seeds the app partner with the reverse-converted
-     * values. Wrapped in the projection guard so the seed is never counted as fresh app progress.
+     * Records the shared story progression observed in a story-title record. The VB block is never
+     * read or written here; the reversed app conversion used elsewhere on this path remains untouched.
+     */
+    private suspend fun recordStoryDomain(individualId: String, binding: ExternalIndividualBinding,
+        record: ObservedDigimon) {
+        val observed = when {
+            isLeBinding(binding) -> LeStatConversion.nativeStats(record)?.let(StoryProgressTracking::fromLe)
+            isDs2Binding(binding) -> Ds2StatConversion.nativeStats(record)?.let(StoryProgressTracking::fromDs2)
+            else -> WorldDsReceiveConversion.nativeStats(record)?.let(StoryProgressTracking::fromWorldDs)
+        } ?: return
+        try {
+            val now = System.currentTimeMillis()
+            com.tamerslab.transfer.data.ProgressDomainRepository(db.progressDomainDao())
+                .recordStory(StoryProgressTracking.toDomain(observed, individualId, now,
+                    com.tamerslab.domain.transfer.ProgressSeedSource.IMPORT))
+        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            // Progress tracking is bookkeeping, never a reason to fail an import.
+        }
+    }
+
+    /** Lost Evolution layout gate; its own authored policy keeps native values exact. */
+    private fun isLeBinding(binding: ExternalIndividualBinding): Boolean =
+        binding.gameId == NdsStoryProfiles.LOST_EVOLUTION.gameId &&
+            binding.formatProfile == NdsStoryProfiles.LOST_EVOLUTION.formatProfile
+
+    /** Any registered NDS Story binding whose projection policy exists. */
+    private fun isNdsStoryBinding(binding: ExternalIndividualBinding): Boolean =
+        isWorldDsBinding(binding) || isDs2Binding(binding) || isLeBinding(binding)
+
+    /**
+     * First materialization of a World DS or Dawn/Dusk record seeds the app partner with the
+     * reverse-converted values. Wrapped in the projection guard so the seed is never counted as
+     * fresh app progress.
      */
     private suspend fun applyWorldDsInitialStats(snapshot: NativeGameSnapshot, binding: ExternalIndividualBinding,
         definition: CardCharacter) {
-        if (!isWorldDsBinding(binding)) return
+        if (!isNdsStoryBinding(binding)) return
         val record = gson.fromJson(snapshot.recordJson, ObservedDigimon::class.java)
-        val native = WorldDsReceiveConversion.nativeStats(record) ?: return
+        recordStoryDomain(snapshot.individualId, binding, record)
         val reading = WorldDsAppStatsReader.read(db, snapshot.individualId) ?: return
-        val converted = WorldDsStatConversion.toApp(native, reading.appStats.copy(
-            stage = definition.stage.coerceIn(0, 5), baseHp = definition.baseHp, baseBp = definition.baseBp, baseAp = definition.baseAp))
-        UniversalJourneyRepository(db).projection(snapshot.individualId, "world-ds-initial:${snapshot.id}") {
-            val character = db.userCharacterDao().getByIndividualIdSync(snapshot.individualId)
-                .let(IndividualCharacters::representative) ?: return@projection
-            db.userCharacterDao().updateCharacter(character.copy(mood = converted.mood, vitalPoints = converted.vitalPoints,
-                trophies = converted.trophies, totalBattlesWon = converted.wins, totalBattlesLost = converted.losses,
-                activityLevel = converted.activityLevel))
-            db.appPartnerStateDao().state(snapshot.individualId)?.let { progress ->
-                db.appPartnerStateDao().update(progress.copy(trainingHp = converted.trainingHp, trainingBp = converted.trainingBp,
-                    trainingAp = converted.trainingAp, totalTrophies = converted.trophies))
+        val bases = reading.appStats.copy(
+            stage = definition.stage.coerceIn(0, 5), baseHp = definition.baseHp, baseBp = definition.baseBp, baseAp = definition.baseAp)
+        val converted = when {
+            isLeBinding(binding) -> {
+                val native = LeStatConversion.nativeStats(record) ?: return
+                LeStatConversion.toApp(native, bases)
+            }
+            isDs2Binding(binding) -> {
+                val native = Ds2StatConversion.nativeStats(record) ?: return
+                Ds2StatConversion.toApp(native, bases)
+            }
+            else -> {
+                val native = WorldDsReceiveConversion.nativeStats(record) ?: return
+                WorldDsStatConversion.toApp(native, bases)
             }
         }
+        UniversalJourneyRepository(db).projection(snapshot.individualId, "world-ds-initial:${snapshot.id}") {
+                val character = db.userCharacterDao().getByIndividualIdSync(snapshot.individualId)
+                    .let(IndividualCharacters::representative) ?: return@projection
+                db.userCharacterDao().updateCharacter(character.copy(mood = converted.mood, vitalPoints = converted.vitalPoints,
+                    trophies = converted.trophies, totalBattlesWon = converted.wins, totalBattlesLost = converted.losses,
+                    activityLevel = converted.activityLevel))
+                db.appPartnerStateDao().state(snapshot.individualId)?.let { progress ->
+                    db.appPartnerStateDao().update(progress.copy(trainingHp = converted.trainingHp, trainingBp = converted.trainingBp,
+                        trainingAp = converted.trainingAp, totalTrophies = converted.trophies))
+                }
+            }
     }
 
     /**
@@ -253,9 +305,17 @@ class NativeMaterializationRepository(
         canonicalAuthority: String = "GAME_TABLE"): Boolean = withContext(Dispatchers.IO) {
         val snapshot = dao.snapshot(snapshotId) ?: return@withContext false
         val binding = dao.binding(snapshot.bindingId) ?: return@withContext false
-        if (!isWorldDsBinding(binding)) return@withContext false
+        if (!isNdsStoryBinding(binding)) return@withContext false
+        val ds2 = isDs2Binding(binding)
+        val le = isLeBinding(binding)
         val record = gson.fromJson(snapshot.recordJson, ObservedDigimon::class.java)
-        val current = WorldDsReceiveConversion.nativeStats(record) ?: return@withContext false
+        val current = WorldDsReceiveConversion.nativeStats(record)
+        val currentDs2 = Ds2StatConversion.nativeStats(record)
+        val currentLe = LeStatConversion.nativeStats(record)
+        if (ds2 && currentDs2 == null) return@withContext false
+        if (le && currentLe == null) return@withContext false
+        if (!ds2 && !le && current == null) return@withContext false
+        recordStoryDomain(snapshot.individualId, binding, record)
         val reading = WorldDsAppStatsReader.read(db, snapshot.individualId)
         val projection = db.transferContinuityDao().projection(snapshot.individualId)
         val previousSnapshot = projection?.takeIf { it.nativeSnapshotId != snapshot.id }
@@ -272,9 +332,11 @@ class NativeMaterializationRepository(
         ) return@withContext false
         val previous = previousSnapshot?.let { gson.fromJson(it.recordJson, ObservedDigimon::class.java) }
         val previousStats = previous?.let(WorldDsReceiveConversion::nativeStats)
+        val previousDs2 = previous?.let(Ds2StatConversion::nativeStats)
+        val previousLe = previous?.let(LeStatConversion::nativeStats)
         val existingMapping = dao.mapping(snapshot.id)?.takeIf { it.nativeSpeciesId == record.nativeSpeciesId }
         val tableCanonical = NativeSpeciesResolution.tableIdentity(binding.gameId, binding.formatProfile,
-            snapshot.codecVersion, record.nativeSpeciesId, worldDsSpecies, catalog())
+            snapshot.codecVersion, record.nativeSpeciesId, speciesTables, catalog())
         // The current native record is the authority on the form.
         // 1) If the game's own species table resolves a catalog species, use it (unless user explicitly confirmed otherwise).
         // 2) If the table has no entry for this DS form, create a synthetic definition for the DS name.
@@ -291,30 +353,59 @@ class NativeMaterializationRepository(
                 ?: db.characterDao().getById(ExpandedCatalogRepository.definitionId(species.id))
                 ?: ensureCatalogDefinition(species)
         }
-        val dsName = worldDsSpecies?.name(record.nativeSpeciesId)
+        val dsName = speciesTables?.name(binding.gameId, binding.formatProfile, snapshot.codecVersion, record.nativeSpeciesId)
         val syntheticDefinition = if (definition == null && target == null && dsName != null) {
             ensureSyntheticDefinition(dsName, record.nativeSpeciesId, reading?.appStats)
         } else null
         val effectiveDefinition = definition ?: syntheticDefinition
         val effectiveTargetId = target?.id ?: syntheticDefinition?.speciesId
-        val updated = reading?.let { appReading ->
-            val bases = effectiveDefinition?.let {
+        val seedBases = reading?.let { appReading ->
+            effectiveDefinition?.let {
                 appReading.appStats.copy(stage = it.stage.coerceIn(0, 5), baseHp = it.baseHp,
                     baseBp = it.baseBp, baseAp = it.baseAp)
             } ?: appReading.appStats
-            if (previousStats != null) {
-                val delta = WorldDsStatConversion.applyDelta(previousStats, current, bases)
-                if (previous.nativeSpeciesId != record.nativeSpeciesId) {
+        }
+        val updated = reading?.let { appReading ->
+            val bases = seedBases ?: appReading.appStats
+            if (le) {
+                val currentNative = requireNotNull(currentLe)
+                if (previousLe != null) {
+                    val delta = LeStatConversion.applyDelta(previousLe, currentNative, bases)
+                    if (previous!!.nativeSpeciesId != record.nativeSpeciesId) {
+                        delta.copy(vitalPoints = maxOf(bases.vitalPoints,
+                            LeStatConversion.vitalPointsForLevel(currentNative.level)))
+                    } else delta
+                } else {
+                    val seeded = LeStatConversion.toApp(currentNative, bases)
+                    bases.copy(trainingHp = seeded.trainingHp, trainingBp = seeded.trainingBp,
+                        trainingAp = seeded.trainingAp, vitalPoints = seeded.vitalPoints, mood = seeded.mood)
+                }
+            } else if (ds2) {
+                val currentNative = requireNotNull(currentDs2)
+                if (previousDs2 != null) {
+                    val delta = Ds2StatConversion.applyDelta(previousDs2, currentNative, bases)
+                    if (previous!!.nativeSpeciesId != record.nativeSpeciesId) {
+                        delta.copy(vitalPoints = maxOf(bases.vitalPoints,
+                            Ds2StatConversion.vitalPointsForLevel(currentNative.level)))
+                    } else delta
+                } else {
+                    val seeded = Ds2StatConversion.toApp(currentNative, bases)
+                    bases.copy(trainingHp = seeded.trainingHp, trainingBp = seeded.trainingBp,
+                        trainingAp = seeded.trainingAp, vitalPoints = seeded.vitalPoints, mood = seeded.mood)
+                }
+            } else if (previousStats != null) {
+                val delta = WorldDsStatConversion.applyDelta(previousStats, requireNotNull(current), bases)
+                if (previous!!.nativeSpeciesId != record.nativeSpeciesId) {
                     // A DS evolution may change the stored level; never let it erase the level the
                     // app partner had before the form change.
                     delta.copy(vitalPoints = maxOf(bases.vitalPoints,
-                        WorldDsStatConversion.vitalPointsForLevel(current.level)))
+                        WorldDsStatConversion.vitalPointsForLevel(requireNotNull(current).level)))
                 } else delta
             } else {
                 // No checkpoint exists yet (for example a partner created outside the transfer
                 // baseline). Seed from the native record exactly like first materialization instead
                 // of leaving an unrelated app level behind.
-                val seeded = WorldDsStatConversion.toApp(current, bases)
+                val seeded = WorldDsStatConversion.toApp(requireNotNull(current), bases)
                 bases.copy(trainingHp = seeded.trainingHp, trainingBp = seeded.trainingBp,
                     trainingAp = seeded.trainingAp, vitalPoints = seeded.vitalPoints, mood = seeded.mood,
                     trophies = seeded.trophies, wins = seeded.wins, losses = seeded.losses,
@@ -323,22 +414,6 @@ class NativeMaterializationRepository(
         }
         var changed = false
         db.withTransaction {
-            if (updated != null) {
-                UniversalJourneyRepository(db).projection(snapshot.individualId, "world-ds-return:${snapshot.id}") {
-                    val characters = db.userCharacterDao().getByIndividualIdSync(snapshot.individualId)
-                    val character = IndividualCharacters.representative(characters)
-                        ?: return@projection
-                    db.userCharacterDao().updateCharacter(character.copy(vitalPoints = updated.vitalPoints,
-                        trophies = updated.trophies, totalBattlesWon = updated.wins, totalBattlesLost = updated.losses,
-                        activityLevel = updated.activityLevel))
-                    db.appPartnerStateDao().state(snapshot.individualId)?.let { progress ->
-                        db.appPartnerStateDao().update(progress.copy(trainingHp = updated.trainingHp,
-                            trainingBp = updated.trainingBp, trainingAp = updated.trainingAp,
-                            totalTrophies = updated.trophies))
-                    }
-                }
-                changed = true
-            }
             val characters = db.userCharacterDao().getByIndividualIdSync(snapshot.individualId)
             val character = IndividualCharacters.representative(characters)
             val individual = db.digimonIndividualDao().getIndividual(snapshot.individualId)
@@ -413,7 +488,8 @@ class NativeMaterializationRepository(
                 val baselineDeltaId = db.transferContinuityDao().lastDelta(snapshot.individualId)
                 if (projection == null) {
                     db.transferContinuityDao().saveProjection(NativeAppProjection(snapshot.individualId,
-                        snapshot.id, WorldDsStatConversion.VERSION, "APP_RETURN_VALUES", stage, baseHp, baseBp,
+                        snapshot.id, returnPolicyVersion(isLeBinding(binding), isDs2Binding(binding)),
+                        "APP_RETURN_VALUES", stage, baseHp, baseBp,
                         baseAp, trainingHp, trainingAp, trainingBp, vitalPoints, wins, losses, baselineDeltaId,
                         clock(), progress?.originBasisPoints ?: 10000))
                 } else {
@@ -430,13 +506,20 @@ class NativeMaterializationRepository(
         changed
     }
 
+    /** Projection policy id for one layout: Lost Evolution and Dawn/Dusk keep separate versions. */
+    private fun returnPolicyVersion(le: Boolean, ds2: Boolean): Int = when {
+        le -> LeStatConversion.VERSION
+        ds2 -> Ds2StatConversion.VERSION
+        else -> WorldDsStatConversion.VERSION
+    }
+
     /**
      * Repairs app cards after an earlier DS evolution return stored the new native snapshot but left
      * the old card/species in place. User-confirmed mappings are authoritative and are never replaced.
      */
     suspend fun reconcileReturnedSpecies(): Int = withContext(Dispatchers.IO) {
-        if (worldDsSpecies == null) return@withContext 0
-        val bindings = db.nativeGameArchiveDao().allBindings().filter(::isWorldDsBinding)
+        if (speciesTables == null) return@withContext 0
+        val bindings = db.nativeGameArchiveDao().allBindings().filter(::isNdsStoryBinding)
         if (bindings.isEmpty()) return@withContext 0
         val byId = bindings.associateBy { it.bindingId }
         var repaired = 0
@@ -458,7 +541,7 @@ class NativeMaterializationRepository(
             // Only a catalog-resolvable form can be repaired automatically. An unresolved name may
             // have been mapped by the user to a real species; never replace that with a placeholder.
             val canonical = NativeSpeciesResolution.tableIdentity(binding.gameId, binding.formatProfile,
-                snapshot.codecVersion, record.nativeSpeciesId, worldDsSpecies, catalog()) ?: continue
+                snapshot.codecVersion, record.nativeSpeciesId, speciesTables, catalog()) ?: continue
             val definition = runCatching { prepareDefinition(canonical) }.getOrNull()
                 ?: db.characterDao().getById(ExpandedCatalogRepository.definitionId(canonical))
                 ?: ensureCatalogDefinition(requireNotNull(NativeCanonicalMappingPolicy.target(catalog(), canonical)))

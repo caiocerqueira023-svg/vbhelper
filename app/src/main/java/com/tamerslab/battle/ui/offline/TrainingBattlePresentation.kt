@@ -38,6 +38,9 @@ import com.tamerslab.rendering.sprite3d.ResidentFrameImage
 import com.tamerslab.rendering.sprite3d.SpriteExtrusionGlb
 import com.tamerslab.utils.BitmapData
 import com.tamerslab.utils.createARGBIntArray
+import com.tamerslab.species.BundledVbSprites
+import com.tamerslab.species.SpeciesAppearanceRepository
+import com.tamerslab.species.VB_BATTLE_POSES
 import com.tamerslab.species.displayFrame
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -181,6 +184,7 @@ object TrainingBattlePresentationFactory {
             }
         }
         val spriteManager = IndividualSpriteManager(appContext)
+        val bundledVbSprites = (appContext as TamersLabApplication).container.dotSpriteLibrary.bundledVbSprites
         val attackSpriteManager = AttackSpriteManager(appContext)
         val hitEffectSpriteManager = HitEffectSpriteManager(appContext)
         val impactModels = buildMap {
@@ -205,7 +209,7 @@ object TrainingBattlePresentationFactory {
             suspend fun posesForSpecies(name: String?): Map<String, ResidentFrameImage>? {
                 if (name.isNullOrBlank()) return null
                 val key = BattleSpeciesIdentity.normalize(name)
-                if (!preferredPoses.containsKey(key)) preferredPoses[key] = appearances.spriteFor(name)?.let(::spritePoses)
+                if (!preferredPoses.containsKey(key)) preferredPoses[key] = preferredSpeciesPoses(name, appearances, bundledVbSprites)
                 return preferredPoses[key]
             }
             suspend fun attackVisuals(cardCharacterId: Long?, artId: String): Map<String, Bitmap> {
@@ -422,6 +426,28 @@ object TrainingBattlePresentationFactory {
     private fun SpeciesProfile.normalizedNames(blastData: BlastEvolutionData): Set<String> =
         listOfNotNull(speciesName, matchedName).filter { it.isNotBlank() }
             .map { BlastEvolutionRepository.normalize(blastData, it) }.toSet()
+
+    /**
+     * Preferred artwork for a species: the owner's chosen/imported VB rows first, then the VB frames
+     * shipped in the APK, then installed Dot rows. The shipped frames are the only VB source for a
+     * species the owner has not imported, so VB-first must not fall through to Dot before trying them.
+     */
+    private suspend fun preferredSpeciesPoses(
+        name: String,
+        appearances: SpeciesAppearanceRepository,
+        vbSprites: BundledVbSprites,
+    ): Map<String, ResidentFrameImage>? {
+        val artwork = appearances.resolve(name) ?: return null
+        artwork.sprite?.let { return spritePoses(it) }
+        val assetId = artwork.assetId ?: return null
+        val shipped = vbSprites.frames(assetId)
+        if (shipped.isEmpty()) return null
+        val idle = 1.takeIf { it in shipped } ?: shipped.first()
+        return VB_BATTLE_POSES.mapNotNull { (pose, frame) ->
+            val bitmap = vbSprites.bitmap(assetId, frame.takeIf { it in shipped } ?: idle) ?: return@mapNotNull null
+            bitmap.toResidentFrame()?.let { pose to it }
+        }.toMap().takeIf { it.isNotEmpty() }
+    }
 
     // Room's SpeciesProfileConverters has already decoded the persisted specialMoves JSON.
     private fun SpeciesProfile.firstSpecialMove(): String? = specialMoves.firstOrNull()?.takeIf { it.isNotBlank() }

@@ -53,6 +53,12 @@ sealed class NavigationItems(
         R.string.nav_storage
     )
 
+    object Rank : NavigationItems(
+        AppRoute.Rank,
+        R.drawable.vb_rank_15,
+        R.string.nav_rank
+    )
+
     object Settings : NavigationItems(
         AppRoute.Settings,
         R.drawable.baseline_settings_24,

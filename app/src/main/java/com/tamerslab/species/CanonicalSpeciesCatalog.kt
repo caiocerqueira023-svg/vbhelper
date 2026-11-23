@@ -93,6 +93,26 @@ class CanonicalSpeciesCatalog(val data: CanonicalSpeciesDatabaseDto) {
         it.kind == "DIGIMON" && it.dotSprites.setIds.isNotEmpty()
     } ?: false
 
+    /**
+     * Character ids of the VB battle sprite frames bundled with the app for this species, best source
+     * first. [CanonicalSpeciesDto.cardSlots] is the build-time binding between a physical DiM card slot
+     * and the canonical form, so it also maps an un-imported species to its shipped artwork.
+     *
+     * The lowest card/slot wins to stay deterministic. DiM 124 only ships tintable alpha masks (every
+     * pixel is black, the game colored it at runtime), so it is not presentable artwork and is never a
+     * candidate here; a species bound only to DiM 124 keeps its Dot appearance instead.
+     */
+    fun bundledVbAssetIds(species: CanonicalSpeciesDto): List<String> {
+        val bound = species.cardSlots.mapNotNull { slot ->
+            val card = slot.substringBefore(':', "").toIntOrNull()?.takeIf { it > 0 } ?: return@mapNotNull null
+            val mon = slot.substringAfter(':', "").toIntOrNull()?.takeIf { it > 0 } ?: return@mapNotNull null
+            card to mon
+        }.filterNot { (card, _) -> card == TINT_MASK_VB_CARD }.distinct()
+        return bound
+            .sortedWith(compareBy({ it.first }, { it.second }))
+            .map { (card, mon) -> vbCharacterId(card, mon) }
+    }
+
     fun setsForSpecies(nameOrId: String): List<DotSpriteSetDto> {
         val species = resolve(nameOrId) ?: return emptyList()
         return species.dotSprites.setIds.mapNotNull(setsById::get).sortedWith(
@@ -112,6 +132,8 @@ class CanonicalSpeciesCatalog(val data: CanonicalSpeciesDatabaseDto) {
     }
 
     companion object {
+        /** DiM 124 ships tintable alpha masks, not presentable artwork. */
+        private const val TINT_MASK_VB_CARD = 124
         internal val FRAME_PATH = Regex("frames/[0-9a-f]{64}\\.bin")
         private val colors = listOf("black", "white", "red", "blue", "green", "yellow", "gold", "silver", "orange", "violet", "purple", "clear")
         private fun compactKey(name: String) = Normalizer.normalize(name, Normalizer.Form.NFKD)

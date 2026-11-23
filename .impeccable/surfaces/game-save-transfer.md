@@ -204,3 +204,31 @@
 - Full DIM-style Home/stat parity is required for card-independent actors. A selected
   DIM supplies its stat basis; origin data remains retained and separately projected.
 - Native/network/UI and real-game acceptance remain separate from JVM/schema checks.
+
+## Direction contract — Transfer library & box overhaul (2026-11-20)
+
+THESIS: Transfer stops being a save-manager settings page and becomes a Digimon
+library: games are shelves, an open save is a box, a Digimon is a full inspector
+plate. It refuses the origin-row list, the truncating save dropdown, the technical
+copy-review kicker and the plain Material mon cards in the main path.
+
+OWN-WORLD: Tamers Lab only — palette-resolved dark HUD surfaces, Oxanium type,
+cut-corner 10dp plates, 1dp hairlines, cyan reserved for live/selected state, DS
+launcher art and the app's own sprites as the colour. No pixel-chrome copy, no new
+icon family, no gamepad legend.
+
+STORY: The player sees every game at a glance, opens one, recognises their Digimon
+in a box grid with level badges and species, taps for native facts, and moves in one
+action; sending shows destination games as cards and Party/Bank/Farm as instrument
+chips with counts.
+
+FIRST VIEWPORT: TopBanner "Transfer"; a "Games" heading with the save count and an
+Open save action; a two-column grid of game cards (art plate, title, save/status
+line), then a full-width Storage plate and a Bracelet row. Inside a game: save
+identity bar, container tabs with counts, a three-column box of Digimon cards.
+
+FORM: shelf library → box → inspector. Direction pinned by the owner's PKForge /
+PKVault references; no roll. seed: none (unavailable)
+
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish
+review, the verdict, DESIGN.md, and every shipping raster carrying its provenance.

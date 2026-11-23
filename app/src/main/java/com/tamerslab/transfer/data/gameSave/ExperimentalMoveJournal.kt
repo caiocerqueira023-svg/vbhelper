@@ -49,6 +49,8 @@ internal data class ExperimentalSendRecord(
     val generated: Boolean = false,
     /** True when an existing destination record is repaired in place instead of inserted. */
     val replaced: Boolean = false,
+    /** Requested native container (PARTY/FARM/BANK); null keeps the layout default. */
+    val destination: String? = null,
     override val phase: String = "PREPARED",
 ) : ExperimentalEditOperation
 

@@ -3,7 +3,7 @@
 
     <style name="Theme.TamersLab.Base" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">@color/deep_purple_bg</item>
-        <item name="android:statusBarColor">@color/deep_purple_bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@color/deep_purple_bg</item>
         <item name="android:windowLightStatusBar">false</item>
         <item name="android:windowLightNavigationBar">false</item>
@@ -11,12 +11,12 @@
     <style name="Theme.TamersLab" parent="Theme.TamersLab.Base" />
     <style name="Theme.TamersLab.Lab" parent="Theme.TamersLab">
         <item name="android:windowBackground">@color/lab_bg</item>
-        <item name="android:statusBarColor">@color/lab_bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@color/lab_bg</item>
     </style>
     <style name="Theme.TamersLab.Arena.Base" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowBackground">@color/arena_bg</item>
-        <item name="android:statusBarColor">@color/arena_bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@color/arena_bg</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowLightNavigationBar">true</item>
@@ -24,7 +24,7 @@
     <style name="Theme.TamersLab.Arena" parent="Theme.TamersLab.Arena.Base" />
     <style name="Theme.TamersLab.DigimonNet" parent="Theme.TamersLab.Arena">
         <item name="android:windowBackground">@color/digimon_net_bg</item>
-        <item name="android:statusBarColor">@color/digimon_net_bg</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@color/digimon_net_bg</item>
     </style>
 </resources>

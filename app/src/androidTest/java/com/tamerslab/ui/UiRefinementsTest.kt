@@ -176,6 +176,17 @@ class UiRefinementsTest {
         override fun isShiftNoticePending(characterId: Long, onResult: (Boolean) -> Unit) = onResult(false)
         override fun markShiftNoticeShown(characterId: Long) {}
         override fun isLegacyLlmEnabled(): Boolean = true
+        override fun isFreeChatEnabled(): Boolean = false
+        override fun openFreeChat(
+            characterId: Long,
+            onResult: (Result<com.tamerslab.digiline.freechat.gateway.FreeChatSceneView?>) -> Unit
+        ) = onResult(Result.success(null))
+        override fun sendFreeText(
+            characterId: Long,
+            text: String,
+            onResult: (Result<com.tamerslab.digiline.freechat.gateway.FreeChatSceneView?>) -> Unit
+        ) = onResult(Result.success(null))
+        override fun clearFreeChat(characterId: Long, onDone: () -> Unit) = onDone()
         override fun sendMessage(characterId: Long, text: String, onResult: (Result<String>) -> Unit) {
             onResult(if (fail) Result.failure(IllegalStateException("internal implementation detail")) else Result.success("reply"))
         }

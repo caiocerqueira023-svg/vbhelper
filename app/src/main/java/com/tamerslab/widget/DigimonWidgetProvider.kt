@@ -30,6 +30,8 @@ import com.tamerslab.MainActivity
 import com.tamerslab.R
 import com.tamerslab.di.TamersLabApplication
 import com.tamerslab.dtos.CharacterDtos
+import com.tamerslab.species.VB_WALK_POSES
+import com.tamerslab.species.withBundledVbArtwork
 import com.tamerslab.utils.BitmapData
 import com.tamerslab.utils.getBitmap
 import kotlinx.coroutines.CoroutineScope
@@ -261,6 +263,7 @@ class DigimonWidgetProvider : AppWidgetProvider() {
             ioScope.launch {
                 var sprites: CharacterDtos.WidgetSprites? = null
                 var name: String? = null
+                var activeSpecies: String? = null
                 try {
                     val app = appContext as? TamersLabApplication
                     val db = app?.container?.db
@@ -273,8 +276,19 @@ class DigimonWidgetProvider : AppWidgetProvider() {
                             }
                                 ?.takeIf(String::isNotBlank)
                                 ?: active?.let { db.speciesProfileDao().getByCardCharacterId(it.charId)?.speciesName }
+                            activeSpecies = active?.let { character ->
+                                db.speciesProfileDao().getByCardCharacterId(character.charId)
+                                    ?.let { profile -> profile.speciesName?.takeIf(String::isNotBlank) ?: profile.matchedName }
+                            }
                             sprites = db.userCharacterDao().getActiveCharacterWidgetSprites()
                         }
+                        // VB-first: a partner without its own loaded VB art still gets the VB frames
+                        // shipped in the app instead of the Dot rows the display view resolved.
+                        val appearance = app?.container?.speciesAppearance
+                        val vb = activeSpecies?.takeIf(String::isNotBlank)?.let { species ->
+                            appearance?.bundledSprite(species, VB_WALK_POSES)
+                        }
+                        if (vb != null) sprites = sprites?.withBundledVbArtwork(vb)
                     }
                 } catch (cancelled: CancellationException) { throw cancelled }
                 catch (_: Exception) {

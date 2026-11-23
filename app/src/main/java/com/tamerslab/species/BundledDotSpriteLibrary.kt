@@ -21,11 +21,21 @@ import java.util.zip.ZipFile
 
 /** Offline source library. Browsing decodes only visible portraits; selection installs one set. */
 class BundledDotSpriteLibrary(private val context: Context, private val db: AppDatabase) {
+    /**
+     * VB battle frames shipped in the APK, reachable for un-imported species through the canonical
+     * card-slot binding. Shared by every artwork consumer so the asset index is read once per process.
+     */
+    val bundledVbSprites: BundledVbSprites by lazy {
+        BundledVbSprites(context.applicationContext) { catalogBlocking() }
+    }
     private val catalogLock = Any()
     private val packMutex = Mutex()
+    private val portraitZipMutex = Mutex()
+    private var portraitZipPack: File? = null
+    private var portraitZip: ZipFile? = null
     private var cachedCatalog: CanonicalSpeciesCatalog? = null
     private var cachedPack: File? = null
-    private val portraits = object : LruCache<String, Bitmap>(4 * 1024 * 1024) {
+    private val portraits = object : LruCache<String, Bitmap>(8 * 1024 * 1024) {
         override fun sizeOf(key: String, value: Bitmap) = value.allocationByteCount
     }
     private val installedSprites = object : LruCache<String, Sprite>(8 * 1024 * 1024) {
@@ -47,8 +57,16 @@ class BundledDotSpriteLibrary(private val context: Context, private val db: AppD
         portraits[setId]?.let { return@withContext it }
         val catalog = catalog()
         val set = requireNotNull(catalog.setsById[setId])
-        val pack = pack(catalog)
-        val bytes = ZipFile(pack).use { readFrame(it, set, DotFrameRoles.path(set, 1)) }
+        // A fresh ZipFile parses the pack's ~27k-entry central directory; keep one open for portraits
+        // (they load one at a time in pickers/lists), guarded because ZipFile streams are not shared.
+        val bytes = portraitZipMutex.withLock {
+            val pack = pack(catalog)
+            val zip = portraitZip?.takeIf { portraitZipPack == pack } ?: run {
+                portraitZip?.close()
+                ZipFile(pack).also { portraitZip = it; portraitZipPack = pack }
+            }
+            readFrame(zip, set, DotFrameRoles.path(set, 1))
+        }
         Bitmap.createBitmap(BitmapData(bytes, set.width, set.height).createARGBIntArray(),
             set.width, set.height, Bitmap.Config.ARGB_8888).also { portraits.put(setId, it) }
     }
@@ -104,8 +122,10 @@ class BundledDotSpriteLibrary(private val context: Context, private val db: AppD
         val data = catalog.data
         require(data.packBytes in 1..(64L * 1024 * 1024) && SHA256.matches(data.packSha256))
         cachedPack?.takeIf { it.isFile && it.length() == data.packBytes }?.let { return@withLock it }
+        // The cache file name already carries the checksum, so a matching length is enough on the hot
+        // path: re-hashing 12 MB on every process start only delays the first portrait.
         val target = File(context.cacheDir, "bundled-dot-${data.packSha256}.zip")
-        if (!target.isFile || target.length() != data.packBytes || hash(target) != data.packSha256) {
+        if (!target.isFile || target.length() != data.packBytes) {
             val temporary = File.createTempFile("bundled-dot-", ".part", context.cacheDir)
             try {
                 context.assets.open("dot_sprites.zip").use { input -> temporary.outputStream().use { output ->

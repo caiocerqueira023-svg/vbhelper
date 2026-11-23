@@ -1,4 +1,4 @@
-﻿package com.tamerslab.home.ui
+package com.tamerslab.home.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -80,7 +80,7 @@ fun HomeScreen(
     val scope = androidx.compose.runtime.rememberCoroutineScope()
     var choosingExpanded by remember { mutableStateOf(false) }
 
-    val storageRepository = remember { StorageRepository(application.container.db) }
+    val storageRepository = remember { application.container.storageRepository }
     val cardRepository = remember { CardRepository(application.container.db) }
     val dexRepository = remember { DexRepository(application.container.db) }
 

@@ -132,9 +132,18 @@ benchmark step; device/instrumentation/benchmark checks are a documented manual 
 
 ## Product, transfer, and format research
 
+- [DIGILINE_FREE_TALK_PLAN.md](../DIGILINE_FREE_TALK_PLAN.md) — SimSimi-style, Digimon-contextualized,
+  offline free-talk ("Papo") feasibility and implementation plan for DigiLine; retrieval-based, no
+  runtime LLM. Supporting audits in [analysis/simsimi-free-chat/](../analysis/simsimi-free-chat/).
+- [FREE_CHAT_IMPLEMENTATION_CONTRACT.md](../FREE_CHAT_IMPLEMENTATION_CONTRACT.md) — code-level contract for the
+  Free Talk implementation (assets, DTOs, engines, Room v57, loader, gateway, UI, DI wiring).
+- [DISTRIBUTION_GATE.md](../DISTRIBUTION_GATE.md) — mandatory checklist before any public distribution: removes
+  or rewrites third-party seed material used by the personal-build Free Talk corpus.
 - [MULTI_GAME_TRANSFER_PLAN.md](../MULTI_GAME_TRANSFER_PLAN.md) — multi-game transfer
   plan and current transfer contract.
 - [DAWN_DUSK_TRANSFER_PLAN.md](../DAWN_DUSK_TRANSFER_PLAN.md) — Dawn/Dusk evidence plan.
+- [LOST_EVOLUTION_TRANSFER_PLAN.md](../LOST_EVOLUTION_TRANSFER_PLAN.md) — Lost Evolution adapter plan and verification checklist.
+- [game-save-core/LOST_EVOLUTION_RESEARCH.md](../game-save-core/LOST_EVOLUTION_RESEARCH.md) — Lost Evolution ROM/save evidence.
 - [EXPANDED_MODE_IMPLEMENTATION.md](../EXPANDED_MODE_IMPLEMENTATION.md) — historical
   expanded-mode implementation notes.
 - [game-save-core/WORLD_DS_RESEARCH.md](../game-save-core/WORLD_DS_RESEARCH.md) and

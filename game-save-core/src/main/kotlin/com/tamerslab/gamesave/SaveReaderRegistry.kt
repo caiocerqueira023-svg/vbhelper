@@ -15,7 +15,9 @@ class SaveReaderRegistry(private val readers: List<GameSaveReader> = defaultRead
          * decode throws its own failure and never silently claims another profile's save.
          */
         fun defaultReaders(): List<GameSaveReader> =
-            listOf(TimeStrangerSaveReader()) + NdsStoryProfiles.all.map { NdsStorySaveReader(it) }
+            listOf(TimeStrangerSaveReader()) +
+                NdsStoryProfiles.all.filter { it.gameId != LostEvolution.GAME_ID }.map { NdsStorySaveReader(it) } +
+                LostEvolutionSaveReader()
     }
 
     /** Registration order is a contract: broad readers first, specific readers last (see SAVE_READING_STANDARD.md). */

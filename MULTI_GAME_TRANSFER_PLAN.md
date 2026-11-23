@@ -48,6 +48,15 @@ evidence: Dawn/Dusk run on the World DS engine but persist a **different save la
 `0x164` bytes at `0x288`), so World DS offsets are not reusable. No production reader or
 writer for Dawn/Dusk exists yet; real-save and ROM evidence is required first.
 
+**Lost Evolution step opened (2026-11-20, user-directed):** the third NDS Story adapter is
+planned and implemented in [LOST_EVOLUTION_TRANSFER_PLAN.md](LOST_EVOLUTION_TRANSFER_PLAN.md):
+Digimon Story: Lost Evolution (Japan `BLEJ` + Operation Decoded T-En v1.1) is read, imported,
+moved out and sent back through the same flows, using a core profile/editor and an app species
+asset generated from the user's own ROM. Save layout, record struct, party/farm containers and the
+identity allocator were recovered from the ROM's own code and validated against the user's retail
+save; in-game boot acceptance is the remaining external verification. Evidence:
+[game-save-core/LOST_EVOLUTION_RESEARCH.md](game-save-core/LOST_EVOLUTION_RESEARCH.md).
+
 **Definitive Transfer UX (2026-10-17, latest user clarification):** one **list of
 origins** containing games, Vital Bracelet and every other supported Digimon origin.
 DS games use the **icons shown by the DS launcher**, not cover artwork. Open a game
@@ -1626,6 +1635,42 @@ World DS checksum/sequence research and the plan 4.5 history/recovery UI.
 - Next gate unchanged: the Dawn/Dusk evidence pack (`DAWN_DUSK_TRANSFER_PLAN.md` W2) needs
   one real USA save per title, controlled before/after pairs and the USA ROMs (or extracted
   JSON) before a second profile, reader registration or any writer flag.
+
+### Dawn/Dusk adapter delivered from ROMs (2026-11-19)
+
+The user supplied both USA ROMs and two retail saves and asked for the adapter to be finished
+from static analysis rather than a controlled-sample matrix. Done in this tree:
+
+- **Layout evidence (W2):** recovered from the user's ROMs with Ghidra headless (ARM9 + overlays)
+  and verified on the two saves — `0x10000` image, `0x7B2C` copies at `0x0`/`0x7B80`, MD5 header
+  over the copy with the header zeroed, u32 sequence at `+0x18`, `DSDIG2` at `+0x10`, 40 records
+  of `0x164` at `0x288`, party ids at `0x260`, last id at `0x25C`, plus the record field map
+  through `0x124`. Species names/base data/lineage/EXP curves extracted from both ROMs and
+  identical between the titles. Full evidence: `game-save-core/DS2_RESEARCH.md` (tooling in
+  `analysis/ds2/`).
+- **Reader (W3):** `NdsStoryProfiles.DAWN_DUSK` is registered; the shared registry, discovery,
+  copy review and error granularity work unchanged; `DSDIG2` is required for recognition so the
+  families never decode each other. The origin list shows Dawn and Dusk (title from the file
+  name, generic names fall back to Dawn); copy review works through the profile-based dialog.
+- **Acquisition (W4):** DS2 import profile, per-game species registry (`NdsStorySpeciesTables`,
+  `Ds2SpeciesTable`), auto-identity from the game's own table, `Ds2StatConversion`
+  (`ds2-stat-v1`) seeding/return, materialization and refresh gates generalized from the DS1
+  literal to profile lookups. The nine native EXP channels stay archived; only the three
+  training counters are interpreted.
+- **Editor (W6 core):** `Ds2SaveEdits`/`Ds2SaveEditor` implement revision-bound removal, exact
+  retained insertion, replacement and party admission, editing only the authoritative copy,
+  refusing a copy whose header disagrees, bumping the sequence and resealing the header; verified
+  on the real saves (removal + restore rebuilds the exact bytes).
+- **Writers:** the app Move/Send repositories were generalized to resolve the import profile and
+  the native editor per observation, so Dawn/Dusk party records use the normal Move to Storage /
+  Move to game flow with journal, durable backup, fresh-read preflight, readback verification and
+  presence. Sends prefer the exact retained record and fall back to synthesis: app-only partners
+  (or stored partners whose app growth exceeds the record) are projected into a `0x164` record from
+  the game's own species defaults plus the app stats, with the retained record as the seed so
+  identity and unknown bytes survive; a cross-layout send is still refused instead of converted
+  (that journey belongs to Storage conversion).
+- **Not yet:** no reviewed title-binding prompt (the file name resolves the title); DigiFarm out
+  of scope; no in-game acceptance of a written Dawn/Dusk save and no phone run.
 
 ## 22. Risk register
 

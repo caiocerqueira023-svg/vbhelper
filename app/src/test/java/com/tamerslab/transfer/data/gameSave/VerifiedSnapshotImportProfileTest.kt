@@ -35,6 +35,22 @@ class VerifiedSnapshotImportProfileTest {
         assertEquals(setOf(SaveContainer.PARTY, SaveContainer.BANK), policy.allowedSnapshotContainers)
         assertEquals(TimeStrangerSaveReader.GAME_ID, policy.gameId)
     }
+    @Test fun lostEvolutionProfileImportsPartyAndFarmResidents() {
+        val policy = GameImportAcquisitionRepository.productionProfiles.single {
+            it.gameId == NdsStoryProfiles.LOST_EVOLUTION.gameId
+        }
+        assertEquals(NdsStoryProfiles.LOST_EVOLUTION.formatProfile, policy.formatProfile)
+        assertEquals(1, policy.codecVersion)
+        assertEquals("le-source-local-v1", policy.identityScheme)
+        assertTrue(policy.provisionalIdentity)
+        assertTrue(policy.appPersonalityOnly)
+        assertFalse(policy.crossSourceIdentityReview)
+        assertEquals(setOf(SaveContainer.PARTY, SaveContainer.FARM), policy.allowedSnapshotContainers)
+        assertEquals(1..99, policy.nativeLevelRange)
+        val farmRecord = record.copy(container = SaveContainer.FARM, nativeIdentity = "save-local:30405f00000001e")
+        assertEquals("native:save-local:30405f00000001e", policy.nativeIdentity(farmRecord))
+    }
+
     @Test fun profileRejectsMissingVerificationMetadata() {
         assertThrows(IllegalArgumentException::class.java) {
             VerifiedSnapshotImportProfile("fixture", "fixture-v1", 1, "", emptyMap())

@@ -392,7 +392,7 @@ fun RadarScreen(
         selectedEncounterName = target.speciesName
         worldState.set<String?>("radar-quest-target", null)
     }
-    val activeCharacterFlow = remember { app.container.db.userCharacterDao().getActiveCharacter() }
+    val activeCharacterFlow = remember { app.container.storageRepository.getActiveCharacter() }
     val activeOwned by activeCharacterFlow.collectAsStateWithLifecycle(initialValue = null)
     // The active partner is the radar's player token: its four stored frames become the extruded
     // 3D model standing at the centre of the isometric world.
@@ -1297,7 +1297,9 @@ fun RadarScreen(
                                 },onLongClick={ asset?.let { spawn -> scope.launch {
                                      selectedSpecies=withContext(Dispatchers.IO) { val dex = DexRepository(app.container.db)
                                          spawn.cardId?.let { dex.getCharactersByCardId(it).first().firstOrNull { c -> c.id==spawn.cardCharacterId } }
-                                             ?: dex.getCharacterProgress(spawn.cardCharacterId).first() }
+                                             ?: com.tamerslab.species.BundledVbArtwork.progress(
+                                                 dex.getCharacterProgress(spawn.cardCharacterId).first(),
+                                                 spawn.speciesName, app.container.speciesAppearance) }
                                  } } }).semantics { contentDescription=asset?.speciesName ?: "Digimon" }
                           )
                         val activity=worldSnapshot.publicInteractionFor(projection.individualId)
@@ -1541,7 +1543,9 @@ fun RadarScreen(
                                                              dex.getCharactersByCardId(cardId)
                                                                  .first()
                                                                  .firstOrNull { it.id == spawn.cardCharacterId }
-                                                         } ?: dex.getCharacterProgress(spawn.cardCharacterId).first()
+                                                         } ?: com.tamerslab.species.BundledVbArtwork.progress(
+                                                             dex.getCharacterProgress(spawn.cardCharacterId).first(),
+                                                             spawn.speciesName, app.container.speciesAppearance)
                                                      }
                                                 }
                                             }

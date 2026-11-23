@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "frames": [
+    {"text": "The records list {name} as {level}. They do not list mercy."},
+    {"text": "{name} is filed under {type}. Files are tidy; living data is not."},
+    {"text": "Anyone can look up {name}'s moves. Nobody can look up its reasons."},
+    {"text": "Level says {level}; type says {type}. Neither says what {name} wants."},
+    {"text": "If the records call {name} a {type}, the records have not met it."},
+    {"text": "{name}'s file lists {move}. A move is a fact, not a promise."},
+    {"text": "A {level} like {name} still gets to choose. Rank is not character."},
+    {"text": "Every {type} carries data differently. {name} is no exception."},
+    {"text": "The records put {name} at {level}. I put no one at a level twice."},
+    {"text": "{name} is {level}. That is the whole file; the rest is choices."}
+  ]
+}

@@ -6,9 +6,12 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Backup
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -68,14 +71,39 @@ internal fun GameMoveBackupsScreen() {
             failed -> TextButton(onClick = { attempt++ }) { Text(stringResource(R.string.transfer_refresh)) }
             backups == null -> CircularProgressIndicator(Modifier.padding(16.dp))
             backups.orEmpty().isEmpty() -> Text(stringResource(R.string.transfer_backups_empty), Modifier.padding(16.dp))
-            else -> LazyColumn(Modifier.weight(1f)) {
+            else -> LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 items(backups.orEmpty(), key = { it.operationId }) { backup ->
-                    ListItem(headlineContent = { Text(backup.sourceLabel ?: stringResource(R.string.transfer_game_world_ds)) },
-                        supportingContent = { Text(android.text.format.DateFormat.getMediumDateFormat(context).format(Date(backup.createdAt)) +
-                            " " + android.text.format.DateFormat.getTimeFormat(context).format(Date(backup.createdAt))) },
-                        trailingContent = { TextButton(enabled = !exporting, onClick = {
-                            selected = backup.operationId; create.launch("world-ds-original.sav")
-                        }) { Text(stringResource(R.string.transfer_backup_export)) } })
+                    Surface(
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        border = androidx.compose.foundation.BorderStroke(1.dp,
+                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.10f)),
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Row(
+                            Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            Icon(Icons.Default.Backup, null,
+                                Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                                Text(backup.sourceLabel ?: stringResource(R.string.transfer_game_world_ds),
+                                    style = MaterialTheme.typography.titleSmall, maxLines = 1,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                                Text(stringResource(if (backup.sent) R.string.transfer_backup_send_kind
+                                else R.string.transfer_backup_move_kind) + " · " +
+                                    android.text.format.DateFormat.getMediumDateFormat(context).format(Date(backup.createdAt)) +
+                                    " " + android.text.format.DateFormat.getTimeFormat(context).format(Date(backup.createdAt)),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2)
+                            }
+                            TextButton(enabled = !exporting, onClick = {
+                                selected = backup.operationId; create.launch("world-ds-original.sav")
+                            }) { Text(stringResource(R.string.transfer_backup_export)) }
+                        }
+                    }
                 }
             }
         }

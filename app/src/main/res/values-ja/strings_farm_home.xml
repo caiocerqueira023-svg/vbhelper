@@ -7,14 +7,18 @@
     <string name="place_arena_subtitle">コロシアム</string>
     <string name="place_digiline">デジライン</string>
     <string name="place_digiline_subtitle">メッセージ</string>
+    <string name="place_transfer">転送</string>
+    <string name="place_transfer_subtitle">ゲームとデバイス</string>
     <string name="place_items">アイテム</string>
     <string name="place_items_subtitle">インベントリ</string>
     <string name="place_partners">パートナー</string>
     <string name="place_partners_subtitle">保管庫</string>
 
     <string name="home_open_place">%1$s を開く</string>
-    <string name="home_farm_chip_description">デジファームにいるデジモン</string>
+    <string name="home_farm_chip_a11y">デジファームにいるデジモン %1$d/%2$d</string>
+    <string name="home_farm_chip_action">デジファームの一覧を開く</string>
     <string name="home_farm_residents">%1$d/%2$d</string>
+    <string name="home_partner_slab_a11y">%1$s、%2$s・%3$s、バイタル %4$d/%5$d、気分 %6$s</string>
     <string name="home_quests_chip_description">クエスト</string>
     <string name="home_settings_description">設定</string>
     <string name="home_menu_description">メニュー</string>
@@ -56,4 +60,5 @@
     <string name="place_dex">図鑑</string>
     <string name="place_dex_subtitle">コレクション</string>
     <string name="digiline_start_chat">会話を始める</string>
+    <string name="home_menu_tamer_profile">テイマープロフィール</string>
 </resources>

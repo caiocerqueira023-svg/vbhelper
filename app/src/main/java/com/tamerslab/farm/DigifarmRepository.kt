@@ -13,6 +13,7 @@ import com.tamerslab.domain.digifarm.FarmResident
 import com.tamerslab.dtos.FarmResidentWithDetails
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import java.util.UUID
 import kotlin.random.Random
 import com.tamerslab.domain.personality.DigimonSocialProfile
@@ -20,7 +21,9 @@ import com.tamerslab.domain.personality.DigimonPersonalityType
 import com.tamerslab.chat.ChatRepository
 import com.tamerslab.farm.social.FarmConversationOrchestrator
 
-class DigifarmRepository(private val db: AppDatabase) {
+class DigifarmRepository(private val db: AppDatabase,
+    /** Applies the VB-first shipped-art priority to the DigiLine thread avatars. */
+    private val appearances: com.tamerslab.species.SpeciesAppearanceRepository? = null) {
     private val dao = db.digifarmDao()
     private var conversations: FarmConversationOrchestrator? = null
 
@@ -42,6 +45,7 @@ class DigifarmRepository(private val db: AppDatabase) {
     fun observeResidentCharacterIds(): Flow<List<Long>> = dao.observeResidentCharacterIds()
     fun observeMessages(farmId: String, limit: Int = 50): Flow<List<FarmMessage>> = dao.observeMessages(farmId, limit)
     fun observeStorageThreads() = dao.observeStorageThreads()
+        .map { threads -> com.tamerslab.species.BundledVbArtwork.digilineThreads(threads, appearances) }
     fun observeWildThreads() = db.wildRelationshipDao().observeUnlocked()
     suspend fun residentsSnapshot(farmId: String) = db.withTransaction {
         val eligibility = db.participation?.snapshot()

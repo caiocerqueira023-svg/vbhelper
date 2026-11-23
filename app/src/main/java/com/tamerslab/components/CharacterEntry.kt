@@ -392,13 +392,20 @@ fun ItemDisplay(
     }
 }
 
+/**
+ * One row of a partner's special missions.
+ *
+ * [slot] is the card's position among the partner's mission rows (0..3), i.e. the mission slot.
+ * It must never be derived from [SpecialMissions.watchId], which is a device-side mission id.
+ */
 @Composable
 fun SpecialMissionsEntry(
     specialMission: SpecialMissions,
+    slot: Int,
     modifier: Modifier = Modifier,
     onClickMission: (Long) -> Unit = {  },
     onClickCollect: (Long) -> Unit = {  },
-    onClickAssign: (Int) -> Unit = {  },
+    onClickAssign: (Long) -> Unit = {  },
     canAssign: Boolean = false,
 ) {
     val textValue = when (specialMission.missionType) {
@@ -486,7 +493,7 @@ fun SpecialMissionsEntry(
         onClick = when {
             specialMission.status == SpecialMission.Status.COMPLETED -> { { onClickCollect(specialMission.id) } }
             specialMission.status == SpecialMission.Status.UNAVAILABLE ->
-                if (canAssign) { { onClickAssign(specialMission.watchId) } } else { { } }
+                if (canAssign) { { onClickAssign(specialMission.id) } } else { { } }
             else -> { { onClickMission(specialMission.id) } }
         },
         colors = CardDefaults.cardColors(
@@ -529,7 +536,9 @@ fun SpecialMissionsEntry(
                 Text(
                     text = detailText,
                     fontFamily = MaterialTheme.typography.titleSmall.fontFamily,
-                    color = contentColor.copy(alpha = 0.8f),
+                    // Instruction copy keeps the full muted ink: dimming it with alpha dropped the
+                    // mission hints below AA on the dark palettes.
+                    color = contentColor,
                 )
             }
             if (specialMission.status == SpecialMission.Status.COMPLETED) {

@@ -14,7 +14,7 @@ data class NativePresentationSource(val species: CanonicalSpeciesDto, val userCo
 
 /** Read-only presentation: browsing does not create species, partners, mappings or import receipts. */
 class NativeSpeciesPresentationRepository(private val db: AppDatabase, private val library: BundledDotSpriteLibrary,
-    private val worldDsSpecies: WorldDsSpeciesTable? = null) {
+    private val speciesTables: NdsStorySpeciesTables? = null) {
     suspend fun sources(view: LinkedSaveView): Map<String, NativePresentationSource> = withContext(Dispatchers.IO) {
         val observation = view.observation ?: return@withContext emptyMap()
         val hints = db.nativeGameArchiveDao().presentationMappings(view.source.sourceId, view.source.documentKey)
@@ -24,9 +24,9 @@ class NativeSpeciesPresentationRepository(private val db: AppDatabase, private v
                 observation.gameId, observation.formatProfile, observation.codecVersion, record.nativeIdentity,
                 record.nativeSpeciesId, hints)
             val id = reviewed ?: NativeSpeciesResolution.tableIdentity(observation.gameId, observation.formatProfile,
-                observation.codecVersion, record.nativeSpeciesId, worldDsSpecies, catalog)
+                observation.codecVersion, record.nativeSpeciesId, speciesTables, catalog)
             val species = id?.let { catalog.speciesById[it]?.takeIf { species -> species.kind == "DIGIMON" } }
-                ?: worldDsSpecies?.name(record.nativeSpeciesId)?.let { name ->
+                ?: speciesTables?.name(observation.gameId, observation.formatProfile, observation.codecVersion, record.nativeSpeciesId)?.let { name ->
                     CanonicalSpeciesDto(NativeSpeciesResolution.unresolvedIdentity(name), name, kind = "DIGIMON")
                 }
                 ?: return@mapNotNull null
@@ -47,9 +47,9 @@ class NativeSpeciesPresentationRepository(private val db: AppDatabase, private v
         val snapshot = db.nativeMaterializationDao().snapshot(snapshotId) ?: return@withContext null
         val binding = db.nativeGameArchiveDao().binding(snapshot.bindingId) ?: return@withContext null
         val id = NativeSpeciesResolution.tableIdentity(binding.gameId, binding.formatProfile, snapshot.codecVersion,
-            speciesId, worldDsSpecies, catalog)
+            speciesId, speciesTables, catalog)
         id?.let { catalog.speciesById[it]?.takeIf { species -> species.kind == "DIGIMON" } }?.let { return@withContext it }
-        return@withContext worldDsSpecies?.name(speciesId)?.let { name ->
+        return@withContext speciesTables?.name(binding.gameId, binding.formatProfile, snapshot.codecVersion, speciesId)?.let { name ->
             CanonicalSpeciesDto(NativeSpeciesResolution.unresolvedIdentity(name), name, kind = "DIGIMON")
         }
     }

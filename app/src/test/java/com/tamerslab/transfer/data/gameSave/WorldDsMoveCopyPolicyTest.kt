@@ -1,6 +1,7 @@
 package com.tamerslab.transfer.data.gameSave
 
 import com.tamerslab.gamesave.NativeStatParameters
+import com.tamerslab.gamesave.NdsStoryProfiles
 import com.tamerslab.gamesave.ObservationNotice
 import com.tamerslab.gamesave.ObservedDigimon
 import com.tamerslab.gamesave.RecordIssue
@@ -29,6 +30,22 @@ class WorldDsMoveCopyPolicyTest {
         if (confirmed) listOf(ObservationNotice.SAVE_COPY_USER_CONFIRMED) else emptyList(), copyIntegrity = copyIntegrity)
 
     private val recordBase = "AAAA"
+
+    @Test fun farmResidentsAreOnlyRemovableWhereTheLayoutOptsIn() {
+        val farm = record(1, "save-local:7", recordBase, container = SaveContainer.FARM)
+        assertFalse(WorldDsMoveRecordPolicy.removable(farm))
+        assertTrue(WorldDsMoveRecordPolicy.removable(farm, farmRecordsMovable = true))
+        assertTrue(WorldDsMoveRecordPolicy.removable(farm.copy(issues = listOf(RecordIssue.AMBIGUOUS_SAVE_BLOCK)),
+            farmRecordsMovable = true))
+        assertFalse(WorldDsMoveRecordPolicy.removable(farm.copy(issues = listOf(RecordIssue.GUEST_RECORD)),
+            farmRecordsMovable = true))
+        assertTrue(NdsStoryProfiles.LOST_EVOLUTION.farmRecordsMovable)
+        assertFalse(NdsStoryProfiles.WORLD_DS.farmRecordsMovable)
+        assertFalse(NdsStoryProfiles.DAWN_DUSK.farmRecordsMovable)
+        val secondFarm = record(1, "save-local:8", recordBase, container = SaveContainer.FARM)
+        assertTrue(WorldDsMoveRecordPolicy.keepsUsableRecord(listOf(farm, secondFarm), farm))
+        assertFalse(WorldDsMoveRecordPolicy.keepsUsableRecord(listOf(farm), farm))
+    }
 
     @Test fun singlePopulatedCopyIsConsistent() {
         val chosen = record(1, "save-local:7", recordBase)

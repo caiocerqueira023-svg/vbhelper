@@ -7,18 +7,26 @@
     <string name="place_arena_subtitle">Colosseum</string>
     <string name="place_digiline">DigiLine</string>
     <string name="place_digiline_subtitle">Messages</string>
+    <string name="place_transfer">Transfer</string>
+    <string name="place_transfer_subtitle">Games &amp; devices</string>
     <string name="place_items">Items</string>
     <string name="place_items_subtitle">Inventory</string>
     <string name="place_partners">Partners</string>
     <string name="place_partners_subtitle">Vault</string>
 
     <string name="home_open_place">Open %1$s</string>
-    <string name="home_farm_chip_description">Who is in the Digifarm</string>
+    <!-- The chip's accessible label carries the live reading; the old static "Who is in the Digifarm"
+         label hid the count from TalkBack. -->
+    <string name="home_farm_chip_a11y">Who is in the Digifarm, %1$d of %2$d</string>
+    <string name="home_farm_chip_action">Open Digifarm roster</string>
     <string name="home_farm_residents">%1$d/%2$d</string>
+    <!-- Slab label: name, stage · attribute, vitals, mood summary in one utterance. -->
+    <string name="home_partner_slab_a11y">%1$s, %2$s · %3$s, vitals %4$d of %5$d, mood %6$s</string>
     <string name="home_quests_chip_description">Quests</string>
     <string name="home_settings_description">Settings</string>
     <string name="home_menu_description">Menu</string>
     <string name="home_menu_title">Menu</string>
+    <string name="home_menu_tamer_profile">Tamer profile</string>
     <string name="home_roster_sheet_title">In the Digifarm</string>
     <string name="home_roster_sheet_note">Your active partner and favourites live here. With more than %1$d favourites, the farm shows a rotating selection.</string>
     <string name="home_roster_active_partner">Active partner</string>

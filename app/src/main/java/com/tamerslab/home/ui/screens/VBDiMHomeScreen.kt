@@ -39,6 +39,7 @@ import com.tamerslab.home.ui.PartnerVitalsHeader
 import com.tamerslab.home.ui.PartnerWinRateRow
 import com.tamerslab.home.ui.dialogs.AssignSpecialMissionDialog
 import com.tamerslab.home.ui.dialogs.DeleteSpecialMissionDialog
+import com.tamerslab.items.data.SpecialMissionAssignment
 import com.tamerslab.ui.theme.TextPrimaryOnDark
 import com.tamerslab.utils.BitmapData
 
@@ -74,7 +75,11 @@ fun VBDiMHomeScreen(
     appData: com.tamerslab.storage.data.AppHomeStats? = null,
 ) {
     var selectedSpecialMissionId by remember { mutableStateOf<Long>(-1) }
-    var assignSpecialMissionSlot by remember { mutableStateOf<Int?>(null) }
+    // A tapped card is identified by its slot (row position) and its mission row id, never by watchId.
+    var assignSpecialMissionTarget by remember { mutableStateOf<SpecialMissionAssignmentTarget?>(null) }
+    val missionRows = remember(specialMissions) {
+        SpecialMissionAssignment.orderedMissions(specialMissions)
+    }
 
     Column(
         modifier = Modifier
@@ -172,10 +177,11 @@ fun VBDiMHomeScreen(
                 color = TextPrimaryOnDark,
             )
         }
-        for (mission in specialMissions) {
+        for ((slot, mission) in missionRows.withIndex()) {
             Row(modifier = Modifier.fillMaxWidth()) {
                 SpecialMissionsEntry(
                     specialMission = mission,
+                    slot = slot,
                     modifier = Modifier
                         .weight(1f)
                         .padding(8.dp),
@@ -183,7 +189,9 @@ fun VBDiMHomeScreen(
                     onClickCollect = { missionId ->
                         homeScreenController.clearSpecialMission(missionId, onClickCollect)
                     },
-                    onClickAssign = { slot -> assignSpecialMissionSlot = slot },
+                    onClickAssign = { missionId ->
+                        assignSpecialMissionTarget = SpecialMissionAssignmentTarget(slot, missionId)
+                    },
                     canAssign = true,
                 )
             }
@@ -191,12 +199,13 @@ fun VBDiMHomeScreen(
         Spacer(modifier = Modifier.height(8.dp))
     }
 
-    assignSpecialMissionSlot?.let { slot ->
+    assignSpecialMissionTarget?.let { target ->
         AssignSpecialMissionDialog(
             characterId = activeMon.id,
-            slotWatchId = slot,
+            slot = target.slot,
+            missionId = target.missionId,
             homeScreenController = homeScreenController,
-            onDismiss = { assignSpecialMissionSlot = null },
+            onDismiss = { assignSpecialMissionTarget = null },
         )
     }
 
@@ -210,3 +219,6 @@ fun VBDiMHomeScreen(
         )
     }
 }
+
+/** The mission card the visitor tapped: its slot (row position) and its mission row id. */
+private data class SpecialMissionAssignmentTarget(val slot: Int, val missionId: Long)

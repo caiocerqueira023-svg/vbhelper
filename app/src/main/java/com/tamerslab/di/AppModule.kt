@@ -49,7 +49,8 @@ val repositoryModule = koinModule {
     single<ChatGateway> { ContainerChatGateway(get()) }
     single<FarmGateway> { ContainerFarmGateway(get()) }
     single<StorageGateway> { ContainerStorageGateway(get()) }
-    single<ArenaRosterGateway> { RoomArenaRosterGateway(get<AppContainer>().db, androidContext()) }
+    single<ArenaRosterGateway> { RoomArenaRosterGateway(get<AppContainer>().db, androidContext(),
+        get<DefaultAppContainer>().speciesAppearance) }
     single<VpetRepository> { ContainerVpetRepository(get()) }
 }
 

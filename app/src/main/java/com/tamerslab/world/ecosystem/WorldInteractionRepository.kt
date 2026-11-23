@@ -241,6 +241,12 @@ class WorldInteractionRepository(private val db: AppDatabase,
                 val character = db.userCharacterDao().getCharacterSync(characterId) ?: fail(InteractionFailure.UNAVAILABLE)
                 if (character.individualId != participant.individualId) fail(InteractionFailure.UNAVAILABLE)
                 check(db.userCharacterDao().recordBattleResult(characterId, effects.ownedWon) == 1)
+                com.tamerslab.rank.data.RankEvents.award(
+                    if (effects.ownedWon) com.tamerslab.rank.domain.TxpSource.BATTLE_WIN
+                    else com.tamerslab.rank.domain.TxpSource.BATTLE_LOSS,
+                    "battle:$id:${effects.ownedWon}",
+                    origin = "WORLD",
+                )
             }
         }
         DigimonScanRepository(db, now).awardBattleLocked(id,

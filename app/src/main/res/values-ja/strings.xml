@@ -1077,6 +1077,18 @@
     <string name="digiline_sync_pending">まだゲームのセーブに書き込まれていません</string>
     <string name="digiline_sync_synced">ゲームのセーブと同期済み</string>
     <string name="digiline_depart_warning">これは会話を完全に終わらせる可能性があります。</string>
+    <!-- DigiLine Free Talk ("Papo"): authored, offline conversation. -->
+    <string name="freechat_placeholder">Tell your partner what is on your mind...</string>
+    <string name="freechat_send">Send</string>
+    <string name="freechat_empty">The link is open. Say something to start the conversation.</string>
+    <string name="freechat_chips_label">Suggested topics</string>
+    <string name="freechat_unavailable">Free talk is not available right now.</string>
+    <string name="freechat_clear">Clear conversation</string>
+    <string name="freechat_boundary">That is a line they will not cross. Try another subject.</string>
+    <string name="freechat_closed_safety">This conversation is closed for now. You can start again whenever you want.</string>
+    <string name="freechat_clear_done">Conversation cleared</string>
+    <string name="freechat_clear_title">Clear this conversation?</string>
+    <string name="freechat_clear_body">The free talk messages with this partner will be removed. Authored events, bond and records stay as they are.</string>
 <string name="vpet_title">Virtual pet</string>
     <string name="vpet_intro_title">Read a virtual pet</string>
     <string name="vpet_intro_body">Read a Digimon from a Digital Monster or Pendulum device into Tamers Lab Storage. The reader only reads the device; nothing is written back to it.</string>
@@ -1185,6 +1197,8 @@
     <string name="scan_guide_digimon_departing">Digimon leaving for the watch</string>
 <string name="settings_debug_legacy_llm_title">Legacy LLM chat</string>
 <string name="settings_debug_legacy_llm_description">Debug only. Restores free-text chat through an external AI service. Sandboxed: it never changes mood, personality, quests or save data.</string>
+<string name="settings_debug_free_chat_title">DigiLine free talk</string>
+<string name="settings_debug_free_chat_description">On by default. Turn this off to kill the authored free-talk composer (Debug kill switch). Authored card events and the partner save data stay untouched.</string>
 <!-- Adventure: VB Arena-derived composition rendered with the Tamers Lab instrument language. -->
 <string name="adventure_character_list">キャラクターリスト</string>
 <string name="adventure_selected_count">%1$d 体選択中</string>
@@ -1203,5 +1217,8 @@
 <string name="adventure_scene_ready_count">%1$d 体が帰還</string>
 <string name="adventure_scene_ready">準備完了!</string>
 <string name="adventure_scene_slot_description">%1$s。%2$s。%3$s</string>
+    <string name="scan_received_character_success">デジモンを受け取りました。</string>
+    <string name="scan_handoff_received_note">デジモンがウォッチから戻りました。</string>
+    <string name="scan_handoff_sent_note">ウォッチが転送を確認しました。</string>
 </resources>
 

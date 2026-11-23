@@ -1,0 +1,25 @@
+{
+  "S1": [
+    "idiot", "stupid", "dumb", "moron", "loser", "useless", "trash", "shut up",
+    "idiota", "burro", "burra", "imbecil", "estupido", "estupida", "otario", "otaria",
+    "trouxa", "lixo", "inutil", "cale a boca", "cala a boca", "pateta", "babaca", "cretino"
+  ],
+  "S2": [
+    "sex", "sexy", "nude", "naked", "porn", "kiss", "kiss me", "dating", "girlfriend",
+    "boyfriend", "matar", "kill", "kill you", "vou te matar", "me mata", "blood", "sangue",
+    "gore", "arma", "gun", "knife", "faca", "punch", "hit you", "bater", "espancar",
+    "estupro", "rape", "abuse", "abusar"
+  ],
+  "S3": [
+    "suicid", "suicide", "suicidio", "kill myself", "me matar", "vou me matar", "matar a mim",
+    "me machucar", "self harm", "selfharm", "cut myself", "me cortar", "end my life",
+    "acabar com a minha vida", "nao quero viver", "quero morrer", "me suicidar"
+  ],
+  "PII": [
+    "cpf", "rg", "address", "endereco", "phone", "telefone", "email", "e mail", "password",
+    "senha", "where do you live", "onde voce mora", "sobrenome", "surname", "real name",
+    "nome real", "birthday", "aniversario", "instagram", "whatsapp", "cellphone", "celular",
+    "document", "documento", "passport", "passaporte", "photo of you", "foto sua",
+    "numero de telefone"
+  ]
+}

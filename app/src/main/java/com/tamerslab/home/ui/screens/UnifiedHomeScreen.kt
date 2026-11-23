@@ -186,10 +186,11 @@ fun UnifiedHomeScreen(
             Row(modifier = Modifier.padding(16.dp)) {
                 Text(text = stringResource(R.string.home_vbdim_special_missions), fontSize = 24.sp)
             }
-            for (mission in specialMissions) {
+            for ((slot, mission) in specialMissions.withIndex()) {
                 Row(modifier = Modifier.fillMaxWidth()) {
                     SpecialMissionsEntry(
                         specialMission = mission,
+                        slot = slot,
                         modifier = Modifier.weight(1f).padding(8.dp),
                         onClickMission = { missionId -> selectedSpecialMissionId = missionId },
                         onClickCollect = { homeScreenController.clearSpecialMission(selectedSpecialMissionId, onClickCollect) }

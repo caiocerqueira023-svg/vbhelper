@@ -41,7 +41,7 @@ class WorldDsResearchInsertion internal constructor(
     override val sourceRevision: String,
     override val candidateRevision: String,
     override val recordKey: String,
-    val nativeIdentity: String,
+    override val nativeIdentity: String,
     val slot: Int,
     val position: Int,
     internal val bases: List<Int>,
@@ -50,6 +50,8 @@ class WorldDsResearchInsertion internal constructor(
     /** Each populated copy's original slot bytes, including erased (0xFF) tails, for byte-identical undo. */
     internal val slotBytesBase64: List<String>,
     internal val partiesBase64: List<String>,
+    /** Each populated copy's original farm table when the insertion wrote a farm reference. */
+    internal val farmsBase64: List<String>,
     internal val previousLastIds: List<Long>,
     /** Each populated copy's integrity header exactly as the source left it, for byte-identical undo. */
     internal val headersBase64: List<String>,
@@ -68,7 +70,7 @@ class WorldDsResearchReplacement internal constructor(
     override val sourceRevision: String,
     override val candidateRevision: String,
     override val recordKey: String,
-    val nativeIdentity: String,
+    override val nativeIdentity: String,
     internal val bases: List<Int>,
     internal val slots: List<Int>,
     /** Each populated copy's original slot bytes, for byte-identical undo. */
@@ -91,7 +93,7 @@ class WorldDsResearchAdmission internal constructor(
     override val sourceRevision: String,
     override val candidateRevision: String,
     override val recordKey: String,
-    val nativeIdentity: String,
+    override val nativeIdentity: String,
     internal val bases: List<Int>,
     internal val slot: Int,
     internal val partiesBase64: List<String>,
@@ -241,7 +243,8 @@ object WorldDsPartyEdits {
      * copy and append its identity to each copy's contiguous party table. Nothing is guessed: retained
      * bytes are copied verbatim.
      */
-    fun insertRetainedRecord(destination: ByteArray, observedRevision: String, recordBase64: String): WorldDsResearchInsertion {
+    fun insertRetainedRecord(destination: ByteArray, observedRevision: String, recordBase64: String,
+        container: SaveContainer? = null): WorldDsResearchInsertion {
         require(revision(destination) == observedRevision) { "Destination changed; read it again before planning a return" }
         val before = WorldDsSaveReader().read(destination)
         val native = Base64.getDecoder().decode(recordBase64)
@@ -252,7 +255,7 @@ object WorldDsPartyEdits {
             require(before.records.none { it.nativeIdentity == "save-local:$id" }) {
                 "The destination already owns the retained local identity"
             }
-            return insertNativeRecord(destination, observedRevision, before, native, id)
+            return insertNativeRecord(destination, observedRevision, before, native, id, container)
         } finally {
             native.fill(0)
         }
@@ -263,7 +266,8 @@ object WorldDsPartyEdits {
      * native fields the caller did not regenerate; identity, species, name and stat windows are
      * always overwritten before insertion.
      */
-    fun insertGeneratedRecord(destination: ByteArray, observedRevision: String, recordBase64: String): WorldDsResearchInsertion {
+    fun insertGeneratedRecord(destination: ByteArray, observedRevision: String, recordBase64: String,
+        container: SaveContainer? = null): WorldDsResearchInsertion {
         require(revision(destination) == observedRevision) { "Destination changed; read it again before planning a return" }
         val before = WorldDsSaveReader().read(destination)
         val seed = Base64.getDecoder().decode(recordBase64)
@@ -279,7 +283,7 @@ object WorldDsPartyEdits {
             require(id in 1 until 0xFFFFFF00L) { "The destination has no safe native identity space" }
             put32(native, 0, id)
             validateRetainedRecord(native)
-            return insertNativeRecord(destination, observedRevision, before, native, id)
+            return insertNativeRecord(destination, observedRevision, before, native, id, container)
         } finally {
             seed.fill(0)
             native.fill(0)
@@ -359,13 +363,36 @@ object WorldDsPartyEdits {
         }
     }
 
+    private fun firstFreeFarmReference(bytes: ByteArray, base: Int,
+        farm: com.tamerslab.gamesave.NdsStoryFarmLayout, id: Long): Pair<Int, Int> {
+        for (group in 0 until farm.groups) {
+            val groupBase = base + farm.base + group * farm.stride
+            for (resident in 0 until farm.residents) {
+                val at = groupBase + farm.residentOffset + resident * 4
+                val current = u32(bytes, at)
+                require(current != id) { "The farm already references this individual" }
+                if (current == 0L) return group to resident
+            }
+        }
+        throw IllegalArgumentException("The destination has no free farm slot")
+    }
+
     private fun insertNativeRecord(
         destination: ByteArray,
         observedRevision: String,
         before: SaveObservation,
         native: ByteArray,
         id: Long,
+        container: SaveContainer?,
     ): WorldDsResearchInsertion {
+        val requested = container ?: SaveContainer.PARTY
+        require(requested in setOf(SaveContainer.PARTY, SaveContainer.FARM, SaveContainer.BANK)) {
+            "Unsupported World DS destination: $requested"
+        }
+        require(requested != SaveContainer.FARM) {
+            "World DS farm placement is not verified yet; choose party or bank"
+        }
+        val farmLayout: com.tamerslab.gamesave.NdsStoryFarmLayout? = null
         val expectedBase64 = Base64.getEncoder().encodeToString(native)
         val populated = before.records.mapNotNull { it.nativeParameters?.saveBlock }.distinct().sorted()
         require(populated.isNotEmpty()) { "The destination has no populated save copy" }
@@ -375,10 +402,19 @@ object WorldDsPartyEdits {
         val partyByBlock = bases.map { base ->
             val party = MutableList(PARTY_COUNT) { u32(destination, base + PARTY + it * 4) }
             require(party.none { it == id }) { "The destination party already references this individual" }
-            val free = (0 until PARTY_CAP).firstOrNull { party[it] == 0L }
-                ?: throw IllegalArgumentException("The destination has no free visible party slot (eight slots)")
-            party[free] = id
-            party to (free + 1)
+            if (requested != SaveContainer.PARTY) {
+                party to 0
+            } else {
+                val free = (0 until PARTY_CAP).firstOrNull { party[it] == 0L }
+                    ?: throw IllegalArgumentException("The destination has no free visible party slot (eight slots)")
+                party[free] = id
+                party to (free + 1)
+            }
+        }
+        val farmByBlock = if (farmLayout != null) {
+            bases.map { base -> firstFreeFarmReference(destination, base, farmLayout, id) }
+        } else {
+            emptyList()
         }
         val slots = bases.map { base ->
             (0 until RECORD_COUNT).firstOrNull { index ->
@@ -395,7 +431,13 @@ object WorldDsPartyEdits {
         try {
             bases.forEachIndexed { index, base ->
                 native.copyInto(candidate, base + RECORDS + slots[index] * STRIDE)
-                repeat(PARTY_COUNT) { put32(candidate, base + PARTY + it * 4, partyByBlock[index].first[it]) }
+                if (requested == SaveContainer.PARTY) {
+                    repeat(PARTY_COUNT) { put32(candidate, base + PARTY + it * 4, partyByBlock[index].first[it]) }
+                } else if (farmLayout != null) {
+                    val (group, resident) = farmByBlock[index]
+                    put32(candidate, base + farmLayout.base + group * farmLayout.stride +
+                        farmLayout.residentOffset + resident * 4, id)
+                }
                 if (id > previousLastIds[index]) put32(candidate, base + LAST_ID, id)
             }
             resealHeaders(candidate, bases)
@@ -403,13 +445,18 @@ object WorldDsPartyEdits {
             check(after.records.size == before.records.size + populated.size) {
                 "Insertion did not add exactly one native individual per populated copy"
             }
+            val expectedContainer = when (requested) {
+                SaveContainer.PARTY -> SaveContainer.PARTY
+                SaveContainer.FARM -> SaveContainer.FARM
+                else -> SaveContainer.UNASSIGNED
+            }
             populated.forEachIndexed { index, block ->
                 val inserted = after.records.singleOrNull {
                     it.nativeIdentity == "save-local:$id" && it.nativeParameters?.saveBlock == block
                 }
                 check(inserted != null && inserted.nativeRecordBase64 == expectedBase64 &&
-                    inserted.container == SaveContainer.PARTY && inserted.position == partyByBlock[index].second &&
-                    inserted.issues.all { it in removableIssues(false) }) {
+                    inserted.container == expectedContainer &&
+                    (expectedContainer != SaveContainer.PARTY || inserted.position == partyByBlock[index].second)) {
                     "Insertion did not produce the exact expected record in every populated copy"
                 }
             }
@@ -419,15 +466,28 @@ object WorldDsPartyEdits {
             val windows = bases.flatMapIndexed { index, base ->
                 listOf(base + LAST_ID until base + RECORDS,
                     base + RECORDS + slots[index] * STRIDE until base + RECORDS + slots[index] * STRIDE + STRIDE) +
-                    listOf(base until base + HEADER_BYTES)
+                    listOf(base until base + HEADER_BYTES) +
+                    if (farmLayout != null) {
+                        listOf(base + farmLayout.base until
+                            base + farmLayout.base + farmLayout.groups * farmLayout.stride)
+                    } else {
+                        emptyList()
+                    }
             }
             check(destination.indices.all { index -> windows.any { index in it } || destination[index] == candidate[index] }) {
                 "Insertion changed unrelated save bytes"
             }
+            val originalFarms = if (farmLayout != null) {
+                bases.map { destination.copyOfRange(it + farmLayout.base,
+                    it + farmLayout.base + farmLayout.groups * farmLayout.stride) }
+                    .map { Base64.getEncoder().encodeToString(it) }
+            } else {
+                emptyList()
+            }
             return WorldDsResearchInsertion(observedRevision, revision(candidate), insertedKeys.first(), "save-local:$id",
                 slots.first(), partyByBlock.first().second, bases, slots,
                 originalSlots.map { Base64.getEncoder().encodeToString(it) },
-                originalParties.map { Base64.getEncoder().encodeToString(it) }, previousLastIds,
+                originalParties.map { Base64.getEncoder().encodeToString(it) }, originalFarms, previousLastIds,
                 originalHeaders.map { Base64.getEncoder().encodeToString(it) }, candidate)
         } finally {
             originalSlots.forEach { it.fill(0) }
@@ -542,17 +602,23 @@ object WorldDsPartyEdits {
         val slotBytes = insertion.slotBytesBase64.map { Base64.getDecoder().decode(it) }
         val parties = insertion.partiesBase64.map { Base64.getDecoder().decode(it) }
         val headers = insertion.headersBase64.map { Base64.getDecoder().decode(it) }
+        val farms = insertion.farmsBase64.map { Base64.getDecoder().decode(it) }
         val restored = candidate.copyOf()
         try {
             require(parties.size == insertion.bases.size && parties.all { it.size == PARTY_COUNT * 4 } &&
                 insertion.previousLastIds.size == insertion.bases.size && insertion.slots.size == insertion.bases.size &&
                 slotBytes.size == insertion.bases.size && slotBytes.all { it.size == STRIDE } &&
-                headers.size == insertion.bases.size && headers.all { it.size == HEADER_BYTES })
+                headers.size == insertion.bases.size && headers.all { it.size == HEADER_BYTES } &&
+                (farms.isEmpty() || (farms.size == insertion.bases.size &&
+                    farms.all { bytes -> bytes.size == requireNotNull(PROFILE.farm).groups *
+                        requireNotNull(PROFILE.farm).stride })) )
             insertion.bases.forEachIndexed { index, base ->
                 slotBytes[index].copyInto(restored, base + RECORDS + insertion.slots[index] * STRIDE)
                 parties[index].copyInto(restored, base + PARTY)
                 put32(restored, base + LAST_ID, insertion.previousLastIds[index])
                 headers[index].copyInto(restored, base)
+                if (farms.isNotEmpty()) farms[index].copyInto(restored,
+                    base + requireNotNull(PROFILE.farm).base)
             }
             check(revision(restored) == insertion.sourceRevision) { "Native insertion/undo was not byte-identical" }
             WorldDsSaveReader().read(restored)

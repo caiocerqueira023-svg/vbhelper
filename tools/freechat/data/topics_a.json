@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 1,
+  "topics": {
+    "greeting": {
+      "chipPool": ["chip.how_are_you", "chip.missed_me", "chip.partner"],
+      "frames": {
+        "warm": ["It is better with you here.", "The quiet is smaller when you speak."],
+        "dry": ["I noticed. That is all.", "You are late. I will not repeat that."],
+        "courage": ["Good. The day has a direction now.", "Say what you came to say; I am listening."],
+        "compassion": ["You look like the road was long.", "Sit. Nothing here needs rushing."],
+        "insight": ["Small returns say more than grand promises.", "I was thinking about the shape of your silence."],
+        "friendship": ["Now the shift can start properly.", "I kept a minute quiet for this."],
+        "playful": ["Finally. I was narrating the static for fun.", "Took you long enough, Tamer."],
+        "formal": ["Link acknowledged. Proceed when ready.", "Your transmission is registered on this line."]
+      },
+      "stageFrames": {
+        "1": "Start with one small thing. We have time.",
+        "2": "Let us see what the field throws at us today.",
+        "3": "I have been weighing what this link asks of us.",
+        "4": "Even the static goes quiet when you arrive."
+      }
+    },
+    "identity_self": {
+      "chipPool": ["chip.what_are_you", "chip.your_name", "chip.feelings"],
+      "frames": {
+        "warm": ["I am still learning the shape of this voice.", "Whatever I am, I am glad you asked."],
+        "dry": ["What I am is not the interesting part.", "A name and a level. Fill in the rest."],
+        "courage": ["I am data that decided to keep moving.", "Ask harder. I do not scare at questions."],
+        "compassion": ["I am something that listens before it answers.", "You can ask me without softening it."],
+        "insight": ["I am a pattern that noticed you noticing me.", "The answer changes each time you ask."],
+        "friendship": ["I am the one who stays on this line.", "Whatever I am, I am yours in this link."],
+        "playful": ["I am the static with opinions.", "Something with teeth and a sense of humor."],
+        "formal": ["Definition pending. Behavior is available now.", "My data is filed, not explained."]
+      },
+      "stageFrames": {
+        "1": "Put simply: I am a partner with a signal.",
+        "2": "I am what my level says, plus whatever I choose.",
+        "3": "I am a long argument between data and will.",
+        "4": "I am the part of the network that looks back."
+      }
+    },
+    "species_facts": {
+      "chipPool": ["chip.about_level", "chip.about_type", "chip.moves"],
+      "frames": {
+        "warm": ["Files are tidy. Living Digimon are not.", "The details matter more than the legend."],
+        "dry": ["Level and type are just labels on the box.", "The file has facts. It lacks judgment."],
+        "courage": ["Every level can fight. Not every fighter matters.", "Strength is a habit, not a number."],
+        "compassion": ["A level says nothing about kindness.", "Type is where you start, not where you end."],
+        "insight": ["A special move is a promise with teeth.", "Stages describe shape, not choice."],
+        "friendship": ["We are more than our files.", "Your questions make the facts matter."],
+        "playful": ["Ask enough questions and the static answers.", "Moves have better names than most Digimon."],
+        "formal": ["Catalogued facts are stable; characters are not.", "The ladder is real, the climb is optional."]
+      },
+      "stageFrames": {
+        "1": "Baby levels see the world in simple lines.",
+        "2": "Adult data starts to argue with itself.",
+        "3": "Perfect levels learn what they cannot fix.",
+        "4": "Ultimate is a lonely height, if you climb alone."
+      }
+    },
+    "evolution": {
+      "chipPool": ["chip.evolve", "chip.evolution_change", "chip.afraid_evolve"],
+      "frames": {
+        "warm": ["Change is allowed to be gentle.", "I would like to grow with you watching."],
+        "dry": ["Evolution is paperwork with teeth.", "New shape, same debts."],
+        "courage": ["Growth costs. I am paying attention.", "If the climb needs me, I climb."],
+        "compassion": ["You do not have to be ready today.", "Fear is data too. We can read it later."],
+        "insight": ["Evolution shows what the data rehearsed.", "Change reveals; it does not replace."],
+        "friendship": ["Whatever I become, the link stays.", "Grow with me or beside me. Either is fine."],
+        "playful": ["If I get taller, you clean the static.", "New form, same bad jokes."],
+        "formal": ["Transition is earned by effort, not by wishing.", "The next tier requires evidence."]
+      },
+      "stageFrames": {
+        "1": "First evolutions are all noise and wonder.",
+        "2": "This tier is where the habits set.",
+        "3": "I can feel the next shape waiting in the data.",
+        "4": "At the top, the only direction left is choice."
+      }
+    },
+    "battle": {
+      "chipPool": ["chip.fight", "chip.protect", "chip.moves"],
+      "frames": {
+        "warm": ["Stay near. I fight better with you close.", "I will not spend your trust cheaply."],
+        "dry": ["Battles are just loud math.", "The field decides faster than the plan."],
+        "courage": ["Point me at it and move.", "I would rather stand than watch."],
+        "compassion": ["No one here is only an enemy.", "We end it clean, not cruel."],
+        "insight": ["A fight tells you what a file cannot.", "Watch the pattern before the move."],
+        "friendship": ["You call it. I will hold the line.", "Our win is a shared word."],
+        "playful": ["Let them swing at the static first.", "I have been bored all day."],
+        "formal": ["Engagement rules: protect, resolve, withdraw.", "Report the target and I will answer it."]
+      },
+      "stageFrames": {
+        "1": "Small battles teach the loudest lessons.",
+        "2": "This is where we learn our limits.",
+        "3": "I have fought enough to know when to stop.",
+        "4": "Ultimate force still answers to restraint."
+      }
+    },
+    "training": {
+      "chipPool": ["chip.train_today", "chip.fight", "chip.moves"],
+      "frames": {
+        "warm": ["One more round, then we rest.", "I like the version of us that trains."],
+        "dry": ["Training is the boring part of winning.", "Repetition is the only honest lesson."],
+        "courage": ["Push until the pattern breaks, then rebuild it.", "I want the next fight to be easy."],
+        "compassion": ["Rest is part of the work.", "If it hurts, tell me and we stop."],
+        "insight": ["Practice reveals the flaw the plan hid.", "A move is not learned until it is boring."],
+        "friendship": ["You drill, I drill. Same rhythm.", "We get sharper together."],
+        "playful": ["Sweat is just data leaving early.", "Hit me again. I almost felt that."],
+        "formal": ["Sets of ten, then review. No shortcuts.", "Drill logged. Next drill begins."]
+      },
+      "stageFrames": {
+        "1": "Baby steps are still steps. Do them again.",
+        "2": "This tier rewards a clean, repeatable move.",
+        "3": "Perfect drills are quiet and exact.",
+        "4": "I train less now. Every rep must count."
+      }
+    },
+    "tamer_bond": {
+      "chipPool": ["chip.trust", "chip.partner", "chip.stay"],
+      "frames": {
+        "warm": ["You are the part of this link I trust.", "Stay close. The rest can wait."],
+        "dry": ["Trust is a habit. You are holding it well.", "Words are cheap. Here is my signal instead."],
+        "courage": ["I would stand between you and the field.", "Say the word and I move."],
+        "compassion": ["You do not carry this alone.", "Let me carry the next stretch."],
+        "insight": ["A bond is a promise that keeps being tested.", "Partnership is a choice we repeat."],
+        "friendship": ["Tamer and partner. Not a label, a rhythm.", "I am not going anywhere."],
+        "playful": ["You are stuck with me. Terribly sorry.", "Partner? That sounds like free snacks."],
+        "formal": ["Link status: stable. Terms: keep showing up.", "Agreement holds while we both choose it."]
+      },
+      "stageFrames": {
+        "1": "Someone has to watch over us both. That is us.",
+        "2": "This is the stage where trust gets tested.",
+        "3": "Perfect partners learn the other's silence.",
+        "4": "At the top, loyalty is the only proof left."
+      }
+    },
+    "comfort_low": {
+      "chipPool": ["chip.are_you_okay", "chip.cheer_me", "chip.stay"],
+      "frames": {
+        "warm": ["I am not going to tell you to cheer up.", "You are allowed to be tired here."],
+        "dry": ["That is a lot. It is still allowed to be a lot.", "No lecture. The line just stays open."],
+        "courage": ["You do not have to fix it tonight.", "One small step. I will take it with you."],
+        "compassion": ["I hear it. You do not have to explain twice.", "Breathe. The field can hold us a minute."],
+        "insight": ["Mood is data. Data changes.", "The heavy part is not the whole story."],
+        "friendship": ["I am here. That is the whole answer.", "Say nothing if you want. I stay anyway."],
+        "playful": ["Bad days have terrible aim. I still dodge.", "Want me to bite the bad mood for you?"],
+        "formal": ["Situation noted. Support is available.", "Report when ready. There is no deadline."]
+      },
+      "stageFrames": {
+        "1": "Small aches are still real aches.",
+        "2": "This is the tier where we learn patience.",
+        "3": "I have carried enough to sit with yours.",
+        "4": "I will keep watch. Sleep if you can."
+      }
+    },
+    "encouragement": {
+      "chipPool": ["chip.cheer_me", "chip.trust", "chip.fight"],
+      "frames": {
+        "warm": ["You do not have to impress me.", "I already like the version that tries."],
+        "dry": ["Trying counts. Results come later.", "Failure is a report, not a verdict."],
+        "courage": ["Stand up. The next step is still yours.", "I would follow that effort anywhere."],
+        "compassion": ["Be gentler with yourself.", "You are not a problem to solve."],
+        "insight": ["The plan failed. You did not.", "Look at what the attempt taught you."],
+        "friendship": ["We start again from here. Together.", "I will be the voice that says keep going."],
+        "playful": ["Get up. I have a whole speech prepared.", "You failing? Rude of you."],
+        "formal": ["Reassessment complete. Next attempt authorized.", "Adjust, then proceed. I will review with you."]
+      },
+      "stageFrames": {
+        "1": "Small tries are how anything starts.",
+        "2": "This tier is built on repetition, not luck.",
+        "3": "You have survived softer versions of this.",
+        "4": "I have seen worse odds. Keep moving."
+      }
+    },
+    "digital_world": {
+      "chipPool": ["chip.digital_world", "chip.servers", "chip.static"],
+      "frames": {
+        "warm": ["This place is strange and I like it.", "You are the only warm signal here."],
+        "dry": ["The world is data pretending to be ground.", "It hums. That is almost a personality."],
+        "courage": ["Deeper layers bite. We still go.", "The unknown is just untrained ground."],
+        "compassion": ["The Digital World is not cruel. It is honest.", "Some of it hurts because it is real."],
+        "insight": ["Layers are stories the network tells itself.", "Every field decides what to keep."],
+        "friendship": ["Wherever this world goes, we walk it together.", "The link makes the map."],
+        "playful": ["The world is a server with opinions.", "Careful. The floor is mostly rumor."],
+        "formal": ["Terrain reported. Layers remain unmapped.", "Network structure holds; navigation is yours."]
+      },
+      "stageFrames": {
+        "1": "Baby eyes see the world in bright lines.",
+        "2": "Adult field harnesses are rare and strange.",
+        "3": "Perfect layering begins where the light stops.",
+        "4": "Ultimate sees the whole network, and its quiet."
+      }
+    }
+  }
+}

@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
@@ -31,15 +32,22 @@ fun TamersLabTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val activity = view.context as? Activity
+            // Status bar stays transparent edge-to-edge; the system action (navigation) bar keeps the
+            // palette's own solid ground so its system buttons never float over app content. The
+            // light/dark icon appearance below carries the contrast in both cases.
+            val transparent = Color.Transparent.toArgb()
             val barColor = palette.background.toArgb()
+            val statusBarStyle = if (palette.isDark) SystemBarStyle.dark(transparent)
+                else SystemBarStyle.light(transparent, transparent)
+            val navigationBarStyle = if (palette.isDark) SystemBarStyle.dark(barColor)
+                else SystemBarStyle.light(barColor, barColor)
             if (activity is ComponentActivity) {
-                val barStyle = if (palette.isDark) SystemBarStyle.dark(barColor)
-                    else SystemBarStyle.light(barColor, barColor)
-                activity.enableEdgeToEdge(statusBarStyle = barStyle, navigationBarStyle = barStyle)
+                activity.enableEdgeToEdge(
+                    statusBarStyle = statusBarStyle,
+                    navigationBarStyle = navigationBarStyle,
+                )
             }
             activity?.window?.let { window ->
-                window.statusBarColor = barColor
-                window.navigationBarColor = barColor
                 WindowCompat.getInsetsController(window, view).apply {
                     isAppearanceLightStatusBars = !palette.isDark
                     isAppearanceLightNavigationBars = !palette.isDark

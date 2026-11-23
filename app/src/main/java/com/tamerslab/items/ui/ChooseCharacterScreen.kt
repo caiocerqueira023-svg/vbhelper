@@ -25,7 +25,7 @@ fun ChooseCharacterScreen(
     itemId: Long
 ) {
     val application = LocalContext.current.applicationContext as TamersLabApplication
-    val storageRepository = remember { StorageRepository(application.container.db) }
+    val storageRepository = remember { application.container.storageRepository }
     var characterList by remember {
         mutableStateOf<List<CharacterDtos.CharacterWithSprites>>(emptyList())
     }

@@ -47,6 +47,7 @@ import com.tamerslab.farm.diorama.FarmDioramaSeed
 import com.tamerslab.farm.diorama.FarmDioramaSimulation
 import com.tamerslab.farm.farmWorldStore
 import com.tamerslab.farm.map.Digifarm3dMap
+import com.tamerslab.home.ui.HomeSheetShape
 import com.tamerslab.dtos.CharacterDtos
 import com.tamerslab.rendering.sprite3d.ResidentFrameImage
 import com.tamerslab.rendering.sprite3d.SpriteExtrusionGlb
@@ -83,7 +84,7 @@ private const val ROTATION_BUCKET_MILLIS = 3_600_000L
 fun rememberFarmWorldController(): FarmWorldController {
     val context = LocalContext.current
     val app = context.applicationContext as TamersLabApplication
-    val storageRepository = remember(app) { StorageRepository(app.container.db) }
+    val storageRepository = remember(app) { app.container.storageRepository }
     val database = app.container.db
     val preferences = remember(app) { FarmWorldPreferences(app.farmWorldStore) }
     val dotLibrary = app.container.dotSpriteLibrary
@@ -384,6 +385,7 @@ fun FarmResidentSheet(
         onDismissRequest = onDismiss,
         containerColor = SurfaceDeepPurple,
         contentColor = TextPrimaryOnDark,
+        shape = HomeSheetShape,
     ) {
         Column(
             Modifier

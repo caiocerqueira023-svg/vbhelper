@@ -2,6 +2,8 @@ package com.tamerslab.chat.ui
 
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
+import com.tamerslab.digiline.freechat.gateway.FreeChatResult
+import com.tamerslab.digiline.freechat.gateway.FreeChatSceneView
 import com.tamerslab.domain.chat.ChatMessageEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -16,6 +18,7 @@ class ChatScreenControllerImpl(
     private val speciesRepository = com.tamerslab.di.AppServices.speciesRepository
     private val ownedRepository = com.tamerslab.di.AppServices.ownedDigilineRepository
     private val digilineGateway = com.tamerslab.di.AppServices.digilineGateway
+    private val freeChatGateway = com.tamerslab.di.AppServices.freeChatGateway
 
     override fun getHistory(characterId: Long): Flow<List<ChatMessageEntity>> =
         chatRepository.getHistory(characterId)
@@ -45,6 +48,36 @@ class ChatScreenControllerImpl(
 
     override fun isLegacyLlmEnabled(): Boolean =
         com.tamerslab.di.AppServices.debugSettingsRepository.legacyLlmEnabled
+
+    override fun isFreeChatEnabled(): Boolean = freeChatGateway.isAvailable()
+
+    override fun openFreeChat(characterId: Long, onResult: (Result<FreeChatSceneView?>) -> Unit) =
+        launchFreeChatAction(onResult) { freeChatGateway.open(characterId) }
+
+    override fun sendFreeText(characterId: Long, text: String, onResult: (Result<FreeChatSceneView?>) -> Unit) =
+        launchFreeChatAction(onResult) { freeChatGateway.send(characterId, text) }
+
+    override fun clearFreeChat(characterId: Long, onDone: () -> Unit) {
+        componentActivity.lifecycleScope.launch(Dispatchers.IO) {
+            runCatching { freeChatGateway.clear(characterId) }
+            componentActivity.runOnUiThread { onDone() }
+        }
+    }
+
+    /** Authored Free Talk must never fall back to the legacy LLM chat repository. */
+    private fun launchFreeChatAction(
+        onResult: (Result<FreeChatSceneView?>) -> Unit,
+        action: suspend () -> FreeChatResult,
+    ) {
+        componentActivity.lifecycleScope.launch(Dispatchers.IO) {
+            val result = runCatching {
+                val outcome = action()
+                outcome.error?.let { error(it) }
+                outcome.scene
+            }
+            componentActivity.runOnUiThread { onResult(result) }
+        }
+    }
 
     override fun getPersonalitySyncState(characterId: Long): Flow<PersonalitySyncUiState> =
         kotlinx.coroutines.flow.flow {

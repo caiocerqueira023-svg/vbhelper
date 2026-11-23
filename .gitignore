@@ -38,3 +38,59 @@ build-logs/
 # Local Gradle user-home copies and temporary analysis scratch dumps.
 .gradle-home/
 analysis/**/patcher/
+
+# Lost Evolution reverse-engineering extracts (own ROM/saves): generated, never committed.
+analysis/dsle/dawn/
+analysis/dsle/dusk/
+analysis/dsle/nitrofs/
+analysis/dsle/decompressed/
+analysis/dsle/ghidra/
+analysis/dsle/decompressor/
+analysis/dsle/device/
+analysis/dsle/arm9.bin
+analysis/dsle/arm7.bin
+analysis/dsle/ovl*.bin
+analysis/dsle/ovl*.elf
+analysis/dsle/arm9.elf
+analysis/dsle/arm7.elf
+analysis/dsle/rom.json
+analysis/dsle/nitrofs.json
+analysis/dsle/RECOVERY.txt
+
+# Dawn/Dusk reverse-engineering extracts: generated from the user's own ROMs/saves and never
+# committed (only the tooling and the written research document belong in the tree).
+analysis/ds2/dawn/
+analysis/ds2/dusk/
+analysis/ds2/ghidra/project/
+analysis/ds2/ghidra/out-dawn/
+analysis/ds2/ghidra/out-dusk/
+analysis/ds2/ghidra/out-ovl012/
+
+# Free Talk build-time seed corpora: downloaded reference data stays local, is never shipped,
+# and must be reviewed/removed before distribution (see DISTRIBUTION_GATE.md).
+tools/freechat/_seeds/
+tools/freechat/seed_mining_report.json
+
+# Local reverse-engineering captures and device data: unpacked ROMs/overlays, Ghidra exports,
+# pulled app databases, emulator saves and journals. Keep the tooling and the written research in
+# the tree; never commit the raw game data or the owner's saves/databases.
+analysis/ds1/
+analysis/ds2/device/
+analysis/ds2/dawn/
+analysis/ds2/dusk/
+analysis/ds2/ghidra/out-dawn/
+analysis/ds2/ghidra/out-dusk/
+analysis/ds2/ghidra/out-ovl012/
+analysis/ds2/ghidra/project/
+analysis/vb-lab-aa/assets/
+analysis/vb-lab-aa/contacts/
+analysis/vb-lab-aa/*.json
+analysis/vb-lab-aa/*.jsonl
+analysis/vb-lab-aa/*.log
+analysis/vb-lab-apk/logs/
+analysis/refs/
+
+# Local command logs and scratch run outputs.
+.plan/
+analysis/dsle/*run*.log
+analysis/dsle/*.log

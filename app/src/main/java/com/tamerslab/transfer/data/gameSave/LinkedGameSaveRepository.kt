@@ -157,6 +157,11 @@ class LinkedGameSaveRepository(
             val now = clock()
             db.withTransaction {
                 check(sameAccess(dao.get(id))) { "Source access changed during read" }
+                // A game session that saved over our write leaves no native record behind; release
+                // those individuals so they can be sent again instead of staying "away" forever.
+                val presences = db.nativeMaterializationDao().presenceForSource(id)
+                PresenceReconciliation.vanished(presences, result.records)
+                    .forEach { db.nativeMaterializationDao().clearPresence(it.individualId) }
                 dao.saveObservation(LinkedSaveObservation(id, result.contentRevision, now,
                     result.gameId, result.formatProfile, result.codecVersion, gson.toJson(result)))
                 dao.markSuccess(id, now)

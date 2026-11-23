@@ -18,7 +18,7 @@ import com.tamerslab.di.TamersLabApplication
 import com.tamerslab.transfer.data.gameSave.NativeArchiveView
 import com.tamerslab.transfer.data.gameSave.NativeSpeciesPresentationRepository
 import com.tamerslab.transfer.data.gameSave.AwayNativeRecord
-import com.tamerslab.transfer.data.gameSave.WorldDsSpeciesTable
+import com.tamerslab.transfer.data.gameSave.NdsStorySpeciesTables
 import com.tamerslab.species.CanonicalSpeciesDto
 import com.tamerslab.species.SpeciesAppearanceRepository
 import com.tamerslab.ui.theme.SurfaceStroke
@@ -29,7 +29,7 @@ import kotlinx.coroutines.CancellationException
 private fun archiveSpecies(archive: NativeArchiveView): CanonicalSpeciesDto? {
     val app = LocalContext.current.applicationContext as TamersLabApplication
     val repository = remember(app) { NativeSpeciesPresentationRepository(app.container.db, app.container.dotSpriteLibrary,
-        WorldDsSpeciesTable.load(app)) }
+        NdsStorySpeciesTables.load(app)) }
     val species by produceState<CanonicalSpeciesDto?>(null, archive.snapshot.id) {
         try { value = repository.archive(archive.snapshot.id, archive.record) }
         catch (cancelled: CancellationException) { throw cancelled }

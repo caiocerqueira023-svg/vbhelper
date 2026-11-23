@@ -3,6 +3,7 @@ package com.tamerslab.transfer.ui.scan.screens
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,6 +32,8 @@ fun ReadingScreen(
     var readingScreen by remember { mutableStateOf(false) }
     var isDoneReadingCharacter by remember { mutableStateOf(false) }
     var cardSelectScreen by remember { mutableStateOf(false) }
+    var showHandoff by remember { mutableStateOf(false) }
+    var handoffDone by remember { mutableStateOf(false) }
 
     DisposableEffect(readingScreen) {
         if(readingScreen) {
@@ -80,12 +83,26 @@ fun ReadingScreen(
         }
     }
 
-    if (isDoneReadingCharacter && !cardSelectScreen) {
-        readingScreen = false
-        onComplete()
+    LaunchedEffect(isDoneReadingCharacter, cardSelectScreen) {
+        if (isDoneReadingCharacter && !cardSelectScreen) {
+            readingScreen = false
+            showHandoff = true
+        }
     }
 
-    if (!readingScreen) {
+    if (showHandoff) {
+        TransferHandoffScreen(
+            topBannerText = stringResource(R.string.reading_character_title),
+            direction = NfcTransferDirection.WATCH_TO_APP,
+            showHeader = showHeader,
+            onFinished = {
+                if (!handoffDone) {
+                    handoffDone = true
+                    onComplete()
+                }
+            },
+        )
+    } else if (!readingScreen) {
         ReadCharacterScreen(
             onClickConfirm = {
                 readingScreen = true

@@ -123,6 +123,18 @@ def parse_species_records(data):
                 *[u16(raw, offset + 0x2C + index * 2) for index in range(4)],
                 *[s16(raw, offset + 0x18 + index * 2) for index in range(7)],
                 s16(raw, offset + 0x16),
+                # Creation data copied by func_020a29c4: base stats at dm +4..+0x14,
+                # base level at +2 and the growth row at +0x2A.
+                u32(raw, offset + 0x04),
+                u16(raw, offset + 0x08),
+                u16(raw, offset + 0x0A),
+                u16(raw, offset + 0x0C),
+                u16(raw, offset + 0x0E),
+                u16(raw, offset + 0x10),
+                u16(raw, offset + 0x12),
+                raw[offset + 0x14],
+                raw[offset + 0x02],
+                raw[offset + 0x2A],
             ]
     missing = [species for species in range(SPECIES_COUNT) if species not in records]
     if missing:

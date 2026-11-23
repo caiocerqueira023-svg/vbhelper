@@ -70,6 +70,12 @@ class DigimonScanRepository(private val db: AppDatabase, private val now: () -> 
         db.userCharacterDao().insertTransformationHistory(TransformationHistory(
             monId = characterId, stageId = cardCharacterId, transformationDate = timestamp))
         db.dexDao().insertCharacter(species.charaIndex, species.cardId, timestamp)
+        com.tamerslab.rank.data.RankEvents.award(
+            com.tamerslab.rank.domain.TxpSource.DEX_NEW,
+            "dex:${species.cardId}",
+            digimonRef = species.cardId.toString(),
+            origin = "DEX",
+        )
         EvolutionHistoryRepository(db).repairCharacter(characterId)
         ScanConversionResult.Converted(characterId)
     }

@@ -1,5 +1,8 @@
 package com.tamerslab.home.ui
 
+import androidx.compose.foundation.shape.CutCornerShape
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 
 /**
@@ -22,6 +25,23 @@ val PartnerPeekHeight = 96.dp
  * as one surface tone instead of three different greys.
  */
 val PartnerSlabAlpha = 0.82f
+
+/**
+ * The cut-corner shape shared by Home's modal sheets. The surface brief refuses the Material default
+ * 28dp rounded sheet next to the cut-corner instrument vocabulary, so roster, menu and resident
+ * sheets all pass this.
+ */
+val HomeSheetShape = CutCornerShape(topStart = 18.dp, topEnd = 18.dp)
+
+/**
+ * Extra factor the farm's fixed bottom chrome (peek slab, place band) may grow with the system font.
+ *
+ * The slab and the place band are authored at fixed dp, but their contents are sp and scale with the
+ * system font setting. Capping the growth at 1.5 lets the vitals and the place captions stay inside
+ * the chrome at 2.0x text scale (the sheet layout itself still measures the live detent height).
+ */
+@Composable
+fun farmChromeScale(): Float = LocalDensity.current.fontScale.coerceIn(1f, 1.5f)
 
 /*
  * The composable implemented in `PartnerDeck.kt` and called by the shell:

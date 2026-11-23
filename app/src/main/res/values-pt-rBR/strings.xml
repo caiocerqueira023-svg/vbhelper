@@ -1145,6 +1145,18 @@
     <string name="digiline_sync_pending">Ainda não gravado no save do jogo</string>
     <string name="digiline_sync_synced">Sincronizado com o save do jogo</string>
     <string name="digiline_depart_warning">Isso pode encerrar a conversa de vez.</string>
+    <!-- DigiLine Free Talk ("Papo"): conversa autoral e offline. -->
+    <string name="freechat_placeholder">Conte ao seu parceiro o que está pensando...</string>
+    <string name="freechat_send">Enviar</string>
+    <string name="freechat_empty">O link está aberto. Diga algo para começar a conversa.</string>
+    <string name="freechat_chips_label">Assuntos sugeridos</string>
+    <string name="freechat_unavailable">O papo livre não está disponível agora.</string>
+    <string name="freechat_clear">Limpar conversa</string>
+    <string name="freechat_boundary">Essa é uma linha que ele não vai cruzar. Tente outro assunto.</string>
+    <string name="freechat_closed_safety">Esta conversa está encerrada por agora. Você pode começar de novo quando quiser.</string>
+    <string name="freechat_clear_done">Conversa limpa</string>
+    <string name="freechat_clear_title">Limpar esta conversa?</string>
+    <string name="freechat_clear_body">As mensagens do papo livre com este parceiro serão removidas. Eventos autorais, vínculo e registros continuam como estão.</string>
     <!-- VPet reader (Digital Monster / Pendulum). -->
     <string name="vpet_title">V-Pet</string>
     <string name="vpet_intro_title">Ler um V-Pet</string>
@@ -1251,6 +1263,8 @@
     <string name="vpet_simulate_read">Simular leitura</string>
     <string name="settings_debug_legacy_llm_title">Chat LLM legado</string>
     <string name="settings_debug_legacy_llm_description">Somente em builds de depuração. Restaura o chat de texto livre por um serviço de IA externo. Isolado: nunca altera humor, personalidade, missões ou dados de save.</string>
+    <string name="settings_debug_free_chat_title">Papo livre do DigiLine</string>
+    <string name="settings_debug_free_chat_description">Ativado por padrão. Desative para cortar o compositor do papo livre (chave de desligamento de depuração). Eventos autorais e dados de save do parceiro não são alterados.</string>
 
     <string name="scan_guide_digimon_arriving">Digimon chegando do relógio</string>
     <string name="scan_guide_digimon_departing">Digimon partindo para o relógio</string>
@@ -1272,5 +1286,8 @@
     <string name="adventure_scene_ready_count">%1$d prontos</string>
     <string name="adventure_scene_ready">Pronto!</string>
     <string name="adventure_scene_slot_description">%1$s. %2$s. %3$s</string>
+    <string name="scan_received_character_success">Digimon recebido.</string>
+    <string name="scan_handoff_received_note">Seu Digimon voltou do relógio.</string>
+    <string name="scan_handoff_sent_note">O relógio confirmou a transferência.</string>
 </resources>
 

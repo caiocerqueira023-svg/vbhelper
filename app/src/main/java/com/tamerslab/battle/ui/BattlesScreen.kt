@@ -2025,9 +2025,9 @@ fun BattlesScreen(
             // Move database operations to background thread
             kotlinx.coroutines.withContext(Dispatchers.IO) {
                 // First, let's check all characters to see what's in the database
-                val allCharacters = database.userCharacterDao().getAllCharacters().first()
+                val allCharacters = application.container.storageRepository.getAllCharacters().first()
                 val characterById = allCharacters.associateBy { it.id }
-                val storageRepository = StorageRepository(database)
+                val storageRepository = application.container.storageRepository
                 storageRepository.ensureAllPersonalities()
                 val battleProfiles = database.userCharacterDao().getAllBattleParticipantProfiles()
                 val techniqueLoadouts = database.digimonTechniqueLoadoutDao().getAll()

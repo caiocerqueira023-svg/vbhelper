@@ -47,16 +47,25 @@ internal fun TransferLauncherIconsScreen() {
         }
     }
     Column(Modifier.fillMaxSize()) {
-        Text(stringResource(R.string.transfer_launcher_hint), Modifier.padding(16.dp), style = MaterialTheme.typography.bodyMedium)
+        Text(stringResource(R.string.transfer_launcher_hint), Modifier.padding(16.dp),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
-        LazyColumn(Modifier.weight(1f)) {
-            listOf(TransferGame.WORLD_DS, TransferGame.DAWN, TransferGame.DUSK).forEach { game -> item(key = game.name) {
-                ListItem(headlineContent = { Text(stringResource(gameTitle(game))) },
-                    leadingContent = { TransferOriginIcon(game, Modifier.size(40.dp), revision) },
-                    modifier = Modifier.fillMaxWidth().heightIn(min = 72.dp).clickable(enabled = !busy) {
-                        selected = game.name; picker.launch(arrayOf("*/*"))
-                    })
-            } }
+        LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            listOf(TransferGame.WORLD_DS, TransferGame.DAWN, TransferGame.DUSK,
+                TransferGame.LOST_EVOLUTION).forEach { game ->
+                item(key = game.name) {
+                    TransferWidePlate(
+                        title = stringResource(gameTitle(game)),
+                        status = stringResource(if (repository.hasIcon(game)) R.string.transfer_launcher_custom
+                        else R.string.transfer_launcher_default),
+                        onClick = { selected = game.name; picker.launch(arrayOf("*/*")) },
+                        leading = { TransferOriginIcon(game, Modifier.size(40.dp), revision) },
+                        enabled = !busy,
+                    )
+                }
+            }
         }
     }
 }

@@ -9,8 +9,14 @@ object NdsStoryCopySelection {
     /**
      * The copy the game wrote last, from the save counter at the profile's sequence offset. A copy
      * whose integrity header does not match its bytes is ignored, matching the game's fallback
-     * policy. A tie means there is no defensible newest copy (for example two identical writes), so
-     * no auto choice is made. Observations without a registered profile return null.
+     * policy. Observations without a registered profile return null.
+     *
+     * A tie is not automatically ambiguous: the engine itself can produce one. Writing into an
+     * erased slot stores counter 1 (the erased counter wraps), so a save edited by VBHelper to
+     * counter 1 and then re-saved by the game into its empty slot ends with **both** slots at 1.
+     * When every tied copy holds the same individuals, either choice is safe; the lowest copy is
+     * returned so a writer can bump it into a unique newest slot again. Tied copies that disagree
+     * still yield null: there is no defensible newest copy then.
      */
     fun latestCopy(observation: SaveObservation): Int? {
         if (!NdsStoryProfiles.isNdsStory(observation)) return null
@@ -22,7 +28,27 @@ object NdsStoryCopySelection {
         }.groupBy({ it.first }, { it.second }).mapValues { (_, values) -> values.max() }
         if (sequences.isEmpty()) return null
         val newest = sequences.values.max()
-        return sequences.filterValues { it == newest }.keys.singleOrNull()
+        val ties = sequences.filterValues { it == newest }.keys
+        if (ties.size == 1) return ties.single()
+        if (NdsStoryProfiles.forObservation(observation)?.resolveEquivalentCopyTie != true) return null
+        val chosen = ties.min()
+        return chosen.takeIf { candidate -> ties.all { equivalentCopies(observation, candidate, it) } }
+    }
+
+    /**
+     * Whether two copies describe the same ownership state: same individuals with the same native
+     * bytes. Party order, positions, save counters and record keys are deliberately ignored — the
+     * engine rotates the party ring when it saves, which must not make two identical copies
+     * "different".
+     */
+    fun equivalentCopies(observation: SaveObservation, first: Int, second: Int): Boolean {
+        fun signature(copy: Int): Set<Triple<String?, String?, Long>> = observation.records
+            .filter { it.nativeParameters?.saveBlock == copy }
+            .map { Triple(it.nativeIdentity, it.nativeRecordBase64, it.nativeSpeciesId) }
+            .toSet()
+        val left = signature(first)
+        val right = signature(second)
+        return left.isNotEmpty() && left == right
     }
 
     /**

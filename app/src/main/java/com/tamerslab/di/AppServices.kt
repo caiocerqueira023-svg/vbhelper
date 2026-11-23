@@ -28,6 +28,9 @@ object AppServices {
     val worldInteractionOrchestrator get() = container.worldInteractionOrchestrator
     val ownedDigilineRepository get() = container.ownedDigilineRepository
     val digilineGateway get() = container.digilineGateway
+    val freeChatGateway get() = container.freeChatGateway
+    val rankRepository get() = container.rankRepository
+    val rankSettings get() = container.rankSettings
     val worldRepository get() = container.worldRepository
     val arenaRosterGateway get() = GlobalContext.get().get<com.tamerslab.domain.repository.ArenaRosterGateway>()
     val battleUseCase get() = GlobalContext.get().get<com.tamerslab.domain.usecase.BattleUseCase>()

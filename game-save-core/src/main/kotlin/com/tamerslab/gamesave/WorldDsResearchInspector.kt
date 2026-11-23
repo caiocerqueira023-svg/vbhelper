@@ -135,12 +135,13 @@ object WorldDsResearchInspector {
         val region = profile.recordRegion
         fun id(offset: Int) = u32(bytes, base + offset)
         val party = List(profile.partySlots) { id(profile.partyReferenceBase + it * 4) }.filter { it != 0L }
-        val farm = profile.farm
-        val farms = (0 until farm.groups).flatMap { group ->
-            val offset = farm.base + group * farm.stride
-            if (id(offset) == 0L) emptyList()
-            else List(farm.residents) { id(offset + farm.residentOffset + it * 4) }.filter { it != 0L }
-        }
+        val farms = profile.farm?.let { farm ->
+            (0 until farm.groups).flatMap { group ->
+                val offset = farm.base + group * farm.stride
+                if (id(offset) == 0L) emptyList()
+                else List(farm.residents) { id(offset + farm.residentOffset + it * 4) }.filter { it != 0L }
+            }
+        }.orEmpty()
         val slots = (0 until region.count).filter {
             val id = id(region.base + it * region.stride)
             id != 0L && id != profile.emptyRecordId
@@ -156,13 +157,16 @@ object WorldDsResearchInspector {
             val farmCount = farms.count { it == nativeId }
             val conflict = partyCount + farmCount > 1
             val flags = u16(bytes, start + layout.offsetUnk108)
+            // Ownership bits are only interpreted where the profile establishes their meaning; the
+            // Dawn/Dusk state word at 0x120 is not mapped yet, so no ownership claim is made there.
+            val known = profile.liveFlagBits
             val issues = buildSet {
                 if (nativeId in duplicates) add(DsResearchIssue.DUPLICATE_LOCAL_ID)
                 if (conflict) add(DsResearchIssue.CONFLICTING_LOCATION)
-                if (flags and 2 != 0) add(DsResearchIssue.GUEST)
-                if (flags and 4 != 0) add(DsResearchIssue.LENT)
-                if (flags and 0x10 != 0) add(DsResearchIssue.EGG)
-                if (flags and 0x20 != 0) add(DsResearchIssue.OTHER_DS_RECORD)
+                if (known and 2 != 0 && flags and 2 != 0) add(DsResearchIssue.GUEST)
+                if (known and 4 != 0 && flags and 4 != 0) add(DsResearchIssue.LENT)
+                if (known and 0x10 != 0 && flags and 0x10 != 0) add(DsResearchIssue.EGG)
+                if (known and 0x20 != 0 && flags and 0x20 != 0) add(DsResearchIssue.OTHER_DS_RECORD)
             }
             val nativeBytes = bytes.copyOfRange(start, start + region.stride)
             val encoded = try { Base64.getEncoder().encodeToString(nativeBytes) } finally { nativeBytes.fill(0) }

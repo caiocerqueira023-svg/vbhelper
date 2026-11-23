@@ -4,6 +4,7 @@
     <string name="home_special_mission_assign_empty">このスロット用のスペシャルミッションがありません。スペシャルミッションはアイテムストアやクエストで入手できます。</string>
     <string name="home_special_mission_slot_empty">タップして設定</string>
     <string name="home_special_mission_assigned">スペシャルミッションを設定しました</string>
+    <string name="home_special_mission_assign_failed">スペシャルミッションを設定できませんでした。アイテムとパートナーのミッションは変更されていません。もう一度お試しください。</string>
     <string name="home_special_mission_equip">設定</string>
     <string name="special_mission_slot_steps">歩数</string>
     <string name="special_mission_slot_vitals">バイタル</string>

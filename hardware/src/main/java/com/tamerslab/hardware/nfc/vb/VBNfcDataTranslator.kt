@@ -30,6 +30,7 @@ class VBNfcDataTranslator(cryptographicTransformer: CryptographicTransformer, pr
         const val OPERATION_PAGE: Byte = 0x6
     }
 
+
     override fun finalizeByteArrayFormat(bytes: ByteArray) {
         checksumCalculator.recalculateChecksums(bytes)
         performPageBlockDuplications(bytes, BlocksWithCopiesInterweaved, 16)

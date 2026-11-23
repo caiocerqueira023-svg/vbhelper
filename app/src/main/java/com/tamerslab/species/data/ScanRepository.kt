@@ -22,11 +22,20 @@ class ScanRepository(
      * target (an assigned DIM/BEM), which is why watch-origin partners never hit it.
      */
     fun getCardDetails(characterId: Long): Flow<Card> = flow {
-        val userCharacter = database.userCharacterDao().getCharacter(characterId)
-        val assignedCard = userCharacter.exportCardCharacterId
-            ?.let { database.characterDao().getById(it) }
-            ?.cardId?.let { database.cardDao().getCardById(it) }
-        emit(assignedCard ?: database.cardDao().getCardByCharacterIdSync(characterId) ?: EMPTY_CARD)
+        // The transfer deletes the source row when the watch confirms the write. The writing
+        // screens may still have this flow collected during the completion recomposition, so a
+        // missing row is a valid state and must resolve to the neutral card instead of throwing
+        // from a single-row Room query (which was crashing the app right after a successful send).
+        val userCharacter = database.userCharacterDao().getCharacterSync(characterId)
+        val card = if (userCharacter == null) {
+            EMPTY_CARD
+        } else {
+            val assignedCard = userCharacter.exportCardCharacterId
+                ?.let { database.characterDao().getById(it) }
+                ?.cardId?.let { database.cardDao().getCardById(it) }
+            assignedCard ?: database.cardDao().getCardByCharacterIdSync(characterId) ?: EMPTY_CARD
+        }
+        emit(card)
     }.flowOn(Dispatchers.IO)
 
     private companion object {

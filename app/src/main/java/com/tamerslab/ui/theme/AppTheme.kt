@@ -62,7 +62,9 @@ data class AppPalette(
     val yellowDim: Color = Color(0xFF7A631B),
     val textPrimary: Color = Color(0xFFF4F1FF),
     val textSecondary: Color = Color(0xFFB7AFD6),
-    val textMuted: Color = Color(0xFF8A82AC),
+    // #A49CC4 rather than the old #8A82AC: muted ink has to clear 4.5:1 on surfaceHighlight
+    // (#2F2650), not just on surface.
+    val textMuted: Color = Color(0xFFA49CC4),
     val compass: Color = Color(0xFFB0B0B0),
     val follower: Color = Color(0xFF4FC3F7),
     val onStatus: Color = Color(0xFF0A0812),
@@ -118,21 +120,24 @@ data class AppPalette(
 
 private val HelperPalette = AppPalette()
 
-// VB Lab references: neutral charcoal panels, white text and electric cyan signals.
+// VB Lab references: exactly three identity colours - charcoal, white and electric cyan.
+// Tones sampled from the shipped 1.4.6 art (homebg/scan/buttons); status red/green stay
+// semantic roles inherited from the shared palette, not part of the theme identity.
 private val LabPalette = HelperPalette.copy(
-    base = Color(0xFF111111), background = Color(0xFF272727),
-    backgroundAlt = Color(0xFF202020), surface = Color(0xFF303030),
-    surfaceElevated = Color(0xFF383838), surfaceHighlight = Color(0xFF424242),
-    stroke = Color(0xFF707070), primary = Color(0xFF00B9DF),
-    primaryBright = Color(0xFF43D6F3), primaryDim = Color(0xFF19556A),
-    onPrimary = Color(0xFF111111), accent = Color(0xFF00BDE3),
-    accentDim = Color(0xFF23627A), onAccent = Color(0xFF111111),
-    textPrimary = Color(0xFFFFFFFF), textSecondary = Color(0xFFD0D0D0),
-    textMuted = Color(0xFFAAAAAA), follower = Color(0xFF43D6F3),
-    signalHint = Color(0xFFA6ECF5), battlePanel = Color(0xFF303030),
-    battleBackdrop = Color(0xFF202020), battleErrorSurface = Color(0xFF40272D),
-    battleTrack = Color(0xFF555555),
-    blastOutline = Color(0xFFAAAAAA), blastTrack = Color(0xFF202020),
+    base = Color(0xFF080808), background = Color(0xFF181818),
+    backgroundAlt = Color(0xFF202020), surface = Color(0xFF282828),
+    surfaceElevated = Color(0xFF383838), surfaceHighlight = Color(0xFF484848),
+    stroke = Color(0xFF686868), primary = Color(0xFF02C8FF),
+    primaryBright = Color(0xFF89E3FF), primaryDim = Color(0xFF084868),
+    onPrimary = Color(0xFF080808), accent = Color(0xFF02C8FF),
+    accentDim = Color(0xFF084868), onAccent = Color(0xFF080808),
+    textPrimary = Color(0xFFF8F8F8), textSecondary = Color(0xFFD8D8D8),
+    // #B8B8B8 clears 4.5:1 on surfaceHighlight (#484848); #989898 reached only 3.17:1.
+    textMuted = Color(0xFFB8B8B8), follower = Color(0xFF89E3FF),
+    signalHint = Color(0xFF89E3FF), battlePanel = Color(0xFF282828),
+    battleBackdrop = Color(0xFF181818), battleErrorSurface = Color(0xFF40272D),
+    battleTrack = Color(0xFF484848),
+    blastOutline = Color(0xFF989898), blastTrack = Color(0xFF202020),
 )
 
 // VB Arena references: white/silver surfaces, vivid mint green and charcoal lettering.

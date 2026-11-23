@@ -1,4 +1,4 @@
-package com.tamerslab.farm.data
+﻿package com.tamerslab.farm.data
 
 import androidx.room.Dao
 import androidx.room.Insert
@@ -161,6 +161,7 @@ interface DigifarmDao {
     @Query(
         """
         SELECT uc.id AS characterId, uc.individualId AS individualId,
+                 cc.cardId AS cardId,
                di.nickname AS nickname, sp.speciesName AS speciesName,
                s.spriteIdle1 AS spriteIdle, s.width AS spriteWidth, s.height AS spriteHeight,
                (SELECT content FROM ChatMessageEntity cm WHERE cm.individualId = uc.individualId AND cm.kind IS NOT NULL ORDER BY cm.id DESC LIMIT 1) AS lastMessage,

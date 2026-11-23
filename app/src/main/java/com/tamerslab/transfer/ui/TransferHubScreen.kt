@@ -63,7 +63,6 @@ fun TransferHubScreen(navController: NavController, scanController: ScanScreenCo
     var sendIndividualId by rememberSaveable { mutableStateOf(initialIndividualId) }
     var gameKey by rememberSaveable { mutableStateOf<String?>(null) }
     val game = TransferGame.entries.firstOrNull { it.name == gameKey }
-    var menuOpen by remember { mutableStateOf(false) }
     var operationBusy by remember { mutableStateOf(false) }
     var pageHistory by rememberSaveable { mutableStateOf(emptyList<String>()) }
     val openPage: (String) -> Unit = { target ->
@@ -95,43 +94,40 @@ fun TransferHubScreen(navController: NavController, scanController: ScanScreenCo
             "icons" -> R.string.transfer_launcher_icons
             "backups" -> R.string.transfer_move_backups
             "send" -> R.string.transfer_send_title
+            "tools" -> R.string.transfer_menu_section_tools
             else -> R.string.transfer_title
         }), onBackClick = if (operationBusy) null else leave, trailingAction = {
-            Box {
-                IconButton(onClick = { menuOpen = true }, enabled = !operationBusy) {
-                    Icon(Icons.Default.MoreVert, stringResource(R.string.transfer_open_options))
-                }
-                DropdownMenu(menuOpen, onDismissRequest = { menuOpen = false }) {
-                    listOf(
-                        Triple("library", R.string.transfer_origins_title, Icons.AutoMirrored.Filled.List),
-                        Triple("devices", R.string.transfer_watch_section, Icons.Default.Nfc),
-                        Triple("vpet", R.string.vpet_title, Icons.Default.Build),
-                        Triple("manage", R.string.transfer_workspace_manage, Icons.Default.Edit),
-                        Triple("archives", R.string.transfer_workspace_vault_tools, Icons.Default.Inventory2),
-                        Triple("backups", R.string.transfer_move_backups, Icons.Default.Backup),
-                        Triple("icons", R.string.transfer_launcher_icons, Icons.Default.Image),
-                    ).forEach { (target, label, icon) ->
-                        DropdownMenuItem(
-                            text = { Text(stringResource(label)) },
-                            leadingIcon = { Icon(icon, contentDescription = null) },
-                            trailingIcon = if (target == page) {
-                                { Icon(Icons.Default.Check, contentDescription = null) }
-                            } else null,
-                            onClick = {
-                                menuOpen = false
-                                openPage(target)
-                            },
-                        )
-                    }
+            if (page != "tools") {
+                IconButton(onClick = { openPage("tools") }, enabled = !operationBusy) {
+                    Icon(Icons.Default.Build, stringResource(R.string.transfer_menu_section_tools))
                 }
             }
         })
     }) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when (page) {
-                "game", "storage" -> key(page, gameKey) {
-                    TransferWorkspaceScreen(game = game.takeIf { page == "game" }, startInStorage = page == "storage",
-                        initialCharacterId = initialCharacterId, onManageSaves = { openPage("manage") }, onOpenGame = openGame,
+                "library" -> TransferGameLibraryScreen(onOpenGame = openGame,
+                    onStorage = {
+                        navController.navigate(com.tamerslab.navigation.AppRoute.Storage) { launchSingleTop = true }
+                    },
+                    onManageSaves = { openPage("manage") }, onDevices = { openPage("devices") },
+                    onVpet = { openPage("vpet") })
+                "storage" -> key("storage") {
+                    TransferWorkspaceScreen(game = null, startInStorage = true,
+                        initialCharacterId = initialCharacterId,
+                        onManageSaves = { openPage("manage") }, onOpenGame = openGame,
+                        onSendToGame = { individualId -> sendIndividualId = individualId; openPage("send") })
+                }
+                "tools" -> TransferToolsScreen(
+                    onManageSaves = { openPage("manage") },
+                    onArchives = { openPage("archives") },
+                    onBackups = { openPage("backups") },
+                    onIcons = { openPage("icons") },
+                )
+                "game" -> key("game", gameKey) {
+                    TransferWorkspaceScreen(game = game, startInStorage = false,
+                        initialCharacterId = initialCharacterId,
+                        onManageSaves = { openPage("manage") }, onOpenGame = openGame,
                         onSendToGame = { individualId -> sendIndividualId = individualId; openPage("send") })
                 }
                 "manage" -> TransferScreen(showHeader = false)
@@ -151,14 +147,21 @@ fun TransferHubScreen(navController: NavController, scanController: ScanScreenCo
                     }
                 }
                 "devices" -> TransferDevicesPane(navController, scanController, initialCharacterId) { operationBusy = it }
-                "vpet" -> VpetSectionScreen(initialCharacterId = initialCharacterId)
+                "vpet" -> Column(Modifier.fillMaxSize()) {
+                    TransferOriginIdentityBar(
+                        title = stringResource(R.string.vpet_title),
+                        subtitle = stringResource(R.string.transfer_menu_vpet_desc),
+                        leading = { Icon(Icons.Default.Build, null, Modifier.size(24.dp)) },
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
+                    Box(Modifier.weight(1f)) {
+                        VpetSectionScreen(initialCharacterId = initialCharacterId)
+                    }
+                }
                 "send" -> TransferSendScreen(initialCharacterId, sendIndividualId) { openPage("devices") }
                 "icons" -> TransferLauncherIconsScreen()
                 "backups" -> GameMoveBackupsScreen()
-                else -> TransferGameLibraryScreen(onOpenGame = openGame, onStorage = {
-                    navController.navigate(com.tamerslab.navigation.AppRoute.Storage) { launchSingleTop = true }
-                },
-                    onManageSaves = { openPage("manage") }, onDevices = { openPage("devices") })
+                else -> Unit
             }
         }
     }
@@ -168,7 +171,7 @@ fun TransferHubScreen(navController: NavController, scanController: ScanScreenCo
 private fun TransferDevicesPane(navController: NavController, scanController: ScanScreenController,
     initialCharacterId: Long?, onBusy: (Boolean) -> Unit) {
     val application = LocalContext.current.applicationContext as TamersLabApplication
-    val repository = remember(application) { StorageRepository(application.container.db) }
+    val repository = remember(application) { application.container.storageRepository }
     val collection = remember(repository) { repository.getAllCharacters() }
     val characters by collection.collectAsStateWithLifecycle(initialValue = emptyList())
     val participation = rememberPartnerParticipation()
@@ -203,6 +206,12 @@ private fun TransferDevicesPane(navController: NavController, scanController: Sc
         selected != null && capabilities != null && !needsConversion
     }
     Column(Modifier.fillMaxSize()) {
+        TransferOriginIdentityBar(
+            title = stringResource(R.string.transfer_watch_section),
+            subtitle = stringResource(R.string.transfer_device_hint),
+            leading = { Icon(Icons.Default.Nfc, null, Modifier.size(24.dp)) },
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+        )
         CyberPanel(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
             active = selected != null && !busy,

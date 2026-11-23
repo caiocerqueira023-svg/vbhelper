@@ -150,7 +150,9 @@ class NdsStorySaveReader(private val profile: NdsStoryProfile) : GameSaveReader 
      */
     private fun identifiesSaveBlock(bytes: ByteArray, base: Int): Boolean {
         val lastId = u32(bytes, base + profile.lastIdOffset)
-        if (WorldDsResearchInspector.hasSaveSignature(bytes, base + 0x10, profile)) return lastId in 1 until profile.idReserved
+        val signature = WorldDsResearchInspector.hasSaveSignature(bytes, base + 0x10, profile)
+        if (profile.requireSignature && !signature) return false
+        if (signature) return lastId in 1 until profile.idReserved
         if (lastId !in 1 until profile.idReserved) return false
         val live = liveRecordIds(bytes, base)
         if (live.isEmpty()) return false
@@ -172,15 +174,18 @@ class NdsStorySaveReader(private val profile: NdsStoryProfile) : GameSaveReader 
     private fun referencesRecordId(bytes: ByteArray, base: Int, live: Set<Long>): Boolean {
         fun namesRecord(at: Int): Boolean = u32(bytes, at).let { it != 0L && it in live }
         for (slot in 0 until profile.partySlots) if (namesRecord(base + profile.partyReferenceBase + slot * 4)) return true
-        val farm = profile.farm
-        for (group in 0 until farm.groups) {
-            val groupBase = base + farm.base + group * farm.stride
-            for (slot in 0 until farm.residents) if (namesRecord(groupBase + farm.residentOffset + slot * 4)) return true
-            if (namesRecord(groupBase + farm.lastVisitorOffset)) return true
+        profile.farm?.let { farm ->
+            for (group in 0 until farm.groups) {
+                val groupBase = base + farm.base + group * farm.stride
+                for (slot in 0 until farm.residents) if (namesRecord(groupBase + farm.residentOffset + slot * 4)) return true
+                if (namesRecord(groupBase + farm.lastVisitorOffset)) return true
+            }
         }
-        val item = profile.item
-        for (slot in 0 until item.slots) if (namesRecord(base + item.base + slot * item.stride + item.idOffset)) return true
-        return namesRecord(base + profile.miscReferenceOffset)
+        profile.item?.let { item ->
+            for (slot in 0 until item.slots) if (namesRecord(base + item.base + slot * item.stride + item.idOffset)) return true
+        }
+        val misc = profile.miscReferenceOffset ?: return false
+        return namesRecord(base + misc)
     }
 
     /** Range facts observed in one save snapshot: deviations are reported, never grounds for rejection. */

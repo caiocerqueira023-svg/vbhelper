@@ -1,4 +1,4 @@
-﻿package com.tamerslab.storage.ui
+package com.tamerslab.storage.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -39,11 +39,14 @@ private sealed interface ScanCollectionLoad {
 }
 
 @Composable
-internal fun StorageScanCollectionDialog(database: AppDatabase, onClose: () -> Unit) {
+internal fun StorageScanCollectionDialog(database: AppDatabase,
+    appearances: com.tamerslab.species.SpeciesAppearanceRepository? = null, onClose: () -> Unit) {
     var retry by remember { mutableIntStateOf(0) }
-    val collectionFlow = remember(database, retry) {
+    val collectionFlow = remember(database, appearances, retry) {
         database.digimonScanDao().observeCollection()
-            .map<List<DigimonScanEntry>, ScanCollectionLoad> { ScanCollectionLoad.Loaded(it) }
+            .map<List<DigimonScanEntry>, ScanCollectionLoad> { entries ->
+                ScanCollectionLoad.Loaded(com.tamerslab.species.BundledVbArtwork.scanEntries(entries, appearances))
+            }
             .catch { failure ->
                 if (failure is CancellationException) throw failure
                 emit(ScanCollectionLoad.Failed)

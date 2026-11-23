@@ -32,10 +32,20 @@ class SpeciesAppearanceRepository(
         val keys = (species?.aliases.orEmpty() + listOfNotNull(species?.name, name))
             .map(SpeciesCustomizationRepository::key).distinct()
         val imported = db.spriteDao().getOriginalForSpecies(species?.id, keys)
-        return when (SpeciesArtworkPolicy.choose(current, chosenDot != null || dot != null, chosenVb != null, imported != null, vbAssetId != null)) {
+        // Loaded VB art wins; otherwise the VB frames shipped in the APK are still VB artwork and
+        // outrank the Dot fallback in VB-first mode for a species the owner has not imported. Only
+        // look the shipped artwork up when it can actually win, so loaded art/dot resolves stay cheap.
+        val vbAsset = vbAssetId ?: when {
+            current == SpritePreference.VB_FIRST && chosenVb == null && imported == null ->
+                library.bundledVbSprites.assetIdFor(species)
+            current == SpritePreference.DOT_FIRST && chosenDot == null && dot == null ->
+                library.bundledVbSprites.assetIdFor(species)
+            else -> null
+        }
+        return when (SpeciesArtworkPolicy.choose(current, chosenDot != null || dot != null, chosenVb != null, imported != null, vbAsset != null)) {
             SpeciesArtworkSource.VB_CHOICE -> Artwork(sprite = chosenVb)
             SpeciesArtworkSource.VB_IMPORTED -> Artwork(sprite = imported)
-            SpeciesArtworkSource.VB_ASSET -> Artwork(assetId = vbAssetId)
+            SpeciesArtworkSource.VB_ASSET -> Artwork(assetId = vbAsset)
             SpeciesArtworkSource.DOT -> Artwork(sprite = chosenDot ?: library.sprite(requireNotNull(dot)))
             else -> null
         }
@@ -43,24 +53,53 @@ class SpeciesAppearanceRepository(
 
     suspend fun spriteFor(name: String): Sprite? = resolve(name)?.sprite
 
+    /**
+     * The shipped VB frames as a byte-based [Sprite] when the artwork priority picks them (VB-first,
+     * no loaded VB art), else null so byte projections keep their database artwork. [poses] limits the
+     * decoded frames to what the caller renders. Species without shipped frames are rejected from the
+     * in-memory catalog before any preference query, so Dot-only species stay cheap. Call on IO.
+     */
+    suspend fun bundledSprite(name: String, poses: IntArray): Sprite? {
+        val catalog = library.catalog()
+        val species = catalog.resolve(name) ?: return null
+        if (catalog.bundledVbAssetIds(species).isEmpty()) return null
+        val assetId = resolve(name)?.assetId ?: return null
+        return withContext(Dispatchers.IO) { library.bundledVbSprites.sprite(assetId, poses) }
+    }
+
     /** Shared read-only portrait path: source rosters must not install artwork rows just to browse. */
     suspend fun portrait(nameOrId: String): Bitmap? = withContext(Dispatchers.IO) {
         val catalog = library.catalog()
         val species = catalog.resolve(nameOrId) ?: return@withContext null
-        val dot = species.dotSprites.defaultSetId
         val names = (listOf(species.name) + species.aliases).map(SpeciesCustomizationRepository::key).distinct()
         val chosen = names.firstNotNullOfOrNull { db.speciesCustomizationDao().getChosenSprite(it) }
+        val chosenVb = chosen?.takeIf { it.id >= 0 }
+        val chosenDot = chosen?.takeIf { it.id < 0 }
         val imported = db.spriteDao().getOriginalForSpecies(species.id, names)
-        val sprite = when {
-            preference() == SpritePreference.DOT_FIRST && chosen != null && chosen.id < 0 -> chosen
-            preference() == SpritePreference.DOT_FIRST && dot != null -> return@withContext library.portrait(dot)
-            chosen != null && chosen.id >= 0 -> chosen
-            imported != null -> imported
-            chosen != null -> chosen
+        val dot = species.takeIf { catalog.isExpandedReady(species.id) }?.dotSprites?.defaultSetId
+        val current = preference()
+        val vbAsset = when {
+            current == SpritePreference.VB_FIRST && chosenVb == null && imported == null ->
+                library.bundledVbSprites.assetIdFor(species)
+            current == SpritePreference.DOT_FIRST && chosenDot == null && dot == null ->
+                library.bundledVbSprites.assetIdFor(species)
             else -> null
         }
-        if (sprite != null) Bitmap.createBitmap(BitmapData(sprite.spriteIdle1, sprite.width, sprite.height).createARGBIntArray(),
-            sprite.width, sprite.height, Bitmap.Config.ARGB_8888)
-        else dot?.let { library.portrait(it) }
+        when (SpeciesArtworkPolicy.choose(current, chosenDot != null || dot != null, chosenVb != null,
+            imported != null, vbAsset != null)) {
+            SpeciesArtworkSource.VB_CHOICE -> chosenVb?.let(::spriteBitmap)
+            SpeciesArtworkSource.VB_IMPORTED -> imported?.let(::spriteBitmap)
+            // A shipped frame that fails to decode must not hide the species completely.
+            SpeciesArtworkSource.VB_ASSET -> vbAsset?.let { library.bundledVbSprites.portrait(it) }
+                ?: chosenDot?.let(::spriteBitmap) ?: dot?.let { library.portrait(it) }
+            // Dot browsing reads the bundled pack directly; installing a row is a chooser action.
+            SpeciesArtworkSource.DOT -> if (chosenDot != null) spriteBitmap(chosenDot)
+                else dot?.let { library.portrait(it) }
+            else -> null
+        }
     }
+
+    private fun spriteBitmap(sprite: Sprite): Bitmap = Bitmap.createBitmap(
+        BitmapData(sprite.spriteIdle1, sprite.width, sprite.height).createARGBIntArray(),
+        sprite.width, sprite.height, Bitmap.Config.ARGB_8888)
 }

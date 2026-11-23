@@ -7,14 +7,18 @@
     <string name="place_arena_subtitle">Coliseu</string>
     <string name="place_digiline">DigiLine</string>
     <string name="place_digiline_subtitle">Mensagens</string>
+    <string name="place_transfer">Transferir</string>
+    <string name="place_transfer_subtitle">Jogos e dispositivos</string>
     <string name="place_items">Itens</string>
     <string name="place_items_subtitle">Inventário</string>
     <string name="place_partners">Parceiros</string>
     <string name="place_partners_subtitle">Cofre</string>
 
     <string name="home_open_place">Abrir %1$s</string>
-    <string name="home_farm_chip_description">Quem está na Digifarm</string>
+    <string name="home_farm_chip_a11y">Quem está na Digifarm, %1$d de %2$d</string>
+    <string name="home_farm_chip_action">Abrir a lista da Digifarm</string>
     <string name="home_farm_residents">%1$d/%2$d</string>
+    <string name="home_partner_slab_a11y">%1$s, %2$s · %3$s, vitais %4$d de %5$d, humor %6$s</string>
     <string name="home_quests_chip_description">Missões</string>
     <string name="home_settings_description">Configurações</string>
     <string name="home_menu_description">Menu</string>
@@ -56,4 +60,5 @@
     <string name="place_dex">Dex</string>
     <string name="place_dex_subtitle">Coleção</string>
     <string name="digiline_start_chat">Começar uma conversa</string>
+    <string name="home_menu_tamer_profile">Perfil do Tamer</string>
 </resources>

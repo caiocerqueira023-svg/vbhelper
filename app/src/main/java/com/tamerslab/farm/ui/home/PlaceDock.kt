@@ -41,12 +41,18 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.tamerslab.R
+import com.tamerslab.components.hudBottomScrim
+import com.tamerslab.components.hudInkShadow
+import com.tamerslab.home.ui.farmChromeScale
 import com.tamerslab.ui.theme.TextPrimaryOnDark
 import com.tamerslab.ui.theme.VitalCyan
 
 /**
  * Height of the whole place band, including its console edge. The partner sheet yields exactly this
  * much while it opens, which is why the row and the sheet can never overlap or leave a gap.
+ *
+ * This is the authored 1.0x value; the composables multiply it by [farmChromeScale] so the captions
+ * still fit when the user raises the system font.
  */
 internal val PlaceRowBandHeight: Dp = 70.dp
 
@@ -76,10 +82,15 @@ fun PlaceDock(
     val navBottom = with(LocalDensity.current) {
         WindowInsets.navigationBars.getBottom(this).toDp()
     }
+    // Grow the band with the system font (capped at 1.5x): the captions are sp and would otherwise
+    // overflow the authored 70dp row at 2.0x text scale.
+    val chromeScale = farmChromeScale()
+    val bandHeight = PlaceRowBandHeight * chromeScale
+    val rowMinHeight = PlaceRowHeight * chromeScale
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .height(PlaceRowBandHeight + navBottom),
+            .height(bandHeight + navBottom),
     ) {
         // Ground: the same device the top cluster relies on, mirrored, fading up into the world.
         Box(Modifier.matchParentSize().hudBottomScrim())
@@ -107,6 +118,7 @@ fun PlaceDock(
                         place = place,
                         selected = selected == place,
                         onClick = { onPlaceClick(place) },
+                        minHeight = rowMinHeight,
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -120,11 +132,12 @@ private fun PlaceKey(
     place: PlaceDestination,
     selected: Boolean,
     onClick: () -> Unit,
+    minHeight: Dp,
     modifier: Modifier = Modifier,
 ) {
     val label = stringResource(place.label)
     val subtitle = stringResource(place.subtitle)
-    val shadow = hudTextShadow()
+    val shadow = hudInkShadow()
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
     val lit = pressed || selected
@@ -132,7 +145,7 @@ private fun PlaceKey(
     val captionTint = if (lit) VitalCyan else TextPrimaryOnDark.copy(alpha = 0.85f)
     Column(
         modifier = modifier
-            .heightIn(min = PlaceRowHeight)
+            .heightIn(min = minHeight)
             .selectable(
                 selected = selected,
                 interactionSource = interaction,
@@ -159,7 +172,8 @@ private fun PlaceKey(
             color = captionTint,
             maxLines = 1,
             autoSize = TextAutoSize.StepBased(
-                minFontSize = 8.sp,
+                // 11sp is the system's label floor: below it the caption stops being a label.
+                minFontSize = 11.sp,
                 maxFontSize = MaterialTheme.typography.labelMedium.fontSize,
                 stepSize = 0.25.sp,
             ),

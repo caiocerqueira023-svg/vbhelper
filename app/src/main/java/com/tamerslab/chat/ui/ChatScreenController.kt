@@ -1,5 +1,6 @@
 package com.tamerslab.chat.ui
 
+import com.tamerslab.digiline.freechat.gateway.FreeChatSceneView
 import com.tamerslab.digiline.gateway.DigilineScene
 import com.tamerslab.domain.chat.ChatMessageEntity
 import com.tamerslab.domain.species.SpeciesProfile
@@ -19,6 +20,22 @@ interface ChatScreenController {
     fun isShiftNoticePending(characterId: Long, onResult: (Boolean) -> Unit)
     fun markShiftNoticeShown(characterId: Long)
     fun isLegacyLlmEnabled(): Boolean
+
+    /** True when the authored Free Talk gateway can serve this screen (build switch, Debug kill switch and content). */
+    fun isFreeChatEnabled(): Boolean
+
+    /**
+     * Opens (or resumes) the authored Free Talk thread. The returned view carries the persisted greeting
+     * (delivered through the normal history Flow) and the topic chips. This never reaches the legacy LLM path.
+     */
+    fun openFreeChat(characterId: Long, onResult: (Result<FreeChatSceneView?>) -> Unit)
+
+    /** Sends player free text through the authored offline engine, returning the fresh chips and close reason. */
+    fun sendFreeText(characterId: Long, text: String, onResult: (Result<FreeChatSceneView?>) -> Unit)
+
+    /** Removes the authored Free Talk transcript for this partner; authored cards, bond and records stay untouched. */
+    fun clearFreeChat(characterId: Long, onDone: () -> Unit)
+
     fun sendMessage(characterId: Long, text: String, onResult: (Result<String>) -> Unit)
     fun deleteFromMessage(characterId: Long, messageId: Long)
     fun resendMessage(characterId: Long, messageId: Long, text: String, onResult: (Result<String>) -> Unit)

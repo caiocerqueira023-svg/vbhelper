@@ -56,6 +56,16 @@ class SettingsScreenControllerImpl(
     fun setDebugEnabled(enabled: Boolean) = debugSettingsRepository.setEnabled(enabled)
     fun setDebugInstantScan(enabled: Boolean) = debugSettingsRepository.setInstantScan(enabled)
     fun setDebugLegacyLlm(enabled: Boolean) = debugSettingsRepository.setLegacyLlmChat(enabled)
+    fun setDebugFreeChatEnabled(enabled: Boolean) = debugSettingsRepository.setFreeChatKilled(!enabled)
+    private val rankSettings = com.tamerslab.di.AppServices.rankSettings
+    val rankHomeCardEnabled = rankSettings.homeCardEnabled
+    val rankNotificationsEnabled = rankSettings.notificationsEnabled
+    fun setRankHomeCardEnabled(enabled: Boolean) {
+        context.lifecycleScope.launch(Dispatchers.IO) { rankSettings.setHomeCardEnabled(enabled) }
+    }
+    fun setRankNotificationsEnabled(enabled: Boolean) {
+        context.lifecycleScope.launch(Dispatchers.IO) { rankSettings.setNotificationsEnabled(enabled) }
+    }
     private val spritePreferences = com.tamerslab.di.AppServices.spritePreferenceRepository
     val spritePreference = spritePreferences.preference
     fun setSpritePreference(preference: com.tamerslab.species.SpritePreference) {

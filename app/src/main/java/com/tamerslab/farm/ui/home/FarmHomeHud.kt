@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
@@ -52,7 +51,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -68,12 +66,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.tamerslab.R
+import com.tamerslab.components.HudHairline
+import com.tamerslab.components.HudKey
 import com.tamerslab.components.VitalButton
 import com.tamerslab.components.VitalButtonStyle
+import com.tamerslab.components.hudInkShadow
+import com.tamerslab.components.hudTopScrim
 import com.tamerslab.navigation.NavigationItems
 import com.tamerslab.navigation.TransferNavigation
 import com.tamerslab.navigation.TransferSection
 import com.tamerslab.navigation.navigatePrimary
+import com.tamerslab.home.ui.HomeSheetShape
 import com.tamerslab.farm.FarmSpriteFilter
 import com.tamerslab.farm.ui.digifarm.FarmMemberOption
 import com.tamerslab.farm.ui.digifarm.FarmWorldResident
@@ -98,13 +101,18 @@ import com.tamerslab.ui.theme.VitalCyan
 fun HomeTopHud(
     residentCount: Int,
     capacity: Int,
-    bits: Int,
     onFarmClick: () -> Unit,
-    onTransferClick: () -> Unit,
+    onDexClick: () -> Unit,
     onSettingsClick: () -> Unit,
     onMenuClick: () -> Unit,
     modifier: Modifier = Modifier,
+    rankLevel: Int? = null,
+    rankEmblemRes: Int? = null,
+    onRankClick: (() -> Unit)? = null,
 ) {
+    // Past 1.3 the rank reading yields its slot so the resident count keeps the row on a 360dp
+    // phone; the same idea as FarmIdentity's type-role drop at 1.2.
+    val dense = LocalDensity.current.fontScale > 1.3f
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -119,22 +127,28 @@ fun HomeTopHud(
                 .heightIn(min = 56.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Status cluster keeps its natural width on the left; the rest of the bar is the separator,
-            // and the three actions sit together on the right - starting past the middle of the screen,
-            // so the currency and the farm count are never crowded by them. Settings lives in the menu
-            // sheet (its first entry), which is why the bar carries three keys rather than four.
+            // Status cluster keeps its natural width on the left; the rest of the bar is the
+            // separator, and the three actions sit together on the right. The currency lives in the
+            // Items/store surfaces instead of the header, and Dex is a top-zone key now (Transfer
+            // moved into the place row).
             FarmIdentity(
                 residentCount = residentCount,
                 capacity = capacity,
                 onClick = onFarmClick,
             )
-            Spacer(Modifier.width(12.dp))
-            BitsReadout(bits = bits)
+            if (!dense && rankLevel != null && rankEmblemRes != null && onRankClick != null) {
+                Spacer(Modifier.width(12.dp))
+                com.tamerslab.rank.ui.RankHudReadout(
+                    level = rankLevel,
+                    emblemRes = rankEmblemRes,
+                    onClick = onRankClick,
+                )
+            }
             Spacer(Modifier.weight(1f))
             HudKey(
-                icon = R.drawable.baseline_nfc_24,
-                description = stringResource(R.string.nav_transfer),
-                onClick = onTransferClick,
+                icon = R.drawable.vb_icon_digidex,
+                description = stringResource(R.string.nav_dex),
+                onClick = onDexClick,
             )
             Spacer(Modifier.width(6.dp))
             HudKey(
@@ -149,7 +163,7 @@ fun HomeTopHud(
                 onClick = onMenuClick,
             )
         }
-        HudGroundLine()
+        HudHairline(Modifier.padding(top = 6.dp))
     }
 }
 
@@ -160,16 +174,20 @@ private fun FarmIdentity(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val description = stringResource(R.string.home_farm_chip_description)
+    // The chip's label carries the live reading: the count is the information, "who is in the farm"
+    // is only the window into it. Appending the description to the visible text would make TalkBack
+    // stop on two nodes for one value, so the reading is spoken once here.
+    val description = stringResource(R.string.home_farm_chip_a11y, residentCount, capacity)
+    val action = stringResource(R.string.home_farm_chip_action)
     // Over the world the clusters have to hold up at any text size: past 1.2 the count drops one type
     // role, which is what keeps the action keys on screen on a 360dp phone.
     val compact = LocalDensity.current.fontScale > 1.2f
-    val shadow = hudTextShadow()
+    val shadow = hudInkShadow()
     Row(
         modifier = modifier
             .heightIn(min = 48.dp)
             .clip(CutCornerShape(6.dp))
-            .clickable(role = Role.Button, onClick = onClick)
+            .clickable(role = Role.Button, onClickLabel = action, onClick = onClick)
             .semantics { contentDescription = description }
             .padding(end = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -258,101 +276,6 @@ private fun ResidentPlaceGauge(
     }
 }
 
-/** Live currency, floating: the accent carries the numerals so the eye lands on the number. */
-@Composable
-private fun BitsReadout(bits: Int) {
-    val description = stringResource(R.string.items_store_credits, bits)
-    val shadow = hudTextShadow()
-    Row(
-        modifier = Modifier
-            .heightIn(min = 48.dp)
-            .semantics { contentDescription = description },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Text(
-            text = bits.toString(),
-            style = MaterialTheme.typography.labelLarge.copy(
-                fontFeatureSettings = "tnum",
-                shadow = shadow,
-            ),
-            color = VitalCyan,
-            maxLines = 1,
-            softWrap = false,
-        )
-    }
-}
-
-@Composable
-private fun HudKey(
-    icon: ImageVector,
-    description: String,
-    onClick: () -> Unit,
-) {
-    HudKeySlot(description = description, onClick = onClick) {
-        Icon(
-            imageVector = icon,
-            contentDescription = null,
-            tint = TextPrimaryOnDark.copy(alpha = 0.92f),
-            modifier = Modifier.size(22.dp),
-        )
-    }
-}
-
-@Composable
-private fun HudKey(
-    @DrawableRes icon: Int,
-    description: String,
-    onClick: () -> Unit,
-) {
-    HudKeySlot(description = description, onClick = onClick) {
-        Icon(
-            painter = painterResource(icon),
-            contentDescription = null,
-            tint = TextPrimaryOnDark.copy(alpha = 0.92f),
-            modifier = Modifier.size(22.dp),
-        )
-    }
-}
-
-@Composable
-private fun HudKeyCell(
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    Box(modifier = modifier, contentAlignment = Alignment.Center) { content() }
-}
-
-@Composable
-private fun HudKeySlot(
-    description: String,
-    onClick: () -> Unit,
-    content: @Composable () -> Unit,
-) {
-    Box(
-        modifier = Modifier
-            .size(48.dp)
-            .clip(CutCornerShape(10.dp))
-            .clickable(role = Role.Button, onClick = onClick)
-            .semantics { contentDescription = description },
-        contentAlignment = Alignment.Center,
-    ) {
-        content()
-    }
-}
-
-/** The HUD's ground line: a single hairline that ends the status zone without enclosing it. */
-@Composable
-private fun HudGroundLine() {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .padding(start = 16.dp, end = 16.dp, top = 6.dp)
-            .height(1.dp)
-            .background(TextPrimaryOnDark.copy(alpha = 0.12f))
-    )
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FarmRosterSheet(
@@ -374,6 +297,7 @@ fun FarmRosterSheet(
 
     ModalBottomSheet(
         onDismissRequest = { if (picking) picking = false else onDismiss() },
+        shape = HomeSheetShape,
     ) {
         Column(
             modifier = Modifier
@@ -613,7 +537,7 @@ fun HomeMenuSheet(
     onDismiss: () -> Unit,
 ) {
     val entries = remember(navController) { menuEntries(navController) }
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    ModalBottomSheet(onDismissRequest = onDismiss, shape = HomeSheetShape) {
         Column(
             modifier = Modifier
                 .verticalScroll(rememberScrollState())
@@ -655,6 +579,10 @@ private fun menuEntries(navController: NavController): List<MenuEntry> {
         // Settings first: it is the one entry people look for by name, and burying it under Credits
         // made the menu read as if settings did not exist. The gear in the bar is the fast path.
         primary(NavigationItems.Settings),
+        // The tamer profile lives behind the same Rank surface as the header rank readout.
+        MenuEntry(R.string.home_menu_tamer_profile, R.drawable.vb_rank_15) {
+            navController.navigatePrimary(NavigationItems.Rank)
+        },
         primary(NavigationItems.Quests),
         primary(NavigationItems.Dex),
         primary(NavigationItems.Items),

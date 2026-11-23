@@ -23,7 +23,7 @@ Their embedded PNGs are the provenance of the generated rasters. The generator
 records the original GLB SHA-256, material name, theme, texture channel and original
 sampler in `app/src/main/assets/environment_themes/manifest.json`. PNG filenames
 are their own SHA-256 hashes, allowing shared texture payloads to be deduplicated.
-The initial pack contains **43 PNGs serving 56 channel/theme bindings**.
+The initial pack contains **47 PNGs serving 64 channel/theme bindings**.
 
 VB Helper texture payloads are byte-identical copies of the originals. Alternative
 palettes preserve image dimensions and every alpha byte. Digifarm recoloring is
@@ -58,6 +58,35 @@ instead of the 0.75x used by white arena surfaces), and the Digifarm viewport pa
 higher light-theme pulse ceiling (1.62) into `EnvironmentThemeController`, so the floor and
 cube accents bloom in every theme. The trim on the baseline means only bright lines reach
 the bloom range, which keeps the floor's color saturated instead of washing it out.
+
+### Animated farm glow overlay
+
+The island floor does **not** pulse and its art carries no baked highlight: `island_top.png`
+is the authored 512 mosaic, byte-identical to the committed texture (the generator
+reproduces it). Only the lightest grass tiles and the bright wireframe lines pulse, through a
+separate **`island_glow_overlay.png`** (512x512 RGBA) primitive:
+
+- `build_reference_textures.py` ranks the fully-grass 16px mosaic tiles by mean linear
+  luminance and marks the lightest ~8% (`GLOW_TILE_FRACTION`, candidates 8/12/16%) plus the
+  bright grid-line pixels (max channel >= 200 inside exposed cells) in the **alpha** mask;
+  RGB keeps the authored island colour, so the overlay pulses those pixels in colour instead
+  of whitening them.
+- `build_assets.py` duplicates the island-top faces as a 4th Island primitive, nudged
+  `OVERLAY_EPSILON = 0.0006` world units along +Y, and adds the
+  **`island_glow_overlay_baked`** material: emissiveTexture + baseColorTexture = the overlay,
+  `baseColorFactor [0,0,0,1]` (alpha from the texture), `emissiveFactor [1,1,1]`,
+  `alphaMode: BLEND`, same sampler as the island top. The committed base
+  `island_top_baked` material/primitive are unchanged.
+- The Digifarm viewport holds the base floor at a static emissive factor (1.45) and pulses
+  this overlay with the old envelope (base 1.45, amplitude 0.78), so the selected tiles and
+  wire lines pulse while the darker grass luminance never changes. `validate_asset.py` pins
+  6 materials, 4 island primitives, the overlay BLEND/alpha contract, the +Y offset and the
+  byte-identical base island top.
+- Every theme gets its own overlay variant: the themed island colour through the *same*
+  authored alpha mask (so the same pixels pulse in every palette); `vb_helper` is a
+  byte-identical copy of the GLB overlay payload. The overlay material carries both
+  `baseColorMap` and `emissiveMap` bindings, which is why the theme pack is now
+  47 PNGs / 64 bindings.
 
 `build_assets.py` splits the cliff into two materials, because it is a one-sided skirt
 that fades to transparent at its foot: the upper 48% (fully opaque in the authored art)

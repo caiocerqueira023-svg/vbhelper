@@ -51,7 +51,7 @@
   "scenes": {
     "farm": {
       "asset": "digifarm/3d/digi_farm_3d.glb",
-      "sourceSha256": "e317460d98d2511e32279578bac00b27ecf6b5d47e353d01c9058d2fcf3bca80",
+      "sourceSha256": "0fadfb710966dfdf1a12a50932646133d750e3ccc9e0aad1cea7bd00b84f972e",
       "materials": [
         {
           "name": "island_top_baked",
@@ -138,6 +138,128 @@
               "textures": {
                 "emissiveMap": {
                   "asset": "environment_themes/textures/4910e2c392c5a4f558f3e674b8cee4c6e2128aec247671cfdfafd71a082277f6.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "island_glow_overlay_baked",
+          "role": "glow_overlay",
+          "variants": {
+            "vb_helper": {
+              "baseColorFactor": [
+                0,
+                0,
+                0,
+                1
+              ],
+              "emissiveFactor": [
+                1,
+                1,
+                1
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/681ef13c63dc7b23d11278df6120d9bbcaa5709dcb33a53374da23c9269c6838.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                },
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/681ef13c63dc7b23d11278df6120d9bbcaa5709dcb33a53374da23c9269c6838.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_lab": {
+              "baseColorFactor": [
+                0,
+                0,
+                0,
+                1
+              ],
+              "emissiveFactor": [
+                1.0,
+                1.0,
+                1.0
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/73ada5e1cbca09f27719a574080ec0c9e1f374c34698ea5c018a9b32856155a7.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                },
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/73ada5e1cbca09f27719a574080ec0c9e1f374c34698ea5c018a9b32856155a7.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "vb_arena": {
+              "baseColorFactor": [
+                0,
+                0,
+                0,
+                1
+              ],
+              "emissiveFactor": [
+                0.94,
+                0.94,
+                0.94
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/2c97d673d1f955691d76848ac9c7c037f1eb5436573be798c1a25d841cc5f847.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                },
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/2c97d673d1f955691d76848ac9c7c037f1eb5436573be798c1a25d841cc5f847.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                }
+              }
+            },
+            "digimon_net": {
+              "baseColorFactor": [
+                0,
+                0,
+                0,
+                1
+              ],
+              "emissiveFactor": [
+                0.94,
+                0.94,
+                0.94
+              ],
+              "textures": {
+                "baseColorMap": {
+                  "asset": "environment_themes/textures/c54ae011f233363c59a5767f14a4cac86257841d2c74077bfcbeb437dbbd1d6d.png",
+                  "wrapS": 10497,
+                  "wrapT": 10497,
+                  "minFilter": 9987,
+                  "magFilter": 9729
+                },
+                "emissiveMap": {
+                  "asset": "environment_themes/textures/c54ae011f233363c59a5767f14a4cac86257841d2c74077bfcbeb437dbbd1d6d.png",
                   "wrapS": 10497,
                   "wrapT": 10497,
                   "minFilter": 9987,

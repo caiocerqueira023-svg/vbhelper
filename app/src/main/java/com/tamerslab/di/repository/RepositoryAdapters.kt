@@ -81,13 +81,14 @@ class ContainerFarmGateway(private val container: DefaultAppContainer) : FarmGat
 }
 
 class ContainerStorageGateway(private val container: DefaultAppContainer) : StorageGateway {
-    private val delegate = StorageRepository(container.db)
+    private val delegate get() = container.storageRepository
     override fun characters(): Flow<List<CharacterDtos.CharacterWithSprites>> = delegate.getAllCharacters()
 }
 
 class RoomArenaRosterGateway(
     private val db: AppDatabase,
     private val context: android.content.Context,
+    private val appearances: com.tamerslab.species.SpeciesAppearanceRepository? = null,
 ) : ArenaRosterGateway {
     override val invalidation: Flow<Unit> = db.invalidationTracker.createFlow(
         "Card", "CardCharacter", "UserCharacter", "SpeciesProfile", "SpeciesCatalogEntry",
@@ -96,7 +97,8 @@ class RoomArenaRosterGateway(
     override suspend fun load(): ArenaRoster {
         db.expandedCatalog?.ensureReadyDefinitions()
         val eligibility = db.participation?.snapshot()
-        val characters = db.userCharacterDao().getAllCharacters().first().associateBy { it.id }
+        val characters = com.tamerslab.species.BundledVbArtwork.characters(
+            db.userCharacterDao().getAllCharacters().first(), appearances).associateBy { it.id }
         val techniques = db.digimonTechniqueLoadoutDao().getAll()
             .map { ArenaTechnique(it.individualId, it.slot, it.techniqueId) }
             .groupBy { it.individualId }

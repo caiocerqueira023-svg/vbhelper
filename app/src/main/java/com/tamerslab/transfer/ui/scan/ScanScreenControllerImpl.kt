@@ -36,6 +36,8 @@ import com.tamerslab.domain.identity.WatchTransfer
 import com.tamerslab.domain.identity.TransferFingerprint
 import com.tamerslab.transfer.data.WatchTransferRepository
 import com.tamerslab.di.TamersLabApplication
+import com.tamerslab.rank.data.RankEvents
+import com.tamerslab.rank.domain.TxpSource
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
 import androidx.room.withTransaction
@@ -89,6 +91,12 @@ class ScanScreenControllerImpl(
                     if (saved) {
                         selectedImportCardId = null
                         cancelRead()
+                        RankEvents.award(
+                            TxpSource.NFC_READ,
+                            "nfc:read:${tagCommunicator.deviceKey}:${System.currentTimeMillis()}",
+                            digimonRef = null,
+                            origin = "NFC",
+                        )
                         componentActivity.runOnUiThread { onComplete() }
                     }
                     resultMessage
@@ -108,6 +116,11 @@ class ScanScreenControllerImpl(
                     }
                     if (received) {
                         cancelRead()
+                        RankEvents.award(
+                            TxpSource.NFC_READ,
+                            "nfc:hce:read:${System.currentTimeMillis()}",
+                            origin = "HCE",
+                        )
                         componentActivity.runOnUiThread { onComplete() }
                     }
                 } catch (e: Exception) {
@@ -231,6 +244,12 @@ class ScanScreenControllerImpl(
                         tagCommunicator.sendCharacter(nfcCharacter)
                     } else error("Unsupported watch character type")
                     transfers.complete(transfer)
+                    RankEvents.award(
+                        TxpSource.NFC_WRITE,
+                        "nfc:write:${transfer.token}:${System.currentTimeMillis()}",
+                        digimonRef = transfer.individualId,
+                        origin = "NFC",
+                    )
                     cancelRead()
                     componentActivity.runOnUiThread { onComplete() }
                     componentActivity.getString(R.string.scan_sent_character_success)
@@ -255,6 +274,12 @@ class ScanScreenControllerImpl(
                         database.userCharacterDao().deleteCharacterById(characterId)
                     }
                     cancelRead()
+                    RankEvents.award(
+                        TxpSource.NFC_WRITE,
+                        "nfc:hce:write:${characterId}:${System.currentTimeMillis()}",
+                        digimonRef = characterId.toString(),
+                        origin = "HCE",
+                    )
                     notifyTransfer(componentActivity.getString(R.string.scan_sent_character_success))
                     componentActivity.runOnUiThread { onComplete() }
                 } catch (failure: Exception) {

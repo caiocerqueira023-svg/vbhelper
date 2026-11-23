@@ -108,7 +108,7 @@ A base escura cria um espaço calmo para sprites e dados. Roxo constrói a atmos
 ### Selectable Color Themes
 
 - **Tamers Lab:** preserves the incumbent dark purple/cyan appearance and is the default.
-- **VB Lab:** charcoal and neutral gray surfaces, white lettering, and electric cyan signals, based on the supplied Vital Bracelet Lab references.
+- **VB Lab:** charcoal and neutral gray surfaces, white lettering, and electric cyan signals, sampled from the shipped art (`#080808/#181818/#282828/#383838/#484848`, `#F8F8F8`, `#02C8FF/#89E3FF`). Three identity colours only; status green/red remain semantic roles.
 - **VB Arena:** white/silver surfaces, charcoal lettering, and mint-green accents, based on the supplied Vital Bracelet Arena references. Small green text uses a deeper green to remain readable.
 - **Digimon.net:** white/pale-blue surfaces, royal-blue controls and signals (`#1251D0`), and lemon-yellow filled highlights (`#F6FF00`), based on the official portal's `css/layout.css` and `css/top.css`. Imported logos and name sprites keep the shared light-theme silhouette shadow.
 - Users select a saved palette in Settings → Appearance. Phone light/dark mode and wallpaper colors never select or alter it.
@@ -157,7 +157,7 @@ A paleta usa profundidade violeta para o mundo do produto e energia ciano para t
 
 ## Typography
 
-**Display Font:** Oxanium (configurável pelo usuário, com alternativas Michroma, Eurostile Extended e Square 721 Extended)
+**Display Font:** Oxanium (configurável pelo usuário, com alternativas Michroma, Eurostile Extended, Square 721 Extended e VB Lab (Kafu Techno))
 
 **Body Font:** Oxanium (configurável pelo usuário)
 
@@ -186,7 +186,7 @@ quadrada do cartão do Digimon; os três painéis dividem a altura disponível i
 
 O app usa uma coluna de contexto no topo, conteúdo rolável e navegação inferior em telas compactas. A grade de Digimon mantém três colunas; as grades de itens adaptam a quantidade de colunas à largura disponível para manter nomes completos e a área de arte separada. A densidade é equilibrada com áreas de toque mínimas de 48dp e espaçamento de 8dp ou mais entre ações adjacentes.
 
-O fundo tecnológico é global, atrás de superfícies transparentes de Scaffold. Painéis elevam a informação por camadas tonais e molduras, não por grandes blocos opacos. Em larguras ampliadas, navegação deve migrar para um padrão Android apropriado, como rail ou drawer, em vez de esticar a barra inferior de telefone.
+O fundo tecnológico é global, atrás de superfícies transparentes de Scaffold. Painéis elevam a informação por camadas tonais e molduras, não por grandes blocos opacos. Em larguras ampliadas, a navegação do app deve migrar para um padrão Android apropriado, como rail ou drawer, em vez de esticar a fileira de lugares do farm.
 
 ## Elevation & Depth
 
@@ -298,7 +298,8 @@ the species-wide preference on Save. Source scope has been reviewed; native
 captures of this new tab remain pending a connected device.
 
 There are no source gameplay modes. Settings offers **VB first** and **Dot first**
-as artwork priority only. VB first uses loaded/saved VB appearance then Dot fallback;
+as artwork priority only. VB first uses loaded/saved VB appearance, then the VB sprite
+frames bundled with the app, then Dot fallback;
 Dot first uses the species' Dot appearance then loaded/saved VB fallback. Missing
 artwork uses a neutral placeholder and never disables a partner. The shared display
 projection and asset-backed renderers resolve preferences by canonical identity across
@@ -344,16 +345,18 @@ metadata and private stats. Empty optional fields produce no empty sections.
 
 ### Navigation
 
-- **Style:** barra inferior compacta com ícone e rótulo; item ativo recebe fundo violeta translúcido e ícone/texto em ciano.
-- **Motion:** cor do item ativo faz transição curta; mudanças de rota entre lugares usam slide
-  horizontal curto, e Home tem a sua própria transição, porque é um mundo e não uma página (ver
-  **Farm home shell** → Transitions).
+- **Style:** sem barra inferior global. O farm Home navega pela fileira de cinco lugares e pelo menu;
+  as demais rotas abrem com o `TopBanner` de instrumento e uma chave de voltar explícita. A antiga
+  barra compacta (quatro destinos + More) e o rail correspondente estão aposentados e não são compostos.
+- **Motion:** mudanças de rota entre lugares usam slide horizontal curto, e Home tem a sua própria
+  transição, porque é um mundo e não uma página (ver **Farm home shell** → Transitions).
 
-A barra compacta preserva o desenho original: fundo técnico, seleção chanfrada
-envolvendo ícone/rótulo e quatro destinos diários mais More. Os itens mantêm
-semântica nativa de tabs selecionáveis. O rail usa componentes Material e permite rolagem em janelas baixas.
-Gestos horizontais pertencem ao conteúdo, como favoritos e gráficos; a camada global
-de navegação não os intercepta. A barra inferior se recolhe enquanto o teclado está aberto.
+A barra de status é transparente e o material do cabeçalho continua atrás dela; a barra de ação do
+sistema mantém o fundo sólido da paleta selecionada. Gestos horizontais pertencem ao conteúdo, como
+favoritos e gráficos; a camada global de navegação não os intercepta. Em larguras ampliadas a
+navegação ainda não migra para rail ou
+drawer: a fileira de lugares é limitada a 460dp e as chaves do HUD continuam nas bordas da janela.
+A composição de largura ampliada permanece pendente.
 
 O Scaffold externo reserva e consome os insets de sistema e recorte de tela; a raiz
 do conteúdo reserva e consome o IME uma vez. Telas editáveis herdam esse consumo;
@@ -369,12 +372,17 @@ it instead of framing it. The compact bottom navigation is retired; navigation h
 
 - **Top zone:** no shelf, no box. The HUD is two detached clusters over the world: status on the
   left (home glyph, resident count with a twelve-slot place gauge underneath, roster chevron inline
-  with the count) and the bits readout beside it in the accent, then four keys floating at the right:
-  Transfer, Dex, the settings gear and the menu. Quests lives in the menu sheet rather than the bar. A palette-resolved scrim and a single hairline ground line carry
-  the contrast a panel used to carry; text and marks sit in HUD ink with a soft 1dp/3dp shadow, so
+  with the count) and the tamer-rank emblem after it, then three keys floating at the right: Dex, the
+  settings gear and the menu. Transfer lives in the place row, the currency lives in the Items/store
+  surfaces instead of the header, and the menu sheet carries Quests, Transfer and a Tamer profile
+  entry. A
+  palette-resolved scrim and a single hairline ground line carry
+  the contrast a panel used to carry; text and marks sit in HUD ink with a soft 1dp/3dp shadow that
+  resolves per palette (dark ink shadow in the dark palettes, light in the light palettes), so
   each cluster holds up against sky, ground or chasm. Keys keep 48dp targets; past font scale 1.2 the
-  count drops a type role and the chevron goes, which keeps every key on a 360dp phone.
-- **Place row:** five places as pure overlay, matching the top zone: Radar, Arena, Dex, Shop,
+  count drops a type role and the chevron goes, and past 1.3 the rank emblem yields its slot, which
+  keeps every key on a 360dp phone.
+- **Place row:** five places as pure overlay, matching the top zone: Radar, Arena, Transfer, Items,
   Partners are icon plus caption floating on a bottom scrim, and the row owns the very bottom of the
   screen - the partner slab sits directly above it, like a mini player over a tab row. There is no
   deck, no tile and no container: contrast comes from a ground painted in the partner slab's own
@@ -385,13 +393,18 @@ it instead of framing it. The compact bottom navigation is retired; navigation h
   marks the junction. There is no blur or glass effect on chrome: translucency is tint only. The slab's frame keeps only its upper edge (two chamfers
   plus the top line): no side or bottom strokes, so it has no silhouette where it meets the row.
   The icon is the action and the caption its descriptor; the caption auto-sizes down rather than
-  truncating, so localized labels ("Parceiros") and large font scales stay complete. Pressing a place
+  truncating (floor 11sp), so localized labels ("Parceiros") and large font scales stay complete.
+  Pressing a place
   turns it accent; a current place would also keep a 2dp accent underline. The row is capped at 460dp
-  and centred so wide windows do not stretch it. Badges appear only while something is actually
-  waiting. The menu sheet carries Quests, Dex, Items, Adventure, Transfer, Credits, Viewer, Lorebook
-  and Settings. Earlier machined tile keys and the floating deck are superseded.
+  so wide windows do not stretch it; centring on wide windows is not implemented yet.
+  Badges appear only while something is actually
+  waiting. The menu sheet carries Settings first, then Tamer profile, Quests, Dex, Items, Adventure,
+  Transfer, Lorebook, Viewer and Credits. Earlier machined tile keys and the floating deck are
+  superseded.
 - **Partner deck:** a 96dp slab that doubles as the drag handle, sitting above the place row, over a
-  three-detent sheet (peek 96dp, half 44%, expanded 96%). The sheet owns one height value: a drag moves
+  three-detent sheet (peek 96dp, half 44%, expanded 96%). The peek height and the place band grow with
+  the system font, capped at 1.5x, so the vitals and captions survive 2.0x text scale. The sheet owns
+  one height value: a drag moves
   it 1:1 under the finger (no jump at grab or release, no detent snap while dragging) and the settle
   animation continues from wherever the finger left it; the chevron opens one detent upward and drops
   the sheet all the way to peek from expanded. A gesture that merely reaches the end of the overview's
@@ -407,8 +420,10 @@ it instead of framing it. The compact bottom navigation is retired; navigation h
   owned items that fill that slot (steps, vitals, battles, wins) so a pick can never land in another
   slot; a running mission opens removal, and a completed one collects its reward. Assigning consumes
   one item through the same gameplay path as the Items tab, so Home and Items never diverge.
-- **Gesture ownership:** the slab claims its drag area above the navigation-bar strip with
-  `systemGestureExclusion`, so pulling the sheet up is never read as the system Home gesture. Drags
+- **Gesture ownership:** the slab (and its loading/choose/unavailable state-card equivalents) claims
+  only its own drag area above the navigation-bar strip with `systemGestureExclusion`, so pulling the
+  sheet up is never read as the system Home gesture. The exclusion is attached to the bounded handle
+  nodes, never to the whole route. Drags
   on the 3D surface belong to the camera; drags on chrome belong to the sheet; nothing else.
 - **Camera:** the active partner is followed by default, a drag or pinch overrides for five seconds
   and then eases back over 600ms. A cinematic drift runs whenever nobody is touching the scene: the
@@ -674,14 +689,17 @@ separate, so display/configuration changes cannot create gains or rewrite native
 originals. Normalization policy numbers are authored rules, not device measurements.
 
 The farm home is the compact shell: the Digifarm fills Home, places are reached from its command
-deck and menu, and the phone bottom navigation bar is retired (see **Farm home shell**).
-Home's upper-left Transfer action is being redesigned from PKForge's library/editor/
-bank references into a **vertical origin list**. Games, Vital Bracelet and every other
-supported Digimon origin are peer rows. DS entries use the recognizable DS launcher
-icons rather than covers. Opening a game reveals saved individuals with automatically
-matched species and the app's normal sprites. Tap an individual for its information
-and a direct Move to Storage action. Preserve the saved app palette, sprite preferences
-and Material/Android behavior. Earlier game-cover grids are a superseded prototype.
+deck and menu, and the phone bottom navigation bar is retired (see **Farm home shell**). Home's
+upper-left Transfer action opens the **Transfer library**, built from PKForge's library/editor/bank
+references inside this document's visual system: a two-column shelf of game plates (DS launcher
+art, roster census, save count), Storage and the Vital Bracelet as full-width plates, then the
+opened game as an identity bar (save label, roster census, refresh), container scope tabs with
+counts (All/Party/Farm/Bank) and a three-column box. A Digimon cell is a flat instrument tile:
+framed sprite as hero, name and level underneath; tapping opens the full inspector sheet with the
+native HP/MP/combat facts, a collapsed native-detail block and one primary Move action. Sends use
+the same plates for destination games and the Party/Bank/Farm scope chips for placement. Sprites,
+launcher art and the saved palette carry the identity; no extra covers, chrome or gamepad legends
+are introduced. Earlier origin-row and cover-grid lists are superseded.
 
 The only transfer directions are game → Storage and Storage → game. Any supported game
 that supports an individual's species may receive it; origin is not a destination

@@ -38,6 +38,7 @@ import com.tamerslab.world.ui.WorldChatScreenControllerImpl
 import com.tamerslab.transfer.data.VitalWearCharacterImporter
 import com.tamerslab.ui.theme.TamersLabTheme
 import com.tamerslab.settings.data.AppThemeSettings
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import com.tamerslab.components.TechBackground
 import com.tamerslab.components.showAppFeedback
@@ -86,10 +87,17 @@ class MainActivity : AppCompatActivity() {
         val worldChatScreenController = WorldChatScreenControllerImpl(this)
 
         val palette = settingsScreenController.currentTheme.value.palette
+        // Transparent status bar, solid palette ground for the system action (navigation) bar.
+        val transparent = Color.Transparent.toArgb()
         val barColor = palette.background.toArgb()
-        val barStyle = if (palette.isDark) SystemBarStyle.dark(barColor)
+        val statusBarStyle = if (palette.isDark) SystemBarStyle.dark(transparent)
+            else SystemBarStyle.light(transparent, transparent)
+        val navigationBarStyle = if (palette.isDark) SystemBarStyle.dark(barColor)
             else SystemBarStyle.light(barColor, barColor)
-        enableEdgeToEdge(statusBarStyle = barStyle, navigationBarStyle = barStyle)
+        enableEdgeToEdge(
+            statusBarStyle = statusBarStyle,
+            navigationBarStyle = navigationBarStyle,
+        )
 
         initialDestination = getInitialDestinationFromIntent(intent)
 

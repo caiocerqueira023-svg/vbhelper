@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "description": "Seed provenance for the DigiLine Free Talk corpus (personal, non-distributed build). The GENERATED corpus (authored banks + catalog fact atoms) is the priority answer source. The public-corpus database fallback is dataset dialogue shipped for LAST-RESORT use only; the owner takes responsibility for that use and DISTRIBUTION_GATE.md removes/replaces it before any distribution.",
+  "owner": "project owner (personal build; takes responsibility for seed use)",
+  "reviewedAt": "2026-11-18",
+  "shippedAssets": [
+    "app/src/main/assets/freechat/v1/en/manifest.json",
+    "app/src/main/assets/freechat/v1/en/free_chat.json",
+    "app/src/main/assets/freechat/v1/en/species_voice.json",
+    "app/src/main/assets/freechat/v1/en/database_fallback.json"
+  ],
+  "shippedCounts": {
+    "intents": 210,
+    "replies": 5040,
+    "fallbackLines": 40,
+    "matchPhrases": 1746,
+    "chips": 78,
+    "speciesVoices": 1662,
+    "databasePairs": 5000
+  },
+  "generatedCorpus": {
+    "origin": "Composed from project-authored banks in tools/freechat/data/ + fact atoms (name/level/type/specialMoves/level-tier) read from app/src/main/assets/species_catalog.json. The catalog profile prose is never read by the generator.",
+    "priority": "primary answer source (generated intent/reply matches > species-voice lines > intent fallbacks > database fallback)",
+    "externalSeedTextShipped": false,
+    "catalogProfileProseUsed": false,
+    "authoringStatus": "draft (owner approval pending; no line is claimed reviewed)",
+    "originalityGate": "tools/freechat/validate_freechat.py: 8-word shingle overlap against species_catalog profiles, existing DigiLine packs and the legacy species-chat asset; banned assistant/out-of-world/third-party phrase lints."
+  },
+  "databaseFallback": {
+    "path": "app/src/main/assets/freechat/v1/en/database_fallback.json",
+    "role": "LAST RESORT ONLY - runtime may use these pairs only after generated matches, species-voice lines, intent fallbacks and authored deflection/confusion fallbacks have no answer.",
+    "priorityGuarantee": "The builder never mixes the two lanes: generated replies are never converted into DB pairs and DB pairs are never re-voiced into generated replies.",
+    "pairCount": 5000,
+    "sources": [
+      {
+        "source": "cornell-movie-dialogs",
+        "name": "Cornell Movie-Dialogs Corpus",
+        "url": "https://www.cs.cornell.edu/~cristian/Cornell_Movie-Dialogs_Corpus.html",
+        "license": "research-only (personal build)",
+        "language": "en",
+        "shippedPairs": 2801,
+        "usage": "Dataset dialogue shipped verbatim in database_fallback.json for this personal build only. Distribution gate must remove/replace this asset."
+      },
+      {
+        "source": "oasst1-en",
+        "name": "OpenAssistant Conversations (OASST1)",
+        "url": "https://huggingface.co/datasets/OpenAssistant/oasst1",
+        "license": "Apache-2.0",
+        "language": "en",
+        "shippedPairs": 1034,
+        "usage": "Dataset dialogue shipped verbatim in database_fallback.json for this personal build only. The supplied sample contained no pt-BR rows, so no oasst1-pt pairs shipped.",
+        "distribution": "Apache-2.0 permits redistribution with attribution; still last-resort dataset dialogue, not re-voiced."
+      },
+      {
+        "source": "soda",
+        "name": "SODA (Social Dialogue Dataset)",
+        "url": "https://huggingface.co/datasets/allenai/soda",
+        "license": "CC BY 4.0",
+        "language": "en",
+        "shippedPairs": 1165,
+        "usage": "Dataset dialogue shipped verbatim in database_fallback.json for this personal build only.",
+        "distribution": "CC BY 4.0 permits redistribution with attribution; still last-resort dataset dialogue, not re-voiced."
+      }
+    ],
+    "filtering": "Deduped on normalized (user, response); dropped empty/too-short rows, assistant-phrase rows, PII-looking rows (e-mail, URL, @handle, phone/SSN-like digit runs), sexual/romance rows, abusive/profanity rows; response <= 300 chars, user <= 300 chars; at most 300 pt pairs (none available); deterministic sorted selection capped at 5,000 pairs; source+license kept per pair.",
+    "distributionGate": "DISTRIBUTION_GATE.md owns removal/replacement. Options: strip database_fallback.json + the manifest databaseFallback key (runtime then relies on generated content only), or replace it with owner-authored/cleared dialogue while keeping the same schema."
+  },
+  "seeds": [
+    {
+      "id": "cornell-movie-dialogs",
+      "name": "Cornell Movie-Dialogs Corpus",
+      "url": "https://www.cs.cornell.edu/~cristian/Cornell_Movie-Dialogs_Corpus.html",
+      "license": "No license stated; extracted movie-script dialogue (research distribution)",
+      "status": "shipped-in-database-fallback-personal-build",
+      "usage": "Database fallback pairs only (last resort). Never used to compose generated replies.",
+      "committed": false
+    },
+    {
+      "id": "oasst1",
+      "name": "OpenAssistant Conversations (OASST1)",
+      "url": "https://huggingface.co/datasets/OpenAssistant/oasst1",
+      "license": "Apache-2.0",
+      "status": "shipped-in-database-fallback-personal-build",
+      "usage": "Database fallback pairs (en sample). Also usable offline for prompter-phrase mining (--seed-pairs) for authored match-phrase banks; seed text is never copied into generated replies.",
+      "committed": false
+    },
+    {
+      "id": "soda",
+      "name": "SODA (Social Dialogue Dataset)",
+      "url": "https://huggingface.co/datasets/allenai/soda",
+      "license": "CC BY 4.0",
+      "status": "shipped-in-database-fallback-personal-build",
+      "usage": "Database fallback pairs only (last resort). Never used to compose generated replies.",
+      "committed": false
+    },
+    {
+      "id": "dailydialog",
+      "name": "DailyDialog",
+      "url": "https://huggingface.co/datasets/li2017dailydialog/daily_dialog",
+      "license": "CC BY-NC-SA 4.0",
+      "status": "optional-offline-seed-only",
+      "usage": "Not supplied for the ship pack this pass; if supplied, offline mining/DB-fallback candidates only (NC terms), never used to compose generated replies.",
+      "committed": false
+    },
+    {
+      "id": "empathetic-dialogues",
+      "name": "EmpatheticDialogues",
+      "url": "https://huggingface.co/datasets/facebook/empathetic_dialogues",
+      "license": "CC BY-NC 4.0",
+      "status": "optional-offline-seed-only",
+      "usage": "Reference for comfort/boundary dialogue acts only; not shipped this pass.",
+      "committed": false
+    },
+    {
+      "id": "ubuntu-dialogue",
+      "name": "Ubuntu Dialogue Corpus",
+      "url": "https://github.com/rkadlec/ubuntu-ranking-dataset-creator",
+      "license": "No explicit data license (IBM 2015 generator; IRC logs)",
+      "status": "not-used",
+      "usage": "Technical register is off-brief for a companion chat; excluded.",
+      "committed": false
+    },
+    {
+      "id": "opensubtitles-opus",
+      "name": "OpenSubtitles / OPUS",
+      "url": "https://opus.nlpl.eu/",
+      "license": "Copyright-imposed / varies per release",
+      "status": "not-used",
+      "usage": "Subtitle text is copyrighted and off-world for this feature; excluded.",
+      "committed": false
+    },
+    {
+      "id": "project-authored-banks",
+      "name": "tools/freechat/data/*.json (topics, intents, grounding, chips, fallbacks, safety)",
+      "license": "Project-owned original writing (all rights reserved by the project)",
+      "status": "shipped-generated-priority-corpus",
+      "usage": "Composes every generated reply; no external text and no catalog profile prose.",
+      "committed": true
+    },
+    {
+      "id": "app-species-catalog",
+      "name": "app/src/main/assets/species_catalog.json",
+      "license": "App-bundled catalog data",
+      "status": "shipped-fact-atoms",
+      "usage": "Fact atoms only: name, level, type, specialMoves, level->tier. Profile prose is never read by the builder and never shipped as free-talk speech.",
+      "committed": true
+    },
+    {
+      "id": "legacy-reference-corpora",
+      "name": "app/src/main/assets/digiline/v1/en/*.json, species_chat_examples.json",
+      "license": "Project packs (style pattern only) / third-party legacy game text (reference only)",
+      "status": "reference-only",
+      "usage": "Style/register references and originality-gate reference corpora. No text is copied into Free Talk replies.",
+      "committed": true
+    },
+    {
+      "id": "digimon-chat-export",
+      "name": "digimon_chat_export/ (Time Stranger DCO mod, Cyber Sleuth quiz, SMT V negotiation)",
+      "license": "Third-party game/mod text (reference only)",
+      "status": "reference-only",
+      "usage": "Data-shape and coverage reference for the existing DigiLine v2 card packs; never used as Free Talk reply text.",
+      "committed": false
+    }
+  ],
+  "seedPairsInput": {
+    "databaseSeedsFlag": "--database-seeds <dir-or-jsonl>",
+    "databaseSeedsDefault": "tools/freechat/_seeds/ (git-ignored)",
+    "miningFlag": "--seed-pairs <jsonl>",
+    "miningReportPath": "tools/freechat/seed_mining_report.json (offline only, never shipped)",
+    "assetsAffectedByMining": false,
+    "note": "Seed files are owner-provided and git-ignored. The database fallback asset is deterministic for a given seed set; the generated corpus is byte-identical whether or not any seed flag is passed."
+  },
+  "distributionGate": {
+    "owner": "DISTRIBUTION_GATE.md (Lead)",
+    "requiredBeforeDistribution": "Remove or owner-clear database_fallback.json (and its manifest key) and replace any NC/NC-SA or research-only pairs; verify generated corpus originality gate; keep the catalog-fact-atom citation policy.",
+    "generatedCorpusStatus": "Authored original writing for this project - no distribution blocker from seed text."
+  }
+}

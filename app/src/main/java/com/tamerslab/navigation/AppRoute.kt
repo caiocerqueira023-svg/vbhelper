@@ -13,6 +13,7 @@ sealed interface AppRoute {
     @Serializable @SerialName("Home") data object Home : AppRoute
     @Serializable @SerialName("World") data object World : AppRoute
     @Serializable @SerialName("Radar") data object Radar : AppRoute
+    @Serializable @SerialName("Rank") data object Rank : AppRoute
     @Serializable @SerialName("Digiline") data object Digiline : AppRoute
     @Serializable @SerialName("Quests") data object Quests : AppRoute
     @Serializable @SerialName("WorldRecruits") data object WorldRecruits : AppRoute

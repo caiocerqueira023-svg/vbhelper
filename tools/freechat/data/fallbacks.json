@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "levels": {
+    "1": [
+      {"text": "My data settles when you speak. Try the question again.", "tone": "warm"},
+      {"text": "The signal reached me. The meaning did not.", "tone": "dry"},
+      {"text": "Say it once more. I am not going anywhere.", "tone": "courage"},
+      {"text": "I heard you. I am just slow to understand.", "tone": "compassion"},
+      {"text": "Some questions arrive as weather. Repeat yours.", "tone": "insight"},
+      {"text": "The link is open. Say it again in your own words.", "tone": "friendship"},
+      {"text": "That came through as static with ambition.", "tone": "playful"},
+      {"text": "Transmission received, meaning unclear. Resend.", "tone": "formal"},
+      {"text": "The link heard you; the meaning lagged behind.", "tone": "friendship"},
+      {"text": "Try it smaller. I will meet you halfway.", "tone": "compassion"}
+    ],
+    "2": [
+      {"text": "That is close to something I know. Say it differently.", "tone": "warm"},
+      {"text": "Wrong angle. Try the plain version.", "tone": "dry"},
+      {"text": "I can take the question. Give me a cleaner one.", "tone": "courage"},
+      {"text": "You do not have to phrase it perfectly. Try again.", "tone": "compassion"},
+      {"text": "The shape of that sentence hides the question.", "tone": "insight"},
+      {"text": "We can find the words together. Go on.", "tone": "friendship"},
+      {"text": "My file has a hole exactly that size.", "tone": "playful"},
+      {"text": "Request ambiguous. Restate with fewer unknowns.", "tone": "formal"},
+      {"text": "You are circling something. Land on it.", "tone": "insight"},
+      {"text": "That almost had a shape. Once more.", "tone": "warm"}
+    ],
+    "3": [
+      {"text": "That is outside my field. Ask me about mine.", "tone": "warm"},
+      {"text": "No entry. Choose a different topic.", "tone": "dry"},
+      {"text": "The unknown is fine. Describe what you want from it.", "tone": "courage"},
+      {"text": "I cannot see that far. Tell me what is close to you.", "tone": "compassion"},
+      {"text": "Some answers keep their distance. Ask around them.", "tone": "insight"},
+      {"text": "Stay on the link and we will find the edge.", "tone": "friendship"},
+      {"text": "The static ate that one. It owes me.", "tone": "playful"},
+      {"text": "Topic unavailable. Alternate topic required.", "tone": "formal"},
+      {"text": "My files stop before that question does.", "tone": "dry"},
+      {"text": "Ask me something this field can answer.", "tone": "formal"}
+    ],
+    "4": [
+      {"text": "I am not sure what that meant. Say it once more.", "tone": "warm"},
+      {"text": "That did not parse. Start again.", "tone": "dry"},
+      {"text": "No shame in repeating. I missed it.", "tone": "courage"},
+      {"text": "I would rather ask than guess. Again, slowly.", "tone": "compassion"},
+      {"text": "Meaning did not survive the trip. Rebuild it.", "tone": "insight"},
+      {"text": "We are still talking. That is what matters.", "tone": "friendship"},
+      {"text": "My ears are data. They sometimes lag.", "tone": "playful"},
+      {"text": "Input unparsed. Rephrase.", "tone": "formal"},
+      {"text": "Still static between the words. Go again.", "tone": "playful"},
+      {"text": "I lost the thread. Hand it back.", "tone": "courage"}
+    ]
+  }
+}

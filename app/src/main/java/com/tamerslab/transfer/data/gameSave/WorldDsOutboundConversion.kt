@@ -53,8 +53,10 @@ internal object WorldDsOutboundConversion {
         seedBase64: String?,
         defaults: WorldDsRecordDefaults? = null,
         lineage: List<Long> = emptyList(),
+        nativeStats: WorldDsStatConversion.NativeStats? = null,
     ): ObservedDigimon {
-        val native = WorldDsStatConversion.toNative(state.appStats)
+        // A tracked story block is authoritative: it is written exactly, not re-derived from the app.
+        val native = nativeStats ?: WorldDsStatConversion.toNative(state.appStats)
         val decoded = seedBase64?.let { runCatching { WorldDsRecordCodec.decodeBase64(it) }.getOrNull() }
         val seed = decoded?.takeIf { it.size == WorldDsRecordCodec.RECORD_BYTES }
         decoded?.takeIf { it.size != WorldDsRecordCodec.RECORD_BYTES }?.fill(0)

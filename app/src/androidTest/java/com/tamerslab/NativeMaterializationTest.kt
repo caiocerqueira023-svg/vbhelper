@@ -47,6 +47,22 @@ class NativeMaterializationTest {
             it[20] = "Agumon"; it[21] = "Greymon"
         })))
 
+    /** Registry used by materialization: the World DS fixture plus a minimal Dawn/Dusk table. */
+    private val speciesTables = NdsStorySpeciesTables(speciesTable, Ds2SpeciesTable.parse(Gson().toJson(mapOf(
+        "gameId" to NdsStoryProfiles.DAWN_DUSK.gameId,
+        "formatProfile" to NdsStoryProfiles.DAWN_DUSK.formatProfile,
+        "names" to (0x41..0x1F4).associate { it.toString() to "" },
+        "baseData" to (0x41..0x1F4).associate { it.toString() to emptyMap<String, Any>() },
+        "previousSpecies" to emptyMap<String, Int>(),
+        "expCurves" to listOf(List(99) { 0 }, List(99) { 0 }, List(99) { 0 }),
+    ))), LeSpeciesTable.parse(Gson().toJson(mapOf(
+        "gameId" to NdsStoryProfiles.LOST_EVOLUTION.gameId,
+        "formatProfile" to NdsStoryProfiles.LOST_EVOLUTION.formatProfile,
+        "names" to mapOf("77" to "Agumon", "82" to "Gabumon"),
+        "baseData" to mapOf("77" to mapOf<String, Any>(), "82" to mapOf<String, Any>()),
+        "stageBands" to mapOf("rookie" to listOf(77, 116)),
+    ))))
+
     @Before fun setup() = runBlocking {
         check(context.packageName.endsWith(".integritycheck"))
         preferences.edit().clear().commit()
@@ -64,7 +80,7 @@ class NativeMaterializationTest {
         val source = sources.link(SaveDocument("provider:slot", "content://provider/slot", "content://provider/slot", "0001.bin"))
         acquisition.commit(previews.prepare(source, observed.contentRevision, listOf(record.recordKey)).draft.draftId)
         archive = acquisition.archives.first().single()
-        repository = NativeMaterializationRepository(db, acquisition, { catalog }, { definition(it) }, speciesTable)
+        repository = NativeMaterializationRepository(db, acquisition, { catalog }, { definition(it) }, speciesTables)
     }
     @After fun cleanup() { db.close(); preferences.edit().clear().commit() }
 
@@ -109,7 +125,7 @@ class NativeMaterializationTest {
         assertNull(native.snapshot.nativePersonalityId)
         assertEquals(record, native.record)
         val personality = db.digimonIndividualDao().getPersonality(id)
-        val materialization = NativeMaterializationRepository(db, production, { catalog }, { definition(it) }, speciesTable)
+        val materialization = NativeMaterializationRepository(db, production, { catalog }, { definition(it) }, speciesTables)
         val mapping = materialization.saveMapping(native.snapshot.id, "digimon.agumon")
         val result = materialization.materialize(mapping)
         assertTrue(result.created)
@@ -156,7 +172,7 @@ class NativeMaterializationTest {
         val sends = ExperimentalWorldDsSendRepository(db, sources, object : SaveDocumentWrite {
             override fun canWrite(documentUri: String, grantUri: String) = false
             override suspend fun write(documentUri: String, bytes: ByteArray) = Unit
-        }, sendDirectory, speciesTable, { catalog })
+        }, sendDirectory, speciesTables, { catalog })
         try {
             // After the return the projection matches the app state: the exact retained bytes are used.
             val exact = requireNotNull(sends.outbound(id))

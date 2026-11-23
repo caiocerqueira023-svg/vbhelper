@@ -63,7 +63,7 @@ internal fun ArenaSprite(species: ArenaSpecies?, size: Dp = 64.dp, modifier: Mod
         application?.container?.db?.speciesCustomizationDao()?.observeSpriteId(appearanceKey)
             ?: kotlinx.coroutines.flow.flowOf(null)
     }.collectAsStateWithLifecycle(null)
-    val frames by key(species?.assetId, species?.cardCharacterId, preferredId, mode) {
+    val frames by key(species?.name, species?.assetId, species?.cardCharacterId, preferredId, mode) {
         produceState<List<ImageBitmap>>(emptyList()) {
             val selected = species ?: return@produceState
             value = withContext(Dispatchers.IO) {
@@ -75,12 +75,22 @@ internal fun ArenaSprite(species: ArenaSpecies?, size: Dp = 64.dp, modifier: Mod
                             it.db, it.dotSpriteLibrary) { it.spritePreferenceRepository.current }
                             .resolve(selected.name, selected.assetId)
                     }
-                    if (resolved?.sprite != null) arenaIdleFrames(resolved.sprite)
-                    else if (resolved?.assetId != null) loadBundledArenaArtwork(context, resolved.assetId)
-                    else if (selected.assetId != null) loadBundledArenaArtwork(context, selected.assetId)
-                    else selected.cardCharacterId?.let { id ->
-                        (context as TamersLabApplication).container.db.spriteDao().getForCharacter(id)?.let(::arenaIdleFrames)
-                    }.orEmpty()
+                    val frames = when {
+                        resolved?.sprite != null -> arenaIdleFrames(resolved.sprite)
+                        resolved?.assetId != null -> loadBundledArenaArtwork(context, resolved.assetId)
+                        selected.assetId != null -> loadBundledArenaArtwork(context, selected.assetId)
+                        else -> selected.cardCharacterId?.let { id ->
+                            (context as TamersLabApplication).container.db.spriteDao().getForCharacter(id)?.let(::arenaIdleFrames)
+                        }.orEmpty()
+                    }
+                    // Shipped frames can miss/corrupt; never leave a resolved species without its Dot art.
+                    frames.ifEmpty {
+                        val library = container?.dotSpriteLibrary
+                        val dot = library?.catalogBlocking()?.resolve(selected.name)
+                            ?.takeIf { it.dotSprites.setIds.isNotEmpty() }?.dotSprites?.defaultSetId
+                        if (library == null || dot == null) emptyList()
+                        else runCatching { library.sprite(dot) }.getOrNull()?.let(::arenaIdleFrames).orEmpty()
+                    }
                 } catch (failure: Exception) {
                     if (failure is CancellationException) throw failure
                     emptyList()
@@ -88,9 +98,9 @@ internal fun ArenaSprite(species: ArenaSpecies?, size: Dp = 64.dp, modifier: Mod
             }
         }
     }
-    var frameIndex by remember(species?.assetId, species?.cardCharacterId, preferredId, mode) { mutableIntStateOf(0) }
-    val timing = remember(species?.assetId, species?.cardCharacterId, preferredId, mode) {
-        val identity = (mode?.name ?: "") + (preferredId?.toString() ?: species?.assetId ?: "imported:${species?.cardCharacterId}")
+    var frameIndex by remember(species?.name, species?.assetId, species?.cardCharacterId, preferredId, mode) { mutableIntStateOf(0) }
+    val timing = remember(species?.name, species?.assetId, species?.cardCharacterId, preferredId, mode) {
+        val identity = (mode?.name ?: "") + (preferredId?.toString() ?: species?.assetId ?: "imported:${species?.cardCharacterId}") + ":" + species?.name
         val seed = (identity.hashCode().toLong() * 1_103_515_245L + 12_345L) and 0x7fff_ffffL
         val interval = 550L + seed % 301L
         (seed / 997L) % interval to interval

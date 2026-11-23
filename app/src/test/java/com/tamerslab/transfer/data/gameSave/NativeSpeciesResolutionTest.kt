@@ -38,10 +38,10 @@ class NativeSpeciesResolutionTest {
     @Test fun otherGamesProfilesVersionsUnusedSlotsAndUnnamedSpeciesStayUnidentified() {
         val catalog = catalog()
         assertNull(NativeSpeciesResolution.tableIdentity("digimon_world_ds_3ds", "world-ds-usa-drastic-raw-v1",
-            1, 4, table(), catalog))
-        assertNull(NativeSpeciesResolution.tableIdentity("digimon_world_ds_nds", "world-ds-eur", 1, 4, table(), catalog))
+            1, 4, registry(), catalog))
+        assertNull(NativeSpeciesResolution.tableIdentity("digimon_world_ds_nds", "world-ds-eur", 1, 4, registry(), catalog))
         assertNull(NativeSpeciesResolution.tableIdentity("digimon_world_ds_nds", "world-ds-usa-drastic-raw-v1",
-            2, 4, table(), catalog))
+            2, 4, registry(), catalog))
         assertNull(tableIdentity(101, catalog))
         assertNull(tableIdentity(426, catalog))
         assertNull(tableIdentity(420, catalog))
@@ -57,13 +57,18 @@ class NativeSpeciesResolutionTest {
 
     private fun tableIdentity(speciesId: Long, catalog: CanonicalSpeciesCatalog) =
         NativeSpeciesResolution.tableIdentity("digimon_world_ds_nds", "world-ds-usa-drastic-raw-v1", 1, speciesId,
-            table(), catalog)
+            registry(), catalog)
 
     private fun asset(name: String): File =
         File("src/main/assets/$name").takeIf { it.isFile } ?: File("app/src/main/assets/$name")
 
     private fun table(): WorldDsSpeciesTable =
         WorldDsSpeciesTable.parse(asset("world_ds_species.json").reader().use { it.readText() })
+
+    /** Registry holding the shipped World DS table plus the shipped Dawn/Dusk table. */
+    private fun registry(): NdsStorySpeciesTables = NdsStorySpeciesTables(table(),
+        Ds2SpeciesTable.parse(asset("ds2_species.json").reader().use { it.readText() }),
+        LeSpeciesTable.parse(asset("le_species.json").reader().use { it.readText() }))
 
     private fun catalog(): CanonicalSpeciesCatalog =
         CanonicalSpeciesCatalog(Gson().fromJson(asset("species_catalog.json").reader(), CanonicalSpeciesDatabaseDto::class.java))

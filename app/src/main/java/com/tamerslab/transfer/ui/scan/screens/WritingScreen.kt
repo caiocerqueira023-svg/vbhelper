@@ -120,7 +120,17 @@ fun WritingScreen(
         }
     }
 
-    if (!writingScreen) {
+    var showHandoff by remember { mutableStateOf(false) }
+
+    if (showHandoff) {
+        TransferHandoffScreen(
+            topBannerText = stringResource(R.string.writing_character_action_title),
+            direction = NfcTransferDirection.APP_TO_WATCH,
+            showHeader = showHeader,
+            characterPreview = characterPreview,
+            onFinished = onComplete,
+        )
+    } else if (!writingScreen) {
         writing = false
         WriteCardScreen(
             characterId = characterId,
@@ -173,17 +183,11 @@ fun WritingScreen(
         )
     }
 
-    var completedWriting by remember { mutableStateOf(false) }
-
     LaunchedEffect(isDoneSendingCard, isDoneWritingCharacter) {
         if (isDoneSendingCard && isDoneWritingCharacter) {
             // Persistence is completed by the controller before this callback.
-            completedWriting = true
+            showHandoff = true
         }
-    }
-
-    if (completedWriting) {
-        onComplete()
     }
 }
 

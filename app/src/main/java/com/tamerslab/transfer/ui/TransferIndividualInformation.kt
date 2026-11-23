@@ -65,7 +65,7 @@ internal fun TransferIndividualTile(nickname: String, level: Int?, species: Cano
         color = MaterialTheme.colorScheme.surfaceContainer) {
         Column(Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            TransferSpeciesPortrait(species, artworkVersion, Modifier.size(72.dp))
+            TransferIdleSprite(species, artworkVersion, 64.dp)
             Text(nickname.ifBlank { species?.name ?: stringResource(R.string.transfer_unnamed_record) },
                 style = MaterialTheme.typography.titleSmall, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
             species?.let { Text(it.name, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center,
@@ -82,7 +82,6 @@ internal fun TransferIndividualInformation(record: ObservedDigimon, nickname: St
     onGrantAccess: (() -> Unit)? = null, onAdmitToParty: (() -> Unit)? = null, admitBlocker: Int? = null,
     onDismiss: () -> Unit) {
     val blocked = moveBlocker ?: when {
-        record.container == SaveContainer.FARM -> R.string.destination_farm_excluded
         record.container == SaveContainer.UNASSIGNED && record.issues.isNotEmpty() &&
             record.issues.all { it == RecordIssue.UNASSIGNED_LOCATION || it == RecordIssue.AMBIGUOUS_SAVE_BLOCK } -> null
         record.container == SaveContainer.PARTY && record.issues.isNotEmpty() &&

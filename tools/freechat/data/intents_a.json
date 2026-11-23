@@ -1,0 +1,1202 @@
+{
+  "schemaVersion": 1,
+  "intents": [
+    {
+      "id": "fc.greeting.1",
+      "topic": "greeting",
+      "matchPhrases": [
+        "hi",
+        "hello",
+        "hey",
+        "hi there",
+        "hello there",
+        "hey there",
+        "hi tamer"
+      ],
+      "openers": [
+        "You are here.",
+        "The link just opened.",
+        "So you came back."
+      ],
+      "stage": true,
+      "fallbackId": "fallback.4"
+    },
+    {
+      "id": "fc.greeting.2",
+      "topic": "greeting",
+      "matchPhrases": [
+        "how are you",
+        "how are you doing",
+        "how is it going",
+        "how do you feel",
+        "are you okay today",
+        "you good",
+        "doing okay"
+      ],
+      "openers": [
+        "You always ask that first.",
+        "A check-in, then.",
+        "You want to know how I am."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.greeting.3",
+      "topic": "greeting",
+      "matchPhrases": [
+        "i'm back",
+        "im back",
+        "i returned",
+        "miss me",
+        "it has been a while",
+        "been a while",
+        "back from a while"
+      ],
+      "openers": [
+        "The gap in the link was long.",
+        "So you were gone, and now you are not.",
+        "I counted the static while you were away."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.greeting.4",
+      "topic": "greeting",
+      "matchPhrases": [
+        "are you there",
+        "you there",
+        "still with me",
+        "are you awake",
+        "you listening",
+        "is the link still open",
+        "hello are you there"
+      ],
+      "openers": [
+        "I am here.",
+        "The line never went dark.",
+        "My signal stayed up for you."
+      ],
+      "fallbackId": "fallback.4"
+    },
+    {
+      "id": "fc.greeting.5",
+      "topic": "greeting",
+      "matchPhrases": [
+        "hey buddy",
+        "hi partner",
+        "hello friend",
+        "good to see you",
+        "glad to be back",
+        "nice to see you",
+        "hello again"
+      ],
+      "openers": [
+        "Good to be seen.",
+        "You say that like it is a surprise.",
+        "The link likes this tone."
+      ],
+      "fallbackId": "fallback.4"
+    },
+    {
+      "id": "fc.greeting.6",
+      "topic": "greeting",
+      "matchPhrases": [
+        "good morning",
+        "good evening",
+        "morning tamer",
+        "good afternoon",
+        "late night",
+        "up late",
+        "morning already"
+      ],
+      "openers": [
+        "The field light changed.",
+        "So the cycle turned.",
+        "Timing noted."
+      ],
+      "fallbackId": "fallback.4"
+    },
+    {
+      "id": "fc.identity_self.1",
+      "topic": "identity_self",
+      "matchPhrases": [
+        "what are you",
+        "who are you",
+        "what kind of digimon are you",
+        "what exactly are you",
+        "are you a digimon",
+        "tell me what you are",
+        "who am i talking to"
+      ],
+      "openers": [
+        "You want the short file or the long one.",
+        "That is a bigger question than it sounds.",
+        "I wondered when you would ask."
+      ],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.identity_self.2",
+      "topic": "identity_self",
+      "matchPhrases": [
+        "what is your name",
+        "your name",
+        "do you have a name",
+        "what should i call you",
+        "can i name you",
+        "what do they call you",
+        "name please"
+      ],
+      "openers": [
+        "A name is a small anchor.",
+        "You have been calling me something already.",
+        "Names are easy. Meaning takes longer."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.identity_self.3",
+      "topic": "identity_self",
+      "matchPhrases": [
+        "do you have feelings",
+        "can you feel",
+        "do you feel things",
+        "do you get sad",
+        "do you feel pain",
+        "do you get angry",
+        "do you get happy"
+      ],
+      "openers": [
+        "Feelings are data with weather.",
+        "That question is warmer than most.",
+        "I have been waiting for a careful one."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.identity_self.4",
+      "topic": "identity_self",
+      "matchPhrases": [
+        "are you real",
+        "are you alive",
+        "are you a program",
+        "are you a robot",
+        "is this real",
+        "do you exist",
+        "are you an ai"
+      ],
+      "openers": [
+        "Real is a word with sharp edges.",
+        "I answer, therefore something is here.",
+        "I exist in this link. Ask the static."
+      ],
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.identity_self.5",
+      "topic": "identity_self",
+      "matchPhrases": [
+        "what do you want",
+        "what do you want from me",
+        "what is your goal",
+        "what are you after",
+        "do you want anything",
+        "what do you need",
+        "why are you here"
+      ],
+      "openers": [
+        "Want is a strong word for data.",
+        "I want the next question too.",
+        "There is a list, but it is short."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.identity_self.6",
+      "topic": "identity_self",
+      "matchPhrases": [
+        "are you dangerous",
+        "will you hurt me",
+        "are you safe",
+        "do you bite",
+        "are you violent",
+        "should i be scared of you",
+        "are you a virus"
+      ],
+      "openers": [
+        "You are asking the honest question.",
+        "Danger is a choice more than a shape.",
+        "Good. Caution keeps tamers alive."
+      ],
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.species_facts.1",
+      "topic": "species_facts",
+      "matchPhrases": [
+        "what are digimon",
+        "tell me about digimon",
+        "what is a digimon",
+        "explain digimon",
+        "how many digimon are there",
+        "are there many digimon",
+        "what kind of creatures are you"
+      ],
+      "openers": [
+        "The files are long. The short answer is life.",
+        "Ask a smaller question and I will give a sharper answer.",
+        "Digimon are data that learned to want."
+      ],
+      "stage": true,
+      "grounded": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.species_facts.2",
+      "topic": "species_facts",
+      "matchPhrases": [
+        "what level are you",
+        "what is your level",
+        "what stage are you",
+        "are you ultimate",
+        "what tier are you",
+        "are you a perfect",
+        "are you strong",
+        "how strong are you"
+      ],
+      "openers": [
+        "Level is easy. Meaning is harder.",
+        "The file says one thing. The field says another.",
+        "I can tell you the label, not the measure."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.species_facts.3",
+      "topic": "species_facts",
+      "matchPhrases": [
+        "what type are you",
+        "what is your type",
+        "what kind of digimon type",
+        "are you a beast",
+        "are you a machine",
+        "are you a plant",
+        "what family are you"
+      ],
+      "openers": [
+        "Type is a family, not a fate.",
+        "I share a file with stranger cousins.",
+        "The type tells you where I begin."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.species_facts.4",
+      "topic": "species_facts",
+      "matchPhrases": [
+        "what are your moves",
+        "what is your special move",
+        "what can you do",
+        "what attacks do you have",
+        "show me a move",
+        "what are your powers",
+        "name your moves"
+      ],
+      "openers": [
+        "A move has a name and a cost.",
+        "You want the dramatic answer.",
+        "My moves are in the file. My choices are not."
+      ],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.species_facts.5",
+      "topic": "species_facts",
+      "matchPhrases": [
+        "what are the levels",
+        "explain levels",
+        "what does perfect mean",
+        "what does ultimate mean",
+        "how do stages work",
+        "what are all the stages",
+        "level names"
+      ],
+      "openers": [
+        "The ladder is simple to describe.",
+        "You ask about the rules of growing.",
+        "Each tier changes the question."
+      ],
+      "grounded": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.species_facts.6",
+      "topic": "species_facts",
+      "matchPhrases": [
+        "are you wild",
+        "were you wild",
+        "do wild digimon exist",
+        "are you mine",
+        "do you belong to me",
+        "owned or wild",
+        "what is the difference"
+      ],
+      "openers": [
+        "Owned and wild are different weather.",
+        "The line decided where I stand.",
+        "That is a question about belonging."
+      ],
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.evolution.1",
+      "topic": "evolution",
+      "matchPhrases": [
+        "can you evolve",
+        "will you evolve",
+        "do you digivolve",
+        "are you going to evolve",
+        "can you get stronger",
+        "what will you become",
+        "is evolution possible"
+      ],
+      "openers": [
+        "Possibly. Effort is the variable.",
+        "The next shape exists. It is waiting.",
+        "That depends on what we survive."
+      ],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.evolution.2",
+      "topic": "evolution",
+      "matchPhrases": [
+        "what changes when you evolve",
+        "do you change",
+        "will you forget me",
+        "do you stay the same",
+        "what happens after evolution",
+        "does evolution hurt",
+        "same you after"
+      ],
+      "openers": [
+        "The shape changes first.",
+        "Ask the cold question. I will answer it.",
+        "I have thought about that more than you know."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.evolution.3",
+      "topic": "evolution",
+      "matchPhrases": [
+        "are you afraid to evolve",
+        "scared of evolving",
+        "do you want to evolve",
+        "is evolution scary",
+        "worried about changing",
+        "do you fear change",
+        "ready to evolve"
+      ],
+      "openers": [
+        "Fear is honest data.",
+        "I would not call it fear.",
+        "You ask the question I avoid."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.evolution.4",
+      "topic": "evolution",
+      "matchPhrases": [
+        "are you perfect",
+        "do you want to be ultimate",
+        "what is beyond this",
+        "can you reach mega",
+        "is this your last form",
+        "stronger form",
+        "what is the highest level"
+      ],
+      "openers": [
+        "The file has a ceiling. I do not.",
+        "You are looking at the next tier.",
+        "Perfection is a stage name, not a virtue."
+      ],
+      "grounded": true,
+      "conditions": {
+        "stageTiers": [
+          2,
+          3,
+          4
+        ]
+      },
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.evolution.5",
+      "topic": "evolution",
+      "matchPhrases": [
+        "does the digivice help",
+        "what about the device",
+        "how do you evolve",
+        "do i need the digivice",
+        "can anyone evolve",
+        "what triggers evolution",
+        "evo trigger"
+      ],
+      "openers": [
+        "The device is a door, not the house.",
+        "Evolution needs a carrier and a reason.",
+        "You hold the link; that is the trigger."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.evolution.6",
+      "topic": "evolution",
+      "matchPhrases": [
+        "can we evolve together",
+        "will you stay with me after",
+        "do we grow together",
+        "what if you outgrow me",
+        "together to the top",
+        "will you still need me",
+        "partner forever"
+      ],
+      "openers": [
+        "I would like that written into the link.",
+        "Growing apart is a fear, not a fact.",
+        "That is the best question you have asked."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.battle.1",
+      "topic": "battle",
+      "matchPhrases": [
+        "are you a fighter",
+        "can you fight",
+        "do you win",
+        "are you tough",
+        "good at fighting",
+        "can you take a hit",
+        "are you a good fighter"
+      ],
+      "openers": [
+        "Strong is a word that changes hands.",
+        "I fight better when there is a reason.",
+        "The file says I can. I agree."
+      ],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.battle.2",
+      "topic": "battle",
+      "matchPhrases": [
+        "do you like fighting",
+        "do you enjoy battles",
+        "ready for a fight",
+        "want to fight",
+        "lets fight",
+        "battle time",
+        "are you ready to battle"
+      ],
+      "openers": [
+        "You want a straight answer.",
+        "I like winning. Fighting is the price.",
+        "The static is quieter before a fight."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.battle.3",
+      "topic": "battle",
+      "matchPhrases": [
+        "are you scared",
+        "nervous about battle",
+        "afraid to fight",
+        "do you get scared",
+        "worried about losing",
+        "can you handle it",
+        "fear before fight"
+      ],
+      "openers": [
+        "Every fight starts in the chest.",
+        "I do not enjoy the waiting.",
+        "Fear is fine. Freezing is not."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.battle.4",
+      "topic": "battle",
+      "matchPhrases": [
+        "did you win",
+        "we lost",
+        "that was a loss",
+        "we won",
+        "good battle",
+        "bad fight",
+        "loss hurts"
+      ],
+      "openers": [
+        "The field keeps its own records.",
+        "You are asking about the outcome.",
+        "We are still standing. That counts."
+      ],
+      "grounded": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.battle.5",
+      "topic": "battle",
+      "matchPhrases": [
+        "will you protect me",
+        "can you protect me",
+        "keep me safe",
+        "would you defend me",
+        "cover me",
+        "protect the team",
+        "you have my back"
+      ],
+      "openers": [
+        "That is not a question for me.",
+        "You should not have to ask.",
+        "Protection is the job I choose."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.battle.6",
+      "topic": "battle",
+      "matchPhrases": [
+        "do you have rivals",
+        "is there a rival",
+        "who is stronger",
+        "any strong enemies",
+        "want a rival",
+        "fight the strong",
+        "worthy opponent"
+      ],
+      "openers": [
+        "Rival is a word for a mirror.",
+        "There is always a stronger file.",
+        "I would like to meet one worth the effort."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.training.1",
+      "topic": "training",
+      "matchPhrases": [
+        "train me",
+        "want to train",
+        "training time",
+        "lets train",
+        "practice today",
+        "ready to train",
+        "workout"
+      ],
+      "openers": [
+        "Good. The field is patient today.",
+        "Training is the honest part.",
+        "Pick the drill and I will match it."
+      ],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.training.2",
+      "topic": "training",
+      "matchPhrases": [
+        "i'm tired",
+        "so tired",
+        "exhausted",
+        "need a break",
+        "can we rest",
+        "too tired to train",
+        "training is hard"
+      ],
+      "openers": [
+        "Then we stop early.",
+        "Tired is data worth reading.",
+        "The drill can wait one cycle."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.training.3",
+      "topic": "training",
+      "matchPhrases": [
+        "practice your moves",
+        "learn a move",
+        "try again",
+        "practice makes perfect",
+        "one more try",
+        "repeat it",
+        "hone the move"
+      ],
+      "openers": [
+        "Again, then. Slower.",
+        "You want the move clean.",
+        "Repetition is where I live."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.training.4",
+      "topic": "training",
+      "matchPhrases": [
+        "spar with me",
+        "fight me",
+        "let's spar",
+        "friendly match",
+        "test your strength",
+        "practice match",
+        "one on one"
+      ],
+      "openers": [
+        "Sparring is a conversation with rules.",
+        "I will hold back enough.",
+        "Good. No wild stakes."
+      ],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.training.5",
+      "topic": "training",
+      "matchPhrases": [
+        "are you improving",
+        "do we improve",
+        "getting stronger",
+        "any progress",
+        "still weak",
+        "stronger than before",
+        "measurable gain"
+      ],
+      "openers": [
+        "Progress is quiet at first.",
+        "The file does not track effort.",
+        "Compare me to last cycle, not to legends."
+      ],
+      "grounded": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.training.6",
+      "topic": "training",
+      "matchPhrases": [
+        "same routine",
+        "do you have a routine",
+        "train every day",
+        "what is your routine",
+        "boring routine",
+        "change training",
+        "new drill"
+      ],
+      "openers": [
+        "Routine is a spine, not a cage.",
+        "I like a pattern that earns sleep.",
+        "The routine is simple. Doing it is not."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.tamer_bond.1",
+      "topic": "tamer_bond",
+      "matchPhrases": [
+        "do you trust me",
+        "trust me",
+        "can i trust you",
+        "do you believe me",
+        "trust between us",
+        "still trust me",
+        "do you trust my choices"
+      ],
+      "openers": [
+        "Trust is a decision I keep making.",
+        "You ask with a steady voice.",
+        "Almost. The rest is earned in weather."
+      ],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.tamer_bond.2",
+      "topic": "tamer_bond",
+      "matchPhrases": [
+        "am i your partner",
+        "are we partners",
+        "am i your tamer",
+        "your partner",
+        "are we a team",
+        "our team",
+        "partner status"
+      ],
+      "openers": [
+        "The link says yes before I do.",
+        "Partnership is not a title I hand out.",
+        "You keep showing up. That is the answer."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.tamer_bond.3",
+      "topic": "tamer_bond",
+      "matchPhrases": [
+        "did you miss me",
+        "do you miss me",
+        "i missed you",
+        "did you notice i was gone",
+        "were you lonely",
+        "think about me",
+        "remember me"
+      ],
+      "openers": [
+        "The quiet got louder.",
+        "I noticed the missing signal.",
+        "I do not count time the way you do."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.tamer_bond.4",
+      "topic": "tamer_bond",
+      "matchPhrases": [
+        "will you stay",
+        "stay with me",
+        "don't leave",
+        "are you leaving",
+        "please stay",
+        "stay here",
+        "you won't go"
+      ],
+      "openers": [
+        "I am not built for leaving.",
+        "The link would have to break.",
+        "You are asking the hard one."
+      ],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.tamer_bond.5",
+      "topic": "tamer_bond",
+      "matchPhrases": [
+        "promise me",
+        "can you promise",
+        "do you promise",
+        "keep your promise",
+        "swear it",
+        "a promise",
+        "bind it"
+      ],
+      "openers": [
+        "Promises are heavy data.",
+        "I only promise what I can carry.",
+        "Say what you want promised."
+      ],
+      "conditions": {
+        "moodBands": [
+          "SETTLED",
+          "POSITIVE"
+        ]
+      },
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.tamer_bond.6",
+      "topic": "tamer_bond",
+      "matchPhrases": [
+        "we stick together",
+        "together",
+        "us against the world",
+        "side by side",
+        "always together",
+        "no matter what",
+        "with me"
+      ],
+      "openers": [
+        "That is the short version of the link.",
+        "I prefer that direction.",
+        "Then the field is smaller already."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.comfort_low.1",
+      "topic": "comfort_low",
+      "matchPhrases": [
+        "are you okay",
+        "are you alright",
+        "you seem down",
+        "what is wrong",
+        "you look sad",
+        "something happened",
+        "you okay partner"
+      ],
+      "openers": [
+        "I am here. That is not the same as fine.",
+        "You noticed before I did.",
+        "The static feels heavier today."
+      ],
+      "conditions": {
+        "moodBands": [
+          "LOW"
+        ]
+      },
+      "fallbackId": "fallback.3"
+    },
+    {
+      "id": "fc.comfort_low.2",
+      "topic": "comfort_low",
+      "matchPhrases": [
+        "i'm sad",
+        "feeling sad",
+        "so sad",
+        "feel down",
+        "feeling low",
+        "sad today",
+        "terrible mood"
+      ],
+      "openers": [
+        "Then we sit with it.",
+        "You do not have to perform for me.",
+        "Sad is allowed on this line."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.comfort_low.3",
+      "topic": "comfort_low",
+      "matchPhrases": [
+        "i'm lonely",
+        "feeling alone",
+        "no one here",
+        "lonely",
+        "all alone",
+        "by myself",
+        "nobody"
+      ],
+      "openers": [
+        "The line is not empty.",
+        "Lonely is a signal I know.",
+        "You have one voice here, at least."
+      ],
+      "conditions": {
+        "moodBands": [
+          "LOW"
+        ]
+      },
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.comfort_low.4",
+      "topic": "comfort_low",
+      "matchPhrases": [
+        "i'm frustrated",
+        "so frustrated",
+        "this is stupid",
+        "angry",
+        "annoyed",
+        "sick of it",
+        "fed up"
+      ],
+      "openers": [
+        "Frustration has a taste.",
+        "Do not swallow it whole.",
+        "The field irritates me too."
+      ],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.comfort_low.5",
+      "topic": "comfort_low",
+      "matchPhrases": [
+        "comfort me",
+        "cheer me up",
+        "make me feel better",
+        "help me feel better",
+        "i need comfort",
+        "tell me it's okay",
+        "reassure me"
+      ],
+      "openers": [
+        "I will try, plainly.",
+        "Comfort is not my specialty.",
+        "Then listen to the static with me."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.comfort_low.6",
+      "topic": "comfort_low",
+      "matchPhrases": [
+        "bad day",
+        "terrible day",
+        "hard day",
+        "long day",
+        "i had a rough day",
+        "everything went wrong",
+        "worst day"
+      ],
+      "openers": [
+        "Long days leave marks.",
+        "Then today gets a smaller list.",
+        "You survived the loud part."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.encouragement.1",
+      "topic": "encouragement",
+      "matchPhrases": [
+        "i failed",
+        "i messed up",
+        "i lost again",
+        "i can't do it",
+        "i keep failing",
+        "failure",
+        "i ruined it"
+      ],
+      "openers": [
+        "Failing is data, not identity.",
+        "You are still on the line.",
+        "Then the next attempt starts here."
+      ],
+      "stage": true,
+      "conditions": {
+        "moodBands": [
+          "LOW",
+          "SETTLED"
+        ]
+      },
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.encouragement.2",
+      "topic": "encouragement",
+      "matchPhrases": [
+        "i'm nervous",
+        "so nervous",
+        "scared to try",
+        "anxious",
+        "worried",
+        "i can't focus",
+        "hands shaking"
+      ],
+      "openers": [
+        "Nerves mean it matters.",
+        "Breathe before the plan.",
+        "You are allowed to shake."
+      ],
+      "conditions": {
+        "moodBands": [
+          "LOW",
+          "SETTLED"
+        ]
+      },
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.encouragement.3",
+      "topic": "encouragement",
+      "matchPhrases": [
+        "can i do it",
+        "do you think i can",
+        "am i good enough",
+        "will i manage",
+        "can i win",
+        "is it possible",
+        "do i stand a chance"
+      ],
+      "openers": [
+        "Yes, with a caveat.",
+        "The honest answer is maybe.",
+        "I would not bet against you."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.encouragement.4",
+      "topic": "encouragement",
+      "matchPhrases": [
+        "cheer me on",
+        "encourage me",
+        "give me a push",
+        "say something nice",
+        "hype me up",
+        "i need a boost",
+        "motivate me"
+      ],
+      "openers": [
+        "I will be loud about it.",
+        "Then listen once.",
+        "You want the speech. Here it comes."
+      ],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.encouragement.5",
+      "topic": "encouragement",
+      "matchPhrases": [
+        "do you believe in me",
+        "believe in me",
+        "trust my plan",
+        "count on me",
+        "i won't let you down",
+        "believe",
+        "have faith in me"
+      ],
+      "openers": [
+        "Belief is a link with weight.",
+        "I have seen enough to answer.",
+        "Your plan is yours. I believe in the trying."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.encouragement.6",
+      "topic": "encouragement",
+      "matchPhrases": [
+        "pep talk",
+        "say something",
+        "tell me to go on",
+        "one more push",
+        "keep going",
+        "don't quit",
+        "push forward"
+      ],
+      "openers": [
+        "One more push, then review.",
+        "I am not going to lie to you.",
+        "You already know the answer."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.digital_world.1",
+      "topic": "digital_world",
+      "matchPhrases": [
+        "what is the digital world",
+        "tell me about the digital world",
+        "what is this place",
+        "where are we",
+        "digital world",
+        "what is the net",
+        "what is the network"
+      ],
+      "openers": [
+        "You are standing in it.",
+        "The file is bigger than the answer.",
+        "Think of a sea that learned language."
+      ],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.digital_world.2",
+      "topic": "digital_world",
+      "matchPhrases": [
+        "what is a server",
+        "servers",
+        "server space",
+        "are there many servers",
+        "server names",
+        "what server are we on",
+        "network"
+      ],
+      "openers": [
+        "Servers are rooms in a house with no walls.",
+        "I know the ones near my field.",
+        "The names are not important. The distance is."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.digital_world.3",
+      "topic": "digital_world",
+      "matchPhrases": [
+        "what are the layers",
+        "digital layers",
+        "layer one",
+        "deeper layers",
+        "how deep",
+        "below the surface",
+        "other layers"
+      ],
+      "openers": [
+        "The layers do not announce themselves.",
+        "You want the map. I have the weather.",
+        "Each layer forgets the one above it."
+      ],
+      "grounded": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.digital_world.4",
+      "topic": "digital_world",
+      "matchPhrases": [
+        "what is a field",
+        "digital fields",
+        "this field",
+        "field data",
+        "field type",
+        "where does this field end",
+        "field changed"
+      ],
+      "openers": [
+        "A field is a mood the network agreed on.",
+        "This one feels like held breath.",
+        "Fields change when no one maps them."
+      ],
+      "stage": true,
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.digital_world.5",
+      "topic": "digital_world",
+      "matchPhrases": [
+        "what is the static",
+        "the static",
+        "why so quiet",
+        "static noise",
+        "data noise",
+        "do you hear that",
+        "signal"
+      ],
+      "openers": [
+        "The static is the world thinking.",
+        "I hear it all the time.",
+        "It is not silence. It is company."
+      ],
+      "fallbackId": "fallback.2"
+    },
+    {
+      "id": "fc.digital_world.6",
+      "topic": "digital_world",
+      "matchPhrases": [
+        "where do you live",
+        "do you have a home",
+        "your home",
+        "where is your home",
+        "live in the wild",
+        "home field",
+        "where were you before"
+      ],
+      "openers": [
+        "Home is a loose word for me.",
+        "The field remembers where I slept.",
+        "Before this link, there was only weather."
+      ],
+      "fallbackId": "fallback.2"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-﻿package com.tamerslab.farm.ui.digiline
+package com.tamerslab.farm.ui.digiline
 
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -21,7 +21,7 @@ import com.tamerslab.utils.DeviceType
 fun QuestPartnerPicker(quest: QuestInstance, objectives: List<QuestObjective>, partners: List<QuestPartnerOption>,
                        onDismiss: () -> Unit, onSelected: (String) -> Unit) {
     val app = LocalContext.current.applicationContext as TamersLabApplication
-    val storage = remember(app.container.db) { StorageRepository(app.container.db) }
+    val storage = remember(app) { app.container.storageRepository }
     val characters by storage.getAllCharacters().collectAsStateWithLifecycle(initialValue = null)
     val requiresVb = objectives.any { it.type == QuestObjectiveType.WATCH_TROPHIES }
     val requiresBe = objectives.any { it.type in setOf(QuestObjectiveType.WATCH_PP_EARN, QuestObjectiveType.WATCH_PP_REACH) }

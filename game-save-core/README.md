@@ -21,8 +21,10 @@ module.
 | `SaveReaderRegistry.kt` | Reader selection and the bounded read boundary; `read(InputStream)` and `capture(InputStream)` produce a `SaveObservation` plus optional source bytes and a SHA-256 `contentRevision`. |
 | `SaveModels.kt` | `SaveObservation`, `ObservedDigimon`, `SaveCapabilities`, `SaveContainer`, `RecordMembership`, `RecordIssue`, `ObservationNotice`, `SaveReadFailure`, `CapturedSave`. |
 | `TimeStrangerSaveReader.kt` | Time Stranger reader (encrypted document format). |
-| `NdsStorySaveReader.kt`, `NdsStoryProfile.kt`, `NdsStoryRecordCodec.kt`, `NdsStorySaveEditor.kt` | NDS Story engine-family readers/codecs/editor; World DS is the first registered profile. |
+| `NdsStorySaveReader.kt`, `NdsStoryProfile.kt`, `NdsStoryRecordCodec.kt`, `NdsStorySaveEditor.kt` | NDS Story engine-family readers/codecs/editor; World DS is the first registered profile, Dawn/Dusk the second and Lost Evolution the third. |
 | `WorldDsSaveReader.kt`, `WorldDsRecordCodec.kt`, `WorldDsCopySelection.kt`, `WorldDsPartyEdits.kt` | Digimon World DS facades and the audited party-edit byte windows. |
+| `Ds2SaveEdits.kt` | Digimon World Dawn/Dusk reader facade (`WorldDs2SaveReader`) and the verified party-record editor (`Ds2SaveEdits`, `Ds2SaveEditor`). Layout evidence: `DS2_RESEARCH.md`. |
+| `Ds2RecordCodec.kt` | Dawn/Dusk `0x164` record codec and synthesis (species defaults, history forms/bitmap, stage flags, EXP-to-next). |
 | `DestinationPreviewPlanner.kt`, `SnapshotImportPlanner.kt` | Destination evaluation and snapshot-copy planning. |
 | `TransferCommit.kt`, `UniversalProgress.kt` | Commit journal/rehearsal and the lossless native-progress model. |
 | `NativeProgressReview.kt`, `NativeRefreshPlanner.kt`, `IdentityEvidenceComparison.kt` | Read-only native-change review and identity evidence comparison. |

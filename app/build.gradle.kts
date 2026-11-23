@@ -45,6 +45,10 @@ android {
         // device Perfetto validation described in docs/performance/BASELINE.md.
         // Override for an A/B build with -PbattleSceneChannel=true.
         buildConfigField("boolean", "BATTLE_SCENE_CHANNEL_ENABLED", battleSceneChannelEnabled.toString())
+        // DigiLine Free Talk ("Papo"): authored, offline, retrieval-based conversation with an
+        // owned partner. On in normal builds; the Debug settings kill-switch can disable it at
+        // runtime without a rebuild.
+        buildConfigField("boolean", "FREE_CHAT_ENABLED", "true")
     }
 
     buildTypes {

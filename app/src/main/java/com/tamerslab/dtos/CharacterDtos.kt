@@ -33,6 +33,8 @@ object CharacterDtos {
         val nameSpriteWidth: Int,
         val nameSpriteHeight: Int,
         val isBemCard: Boolean,
+        /** Imported-card source, or null for app catalog definitions: cheap "needs bundled VB art" probe. */
+        val cardId: Long? = null,
         val nickname: String?,
         val speciesName: String?,
         val isInAdventure: Boolean,

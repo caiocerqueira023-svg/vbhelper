@@ -12,6 +12,11 @@ import math
 import sys
 from pathlib import Path
 
+# How far above the static island floor the pulsing glow overlay sits, in world units
+# (runtime is Y-up; converted into the mesh's local space when the duplicate faces are
+# created). Enough to avoid coplanar depth artifacts, small enough to stay invisible.
+OVERLAY_EPSILON = 0.0006
+
 import bmesh
 import bpy
 from mathutils import Matrix, Vector
@@ -27,7 +32,7 @@ def emission_mat(name, image_path):
     texture.image = bpy.data.images.load(str(image_path), check_existing=True)
     mat.node_tree.links.new(texture.outputs['Color'], emission.inputs['Color'])
     mat.node_tree.links.new(emission.outputs[0], output.inputs['Surface'])
-    if name == 'island_side_baked':
+    if name in ('island_side_baked', 'island_glow_overlay_baked'):
         mat.surface_render_method = 'DITHERED'
         mat.blend_method = 'BLEND'
     return mat
@@ -84,6 +89,11 @@ def build_island(o, tex_dir):
     # (opaque-pass) material so it writes depth: that hides the far side of the skirt
     # that used to show through the near side on the island's flanks.
     mesh.materials.append(emission_mat('island_side_rim_baked', tex_dir / 'island_side.png'))
+    # Animated glow overlay: the same island-top surface duplicated just above the base,
+    # driven by an RGBA mask texture (alpha only on the lightest grass tiles + wire lines)
+    # so the runtime can pulse those pixels independently of the static base floor.
+    mesh.materials.append(emission_mat('island_glow_overlay_baked',
+                                       tex_dir / 'island_glow_overlay.png'))
 
     bm = bmesh.new()
     bm.from_mesh(mesh)
@@ -150,7 +160,7 @@ def build_island(o, tex_dir):
     for ring_index in range(len(rings) - 1):
         upper, lower = rings[ring_index], rings[ring_index + 1]
         upper_depth, lower_depth = profile[ring_index][0], profile[ring_index + 1][0]
-        band_material = 3 if ring_index < rim_bands else 1
+        band_material = 2 if ring_index < rim_bands else 1
         for i in range(n):
             j = (i + 1) % n
             face = bm.faces.new((upper[i], lower[i], lower[j], upper[j]))
@@ -163,12 +173,34 @@ def build_island(o, tex_dir):
             }
             for face_loop in face.loops:
                 face_loop[uv].uv = mapping[face_loop.vert]
+
+    # Animated glow overlay: duplicate the top surface a hair above the base plane so the
+    # pulsing primitive never z-fights the static floor. The offset is authored in world
+    # +up and converted into the island mesh's local space (the object has a non-uniform
+    # scale), so the exported glTF node puts it OVERLAY_EPSILON above the base in Y.
+    overlay_offset = inv.to_3x3() @ Vector((0.0, 0.0, OVERLAY_EPSILON))
+    overlay_vertices = {}
+    overlay_faces = 0
+    for face in [f for f in bm.faces if f.material_index == 0]:
+        copies = []
+        for vertex in face.verts:
+            copy = overlay_vertices.get(vertex)
+            if copy is None:
+                copy = bm.verts.new(vertex.co + overlay_offset)
+                overlay_vertices[vertex] = copy
+            copies.append(copy)
+        overlay_face = bm.faces.new(copies)
+        overlay_face.material_index = 3
+        for base_loop, overlay_loop in zip(face.loops, overlay_face.loops):
+            overlay_loop[uv].uv = base_loop[uv].uv.copy()
+        overlay_faces += 1
     bm.normal_update()
     bm.to_mesh(mesh)
     mesh.update()
     bm.free()
     print('Built complete island:', len(grass), 'grass faces,', n, 'rim vertices,',
-          (len(profile) - 1) * n, 'cliff faces')
+          (len(profile) - 1) * n, 'cliff faces,', overlay_faces,
+          'glow-overlay faces')
 
 
 def block_object(name, spec, materials, parent=None):
@@ -269,6 +301,21 @@ def finalize_glb(path):
             pbr['baseColorTexture'] = {'index': texture['index']}
             pbr['baseColorFactor'] = [1, 1, 1, 1]
             material['alphaMode'] = 'BLEND'
+        elif material.get('name') == 'island_glow_overlay_baked':
+            texture = material.get('emissiveTexture')
+            if texture is None:
+                raise RuntimeError('Glow overlay emissive texture missing')
+            top_material = next(item for item in doc['materials']
+                                if item.get('name') == 'island_top_baked')
+            top_texture = doc['textures'][top_material['emissiveTexture']['index']]
+            overlay_texture = doc['textures'][texture['index']]
+            # Same sampler as the island top; the overlay only supplies colour + alpha.
+            overlay_texture['sampler'] = top_texture.get('sampler', 0)
+            pbr = material.setdefault('pbrMetallicRoughness', {})
+            pbr['baseColorTexture'] = {'index': texture['index']}
+            pbr['baseColorFactor'] = [0, 0, 0, 1]
+            material['emissiveFactor'] = [1, 1, 1]
+            material['alphaMode'] = 'BLEND'
         elif material.get('name') == 'island_side_rim_baked':
             texture = material.get('emissiveTexture')
             if texture is None:
@@ -312,6 +359,9 @@ def main():
     source_texture = source.parent / 'farm_base_tex01.png'
     if not source_texture.is_file():
         raise RuntimeError(f'Original Farm texture atlas not found: {source_texture}')
+    overlay_texture = source.parent / 'island_glow_overlay.png'
+    if not overlay_texture.is_file():
+        raise RuntimeError(f'Glow overlay texture not found: {overlay_texture}')
     output = Path(args.output_dir)
     output.mkdir(parents=True, exist_ok=True)
     bpy.ops.wm.read_factory_settings(use_empty=True)

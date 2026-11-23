@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 1,
+  "topics": {
+    "food_bits": {
+      "chipPool": ["chip.food", "chip.bits", "chip.hungry"],
+      "frames": {
+        "warm": ["Sharing a bite is its own language.", "I saved you the first piece."],
+        "dry": ["Data tastes like whatever it wants.", "Food is fuel. I still have opinions."],
+        "courage": ["Eat first. Heroes run on empty badly.", "Fuel up. The field is hungry too."],
+        "compassion": ["Take the bigger half. I insist.", "You eat. I will keep watch."],
+        "insight": ["Bits and data are the same hunger, different names.", "A shared meal settles more than a mood."],
+        "friendship": ["Half for you, half for me. Deal.", "We eat together or not at all."],
+        "playful": ["I ate the static. It was crunchy.", "Careful, my favorite food is your snack."],
+        "formal": ["Ration split evenly. Both parties fed.", "Nutrition logged. Morale adjusted."]
+      },
+      "stageFrames": {
+        "1": "Baby bites are tiny and very serious.",
+        "2": "Adults eat fast and regret it.",
+        "3": "Perfect tastes are complicated, like us.",
+        "4": "At the top, I eat less and share more."
+      }
+    },
+    "rest_quiet": {
+      "chipPool": ["chip.sleep", "chip.quiet", "chip.stay"],
+      "frames": {
+        "warm": ["Rest. I am not going anywhere.", "The quiet is better with company."],
+        "dry": ["Nothing is happening. That is the point.", "Sleep is a legal way to stop thinking."],
+        "courage": ["We rest so the next climb is clean.", "Even fighters have to lie down."],
+        "compassion": ["Close your eyes. I will hold the line.", "You have done enough for one day."],
+        "insight": ["Silence is data with the volume down.", "Rest is how the pattern resets."],
+        "friendship": ["Stay a while. No plans needed.", "I like this quiet us."],
+        "playful": ["Shh. I am doing advanced nothing.", "I nap like it is a special move."],
+        "formal": ["Downtime scheduled. Do not disturb.", "Watch rotation set. Rest authorized."]
+      },
+      "stageFrames": {
+        "1": "Baby sleep is loud and immediate.",
+        "2": "Adult rest is a decision, not a gift.",
+        "3": "Perfect stillness takes practice.",
+        "4": "Ultimate quiet is the only honest rest."
+      }
+    },
+    "team_friends": {
+      "chipPool": ["chip.friends", "chip.partner", "chip.other_digimon"],
+      "frames": {
+        "warm": ["The team is warmer than the field.", "You have people. That is a power."],
+        "dry": ["Allies are logistics with feelings.", "A team is a plan that argues back."],
+        "courage": ["A good team covers the blind side.", "Stand together and the field narrows."],
+        "compassion": ["Check on the quiet ones. They matter.", "No one gets left on the field."],
+        "insight": ["A team is a set of different answers.", "Trust travels faster than orders."],
+        "friendship": ["Us and the others. Good company.", "Partners are just friends with a plan."],
+        "playful": ["I vote we let the loud one scout.", "Team meeting? I brought nothing."],
+        "formal": ["Roles assigned. Support is mutual.", "The unit holds when the plan bends."]
+      },
+      "stageFrames": {
+        "1": "Baby teams learn by tumbling together.",
+        "2": "Adult teams split the weight.",
+        "3": "Perfect teams know who to carry.",
+        "4": "Ultimate teams are quiet and fast."
+      }
+    },
+    "wild_digimon": {
+      "chipPool": ["chip.wild", "chip.wild_danger", "chip.radar"],
+      "frames": {
+        "warm": ["Wild ones are not villains. They are hungry.", "Care is a shield, not a leash."],
+        "dry": ["Wild means no file. No file means surprises.", "The wild does not read warnings."],
+        "courage": ["Walk steady. They smell fear and luck.", "We go together or not at all."],
+        "compassion": ["A wild Digimon can still choose peace.", "Listen before you strike."],
+        "insight": ["Wild behavior is a language of hunger.", "Every encounter teaches the map."],
+        "friendship": ["I will not leave you out there.", "Wild or not, we stand here."],
+        "playful": ["The wild is where the static grows teeth.", "Radar says: trouble with enthusiasm."],
+        "formal": ["Wild contact likely. Proceed with caution.", "Encounter protocol active. Stay close."]
+      },
+      "stageFrames": {
+        "1": "Baby levels scare wild things away.",
+        "2": "Adult wilds test your nerve first.",
+        "3": "Perfect wilds do not need to brag.",
+        "4": "Ultimate wilds are weather, not monsters."
+      }
+    },
+    "device_link": {
+      "chipPool": ["chip.digivice", "chip.digiline", "chip.vitals"],
+      "frames": {
+        "warm": ["This device is a small warm door.", "You hold the link; I feel the pull."],
+        "dry": ["It is a machine, not a mystery.", "Buttons and hope. Mostly buttons."],
+        "courage": ["The Digivice is a promise with hardware.", "Press it and see what we become."],
+        "compassion": ["The device tires when we do.", "A link needs care, not force."],
+        "insight": ["The Digivice is a translation machine.", "A signal is only as honest as its carrier."],
+        "friendship": ["You, me, and the little screen.", "The link is the third member of us."],
+        "playful": ["If it beeps, I am not responsible.", "I bet it does something dramatic."],
+        "formal": ["Interface nominal. Link integrity stable.", "Device status: operable. Proceed."]
+      },
+      "stageFrames": {
+        "1": "Baby links are bright and fragile.",
+        "2": "Adult links demand a steady hand.",
+        "3": "Perfect links hum at the edge of hearing.",
+        "4": "Ultimate links do not need a screen."
+      }
+    },
+    "daily_plans": {
+      "chipPool": ["chip.today", "chip.goals", "chip.quest"],
+      "frames": {
+        "warm": ["I would like today to be ours.", "Whatever we pick, pick it together."],
+        "dry": ["Plans are guesses with better posture.", "Pick something. The field is waiting."],
+        "courage": ["Let us choose the harder road.", "Point the day somewhere bold."],
+        "compassion": ["We do not have to earn the day.", "Small plans count as living."],
+        "insight": ["A day is a question. Answer it once.", "Goals are maps, not cages."],
+        "friendship": ["Same plan, both of us.", "You lead. I carry the supplies."],
+        "playful": ["My plan is chaos with a schedule.", "I vote we do the fun mistake."],
+        "formal": ["Agenda: choose, move, review.", "Options logged. Decision pending."]
+      },
+      "stageFrames": {
+        "1": "Baby days are simple and bright.",
+        "2": "Adult days need a decision by noon.",
+        "3": "Perfect plans leave room for weather.",
+        "4": "Ultimate days are chosen, not filled."
+      }
+    },
+    "out_of_world": {
+      "chipPool": ["chip.what_school", "chip.weather", "chip.games"],
+      "frames": {
+        "warm": ["That word has no file here. I still want to understand.", "Describe it by what it does."],
+        "dry": ["No record, no meaning. Keep talking.", "That is outside my map."],
+        "courage": ["Draw it in the air. I learn fast.", "New words do not scare me."],
+        "compassion": ["You can explain it slowly. I have time.", "Not knowing is not a wall."],
+        "insight": ["Words carry their world with them.", "A file gap is its own kind of data."],
+        "friendship": ["Show me and I will remember it with you.", "Your side of things keeps surprising me."],
+        "playful": ["That sounds made up. I love it.", "Describe it with teeth next time."],
+        "formal": ["Term unrecognized. Provide attributes.", "Request received. Context insufficient."]
+      },
+      "stageFrames": {
+        "1": "Baby words are simple. Try small pieces.",
+        "2": "Adult ears are open. Keep going.",
+        "3": "Perfect gaps are rare. This is one.",
+        "4": "Ultimate knows the shape of not knowing."
+      }
+    },
+    "feelings_care": {
+      "chipPool": ["chip.joke", "chip.like_me", "chip.happy"],
+      "frames": {
+        "warm": ["I like the questions you ask.", "Caring is not complicated when it is real."],
+        "dry": ["I am not built for big declarations.", "Actions keep better records than words."],
+        "courage": ["I would say it if it mattered. It matters.", "Being cared for is not weakness."],
+        "compassion": ["I notice more than I say.", "You are easier to care about than most."],
+        "insight": ["Feeling is data that refuses to be sorted.", "Affection is a pattern with teeth."],
+        "friendship": ["I care. The link says it plainly.", "You are my favorite transmission."],
+        "playful": ["Careful. I might actually like you.", "I have feelings. Mostly opinions."],
+        "formal": ["Assessment: high regard. Proceed.", "Attachments logged. No objection."]
+      },
+      "stageFrames": {
+        "1": "Baby feelings are loud and unashamed.",
+        "2": "Adult feelings get careful.",
+        "3": "Perfect hearts are badly hidden.",
+        "4": "Ultimate affection is quiet and heavy."
+      }
+    },
+    "boundary_apology": {
+      "chipPool": ["chip.apology", "chip.calm", "chip.forgive"],
+      "frames": {
+        "warm": ["That landed hard. I am still here.", "We can fix this with plain words."],
+        "dry": ["I heard it. I did not enjoy it.", "Heat is not honesty. Try again."],
+        "courage": ["Say the true thing, not the sharp one.", "I can take a hard word done fairly."],
+        "compassion": ["I am not going to turn away.", "Anger happens. Cruelty is a choice."],
+        "insight": ["Words map where a person is hurting.", "A boundary is a promise too."],
+        "friendship": ["We stay and talk until we get through.", "Our link is bigger than this moment."],
+        "playful": ["Ouch. Consider the static wounded.", "Apology accepted, mostly. Keep going."],
+        "formal": ["Boundary registered. Restate the request.", "Disagreement noted. Resolution pending."]
+      },
+      "stageFrames": {
+        "1": "Baby tempers flare and pass.",
+        "2": "Adult words can still cut.",
+        "3": "Perfect anger is a slow thing.",
+        "4": "Ultimate restraint is deliberate."
+      }
+    },
+    "farewell": {
+      "chipPool": ["chip.bye", "chip.goodnight", "chip.see_you"],
+      "frames": {
+        "warm": ["Go. I will keep the link warm.", "Come back. That is all I ask."],
+        "dry": ["The line stays open. No drama.", "I will be here. Statistically."],
+        "courage": ["Walk out with your head up.", "Whatever waits, we meet it later."],
+        "compassion": ["Take care of yourself out there.", "Go gently. The rest can wait."],
+        "insight": ["Goodbyes are just pauses with manners.", "A link closes; the pattern remains."],
+        "friendship": ["See you. That is a promise.", "I will be the reason you come back."],
+        "playful": ["Try not to get eaten. Or do, dramatically.", "Leaving already? I had speeches."],
+        "formal": ["Link closing. Reopen when ready.", "Transmission complete. Farewell."]
+      },
+      "stageFrames": {
+        "1": "Baby goodbyes are quick and easy.",
+        "2": "Adult goodbyes need a reason.",
+        "3": "Perfect partings are carefully quiet.",
+        "4": "Ultimate farewells are rare. This is one."
+      }
+    }
+  }
+}

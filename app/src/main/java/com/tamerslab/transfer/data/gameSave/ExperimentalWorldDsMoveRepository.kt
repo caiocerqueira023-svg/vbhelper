@@ -8,6 +8,7 @@ import com.tamerslab.domain.personality.DigimonPersonalityTraits
 import com.tamerslab.domain.transfer.*
 import com.tamerslab.gamesave.*
 import com.tamerslab.gamesave.NdsStoryProfiles
+import com.tamerslab.navigation.TransferGameCatalog
 import com.google.gson.Gson
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -70,12 +71,14 @@ internal object WorldDsMoveRecordPolicy {
     private val imageOnlyIssues = setOf(RecordIssue.AMBIGUOUS_SAVE_BLOCK, RecordIssue.IMPLAUSIBLE_VALUES,
         RecordIssue.UNKNOWN_NAME_CODES)
 
-    fun removable(record: ObservedDigimon): Boolean {
+    fun removable(record: ObservedDigimon, farmRecordsMovable: Boolean = false): Boolean {
         if (record.nativeIdentity == null) return false
         val content = record.issues.filterNot { it in imageOnlyIssues }
         return when (record.container) {
             SaveContainer.PARTY -> content.isEmpty()
             SaveContainer.UNASSIGNED -> content.isNotEmpty() && content.all { it == RecordIssue.UNASSIGNED_LOCATION }
+            // Only layouts whose editor clears the farm reference take part in native transfer.
+            SaveContainer.FARM -> farmRecordsMovable && content.isEmpty()
             else -> false
         }
     }
@@ -91,7 +94,8 @@ internal object WorldDsMoveRecordPolicy {
     fun hasFreePartySlot(observation: SaveObservation, record: ObservedDigimon): Boolean {
         val authority = WorldDsCopySelection.authoritativeCopy(observation)
         val scoped = if (authority != null) WorldDsCopySelection.recordsForCopy(observation, authority) else observation.records
-        return scoped.count { it.container == SaveContainer.PARTY } < WorldDsPartyEdits.PARTY_CAP
+        val cap = NdsStoryProfiles.forObservation(observation)?.partyVisibleCap ?: WorldDsPartyEdits.PARTY_CAP
+        return scoped.count { it.container == SaveContainer.PARTY } < cap
     }
 
     /** The game must keep one usable Digimon after a move; a party removal additionally keeps the party non-empty. */
@@ -101,7 +105,11 @@ internal object WorldDsMoveRecordPolicy {
         }
         // Every populated save copy repeats each record; usable Digimon are counted by identity, never per copy.
         val party = usableParty.mapNotNull { it.nativeIdentity }.distinct().size
+        val farm = records.filter {
+            it.container == SaveContainer.FARM && it.issues.all { issue -> issue == RecordIssue.AMBIGUOUS_SAVE_BLOCK }
+        }.mapNotNull { it.nativeIdentity }.distinct().size
         if (record.container == SaveContainer.PARTY) return party > 1
+        if (record.container == SaveContainer.FARM) return party + farm > 1
         val storage = records.filter {
             it.container == SaveContainer.UNASSIGNED &&
                 it.issues.all { issue -> issue == RecordIssue.AMBIGUOUS_SAVE_BLOCK || issue == RecordIssue.UNASSIGNED_LOCATION }
@@ -132,9 +140,14 @@ class ExperimentalWorldDsMoveRepository(
     private val admissions = ExperimentalEditJournal(File(journalDirectory, "admissions"), ExperimentalAdmitRecord::class.java)
     private val mutex = Mutex()
     private val gson = Gson()
-    private val profile = GameImportAcquisitionRepository.productionProfiles.single {
-        it.matches(NdsStoryProfiles.WORLD_DS.gameId, NdsStoryProfiles.WORLD_DS.formatProfile, NdsStoryProfiles.WORLD_DS.codecVersion)
-    }
+
+    /** The registered snapshot-import profile matching one observation's game/profile/codec. */
+    private fun profileFor(observation: SaveObservation): VerifiedSnapshotImportProfile? =
+        GameImportAcquisitionRepository.productionProfiles.firstOrNull { it.matches(observation) }
+
+    /** The verified native editor for one observation's layout (World DS or Dawn/Dusk). */
+    private fun editorFor(observation: SaveObservation): NdsStorySaveEditor =
+        requireNotNull(NdsStorySaveEditors.forObservation(observation)) { "No native editor for this game save" }
 
     suspend fun backups(): List<GameMoveBackup> = journal.records().sortedByDescending { it.createdAt }.map {
         GameMoveBackup(it.operationId, db.linkedGameSaveDao().get(it.sourceId)?.label, it.createdAt)
@@ -149,12 +162,17 @@ class ExperimentalWorldDsMoveRepository(
 
     fun blocker(view: LinkedSaveView, record: ObservedDigimon): WorldDsMoveBlocker? {
         val observation = view.observation ?: return WorldDsMoveBlocker.FORMAT
-        if (!profile.matches(observation)) return WorldDsMoveBlocker.FORMAT
+        if (profileFor(observation) == null) return WorldDsMoveBlocker.FORMAT
+        // Only removal-capable titles may leave the game; insert-only writers are send-only.
+        if (!TransferGameCapabilities.hasWiredMover(TransferGameCatalog.identify(observation.gameId, view.source.displayName))) {
+            return WorldDsMoveBlocker.FORMAT
+        }
         if (view.source.lastError != null) return WorldDsMoveBlocker.STALE
         val resolved = WorldDsMoveCopyPolicy.resolve(observation, record)
             ?: return if (WorldDsMoveCopyPolicy.onlyOutsideAuthority(observation, record))
                 WorldDsMoveBlocker.ONLY_IN_OLDER_COPY else WorldDsMoveBlocker.COPY_DIVERGENCE
-        if (!WorldDsMoveRecordPolicy.removable(resolved)) return WorldDsMoveBlocker.REVIEW
+        val farmRecordsMovable = NdsStoryProfiles.forObservation(observation)?.farmRecordsMovable == true
+        if (!WorldDsMoveRecordPolicy.removable(resolved, farmRecordsMovable)) return WorldDsMoveBlocker.REVIEW
         if (!WorldDsMoveRecordPolicy.keepsUsableRecord(observation, resolved)) return WorldDsMoveBlocker.LAST_PARTY_MEMBER
         if (!writer.canWrite(view.source.documentUri, view.source.grantUri)) return WorldDsMoveBlocker.WRITE_ACCESS
         return null
@@ -162,7 +180,7 @@ class ExperimentalWorldDsMoveRepository(
 
     fun admissionBlocker(view: LinkedSaveView, record: ObservedDigimon): WorldDsMoveBlocker? {
         val observation = view.observation ?: return WorldDsMoveBlocker.FORMAT
-        if (!profile.matches(observation)) return WorldDsMoveBlocker.FORMAT
+        if (profileFor(observation) == null) return WorldDsMoveBlocker.FORMAT
         if (view.source.lastError != null) return WorldDsMoveBlocker.STALE
         val resolved = WorldDsMoveCopyPolicy.resolve(observation, record)
             ?: return if (WorldDsMoveCopyPolicy.onlyOutsideAuthority(observation, record))
@@ -186,7 +204,8 @@ class ExperimentalWorldDsMoveRepository(
                 val record = requireNotNull(WorldDsMoveCopyPolicy.resolve(observed, requested)) { "The authoritative copy does not contain this record" }
                 require(admissionBlocker(LinkedSaveView(source, observed), record) == null) { "Native admission is unavailable for this record" }
                 val original = requireNotNull(captured.container).copyOf()
-                val admission = WorldDsPartyEdits.admitStorageRecordToParty(original, observed.contentRevision, record.recordKey)
+                val editor = editorFor(observed)
+                val admission = editor.admitToParty(original, observed.contentRevision, record.recordKey)
                 val candidate = admission.candidateBytes
                 try {
                     var operation = ExperimentalAdmitRecord(UUID.randomUUID().toString(), sourceId, source.documentKey,
@@ -207,7 +226,8 @@ class ExperimentalWorldDsMoveRepository(
                         }
                         operation = operation.copy(phase = "ACKNOWLEDGED"); admissions.update(operation)
                     } catch (cancelled: CancellationException) { throw cancelled }
-                    catch (_: Exception) {
+                    catch (failure: Exception) {
+                        android.util.Log.e("WorldDsMove", "admission recovery required", failure)
                         admissions.update(operation.copy(phase = "RECOVERY_REQUIRED"))
                         throw WorldDsMoveRecoveryRequired()
                     }
@@ -224,9 +244,14 @@ class ExperimentalWorldDsMoveRepository(
                 val source = requireNotNull(db.linkedGameSaveDao().get(sourceId))
                 val requested = requireNotNull(observed.records.singleOrNull { it.recordKey == recordKey })
                 val record = requireNotNull(WorldDsMoveCopyPolicy.resolve(observed, requested)) { "The authoritative copy does not contain this record" }
+                if (!TransferGameCapabilities.hasWiredMover(TransferGameCatalog.identify(observed.gameId, source.displayName))) {
+                    throw IllegalStateException("This game's native removal writer is disabled")
+                }
                 require(blocker(LinkedSaveView(source, observed), record) == null) { "Native move is unavailable for this record" }
                 val original = requireNotNull(captured.container).copyOf()
-                val removal = WorldDsPartyEdits.removeForResearch(original, observed.contentRevision, record.recordKey)
+                val editor = editorFor(observed)
+                val profile = requireNotNull(profileFor(observed))
+                val removal = editor.removeRecord(original, observed.contentRevision, record.recordKey)
                 val candidate = removal.candidateBytes
                 try {
                     val bindings = db.nativeGameArchiveDao().bindings(sourceId, source.documentKey, observed.gameId,
@@ -259,7 +284,11 @@ class ExperimentalWorldDsMoveRepository(
                         capture().use { reread ->
                             check(reread.observation.contentRevision == operation.candidateRevision)
                             check(requireNotNull(reread.container).contentEquals(candidate))
-                            check(reread.observation.records.none { it.nativeIdentity == record.nativeIdentity })
+                            val editedCopy = record.nativeParameters?.saveBlock
+                            check(reread.observation.records.none {
+                                it.nativeIdentity == record.nativeIdentity &&
+                                    (editedCopy == null || it.nativeParameters?.saveBlock == editedCopy)
+                            })
                         }
                         operation = operation.copy(phase = "SOURCE_VERIFIED"); journal.update(operation)
                         val snapshot = acquire(operation, original)
@@ -267,7 +296,8 @@ class ExperimentalWorldDsMoveRepository(
                         ExperimentalWorldDsMoveResult(operation.individualId,
                             materialize(snapshot, operation.canonicalSpeciesId, operation.canonicalAuthority))
                     } catch (cancelled: CancellationException) { throw cancelled }
-                    catch (_: Exception) {
+                    catch (failure: Exception) {
+                        android.util.Log.e("WorldDsMove", "move recovery required for ${operation.record.recordKey}", failure)
                         journal.update(operation.copy(phase = "RECOVERY_REQUIRED"))
                         throw WorldDsMoveRecoveryRequired()
                     }
@@ -295,7 +325,8 @@ class ExperimentalWorldDsMoveRepository(
                     val candidate = admissions.candidate(operation.operationId)
                     try {
                         check(hash(original) == operation.sourceRevision && hash(candidate) == operation.candidateRevision)
-                        val rebuilt = WorldDsPartyEdits.admitStorageRecordToParty(original, operation.sourceRevision, operation.record.recordKey)
+                        val editor = requireNotNull(NdsStorySaveEditors.forObservation(operation.observation))
+                        val rebuilt = editor.admitToParty(original, operation.sourceRevision, operation.record.recordKey)
                         check(rebuilt.candidateBytes.contentEquals(candidate))
                     } finally { original.fill(0); candidate.fill(0) }
                 }
@@ -320,9 +351,15 @@ class ExperimentalWorldDsMoveRepository(
                     val candidate = journal.candidate(operation.operationId)
                     try {
                         check(hash(original) == operation.sourceRevision && hash(candidate) == operation.candidateRevision)
-                        val rebuilt = WorldDsPartyEdits.removeForResearch(original, operation.sourceRevision, operation.record.recordKey)
+                        val editor = requireNotNull(NdsStorySaveEditors.forObservation(operation.observation))
+                        val rebuilt = editor.removeRecord(original, operation.sourceRevision, operation.record.recordKey)
                         check(rebuilt.candidateBytes.contentEquals(candidate))
-                        val snapshot = acquire(operation, original)
+                        val snapshot = try {
+                            acquire(operation, original)
+                        } catch (failure: Exception) {
+                            android.util.Log.e("WorldDsMove", "resume acquisition failed for ${operation.record.recordKey}", failure)
+                            throw failure
+                        }
                         journal.update(operation.copy(phase = "ACKNOWLEDGED"))
                         materialize(snapshot, operation.canonicalSpeciesId, operation.canonicalAuthority)
                     } finally { original.fill(0); candidate.fill(0) }
@@ -333,7 +370,8 @@ class ExperimentalWorldDsMoveRepository(
     }
 
     private suspend fun acquire(operation: ExperimentalMoveRecord, original: ByteArray): Long = db.withTransaction {
-        val decoded = WorldDsSaveReader().read(original)
+        val profile = requireNotNull(profileFor(operation.observation))
+        val decoded = requireNotNull(NdsStorySaveEditors.forObservation(operation.observation)).read(original)
         check(profile.matches(decoded) && decoded.contentRevision == operation.sourceRevision)
         // The journaled record was reviewed against a selected copy; the raw image may still flag its
         // blocks as ambiguous. Only the record's own content must match, never its review state.
@@ -384,7 +422,11 @@ class ExperimentalWorldDsMoveRepository(
 
     private suspend fun materialize(snapshotId: Long, canonicalId: String?, authority: String?): Boolean {
         val repository = materialization ?: return false
-        repository.applyWorldDsReturn(snapshotId, canonicalId, authority ?: "GAME_TABLE")
+        // The native acquisition is already durable at this point. A presentation/materialization
+        // failure must never turn a completed move into "recovery required" or block the source.
+        runCatching { repository.applyWorldDsReturn(snapshotId, canonicalId, authority ?: "GAME_TABLE") }
+            .onFailure { android.util.Log.e("WorldDsMove", "return materialization failed", it) }
+            .getOrDefault(false)
         if (canonicalId == null) return false
         return try {
             val mapping = repository.mapping(snapshotId) ?: repository.saveMapping(snapshotId, canonicalId,

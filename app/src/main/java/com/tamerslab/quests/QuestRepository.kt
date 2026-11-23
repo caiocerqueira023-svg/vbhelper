@@ -607,6 +607,11 @@ class QuestRepository(private val db: AppDatabase, private val currency: Currenc
             db.worldSpawnDao().updateMood(giver.individualId, trust)
         }
         check(dao.updateQuest(quest.copy(state = QuestState.COMPLETED, finishedAt = clock(), revision = quest.revision + 1)) == 1)
+        com.tamerslab.rank.data.RankEvents.award(
+            com.tamerslab.rank.domain.TxpSource.QUEST,
+            "quest:${quest.id}",
+            origin = "QUEST",
+        )
         db.wildRelationshipDao().get(quest.giverId)?.let { giver ->
             if (giver.recruitmentState == "RECRUITED") closeUnmaterializedFollowUpsLocked(quest.giverId, QuestFollowUpBlock.GIVER_JOINED)
             else materializeFollowUpsLocked(giver)

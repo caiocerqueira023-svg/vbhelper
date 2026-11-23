@@ -69,6 +69,23 @@ fun Modifier.hudTopScrim(): Modifier {
 }
 
 /**
+ * Ground under a bottom place band: starts on the partner slab's exact tone where the sheet meets it
+ * - so the junction has no seam and no stroked line - holds that tone under the places, then firms up
+ * toward the window edge so the places sit on their most solid ground. Mirrors [hudTopScrim].
+ */
+@Composable
+fun Modifier.hudBottomScrim(): Modifier {
+    val ground = SurfaceElevatedPurple
+    return background(
+        Brush.verticalGradient(
+            0f to ground.copy(alpha = PartnerSlabAlpha),
+            0.55f to ground.copy(alpha = PartnerSlabAlpha + 0.08f),
+            1f to ground.copy(alpha = PartnerSlabAlpha + 0.14f),
+        )
+    )
+}
+
+/**
  * Soft drop shadow for HUD ink: a 1dp offset plus a 3dp blur. [SceneTextShadow] flips dark/light with
  * the palette, so the same ink role holds over a dark scene and a light page.
  */
