@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import com.tamerslab.components.CyberEmptyState
 import com.tamerslab.components.TopBanner
-import com.tamerslab.components.VitalSectionHeader
+import com.tamerslab.components.VitalSectionBar
 import com.tamerslab.domain.card.Card
 import com.tamerslab.transfer.ui.scan.cardSelect.ScanCardEntry
 import com.tamerslab.utils.BitmapData
@@ -50,7 +50,7 @@ fun ChooseCard(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    VitalSectionHeader(
+                    VitalSectionBar(
                         title = stringResource(R.string.choose_card_title),
                         modifier = Modifier.weight(1f),
                     )

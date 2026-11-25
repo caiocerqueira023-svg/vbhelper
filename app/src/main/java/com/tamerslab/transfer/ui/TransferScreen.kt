@@ -1,4 +1,4 @@
-﻿package com.tamerslab.transfer.ui
+package com.tamerslab.transfer.ui
 
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -42,7 +42,7 @@ import com.tamerslab.components.CyberEmptyState
 import com.tamerslab.components.CyberPanel
 import com.tamerslab.components.TopBanner
 import com.tamerslab.components.VitalButton
-import com.tamerslab.components.VitalSectionHeader
+import com.tamerslab.components.VitalSectionBar
 import com.tamerslab.components.showAppFeedback
 import com.tamerslab.di.TamersLabApplication
 import com.tamerslab.gamesave.ObservationNotice
@@ -197,7 +197,7 @@ fun TransferScreen(showHeader: Boolean = true) {
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    VitalSectionHeader(
+                    VitalSectionBar(
                         title = stringResource(R.string.transfer_linked_saves),
                         detail = pluralStringResource(R.plurals.transfer_workspace_save_count, sources.size, sources.size),
                     )
@@ -285,7 +285,7 @@ fun TransferScreen(showHeader: Boolean = true) {
                             val records = view.observation?.let { shownRecords(it, container) }.orEmpty()
                             if (records.isNotEmpty()) {
                                 item(key = "container:$id:$container") {
-                                    VitalSectionHeader(title = stringResource(containerLabel(container)), modifier = Modifier.padding(horizontal = 16.dp))
+                                    VitalSectionBar(title = stringResource(containerLabel(container)), modifier = Modifier.padding(horizontal = 16.dp))
                                 }
                                 items(records, key = { "record:$id:${it.recordKey}" }) { record ->
                                     ObservedRecordRow(record, Modifier.fillMaxWidth().padding(horizontal = 24.dp),
@@ -301,7 +301,7 @@ fun TransferScreen(showHeader: Boolean = true) {
                 }
             }
             if (savedPreviews.isNotEmpty()) {
-                item { VitalSectionHeader(title = stringResource(R.string.transfer_saved_previews), modifier = Modifier.padding(horizontal = 16.dp)) }
+                item { VitalSectionBar(title = stringResource(R.string.transfer_saved_previews), modifier = Modifier.padding(horizontal = 16.dp)) }
                 items(savedPreviews, key = { "draft:${it.draftId}" }) { draft ->
                     TextButton(onClick = { importPreviewRequest = ImportPreviewRequest.Saved(draft.draftId) },
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
@@ -389,7 +389,7 @@ private fun TransferSourceCard(
         return "${dateFormatter.format(date)} ${timeFormatter.format(date)}"
     }
     CyberPanel(modifier = modifier, active = view.observation != null) {
-        VitalSectionHeader(
+        VitalSectionBar(
             title = view.source.label,
             detail = view.observation?.let {
                 val shown = shownRecords(it)

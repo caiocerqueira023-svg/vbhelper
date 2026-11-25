@@ -721,6 +721,22 @@ current one instead of jumping home. The outgoing partner is one card (label, pa
 NFC work locks page/partner changes; prepared payloads follow the selected partner.
 Storage shortcuts carry partner context. Native change review does not award app growth.
 
+### Watch transfer surface
+
+The Vital Bracelet pane is one signal instrument rather than a stack of explainer panels.
+A compact partner strip (watch mark, status, portrait, Change) stays above the step; the
+step itself sits in a single square stage with one technical border. The stage always
+carries the same APP ↔ VITAL BRACELET endpoint rail (Arena's lightning-line art, recolored
+to the palette), then the current subject - the selected Digimon for writes, the watch for
+reads - and a quiet step rail. Direction is chosen as one of two large route rows on the
+entry page; the old separate NFC explainer and duplicate action block are gone.
+
+The one authored motion belongs to the successful hand-off: the Arena `ui_tsm` ring, signal
+line, glow and sparkles are recolored through the selected palette, the endpoint signal
+travels in the transfer direction, and the Digimon settles into the stage. Reduced motion
+shows the resolved frame without the travel. Waiting is a restrained pulse, never a second
+show; the debug simulation controls stay available only under Settings → Debug.
+
 ### Universal participation and cosmetic preferences
 
 Every stored Digimon is usable regardless of origin, DIM association, catalog coverage

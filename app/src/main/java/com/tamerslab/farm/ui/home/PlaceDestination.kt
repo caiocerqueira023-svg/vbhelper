@@ -48,8 +48,8 @@ enum class PlaceDestination(
     ),
     Partners(
         AppRoute.Storage,
-        // White Dot-sprite companion icon, matching the Dex key's white pixel artwork.
-        R.drawable.vb_icon_partners,
+        // Botamon dot sprite carried over from the old Dex key.
+        R.drawable.vb_icon_digidex,
         R.string.place_partners,
         R.string.place_partners_subtitle,
     ),

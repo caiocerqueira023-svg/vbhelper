@@ -25,6 +25,7 @@ import com.tamerslab.R
 import com.tamerslab.components.ItemDisplay
 import com.tamerslab.components.SpecialMissionsEntry
 import com.tamerslab.components.TransformationHistoryCard
+import com.tamerslab.components.VitalSectionBar
 import com.tamerslab.components.WeeklyVitalsChart
 import com.tamerslab.domain.device_data.SpecialMissions
 import com.tamerslab.domain.device_data.VBCharacterData
@@ -169,14 +170,11 @@ fun VBDiMHomeScreen(
             )
         }
 
-        Row(modifier = Modifier.padding(8.dp)) {
-            Text(
-                text = stringResource(R.string.home_vbdim_special_missions),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.ExtraBold,
-                color = TextPrimaryOnDark,
-            )
-        }
+        VitalSectionBar(
+            title = stringResource(R.string.home_vbdim_special_missions),
+            modifier = Modifier.padding(start = 8.dp, end = 8.dp, top = 8.dp),
+            compact = true,
+        )
         for ((slot, mission) in missionRows.withIndex()) {
             Row(modifier = Modifier.fillMaxWidth()) {
                 SpecialMissionsEntry(

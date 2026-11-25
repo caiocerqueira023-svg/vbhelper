@@ -58,6 +58,7 @@ import com.tamerslab.utils.BitmapData
 import com.tamerslab.species.SpeciesAppearanceRepository
 import com.tamerslab.domain.characters.Sprite
 import com.tamerslab.components.motionEnabled
+import com.tamerslab.components.VitalSectionBar
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.FilterQuality
@@ -702,14 +703,7 @@ internal fun TransferInspectorSheet(
 
 @Composable
 private fun DomainHeader(title: String, source: Int) {
-    Row(Modifier.fillMaxWidth().padding(top = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(title, style = MaterialTheme.typography.titleSmall,
-            color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
-        Text(stringResource(source), style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-    }
+    VitalSectionBar(title, detail = stringResource(source))
 }
 
 private fun domainSourceLabel(source: com.tamerslab.domain.transfer.ProgressSeedSource): Int =
@@ -839,8 +833,6 @@ internal fun TransferToolsScreen(
 
 @Composable
 private fun ToolSection(title: String) {
-    Text(title, style = MaterialTheme.typography.labelMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(top = 8.dp))
+    VitalSectionBar(title)
 }
 

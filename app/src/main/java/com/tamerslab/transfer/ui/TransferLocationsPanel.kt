@@ -1,4 +1,4 @@
-﻿package com.tamerslab.transfer.ui
+package com.tamerslab.transfer.ui
 
 import android.content.pm.PackageManager
 import android.os.Build
@@ -20,7 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.tamerslab.R
 import com.tamerslab.components.VitalButton
-import com.tamerslab.components.VitalSectionHeader
+import com.tamerslab.components.VitalSectionBar
 import com.tamerslab.components.showAppFeedback
 import com.tamerslab.di.TamersLabApplication
 import com.tamerslab.domain.transfer.LinkedSaveLocation
@@ -44,7 +44,7 @@ internal fun TransferLocationsPanel() {
                 permission.launch("android.permission.ACCESS_LOCAL_NETWORK") else pairing = true
         }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.pc_connect)) }
         if (locations.isNotEmpty()) {
-            VitalSectionHeader(title = stringResource(R.string.transfer_locations))
+            VitalSectionBar(title = stringResource(R.string.transfer_locations))
             Text(stringResource(R.string.transfer_locations_hint), style = MaterialTheme.typography.bodySmall)
             locations.forEach { location ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

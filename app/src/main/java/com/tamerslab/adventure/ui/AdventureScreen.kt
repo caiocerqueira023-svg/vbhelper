@@ -31,7 +31,7 @@ import com.tamerslab.components.CollectionRefreshNotice
 import com.tamerslab.components.CollectionStatePanel
 import com.tamerslab.components.CyberEmptyState
 import com.tamerslab.components.TopBanner
-import com.tamerslab.components.VitalSectionHeader
+import com.tamerslab.components.VitalSectionBar
 import com.tamerslab.components.rememberCollectionLoad
 import com.tamerslab.di.TamersLabApplication
 import com.tamerslab.dtos.CharacterDtos
@@ -173,7 +173,7 @@ fun AdventureScreen(
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                         .aspectRatio(AdventureViewportAspect),
                 )
-                VitalSectionHeader(
+                VitalSectionBar(
                     title = stringResource(R.string.adventure_character_list),
                     detail = sectionDetail,
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),

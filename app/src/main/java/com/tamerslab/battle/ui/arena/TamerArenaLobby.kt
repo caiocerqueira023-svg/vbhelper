@@ -35,7 +35,7 @@ import com.tamerslab.components.CyberEmptyState
 import com.tamerslab.components.CollectionLoad
 import com.tamerslab.components.CollectionStatePanel
 import com.tamerslab.components.CyberPanel
-import com.tamerslab.components.VitalSectionHeader
+import com.tamerslab.components.VitalSectionBar
 import com.tamerslab.battle.ui.OfflineBattleParticipant
 import com.tamerslab.components.TopBanner
 import com.tamerslab.components.TopBannerAction
@@ -252,14 +252,14 @@ private fun ArenaRosterRow(entry: ArenaRosterEntry, configured: Boolean, enabled
 private fun ArenaTeamEditor(state: TamerArenaState, actions: ArenaUiActions, onDone: () -> Unit, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        VitalSectionHeader(stringResource(R.string.arena_your_team))
+        VitalSectionBar(stringResource(R.string.arena_your_team))
         repeat(state.format) { slot ->
             val partner = state.partners.firstOrNull { it.stableId == state.selectedPartnerIds.getOrNull(slot) }
             ArenaPartnerSetup(partner, slot, enabled = state.partners.isNotEmpty() && !state.busy && !state.loading,
                 onChoose = { actions.onPickPartner(slot) })
         }
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        VitalSectionHeader(stringResource(R.string.arena_format_label))
+        VitalSectionBar(stringResource(R.string.arena_format_label))
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
             (1..2).forEach { count -> SegmentedButton(state.format == count, onClick = { actions.onFormat(count) },
                 shape = SegmentedButtonDefaults.itemShape(count - 1, 2, CutCornerShape(8.dp)), enabled = !state.busy,
@@ -269,7 +269,7 @@ private fun ArenaTeamEditor(state: TamerArenaState, actions: ArenaUiActions, onD
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        VitalSectionHeader(stringResource(R.string.arena_difficulty_label))
+        VitalSectionBar(stringResource(R.string.arena_difficulty_label))
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
             ArenaDifficulty.entries.forEachIndexed { index, difficulty -> SegmentedButton(state.difficulty == difficulty,
                 onClick = { actions.onDifficulty(difficulty) }, shape = SegmentedButtonDefaults.itemShape(index, 3, CutCornerShape(8.dp)),

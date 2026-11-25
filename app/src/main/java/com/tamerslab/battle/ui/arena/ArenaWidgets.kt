@@ -32,6 +32,7 @@ import com.tamerslab.battle.domain.BattleStrategy
 import com.tamerslab.battle.offline.tamers.*
 import com.tamerslab.components.VitalButton
 import com.tamerslab.components.VitalButtonStyle
+import com.tamerslab.components.VitalSectionBar
 import com.tamerslab.components.motionEnabled
 import com.tamerslab.di.TamersLabApplication
 import com.tamerslab.ui.SpritePreviewPolicy
@@ -164,8 +165,18 @@ internal fun ArenaBadge(label: String, highlighted: Boolean = false, modifier: M
     }
 }
 
+/** Page-level arena section heading: the cyan bar, like every other page section. */
 @Composable
 internal fun ArenaHeading(title: String, modifier: Modifier = Modifier) {
+    VitalSectionBar(title, modifier)
+}
+
+/**
+ * Heading printed inside one of the arena's framed boxes (team panels). Boxes keep the quiet
+ * heading so the bar is never repeated inside a panel.
+ */
+@Composable
+internal fun ArenaPanelHeading(title: String, modifier: Modifier = Modifier) {
     Text(title, modifier.semantics { heading() }, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
 }
 

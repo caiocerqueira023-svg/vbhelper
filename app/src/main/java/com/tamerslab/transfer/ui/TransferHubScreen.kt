@@ -1,8 +1,13 @@
 package com.tamerslab.transfer.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.layout.*
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -22,16 +27,26 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.tamerslab.R
 import com.tamerslab.components.*
 import com.tamerslab.di.TamersLabApplication
 import com.tamerslab.domain.device_data.CharacterCapabilities
 import com.tamerslab.domain.device_data.UserCharacter
+import com.tamerslab.dtos.CharacterDtos
 import com.tamerslab.navigation.AppRoute
 import com.tamerslab.navigation.TransferSection
 import com.tamerslab.navigation.TransferGame
@@ -39,8 +54,18 @@ import com.tamerslab.transfer.ui.scan.ScanScreen
 import com.tamerslab.transfer.ui.scan.ScanScreenController
 import com.tamerslab.transfer.ui.vpet.VpetSectionScreen
 import com.tamerslab.storage.ui.BraceletConversionDialog
+import com.tamerslab.storage.ui.StorageCharacterPickerDialog
+import com.tamerslab.storage.ui.StorageCharacterPickerOption
 import com.tamerslab.storage.ui.NativeGameArchivePanel
 import com.tamerslab.storage.data.StorageRepository
+import com.tamerslab.ui.theme.SurfaceElevatedPurple
+import com.tamerslab.ui.theme.SurfaceStroke
+import com.tamerslab.ui.theme.TextMutedOnDark
+import com.tamerslab.ui.theme.TextPrimaryOnDark
+import com.tamerslab.ui.theme.TextSecondaryOnDark
+import com.tamerslab.ui.theme.VitalCyan
+import com.tamerslab.utils.BitmapData
+import com.tamerslab.utils.getBitmap
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -205,103 +230,122 @@ private fun TransferDevicesPane(navController: NavController, scanController: Sc
     val sendId = if (busy) selectedId else selectedId.takeIf {
         selected != null && capabilities != null && !needsConversion
     }
+    LaunchedEffect(selectedId, eligible, busy) {
+        if (!busy && selectedId != null && selected == null) selectedId = null
+    }
     Column(Modifier.fillMaxSize()) {
-        TransferOriginIdentityBar(
-            title = stringResource(R.string.transfer_watch_section),
-            subtitle = stringResource(R.string.transfer_device_hint),
-            leading = { Icon(Icons.Default.Nfc, null, Modifier.size(24.dp)) },
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-        )
         CyberPanel(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
-            active = selected != null && !busy,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            active = selected != null,
+            onClick = if (busy) null else {
+                { choosing = true }
+            },
+            contentPadding = PaddingValues(8.dp),
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                PartnerAvatar(selected, Modifier.size(58.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Text(
-                        stringResource(R.string.transfer_outgoing_partner),
+                        text = stringResource(
+                            if (selected != null) R.string.transfer_outgoing_partner
+                            else R.string.transfer_receive_only_short,
+                        ).uppercase(),
                         style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = if (selected != null) VitalCyan else TextMutedOnDark,
+                        letterSpacing = 0.8.sp,
                     )
                     Text(
-                        when {
-                            selected != null -> selected.nickname?.takeIf(String::isNotBlank)
-                                ?: selected.speciesName ?: stringResource(R.string.transfer_unnamed_record)
-                            selectedId != null -> stringResource(R.string.transfer_outgoing_unavailable)
-                            else -> stringResource(R.string.transfer_receive_only_short)
-                        },
+                        text = selected?.nickname?.takeIf(String::isNotBlank)
+                            ?: selected?.speciesName
+                            ?: stringResource(R.string.transfer_no_partner_short),
                         style = MaterialTheme.typography.titleMedium,
+                        color = TextPrimaryOnDark,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = when {
+                            busy -> stringResource(R.string.transfer_busy)
+                            selected != null -> selected.speciesName
+                                ?: stringResource(R.string.transfer_choose_partner_hint)
+                            else -> stringResource(R.string.transfer_choose_partner_hint)
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextSecondaryOnDark,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                TextButton(onClick = { choosing = true }, enabled = !busy) {
+                TextButton(
+                    onClick = { choosing = true },
+                    enabled = !busy,
+                ) {
                     Text(stringResource(R.string.transfer_change_partner))
                 }
             }
-            if (selected != null && outgoing == null) LinearProgressIndicator(Modifier.fillMaxWidth())
             if (needsConversion && outgoing != null) {
-                VitalButton(
+                Text(
+                    text = stringResource(R.string.transfer_conversion_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = TextSecondaryOnDark,
+                )
+                TextButton(
                     onClick = { converting = true },
                     enabled = !busy,
-                    modifier = Modifier.fillMaxWidth(),
-                ) { Text(stringResource(R.string.conversion_title)) }
+                    modifier = Modifier.align(Alignment.End),
+                ) {
+                    Text(stringResource(R.string.conversion_title))
+                }
             }
-            Text(
-                stringResource(R.string.transfer_device_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
         Box(Modifier.weight(1f)) {
             key(selectedId, epoch) {
-                ScanScreen(navController, sendId, scanController, launchedFromHomeScreen = true, embedded = true,
-                    onOperationActiveChange = { busy = it; onBusy(it) }, onFinished = { busy = false; onBusy(false); epoch++ })
+                ScanScreen(
+                    navController,
+                    sendId,
+                    scanController,
+                    launchedFromHomeScreen = true,
+                    embedded = true,
+                    onOperationActiveChange = { busy = it; onBusy(it) },
+                    onFinished = { busy = false; onBusy(false); epoch++ },
+                )
             }
         }
     }
     if (choosing) {
-        AlertDialog(
-            onDismissRequest = { choosing = false },
-            title = { Text(stringResource(R.string.transfer_choose_outgoing)) },
-            text = {
-                LazyColumn(Modifier.fillMaxWidth().heightIn(max = 420.dp)) {
-                    item(key = "receive-only") {
-                        PartnerOption(
-                            label = stringResource(R.string.transfer_receive_only_short),
-                            supporting = stringResource(R.string.transfer_receive_only),
-                            selected = selectedId == null,
-                            onClick = { selectedId = null; choosing = false },
-                        )
-                    }
-                    items(eligible, key = { it.id }) { partner ->
-                        PartnerOption(
-                            label = partner.nickname?.takeIf(String::isNotBlank)
-                                ?: partner.speciesName ?: stringResource(R.string.transfer_unnamed_record),
-                            supporting = partner.speciesName?.takeIf { partner.nickname?.isNotBlank() == true },
-                            selected = partner.id == selectedId,
-                            onClick = { selectedId = partner.id; choosing = false },
-                        )
-                    }
-                    if (eligible.isEmpty()) {
-                        item(key = "no-outgoing") {
-                            Text(
-                                stringResource(R.string.transfer_no_outgoing),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                            )
-                        }
-                    }
-                }
+        val receiveOnlyOption = StorageCharacterPickerOption(
+            id = "receive-only",
+            displayName = stringResource(R.string.transfer_receive_only_short),
+            isActive = selectedId == null,
+            content = { onPick ->
+                ReceiveOnlyPickerTile(
+                    selected = selectedId == null,
+                    onClick = {
+                        selectedId = null
+                        choosing = false
+                    },
+                )
             },
-            confirmButton = {},
-            dismissButton = {
-                TextButton(onClick = { choosing = false }) { Text(stringResource(R.string.transfer_close)) }
+        )
+        StorageCharacterPickerDialog(
+            characters = eligible,
+            title = stringResource(R.string.transfer_choose_outgoing),
+            emptyMessage = stringResource(R.string.transfer_no_outgoing),
+            supplementalOptions = listOf(receiveOnlyOption),
+            onDismiss = { choosing = false },
+            onCharacterSelected = { id ->
+                selectedId = id
+                choosing = false
+            },
+            onSupplementalSelected = {
+                selectedId = null
+                choosing = false
             },
         )
     }
@@ -310,17 +354,71 @@ private fun TransferDevicesPane(navController: NavController, scanController: Sc
 }
 
 @Composable
-private fun PartnerOption(
-    label: String,
-    supporting: String?,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    ListItem(
-        headlineContent = { Text(label) },
-        supportingContent = supporting?.let { { Text(it) } },
-        leadingContent = { RadioButton(selected = selected, onClick = onClick) },
-        modifier = Modifier.clickable(onClick = onClick),
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-    )
+private fun ReceiveOnlyPickerTile(selected: Boolean, onClick: () -> Unit) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
+    ) {
+        Surface(
+            color = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHighest,
+            shape = RectangleShape,
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(1f)
+                .clickable(onClick = onClick),
+        ) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Image(
+                    painter = painterResource(R.drawable.vb_lab_scan_icon),
+                    contentDescription = null,
+                    modifier = Modifier.fillMaxSize().padding(8.dp).rotate(90f),
+                    contentScale = ContentScale.Fit,
+                    colorFilter = ColorFilter.tint(VitalCyan, BlendMode.SrcIn),
+                )
+            }
+        }
+        Text(
+            text = stringResource(R.string.transfer_receive_only_short),
+            style = MaterialTheme.typography.labelMedium,
+            color = TextPrimaryOnDark,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 4.dp, vertical = 2.dp),
+        )
+    }
 }
+
+@Composable
+private fun PartnerAvatar(character: CharacterDtos.CharacterWithSprites?, modifier: Modifier = Modifier) {
+    val bitmap = remember(character?.id, character?.spriteIdle) {
+        character?.let {
+            runCatching {
+                BitmapData(it.spriteIdle, it.spriteWidth, it.spriteHeight).getBitmap().asImageBitmap()
+            }.getOrNull()
+        }
+    }
+    Box(
+        modifier = modifier.background(SurfaceElevatedPurple, CutCornerShape(7.dp)),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (bitmap != null) {
+            Image(
+                bitmap = bitmap,
+                contentDescription = character?.nickname ?: character?.speciesName,
+                modifier = Modifier.fillMaxSize().padding(4.dp),
+                contentScale = ContentScale.Fit,
+                filterQuality = FilterQuality.None,
+            )
+        } else {
+            Image(
+                painter = painterResource(R.drawable.vb_lab_scan_icon),
+                contentDescription = null,
+                modifier = Modifier.size(34.dp).rotate(90f),
+                contentScale = ContentScale.Fit,
+                colorFilter = ColorFilter.tint(VitalCyan, BlendMode.SrcIn),
+            )
+        }
+    }
+}
+

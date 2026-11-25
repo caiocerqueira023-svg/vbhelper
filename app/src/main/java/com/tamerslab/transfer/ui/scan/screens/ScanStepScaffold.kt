@@ -17,7 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tamerslab.components.TopBanner
-import com.tamerslab.components.VitalSectionHeader
+import com.tamerslab.components.VitalSectionBar
 
 /**
  * The shared frame of one NFC step (read/write prompt, transfer progress).
@@ -41,9 +41,9 @@ internal fun ScanStepScaffold(
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             if (!showHeader) {
-                VitalSectionHeader(
+                VitalSectionBar(
                     title = title,
-                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 12.dp),
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                 )
             }
             Box(Modifier.weight(1f).fillMaxWidth()) {
@@ -51,9 +51,9 @@ internal fun ScanStepScaffold(
                     modifier = Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
-                        .padding(horizontal = 24.dp),
+                        .padding(start = 16.dp, end = 16.dp, top = 6.dp, bottom = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
+                    verticalArrangement = Arrangement.Top,
                     content = content,
                 )
             }

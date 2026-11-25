@@ -37,7 +37,7 @@ sealed class NavigationItems(
 
     object Dex : NavigationItems(
         AppRoute.Dex,
-        R.drawable.vb_icon_digidex,
+        R.drawable.baseline_menu_book_24,
         R.string.nav_dex
     )
 
@@ -67,7 +67,7 @@ sealed class NavigationItems(
 
     object Lorebook : NavigationItems(
         AppRoute.Lorebook,
-        R.drawable.baseline_menu_book_24,
+        R.drawable.baseline_book_24,
         R.string.ui_lorebook_title
     )
 

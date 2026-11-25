@@ -146,7 +146,7 @@ fun HomeTopHud(
             }
             Spacer(Modifier.weight(1f))
             HudKey(
-                icon = R.drawable.vb_icon_digidex,
+                icon = R.drawable.baseline_menu_book_24,
                 description = stringResource(R.string.nav_dex),
                 onClick = onDexClick,
             )

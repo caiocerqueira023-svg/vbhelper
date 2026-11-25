@@ -30,7 +30,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.activity.ComponentActivity
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,8 +57,14 @@ import com.tamerslab.settings.data.DEFAULT_ROLEPLAY_TEMPERATURE
 import com.tamerslab.settings.ui.dialogs.LanguageDialog
 import com.tamerslab.settings.ui.dialogs.LlmSettingsDialog
 import com.tamerslab.settings.ui.dialogs.PromptTemplateDialog
+import com.tamerslab.settings.ui.dialogs.TransferSimulationMode
+import com.tamerslab.settings.ui.dialogs.TransferSimulatorDialog
 import com.tamerslab.species.SpritePreference
 import com.tamerslab.species.ui.card.CardBatchImportPanel
+import com.tamerslab.storage.data.StorageRepository
+import com.tamerslab.transfer.debug.WatchTransferSimulator
+import com.tamerslab.di.TamersLabApplication
+import kotlinx.coroutines.launch
 import com.tamerslab.ui.theme.AppFont
 import com.tamerslab.ui.theme.TextPrimaryOnDark
 import com.tamerslab.ui.theme.TextSecondaryOnDark
@@ -76,6 +84,13 @@ fun SettingsScreen(
     musicController: AppMusicController
 ) {
     val context = LocalContext.current
+    val simulatorApplication = context.applicationContext as TamersLabApplication
+    val simulatorCharacters by remember { StorageRepository(simulatorApplication.container.db).getAllCharacters() }
+        .collectAsStateWithLifecycle(initialValue = emptyList())
+    val simulatorScope = rememberCoroutineScope()
+    var simulatorMode by remember { mutableStateOf<TransferSimulationMode?>(null) }
+    var simulatorBusy by remember { mutableStateOf(false) }
+    var simulatorMessage by remember { mutableStateOf<String?>(null) }
 
     val showLlmDialog by settingsScreenController.showLlmDialog.collectAsStateWithLifecycle()
     val currentApiKey by settingsScreenController.currentLlmApiKey.collectAsStateWithLifecycle(initialValue = null)
@@ -286,6 +301,18 @@ fun SettingsScreen(
                     checked = debugSettings.instantScan,
                     onCheckedChange = settingsScreenController::setDebugInstantScan
                 )
+                SettingsEntry(
+                    title = stringResource(R.string.settings_debug_simulate_receive_title),
+                    description = stringResource(R.string.settings_debug_simulate_receive_desc),
+                ) {
+                    simulatorMode = TransferSimulationMode.RECEIVE
+                }
+                SettingsEntry(
+                    title = stringResource(R.string.settings_debug_simulate_send_title),
+                    description = stringResource(R.string.settings_debug_simulate_send_desc),
+                ) {
+                    simulatorMode = TransferSimulationMode.SEND
+                }
                 SettingsEntry(title = stringResource(R.string.ui_personality_prompt),
                     description = stringResource(R.string.ui_edit_prompt_description)) {
                     settingsScreenController.onClickConfigurePromptTemplate()
@@ -432,6 +459,60 @@ fun SettingsScreen(
                     Text(stringResource(R.string.ui_close))
                 }
             }
+        )
+    }
+
+    val activeMode = simulatorMode
+    if (activeMode != null) {
+        TransferSimulatorDialog(
+            mode = activeMode,
+            characters = simulatorCharacters,
+            busy = simulatorBusy,
+            onDismiss = { if (!simulatorBusy) simulatorMode = null },
+            onConfirm = { characterId ->
+                simulatorBusy = true
+                simulatorScope.launch {
+                    val result = runCatching {
+                        val simulator = WatchTransferSimulator(context as ComponentActivity)
+                        if (activeMode == TransferSimulationMode.RECEIVE) {
+                            simulator.receive(characterId)
+                        } else {
+                            simulator.send(characterId)
+                            null
+                        }
+                    }
+                    simulatorBusy = false
+                    simulatorMode = null
+                    simulatorMessage = result.fold(
+                        onSuccess = { newId ->
+                            if (activeMode == TransferSimulationMode.RECEIVE) {
+                                context.getString(R.string.settings_debug_simulator_receive_success, newId ?: 0L)
+                            } else {
+                                context.getString(R.string.settings_debug_simulator_send_success)
+                            }
+                        },
+                        onFailure = { error ->
+                            context.getString(
+                                R.string.settings_debug_simulator_failure,
+                                error.message ?: error.javaClass.simpleName,
+                            )
+                        },
+                    )
+                }
+            },
+        )
+    }
+
+    simulatorMessage?.let { message ->
+        AlertDialog(
+            onDismissRequest = { simulatorMessage = null },
+            title = { Text(stringResource(R.string.settings_debug_simulator_result_title)) },
+            text = { Text(message) },
+            confirmButton = {
+                TextButton(onClick = { simulatorMessage = null }) {
+                    Text(stringResource(R.string.ui_ok))
+                }
+            },
         )
     }
 }

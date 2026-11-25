@@ -20,6 +20,7 @@ import com.tamerslab.data.database.AppDatabase
 import com.tamerslab.domain.card.Card
 import com.tamerslab.transfer.ui.scan.converters.FromNfcConverter
 import com.tamerslab.transfer.ui.scan.converters.ToNfcConverter
+import com.tamerslab.transfer.ui.scan.converters.NfcImportResult
 import com.tamerslab.transfer.data.VitalWearCharacterExporter
 import com.tamerslab.transfer.data.VitalWearCharacterImporter
 import com.tamerslab.security.getCryptographicTransformerMap
@@ -36,10 +37,12 @@ import com.tamerslab.domain.identity.WatchTransfer
 import com.tamerslab.domain.identity.TransferFingerprint
 import com.tamerslab.transfer.data.WatchTransferRepository
 import com.tamerslab.di.TamersLabApplication
+import com.tamerslab.transfer.debug.DebugSentTransferBridge
 import com.tamerslab.rank.data.RankEvents
 import com.tamerslab.rank.domain.TxpSource
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.UUID
 import androidx.room.withTransaction
 
 class ScanScreenControllerImpl(
@@ -129,6 +132,96 @@ class ScanScreenControllerImpl(
                 }
             }
         )
+    }
+
+    override fun simulateRead(onComplete: () -> Unit, onError: (Throwable) -> Unit) {
+        componentActivity.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                // Prefer returning the exact character produced by the last debug send. The real
+                // watch would hold that payload; the bridge keeps it for this process.
+                val sent = DebugSentTransferBridge.peek()
+                val (nfc, deviceKey) = if (sent != null) {
+                    sent.character to sent.deviceKey
+                } else {
+                    val sourceId = database.userCharacterDao().getAllCharacterIds().firstOrNull()
+                        ?: error("No stored Digimon is available for the simulated receive.")
+                    val template = ToNfcConverter(componentActivity).characterToNfc(sourceId)
+                    template.appReserved1 = IndividualIdentity.encode(IndividualIdentity.generate())
+                    template to "debug-simulator-read"
+                }
+                val cardId = nfc.appReserved2[0].toLong().takeIf { it != 0L }
+                    ?.let { database.cardDao().getCardById(it) }?.id
+                    ?: database.cardDao().getCardByCardId(nfc.dimId.toInt()).firstOrNull()?.id
+                    ?: error("The simulated receive has no associated card.")
+                val result = FromNfcConverter(componentActivity, deviceKey)
+                    .addCharacterUsingCard(nfc, cardId)
+                if (result !is NfcImportResult.Stored) {
+                    error("The simulated receive could not be stored: $result")
+                }
+                if (sent != null) DebugSentTransferBridge.clear()
+                RankEvents.award(
+                    TxpSource.NFC_READ,
+                    "debug:nfc:read:${UUID.randomUUID()}",
+                    origin = "DEBUG",
+                )
+                withContext(Dispatchers.Main) { onComplete() }
+            } catch (failure: Throwable) {
+                Log.e("DEBUG_READ", "Simulated watch receive failed", failure)
+                withContext(Dispatchers.Main) { onError(failure) }
+            }
+        }
+    }
+
+    override fun simulateCheckCard(
+        nfcCharacter: NfcCharacter,
+        onComplete: () -> Unit,
+        onError: (Throwable) -> Unit,
+    ) {
+        componentActivity.runOnUiThread { onComplete() }
+    }
+
+    override fun simulateWrite(
+        nfcCharacter: NfcCharacter,
+        onComplete: () -> Unit,
+        onError: (Throwable) -> Unit,
+    ) {
+        componentActivity.lifecycleScope.launch(Dispatchers.IO) {
+            try {
+                val base = requireNotNull(pendingWatchTransfer) {
+                    "No prepared individual transfer for the simulated write."
+                }
+                check(IndividualIdentity.decode(nfcCharacter.appReserved1) == base.token) {
+                    "Transfer token changed."
+                }
+                val transfer = base.copy(deviceKey = "debug-simulator-${UUID.randomUUID()}")
+                DebugSentTransferBridge.store(nfcCharacter, transfer.deviceKey, transfer.individualId)
+                try {
+                    val transfers = WatchTransferRepository(database)
+                    transfers.prepare(transfer)
+                    database.runInTransaction {
+                        com.tamerslab.quests.QuestProgress(database).captureExportLocked(
+                            transfer.token, transfer.individualId, nfcCharacter, System.currentTimeMillis(),
+                        )
+                    }
+                    transfers.complete(transfer)
+                } catch (failure: Throwable) {
+                    DebugSentTransferBridge.clear()
+                    throw failure
+                }
+                pendingWatchTransfer = null
+                pendingExportCharacterId = null
+                RankEvents.award(
+                    TxpSource.NFC_WRITE,
+                    "debug:nfc:write:${transfer.token}",
+                    digimonRef = transfer.individualId,
+                    origin = "DEBUG",
+                )
+                withContext(Dispatchers.Main) { onComplete() }
+            } catch (failure: Throwable) {
+                Log.e("DEBUG_WRITE", "Simulated watch write failed", failure)
+                withContext(Dispatchers.Main) { onError(failure) }
+            }
+        }
     }
 
     override fun cancelRead() {

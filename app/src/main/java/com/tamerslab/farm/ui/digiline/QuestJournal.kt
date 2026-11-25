@@ -26,7 +26,7 @@ import com.tamerslab.R
 import com.tamerslab.components.CyberPanel
 import com.tamerslab.components.VitalButton
 import com.tamerslab.components.VitalButtonStyle
-import com.tamerslab.components.VitalSectionBar
+import com.tamerslab.components.VitalSectionHeader
 import com.tamerslab.components.VitalTabs
 import com.tamerslab.quests.*
 
@@ -96,7 +96,7 @@ private fun QuestEntry(details: QuestWithObjectives, busy: Boolean,
             color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
         quest.partnerName?.let { Text(stringResource(R.string.quest_bound_partner, it),
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        if (details.objectives.isNotEmpty()) VitalSectionBar(stringResource(R.string.uniform_objectives))
+        if (details.objectives.isNotEmpty()) VitalSectionHeader(stringResource(R.string.uniform_objectives))
         details.objectives.groupBy { it.phase }.toSortedMap().forEach { (phase, objectives) ->
             if (details.objectives.any { it.phase > 0 }) {
                 val state = when {
@@ -149,7 +149,7 @@ private fun QuestEntry(details: QuestWithObjectives, busy: Boolean,
             (actorId == null || actorId == quest.giverId) && current.any { it.techniqueId != null }) {
             TextButton(onClick = { onConfigurePartner(quest) }, enabled = !busy) { Text(stringResource(R.string.quest_configure_techniques)) }
         }
-        VitalSectionBar(stringResource(R.string.uniform_rewards))
+        VitalSectionHeader(stringResource(R.string.uniform_rewards))
         if (quest.category == QuestCategory.RECRUITMENT) {
             Text(stringResource(R.string.quest_join_reward, quest.giverName), style = MaterialTheme.typography.bodyMedium)
         } else {
@@ -193,7 +193,7 @@ private fun QuestEntry(details: QuestWithObjectives, busy: Boolean,
             }
         }
         quest.followUpTemplateId?.let { nextId ->
-            VitalSectionBar(stringResource(R.string.uniform_follow_up))
+            VitalSectionHeader(stringResource(R.string.uniform_follow_up))
             Text(stringResource(R.string.quest_follow_up_plan, questTitle(nextId)), style = MaterialTheme.typography.bodyMedium)
             when {
                 nextQuest != null -> TextButton(onClick = onShowNext, enabled = !busy) { Text(stringResource(R.string.quest_show_next)) }

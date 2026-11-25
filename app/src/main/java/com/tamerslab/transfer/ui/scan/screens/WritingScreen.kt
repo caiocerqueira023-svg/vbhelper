@@ -1,27 +1,63 @@
 package com.tamerslab.transfer.ui.scan.screens
 
+import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.tamerslab.hardware.nfc.data.NfcCharacter
-import com.tamerslab.ActivityLifecycleListener
-import com.tamerslab.di.TamersLabApplication
-import com.tamerslab.domain.card.Card
-import com.tamerslab.species.data.ScanRepository
-import com.tamerslab.transfer.ui.scan.SCAN_SCREEN_ACTIVITY_LIFECYCLE_LISTENER
-import com.tamerslab.transfer.ui.scan.ScanScreenController
-import com.tamerslab.transfer.ui.scan.components.NfcTransferDirection
-import com.tamerslab.utils.BitmapData
-import com.tamerslab.utils.ImageBitmapData
-import com.tamerslab.utils.getImageBitmap
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.tamerslab.ActivityLifecycleListener
 import com.tamerslab.R
+import com.tamerslab.di.AppServices
+import com.tamerslab.hardware.nfc.data.NfcCharacter
+import com.tamerslab.transfer.ui.scan.SCAN_SCREEN_ACTIVITY_LIFECYCLE_LISTENER
+import com.tamerslab.transfer.ui.scan.ScanScreenController
+import com.tamerslab.components.VitalButtonStyle
+import com.tamerslab.transfer.ui.scan.components.ArenaTransferSuccessVisual
+import com.tamerslab.transfer.ui.scan.components.TransferActionDock
+import com.tamerslab.transfer.ui.scan.components.TransferDirection
+import com.tamerslab.transfer.ui.scan.components.TransferStagePhase
+import com.tamerslab.transfer.ui.scan.components.ArenaTransferStage
+import com.tamerslab.transfer.ui.scan.components.TransferSubject
+import com.tamerslab.components.CyberPanel
+import com.tamerslab.components.DimLogo
+import com.tamerslab.ui.theme.DeepPurpleBgAlt
+import com.tamerslab.transfer.ui.scan.components.loadTransferSubject
+import com.tamerslab.ui.theme.TextMutedOnDark
+import com.tamerslab.ui.theme.TextPrimaryOnDark
+import com.tamerslab.ui.theme.TextSecondaryOnDark
+import com.tamerslab.ui.theme.VitalCyan
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
+private enum class WritePhase { REVIEW, WAITING_CARD, READY, WAITING_WRITE, SUCCESS }
+
+private enum class WriteScan { CARD, WRITE }
 
 @Composable
 fun WritingScreen(
@@ -33,49 +69,53 @@ fun WritingScreen(
     showHeader: Boolean = true,
 ) {
     val secrets by scanScreenController.secretsFlow.collectAsStateWithLifecycle(null)
-
-    // The outgoing card artwork lets the hand-off animation show the actual Digimon travelling to
-    // the watch instead of the generic DigiCore fallback. It reuses the same source the two write
-    // steps already render, so no extra lookup is introduced for the user.
     val context = LocalContext.current
-    val application = context.applicationContext as TamersLabApplication
-    val scanRepository = remember { ScanRepository(application.container.db) }
-    val cardDetails by scanRepository.getCardDetails(characterId).collectAsStateWithLifecycle(
-        initialValue = Card(
-            id = 0,
-            cardId = 0,
-            logo = byteArrayOf(),
-            logoWidth = 0,
-            logoHeight = 0,
-            name = "",
-            stageCount = 0,
-            isBEm = false,
-        )
-    )
-    val characterPreview: ImageBitmapData? = remember(
-        cardDetails.logoWidth,
-        cardDetails.logoHeight,
-        cardDetails.logo,
-    ) {
-        if (cardDetails.logoWidth > 0 && cardDetails.logoHeight > 0) {
-            BitmapData(
-                bitmap = cardDetails.logo,
-                width = cardDetails.logoWidth,
-                height = cardDetails.logoHeight,
-            ).getImageBitmap(context = context, multiplier = 4, obscure = false)
-        } else {
-            null
+    val debugEnabled = AppServices.debugSettingsRepository.enabled
+
+    var phase by remember { mutableStateOf(WritePhase.REVIEW) }
+    var scanMode by remember { mutableStateOf<WriteScan?>(null) }
+    var subject by remember { mutableStateOf<TransferSubject?>(null) }
+    var subjectLoading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(characterId) {
+        subject = withContext(Dispatchers.IO) { loadTransferSubject(context, characterId) }
+        subjectLoading = false
+    }
+
+    fun reportSimulationFailure(failure: Throwable) {
+        Toast.makeText(
+            context,
+            context.getString(
+                R.string.debug_simulate_failed,
+                failure.message ?: failure.javaClass.simpleName,
+            ),
+            Toast.LENGTH_LONG,
+        ).show()
+    }
+
+    fun cancelTransfer() {
+        scanMode = null
+        scanScreenController.cancelRead()
+        onCancel()
+    }
+
+    fun runStep(mode: WriteScan) {
+        val currentSecrets = secrets ?: return
+        when (mode) {
+            WriteScan.CARD -> scanScreenController.onClickCheckCard(currentSecrets, nfcCharacter) {
+                scanMode = null
+                phase = WritePhase.READY
+            }
+            WriteScan.WRITE -> scanScreenController.onClickWrite(currentSecrets, nfcCharacter) {
+                scanMode = null
+                phase = WritePhase.SUCCESS
+            }
         }
     }
 
-    var writing by remember { mutableStateOf(false) }
-    var writingScreen by remember { mutableStateOf(false) }
-    var writingConfirmScreen by remember { mutableStateOf(false) }
-    var isDoneSendingCard by remember { mutableStateOf(false) }
-    var isDoneWritingCharacter by remember { mutableStateOf(false) }
-
-    DisposableEffect(writing) {
-        if (writing) {
+    DisposableEffect(scanMode) {
+        val mode = scanMode
+        if (mode != null) {
             scanScreenController.registerActivityLifecycleListener(
                 SCAN_SCREEN_ACTIVITY_LIFECYCLE_LISTENER,
                 object : ActivityLifecycleListener {
@@ -84,110 +124,323 @@ fun WritingScreen(
                     }
 
                     override fun onResume() {
-                        if (!isDoneSendingCard) {
-                            scanScreenController.onClickCheckCard(secrets!!, nfcCharacter) {
-                                isDoneSendingCard = true
-                            }
-                        } else if (!isDoneWritingCharacter) {
-                            scanScreenController.onClickWrite(secrets!!, nfcCharacter) {
-                                isDoneWritingCharacter = true
-                            }
-                        }
+                        runStep(mode)
                     }
-                }
+                },
             )
-
-            if (secrets != null) {
-                if (!isDoneSendingCard) {
-                    scanScreenController.onClickCheckCard(secrets!!, nfcCharacter) {
-                        isDoneSendingCard = true
-                    }
-                } else if (!isDoneWritingCharacter) {
-                    scanScreenController.onClickWrite(secrets!!, nfcCharacter) {
-                        isDoneWritingCharacter = true
-                    }
-                }
-            }
+            runStep(mode)
         }
-
         onDispose {
-            if (writing) {
+            if (mode != null) {
                 scanScreenController.unregisterActivityLifecycleListener(
-                    SCAN_SCREEN_ACTIVITY_LIFECYCLE_LISTENER
+                    SCAN_SCREEN_ACTIVITY_LIFECYCLE_LISTENER,
                 )
                 scanScreenController.cancelRead()
             }
         }
     }
 
-    var showHandoff by remember { mutableStateOf(false) }
-
-    if (showHandoff) {
-        TransferHandoffScreen(
-            topBannerText = stringResource(R.string.writing_character_action_title),
-            direction = NfcTransferDirection.APP_TO_WATCH,
-            showHeader = showHeader,
-            characterPreview = characterPreview,
-            onFinished = onComplete,
-        )
-    } else if (!writingScreen) {
-        writing = false
-        WriteCardScreen(
-            characterId = characterId,
-            onClickCancel = {
-                scanScreenController.cancelRead()
-                onCancel()
-            },
-            onClickConfirm = {
-                writingScreen = true
-            },
-            showHeader = showHeader
-        )
-    } else if (!isDoneSendingCard) {
-        writing = true
-        ActionScreen(
-            topBannerText = stringResource(R.string.sending_card_title),
-            onClickCancel = {
-                scanScreenController.cancelRead()
-                onCancel()
-            },
-            direction = NfcTransferDirection.APP_TO_WATCH,
-            showHeader = showHeader,
-            characterPreview = characterPreview,
-        )
-    } else if (!writingConfirmScreen) {
-        writing = false
-        WriteCharacterScreen(
-            characterId = characterId,
-            onClickCancel = {
-                scanScreenController.cancelRead()
-                onCancel()
-            },
-            onClickConfirm = {
-                writingConfirmScreen = true
-            },
-            showHeader = showHeader
-        )
-    } else if (!isDoneWritingCharacter) {
-        writing = true
-        ActionScreen(
-            topBannerText = stringResource(R.string.writing_character_action_title),
-            onClickCancel = {
-                isDoneSendingCard = false
-                scanScreenController.cancelRead()
-                onCancel()
-            },
-            direction = NfcTransferDirection.APP_TO_WATCH,
-            showHeader = showHeader,
-            characterPreview = characterPreview,
-        )
+    fun beginCardCheck() {
+        phase = WritePhase.WAITING_CARD
+        scanMode = WriteScan.CARD
     }
 
-    LaunchedEffect(isDoneSendingCard, isDoneWritingCharacter) {
-        if (isDoneSendingCard && isDoneWritingCharacter) {
-            // Persistence is completed by the controller before this callback.
-            showHandoff = true
+    fun beginWrite() {
+        phase = WritePhase.WAITING_WRITE
+        scanMode = WriteScan.WRITE
+    }
+
+    when (phase) {
+        WritePhase.REVIEW -> WriteReviewPage(
+            showHeader = showHeader,
+            subject = subject,
+            loading = subjectLoading,
+            onVerify = ::beginCardCheck,
+            onCancel = ::cancelTransfer,
+        )
+        WritePhase.WAITING_CARD -> WriteWaitingPage(
+            showHeader = showHeader,
+            screenTitle = stringResource(R.string.sending_card_title),
+            step = 1,
+            title = stringResource(R.string.transfer_wait_card_title),
+            body = stringResource(R.string.transfer_wait_card_body),
+            subject = subject,
+            onCancel = ::cancelTransfer,
+            debugEnabled = debugEnabled,
+            onSimulate = {
+                scanMode = null
+                scanScreenController.simulateCheckCard(
+                    nfcCharacter = nfcCharacter,
+                    onComplete = { phase = WritePhase.READY },
+                    onError = ::reportSimulationFailure,
+                )
+            },
+        )
+        WritePhase.READY -> WriteReadyPage(
+            showHeader = showHeader,
+            subject = subject,
+            onSend = ::beginWrite,
+            onCancel = ::cancelTransfer,
+        )
+        WritePhase.WAITING_WRITE -> WriteWaitingPage(
+            showHeader = showHeader,
+            screenTitle = stringResource(R.string.writing_character_action_title),
+            step = 2,
+            title = stringResource(R.string.transfer_wait_write_title),
+            body = stringResource(R.string.transfer_wait_write_body),
+            subject = subject,
+            onCancel = ::cancelTransfer,
+            debugEnabled = debugEnabled,
+            onSimulate = {
+                scanMode = null
+                scanScreenController.simulateWrite(
+                    nfcCharacter = nfcCharacter,
+                    onComplete = { phase = WritePhase.SUCCESS },
+                    onError = ::reportSimulationFailure,
+                )
+            },
+        )
+        WritePhase.SUCCESS -> WriteSuccessPage(
+            showHeader = showHeader,
+            subject = subject,
+            onContinue = onComplete,
+        )
+    }
+}
+
+@Composable
+private fun DimCardPanel(
+    subject: TransferSubject?,
+    title: String,
+    body: String,
+    status: String,
+) {
+    CyberPanel(
+        modifier = Modifier.fillMaxWidth().widthIn(max = 520.dp).padding(top = 12.dp),
+        active = true,
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            subject?.cardBitmap?.let { cardBitmap ->
+                Surface(
+                    color = DeepPurpleBgAlt,
+                    shape = RectangleShape,
+                    modifier = Modifier.size(96.dp),
+                ) {
+                    DimLogo(
+                        bitmap = cardBitmap,
+                        contentDescription = stringResource(R.string.write_card_icon_description),
+                        modifier = Modifier.fillMaxSize().padding(8.dp),
+                        filterQuality = FilterQuality.None,
+                    )
+                }
+            }
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(5.dp),
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TextPrimaryOnDark,
+                )
+                Text(
+                    text = body,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = TextSecondaryOnDark,
+                )
+                Text(
+                    text = status,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = VitalCyan,
+                )
+            }
         }
     }
 }
 
+@Composable
+private fun WriteReviewPage(
+    showHeader: Boolean,
+    subject: TransferSubject?,
+    loading: Boolean,
+    onVerify: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    ScanStepScaffold(
+        title = stringResource(R.string.write_card_title),
+        showHeader = showHeader,
+        onBack = onCancel,
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().widthIn(max = 520.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            ArenaTransferStage(
+                direction = TransferDirection.SEND,
+                phase = TransferStagePhase.READY,
+                subject = subject,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            DimCardPanel(
+                subject = subject,
+                title = stringResource(R.string.write_card_device_ready),
+                body = stringResource(
+                    R.string.write_card_required_card,
+                    subject?.cardName ?: stringResource(R.string.transfer_card_unknown),
+                ),
+                status = stringResource(R.string.scan_card_link_ready),
+            )
+            Spacer(Modifier.height(14.dp))
+            TransferActionDock(
+                primaryLabel = stringResource(R.string.write_card_confirm),
+                onPrimary = onVerify,
+                primaryEnabled = !loading,
+                secondaryLabel = stringResource(R.string.ui_cancel),
+                onSecondary = onCancel,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WriteReadyPage(
+    showHeader: Boolean,
+    subject: TransferSubject?,
+    onSend: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    ScanStepScaffold(
+        title = stringResource(R.string.write_character_title),
+        showHeader = showHeader,
+        onBack = onCancel,
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().widthIn(max = 520.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            ArenaTransferStage(
+                direction = TransferDirection.SEND,
+                phase = TransferStagePhase.READY,
+                subject = subject,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            DimCardPanel(
+                subject = subject,
+                title = stringResource(R.string.write_character_success),
+                body = stringResource(R.string.write_character_wait_ready),
+                status = stringResource(R.string.scan_nfc_link_ready),
+            )
+            Spacer(Modifier.height(14.dp))
+            TransferActionDock(
+                primaryLabel = stringResource(R.string.write_character_confirm),
+                onPrimary = onSend,
+                secondaryLabel = stringResource(R.string.ui_cancel),
+                onSecondary = onCancel,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WriteWaitingPage(
+    showHeader: Boolean,
+    screenTitle: String,
+    step: Int,
+    title: String,
+    body: String,
+    subject: TransferSubject?,
+    onCancel: () -> Unit,
+    debugEnabled: Boolean,
+    onSimulate: () -> Unit,
+) {
+    ScanStepScaffold(
+        title = screenTitle,
+        showHeader = showHeader,
+        onBack = onCancel,
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().widthIn(max = 520.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            ArenaTransferStage(
+                direction = TransferDirection.SEND,
+                phase = TransferStagePhase.WAITING,
+                subject = subject,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(14.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.headlineSmall,
+                color = TextPrimaryOnDark,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = body,
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondaryOnDark,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 4.dp, bottom = 10.dp),
+            )
+            Spacer(Modifier.height(14.dp))
+            TransferActionDock(
+                primaryLabel = stringResource(R.string.ui_cancel),
+                onPrimary = onCancel,
+                primaryStyle = VitalButtonStyle.SECONDARY,
+                debugLabel = if (debugEnabled) {
+                    stringResource(R.string.debug_simulate_watch_action)
+                } else {
+                    null
+                },
+                onDebug = if (debugEnabled) onSimulate else null,
+            )
+        }
+    }
+}
+
+@Composable
+private fun WriteSuccessPage(
+    showHeader: Boolean,
+    subject: TransferSubject?,
+    onContinue: () -> Unit,
+) {
+    ScanStepScaffold(
+        title = stringResource(R.string.write_character_title),
+        showHeader = showHeader,
+        onBack = null,
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().widthIn(max = 520.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            ArenaTransferSuccessVisual(
+                direction = TransferDirection.SEND,
+                subject = subject,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Spacer(Modifier.height(14.dp))
+            Text(
+                text = stringResource(R.string.transfer_success_send_title),
+                style = MaterialTheme.typography.headlineSmall,
+                color = TextPrimaryOnDark,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = stringResource(R.string.transfer_success_send_body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = TextSecondaryOnDark,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 4.dp, bottom = 10.dp),
+            )
+            Spacer(Modifier.height(12.dp))
+            TransferActionDock(
+                primaryLabel = stringResource(R.string.transfer_continue),
+                onPrimary = onContinue,
+            )
+        }
+    }
+}

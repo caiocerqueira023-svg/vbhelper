@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -66,13 +67,31 @@ fun VitalSearchField(value: String, onValueChange: (String) -> Unit, label: Stri
         } }, shape = CutCornerShape(8.dp), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search))
 }
 
-/** The divided species-profile reading vocabulary, reused for dense operational details. */
+/**
+ * The app's section heading: a divided cyan bar on the square technical frame.
+ *
+ * Page-level sections use the bar (with an optional trailing count). It is deliberately not used
+ * inside a framed panel (for example the arena “Opponent team” box): those keep the quieter
+ * [VitalSectionHeader]. [compact] trims the vertical padding where the bar sits in a dense sheet.
+ */
 @Composable
-fun VitalSectionBar(title: String, modifier: Modifier = Modifier) {
+fun VitalSectionBar(
+    title: String,
+    modifier: Modifier = Modifier,
+    detail: String? = null,
+    compact: Boolean = false,
+) {
     Surface(modifier.fillMaxWidth().cyberFrame(), color = MaterialTheme.colorScheme.surfaceContainerHighest,
         shape = androidx.compose.ui.graphics.RectangleShape) {
-        Text(title, Modifier.padding(horizontal = 12.dp, vertical = 8.dp).semantics { heading() },
-            style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = VitalCyan,
-            textAlign = TextAlign.Center)
+        Box(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = if (compact) 5.dp else 8.dp)) {
+            Text(title, Modifier.align(Alignment.Center).semantics { heading() },
+                style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold,
+                color = VitalCyan, textAlign = TextAlign.Center, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            detail?.let {
+                Text(it, Modifier.align(Alignment.CenterEnd), style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold, color = VitalCyan,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
     }
 }

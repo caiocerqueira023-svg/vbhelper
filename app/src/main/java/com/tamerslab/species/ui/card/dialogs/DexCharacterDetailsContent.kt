@@ -1,4 +1,4 @@
-﻿package com.tamerslab.species.ui.card.dialogs
+package com.tamerslab.species.ui.card.dialogs
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.unit.dp
 import com.tamerslab.R
 import com.tamerslab.components.DimLogo
+import com.tamerslab.components.VitalSectionBar
 import com.tamerslab.components.motionEnabled
 import com.tamerslab.components.cyberFrame
 import com.tamerslab.domain.species.SpeciesProfile
@@ -239,11 +240,7 @@ private fun DexSpeciesFact(label: String, value: String) {    Column {
 
 @Composable
 private fun DexProfileSectionHeader(title: String) {
-    Box(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerHighest, RectangleShape)
-        .cyberFrame().padding(horizontal = 12.dp, vertical = 8.dp), contentAlignment = Alignment.Center) {
-        Text(title, style = MaterialTheme.typography.titleSmall, color = VitalCyan,
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.semantics { heading() })
-    }
+    VitalSectionBar(title)
 }
 
 @Composable

@@ -13,6 +13,21 @@ interface ScanScreenController {
     fun onClickCheckCard(secrets: Secrets, nfcCharacter: NfcCharacter, onComplete: () -> Unit)
     fun onClickWrite(secrets: Secrets, nfcCharacter: NfcCharacter, onComplete: () -> Unit)
 
+    /** Debug-only: import a stored character as if the watch had just been read. */
+    fun simulateRead(onComplete: () -> Unit, onError: (Throwable) -> Unit) {
+        onError(UnsupportedOperationException("Watch receive simulation is unavailable."))
+    }
+
+    /** Debug-only: complete the physical DIM check step without a watch. */
+    fun simulateCheckCard(nfcCharacter: NfcCharacter, onComplete: () -> Unit, onError: (Throwable) -> Unit) {
+        onComplete()
+    }
+
+    /** Debug-only: complete the prepared write without NFC. */
+    fun simulateWrite(nfcCharacter: NfcCharacter, onComplete: () -> Unit, onError: (Throwable) -> Unit) {
+        onError(UnsupportedOperationException("Watch write simulation is unavailable."))
+    }
+
     fun cancelRead()
 
     fun registerActivityLifecycleListener(key: String, activityLifecycleListener: ActivityLifecycleListener)

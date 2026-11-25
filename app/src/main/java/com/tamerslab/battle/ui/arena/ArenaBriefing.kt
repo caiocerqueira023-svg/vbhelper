@@ -45,7 +45,7 @@ internal fun ArenaBriefing(state: TamerArenaState, tamer: TamerDefinition, resol
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         ArenaSprite(resolver.speciesNamed(tamer.primary), 96.dp)
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            ArenaHeading(stringResource(if (state.teamReady) R.string.arena_unavailable_heading else R.string.arena_choose_team))
+                            ArenaPanelHeading(stringResource(if (state.teamReady) R.string.arena_unavailable_heading else R.string.arena_choose_team))
                             val missing = if (state.teamReady) resolver.missingArtwork(tamer.id, state.stages) else emptyList()
                             Text(if (missing.isNotEmpty()) stringResource(R.string.arena_needs_art, missing.joinToString(", "))
                                 else stringResource(if (state.teamReady) R.string.arena_missing_art else R.string.arena_no_partners),
@@ -57,7 +57,7 @@ internal fun ArenaBriefing(state: TamerArenaState, tamer: TamerDefinition, resol
                     Modifier.fillMaxWidth(), primary = false, icon = Icons.Outlined.Refresh)
             } else {
                 CyberPanel(Modifier.fillMaxWidth(), active = true, contentPadding = PaddingValues(16.dp)) {
-                    ArenaHeading(stringResource(R.string.arena_their_team))
+                    ArenaPanelHeading(stringResource(R.string.arena_their_team))
                     Spacer(Modifier.height(8.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                         team.members.forEach { member ->

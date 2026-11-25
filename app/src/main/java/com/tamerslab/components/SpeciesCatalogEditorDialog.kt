@@ -117,7 +117,7 @@ fun SpeciesCatalogEditorDialog(originalName: String?, onDismiss: () -> Unit, onS
                             enabled = !saving, modifier = Modifier.fillMaxWidth(), minLines = 2, maxLines = 5)
                         OutlinedTextField(description, { description = it.take(20_000) }, label = { Text(stringResource(R.string.ui_optional_profile)) },
                             enabled = !saving, modifier = Modifier.fillMaxWidth(), minLines = 4, maxLines = 10)
-                        VitalSectionHeader(stringResource(R.string.species_sprite_title))
+                        VitalSectionBar(stringResource(R.string.species_sprite_title))
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                             LoadedSpritePortrait(previewSprite, Modifier.size(88.dp))

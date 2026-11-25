@@ -37,7 +37,7 @@ import com.tamerslab.R
 import com.tamerslab.components.CyberPanel
 import com.tamerslab.components.VitalButton
 import com.tamerslab.components.VitalButtonStyle
-import com.tamerslab.components.VitalSectionHeader
+import com.tamerslab.components.VitalSectionBar
 import com.tamerslab.di.TamersLabApplication
 import com.tamerslab.domain.vpet.VpetImportOutcome
 import com.tamerslab.domain.vpet.VpetPendingRead
@@ -55,7 +55,7 @@ import java.util.Date
 
 @Composable
 internal fun VpetPendingReadsHeader(count: Int, modifier: Modifier = Modifier) {
-    VitalSectionHeader(
+    VitalSectionBar(
         title = stringResource(R.string.vpet_pending_title),
         detail = count.takeIf { it > 0 }?.let { stringResource(R.string.vpet_pending_count, it) },
         modifier = modifier,

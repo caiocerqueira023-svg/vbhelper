@@ -1,13 +1,10 @@
 package com.tamerslab.items.ui
 
 import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,60 +55,35 @@ fun ItemsStore() {
     }
 
     val bits = currentCurrency.value
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 150.dp),
+    LazyColumn(
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(InstrumentSpacing.Screen),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
+        contentPadding = PaddingValues(horizontal = InstrumentSpacing.Screen, vertical = 8.dp),
     ) {
-        item(span = { GridItemSpan(maxLineSpan) }, key = "refresh") {
+        item(key = "refresh") {
             CollectionRefreshNotice(collection)
         }
-        item(span = { GridItemSpan(maxLineSpan) }, key = "wallet") {
-            StoreWalletStrip(
-                bits = bits,
-                affordable = items.count { it.price <= bits },
-                total = items.size,
-            )
+        item(key = "wallet") {
+            StoreWalletStrip(bits = bits)
         }
         ItemFamily.entries.forEach { family ->
             val entries = items.filter { itemFamily(it.itemIcon) == family }
             if (entries.isEmpty()) return@forEach
-            item(span = { GridItemSpan(maxLineSpan) }, key = "family:${family.name}") {
-                CatalogueSectionHeader(family.label, entries.size)
+            item(key = "family:${family.name}") {
+                CatalogueSectionHeader(family.label)
             }
-            // Mission names carry a goal plus a window, so that family takes the full row width
-            // instead of truncating in a two-up tile; everything else stays in the compact grid.
-            if (family == ItemFamily.MISSIONS) {
-                items(entries, key = { "store:${it.id}" }, span = { GridItemSpan(maxLineSpan) }) { item ->
-                    CatalogueCard(
-                        tile = CatalogueTile(
-                            key = "store:${item.id}",
-                            title = catalogueTitle(item),
-                            iconRes = getIconResource(item.itemIcon),
-                            lengthRes = getLengthIcon(item.itemLength),
-                            trailing = stringResource(R.string.items_store_credits, item.price),
-                            trailingIsWarning = item.price > bits,
-                            onClick = { selectedItemId = item.id },
-                        ),
-                        wide = true,
-                    )
-                }
-            } else {
-                items(entries, key = { "store:${it.id}" }) { item ->
-                    CatalogueCard(
-                        tile = CatalogueTile(
-                            key = "store:${item.id}",
-                            title = catalogueTitle(item),
-                            iconRes = getIconResource(item.itemIcon),
-                            lengthRes = getLengthIcon(item.itemLength),
-                            trailing = stringResource(R.string.items_store_credits, item.price),
-                            trailingIsWarning = item.price > bits,
-                            onClick = { selectedItemId = item.id },
-                        ),
-                    )
-                }
+            items(entries, key = { "store:${it.id}" }) { item ->
+                CatalogueCard(
+                    tile = CatalogueTile(
+                        key = "store:${item.id}",
+                        title = catalogueTitle(item),
+                        iconRes = getIconResource(item.itemIcon),
+                        lengthRes = getLengthIcon(item.itemLength),
+                        trailing = stringResource(R.string.items_store_credits, item.price),
+                        trailingIsWarning = item.price > bits,
+                        onClick = { selectedItemId = item.id },
+                    ),
+                    wide = family == ItemFamily.MISSIONS,
+                )
             }
         }
     }
